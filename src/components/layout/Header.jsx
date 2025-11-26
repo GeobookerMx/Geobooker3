@@ -1,95 +1,87 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import BrandLogo from "../common/BrandLogo";
 
 export default function Header() {
-  const [open, setOpen] = useState(false);
-  const location = useLocation();
-
-  const isActive = (path) =>
-    location.pathname === path
-      ? "text-yellow-300 font-semibold"
-      : "text-white hover:text-yellow-200";
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="bg-gradient-to-r from-blue-800 to-blue-600 text-white shadow-md sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+    <header className="bg-geoYellow shadow-lg sticky top-0 z-50">
+      <div className="container mx-auto flex items-center justify-between px-4 py-3">
 
         {/* LOGO */}
-        <Link to="/" className="flex items-center gap-3">
-          <div className="bg-white p-2 rounded-full shadow">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-400 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">GB</span>
-            </div>
-          </div>
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight">Geobooker</h1>
-            <span className="text-xs opacity-80">Directorios Locales</span>
-          </div>
+        <Link to="/" className="flex items-center space-x-3">
+          <BrandLogo className="hover:scale-105 transition-transform duration-200" />
         </Link>
 
-        {/* MENU DESKTOP */}
-        <nav className="hidden lg:flex items-center gap-8">
-          <Link className={isActive("/")} to="/">Inicio</Link>
-          <Link className={isActive("/businesses")} to="/businesses">Negocios</Link>
-          <Link className={isActive("/categories")} to="/categories">Categorías</Link>
+        {/* HAMBURGER BUTTON (MOBILE) */}
+        <button
+          className="md:hidden flex flex-col items-center justify-center space-y-1"
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label="Abrir menú"
+        >
+          <span
+            className={`block w-6 h-[3px] bg-geoPurple transition-transform ${
+              isOpen ? "rotate-45 translate-y-2" : ""
+            }`}
+          ></span>
+          <span
+            className={`block w-6 h-[3px] bg-geoPurple transition-opacity ${
+              isOpen ? "opacity-0" : "opacity-100"
+            }`}
+          ></span>
+          <span
+            className={`block w-6 h-[3px] bg-geoPurple transition-transform ${
+              isOpen ? "-rotate-45 -translate-y-2" : ""
+            }`}
+          ></span>
+        </button>
+
+        {/* DESKTOP NAV */}
+        <nav className="hidden md:flex items-center space-x-8 font-brand">
+          <Link to="/" className="text-geoPurple hover:text-geoPink transition-colors">
+            Inicio
+          </Link>
+
+          <Link to="/categories" className="text-geoPurple hover:text-geoPink transition-colors">
+            Categorías
+          </Link>
 
           <Link
             to="/business/register"
-            className="bg-yellow-400 text-gray-900 px-5 py-2 rounded-full font-semibold shadow hover:bg-yellow-300 transition"
+            className="bg-geoPink text-white px-4 py-2 rounded-full hover:bg-geoPurple transition-colors"
           >
-            + Agregar negocio
+            + Registrar Negocio
+          </Link>
+        </nav>
+      </div>
+
+      {/* MOBILE MENU */}
+      {isOpen && (
+        <div className="md:hidden bg-geoYellow shadow-inner border-t border-geoPurple/10 px-4 py-4 space-y-4 font-brand animate-fadeIn">
+          <Link
+            to="/"
+            className="block text-geoPurple hover:text-geoPink"
+            onClick={() => setIsOpen(false)}
+          >
+            Inicio
           </Link>
 
           <Link
-            to="/login"
-            className="bg-white text-blue-700 px-4 py-2 rounded-full border border-blue-300 hover:bg-gray-100 transition font-medium"
+            to="/categories"
+            className="block text-geoPurple hover:text-geoPink"
+            onClick={() => setIsOpen(false)}
           >
-            Iniciar sesión
+            Categorías
           </Link>
-        </nav>
 
-        {/* BOTÓN MOBILE */}
-        <button
-          onClick={() => setOpen(!open)}
-          className="lg:hidden p-2 bg-blue-700 rounded-lg hover:bg-blue-600"
-        >
-          {open ? <X size={26} /> : <Menu size={26} />}
-        </button>
-      </div>
-
-      {/* MENU MOBILE */}
-      {open && (
-        <div className="lg:hidden bg-blue-700 border-t border-blue-600">
-          <nav className="flex flex-col px-4 py-4 gap-3">
-            <Link className={isActive("/")} to="/" onClick={() => setOpen(false)}>
-              Inicio
-            </Link>
-
-            <Link className="text-white hover:text-yellow-200" to="/businesses" onClick={() => setOpen(false)}>
-              Negocios
-            </Link>
-
-            <Link className="text-white hover:text-yellow-200" to="/categories" onClick={() => setOpen(false)}>
-              Categorías
-            </Link>
-
-            <Link
-              to="/business/register"
-              onClick={() => setOpen(false)}
-              className="bg-yellow-400 text-gray-900 px-4 py-2 rounded-lg font-semibold text-center"
-            >
-              + Agregar negocio
-            </Link>
-
-            <Link
-              to="/login"
-              onClick={() => setOpen(false)}
-              className="bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-300 text-center font-medium"
-            >
-              Iniciar sesión
-            </Link>
-          </nav>
+          <Link
+            to="/business/register"
+            className="block bg-geoPink text-white px-4 py-2 rounded-full w-max hover:bg-geoPurple transition"
+            onClick={() => setIsOpen(false)}
+          >
+            + Registrar Negocio
+          </Link>
         </div>
       )}
     </header>

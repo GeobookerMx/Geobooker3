@@ -1,9 +1,20 @@
-export default function BrandLogo({ className = "" }) {
+// src/components/common/BrandLogo.jsx
+import React from "react";
+
+const BrandLogo = ({ className = "", size = 48 }) => {
   return (
     <img
-      src="/assets/logo/LogoBlancofondoazul.PNG"
-      alt="GeoBooker Logo"
-      className={`h-12 w-auto ${className}`}
+      src="/assets/logo/logo.png"
+      alt="Logotipo Geobooker"
+      className={`select-none object-contain ${className}`}
+      style={{
+        height: `${size}px`,
+        width: "auto",
+      }}
+      draggable="false"
+      loading="lazy"
     />
   );
-}
+};
+
+export default BrandLogo;

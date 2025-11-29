@@ -7,7 +7,6 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { LocationProvider } from "./contexts/LocationContext";
 
 import AppRouter from "./router";
-import Header from "./components/layout/Header"; // ← agregamos un Header global opcional
 
 function App() {
   return (
@@ -15,13 +14,7 @@ function App() {
       <AuthProvider>
         <AppProvider>
           <LocationProvider>
-
-            {/* 🔵 Header global con tu logo */}
-            <Header />
-
-            {/* 🔵 Todas las rutas de la app */}
             <AppRouter />
-
           </LocationProvider>
         </AppProvider>
       </AuthProvider>

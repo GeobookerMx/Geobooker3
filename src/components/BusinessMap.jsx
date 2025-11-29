@@ -1,4 +1,5 @@
 import React, { useMemo, memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
 
 const mapContainerStyle = {
@@ -25,7 +26,7 @@ const BUSINESS_ICON = {
 };
 
 // Componente para la ventana de información del negocio
-const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewProfile }) => {
+const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewProfile, t }) => {
   const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLocation?.lat},${userLocation?.lng}&destination=${business.latitude},${business.longitude}&travelmode=driving`;
 
   return (
@@ -39,19 +40,19 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
       <div className="p-3 max-w-xs">
         <h3 className="font-bold text-lg text-gray-800 mb-2">{business.name}</h3>
         <p className="text-gray-600 text-sm mb-1">
-          <span className="font-semibold">Categoría:</span> {business.category}
+          <span className="font-semibold">{t('business.category')}:</span> {business.category}
         </p>
         <p className="text-gray-500 text-xs mb-3">
-          <span className="font-semibold">Dirección:</span> {business.address}
+          <span className="font-semibold">{t('business.address')}:</span> {business.address}
         </p>
-        
+
         <div className="flex justify-between items-center mb-3">
           <span className="text-yellow-500 text-sm font-semibold">
             ★ {business.rating || 'N/A'}
           </span>
           {business.distance && (
             <span className="text-gray-500 text-xs">
-              A {business.distance.toFixed(1)} km
+              {t('business.distance', { distance: business.distance.toFixed(1) })}
             </span>
           )}
         </div>
@@ -63,13 +64,13 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
             rel="noopener noreferrer"
             className="flex-1 bg-green-600 text-white text-center py-2 rounded text-sm hover:bg-green-700 transition duration-200 font-semibold"
           >
-            Ir 🚗
+            {t('business.getDirections')} 🚗
           </a>
           <button
             onClick={() => onViewProfile(business)}
             className="flex-1 bg-blue-600 text-white py-2 rounded text-sm hover:bg-blue-700 transition duration-200 font-semibold"
           >
-            Ver Perfil
+            {t('business.viewProfile')}
           </button>
         </div>
       </div>
@@ -78,14 +79,15 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
 });
 
 // Componente principal del mapa
-export const BusinessMap = memo(({ 
-  userLocation, 
-  businesses = [], 
+export const BusinessMap = memo(({
+  userLocation,
+  businesses = [],
   selectedBusiness,
   onBusinessSelect,
   onViewBusinessProfile,
-  zoom = 14 
+  zoom = 14
 }) => {
+  const { t, i18n } = useTranslation();
   const mapCenter = userLocation || defaultCenter;
 
   // Optimización: useMemo para opciones que no cambian
@@ -110,7 +112,7 @@ export const BusinessMap = memo(({
   }), []);
 
   // Optimización: useMemo para negocios con distancia calculada
-  const businessMarkers = useMemo(() => 
+  const businessMarkers = useMemo(() =>
     businesses.map((business) => {
       // Calcular distancia para cada negocio
       const distance = userLocation ? calculateDistance(
@@ -127,16 +129,16 @@ export const BusinessMap = memo(({
     }), [businesses, userLocation]
   );
 
-  // Función para calcular distancia (debes implementarla o importarla)
+  // Función para calcular distancia
   function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }
 
@@ -144,20 +146,21 @@ export const BusinessMap = memo(({
     <div className="w-full relative">
       {/* Estado del mapa */}
       <div className="absolute top-2 left-2 z-10 bg-white px-3 py-1 rounded-lg shadow-md text-sm text-gray-600">
-        {userLocation ? '📍 Ubicación activa' : '📍 Usando ubicación predeterminada'}
+        {userLocation ? `📍 ${t('home.locationActive')}` : `📍 ${t('home.locationDefault')}`}
       </div>
-      
-      <LoadScript 
+
+      <LoadScript
         googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+        language={i18n.language}
         loadingElement={
           <div className="flex items-center justify-center h-64 bg-gray-100 rounded-lg">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
-            <span className="ml-2">Cargando mapa...</span>
+            <span className="ml-2">{t('map.loadingMap')}</span>
           </div>
         }
         errorElement={
           <div className="flex items-center justify-center h-64 bg-red-100 text-red-600 rounded-lg">
-            Error cargando Google Maps. Verifica tu API Key.
+            {t('map.mapError')}
           </div>
         }
       >
@@ -172,7 +175,7 @@ export const BusinessMap = memo(({
             <Marker
               position={userLocation}
               icon={USER_ICON}
-              title="Tu ubicación actual"
+              title={t('map.yourLocation')}
               zIndex={1000}
             />
           )}
@@ -198,6 +201,7 @@ export const BusinessMap = memo(({
               userLocation={userLocation}
               onCloseClick={() => onBusinessSelect(null)}
               onViewProfile={onViewBusinessProfile}
+              t={t}
             />
           )}
         </GoogleMap>

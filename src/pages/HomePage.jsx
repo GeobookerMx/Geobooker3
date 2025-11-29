@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from '../contexts/LocationContext';
 import SearchBar from '../components/SearchBar';
 import BusinessMap from '../components/BusinessMap';
 import { toast } from 'react-hot-toast';
 
 const HomePage = () => {
+  const { t } = useTranslation();
   const { userLocation, loading: locationLoading, permissionGranted, requestLocationPermission } = useLocation();
   const [searchLoading, setSearchLoading] = useState(false);
   const [businesses, setBusinesses] = useState([]);
@@ -13,25 +15,25 @@ const HomePage = () => {
   useEffect(() => {
     // Si no hay permiso al cargar, mostrar toast
     if (!locationLoading && !permissionGranted) {
-      toast.error('Habilita la ubicación para encontrar negocios cerca de ti', {
+      toast.error(t('home.enableLocation'), {
         duration: 5000,
       });
     }
-  }, [locationLoading, permissionGranted]);
+  }, [locationLoading, permissionGranted, t]);
 
   const handleBusinessesFound = (foundBusinesses) => {
     setBusinesses(foundBusinesses);
     if (foundBusinesses.length === 0) {
-      toast.error('No se encontraron negocios con esos criterios');
+      toast.error(t('home.noBusinessesFound'));
     } else {
-      toast.success(`Encontramos ${foundBusinesses.length} negocios cerca de ti`);
+      toast.success(t('home.foundBusinesses', { count: foundBusinesses.length }));
     }
   };
 
   const handleRetryLocation = async () => {
     try {
       await requestLocationPermission();
-      toast.success('Ubicación obtenida correctamente');
+      toast.success(t('home.locationObtained'));
     } catch (error) {
       toast.error(error.message);
     }
@@ -44,14 +46,14 @@ const HomePage = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center mb-6">
             <h1 className="text-4xl font-bold text-gray-800 mb-3">
-              Encuentra Negocios Cerca de Ti
+              {t('home.title')}
             </h1>
             <p className="text-gray-600 text-lg">
-              Descubre los mejores establecimientos en tu zona
+              {t('home.subtitle')}
             </p>
           </div>
 
-          <SearchBar 
+          <SearchBar
             onSearch={setSearchLoading}
             onBusinessesFound={handleBusinessesFound}
             loading={searchLoading}
@@ -62,7 +64,7 @@ const HomePage = () => {
             <div className="text-center mt-4">
               <div className="inline-flex items-center bg-blue-50 text-blue-700 px-4 py-2 rounded-lg">
                 <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-600 mr-2"></div>
-                Obteniendo tu ubicación...
+                {t('home.gettingLocation')}
               </div>
             </div>
           )}
@@ -70,12 +72,12 @@ const HomePage = () => {
           {!locationLoading && !permissionGranted && (
             <div className="text-center mt-4">
               <div className="inline-flex flex-col items-center bg-orange-50 text-orange-700 px-6 py-4 rounded-lg max-w-md mx-auto">
-                <p className="mb-3">Necesitamos tu ubicación para mostrarte negocios cercanos</p>
+                <p className="mb-3">{t('home.needLocation')}</p>
                 <button
                   onClick={handleRetryLocation}
                   className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition duration-200 font-semibold"
                 >
-                  Permitir Ubicación
+                  {t('home.allowLocation')}
                 </button>
               </div>
             </div>
@@ -88,11 +90,11 @@ const HomePage = () => {
         <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-800">
-              {businesses.length > 0 
-                ? `${businesses.length} Negocios Encontrados` 
-                : 'Mapa de Negocios'}
+              {businesses.length > 0
+                ? `${businesses.length} ${t('home.businessesFound')}`
+                : t('home.businessMap')}
             </h2>
-            
+
             {userLocation && (
               <div className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
                 📍 {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)}
@@ -112,7 +114,7 @@ const HomePage = () => {
           {businesses.length > 0 && (
             <div className="mt-6 lg:hidden">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                Lista de Negocios
+                {t('home.businessList')}
               </h3>
               <div className="space-y-3 max-h-60 overflow-y-auto">
                 {businesses.map((business) => (

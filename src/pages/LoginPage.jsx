@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const LoginPage = () => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -21,12 +23,12 @@ const LoginPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-md">
-      <h1 className="text-3xl font-bold text-gray-800 mb-2">Iniciar Sesión</h1>
-      <p className="text-gray-600 mb-8">Accede a tu cuenta de Geobooker</p>
-      
+      <h1 className="text-3xl font-bold text-gray-800 mb-2">{t('login.title')}</h1>
+      <p className="text-gray-600 mb-8">{t('login.subtitle')}</p>
+
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md">
         <div className="mb-4">
-          <label className="block text-gray-700 font-medium mb-2">Email</label>
+          <label className="block text-gray-700 font-medium mb-2">{t('login.email')}</label>
           <input
             type="email"
             name="email"
@@ -34,12 +36,12 @@ const LoginPage = () => {
             onChange={handleChange}
             required
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="tu@email.com"
+            placeholder={t('login.emailPlaceholder')}
           />
         </div>
-        
+
         <div className="mb-6">
-          <label className="block text-gray-700 font-medium mb-2">Contraseña</label>
+          <label className="block text-gray-700 font-medium mb-2">{t('login.password')}</label>
           <input
             type="password"
             name="password"
@@ -47,20 +49,20 @@ const LoginPage = () => {
             onChange={handleChange}
             required
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Tu contraseña"
+            placeholder={t('login.passwordPlaceholder')}
           />
         </div>
-        
+
         <button
           type="submit"
           className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-300 font-semibold"
         >
-          Iniciar Sesión
+          {t('login.loginButton')}
         </button>
-        
+
         <div className="text-center mt-4">
           <a href="#" className="text-blue-600 hover:text-blue-800 text-sm">
-            ¿Olvidaste tu contraseña?
+            {t('login.forgotPassword')}
           </a>
         </div>
       </form>
@@ -68,4 +70,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage; //
+export default LoginPage;

@@ -1,37 +1,26 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from '../contexts/LocationContext';
-import { supabase } from '../lib/supabase';
+import { searchNearbyPlaces, searchByType, getPlaceType } from '../services/googlePlacesService';
 
 const SearchBar = ({ onSearch, onBusinessesFound, loading }) => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const { userLocation, permissionGranted, requestLocationPermission } = useLocation();
 
-  // Categorías populares para sugerencias
+  // Categorías populares para sugerencias (en español)
   const popularCategories = [
-    'Barbería', 'Restaurante', 'Farmacia', 'Supermercado', 
+    'Farmacia', 'Restaurante', 'Barbería', 'Supermercado',
     'Gimnasio', 'Veterinaria', 'Taller mecánico', 'Lavandería',
-    'Cafetería', 'Panadería', 'Hospital', 'Escuela'
+    'Cafetería', 'Panadería', 'Hospital', 'Escuela',
+    'Banco', 'Gasolinera', 'Hotel'
   ];
 
-  // Función optimizada para calcular distancia
-  const calculateDistance = useCallback((lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Radio de la Tierra en km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  }, []);
-
-  // Búsqueda optimizada por categoría exacta
-  const handleSearch = async (searchQuery = searchTerm, isExactCategory = false) => {
+  // Búsqueda usando Google Places API
+  const handleSearch = async (searchQuery = searchTerm) => {
     if (!searchQuery.trim()) return;
-    
+
     // Si no hay ubicación, solicitarla
     if (!userLocation) {
       try {
@@ -44,42 +33,24 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading }) => {
 
     try {
       onSearch(true);
-      
-      let query = supabase
-        .from('businesses')
-        .select('*')
-        .limit(20);
 
-      // Búsqueda por categoría exacta cuando se selecciona de sugerencias
-      if (isExactCategory) {
-        query = query.eq('category', searchQuery);
+      // Verificar si el término coincide con una categoría conocida
+      const placeType = getPlaceType(searchQuery);
+
+      let businesses;
+      if (placeType) {
+        // Búsqueda por tipo específico
+        businesses = await searchByType(userLocation, placeType, 10000); // 10km radius
       } else {
-        // Búsqueda flexible por nombre o categoría
-        query = query.or(`name.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`);
+        // Búsqueda por palabra clave
+        businesses = await searchNearbyPlaces(userLocation, searchQuery, 10000);
       }
 
-      const { data: businesses, error } = await query;
-
-      if (error) throw error;
-
-      // Filtrar negocios por distancia (radio de 10km)
-      const nearbyBusinesses = businesses?.filter(business => {
-        if (!business.latitude || !business.longitude) return false;
-        
-        const distance = calculateDistance(
-          userLocation.lat,
-          userLocation.lng,
-          business.latitude,
-          business.longitude
-        );
-        
-        return distance <= 10; // 10km radius
-      }) || [];
-
-      onBusinessesFound(nearbyBusinesses);
+      onBusinessesFound(businesses);
       setShowSuggestions(false);
     } catch (error) {
       console.error('Error buscando negocios:', error);
+      onBusinessesFound([]);
     } finally {
       onSearch(false);
     }
@@ -87,7 +58,7 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading }) => {
 
   const handleSuggestionClick = (suggestion) => {
     setSearchTerm(suggestion);
-    handleSearch(suggestion, true); // Búsqueda exacta por categoría
+    handleSearch(suggestion);
   };
 
   const handleRetryLocation = async () => {
@@ -109,11 +80,11 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading }) => {
             setShowSuggestions(true);
           }}
           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-          placeholder="¿Qué negocio o servicio buscas?"
+          placeholder={t('search.placeholder')}
           className="w-full px-6 py-4 text-lg border border-gray-300 rounded-full shadow-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200"
           disabled={loading}
         />
-        
+
         <button
           onClick={() => handleSearch()}
           disabled={loading || !searchTerm.trim()}
@@ -158,14 +129,14 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading }) => {
             <div className="flex items-center">
               <span className="text-orange-500 mr-2">📍</span>
               <p className="text-orange-700 text-sm">
-                Necesitamos tu ubicación para mostrarte negocios cercanos
+                {t('home.needLocation')}
               </p>
             </div>
             <button
               onClick={handleRetryLocation}
               className="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-orange-600 transition duration-200"
             >
-              Permitir Ubicación
+              {t('home.allowLocation')}
             </button>
           </div>
         </div>

@@ -31,8 +31,12 @@ const Sidebar = ({ onLogout }) => {
         <div className="h-screen w-64 bg-gray-900 text-white flex flex-col fixed left-0 top-0">
             {/* Logo */}
             <div className="p-6 border-b border-gray-800">
-                <h1 className="text-2xl font-bold text-blue-400">Geobooker</h1>
-                <p className="text-xs text-gray-400 mt-1">Panel de Administración</p>
+                <img
+                    src="/images/geobooker-logo.png"
+                    alt="Geobooker"
+                    className="h-10 w-auto mb-2"
+                />
+                <p className="text-xs text-gray-400">Panel de Administración</p>
             </div>
 
             {/* Navegación */}
@@ -44,8 +48,8 @@ const Sidebar = ({ onLogout }) => {
                             key={item.path}
                             to={item.path}
                             className={`flex items-center px-6 py-3 transition-colors ${isActive(item.path)
-                                    ? 'bg-blue-600 text-white border-l-4 border-blue-400'
-                                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                                ? 'bg-blue-600 text-white border-l-4 border-blue-400'
+                                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                                 }`}
                         >
                             <Icon className="w-5 h-5 mr-3" />

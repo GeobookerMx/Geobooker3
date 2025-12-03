@@ -1,16 +1,12 @@
-// src/components/common/BrandLogo.jsx
-import React from "react";
+import React from 'react';
 
-const BrandLogo = ({ className = "", size = 48 }) => {
+const BrandLogo = ({ size = 48, className = '' }) => {
   return (
     <img
-      src="/assets/logo/logo.png"
-      alt="Logotipo Geobooker"
+      src="/images/geobooker-logo.png"
+      alt="Geobooker"
+      style={{ height: `${size}px`, width: 'auto' }}
       className={`select-none object-contain ${className}`}
-      style={{
-        height: `${size}px`,
-        width: "auto",
-      }}
       draggable="false"
       loading="lazy"
     />

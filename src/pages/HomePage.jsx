@@ -12,7 +12,6 @@ const HomePage = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [businesses, setBusinesses] = useState([]);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
-  const [showMap, setShowMap] = useState(false);
 
   useEffect(() => {
     if (!locationLoading && !permissionGranted) {
@@ -25,7 +24,6 @@ const HomePage = () => {
 
   const handleBusinessesFound = (foundBusinesses) => {
     setBusinesses(foundBusinesses);
-    setShowMap(true);
     if (foundBusinesses.length === 0) {
       toast.error(t('home.noBusinessesFound'));
     } else {
@@ -89,28 +87,26 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Mapa (si hay búsqueda) */}
-      {showMap && (
-        <div className="container mx-auto px-4 py-8">
-          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">
-                {businesses.length > 0
-                  ? `${businesses.length} ${t('home.businessesFound')}`
-                  : t('home.businessMap')}
-              </h2>
-            </div>
-
-            <BusinessMap
-              userLocation={userLocation}
-              businesses={businesses}
-              selectedBusiness={selectedBusiness}
-              onBusinessSelect={setSelectedBusiness}
-              zoom={businesses.length > 0 ? 13 : 12}
-            />
+      {/* Mapa - Siempre visible */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">
+              {businesses.length > 0
+                ? `${businesses.length} ${t('home.businessesFound')}`
+                : t('home.businessMap')}
+            </h2>
           </div>
+
+          <BusinessMap
+            userLocation={userLocation}
+            businesses={businesses}
+            selectedBusiness={selectedBusiness}
+            onBusinessSelect={setSelectedBusiness}
+            zoom={businesses.length > 0 ? 13 : 12}
+          />
         </div>
-      )}
+      </div>
 
       {/* Sección: Cómo Funciona */}
       <div className="container mx-auto px-4 py-16">

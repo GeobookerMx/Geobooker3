@@ -12,6 +12,15 @@ const HomePage = () => {
   const [businesses, setBusinesses] = useState([]);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
 
+  // Debug: Mostrar ubicación en consola
+  useEffect(() => {
+    console.log('🔍 Debug - Estado de ubicación:', {
+      userLocation,
+      locationLoading,
+      permissionGranted
+    });
+  }, [userLocation, locationLoading, permissionGranted]);
+
   useEffect(() => {
     // Si no hay permiso al cargar, mostrar toast
     if (!locationLoading && !permissionGranted) {
@@ -19,7 +28,14 @@ const HomePage = () => {
         duration: 5000,
       });
     }
-  }, [locationLoading, permissionGranted, t]);
+
+    // Si se obtuvo la ubicación, mostrar confirmación
+    if (userLocation && permissionGranted) {
+      toast.success(`📍 Ubicación obtenida: ${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)}`, {
+        duration: 3000,
+      });
+    }
+  }, [locationLoading, permissionGranted, userLocation, t]);
 
   const handleBusinessesFound = (foundBusinesses) => {
     setBusinesses(foundBusinesses);
@@ -51,6 +67,13 @@ const HomePage = () => {
             <p className="text-gray-600 text-lg">
               {t('home.subtitle')}
             </p>
+
+            {/* Debug info - Eliminar después de probar */}
+            {userLocation && (
+              <div className="mt-2 text-sm text-green-600">
+                ✅ Tu ubicación: {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)}
+              </div>
+            )}
           </div>
 
           <SearchBar
@@ -101,6 +124,13 @@ const HomePage = () => {
               </div>
             )}
           </div>
+
+          {/* Debug: Mostrar si hay ubicación */}
+          {!userLocation && !locationLoading && (
+            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
+              ⚠️ No se detectó tu ubicación. El mapa mostrará Ciudad de México por defecto.
+            </div>
+          )}
 
           <BusinessMap
             userLocation={userLocation}

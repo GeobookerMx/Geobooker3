@@ -5,13 +5,34 @@ import { useLocation } from '../contexts/LocationContext';
 import SearchBar from '../components/SearchBar';
 import BusinessMap from '../components/BusinessMap';
 import { toast } from 'react-hot-toast';
+import { supabase } from '../lib/supabase';
 
 const HomePage = () => {
   const { t } = useTranslation();
   const { userLocation, loading: locationLoading, permissionGranted, requestLocationPermission } = useLocation();
   const [searchLoading, setSearchLoading] = useState(false);
-  const [businesses, setBusinesses] = useState([]);
+  const [businesses, setBusinesses] = useState([]); // Google Places
+  const [geobookerBusinesses, setGeobookerBusinesses] = useState([]); // Native Businesses
   const [selectedBusiness, setSelectedBusiness] = useState(null);
+
+  // Cargar negocios nativos de Geobooker
+  useEffect(() => {
+    const fetchGeobookerBusinesses = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('businesses')
+          .select('*')
+          .eq('status', 'approved');
+
+        if (error) throw error;
+        if (data) setGeobookerBusinesses(data);
+      } catch (error) {
+        console.error('Error fetching Geobooker businesses:', error);
+      }
+    };
+
+    fetchGeobookerBusinesses();
+  }, []);
 
   useEffect(() => {
     if (!locationLoading && !permissionGranted) {
@@ -100,7 +121,8 @@ const HomePage = () => {
 
           <BusinessMap
             userLocation={userLocation}
-            businesses={businesses}
+            businesses={businesses} // Google Places
+            geobookerBusinesses={geobookerBusinesses} // Native Businesses
             selectedBusiness={selectedBusiness}
             onBusinessSelect={setSelectedBusiness}
             zoom={businesses.length > 0 ? 13 : 12}

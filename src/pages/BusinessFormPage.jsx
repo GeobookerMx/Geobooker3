@@ -1,442 +1,293 @@
-// src/pages/BusinessFormPage.jsx
-import React, { useState } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { createBusiness } from "../services/businessService";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
+
+const mapContainerStyle = {
+  width: "100%",
+  height: "400px",
+  borderRadius: "0.75rem",
+};
+
+const defaultCenter = {
+  lat: 19.4326,
+  lng: -99.1332, // CDMX default
+};
 
 export default function BusinessFormPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const mapRef = useRef(null);
 
   const [form, setForm] = useState({
     business_name: "",
-    manager_name: "",      // Encargado del negocio (opcional)
     category: "",
-    subcategory: "",
     description: "",
     address: "",
-    city: "",
-    state: "",
-    country: "México",
-    postal_code: "",
     phone: "",
-    whatsapp: "",
     website: "",
-    facebook: "",
-    instagram: "",
-    tiktok: "",
-    offers_invoicing: false,
-    invoicing_details: "",
-    has_job_openings: false,
+    latitude: null,
+    longitude: null,
+    // Images placeholder
+    images: []
   });
 
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [mapCenter, setMapCenter] = useState(defaultCenter);
 
-  // Manejo genérico de cambios
+  // Manejo de cambios en inputs de texto
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
+    }));
+  };
+
+  // Manejo del mapa
+  const onMapLoad = useCallback((map) => {
+    mapRef.current = map;
+    // Intentar obtener ubicación actual del usuario
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const pos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          setMapCenter(pos);
+          setForm(prev => ({
+            ...prev,
+            latitude: pos.lat,
+            longitude: pos.lng
+          }));
+        },
+        () => {
+          console.log("Error obteniendo ubicación");
+        }
+      );
+    }
+  }, []);
+
+  const onMarkerDragEnd = (e) => {
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
+    setForm(prev => ({
+      ...prev,
+      latitude: lat,
+      longitude: lng
+    }));
+  };
+
+  const onMapClick = (e) => {
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
+    setForm(prev => ({
+      ...prev,
+      latitude: lat,
+      longitude: lng
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validación mínima manual
     if (!form.business_name.trim() || !form.category.trim()) {
-      toast.error("Por favor, completa al menos el nombre del negocio y la categoría.");
+      toast.error("Nombre y categoría son obligatorios");
+      return;
+    }
+
+    if (!form.latitude || !form.longitude) {
+      toast.error("Por favor selecciona la ubicación en el mapa");
       return;
     }
 
     try {
       setSubmitting(true);
-
-      console.log("➡️ Enviando payload a Supabase:", form);
-
-      const result = await createBusiness(form, user);
-
-      console.log("✅ Respuesta de Supabase (createBusiness):", result);
-
-      toast.success("🎉 Tu negocio ha sido enviado. Revisaremos la información.");
-      setSuccess(true);
-
-      // Limpiar formulario
-      setForm({
-        business_name: "",
-        manager_name: "",
-        category: "",
-        subcategory: "",
-        description: "",
-        address: "",
-        city: "",
-        state: "",
-        country: "México",
-        postal_code: "",
-        phone: "",
-        whatsapp: "",
-        website: "",
-        facebook: "",
-        instagram: "",
-        tiktok: "",
-        offers_invoicing: false,
-        invoicing_details: "",
-        has_job_openings: false,
-      });
+      await createBusiness(form, user);
+      toast.success("¡Negocio registrado exitosamente!");
+      navigate("/dashboard");
     } catch (error) {
-      console.error("❌ Error al enviar negocio:", error);
-      toast.error("Hubo un error al enviar tu negocio. Revisa la consola.");
+      console.error("Error:", error);
+      toast.error("Error al registrar el negocio: " + error.message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleNewBusiness = () => {
-    setSuccess(false);
-  };
-
-  // ✅ Pantalla de éxito
-  if (success) {
-    return (
-      <div className="max-w-xl mx-auto px-4 py-16 text-center">
-        <div className="mx-auto mb-6 w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
-          <span className="text-4xl">✅</span>
-        </div>
-        <h1 className="text-3xl font-bold text-slate-800 mb-4">
-          ¡Tu negocio fue registrado!
-        </h1>
-        <p className="text-slate-600 mb-8">
-          Hemos recibido la información de tu negocio.
-          En breve será revisado y, una vez aprobado, aparecerá en Geobooker.
-        </p>
-        <div className="flex flex-col md:flex-row justify-center gap-4">
-          <button
-            onClick={() => navigate("/")}
-            className="px-6 py-2.5 rounded-lg bg-blue-600 text-white font-semibold text-sm shadow-md hover:bg-blue-700 hover:shadow-lg transition"
-          >
-            Volver al inicio
-          </button>
-          <button
-            onClick={handleNewBusiness}
-            className="px-6 py-2.5 rounded-lg border border-slate-300 text-slate-700 font-semibold text-sm hover:bg-slate-50 transition"
-          >
-            Registrar otro negocio
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // 🧾 Formulario
-  const isBasicInvalid =
-    !form.business_name.trim() || !form.category.trim();
-
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold mb-4 text-slate-800">
-        Sube tu negocio a Geobooker
-      </h1>
-      <p className="text-slate-600 mb-8">
-        Completa la información de tu negocio. Por ahora el alta es{" "}
-        <strong>100% gratuita</strong>.
-      </p>
-
-      <form
-        noValidate                 // 👈 Desactiva la validación HTML y usamos la nuestra
-        onSubmit={handleSubmit}
-        className="space-y-6 bg-white rounded-xl shadow-md p-6"
-      >
-        {/* Nombre + encargado */}
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Nombre del negocio <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="business_name"
-              value={form.business_name}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Ej. Barbería El Buen Corte"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Encargado del negocio <span className="text-xs text-slate-400">(opcional)</span>
-            </label>
-            <input
-              type="text"
-              name="manager_name"
-              value={form.manager_name}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Nombre del encargado"
-            />
-          </div>
+    <div className="max-w-4xl mx-auto px-4 py-10">
+      <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-blue-600 px-8 py-6">
+          <h1 className="text-3xl font-bold text-white">Registra tu Negocio</h1>
+          <p className="text-blue-100 mt-2">
+            Únete a Geobooker y haz que miles de clientes te encuentren.
+          </p>
         </div>
 
-        {/* Categoría */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Categoría <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name="category"
-            value={form.category}
-            onChange={handleChange}
-            className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Ej. Barbería, Taller, Farmacia..."
-          />
-        </div>
-
-        {/* Subcategoría */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Subcategoría
-          </label>
-          <input
-            type="text"
-            name="subcategory"
-            value={form.subcategory}
-            onChange={handleChange}
-            className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Ej. Barbería clásica, Vulcanizadora 24h..."
-          />
-        </div>
-
-        {/* Descripción */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Descripción breve
-          </label>
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            rows={3}
-            className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Cuenta brevemente qué ofrece tu negocio."
-          />
-        </div>
-
-        {/* Dirección */}
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Dirección
-            </label>
-            <input
-              type="text"
-              name="address"
-              value={form.address}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Calle y número"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Ciudad
-            </label>
-            <input
-              type="text"
-              name="city"
-              value={form.city}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Ciudad"
-            />
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Estado
-            </label>
-            <input
-              type="text"
-              name="state"
-              value={form.state}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Estado"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Código postal
-            </label>
-            <input
-              type="text"
-              name="postal_code"
-              value={form.postal_code}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="CP"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              País
-            </label>
-            <input
-              type="text"
-              name="country"
-              value={form.country}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-
-        {/* Contacto */}
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Teléfono
-            </label>
-            <input
-              type="text"
-              name="phone"
-              value={form.phone}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Teléfono del negocio"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              WhatsApp
-            </label>
-            <input
-              type="text"
-              name="whatsapp"
-              value={form.whatsapp}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Número de WhatsApp"
-            />
-          </div>
-        </div>
-
-        {/* Redes */}
-        <div className="grid md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Sitio web
-            </label>
-            <input
-              type="text"
-              name="website"
-              value={form.website}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="https://tusitio.com"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Facebook
-            </label>
-            <input
-              type="text"
-              name="facebook"
-              value={form.facebook}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="URL o usuario"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Instagram
-            </label>
-            <input
-              type="text"
-              name="instagram"
-              value={form.instagram}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="@usuario o URL"
-            />
-          </div>
-        </div>
-
-        {/* Opciones extra: facturación y empleo (para futuro, ya guardan en DB) */}
-        <div className="grid md:grid-cols-2 gap-4 border-t border-slate-200 pt-4">
-          <div className="flex items-start space-x-2">
-            <input
-              id="offers_invoicing"
-              type="checkbox"
-              name="offers_invoicing"
-              checked={form.offers_invoicing}
-              onChange={handleChange}
-              className="mt-1"
-            />
-            <div>
-              <label
-                htmlFor="offers_invoicing"
-                className="text-sm font-medium text-slate-700"
-              >
-                ¿Tu negocio emite facturas?
-              </label>
-              <textarea
-                name="invoicing_details"
-                value={form.invoicing_details}
-                onChange={handleChange}
-                rows={2}
-                className="mt-1 w-full border rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Datos importantes sobre facturación (RFC, horario, etc.)"
-              />
+        <form onSubmit={handleSubmit} className="p-8 space-y-8">
+          {/* Sección 1: Información Básica */}
+          <section>
+            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <span className="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">1</span>
+              Información Básica
+            </h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nombre del Negocio *
+                </label>
+                <input
+                  type="text"
+                  name="business_name"
+                  value={form.business_name}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Ej. Tacos El Paisa"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Categoría *
+                </label>
+                <select
+                  name="category"
+                  value={form.category}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Selecciona una categoría</option>
+                  <option value="restaurant">Restaurante / Comida</option>
+                  <option value="shop">Tienda / Comercio</option>
+                  <option value="service">Servicios</option>
+                  <option value="health">Salud / Farmacia</option>
+                  <option value="entertainment">Entretenimiento</option>
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Descripción
+                </label>
+                <textarea
+                  name="description"
+                  value={form.description}
+                  onChange={handleChange}
+                  rows={3}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Describe tu negocio..."
+                />
+              </div>
             </div>
-          </div>
+          </section>
 
-          <div className="flex items-start space-x-2">
-            <input
-              id="has_job_openings"
-              type="checkbox"
-              name="has_job_openings"
-              checked={form.has_job_openings}
-              onChange={handleChange}
-              className="mt-1"
-            />
-            <div>
-              <label
-                htmlFor="has_job_openings"
-                className="text-sm font-medium text-slate-700"
-              >
-                ¿Actualmente tienes vacantes?
-              </label>
-              <p className="text-xs text-slate-500 mt-1">
-                Más adelante podremos mostrar los negocios que están contratando.
-              </p>
+          {/* Sección 2: Ubicación */}
+          <section>
+            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <span className="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">2</span>
+              Ubicación Exacta
+            </h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Arrastra el pin rojo hasta la ubicación exacta de tu negocio.
+            </p>
+
+            <div className="rounded-xl overflow-hidden border border-gray-300 shadow-sm mb-4">
+              <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+                <GoogleMap
+                  mapContainerStyle={mapContainerStyle}
+                  center={mapCenter}
+                  zoom={15}
+                  onLoad={onMapLoad}
+                  onClick={onMapClick}
+                  options={{
+                    streetViewControl: false,
+                    mapTypeControl: false,
+                  }}
+                >
+                  {form.latitude && form.longitude && (
+                    <Marker
+                      position={{ lat: form.latitude, lng: form.longitude }}
+                      draggable={true}
+                      onDragEnd={onMarkerDragEnd}
+                      animation={window.google?.maps?.Animation?.DROP}
+                    />
+                  )}
+                </GoogleMap>
+              </LoadScript>
             </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Dirección Escrita
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  value={form.address}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Calle, número, colonia..."
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* Sección 3: Contacto */}
+          <section>
+            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <span className="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">3</span>
+              Contacto
+            </h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Teléfono
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={form.phone}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="+52..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Sitio Web (Opcional)
+                </label>
+                <input
+                  type="url"
+                  name="website"
+                  value={form.website}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="https://..."
+                />
+              </div>
+            </div>
+          </section>
+
+          <div className="pt-6 border-t border-gray-200 flex justify-end">
+            <button
+              type="button"
+              onClick={() => navigate("/dashboard")}
+              className="mr-4 px-6 py-3 text-gray-700 font-medium hover:bg-gray-100 rounded-lg transition"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-8 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-lg hover:bg-blue-700 hover:shadow-xl transition transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting ? "Registrando..." : "Registrar Negocio"}
+            </button>
           </div>
-        </div>
-
-        {/* Botón */}
-        <div className="pt-4">
-          <button
-            type="submit"
-            disabled={submitting || isBasicInvalid}
-            className="w-full md:w-auto px-6 py-2.5 rounded-lg bg-blue-600 text-white font-semibold text-sm shadow-md hover:bg-blue-700 hover:shadow-lg transition disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {submitting ? "Enviando..." : "Enviar negocio"}
-          </button>
-        </div>
-      </form>
-
-      <p className="text-xs text-slate-500 mt-4">
-        Al enviar tu negocio aceptas nuestros{" "}
-        <span className="underline">términos de servicio</span> y{" "}
-        <span className="underline">política de privacidad</span>.
-      </p>
+        </form>
+      </div>
     </div>
   );
-} 
+}

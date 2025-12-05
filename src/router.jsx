@@ -17,6 +17,7 @@ import AdminLogin from "./pages/admin/AdminLogin.jsx";
 import AdminDashboardLayout from "./pages/admin/DashboardLayout.jsx";
 import DashboardHome from "./pages/admin/DashboardHome.jsx";
 import AdsManagement from "./pages/admin/AdsManagement.jsx";
+import BusinessApprovals from "./pages/admin/BusinessApprovals.jsx";
 
 // Pages
 import HomePage from "./pages/HomePage.jsx";
@@ -27,6 +28,8 @@ import RegisterPage from "./pages/RegisterPage.jsx";
 import BusinessFormPage from "./pages/BusinessFormPage.jsx";
 import CategoriesPage from "./pages/CategoriesPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
+import BusinessEditPage from "./pages/BusinessEditPage.jsx";
+import UpgradePage from "./pages/UpgradePage.jsx";
 
 export default function AppRouter() {
   return (
@@ -50,13 +53,15 @@ export default function AppRouter() {
       {/* User Dashboard (Protected) */}
       <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/dashboard/business/:id/edit" element={<BusinessEditPage />} />
+        <Route path="/dashboard/upgrade" element={<UpgradePage />} />
       </Route>
 
       {/* Admin Routes */}
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin" element={<AdminDashboardLayout />}>
         <Route path="dashboard" element={<DashboardHome />} />
-        <Route path="businesses" element={<div className="p-6"><h1 className="text-2xl font-bold">Gestión de Negocios</h1><p className="text-gray-600 mt-2">Próximamente...</p></div>} />
+        <Route path="businesses" element={<BusinessApprovals />} />
         <Route path="users" element={<div className="p-6"><h1 className="text-2xl font-bold">Gestión de Usuarios</h1><p className="text-gray-600 mt-2">Próximamente...</p></div>} />
         <Route path="ads" element={<AdsManagement />} />
         <Route path="analytics" element={<div className="p-6"><h1 className="text-2xl font-bold">Analytics</h1><p className="text-gray-600 mt-2">Próximamente...</p></div>} />

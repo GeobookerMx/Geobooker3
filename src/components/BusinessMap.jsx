@@ -14,24 +14,33 @@ const defaultCenter = {
   lng: -99.1332
 };
 
-// Iconos personalizados y divertidos
+// Iconos personalizados
 const USER_ICON = {
-  // Pin Azul con usuario para la ubicación actual
+  // Pin Azul con usuario
   url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIyNSIgY3k9IjI1IiByPSIyMCIgZmlsbD0iIzQyODVGNCIgZmlsbC1vcGFjaXR5PSIwLjIiLz4KICA8Y2lyY2xlIGN4PSIyNSIgY3k9IjI1IiByPSIxMiIgZmlsbD0iIzQyODVGNCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+Cjwvc3ZnPg==',
   scaledSize: { width: 50, height: 50 },
   anchor: { x: 25, y: 25 }
 };
 
 const BUSINESS_ICON = {
-  // Pin Rosa estilo Geobooker para negocios
+  // Pin Rosa estilo Geobooker (Google Places)
   url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cGF0aCBkPSJNMjAgNDBDMjAgNDAgMzUgMjUgMzUgMTVDMzUgNi43MTU3MyAyOC4yODQzIDAgMjAgMEMxMS43MTU3IDAgNSA2LjcxNTczIDUgMTVDNSAyNSAyMCA0MCAyMCA0MFoiIGZpbGw9IiNGRTM0NkUiLz4KICA8Y2lyY2xlIGN4PSIyMCIgY3k9IjE1IiByPSI2IiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4=',
   scaledSize: { width: 40, height: 40 },
   anchor: { x: 20, y: 40 }
 };
 
+const GEOBOOKER_ICON = {
+  // Pin Dorado/Premium para negocios nativos de Geobooker
+  url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cGF0aCBkPSJNMjQgNDhDMjQgNDggNDIgMzAgNDIgMThCNDIgOC4wNTg4NyAzMy45NDExIDAgMjQgMEMxNC4wNTg5IDAgNiA4LjA1ODg3IDYgMThDNiAzMCAyNCA0OCAyNCA0OFoiIGZpbGw9IiNGNTlFMDBCIi8+CiAgPGNpcmNsZSBjeD0iMjQiIGN5PSIxOCIgcj0iOCIgZmlsbD0id2hpdGUiLz4KICA8cGF0aCBkPSJNMjQgMTNMMjUuNSAxN0gyOS41TDI2LjUgMTkuNUwyNy41IDIzLjVMMjQgMjEuNUwyMC41IDIzLjVMMjEuNSAxOS41TDE4LjUgMTdIMjIuNUwyNCAxM1oiIGZpbGw9IiNGNTlFMDBCIi8+Cjwvc3ZnPg==',
+  scaledSize: { width: 48, height: 48 },
+  anchor: { x: 24, y: 48 }
+};
+
 // Componente para la ventana de información del negocio
 const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewProfile, t }) => {
   const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLocation?.lat},${userLocation?.lng}&destination=${business.latitude},${business.longitude}&travelmode=driving`;
+
+  const isGeobooker = !!business.owner_id; // Identificar si es nativo
 
   return (
     <InfoWindow
@@ -42,7 +51,15 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
       onCloseClick={onCloseClick}
     >
       <div className="p-3 max-w-xs">
-        <h3 className="font-bold text-lg text-gray-800 mb-2">{business.name}</h3>
+        <div className="flex items-center gap-2 mb-2">
+          <h3 className="font-bold text-lg text-gray-800">{business.name}</h3>
+          {isGeobooker && (
+            <span className="bg-yellow-100 text-yellow-800 text-[10px] px-1.5 py-0.5 rounded border border-yellow-200 font-bold">
+              VERIFICADO
+            </span>
+          )}
+        </div>
+
         <p className="text-gray-600 text-sm mb-1">
           <span className="font-semibold">{t('business.category')}:</span> {business.category}
         </p>
@@ -85,7 +102,8 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
 // Componente principal del mapa
 export const BusinessMap = memo(({
   userLocation,
-  businesses = [],
+  businesses = [], // Google Places
+  geobookerBusinesses = [], // Geobooker Native
   selectedBusiness,
   onBusinessSelect,
   onViewBusinessProfile,
@@ -115,24 +133,6 @@ export const BusinessMap = memo(({
     maxZoom: 18
   }), []);
 
-  // Optimización: useMemo para negocios con distancia calculada
-  const businessMarkers = useMemo(() =>
-    businesses.map((business) => {
-      // Calcular distancia para cada negocio
-      const distance = userLocation ? calculateDistance(
-        userLocation.lat,
-        userLocation.lng,
-        business.latitude,
-        business.longitude
-      ) : null;
-
-      return {
-        ...business,
-        distance
-      };
-    }), [businesses, userLocation]
-  );
-
   // Función para calcular distancia
   function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371;
@@ -145,6 +145,34 @@ export const BusinessMap = memo(({
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }
+
+  // Procesar marcadores de Google Places
+  const googleMarkers = useMemo(() =>
+    businesses.map((business) => ({
+      ...business,
+      distance: userLocation ? calculateDistance(
+        userLocation.lat,
+        userLocation.lng,
+        business.latitude,
+        business.longitude
+      ) : null,
+      type: 'google'
+    })), [businesses, userLocation]
+  );
+
+  // Procesar marcadores de Geobooker
+  const geobookerMarkers = useMemo(() =>
+    geobookerBusinesses.map((business) => ({
+      ...business,
+      distance: userLocation ? calculateDistance(
+        userLocation.lat,
+        userLocation.lng,
+        business.latitude,
+        business.longitude
+      ) : null,
+      type: 'geobooker'
+    })), [geobookerBusinesses, userLocation]
+  );
 
   return (
     <div className="w-full relative">
@@ -185,10 +213,10 @@ export const BusinessMap = memo(({
             />
           )}
 
-          {/* Marcadores de negocios */}
-          {businessMarkers.map((business) => (
+          {/* Marcadores de Google Places (Rosa) */}
+          {googleMarkers.map((business) => (
             <Marker
-              key={business.id}
+              key={`google-${business.id}`}
               position={{
                 lat: business.latitude,
                 lng: business.longitude
@@ -196,6 +224,21 @@ export const BusinessMap = memo(({
               onClick={() => onBusinessSelect(business)}
               icon={BUSINESS_ICON}
               title={business.name}
+            />
+          ))}
+
+          {/* Marcadores de Geobooker (Dorado) */}
+          {geobookerMarkers.map((business) => (
+            <Marker
+              key={`geobooker-${business.id}`}
+              position={{
+                lat: business.latitude,
+                lng: business.longitude
+              }}
+              onClick={() => onBusinessSelect(business)}
+              icon={GEOBOOKER_ICON}
+              title={business.name}
+              zIndex={900} // Encima de los normales
             />
           ))}
 

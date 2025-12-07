@@ -6,7 +6,7 @@ import { Routes, Route } from "react-router-dom";
 import PublicLayout from "./components/layout/PublicLayout.jsx";
 import DashboardLayout from "./components/layout/DashboardLayout.jsx";
 
-// Auth Components
+// Auth
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import WelcomePage from "./pages/WelcomePage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
@@ -18,8 +18,12 @@ import AdminDashboardLayout from "./pages/admin/DashboardLayout.jsx";
 import DashboardHome from "./pages/admin/DashboardHome.jsx";
 import AdsManagement from "./pages/admin/AdsManagement.jsx";
 import BusinessApprovals from "./pages/admin/BusinessApprovals.jsx";
+import RevenuePage from "./pages/admin/RevenuePage.jsx";
+import AnalyticsPage from "./pages/admin/AnalyticsPage.jsx";
+import UsersPage from "./pages/admin/UsersPage.jsx";
+import SettingsPage from "./pages/admin/SettingsPage.jsx";
 
-// Pages
+// User Pages
 import HomePage from "./pages/HomePage.jsx";
 import FAQPage from "./pages/FAQPage.jsx";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage.jsx";
@@ -31,42 +35,78 @@ import DashboardPage from "./pages/DashboardPage.jsx";
 import BusinessEditPage from "./pages/BusinessEditPage.jsx";
 import UpgradePage from "./pages/UpgradePage.jsx";
 
+// Ads / Publicidad
+import AdvertisePage from "./pages/AdvertisePage.jsx";
+import AdsPolicyPage from "./pages/AdsPolicyPage.jsx";
+import CampaignCreateWizard from "./pages/ad-wizard/CampaignCreateWizard.jsx";
+
 export default function AppRouter() {
   return (
     <Routes>
-      {/* Public Routes (No Auth Required) */}
-      <Route path="/welcome" element={<WelcomePage />} />
-      <Route path="/signup" element={<SignupPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/privacy" element={<PrivacyPolicyPage />} />
-      <Route path="/terms" element={<TermsOfServicePage />} />
-      <Route path="/faq" element={<FAQPage />} />
+      {/* 🌐 Rutas públicas que usan el layout general (Header + Footer) */}
+      <Route element={<PublicLayout />}>
+        <Route path="/welcome" element={<WelcomePage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms" element={<TermsOfServicePage />} />
+        <Route path="/faq" element={<FAQPage />} />
 
-      {/* Protected Routes (Require Auth) */}
-      <Route element={<ProtectedRoute><PublicLayout /></ProtectedRoute>}>
+        {/* Página comercial de publicidad (SIN login) */}
+        <Route path="/advertise" element={<AdvertisePage />} />
+
+        {/* Políticas de anuncios (página legal pública) */}
+        <Route path="/legal/ads-policy" element={<AdsPolicyPage />} />
+      </Route>
+
+      {/* 🔐 Rutas protegidas que usan el mismo layout público */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <PublicLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route path="/" element={<HomePage />} />
         <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/business/register" element={<BusinessFormPage />} />
         <Route path="/register" element={<RegisterPage />} />
       </Route>
 
-      {/* User Dashboard (Protected) */}
-      <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+      {/* 📊 Dashboard de usuario (layout tipo panel) */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/dashboard/business/:id/edit" element={<BusinessEditPage />} />
+        <Route
+          path="/dashboard/business/:id/edit"
+          element={<BusinessEditPage />}
+        />
         <Route path="/dashboard/upgrade" element={<UpgradePage />} />
+
+        {/* Wizard de creación de campañas (Protegido, dentro del dashboard) */}
+        <Route path="/advertise/create" element={<CampaignCreateWizard />} />
       </Route>
 
-      {/* Admin Routes */}
+      {/* 🛠️ Rutas de administrador */}
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin" element={<AdminDashboardLayout />}>
         <Route path="dashboard" element={<DashboardHome />} />
         <Route path="businesses" element={<BusinessApprovals />} />
-        <Route path="users" element={<div className="p-6"><h1 className="text-2xl font-bold">Gestión de Usuarios</h1><p className="text-gray-600 mt-2">Próximamente...</p></div>} />
+
+        <Route path="users" element={<UsersPage />} />
+
         <Route path="ads" element={<AdsManagement />} />
-        <Route path="analytics" element={<div className="p-6"><h1 className="text-2xl font-bold">Analytics</h1><p className="text-gray-600 mt-2">Próximamente...</p></div>} />
-        <Route path="revenue" element={<div className="p-6"><h1 className="text-2xl font-bold">Ingresos</h1><p className="text-gray-600 mt-2">Próximamente...</p></div>} />
-        <Route path="settings" element={<div className="p-6"><h1 className="text-2xl font-bold">Configuración</h1><p className="text-gray-600 mt-2">Próximamente...</p></div>} />
+
+        <Route path="analytics" element={<AnalyticsPage />} />
+
+        <Route path="revenue" element={<RevenuePage />} />
+
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
     </Routes>
   );

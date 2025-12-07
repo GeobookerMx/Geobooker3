@@ -19,10 +19,7 @@ const BusinessApprovals = () => {
             setLoading(true);
             let query = supabase
                 .from('businesses')
-                .select(`
-          *,
-          user_profiles!inner(full_name, email, phone)
-        `)
+                .select('*')
                 .order('created_at', { ascending: false });
 
             if (filter !== 'all') {
@@ -113,8 +110,8 @@ const BusinessApprovals = () => {
                 <button
                     onClick={() => setFilter('all')}
                     className={`px-4 py-2 rounded-lg font-medium transition ${filter === 'all'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                 >
                     Todos ({businesses.length})
@@ -122,8 +119,8 @@ const BusinessApprovals = () => {
                 <button
                     onClick={() => setFilter('pending')}
                     className={`px-4 py-2 rounded-lg font-medium transition ${filter === 'pending'
-                            ? 'bg-yellow-500 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-yellow-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                 >
                     Pendientes
@@ -131,8 +128,8 @@ const BusinessApprovals = () => {
                 <button
                     onClick={() => setFilter('approved')}
                     className={`px-4 py-2 rounded-lg font-medium transition ${filter === 'approved'
-                            ? 'bg-green-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                 >
                     Aprobados
@@ -140,8 +137,8 @@ const BusinessApprovals = () => {
                 <button
                     onClick={() => setFilter('rejected')}
                     className={`px-4 py-2 rounded-lg font-medium transition ${filter === 'rejected'
-                            ? 'bg-red-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                 >
                     Rechazados
@@ -203,8 +200,8 @@ const BusinessApprovals = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900">{business.user_profiles?.full_name || 'N/A'}</div>
-                                        <div className="text-sm text-gray-500">{business.user_profiles?.email}</div>
+                                        <div className="text-sm text-gray-900">{business.manager_name || 'N/A'}</div>
+                                        <div className="text-sm text-gray-500">ID: {business.owner_id?.substring(0, 8)}...</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm text-gray-900 capitalize">{business.category}</div>
@@ -286,7 +283,8 @@ const BusinessApprovals = () => {
                                     )}
                                     <div>
                                         <label className="text-sm text-gray-500">Propietario</label>
-                                        <p className="font-medium">{selectedBusiness.user_profiles?.full_name}</p>
+                                        <p className="font-medium">{selectedBusiness.manager_name || 'N/A'}</p>
+                                        <p className="text-xs text-gray-400">ID: {selectedBusiness.owner_id}</p>
                                     </div>
                                     <div className="md:col-span-2">
                                         <label className="text-sm text-gray-500">Descripción</label>

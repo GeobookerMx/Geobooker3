@@ -19,7 +19,7 @@ const Sidebar = ({ onLogout }) => {
         { path: '/admin/dashboard', icon: Home, label: 'Vista General' },
         { path: '/admin/businesses', icon: Store, label: 'Negocios' },
         { path: '/admin/users', icon: Users, label: 'Usuarios' },
-        { path: '/admin/ads', icon: TrendingUp, label: 'Geobooker Ads' },
+        { path: '/admin/ads', icon: TrendingUp, label: '🚀 Geobooker Ads' },
         { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
         { path: '/admin/revenue', icon: DollarSign, label: 'Ingresos' },
         { path: '/admin/settings', icon: Settings, label: 'Configuración' },

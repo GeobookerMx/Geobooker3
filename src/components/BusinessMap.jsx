@@ -30,10 +30,12 @@ const BUSINESS_ICON = {
 };
 
 const GEOBOOKER_ICON = {
-  // Pin Dorado/Premium para negocios nativos de Geobooker
-  url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cGF0aCBkPSJNMjQgNDhDMjQgNDggNDIgMzAgNDIgMThCNDIgOC4wNTg4NyAzMy45NDExIDAgMjQgMEMxNC4wNTg5IDAgNiA4LjA1ODg3IDYgMThDNiAzMCAyNCA0OCAyNCA0OFoiIGZpbGw9IiNGNTlFMDBCIi8+CiAgPGNpcmNsZSBjeD0iMjQiIGN5PSIxOCIgcj0iOCIgZmlsbD0id2hpdGUiLz4KICA8cGF0aCBkPSJNMjQgMTNMMjUuNSAxN0gyOS41TDI2LjUgMTkuNUwyNy41IDIzLjVMMjQgMjEuNUwyMC41IDIzLjVMMjEuNSAxOS41TDE4LjUgMTdIMjIuNUwyNCAxM1oiIGZpbGw9IiNGNTlFMDBCIi8+Cjwvc3ZnPg==',
-  scaledSize: { width: 48, height: 48 },
-  anchor: { x: 24, y: 48 }
+  path: 'M 12,2 L 15,10 L 23,10 L 17,15 L 19,23 L 12,18 L 5,23 L 7,15 L 1,10 L 9,10 Z',
+  fillColor: '#FFD700',
+  fillOpacity: 1,
+  strokeColor: '#FF8C00', 
+  strokeWeight: 2,
+  scale: 2
 };
 
 // Componente para la ventana de información del negocio

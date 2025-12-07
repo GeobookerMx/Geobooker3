@@ -59,7 +59,7 @@ Thumbs.db
 # -----------------------------
 .vercel/
 .netlify/
-functions/
+!netlify/functions/
 
 # -----------------------------
 # ✔️ Cache

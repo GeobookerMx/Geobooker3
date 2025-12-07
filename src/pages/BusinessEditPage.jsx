@@ -188,13 +188,13 @@ const BusinessEditPage = () => {
             try {
                 const fileName = `${id}/${Date.now()}_${file.name}`;
                 const { error: uploadError } = await supabase.storage
-                    .from('business-images')
+                    .from('business images')
                     .upload(fileName, file);
 
                 if (uploadError) throw uploadError;
 
                 const { data: { publicUrl } } = supabase.storage
-                    .from('business-images')
+                    .from('business images')
                     .getPublicUrl(fileName);
 
                 setFormData(prev => ({
@@ -212,10 +212,10 @@ const BusinessEditPage = () => {
 
     const removeImage = async (imageUrl) => {
         try {
-            const pathMatch = imageUrl.match(/business-images\/(.+)$/);
+            const pathMatch = imageUrl.match(/business images\/(.+)$/);
             if (pathMatch) {
                 await supabase.storage
-                    .from('business-images')
+                    .from('business images')
                     .remove([pathMatch[1]]);
             }
 

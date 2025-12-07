@@ -25,7 +25,8 @@ body {
 /* --- Clases utilitarias personalizadas --- */
 .container-custom {
   width: 100%;
-  max-width: 80rem; /* Esto equivale a max-w-7xl */
+  max-width: 80rem;
+  /* Esto equivale a max-w-7xl */
   margin-left: auto;
   margin-right: auto;
   padding-left: 1rem;
@@ -38,4 +39,63 @@ body {
     padding-left: 1rem;
     padding-right: 1rem;
   }
+}
+
+/* ========================================= */
+/* Animaciones para componentes de anuncios */
+/* ========================================= */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-in-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s ease-out;
+}
+
+/* Ocultar scrollbar para carruseles */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+/* Line clamp utilities si no están en Tailwind config */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }

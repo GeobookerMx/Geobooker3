@@ -6,6 +6,17 @@ import SearchBar from '../components/SearchBar';
 import BusinessMap from '../components/BusinessMap';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
+// Componentes de Publicidad
+import {
+  HeroBanner,
+  CarouselAd,
+  StickyBanner,
+  InterstitialAd,
+  useInterstitialTrigger
+} from '../components/ads';
+import RecommendedSection from '../components/ads/RecommendedSection';
+import SponsoredResultCard from '../components/ads/SponsoredResultCard';
+import SponsoredFullwidth from '../components/ads/SponsoredFullwidth';
 
 const HomePage = () => {
   const { t } = useTranslation();
@@ -14,6 +25,9 @@ const HomePage = () => {
   const [businesses, setBusinesses] = useState([]); // Google Places
   const [geobookerBusinesses, setGeobookerBusinesses] = useState([]); // Native Businesses
   const [selectedBusiness, setSelectedBusiness] = useState(null);
+
+  // Sistema de Interstitial Ads
+  const { showInterstitial, incrementSearchCount, closeInterstitial } = useInterstitialTrigger();
 
   // Cargar negocios nativos de Geobooker
   useEffect(() => {
@@ -45,6 +59,9 @@ const HomePage = () => {
 
   const handleBusinessesFound = (foundBusinesses) => {
     setBusinesses(foundBusinesses);
+    // Incrementar contador de búsquedas para trigger de interstitial
+    incrementSearchCount();
+
     if (foundBusinesses.length === 0) {
       toast.error(t('home.noBusinessesFound'));
     } else {
@@ -108,6 +125,25 @@ const HomePage = () => {
         </div>
       </div>
 
+      {/* Hero Banner Publicitario (Primera Plana) */}
+      <HeroBanner />
+
+      {/* Resultados Patrocinados - Solo si hay búsqueda activa */}
+      {businesses.length > 0 && (
+        <div className="container mx-auto px-4 py-6">
+          <div className="max-w-4xl mx-auto space-y-4">
+            {/* Primer resultado patrocinado */}
+            <SponsoredResultCard context={{ search: true, location: userLocation }} />
+
+            {/* Anuncio fullwidth después del 3er resultado */}
+            <SponsoredFullwidth context={{ search: true, location: userLocation }} />
+
+            {/* Segundo resultado patrocinado */}
+            <SponsoredResultCard context={{ search: true, location: userLocation }} />
+          </div>
+        </div>
+      )}
+
       {/* Mapa - Siempre visible */}
       <div className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
@@ -129,6 +165,18 @@ const HomePage = () => {
           />
         </div>
       </div>
+
+      {/* Sección Recomendados (Segunda Plana) */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-sm mx-auto lg:max-w-none lg:grid lg:grid-cols-4 lg:gap-6">
+          <div className="lg:col-span-1">
+            <RecommendedSection />
+          </div>
+        </div>
+      </div>
+
+      {/* Carrusel de Negocios Destacados (Primera Plana) */}
+      <CarouselAd />
 
       {/* Sección: Cómo Funciona */}
       <div className="container mx-auto px-4 py-16">
@@ -303,6 +351,14 @@ const HomePage = () => {
           </button>
         </div>
       </div>
+
+      {/* Banner Inferior Sticky (Segunda Plana) */}
+      <StickyBanner />
+
+      {/* Interstitial Ad (Pantalla Completa) - Aparece después de 5 búsquedas */}
+      {showInterstitial && (
+        <InterstitialAd onClose={closeInterstitial} />
+      )}
     </div>
   );
 };

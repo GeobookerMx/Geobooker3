@@ -137,6 +137,11 @@ const Footer = () => {
                   → Iniciar sesión
                 </Link>
               </li>
+              <li>
+                <Link to="/advertise" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
+                  → Publicidad para negocios
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -147,6 +152,11 @@ const Footer = () => {
               <li>
                 <Link to="/privacy" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
                   → Política de privacidad
+                </Link>
+              </li>
+              <li>
+                <Link to="/legal/ads-policy" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
+                  → Políticas de publicidad
                 </Link>
               </li>
               <li>

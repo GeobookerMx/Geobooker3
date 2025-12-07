@@ -1,13 +1,95 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Check, X, Star, Zap, TrendingUp, Camera, MapPin, BarChart } from 'lucide-react';
+import { loadStripe } from '@stripe/stripe-js';
+import { supabase } from '../lib/supabase';
+import { toast } from 'react-hot-toast';
+
+// Inicializar Stripe (asegúrate de tener la variable en .env.local)
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_sample');
 
 const UpgradePage = () => {
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [priceId, setPriceId] = useState(null); // ID del precio de Stripe
 
-    const handleUpgrade = () => {
-        // TODO: Integrar con Stripe
-        alert('Integración con Stripe próximamente. Por ahora, contacta a soporte para activar Premium.');
+    // Cargar configuración de precio desde Supabase
+    React.useEffect(() => {
+        const fetchPlanConfig = async () => {
+            try {
+                // Por defecto cargamos el plan mensual premium
+                // En el futuro, aquí seleccionamos por país/moneda
+                const { data, error } = await supabase
+                    .from('subscription_plans')
+                    .select('stripe_price_id_mxn')
+                    .eq('code', 'premium_monthly')
+                    .single();
+
+                if (data) {
+                    setPriceId(data.stripe_price_id_mxn);
+                } else if (!error) {
+                    // Fallback si no hay datos en DB
+                    console.warn('No plan config found');
+                }
+            } catch (err) {
+                console.error('Error fetching plan:', err);
+            }
+        };
+        fetchPlanConfig();
+    }, []);
+
+    const handleUpgrade = async () => {
+        setLoading(true);
+        const toastId = toast.loading('Preparando pago seguro...');
+
+        try {
+            // 1. Obtener usuario actual
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                toast.error('Debes iniciar sesión para actualizar', { id: toastId });
+                navigate('/login');
+                return;
+            }
+
+            // 2. Obtener instancia de Stripe
+            const stripe = await stripePromise;
+            if (!stripe) throw new Error('Stripe no pudo cargarse');
+
+            // 3. Crear sesión de checkout en el backend (Netlify Function)
+            // Usamos '/.netlify/functions/...' que es la ruta estándar
+            const response = await fetch('/.netlify/functions/create-checkout-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    priceId: priceId || 'price_H5ggYwtDq4fbrJ', // Fallback ID o el de la DB
+                    userId: session.user.id,
+                    customerEmail: session.user.email,
+                    successUrl: window.location.origin + '/dashboard?success=true',
+                    cancelUrl: window.location.origin + '/upgrade?canceled=true',
+                    countryCode: 'MX' // Idealmente dinámico
+                }),
+            });
+
+            const sessionData = await response.json();
+
+            if (sessionData.error) {
+                throw new Error(sessionData.error);
+            }
+
+            // 4. Redirigir a Stripe
+            const { error } = await stripe.redirectToCheckout({
+                sessionId: sessionData.sessionId,
+            });
+
+            if (error) {
+                throw error;
+            }
+
+        } catch (error) {
+            console.error('Error de pago:', error);
+            toast.error(`Error al iniciar pago: ${error.message}`, { id: toastId });
+            setLoading(false);
+        }
     };
 
     return (
@@ -138,9 +220,20 @@ const UpgradePage = () => {
 
                         <button
                             onClick={handleUpgrade}
-                            className="w-full bg-yellow-400 text-gray-900 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition transform hover:scale-105 shadow-lg"
+                            disabled={loading}
+                            className={`w-full bg-yellow-400 text-gray-900 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition transform hover:scale-105 shadow-lg flex items-center justify-center ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
                         >
-                            Actualizar a Premium →
+                            {loading ? (
+                                <>
+                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Procesando...
+                                </>
+                            ) : (
+                                'Actualizar a Premium →'
+                            )}
                         </button>
                     </div>
                 </div>

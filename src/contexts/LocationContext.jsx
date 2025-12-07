@@ -70,10 +70,9 @@ export const LocationProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    // Intentar obtener ubicación al inicio, pero sin romper la app si falla
-    requestLocationPermission().catch(() => {
-      setLoading(false);
-    });
+    // Ya no solicitamos ubicación automáticamente al cargar
+    // Se solicitará cuando el usuario intente buscar
+    setLoading(false);
   }, []);
 
   const value = {

@@ -71,6 +71,16 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading }) => {
 
   return (
     <div className="w-full max-w-2xl mx-auto relative">
+      {/* Indicador de ubicación activa */}
+      {permissionGranted && userLocation && (
+        <div className="flex items-center justify-center mb-2 text-sm text-green-600">
+          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+          </svg>
+          <span>📍 Ubicación activa</span>
+        </div>
+      )}
+
       <div className="relative">
         <input
           type="text"
@@ -80,10 +90,17 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading }) => {
             setShowSuggestions(true);
           }}
           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-          placeholder={t('search.placeholder')}
-          className="w-full px-6 py-4 text-lg border border-gray-300 rounded-full shadow-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200"
+          placeholder="¿Qué negocio buscas? Ej: Farmacia, Restaurante..."
+          className="w-full px-6 py-4 text-lg border-2 border-gray-200 rounded-full shadow-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 placeholder-gray-400"
           disabled={loading}
         />
+
+        {/* Mostrar qué se está buscando */}
+        {loading && searchTerm && (
+          <div className="absolute left-6 top-full mt-1 text-sm text-blue-600 font-medium">
+            🔍 Buscando "{searchTerm}" cerca de ti...
+          </div>
+        )}
 
         <button
           onClick={() => handleSearch()}

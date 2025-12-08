@@ -7,6 +7,7 @@ import BusinessMap from '../components/BusinessMap';
 import LocationPermissionModal from '../components/LocationPermissionModal';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
+import { searchNearbyPlaces } from '../services/googlePlacesService';
 // Componentes de Publicidad
 import {
   HeroBanner,
@@ -76,6 +77,37 @@ const HomePage = () => {
 
     fetchGeobookerBusinesses();
   }, [categoryFilter, subcategoryFilter]);
+
+  // ⚡ NUEVO: Buscar en Google Places automáticamente cuando hay filtro de categoría
+  useEffect(() => {
+    const searchGooglePlacesWithCategory = async () => {
+      // Solo buscar si hay filtro de categoría Y tenemos ubicación del usuario
+      if (!categoryFilter || !userLocation) return;
+
+      try {
+        setSearchLoading(true);
+
+        // Usar la subcategoría si existe, sino la categoría
+        const searchTerm = subcategoryFilter || categoryFilter;
+
+        // Buscar en Google Places
+        const results = await searchNearbyPlaces(userLocation, searchTerm, 10000);
+
+        if (results && results.length > 0) {
+          setBusinesses(results);
+          toast.success(`🔍 ${results.length} negocios de Google encontrados para "${searchTerm}"`, { duration: 3000 });
+        } else {
+          toast(`No se encontraron negocios de Google para "${searchTerm}"`, { icon: '📭', duration: 3000 });
+        }
+      } catch (error) {
+        console.error('Error buscando en Google Places:', error);
+      } finally {
+        setSearchLoading(false);
+      }
+    };
+
+    searchGooglePlacesWithCategory();
+  }, [categoryFilter, subcategoryFilter, userLocation]);
 
   // Mostrar modal de ubicación si no hay permiso
   useEffect(() => {

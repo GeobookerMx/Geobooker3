@@ -135,6 +135,51 @@ exports.handler = async (event) => {
                 console.log(`Suscripción ${subscriptionId} cancelada/finalizada`);
                 break;
             }
+
+            // CASO OXXO: Pago confirmado (cuando el usuario paga en OXXO)
+            case 'payment_intent.succeeded': {
+                const paymentIntent = stripeEvent.data.object;
+                const metadata = paymentIntent.metadata || {};
+
+                // Verificar si es un pago OXXO
+                if (metadata.payment_type === 'oxxo') {
+                    console.log(`Pago OXXO confirmado: ${paymentIntent.id}`);
+
+                    // Si es pago de publicidad
+                    if (metadata.product_id) {
+                        await supabase
+                            .from('ad_campaigns')
+                            .update({
+                                status: 'pending_review',
+                                payment_status: 'paid',
+                                stripe_payment_intent: paymentIntent.id,
+                                payment_method: 'oxxo'
+                            })
+                            .eq('id', metadata.product_id);
+
+                        console.log(`Campaña ${metadata.product_id} pagada via OXXO`);
+                    }
+
+                    // Si es pago de suscripción única (no recurrente)
+                    if (metadata.user_id && metadata.subscription_type) {
+                        const premiumUntil = new Date();
+                        premiumUntil.setMonth(premiumUntil.getMonth() + 1);
+
+                        await supabase
+                            .from('user_profiles')
+                            .update({
+                                is_premium: true,
+                                premium_since: new Date().toISOString(),
+                                premium_until: premiumUntil.toISOString(),
+                                last_payment_method: 'oxxo'
+                            })
+                            .eq('id', metadata.user_id);
+
+                        console.log(`Usuario ${metadata.user_id} activado Premium via OXXO`);
+                    }
+                }
+                break;
+            }
         }
 
         return { statusCode: 200, body: JSON.stringify({ received: true }) };

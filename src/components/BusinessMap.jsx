@@ -111,10 +111,6 @@ export const BusinessMap = memo(({
   const { t, i18n } = useTranslation();
   const mapCenter = userLocation || defaultCenter;
 
-  // DEBUG: Ver si userLocation llega al componente
-  console.log('🗺️ BusinessMap - userLocation:', userLocation);
-  console.log('🗺️ BusinessMap - mapCenter:', mapCenter);
-
   // ⚡ useJsApiLoader en lugar de LoadScript - evita cargas múltiples
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,

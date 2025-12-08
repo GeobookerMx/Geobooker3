@@ -58,8 +58,15 @@ const HomePage = () => {
         if (error) throw error;
         if (data) {
           setGeobookerBusinesses(data);
-          if (categoryFilter && data.length > 0) {
-            toast.success(`📍 ${data.length} negocios encontrados en ${categoryFilter}`, { duration: 3000 });
+          if (categoryFilter) {
+            if (data.length > 0) {
+              toast.success(`📍 ${data.length} negocios encontrados en ${categoryFilter}`, { duration: 3000 });
+            } else {
+              toast(`Aún no hay negocios registrados en "${categoryFilter}". ¡Sé el primero en registrarte!`, {
+                duration: 5000,
+                icon: '📭'
+              });
+            }
           }
         }
       } catch (error) {

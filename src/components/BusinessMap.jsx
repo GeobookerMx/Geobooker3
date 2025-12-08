@@ -17,18 +17,14 @@ const defaultCenter = {
   lng: -99.1332
 };
 
-// Iconos personalizados - USUARIO (Círculo azul grande y visible)
-// SVG: círculo azul brillante con borde blanco
+// Iconos personalizados - USUARIO (Círculo azul estilo Google Maps)
 const USER_ICON = {
-  url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-    <svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="30" cy="30" r="28" fill="#3B82F6" fill-opacity="0.3" stroke="#3B82F6" stroke-width="2"/>
-      <circle cx="30" cy="30" r="14" fill="#3B82F6" stroke="white" stroke-width="3"/>
-      <circle cx="30" cy="30" r="5" fill="white"/>
-    </svg>
-  `),
-  scaledSize: { width: 60, height: 60 },
-  anchor: { x: 30, y: 30 }
+  path: 0, // google.maps.SymbolPath.CIRCLE
+  fillColor: '#4285F4',
+  fillOpacity: 1,
+  strokeColor: '#ffffff',
+  strokeWeight: 3,
+  scale: 12
 };
 
 const BUSINESS_ICON = {
@@ -114,6 +110,10 @@ export const BusinessMap = memo(({
 }) => {
   const { t, i18n } = useTranslation();
   const mapCenter = userLocation || defaultCenter;
+
+  // DEBUG: Ver si userLocation llega al componente
+  console.log('🗺️ BusinessMap - userLocation:', userLocation);
+  console.log('🗺️ BusinessMap - mapCenter:', mapCenter);
 
   // ⚡ useJsApiLoader en lugar de LoadScript - evita cargas múltiples
   const { isLoaded, loadError } = useJsApiLoader({

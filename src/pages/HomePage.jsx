@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useLocation } from '../contexts/LocationContext';
 import SearchBar from '../components/SearchBar';
 import BusinessMap from '../components/BusinessMap';
+import LocationPermissionModal from '../components/LocationPermissionModal';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 // Componentes de Publicidad
@@ -26,6 +27,7 @@ const HomePage = () => {
   const [businesses, setBusinesses] = useState([]); // Google Places
   const [geobookerBusinesses, setGeobookerBusinesses] = useState([]); // Native Businesses
   const [selectedBusiness, setSelectedBusiness] = useState(null);
+  const [showLocationModal, setShowLocationModal] = useState(false);
 
   // Filtros de categoría desde URL
   const categoryFilter = searchParams.get('category');
@@ -51,9 +53,6 @@ const HomePage = () => {
           query = query.eq('subcategory', subcategoryFilter);
         }
 
-        // ⚡ OPTIMIZACIÓN: Limitar a 10 negocios para rendimiento
-        query = query.limit(10);
-
         const { data, error } = await query;
 
         if (error) throw error;
@@ -71,12 +70,18 @@ const HomePage = () => {
     fetchGeobookerBusinesses();
   }, [categoryFilter, subcategoryFilter]);
 
+  // Mostrar modal de ubicación si no hay permiso
   useEffect(() => {
     if (!locationLoading && !permissionGranted) {
-      toast.error(t('home.enableLocation'), { duration: 5000 });
+      // Mostrar modal después de 1 segundo para mejor UX
+      const timer = setTimeout(() => {
+        setShowLocationModal(true);
+      }, 1000);
+      return () => clearTimeout(timer);
     }
     if (userLocation && permissionGranted) {
       toast.success(`📍 ${t('home.locationObtained')}`, { duration: 3000 });
+      setShowLocationModal(false);
     }
   }, [locationLoading, permissionGranted, userLocation, t]);
 
@@ -103,6 +108,14 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      {/* Modal de permiso de ubicación */}
+      <LocationPermissionModal
+        isOpen={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
+        onRequestPermission={requestLocationPermission}
+        permissionDenied={!permissionGranted && !locationLoading}
+      />
+
       {/* Hero Section con búsqueda */}
       <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white">
         <div className="container mx-auto px-4 py-16">

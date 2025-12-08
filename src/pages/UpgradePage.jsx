@@ -55,7 +55,7 @@ const UpgradePage = () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    priceId: priceId || 'price_H5ggYwtDq4fbrJ',
+                    priceId: priceId || 'price_1Sc6qYRvtu8q72XsuBdILiPA',
                     userId: session.user.id,
                     customerEmail: session.user.email,
                     successUrl: window.location.origin + '/dashboard?success=true',

@@ -17,11 +17,18 @@ const defaultCenter = {
   lng: -99.1332
 };
 
-// Iconos personalizados
+// Iconos personalizados - USUARIO (Círculo azul grande y visible)
+// SVG: círculo azul brillante con borde blanco
 const USER_ICON = {
-  url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIyNSIgY3k9IjI1IiByPSIyMCIgZmlsbD0iIzQyODVGNCIgZmlsbC1vcGFjaXR5PSIwLjIiLz4KICA8Y2lyY2xlIGN4PSIyNSIgY3k9IjI1IiByPSIxMiIgZmlsbD0iIzQyODVGNCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+Cjwvc3ZnPg==',
-  scaledSize: { width: 50, height: 50 },
-  anchor: { x: 25, y: 25 }
+  url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+    <svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="30" cy="30" r="28" fill="#3B82F6" fill-opacity="0.3" stroke="#3B82F6" stroke-width="2"/>
+      <circle cx="30" cy="30" r="14" fill="#3B82F6" stroke="white" stroke-width="3"/>
+      <circle cx="30" cy="30" r="5" fill="white"/>
+    </svg>
+  `),
+  scaledSize: { width: 60, height: 60 },
+  anchor: { x: 30, y: 30 }
 };
 
 const BUSINESS_ICON = {

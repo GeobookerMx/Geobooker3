@@ -37,9 +37,9 @@ export default function EditAdSpaceModal({ space, onClose, onSave }) {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full">
+            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 flex justify-between items-center rounded-t-xl">
+                <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 flex justify-between items-center rounded-t-xl flex-shrink-0">
                     <div>
                         <h2 className="text-2xl font-bold">Editar Espacio Publicitario</h2>
                         <p className="text-blue-100 text-sm mt-1">{space.name}</p>
@@ -52,8 +52,8 @@ export default function EditAdSpaceModal({ space, onClose, onSave }) {
                     </button>
                 </div>
 
-                {/* Content */}
-                <div className="p-6 space-y-6">
+                {/* Content - Scrollable */}
+                <div className="p-6 space-y-6 overflow-y-auto flex-1">
                     {/* Display Name */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">

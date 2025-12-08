@@ -1,8 +1,8 @@
 import React, { useMemo, memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 
-// ⚡ IMPORTANTE: Mover libraries fuera del componente para evitar recargas del mapa
+// ⚡ IMPORTANTE: Constantes fuera del componente para evitar recargas
 const GOOGLE_MAPS_LIBRARIES = ['places'];
 
 const mapContainerStyle = {
@@ -19,14 +19,12 @@ const defaultCenter = {
 
 // Iconos personalizados
 const USER_ICON = {
-  // Pin Azul con usuario
   url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIyNSIgY3k9IjI1IiByPSIyMCIgZmlsbD0iIzQyODVGNCIgZmlsbC1vcGFjaXR5PSIwLjIiLz4KICA8Y2lyY2xlIGN4PSIyNSIgY3k9IjI1IiByPSIxMiIgZmlsbD0iIzQyODVGNCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+Cjwvc3ZnPg==',
   scaledSize: { width: 50, height: 50 },
   anchor: { x: 25, y: 25 }
 };
 
 const BUSINESS_ICON = {
-  // Pin Rosa estilo Geobooker (Google Places)
   url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cGF0aCBkPSJNMjAgNDBDMjAgNDAgMzUgMjUgMzUgMTVDMzUgNi43MTU3MyAyOC4yODQzIDAgMjAgMEMxMS43MTU3IDAgNSA2LjcxNTczIDUgMTVDNSAyNSAyMCA0MCAyMCA0MFoiIGZpbGw9IiNGRTM0NkUiLz4KICA8Y2lyY2xlIGN4PSIyMCIgY3k9IjE1IiByPSI2IiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4=',
   scaledSize: { width: 40, height: 40 },
   anchor: { x: 20, y: 40 }
@@ -44,15 +42,11 @@ const GEOBOOKER_ICON = {
 // Componente para la ventana de información del negocio
 const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewProfile, t }) => {
   const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLocation?.lat},${userLocation?.lng}&destination=${business.latitude},${business.longitude}&travelmode=driving`;
-
-  const isGeobooker = !!business.owner_id; // Identificar si es nativo
+  const isGeobooker = !!business.owner_id;
 
   return (
     <InfoWindow
-      position={{
-        lat: business.latitude,
-        lng: business.longitude
-      }}
+      position={{ lat: business.latitude, lng: business.longitude }}
       onCloseClick={onCloseClick}
     >
       <div className="p-3 max-w-xs">
@@ -64,14 +58,12 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
             </span>
           )}
         </div>
-
         <p className="text-gray-600 text-sm mb-1">
           <span className="font-semibold">{t('business.category')}:</span> {business.category}
         </p>
         <p className="text-gray-500 text-xs mb-3">
           <span className="font-semibold">{t('business.address')}:</span> {business.address}
         </p>
-
         <div className="flex justify-between items-center mb-3">
           <span className="text-yellow-500 text-sm font-semibold">
             ★ {business.rating || 'N/A'}
@@ -82,7 +74,6 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
             </span>
           )}
         </div>
-
         <div className="flex gap-2">
           <a
             href={googleMapsUrl}
@@ -107,8 +98,8 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
 // Componente principal del mapa
 export const BusinessMap = memo(({
   userLocation,
-  businesses = [], // Google Places
-  geobookerBusinesses = [], // Geobooker Native
+  businesses = [],
+  geobookerBusinesses = [],
   selectedBusiness,
   onBusinessSelect,
   onViewBusinessProfile,
@@ -117,21 +108,21 @@ export const BusinessMap = memo(({
   const { t, i18n } = useTranslation();
   const mapCenter = userLocation || defaultCenter;
 
-  // Optimización: useMemo para opciones que no cambian
+  // ⚡ useJsApiLoader en lugar de LoadScript - evita cargas múltiples
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries: GOOGLE_MAPS_LIBRARIES,
+    language: i18n.language
+  });
+
   const mapOptions = useMemo(() => ({
     styles: [
-      {
-        featureType: 'poi.business',
-        stylers: [{ visibility: 'on' }]
-      },
-      {
-        featureType: 'poi.attraction',
-        stylers: [{ visibility: 'off' }]
-      }
+      { featureType: 'poi.business', stylers: [{ visibility: 'on' }] },
+      { featureType: 'poi.attraction', stylers: [{ visibility: 'off' }] }
     ],
     disableDefaultUI: false,
     zoomControl: true,
-    streetViewControl: true,
+    streetViewControl: false, // Desactivado para ahorrar recursos
     mapTypeControl: false,
     fullscreenControl: true,
     minZoom: 10,
@@ -151,33 +142,45 @@ export const BusinessMap = memo(({
     return R * c;
   }
 
-  // Procesar marcadores de Google Places
   const googleMarkers = useMemo(() =>
     businesses.map((business) => ({
       ...business,
       distance: userLocation ? calculateDistance(
-        userLocation.lat,
-        userLocation.lng,
-        business.latitude,
-        business.longitude
+        userLocation.lat, userLocation.lng,
+        business.latitude, business.longitude
       ) : null,
       type: 'google'
     })), [businesses, userLocation]
   );
 
-  // Procesar marcadores de Geobooker
   const geobookerMarkers = useMemo(() =>
     geobookerBusinesses.map((business) => ({
       ...business,
       distance: userLocation ? calculateDistance(
-        userLocation.lat,
-        userLocation.lng,
-        business.latitude,
-        business.longitude
+        userLocation.lat, userLocation.lng,
+        business.latitude, business.longitude
       ) : null,
       type: 'geobooker'
     })), [geobookerBusinesses, userLocation]
   );
+
+  // Estado de carga
+  if (loadError) {
+    return (
+      <div className="flex items-center justify-center h-64 bg-red-100 text-red-600 rounded-lg">
+        {t('map.mapError')}
+      </div>
+    );
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center justify-center h-64 bg-gray-100 rounded-lg">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+        <span className="ml-2">{t('map.loadingMap')}</span>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full relative">
@@ -186,79 +189,56 @@ export const BusinessMap = memo(({
         {userLocation ? `📍 ${t('home.locationActive')}` : `📍 ${t('home.locationDefault')}`}
       </div>
 
-      <LoadScript
-        googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
-        language={i18n.language}
-        libraries={GOOGLE_MAPS_LIBRARIES}
-        loadingElement={
-          <div className="flex items-center justify-center h-64 bg-gray-100 rounded-lg">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
-            <span className="ml-2">{t('map.loadingMap')}</span>
-          </div>
-        }
-        errorElement={
-          <div className="flex items-center justify-center h-64 bg-red-100 text-red-600 rounded-lg">
-            {t('map.mapError')}
-          </div>
-        }
+      <GoogleMap
+        mapContainerStyle={mapContainerStyle}
+        center={mapCenter}
+        zoom={zoom}
+        options={mapOptions}
       >
-        <GoogleMap
-          mapContainerStyle={mapContainerStyle}
-          center={mapCenter}
-          zoom={zoom}
-          options={mapOptions}
-        >
-          {/* Marcador del usuario */}
-          {userLocation && (
-            <Marker
-              position={userLocation}
-              icon={USER_ICON}
-              title={t('map.yourLocation')}
-              zIndex={1000}
-            />
-          )}
+        {/* Marcador del usuario */}
+        {userLocation && (
+          <Marker
+            position={userLocation}
+            icon={USER_ICON}
+            title={t('map.yourLocation')}
+            zIndex={1000}
+          />
+        )}
 
-          {/* Marcadores de Google Places (Rosa) */}
-          {googleMarkers.map((business) => (
-            <Marker
-              key={`google-${business.id}`}
-              position={{
-                lat: business.latitude,
-                lng: business.longitude
-              }}
-              onClick={() => onBusinessSelect(business)}
-              icon={BUSINESS_ICON}
-              title={business.name}
-            />
-          ))}
+        {/* Marcadores de Google Places (Rosa) */}
+        {googleMarkers.map((business) => (
+          <Marker
+            key={`google-${business.id}`}
+            position={{ lat: business.latitude, lng: business.longitude }}
+            onClick={() => onBusinessSelect(business)}
+            icon={BUSINESS_ICON}
+            title={business.name}
+          />
+        ))}
 
-          {/* Marcadores de Geobooker (Dorado) */}
-          {geobookerMarkers.map((business) => (
-            <Marker
-              key={`geobooker-${business.id}`}
-              position={{
-                lat: business.latitude,
-                lng: business.longitude
-              }}
-              onClick={() => onBusinessSelect(business)}
-              icon={GEOBOOKER_ICON}
-              title={business.name}
-              zIndex={900} // Encima de los normales
-            />
-          ))}
+        {/* Marcadores de Geobooker (Dorado) */}
+        {geobookerMarkers.map((business) => (
+          <Marker
+            key={`geobooker-${business.id}`}
+            position={{ lat: business.latitude, lng: business.longitude }}
+            onClick={() => onBusinessSelect(business)}
+            icon={GEOBOOKER_ICON}
+            title={business.name}
+            zIndex={900}
+          />
+        ))}
 
-          {/* InfoWindow del negocio seleccionado */}
-          {selectedBusiness && (
-            <BusinessInfoWindow
-              business={selectedBusiness}
-              userLocation={userLocation}
-              onCloseClick={() => onBusinessSelect(null)}
-              onViewProfile={onViewBusinessProfile}
-              t={t}
-            />
-          )}
-        </GoogleMap>
-      </LoadScript>
+        {/* InfoWindow del negocio seleccionado */}
+        {selectedBusiness && (
+          <BusinessInfoWindow
+            business={selectedBusiness}
+            userLocation={userLocation}
+            onCloseClick={() => onBusinessSelect(null)}
+            onViewProfile={onViewBusinessProfile}
+            t={t}
+          />
+        )}
+      </GoogleMap>
     </div>
   );
 });

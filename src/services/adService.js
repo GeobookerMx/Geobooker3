@@ -50,7 +50,7 @@ export async function loadActiveCampaigns(spaceName, context = {}) {
         }
 
         // FALLBACK: Si falla la RPC o no existe, usar consulta simple
-        console.warn('Using fallback ad fetching logic', rpcError);
+        // (No loguear porque es comportamiento esperado si la función RPC no existe)
         const today = new Date().toISOString().split('T')[0];
         const { data, error } = await supabase
             .from('ad_campaigns')

@@ -1,144 +1,210 @@
-import React from 'react';
-import { useApp } from "../contexts/AppContext"; // <--- CORRECTA (un solo "..")
-import { Link } from 'react-router-dom'; // Para navegación a resultados de búsqueda
-import { 
-  Utensils, // 🍽️ Restaurantes
-  MapPin,   // 📍 Comercios/Tiendas
-  Briefcase, // 💼 Servicios Profesionales
-  HeartPulse, // ❤️ Salud y Belleza
-  Film,     // 🎬 Entretenimiento
-  GraduationCap // 🎓 Educación
-} from 'lucide-react'; // Iconos de Lucide (asumiendo que lo instalaste con npm i lucide-react)
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Utensils, Coffee, ShoppingBag, Briefcase, Wrench, HeartPulse, Film, GraduationCap,
+  ArrowRight, MapPin, Search
+} from 'lucide-react';
+
+// 8 Categorías con subcategorías para México
+const CATEGORIES = [
+  {
+    id: 'restaurantes',
+    name: 'Restaurantes & Comida',
+    icon: Utensils,
+    description: 'Deliciosos lugares para comer',
+    color: 'from-red-500 to-orange-500',
+    subcategories: ['Taquerías', 'Comida Corrida', 'Comida Rápida', 'Pizzerías', 'Mariscos', 'Comida Mexicana', 'Internacional', 'Postres/Heladerías']
+  },
+  {
+    id: 'bares',
+    name: 'Bares y Cafeterías',
+    icon: Coffee,
+    description: 'Relájate con un café o trago',
+    color: 'from-amber-500 to-yellow-500',
+    subcategories: ['Cafeterías', 'Bares/Cantinas', 'Cervecerías', 'Coctelerías', 'Antros/Clubs']
+  },
+  {
+    id: 'tiendas',
+    name: 'Tiendas & Comercios',
+    icon: ShoppingBag,
+    description: 'Encuentra lo que necesitas',
+    color: 'from-blue-500 to-indigo-500',
+    subcategories: ['Abarrotes', 'Minisúper', 'Ropa y Calzado', 'Papelerías', 'Electrónicos', 'Ferreterías', 'Mueblerías', 'Mascotas']
+  },
+  {
+    id: 'servicios',
+    name: 'Servicios Profesionales',
+    icon: Briefcase,
+    description: 'Expertos en lo que necesites',
+    color: 'from-green-500 to-emerald-500',
+    subcategories: ['Abogados', 'Contadores', 'Consultoría', 'Diseñadores', 'Notarías', 'Arquitectos', 'Recursos Humanos']
+  },
+  {
+    id: 'hogar_autos',
+    name: 'Hogar, Reparaciones & Autos',
+    icon: Wrench,
+    description: 'Talleres y servicios del hogar',
+    color: 'from-gray-600 to-gray-800',
+    subcategories: [
+      'Taller Mecánico', 'Vulcanizadora', 'Alineación y Balanceo', 'Taller Eléctrico',
+      'Motos', 'Tracto/Camiones', 'Diesel', 'Boutique Automotriz', 'Lavado de Autos',
+      'Plomería', 'Electricista', 'Cerrajero', 'Carpintería', 'Herrería', 'Vidriería', 'Limpieza'
+    ]
+  },
+  {
+    id: 'salud',
+    name: 'Salud y Belleza',
+    icon: HeartPulse,
+    description: 'Cuida de ti y tu bienestar',
+    color: 'from-pink-500 to-rose-500',
+    subcategories: ['Consultorios', 'Clínicas', 'Dentistas', 'Psicología', 'Spa/Masajes', 'Gimnasios', 'Barberías', 'Salones de Belleza', 'Farmacias']
+  },
+  {
+    id: 'entretenimiento',
+    name: 'Entretenimiento',
+    icon: Film,
+    description: 'Diversión y ocio local',
+    color: 'from-purple-500 to-violet-500',
+    subcategories: ['Cines', 'Teatros', 'Parques', 'Boliche/Billar', 'Karaoke', 'Canchas Deportivas', 'Eventos']
+  },
+  {
+    id: 'educacion',
+    name: 'Educación',
+    icon: GraduationCap,
+    description: 'Aprende y crece',
+    color: 'from-teal-500 to-cyan-500',
+    subcategories: ['Escuelas', 'Guarderías', 'Cursos y Talleres', 'Idiomas', 'Capacitación', 'Música/Danza']
+  }
+];
 
 const CategoriesPage = () => {
-  const { dispatch } = useApp(); // Del AppContext para setear selectedCategory
+  const navigate = useNavigate();
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedSubcategory, setSelectedSubcategory] = useState(null);
 
-  // Categorías alineadas con Supabase y Geobooker (con iconos y rutas)
-  const categories = [
-    {
-      id: 'restaurantes',
-      name: 'Restaurantes',
-      icon: Utensils,
-      description: 'Deliciosos lugares para comer y compartir',
-      color: 'from-red-500 to-orange-500', // Gradiente cálido para comida
-      route: '/search?category=restaurantes'
-    },
-    {
-      id: 'tiendas',
-      name: 'Tiendas & Comercios',
-      icon: MapPin,
-      description: 'Encuentra lo que necesitas cerca de ti',
-      color: 'from-blue-500 to-indigo-500', // Azul para compras
-      route: '/search?category=tiendas'
-    },
-    {
-      id: 'servicios',
-      name: 'Servicios Profesionales',
-      icon: Briefcase,
-      description: 'Expertos en lo que necesites',
-      color: 'from-green-500 to-emerald-500', // Verde para profesionalismo
-      route: '/search?category=servicios'
-    },
-    {
-      id: 'salud',
-      name: 'Salud y Belleza',
-      icon: HeartPulse,
-      description: 'Cuida de ti y tu bienestar',
-      color: 'from-pink-500 to-rose-500', // Rosa para cuidado personal
-      route: '/search?category=salud'
-    },
-    {
-      id: 'entretenimiento',
-      name: 'Entretenimiento',
-      icon: Film,
-      description: 'Diversión y ocio local',
-      color: 'from-purple-500 to-violet-500', // Morado para diversión
-      route: '/search?category=entretenimiento'
-    },
-    {
-      id: 'educacion',
-      name: 'Educación',
-      icon: GraduationCap,
-      description: 'Aprende y crece cerca',
-      color: 'from-yellow-500 to-amber-500', // Amarillo para aprendizaje
-      route: '/search?category=educacion'
-    },
-    // Agrega más si quieres, alineadas con CATEGORIES de supabase.js
-    {
-      id: 'bares',
-      name: 'Bares y Cafeterías',
-      icon: Utensils, // Reusa el ícono de comida
-      description: 'Relájate con un trago o café',
-      color: 'from-amber-500 to-yellow-500',
-      route: '/search?category=bares'
-    }
-  ];
-
-  // Función para manejar clics: setea categoría en context y navega
   const handleCategoryClick = (category) => {
-    dispatch({ type: 'SET_CATEGORY', payload: category.id }); // Actualiza el estado global
-    // Opcional: Muestra un toast o alerta
-    console.log(`Buscando en categoría: ${category.name}`); // Temporal para debug
+    setSelectedCategory(category);
+    setSelectedSubcategory(null);
+  };
+
+  const handleSubcategoryClick = (sub) => {
+    setSelectedSubcategory(sub === selectedSubcategory ? null : sub);
+  };
+
+  const handleSearch = () => {
+    if (!selectedCategory) return;
+
+    const params = new URLSearchParams();
+    params.set('category', selectedCategory.id);
+    if (selectedSubcategory) {
+      params.set('subcategory', selectedSubcategory);
+    }
+
+    navigate(`/home?${params.toString()}`);
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 min-h-screen bg-gradient-to-br from-light to-white">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold text-primary mb-4">
-          Explora por Categorías
-        </h1>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          Descubre negocios locales en México. Encuentra restaurantes, servicios y mucho más cerca de ti.
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            Explora por Categorías
+          </h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Filtra el mapa por tipo de negocio y descubre lugares cerca de ti en México
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {categories.map((category) => {
-          const Icon = category.icon;
-          return (
-            <Link
-              key={category.id}
-              to={category.route} // Navega a resultados con query param
-              onClick={() => handleCategoryClick(category)} // Actualiza context
-              className="group" // Para hover effects
-              aria-label={`Explorar ${category.name}`}
-            >
-              <div className={`bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden`}>
-                {/* Fondo gradiente con icono */}
-                <div className={`w-full h-16 bg-gradient-to-r ${category.color} rounded-xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform`}>
-                  <Icon className="w-8 h-8 text-white" />
+        {/* Grid de 8 categorías */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+          {CATEGORIES.map((cat) => {
+            const Icon = cat.icon;
+            const isSelected = selectedCategory?.id === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => handleCategoryClick(cat)}
+                className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 ${isSelected
+                    ? 'border-blue-500 bg-blue-50 shadow-lg scale-[1.02]'
+                    : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
+                  }`}
+              >
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${cat.color} flex items-center justify-center mb-3`}>
+                  <Icon className="w-6 h-6 text-white" />
                 </div>
-                
-                {/* Nombre y descripción */}
-                <h3 className="text-xl font-semibold text-gray-800 mb-2 group-hover:text-primary transition-colors">
-                  {category.name}
-                </h3>
-                <p className="text-sm text-gray-600 group-hover:text-secondary-dark">
-                  {category.description}
-                </p>
-                
-                {/* Botón sutil */}
-                <button className="mt-4 w-full bg-gradient-to-r from-primary to-secondary text-white text-sm font-medium py-2 px-4 rounded-lg hover:shadow-md transition-all opacity-0 group-hover:opacity-100">
-                  Ver Resultados
-                </button>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
+                <h3 className="font-bold text-gray-900 text-sm md:text-base mb-1">{cat.name}</h3>
+                <p className="text-xs text-gray-500 hidden md:block">{cat.description}</p>
+              </button>
+            );
+          })}
+        </div>
 
-      {/* Llamado a acción inferior */}
-      <div className="text-center mt-12">
-        <p className="text-gray-600 mb-4">
-          ¿No ves tu categoría? {' '}
-          <Link to="/add-business" className="text-primary hover:text-secondary font-semibold underline">
-            Registra la tuya
-          </Link>
-          .
-        </p>
+        {/* Panel de subcategorías */}
+        {selectedCategory && (
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-8 animate-fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">
+                Filtrar en <span className={`bg-gradient-to-r ${selectedCategory.color} bg-clip-text text-transparent`}>{selectedCategory.name}</span>
+              </h3>
+              <span className="text-sm text-gray-400">{selectedCategory.subcategories.length} subcategorías</span>
+            </div>
+
+            {/* Chips de subcategorías */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              {selectedCategory.subcategories.map((sub) => (
+                <button
+                  key={sub}
+                  onClick={() => handleSubcategoryClick(sub)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${selectedSubcategory === sub
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                      : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
+                    }`}
+                >
+                  {sub}
+                </button>
+              ))}
+            </div>
+
+            {/* Resumen y botón */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-100">
+              <div className="flex items-center text-sm text-gray-600">
+                <MapPin className="w-4 h-4 mr-2 text-blue-500" />
+                <span>
+                  Buscando <strong>{selectedCategory.name}</strong>
+                  {selectedSubcategory && <> → <strong>{selectedSubcategory}</strong></>}
+                  {' '}cerca de ti
+                </span>
+              </div>
+
+              <button
+                onClick={handleSearch}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl"
+              >
+                <Search className="w-5 h-5" />
+                Ver en el Mapa
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* CTA para registrar negocio */}
+        <div className="text-center mt-12 p-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl">
+          <p className="text-gray-700 mb-4 text-lg">
+            ¿No ves tu negocio o categoría?
+          </p>
+          <button
+            onClick={() => navigate('/business/new')}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-blue-600 text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition"
+          >
+            Registra tu Negocio en Geobooker
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
   );
 };
 
-export default CategoriesPage; // 
+export default CategoriesPage;

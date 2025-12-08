@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useLocation } from '../contexts/LocationContext';
 import SearchBar from '../components/SearchBar';
 import BusinessMap from '../components/BusinessMap';
@@ -20,33 +20,53 @@ import SponsoredFullwidth from '../components/ads/SponsoredFullwidth';
 
 const HomePage = () => {
   const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { userLocation, loading: locationLoading, permissionGranted, requestLocationPermission } = useLocation();
   const [searchLoading, setSearchLoading] = useState(false);
   const [businesses, setBusinesses] = useState([]); // Google Places
   const [geobookerBusinesses, setGeobookerBusinesses] = useState([]); // Native Businesses
   const [selectedBusiness, setSelectedBusiness] = useState(null);
 
+  // Filtros de categoría desde URL
+  const categoryFilter = searchParams.get('category');
+  const subcategoryFilter = searchParams.get('subcategory');
+
   // Sistema de Interstitial Ads
   const { showInterstitial, incrementSearchCount, closeInterstitial } = useInterstitialTrigger();
 
-  // Cargar negocios nativos de Geobooker
+  // Cargar negocios nativos de Geobooker (con filtros de categoría)
   useEffect(() => {
     const fetchGeobookerBusinesses = async () => {
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('businesses')
           .select('*')
           .eq('status', 'approved');
 
+        // Aplicar filtros de categoría si vienen de CategoriesPage
+        if (categoryFilter) {
+          query = query.eq('category', categoryFilter);
+        }
+        if (subcategoryFilter) {
+          query = query.eq('subcategory', subcategoryFilter);
+        }
+
+        const { data, error } = await query;
+
         if (error) throw error;
-        if (data) setGeobookerBusinesses(data);
+        if (data) {
+          setGeobookerBusinesses(data);
+          if (categoryFilter && data.length > 0) {
+            toast.success(`📍 ${data.length} negocios encontrados en ${categoryFilter}`, { duration: 3000 });
+          }
+        }
       } catch (error) {
         console.error('Error fetching Geobooker businesses:', error);
       }
     };
 
     fetchGeobookerBusinesses();
-  }, []);
+  }, [categoryFilter, subcategoryFilter]);
 
   useEffect(() => {
     if (!locationLoading && !permissionGranted) {
@@ -98,6 +118,25 @@ const HomePage = () => {
               onBusinessesFound={handleBusinessesFound}
               loading={searchLoading}
             />
+
+            {/* Badge de filtro activo */}
+            {categoryFilter && (
+              <div className="flex justify-center mt-4">
+                <div className="inline-flex items-center bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full">
+                  <span className="mr-2">🔍 Filtrando:</span>
+                  <span className="font-bold capitalize">{categoryFilter.replace('_', ' ')}</span>
+                  {subcategoryFilter && <span className="mx-1">→</span>}
+                  {subcategoryFilter && <span className="font-bold">{subcategoryFilter}</span>}
+                  <button
+                    onClick={() => setSearchParams({})}
+                    className="ml-3 bg-white/30 hover:bg-white/50 rounded-full w-6 h-6 flex items-center justify-center transition"
+                    title="Quitar filtro"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            )}
 
             {locationLoading && (
               <div className="text-center mt-4">

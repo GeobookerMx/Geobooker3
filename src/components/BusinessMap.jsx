@@ -33,7 +33,7 @@ const GEOBOOKER_ICON = {
   path: 'M 12,2 L 15,10 L 23,10 L 17,15 L 19,23 L 12,18 L 5,23 L 7,15 L 1,10 L 9,10 Z',
   fillColor: '#FFD700',
   fillOpacity: 1,
-  strokeColor: '#FF8C00', 
+  strokeColor: '#FF8C00',
   strokeWeight: 2,
   scale: 2
 };
@@ -186,7 +186,7 @@ export const BusinessMap = memo(({
       <LoadScript
         googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
         language={i18n.language}
-        libraries={['places']}
+        // ⚡ OPTIMIZACIÓN: No cargar 'places' library - usamos Supabase, no Google Places API
         loadingElement={
           <div className="flex items-center justify-center h-64 bg-gray-100 rounded-lg">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>

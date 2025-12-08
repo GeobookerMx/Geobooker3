@@ -51,6 +51,9 @@ const HomePage = () => {
           query = query.eq('subcategory', subcategoryFilter);
         }
 
+        // ⚡ OPTIMIZACIÓN: Limitar a 10 negocios para rendimiento
+        query = query.limit(10);
+
         const { data, error } = await query;
 
         if (error) throw error;

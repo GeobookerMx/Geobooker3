@@ -252,8 +252,8 @@ const CampaignCreateWizard = () => {
                                         <>
                                             <ImageIcon className="mx-auto text-gray-400 mb-2" size={40} />
                                             <label className="cursor-pointer text-blue-600 hover:underline">
-                                                Subir imagen
-                                                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                                                Subir imagen o GIF
+                                                <input type="file" accept="image/*,.gif" onChange={handleImageUpload} className="hidden" />
                                             </label>
                                             <p className="text-xs text-gray-400 mt-1">Max 2MB</p>
                                         </>
@@ -273,8 +273,8 @@ const CampaignCreateWizard = () => {
                                         <button key={opt.value}
                                             onClick={() => setFormData(prev => ({ ...prev, geographic_scope: opt.value }))}
                                             className={`p-4 rounded-xl border-2 text-left transition ${formData.geographic_scope === opt.value
-                                                    ? 'border-blue-500 bg-blue-50'
-                                                    : 'border-gray-200 hover:border-gray-300'
+                                                ? 'border-blue-500 bg-blue-50'
+                                                : 'border-gray-200 hover:border-gray-300'
                                                 }`}>
                                             <opt.icon className={formData.geographic_scope === opt.value ? 'text-blue-600' : 'text-gray-400'} />
                                             <div className="font-semibold mt-2">{opt.label}</div>
@@ -318,18 +318,56 @@ const CampaignCreateWizard = () => {
                         </div>
                     )}
 
-                    {/* PASO 3 */}
+                    {/* PASO 3 - Confirmar con Preview */}
                     {step === 3 && (
-                        <div className="text-center space-y-4">
-                            <CreditCard className="mx-auto text-green-500" size={48} />
-                            <h3 className="text-xl font-bold">Confirmar Campaña</h3>
-                            <div className="bg-gray-50 rounded-lg p-4 text-left space-y-2">
-                                <div className="flex justify-between"><span>Espacio:</span><strong>{adSpace.display_name}</strong></div>
-                                <div className="flex justify-between"><span>Alcance:</span><strong>{getTargetLocation()}</strong></div>
-                                <div className="flex justify-between"><span>Título:</span><strong>{formData.title}</strong></div>
-                                <div className="flex justify-between border-t pt-2 text-lg"><span>Total:</span><strong className="text-blue-600">${adSpace.price_monthly}/mes</strong></div>
+                        <div className="space-y-6">
+                            <h3 className="text-xl font-bold text-center">Vista Previa de tu Anuncio</h3>
+
+                            {/* AD PREVIEW */}
+                            <div className="bg-gradient-to-br from-gray-100 to-gray-50 p-6 rounded-xl">
+                                <p className="text-xs text-gray-400 mb-3 text-center">Así se verá tu anuncio:</p>
+                                <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+                                    {/* Image */}
+                                    {formData.image_url ? (
+                                        <img src={formData.image_url} alt="Preview" className="w-full h-48 object-cover" />
+                                    ) : (
+                                        <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                                            <ImageIcon size={48} className="text-gray-300" />
+                                        </div>
+                                    )}
+                                    {/* Content */}
+                                    <div className="p-4">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="bg-blue-100 text-blue-600 text-xs px-2 py-0.5 rounded font-medium">PATROCINADO</span>
+                                            <span className="text-xs text-gray-400">{getTargetLocation()}</span>
+                                        </div>
+                                        <h4 className="font-bold text-lg text-gray-900">
+                                            {formData.title || 'Título de tu anuncio'}
+                                        </h4>
+                                        <p className="text-gray-600 text-sm mt-1 line-clamp-2">
+                                            {formData.description || 'Descripción de tu oferta aquí...'}
+                                        </p>
+                                        <div className="mt-4 flex items-center justify-between">
+                                            <span className="text-xs text-gray-400">{formData.advertiser_name || 'Tu Empresa'}</span>
+                                            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition">
+                                                {formData.cta_text || 'Ver Más'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <p className="text-sm text-gray-500">Tu campaña será revisada por el equipo antes de activarse.</p>
+
+                            {/* Resumen */}
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                                <div className="flex justify-between"><span className="text-gray-600">Espacio:</span><strong>{adSpace.display_name}</strong></div>
+                                <div className="flex justify-between"><span className="text-gray-600">Alcance:</span><strong>{getTargetLocation()}</strong></div>
+                                <div className="flex justify-between"><span className="text-gray-600">URL destino:</span><span className="text-blue-600 text-sm truncate max-w-[200px]">{formData.cta_url}</span></div>
+                                <div className="flex justify-between border-t pt-2 text-lg"><span>Total:</span><strong className="text-green-600">${adSpace.price_monthly} MXN/mes</strong></div>
+                            </div>
+
+                            <p className="text-sm text-gray-500 text-center bg-yellow-50 p-3 rounded-lg">
+                                ⏳ Tu campaña será revisada por nuestro equipo en 24-48 horas antes de activarse.
+                            </p>
                         </div>
                     )}
 

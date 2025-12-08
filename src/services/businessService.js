@@ -23,6 +23,10 @@ export async function createBusiness(form, user) {
     manager_name: clean(form.manager_name),
     description: clean(form.description),
     category: clean(form.category),
+    subcategory: clean(form.subcategory),
+
+    // Tags/Características (Pet Friendly, 24hrs, etc.)
+    tags: form.tags || [],
 
     // Dirección y Ubicación
     address: clean(form.address),

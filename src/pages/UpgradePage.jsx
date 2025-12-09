@@ -48,6 +48,9 @@ const UpgradePage = () => {
                 navigate('/login');
                 return;
             }
+
+            console.log('Iniciando checkout con priceId:', priceId);
+
             const stripe = await stripePromise;
             if (!stripe) throw new Error('Stripe no pudo cargarse');
 
@@ -59,15 +62,26 @@ const UpgradePage = () => {
                     userId: session.user.id,
                     customerEmail: session.user.email,
                     successUrl: window.location.origin + '/dashboard?success=true',
-                    cancelUrl: window.location.origin + '/upgrade?canceled=true',
-                    countryCode: 'MX'
+                    cancelUrl: window.location.origin + '/dashboard/upgrade?canceled=true',
+                    countryCode: 'MX',
+                    mode: 'subscription', // IMPORTANTE: Para suscripciones recurrentes
+                    metadata: {
+                        type: 'premium_subscription'
+                    }
                 }),
             });
+
+            console.log('Response status:', response.status);
             const sessionData = await response.json();
+            console.log('Session data:', sessionData);
+
             if (sessionData.error) throw new Error(sessionData.error);
+
+            toast.success('Redirigiendo a Stripe...', { id: toastId });
             const { error } = await stripe.redirectToCheckout({ sessionId: sessionData.sessionId });
             if (error) throw error;
         } catch (error) {
+            console.error('Error en checkout:', error);
             toast.error(`Error: ${error.message}`, { id: toastId });
             setLoading(false);
         }

@@ -1,13 +1,5 @@
-// Create stripe instance - check environment variable first
-let stripe;
-try {
-    if (!process.env.STRIPE_SECRET_KEY) {
-        throw new Error('STRIPE_SECRET_KEY environment variable is not set');
-    }
-    stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-} catch (initError) {
-    console.error('Failed to initialize Stripe:', initError.message);
-}
+// Netlify Function: Create Stripe Checkout Session
+const Stripe = require('stripe');
 
 exports.handler = async (event) => {
     const headers = {
@@ -16,28 +8,32 @@ exports.handler = async (event) => {
         'Access-Control-Allow-Methods': 'POST, OPTIONS'
     };
 
+    // Handle preflight
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 200, headers, body: JSON.stringify({ message: 'OK' }) };
     }
 
-    // Check if Stripe was initialized
-    if (!stripe) {
-        console.error('Stripe not initialized - STRIPE_SECRET_KEY missing');
+    // Validate environment variable
+    if (!process.env.STRIPE_SECRET_KEY) {
+        console.error('STRIPE_SECRET_KEY is not set');
         return {
             statusCode: 500,
             headers,
             body: JSON.stringify({
-                error: 'Payment service not configured. Please contact support.',
-                debug: 'STRIPE_SECRET_KEY environment variable is missing in Netlify'
+                error: 'Payment service not configured',
+                debug: 'Missing STRIPE_SECRET_KEY'
             })
         };
     }
 
     try {
+        // Initialize Stripe
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+        // Parse request body
         const {
             priceId,
-            productId,
-            amount, // Precio en centavos (ej: 900000 para $9000 MXN)
+            amount,
             productName,
             userId,
             successUrl,
@@ -48,7 +44,7 @@ exports.handler = async (event) => {
             metadata
         } = JSON.parse(event.body);
 
-        // Validar que tengamos priceId O amount
+        // Validate required fields
         if (!priceId && !amount) {
             return {
                 statusCode: 400,
@@ -57,51 +53,50 @@ exports.handler = async (event) => {
             };
         }
 
-        // Configurar line_items según lo que tengamos
+        // Configure line items
         let lineItems;
-
         if (priceId) {
-            // Usar precio predefinido de Stripe
-            lineItems = [{
-                price: priceId,
-                quantity: 1,
-            }];
+            lineItems = [{ price: priceId, quantity: 1 }];
         } else {
-            // Usar precio dinámico
             lineItems = [{
                 price_data: {
                     currency: 'mxn',
                     product_data: {
-                        name: productName || metadata?.ad_space_name || 'Publicidad Geobooker',
-                        description: `Campaña publicitaria en Geobooker`,
+                        name: productName || 'Publicidad Geobooker',
+                        description: 'Campaña publicitaria en Geobooker',
                     },
-                    unit_amount: amount, // Ya en centavos
+                    unit_amount: amount,
                 },
                 quantity: 1,
             }];
         }
 
+        // Build session config
         const sessionConfig = {
             payment_method_types: ['card'],
             line_items: lineItems,
-            mode: mode || 'payment', // 'subscription' o 'payment'
-            success_url: successUrl || `${process.env.URL}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: cancelUrl || `${process.env.URL}/upgrade?canceled=true`,
-            customer_email: customerEmail,
+            mode: mode || 'payment',
+            success_url: successUrl || `${process.env.URL || 'https://geobooker.com.mx'}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: cancelUrl || `${process.env.URL || 'https://geobooker.com.mx'}/dashboard/upgrade?canceled=true`,
             metadata: {
-                userId: userId || null,
-                type: metadata?.type || 'ad_payment',
+                userId: userId || '',
+                type: metadata?.type || 'payment',
                 country: countryCode || 'MX',
                 ...metadata
-            },
-            automatic_tax: { enabled: true },
-            allow_promotion_codes: true,
+            }
         };
 
+        // Add customer email if provided
+        if (customerEmail) {
+            sessionConfig.customer_email = customerEmail;
+        }
+
+        // Add client reference if userId provided
         if (userId) {
             sessionConfig.client_reference_id = userId;
         }
 
+        // Create session
         const session = await stripe.checkout.sessions.create(sessionConfig);
 
         return {
@@ -109,6 +104,7 @@ exports.handler = async (event) => {
             headers,
             body: JSON.stringify({ sessionId: session.id, url: session.url }),
         };
+
     } catch (error) {
         console.error('Stripe error:', error);
         return {

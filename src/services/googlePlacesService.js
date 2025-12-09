@@ -177,24 +177,80 @@ export const searchByType = async (location, type, radius = 5000) => {
  * Mapeo de categorías en español a tipos de Google Places
  */
 export const CATEGORY_MAPPING = {
+    // Salud
     'farmacia': 'pharmacy',
-    'restaurante': 'restaurant',
-    'barbería': 'hair_care',
-    'supermercado': 'supermarket',
-    'gimnasio': 'gym',
-    'veterinaria': 'veterinary_care',
-    'taller mecánico': 'car_repair',
-    'lavandería': 'laundry',
-    'cafetería': 'cafe',
-    'panadería': 'bakery',
+    'farmacias': 'pharmacy',
     'hospital': 'hospital',
-    'escuela': 'school',
-    'banco': 'bank',
-    'gasolinera': 'gas_station',
-    'hotel': 'lodging',
+    'hospitales': 'hospital',
+    'clínica': 'hospital',
+    'clinica': 'hospital',
+    'veterinaria': 'veterinary_care',
+    'veterinarias': 'veterinary_care',
+
+    // Comida
+    'restaurante': 'restaurant',
+    'restaurantes': 'restaurant',
+    'cafetería': 'cafe',
+    'cafeteria': 'cafe',
+    'cafeterías': 'cafe',
+    'café': 'cafe',
+    'cafe': 'cafe',
+    'panadería': 'bakery',
+    'panaderia': 'bakery',
+    'panaderías': 'bakery',
     'bar': 'bar',
+    'bares': 'bar',
+
+    // Compras
+    'supermercado': 'supermarket',
+    'supermercados': 'supermarket',
+    'tienda': 'store',
+    'tiendas': 'store',
+
+    // Servicios personales
+    'barbería': 'hair_care',
+    'barberia': 'hair_care',
+    'barberías': 'hair_care',
+    'peluquería': 'hair_care',
+    'peluqueria': 'hair_care',
+    'salón de belleza': 'beauty_salon',
+    'salon de belleza': 'beauty_salon',
+    'spa': 'spa',
+    'gimnasio': 'gym',
+    'gimnasios': 'gym',
+    'gym': 'gym',
+
+    // Automotriz
+    'taller mecánico': 'car_repair',
+    'taller mecanico': 'car_repair',
+    'talleres': 'car_repair',
+    'gasolinera': 'gas_station',
+    'gasolineras': 'gas_station',
+    'autolavado': 'car_wash',
+
+    // Entretenimiento
     'cine': 'movie_theater',
-    'tienda': 'store'
+    'cines': 'movie_theater',
+    'teatro': 'movie_theater',
+    'teatros': 'movie_theater',
+
+    // Servicios
+    'lavandería': 'laundry',
+    'lavanderia': 'laundry',
+    'lavanderías': 'laundry',
+    'banco': 'bank',
+    'bancos': 'bank',
+
+    // Educación
+    'escuela': 'school',
+    'escuelas': 'school',
+    'universidad': 'university',
+    'universidades': 'university',
+
+    // Hospedaje
+    'hotel': 'lodging',
+    'hoteles': 'lodging',
+    'motel': 'lodging'
 };
 
 /**

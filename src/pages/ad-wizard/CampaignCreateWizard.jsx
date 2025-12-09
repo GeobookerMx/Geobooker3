@@ -65,10 +65,38 @@ const CampaignCreateWizard = () => {
 
     // Cargar espacio
     useEffect(() => {
-        if (spaceId) {
-            supabase.from('ad_spaces').select('*').eq('id', spaceId).single()
-                .then(({ data }) => data && setAdSpace(data));
-        }
+        const loadAdSpace = async () => {
+            if (!spaceId) {
+                console.error('No se proporcionó spaceId');
+                toast.error('Error: No se especificó el espacio publicitario');
+                return;
+            }
+
+            try {
+                console.log('Cargando espacio con ID:', spaceId);
+                const { data, error } = await supabase
+                    .from('ad_spaces')
+                    .select('*')
+                    .eq('id', spaceId)
+                    .single();
+
+                if (error) {
+                    console.error('Error cargando ad_space:', error);
+                    toast.error('No se encontró el espacio publicitario');
+                    return;
+                }
+
+                if (data) {
+                    console.log('Ad space cargado:', data);
+                    setAdSpace(data);
+                }
+            } catch (err) {
+                console.error('Error inesperado:', err);
+                toast.error('Error cargando el espacio publicitario');
+            }
+        };
+
+        loadAdSpace();
     }, [spaceId]);
 
     // Cargar email del usuario

@@ -154,7 +154,10 @@ const CampaignCreateWizard = () => {
 
     const handleSubmit = async () => {
         setLoading(true);
+        const toastId = toast.loading('Procesando tu campaña...');
+
         try {
+            // 1. Primero crear la campaña como draft
             const { data: campaignId, error } = await supabase.rpc('create_draft_campaign', {
                 p_space_id: spaceId,
                 p_advertiser_name: formData.advertiser_name,
@@ -174,10 +177,53 @@ const CampaignCreateWizard = () => {
             });
 
             if (error) throw error;
-            toast.success('¡Campaña creada! Pendiente de revisión.');
-            navigate('/admin/ads');
+
+            // 2. Ahora iniciar el checkout de Stripe
+            const stripe = await stripePromise;
+            if (!stripe) throw new Error('Stripe no pudo cargarse');
+
+            const { data: { user } } = await supabase.auth.getUser();
+
+            const response = await fetch('/.netlify/functions/create-checkout-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    priceId: adSpace.stripe_price_id || null,
+                    productId: adSpace.stripe_product_id || null,
+                    amount: Math.round(adSpace.price_monthly * 100), // En centavos
+                    userId: user?.id || null,
+                    customerEmail: formData.advertiser_email,
+                    successUrl: window.location.origin + '/advertise/success?campaign=' + campaignId,
+                    cancelUrl: window.location.origin + '/advertise/create?space=' + spaceId + '&canceled=true',
+                    countryCode: formData.target_country || 'MX',
+                    mode: 'payment', // Pago único para publicidad
+                    metadata: {
+                        type: 'ad_payment',
+                        campaign_id: campaignId,
+                        ad_space_id: spaceId,
+                        ad_space_name: adSpace.name
+                    }
+                }),
+            });
+
+            const sessionData = await response.json();
+
+            if (sessionData.error) {
+                throw new Error(sessionData.error);
+            }
+
+            toast.success('Redirigiendo a pago seguro...', { id: toastId });
+
+            // 3. Redirigir a Stripe Checkout
+            const { error: stripeError } = await stripe.redirectToCheckout({
+                sessionId: sessionData.sessionId
+            });
+
+            if (stripeError) throw stripeError;
+
         } catch (error) {
-            toast.error('Error: ' + error.message);
+            console.error('Error en campaña:', error);
+            toast.error('Error: ' + error.message, { id: toastId });
         } finally {
             setLoading(false);
         }

@@ -38,6 +38,7 @@ import UpgradePage from "./pages/UpgradePage.jsx";
 // Ads / Publicidad
 import AdvertisePage from "./pages/AdvertisePage.jsx";
 import AdsPolicyPage from "./pages/AdsPolicyPage.jsx";
+import AdvertiseSuccessPage from "./pages/AdvertiseSuccessPage.jsx";
 import CampaignCreateWizard from "./pages/ad-wizard/CampaignCreateWizard.jsx";
 
 export default function AppRouter() {
@@ -90,6 +91,7 @@ export default function AppRouter() {
 
         {/* Wizard de creación de campañas (Protegido, dentro del dashboard) */}
         <Route path="/advertise/create" element={<CampaignCreateWizard />} />
+        <Route path="/advertise/success" element={<AdvertiseSuccessPage />} />
       </Route>
 
       {/* 🛠️ Rutas de administrador */}

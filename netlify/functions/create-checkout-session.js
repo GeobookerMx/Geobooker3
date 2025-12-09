@@ -12,33 +12,65 @@ exports.handler = async (event) => {
     }
 
     try {
-        const { priceId, userId, successUrl, cancelUrl, customerEmail, countryCode, mode, metadata } = JSON.parse(event.body);
+        const {
+            priceId,
+            productId,
+            amount, // Precio en centavos (ej: 900000 para $9000 MXN)
+            productName,
+            userId,
+            successUrl,
+            cancelUrl,
+            customerEmail,
+            countryCode,
+            mode,
+            metadata
+        } = JSON.parse(event.body);
 
-        if (!priceId) {
+        // Validar que tengamos priceId O amount
+        if (!priceId && !amount) {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'Falta el parámetro requerido: priceId' })
+                body: JSON.stringify({ error: 'Se requiere priceId o amount' })
             };
+        }
+
+        // Configurar line_items según lo que tengamos
+        let lineItems;
+
+        if (priceId) {
+            // Usar precio predefinido de Stripe
+            lineItems = [{
+                price: priceId,
+                quantity: 1,
+            }];
+        } else {
+            // Usar precio dinámico
+            lineItems = [{
+                price_data: {
+                    currency: 'mxn',
+                    product_data: {
+                        name: productName || metadata?.ad_space_name || 'Publicidad Geobooker',
+                        description: `Campaña publicitaria en Geobooker`,
+                    },
+                    unit_amount: amount, // Ya en centavos
+                },
+                quantity: 1,
+            }];
         }
 
         const sessionConfig = {
             payment_method_types: ['card'],
-            line_items: [
-                {
-                    price: priceId,
-                    quantity: 1,
-                },
-            ],
-            mode: mode || 'subscription', // 'subscription' o 'payment'
+            line_items: lineItems,
+            mode: mode || 'payment', // 'subscription' o 'payment'
             success_url: successUrl || `${process.env.URL}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: cancelUrl || `${process.env.URL}/upgrade?canceled=true`,
             customer_email: customerEmail,
             metadata: {
-                userId: userId, // Puede ser null para anuncios guest
-                type: metadata?.type || 'premium_subscription',
+                userId: userId || null,
+                type: metadata?.type || 'ad_payment',
                 country: countryCode || 'MX',
-                ...metadata // Merge de otros metadatos como campaign_id
+                ...metadata
             },
             automatic_tax: { enabled: true },
             allow_promotion_codes: true,

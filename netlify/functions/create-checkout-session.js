@@ -1,4 +1,13 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+// Create stripe instance - check environment variable first
+let stripe;
+try {
+    if (!process.env.STRIPE_SECRET_KEY) {
+        throw new Error('STRIPE_SECRET_KEY environment variable is not set');
+    }
+    stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+} catch (initError) {
+    console.error('Failed to initialize Stripe:', initError.message);
+}
 
 exports.handler = async (event) => {
     const headers = {
@@ -9,6 +18,19 @@ exports.handler = async (event) => {
 
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 200, headers, body: JSON.stringify({ message: 'OK' }) };
+    }
+
+    // Check if Stripe was initialized
+    if (!stripe) {
+        console.error('Stripe not initialized - STRIPE_SECRET_KEY missing');
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({
+                error: 'Payment service not configured. Please contact support.',
+                debug: 'STRIPE_SECRET_KEY environment variable is missing in Netlify'
+            })
+        };
     }
 
     try {

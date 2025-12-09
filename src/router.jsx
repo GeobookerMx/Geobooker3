@@ -41,6 +41,9 @@ import AdsPolicyPage from "./pages/AdsPolicyPage.jsx";
 import AdvertiseSuccessPage from "./pages/AdvertiseSuccessPage.jsx";
 import CampaignCreateWizard from "./pages/ad-wizard/CampaignCreateWizard.jsx";
 
+// Security
+import SecurityPage from "./pages/SecurityPage.jsx";
+
 export default function AppRouter() {
   return (
     <Routes>
@@ -58,6 +61,9 @@ export default function AppRouter() {
 
         {/* Políticas de anuncios (página legal pública) */}
         <Route path="/legal/ads-policy" element={<AdsPolicyPage />} />
+
+        {/* Página de seguridad y anti-extorsión */}
+        <Route path="/seguridad" element={<SecurityPage />} />
       </Route>
 
       {/* 🔐 Rutas protegidas que usan el mismo layout público */}

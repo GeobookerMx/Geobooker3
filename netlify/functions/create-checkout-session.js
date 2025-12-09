@@ -1,5 +1,5 @@
-// Netlify Function: Create Stripe Checkout Session
-const Stripe = require('stripe');
+// Netlify Function: Create Stripe Checkout Session using fetch (no SDK)
+// This version uses direct API calls to avoid SDK bundling issues
 
 exports.handler = async (event) => {
     const headers = {
@@ -14,7 +14,8 @@ exports.handler = async (event) => {
     }
 
     // Validate environment variable
-    if (!process.env.STRIPE_SECRET_KEY) {
+    const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
+    if (!STRIPE_KEY) {
         console.error('STRIPE_SECRET_KEY is not set');
         return {
             statusCode: 500,
@@ -27,9 +28,6 @@ exports.handler = async (event) => {
     }
 
     try {
-        // Initialize Stripe
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
         // Parse request body
         const {
             priceId,
@@ -39,13 +37,23 @@ exports.handler = async (event) => {
             successUrl,
             cancelUrl,
             customerEmail,
-            countryCode,
-            mode,
-            metadata
+            mode = 'payment',
+            metadata = {}
         } = JSON.parse(event.body);
 
-        // Validate required fields
-        if (!priceId && !amount) {
+        // Build form data for Stripe API
+        const formData = new URLSearchParams();
+
+        // Line items
+        if (priceId) {
+            formData.append('line_items[0][price]', priceId);
+            formData.append('line_items[0][quantity]', '1');
+        } else if (amount) {
+            formData.append('line_items[0][price_data][currency]', 'mxn');
+            formData.append('line_items[0][price_data][product_data][name]', productName || 'Publicidad Geobooker');
+            formData.append('line_items[0][price_data][unit_amount]', String(amount));
+            formData.append('line_items[0][quantity]', '1');
+        } else {
             return {
                 statusCode: 400,
                 headers,
@@ -53,60 +61,60 @@ exports.handler = async (event) => {
             };
         }
 
-        // Configure line items
-        let lineItems;
-        if (priceId) {
-            lineItems = [{ price: priceId, quantity: 1 }];
-        } else {
-            lineItems = [{
-                price_data: {
-                    currency: 'mxn',
-                    product_data: {
-                        name: productName || 'Publicidad Geobooker',
-                        description: 'Campaña publicitaria en Geobooker',
-                    },
-                    unit_amount: amount,
-                },
-                quantity: 1,
-            }];
-        }
+        // Session config
+        formData.append('mode', mode);
+        formData.append('payment_method_types[0]', 'card');
+        formData.append('success_url', successUrl || 'https://geobooker.com.mx/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}');
+        formData.append('cancel_url', cancelUrl || 'https://geobooker.com.mx/dashboard/upgrade?canceled=true');
 
-        // Build session config
-        const sessionConfig = {
-            payment_method_types: ['card'],
-            line_items: lineItems,
-            mode: mode || 'payment',
-            success_url: successUrl || `${process.env.URL || 'https://geobooker.com.mx'}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: cancelUrl || `${process.env.URL || 'https://geobooker.com.mx'}/dashboard/upgrade?canceled=true`,
-            metadata: {
-                userId: userId || '',
-                type: metadata?.type || 'payment',
-                country: countryCode || 'MX',
-                ...metadata
-            }
-        };
-
-        // Add customer email if provided
         if (customerEmail) {
-            sessionConfig.customer_email = customerEmail;
+            formData.append('customer_email', customerEmail);
         }
 
-        // Add client reference if userId provided
         if (userId) {
-            sessionConfig.client_reference_id = userId;
+            formData.append('client_reference_id', userId);
+            formData.append('metadata[userId]', userId);
         }
 
-        // Create session
-        const session = await stripe.checkout.sessions.create(sessionConfig);
+        // Add metadata
+        formData.append('metadata[type]', metadata.type || 'payment');
+        formData.append('metadata[country]', 'MX');
+
+        // Call Stripe API directly
+        const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${STRIPE_KEY}`,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData.toString()
+        });
+
+        const session = await response.json();
+
+        if (!response.ok) {
+            console.error('Stripe API error:', session);
+            return {
+                statusCode: response.status,
+                headers,
+                body: JSON.stringify({
+                    error: session.error?.message || 'Error de Stripe',
+                    code: session.error?.code
+                })
+            };
+        }
 
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ sessionId: session.id, url: session.url }),
+            body: JSON.stringify({
+                sessionId: session.id,
+                url: session.url
+            }),
         };
 
     } catch (error) {
-        console.error('Stripe error:', error);
+        console.error('Function error:', error);
         return {
             statusCode: 500,
             headers,

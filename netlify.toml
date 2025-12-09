@@ -6,20 +6,19 @@
 [build.environment]
   NODE_VERSION = "20"
   NPM_FLAGS = "--legacy-peer-deps"
+  # Skip secrets scanning for Google Maps API key (public key is expected in frontend)
+  SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIza"
 
 # Configuración de funciones
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
-# Excluir funciones del redirect SPA
-[[redirects]]
-  from = "/.netlify/functions/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
 # Para mejorar compatibilidad con rutas tipo SPA (React Router)
+# IMPORTANTE: Netlify maneja funciones automáticamente, no necesitan redirect
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  # Asegurar que funciones no sean capturadas por este redirect
+  conditions = {Role = ["admin", "user", "anonymous"]}

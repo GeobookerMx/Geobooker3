@@ -44,6 +44,9 @@ import CampaignCreateWizard from "./pages/ad-wizard/CampaignCreateWizard.jsx";
 // Security
 import SecurityPage from "./pages/SecurityPage.jsx";
 
+// Business Profile
+import BusinessProfilePage from "./pages/BusinessProfilePage.jsx";
+
 export default function AppRouter() {
   return (
     <Routes>
@@ -64,6 +67,9 @@ export default function AppRouter() {
 
         {/* Página de seguridad y anti-extorsión */}
         <Route path="/seguridad" element={<SecurityPage />} />
+
+        {/* Perfil público de negocio */}
+        <Route path="/business/:id" element={<BusinessProfilePage />} />
       </Route>
 
       {/* 🔐 Rutas protegidas que usan el mismo layout público */}

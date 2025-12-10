@@ -1,0 +1,139 @@
+// src/components/SEO.jsx
+import { useEffect } from 'react';
+
+/**
+ * Componente SEO para manejar meta tags dinámicos
+ * @param {Object} props
+ * @param {string} props.title - Título de la página
+ * @param {string} props.description - Descripción para meta description
+ * @param {string} props.image - URL de imagen para Open Graph
+ * @param {string} props.url - URL canónica de la página
+ * @param {string} props.type - Tipo de contenido (website, article, business.business)
+ * @param {Object} props.business - Datos del negocio para Schema.org
+ */
+const SEO = ({
+    title = 'Geobooker - Directorio de Negocios',
+    description = 'Encuentra los mejores negocios cerca de ti. Restaurantes, tiendas, servicios y más.',
+    image = '/images/geobooker-og.png',
+    url,
+    type = 'website',
+    business = null
+}) => {
+    useEffect(() => {
+        // Actualizar título
+        document.title = title.includes('Geobooker') ? title : `${title} | Geobooker`;
+
+        // Actualizar meta tags
+        updateMetaTag('description', description);
+
+        // Open Graph
+        updateMetaTag('og:title', title, 'property');
+        updateMetaTag('og:description', description, 'property');
+        updateMetaTag('og:image', image.startsWith('http') ? image : `${window.location.origin}${image}`, 'property');
+        updateMetaTag('og:url', url || window.location.href, 'property');
+        updateMetaTag('og:type', type, 'property');
+        updateMetaTag('og:site_name', 'Geobooker', 'property');
+        updateMetaTag('og:locale', 'es_MX', 'property');
+
+        // Twitter Card
+        updateMetaTag('twitter:card', 'summary_large_image');
+        updateMetaTag('twitter:title', title);
+        updateMetaTag('twitter:description', description);
+        updateMetaTag('twitter:image', image.startsWith('http') ? image : `${window.location.origin}${image}`);
+
+        // Canonical URL
+        updateLinkTag('canonical', url || window.location.href);
+
+        // Schema.org para negocios locales
+        if (business) {
+            addBusinessSchema(business);
+        }
+
+        // Cleanup
+        return () => {
+            // Remove business schema on unmount
+            const existingSchema = document.querySelector('script[data-schema="business"]');
+            if (existingSchema) {
+                existingSchema.remove();
+            }
+        };
+    }, [title, description, image, url, type, business]);
+
+    return null; // No renderiza nada visual
+};
+
+// Helper para actualizar meta tags
+const updateMetaTag = (name, content, attributeName = 'name') => {
+    let meta = document.querySelector(`meta[${attributeName}="${name}"]`);
+    if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute(attributeName, name);
+        document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', content);
+};
+
+// Helper para actualizar link tags
+const updateLinkTag = (rel, href) => {
+    let link = document.querySelector(`link[rel="${rel}"]`);
+    if (!link) {
+        link = document.createElement('link');
+        link.setAttribute('rel', rel);
+        document.head.appendChild(link);
+    }
+    link.setAttribute('href', href);
+};
+
+// Helper para agregar Schema.org de negocio local
+const addBusinessSchema = (business) => {
+    // Remover schema existente
+    const existingSchema = document.querySelector('script[data-schema="business"]');
+    if (existingSchema) {
+        existingSchema.remove();
+    }
+
+    const schema = {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "name": business.name,
+        "description": business.description || '',
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": business.address || '',
+            "addressLocality": business.city || '',
+            "addressRegion": business.state || '',
+            "addressCountry": "MX"
+        },
+        "telephone": business.phone || '',
+        "url": business.website || window.location.href,
+        "image": business.image_url || '',
+        "priceRange": business.price_range || '$$',
+    };
+
+    // Agregar coordenadas si están disponibles
+    if (business.latitude && business.longitude) {
+        schema.geo = {
+            "@type": "GeoCoordinates",
+            "latitude": business.latitude,
+            "longitude": business.longitude
+        };
+    }
+
+    // Agregar rating si está disponible
+    if (business.rating) {
+        schema.aggregateRating = {
+            "@type": "AggregateRating",
+            "ratingValue": business.rating,
+            "reviewCount": business.review_count || 1
+        };
+    }
+
+    // Crear script tag
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.setAttribute('data-schema', 'business');
+    script.textContent = JSON.stringify(schema);
+    document.head.appendChild(script);
+};
+
+export default SEO;

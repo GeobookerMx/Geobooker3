@@ -19,6 +19,7 @@ import {
 import RecommendedSection from '../components/ads/RecommendedSection';
 import SponsoredResultCard from '../components/ads/SponsoredResultCard';
 import SponsoredFullwidth from '../components/ads/SponsoredFullwidth';
+import SEO from '../components/SEO';
 
 const HomePage = () => {
   const { t } = useTranslation();
@@ -147,6 +148,12 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      {/* SEO Meta Tags */}
+      <SEO
+        title="Geobooker - Directorio de Negocios Locales"
+        description="Encuentra los mejores negocios cerca de ti. Restaurantes, farmacias, tiendas, servicios y más. El mejor directorio de negocios en México."
+      />
+
       {/* Modal de permiso de ubicación */}
       <LocationPermissionModal
         isOpen={showLocationModal}

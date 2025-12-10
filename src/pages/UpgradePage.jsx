@@ -77,9 +77,9 @@ const UpgradePage = () => {
 
             if (sessionData.error) throw new Error(sessionData.error);
 
+            // Redirigir directamente a Stripe Checkout usando la URL
             toast.success('Redirigiendo a Stripe...', { id: toastId });
-            const { error } = await stripe.redirectToCheckout({ sessionId: sessionData.sessionId });
-            if (error) throw error;
+            window.location.href = sessionData.url;
         } catch (error) {
             console.error('Error en checkout:', error);
             toast.error(`Error: ${error.message}`, { id: toastId });

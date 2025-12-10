@@ -242,12 +242,8 @@ const CampaignCreateWizard = () => {
 
             toast.success('Redirigiendo a pago seguro...', { id: toastId });
 
-            // 3. Redirigir a Stripe Checkout
-            const { error: stripeError } = await stripe.redirectToCheckout({
-                sessionId: sessionData.sessionId
-            });
-
-            if (stripeError) throw stripeError;
+            // 3. Redirigir a Stripe Checkout usando la URL directa
+            window.location.href = sessionData.url;
 
         } catch (error) {
             console.error('Error en campaña:', error);

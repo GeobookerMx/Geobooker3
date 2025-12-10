@@ -145,8 +145,8 @@ const CampaignCreateWizard = () => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        if (file.size > 2 * 1024 * 1024) {
-            toast.error('La imagen no debe superar 2MB');
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('La imagen no debe superar 5MB');
             return;
         }
 

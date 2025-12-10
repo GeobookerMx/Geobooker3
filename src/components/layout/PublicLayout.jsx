@@ -1,8 +1,9 @@
 // src/components/layout/PublicLayout.jsx
 import React from "react";
 import { Outlet } from "react-router-dom";
-import Header from "./Header";   // ← ESTE ES EL FIX IMPORTANTE
-import Footer from "./Footer";   // si tienes footer
+import Header from "./Header";
+import Footer from "./Footer";
+import LocationPrompt from "../LocationPrompt";
 
 export default function PublicLayout() {
   return (
@@ -12,6 +13,9 @@ export default function PublicLayout() {
         <Outlet />
       </main>
       <Footer />
+
+      {/* Prompt de ubicación para móviles */}
+      <LocationPrompt />
     </>
   );
 }

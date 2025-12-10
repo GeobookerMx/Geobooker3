@@ -91,7 +91,7 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading }) => {
           }}
           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           placeholder="¿Qué negocio buscas? Ej: Farmacia, Restaurante..."
-          className="w-full px-6 py-4 text-lg border-2 border-gray-200 rounded-full shadow-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 placeholder-gray-400"
+          className="w-full px-6 py-4 text-lg text-gray-900 bg-white border-2 border-gray-200 rounded-full shadow-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 placeholder-gray-400"
           disabled={loading}
         />
 

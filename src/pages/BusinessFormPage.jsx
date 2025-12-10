@@ -8,6 +8,7 @@ import {
   Utensils, Coffee, ShoppingBag, Briefcase, Wrench, HeartPulse, Film, GraduationCap,
   MapPin, Clock, Dog, CreditCard, Truck, Wifi, Accessibility, Star
 } from 'lucide-react';
+import PhoneInput from '../components/PhoneInput';
 
 const mapContainerStyle = {
   width: "100%",
@@ -347,13 +348,11 @@ export default function BusinessFormPage() {
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <OptionalLabel>Teléfono</OptionalLabel>
-                <input
-                  type="tel"
+                <PhoneInput
                   name="phone"
                   value={form.phone}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="+52 55 1234 5678"
+                  placeholder="55 1234 5678"
                 />
               </div>
               <div>
@@ -389,8 +388,8 @@ export default function BusinessFormPage() {
                     type="button"
                     onClick={() => toggleTag(tag.id)}
                     className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${isSelected
-                        ? 'border-green-500 bg-green-100 text-green-700'
-                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                      ? 'border-green-500 bg-green-100 text-green-700'
+                      : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                       }`}
                   >
                     <Icon className={`w-5 h-5 ${isSelected ? 'text-green-600' : 'text-gray-400'}`} />
@@ -455,13 +454,11 @@ export default function BusinessFormPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
                   <span className="text-green-500 mr-2">💬</span> WhatsApp
                 </label>
-                <input
-                  type="tel"
+                <PhoneInput
                   name="whatsapp"
                   value={form.whatsapp}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  placeholder="+52 55 1234 5678"
+                  placeholder="55 1234 5678"
                 />
               </div>
             </div>

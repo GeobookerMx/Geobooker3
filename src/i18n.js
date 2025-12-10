@@ -19,8 +19,10 @@ i18n
     .use(initReactI18next) // Pasa i18n a react-i18next
     .init({
         resources,
-        lng: localStorage.getItem('language') || 'es', // Idioma por defecto: español
+        // Prioridad: 1) localStorage (usuario eligió), 2) navegador, 3) español
+        lng: localStorage.getItem('language') || navigator.language?.split('-')[0] || 'es',
         fallbackLng: 'es', // Idioma de respaldo
+        supportedLngs: ['es', 'en'], // Idiomas soportados
         interpolation: {
             escapeValue: false // React ya escapa por defecto
         },

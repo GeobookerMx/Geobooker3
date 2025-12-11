@@ -58,8 +58,41 @@ export const LocationProvider = ({ children }) => {
         },
         {
           enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000,
+          timeout: 15000,
+          maximumAge: 10000, // Reducido a 10s para ubicación más fresca en móviles
+        }
+      );
+    });
+  };
+
+  // Función para refrescar ubicación manualmente (útil en móviles)
+  const refreshLocation = () => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("Geolocalización no soportada"));
+        return;
+      }
+
+      setLoading(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const location = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+          };
+          setUserLocation(location);
+          setLoading(false);
+          resolve(location);
+        },
+        (error) => {
+          setLoading(false);
+          reject(error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0, // Forzar ubicación fresca, sin caché
         }
       );
     });
@@ -80,6 +113,7 @@ export const LocationProvider = ({ children }) => {
     loading,
     permissionGranted,
     requestLocationPermission,
+    refreshLocation,
     updateLocation,
   };
 

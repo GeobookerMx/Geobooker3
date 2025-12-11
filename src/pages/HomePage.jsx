@@ -24,7 +24,7 @@ import SEO from '../components/SEO';
 const HomePage = () => {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { userLocation, loading: locationLoading, permissionGranted, requestLocationPermission } = useLocation();
+  const { userLocation, loading: locationLoading, permissionGranted, requestLocationPermission, refreshLocation } = useLocation();
   const [searchLoading, setSearchLoading] = useState(false);
   const [businesses, setBusinesses] = useState([]); // Google Places
   const [geobookerBusinesses, setGeobookerBusinesses] = useState([]); // Native Businesses
@@ -244,6 +244,28 @@ const HomePage = () => {
                     {t('home.allowLocation')}
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* Botón para actualizar ubicación (móviles) */}
+            {!locationLoading && permissionGranted && userLocation && (
+              <div className="text-center mt-4">
+                <button
+                  onClick={async () => {
+                    try {
+                      await refreshLocation();
+                    } catch (error) {
+                      console.error('Error actualizando ubicación:', error);
+                    }
+                  }}
+                  className="inline-flex items-center bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition duration-200"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Actualizar mi ubicación
+                </button>
               </div>
             )}
           </div>

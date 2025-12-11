@@ -1,5 +1,5 @@
 // src/components/admin/Sidebar.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
     Home,
@@ -11,15 +11,49 @@ import {
     BarChart3,
     DollarSign
 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 
 const Sidebar = ({ onLogout }) => {
     const location = useLocation();
+    const [pendingBusinesses, setPendingBusinesses] = useState(0);
+    const [pendingCampaigns, setPendingCampaigns] = useState(0);
+
+    // Cargar conteos de pendientes
+    useEffect(() => {
+        loadPendingCounts();
+
+        // Actualizar cada 30 segundos
+        const interval = setInterval(loadPendingCounts, 30000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const loadPendingCounts = async () => {
+        try {
+            // Contar negocios pendientes
+            const { count: businessCount } = await supabase
+                .from('businesses')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'pending');
+
+            setPendingBusinesses(businessCount || 0);
+
+            // Contar campañas pendientes de revisión
+            const { count: campaignCount } = await supabase
+                .from('ad_campaigns')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'pending_review');
+
+            setPendingCampaigns(campaignCount || 0);
+        } catch (error) {
+            console.error('Error loading pending counts:', error);
+        }
+    };
 
     const menuItems = [
         { path: '/admin/dashboard', icon: Home, label: 'Vista General' },
-        { path: '/admin/businesses', icon: Store, label: 'Negocios' },
+        { path: '/admin/businesses', icon: Store, label: 'Negocios', badge: pendingBusinesses, badgeColor: 'yellow' },
         { path: '/admin/users', icon: Users, label: 'Usuarios' },
-        { path: '/admin/ads', icon: TrendingUp, label: '🚀 Geobooker Ads' },
+        { path: '/admin/ads', icon: TrendingUp, label: '🚀 Geobooker Ads', badge: pendingCampaigns, badgeColor: 'red' },
         { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
         { path: '/admin/revenue', icon: DollarSign, label: 'Ingresos' },
         { path: '/admin/settings', icon: Settings, label: 'Configuración' },
@@ -47,13 +81,23 @@ const Sidebar = ({ onLogout }) => {
                         <Link
                             key={item.path}
                             to={item.path}
-                            className={`flex items-center px-6 py-3 transition-colors ${isActive(item.path)
+                            className={`flex items-center justify-between px-6 py-3 transition-colors ${isActive(item.path)
                                 ? 'bg-blue-600 text-white border-l-4 border-blue-400'
                                 : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                                 }`}
                         >
-                            <Icon className="w-5 h-5 mr-3" />
-                            <span className="font-medium">{item.label}</span>
+                            <div className="flex items-center">
+                                <Icon className="w-5 h-5 mr-3" />
+                                <span className="font-medium">{item.label}</span>
+                            </div>
+                            {item.badge > 0 && (
+                                <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${item.badgeColor === 'red'
+                                        ? 'bg-red-500 text-white animate-pulse'
+                                        : 'bg-yellow-400 text-gray-900'
+                                    }`}>
+                                    {item.badge}
+                                </span>
+                            )}
                         </Link>
                     );
                 })}

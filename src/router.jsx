@@ -44,6 +44,9 @@ import CampaignCreateWizard from "./pages/ad-wizard/CampaignCreateWizard.jsx";
 // Security
 import SecurityPage from "./pages/SecurityPage.jsx";
 
+// Fiscal Info
+import FiscalInfoPage from "./pages/FiscalInfoPage.jsx";
+
 // Business Profile
 import BusinessProfilePage from "./pages/BusinessProfilePage.jsx";
 
@@ -67,6 +70,9 @@ export default function AppRouter() {
 
         {/* Página de seguridad y anti-extorsión */}
         <Route path="/seguridad" element={<SecurityPage />} />
+
+        {/* Información fiscal para usuarios internacionales */}
+        <Route path="/legal/fiscal" element={<FiscalInfoPage />} />
 
         {/* Perfil público de negocio */}
         <Route path="/business/:id" element={<BusinessProfilePage />} />

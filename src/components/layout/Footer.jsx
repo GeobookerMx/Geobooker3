@@ -180,6 +180,11 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/legal/fiscal" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
+                    💼 Información Fiscal
+                  </Link>
+                </li>
+                <li>
                   <a href="mailto:soporte@geobooker.com.mx" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
                     → Soporte técnico
                   </a>

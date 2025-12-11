@@ -18,31 +18,50 @@ const CampaignCreateWizard = () => {
     const [spaceId] = useState(searchParams.get('space') || '');
     const [adSpace, setAdSpace] = useState(null);
 
-    // Geographic data
+    // Geographic data - Organized by regions
     const [countries] = useState([
-        { code: 'MX', name: 'México' },
-        { code: 'AR', name: 'Argentina' },
-        { code: 'BO', name: 'Bolivia' },
-        { code: 'BR', name: 'Brasil' },
-        { code: 'CL', name: 'Chile' },
-        { code: 'CO', name: 'Colombia' },
-        { code: 'CR', name: 'Costa Rica' },
-        { code: 'CU', name: 'Cuba' },
-        { code: 'DO', name: 'República Dominicana' },
-        { code: 'EC', name: 'Ecuador' },
-        { code: 'SV', name: 'El Salvador' },
-        { code: 'GT', name: 'Guatemala' },
-        { code: 'HN', name: 'Honduras' },
-        { code: 'NI', name: 'Nicaragua' },
-        { code: 'PA', name: 'Panamá' },
-        { code: 'PY', name: 'Paraguay' },
-        { code: 'PE', name: 'Perú' },
-        { code: 'PR', name: 'Puerto Rico' },
-        { code: 'UY', name: 'Uruguay' },
-        { code: 'VE', name: 'Venezuela' },
-        { code: 'ES', name: 'España' },
-        { code: 'US', name: 'Estados Unidos' },
-        { code: 'CA', name: 'Canadá' }
+        // 🌎 Norteamérica
+        { code: 'US', name: '🇺🇸 Estados Unidos', region: 'northamerica' },
+        { code: 'CA', name: '🇨🇦 Canadá', region: 'northamerica' },
+        { code: 'MX', name: '🇲🇽 México', region: 'northamerica' },
+
+        // 🌎 Latinoamérica
+        { code: 'AR', name: '🇦🇷 Argentina', region: 'latam' },
+        { code: 'BO', name: '🇧🇴 Bolivia', region: 'latam' },
+        { code: 'BR', name: '🇧🇷 Brasil', region: 'latam' },
+        { code: 'CL', name: '🇨🇱 Chile', region: 'latam' },
+        { code: 'CO', name: '🇨🇴 Colombia', region: 'latam' },
+        { code: 'CR', name: '🇨🇷 Costa Rica', region: 'latam' },
+        { code: 'CU', name: '🇨🇺 Cuba', region: 'latam' },
+        { code: 'DO', name: '🇩🇴 República Dominicana', region: 'latam' },
+        { code: 'EC', name: '🇪🇨 Ecuador', region: 'latam' },
+        { code: 'SV', name: '🇸🇻 El Salvador', region: 'latam' },
+        { code: 'GT', name: '🇬🇹 Guatemala', region: 'latam' },
+        { code: 'HN', name: '🇭🇳 Honduras', region: 'latam' },
+        { code: 'NI', name: '🇳🇮 Nicaragua', region: 'latam' },
+        { code: 'PA', name: '🇵🇦 Panamá', region: 'latam' },
+        { code: 'PY', name: '🇵🇾 Paraguay', region: 'latam' },
+        { code: 'PE', name: '🇵🇪 Perú', region: 'latam' },
+        { code: 'PR', name: '🇵🇷 Puerto Rico', region: 'latam' },
+        { code: 'UY', name: '🇺🇾 Uruguay', region: 'latam' },
+        { code: 'VE', name: '🇻🇪 Venezuela', region: 'latam' },
+
+        // 🌍 Europa
+        { code: 'ES', name: '🇪🇸 España', region: 'europe' },
+        { code: 'DE', name: '🇩🇪 Alemania', region: 'europe' },
+        { code: 'FR', name: '🇫🇷 Francia', region: 'europe' },
+        { code: 'IT', name: '🇮🇹 Italia', region: 'europe' },
+        { code: 'GB', name: '🇬🇧 Reino Unido', region: 'europe' },
+        { code: 'PT', name: '🇵🇹 Portugal', region: 'europe' },
+        { code: 'NL', name: '🇳🇱 Países Bajos', region: 'europe' },
+        { code: 'BE', name: '🇧🇪 Bélgica', region: 'europe' },
+        { code: 'CH', name: '🇨🇭 Suiza', region: 'europe' },
+        { code: 'AT', name: '🇦🇹 Austria', region: 'europe' },
+        { code: 'IE', name: '🇮🇪 Irlanda', region: 'europe' },
+        { code: 'PL', name: '🇵🇱 Polonia', region: 'europe' },
+        { code: 'SE', name: '🇸🇪 Suecia', region: 'europe' },
+        { code: 'NO', name: '🇳🇴 Noruega', region: 'europe' },
+        { code: 'DK', name: '🇩🇰 Dinamarca', region: 'europe' },
     ]);
     const [regions, setRegions] = useState([]);
     const [cities, setCities] = useState([]);
@@ -359,7 +378,21 @@ const CampaignCreateWizard = () => {
                                     <label className="block text-sm font-medium mb-1">País</label>
                                     <select name="target_country" value={formData.target_country}
                                         onChange={handleInputChange} className="w-full border rounded-lg p-3">
-                                        {countries.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
+                                        <optgroup label="🌎 América del Norte">
+                                            {countries.filter(c => c.region === 'northamerica').map(c =>
+                                                <option key={c.code} value={c.code}>{c.name}</option>
+                                            )}
+                                        </optgroup>
+                                        <optgroup label="🌎 Latinoamérica">
+                                            {countries.filter(c => c.region === 'latam').map(c =>
+                                                <option key={c.code} value={c.code}>{c.name}</option>
+                                            )}
+                                        </optgroup>
+                                        <optgroup label="🌍 Europa">
+                                            {countries.filter(c => c.region === 'europe').map(c =>
+                                                <option key={c.code} value={c.code}>{c.name}</option>
+                                            )}
+                                        </optgroup>
                                     </select>
                                 </div>
                             )}

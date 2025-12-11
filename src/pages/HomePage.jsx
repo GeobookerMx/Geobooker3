@@ -59,10 +59,34 @@ const HomePage = () => {
 
         if (error) throw error;
         if (data) {
-          setGeobookerBusinesses(data);
+          // ⭐ Obtener estado Premium de los owners
+          const ownerIds = [...new Set(data.map(b => b.owner_id).filter(Boolean))];
+          let premiumOwners = {};
+
+          if (ownerIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from('user_profiles')
+              .select('id, is_premium')
+              .in('id', ownerIds);
+
+            if (profiles) {
+              profiles.forEach(p => {
+                premiumOwners[p.id] = p.is_premium;
+              });
+            }
+          }
+
+          // Agregar flag is_premium_owner a cada negocio
+          const businessesWithPremium = data.map(business => ({
+            ...business,
+            is_premium_owner: premiumOwners[business.owner_id] || false
+          }));
+
+          setGeobookerBusinesses(businessesWithPremium);
+
           if (categoryFilter) {
-            if (data.length > 0) {
-              toast.success(`📍 ${data.length} negocios encontrados en ${categoryFilter}`, { duration: 3000 });
+            if (businessesWithPremium.length > 0) {
+              toast.success(`📍 ${businessesWithPremium.length} negocios encontrados en ${categoryFilter}`, { duration: 3000 });
             } else {
               toast(`Aún no hay negocios registrados en "${categoryFilter}". ¡Sé el primero en registrarte!`, {
                 duration: 5000,

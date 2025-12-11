@@ -286,6 +286,15 @@ const AdsManagement = () => {
           >
             📊 Analytics
           </button>
+          <button
+            onClick={() => setActiveTab('byType')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'byType'
+              ? 'border-blue-500 text-blue-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+          >
+            🎯 Por Tipo
+          </button>
         </nav>
       </div>
 
@@ -646,6 +655,84 @@ const AdsManagement = () => {
               totalRevenue={campaigns.reduce((sum, c) => sum + parseFloat(c.budget || 0), 0)}
             />
           </div>
+        </div>
+      )}
+
+      {/* Tab: Por Tipo */}
+      {activeTab === 'byType' && (
+        <div className="space-y-6">
+          <h2 className="text-xl font-bold text-gray-900">
+            🎯 Campañas por Tipo de Espacio
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {adSpaces.map((space) => {
+              // Filtrar campañas de este espacio
+              const spaceCampaigns = campaigns.filter(c => c.ad_space_id === space.id);
+              const activeCampaigns = spaceCampaigns.filter(c => c.status === 'active');
+              const pendingCampaigns = spaceCampaigns.filter(c => c.status === 'pending_review');
+              const totalRevenue = spaceCampaigns.reduce((sum, c) => sum + parseFloat(c.budget || 0), 0);
+              const totalImpressions = spaceCampaigns.reduce((sum, c) => sum + (c.impressions || 0), 0);
+              const totalClicks = spaceCampaigns.reduce((sum, c) => sum + (c.clicks || 0), 0);
+              const ctr = totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(2) : 0;
+
+              return (
+                <div key={space.id} className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                  <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+                    <h3 className="text-lg font-bold text-white">{space.display_name}</h3>
+                    <p className="text-blue-100 text-sm">{space.type}</p>
+                  </div>
+
+                  <div className="p-6 space-y-4">
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">{activeCampaigns.length}</div>
+                        <div className="text-xs text-gray-500">Activas</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-yellow-600">{pendingCampaigns.length}</div>
+                        <div className="text-xs text-gray-500">Pendientes</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">${totalRevenue.toLocaleString()}</div>
+                        <div className="text-xs text-gray-500">Ingresos</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600">{ctr}%</div>
+                        <div className="text-xs text-gray-500">CTR</div>
+                      </div>
+                    </div>
+
+                    {/* Metrics Bar */}
+                    <div className="pt-4 border-t border-gray-200">
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span>👁 {totalImpressions.toLocaleString()} imp</span>
+                        <span>👆 {totalClicks.toLocaleString()} clicks</span>
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <button
+                      onClick={() => {
+                        setSpaceFilter(space.id);
+                        setActiveTab('campaigns');
+                      }}
+                      className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition text-sm font-medium"
+                    >
+                      Ver Campañas →
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {adSpaces.length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              No hay espacios publicitarios configurados
+            </div>
+          )}
         </div>
       )}
 

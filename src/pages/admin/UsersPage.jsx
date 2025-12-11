@@ -34,33 +34,46 @@ export default function UsersPage() {
         try {
             setLoading(true);
 
-            // Cargar usuarios de auth.users
-            const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+            // Cargar usuarios desde user_profiles (accesible desde frontend)
+            const { data: userProfiles, error: profileError } = await supabase
+                .from('user_profiles')
+                .select('*')
+                .order('created_at', { ascending: false });
 
-            if (authError) throw authError;
+            if (profileError) {
+                console.error('Error loading user_profiles:', profileError);
+            }
 
-            // Cargar perfiles adicionales si existen
-            const { data: profiles } = await supabase
-                .from('profiles')
-                .select('*');
+            // Cargar negocios para contar cuántos tiene cada usuario
+            const { data: businesses } = await supabase
+                .from('businesses')
+                .select('owner_id');
 
             // Cargar admins
             const { data: admins } = await supabase
                 .from('admin_users')
                 .select('*');
 
+            // Contar negocios por usuario
+            const businessCountByUser = {};
+            (businesses || []).forEach(b => {
+                businessCountByUser[b.owner_id] = (businessCountByUser[b.owner_id] || 0) + 1;
+            });
+
             // Combinar datos
-            const combinedUsers = authUsers.users.map(user => {
-                const profile = profiles?.find(p => p.id === user.id);
-                const isAdmin = admins?.some(a => a.id === user.id);
+            const combinedUsers = (userProfiles || []).map(profile => {
+                const isAdmin = admins?.some(a => a.id === profile.id);
 
                 return {
-                    id: user.id,
-                    email: user.email,
-                    created_at: user.created_at,
-                    last_sign_in: user.last_sign_in_at,
-                    confirmed: user.email_confirmed_at !== null,
+                    id: profile.id,
+                    email: profile.email || profile.id,
+                    created_at: profile.created_at,
+                    last_sign_in: profile.last_sign_in_at || profile.updated_at,
+                    confirmed: true, // Si está en user_profiles, está confirmado
                     isAdmin,
+                    is_premium: profile.is_premium || false,
+                    business_count: businessCountByUser[profile.id] || 0,
+                    full_name: profile.full_name || '',
                     ...profile
                 };
             });
@@ -70,9 +83,10 @@ export default function UsersPage() {
             // Calcular stats
             setStats({
                 total: combinedUsers.length,
-                active: combinedUsers.filter(u => u.last_sign_in).length,
-                inactive: combinedUsers.filter(u => !u.last_sign_in).length,
-                admins: admins?.length || 0
+                active: combinedUsers.filter(u => u.business_count > 0).length,
+                inactive: combinedUsers.filter(u => u.business_count === 0).length,
+                admins: admins?.length || 0,
+                premium: combinedUsers.filter(u => u.is_premium).length
             });
 
             setLoading(false);
@@ -86,9 +100,10 @@ export default function UsersPage() {
         const matchesSearch = user.email?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesFilter =
             filterStatus === 'all' ? true :
-                filterStatus === 'active' ? user.last_sign_in :
-                    filterStatus === 'inactive' ? !user.last_sign_in :
-                        filterStatus === 'admins' ? user.isAdmin : true;
+                filterStatus === 'active' ? user.business_count > 0 :
+                    filterStatus === 'inactive' ? user.business_count === 0 :
+                        filterStatus === 'premium' ? user.is_premium :
+                            filterStatus === 'admins' ? user.isAdmin : true;
 
         return matchesSearch && matchesFilter;
     });
@@ -110,10 +125,11 @@ export default function UsersPage() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <StatsCard title="Total Usuarios" value={stats.total} icon={Users} color="blue" />
-                <StatsCard title="Activos" value={stats.active} icon={CheckCircle} color="green" />
-                <StatsCard title="Inactivos" value={stats.inactive} icon={Ban} color="orange" />
+                <StatsCard title="Con Negocio" value={stats.active} icon={CheckCircle} color="green" />
+                <StatsCard title="Sin Negocio" value={stats.inactive} icon={Ban} color="orange" />
+                <StatsCard title="Premium" value={stats.premium || 0} icon={Shield} color="yellow" />
                 <StatsCard title="Administradores" value={stats.admins} icon={Shield} color="purple" />
             </div>
 
@@ -141,8 +157,9 @@ export default function UsersPage() {
                             className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
                         >
                             <option value="all">Todos</option>
-                            <option value="active">Activos</option>
-                            <option value="inactive">Inactivos</option>
+                            <option value="active">Con Negocio</option>
+                            <option value="inactive">Sin Negocio</option>
+                            <option value="premium">Premium</option>
                             <option value="admins">Administradores</option>
                         </select>
                     </div>
@@ -157,9 +174,9 @@ export default function UsersPage() {
                             <tr className="border-b bg-gray-50">
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Email</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tipo</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Estado</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Premium</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Negocios</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Registro</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Último Acceso</th>
                                 <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Acciones</th>
                             </tr>
                         </thead>
@@ -190,21 +207,22 @@ export default function UsersPage() {
                                             )}
                                         </td>
                                         <td className="px-6 py-4">
-                                            {user.confirmed ? (
-                                                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
-                                                    Confirmado
+                                            {user.is_premium ? (
+                                                <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold flex items-center gap-1 w-fit">
+                                                    ⭐ Premium
                                                 </span>
                                             ) : (
-                                                <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">
-                                                    Pendiente
+                                                <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold">
+                                                    Free
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600">
-                                            {new Date(user.created_at).toLocaleDateString('es-MX')}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600">
-                                            {user.last_sign_in ? new Date(user.last_sign_in).toLocaleDateString('es-MX') : 'Nunca'}
+                                        <td className="px-6 py-4 text-sm">
+                                            {user.business_count > 0 ? (
+                                                <span className="text-green-600 font-semibold">{user.business_count}</span>
+                                            ) : (
+                                                <span className="text-gray-400">0</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
@@ -238,6 +256,7 @@ function StatsCard({ title, value, icon: Icon, color }) {
         green: 'bg-green-50 text-green-600',
         orange: 'bg-orange-50 text-orange-600',
         purple: 'bg-purple-50 text-purple-600',
+        yellow: 'bg-yellow-50 text-yellow-600',
     };
 
     return (

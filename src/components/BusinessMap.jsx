@@ -42,6 +42,17 @@ const GEOBOOKER_ICON = {
   scale: 2
 };
 
+// ⭐ Icono PREMIUM - Estrella dorada más grande y brillante
+const PREMIUM_ICON = {
+  path: 'M 12,2 L 15,10 L 23,10 L 17,15 L 19,23 L 12,18 L 5,23 L 7,15 L 1,10 L 9,10 Z',
+  fillColor: '#FFD700',
+  fillOpacity: 1,
+  strokeColor: '#FFA500',
+  strokeWeight: 3,
+  scale: 2.5, // Más grande que el normal
+  anchor: { x: 12, y: 12 }
+};
+
 // Componente para la ventana de información del negocio
 const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewProfile, t }) => {
   const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLocation?.lat},${userLocation?.lng}&destination=${business.latitude},${business.longitude}&travelmode=driving`;
@@ -219,17 +230,23 @@ export const BusinessMap = memo(({
           />
         ))}
 
-        {/* Marcadores de Geobooker (Dorado) */}
-        {geobookerMarkers.map((business) => (
-          <Marker
-            key={`geobooker-${business.id}`}
-            position={{ lat: business.latitude, lng: business.longitude }}
-            onClick={() => onBusinessSelect(business)}
-            icon={GEOBOOKER_ICON}
-            title={business.name}
-            zIndex={900}
-          />
-        ))}
+        {/* Marcadores de Geobooker (Dorado normal, Premium con estrella grande) */}
+        {geobookerMarkers.map((business) => {
+          // Detectar si es negocio Premium (verificar flag is_premium_owner o is_premium)
+          const isPremium = business.is_premium_owner || business.is_premium || false;
+
+          return (
+            <Marker
+              key={`geobooker-${business.id}`}
+              position={{ lat: business.latitude, lng: business.longitude }}
+              onClick={() => onBusinessSelect(business)}
+              icon={isPremium ? PREMIUM_ICON : GEOBOOKER_ICON}
+              title={isPremium ? `⭐ ${business.name} (Premium)` : business.name}
+              zIndex={isPremium ? 1000 : 900}
+              animation={isPremium ? window.google?.maps?.Animation?.BOUNCE : undefined}
+            />
+          );
+        })}
 
         {/* InfoWindow del negocio seleccionado */}
         {selectedBusiness && (

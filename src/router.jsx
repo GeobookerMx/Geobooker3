@@ -11,6 +11,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import WelcomePage from "./pages/WelcomePage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
+import AuthCallback from "./pages/AuthCallback.jsx";
 
 // Admin
 import AdminLogin from "./pages/admin/AdminLogin.jsx";
@@ -53,6 +54,9 @@ import BusinessProfilePage from "./pages/BusinessProfilePage.jsx";
 export default function AppRouter() {
   return (
     <Routes>
+      {/* 🔒 Callback de autenticación OAuth (sin layout) */}
+      <Route path="/auth/callback" element={<AuthCallback />} />
+
       {/* 🌐 Rutas públicas que usan el layout general (Header + Footer) */}
       <Route element={<PublicLayout />}>
         <Route path="/welcome" element={<WelcomePage />} />

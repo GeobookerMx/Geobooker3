@@ -7,6 +7,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { LocationProvider } from "./contexts/LocationContext";
 
 import AppRouter from "./router";
+import ChatWidget from "./components/agent/ChatWidget";
 
 function App() {
   return (
@@ -15,6 +16,8 @@ function App() {
         <AppProvider>
           <LocationProvider>
             <AppRouter />
+            {/* Asistente AI flotante */}
+            <ChatWidget />
           </LocationProvider>
         </AppProvider>
       </AuthProvider>

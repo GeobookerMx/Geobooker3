@@ -47,6 +47,7 @@ import SecurityPage from "./pages/SecurityPage.jsx";
 
 // Fiscal Info
 import FiscalInfoPage from "./pages/FiscalInfoPage.jsx";
+import GuiaResicoPage from "./pages/GuiaResicoPage.jsx";
 
 // Business Profile
 import BusinessProfilePage from "./pages/BusinessProfilePage.jsx";
@@ -77,6 +78,9 @@ export default function AppRouter() {
 
         {/* Información fiscal para usuarios internacionales */}
         <Route path="/legal/fiscal" element={<FiscalInfoPage />} />
+
+        {/* Guía para darse de alta en el SAT como RESICO */}
+        <Route path="/guia-resico" element={<GuiaResicoPage />} />
 
         {/* Perfil público de negocio */}
         <Route path="/business/:id" element={<BusinessProfilePage />} />

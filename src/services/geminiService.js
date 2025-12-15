@@ -54,6 +54,13 @@ Geobooker es el directorio de negocios locales #1 en México. Ayudamos a las per
 4. Esperar aprobación (24-48 horas)
 5. ¡Listo! Tu negocio aparece en el mapa
 
+## RECURSOS GRATUITOS
+
+📋 **Guía para darte de alta en el SAT (RESICO):** geobooker.com.mx/guia-resico
+- Aprende cómo formalizar tu negocio
+- Régimen Simplificado de Confianza: paga entre 1% y 2.5% de impuestos
+- Paso a paso para obtener tu RFC y empezar a facturar
+
 ## CONTACTO Y SOPORTE
 
 - 📧 Soporte General: geobookerr@gmail.com

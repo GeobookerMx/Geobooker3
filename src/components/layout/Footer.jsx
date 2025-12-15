@@ -158,6 +158,11 @@ const Footer = () => {
                     → Publicidad para negocios
                   </Link>
                 </li>
+                <li>
+                  <Link to="/guia-resico" className="text-gray-300 hover:text-green-400 hover:pl-2 transition-all duration-200 inline-block">
+                    📋 Guía Alta SAT (RESICO)
+                  </Link>
+                </li>
               </ul>
             </div>
 

@@ -15,10 +15,11 @@ const UpgradePage = () => {
     // Configuración de lanzamiento
     const LAUNCH_CONFIG = {
         regularPrice: 299,
-        launchPrice: 119,
-        discount: 60,
-        spotsLeft: 47, // Simular escasez
-        deadline: '31 de Enero 2025',
+        launchPrice: 0, // GRATIS por 3 meses
+        monthsFree: 3,
+        spotsLeft: 4847, // De 5,000 totales
+        totalSpots: 5000,
+        deadline: '31 de Marzo 2025',
         isLaunchActive: true
     };
 
@@ -98,7 +99,7 @@ const UpgradePage = () => {
                 <div className="text-center mb-12">
                     {LAUNCH_CONFIG.isLaunchActive && (
                         <div className="inline-flex items-center bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-2 rounded-full text-sm font-bold mb-4 animate-pulse">
-                            🚀 LANZAMIENTO: Solo quedan {LAUNCH_CONFIG.spotsLeft} lugares al precio especial
+                            🎁 LANZAMIENTO: ¡{LAUNCH_CONFIG.monthsFree} MESES GRATIS para los primeros {LAUNCH_CONFIG.totalSpots.toLocaleString()} negocios!
                         </div>
                     )}
                     <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
@@ -180,15 +181,15 @@ const UpgradePage = () => {
                             {LAUNCH_CONFIG.isLaunchActive ? (
                                 <>
                                     <div className="flex items-center justify-center gap-3">
-                                        <span className="text-2xl text-white/60 line-through">${LAUNCH_CONFIG.regularPrice}</span>
-                                        <span className="text-5xl font-bold">${LAUNCH_CONFIG.launchPrice}</span>
+                                        <span className="text-2xl text-white/60 line-through">${LAUNCH_CONFIG.regularPrice}/mes</span>
+                                        <span className="text-5xl font-bold">¡GRATIS!</span>
                                     </div>
-                                    <p className="text-pink-200">MXN / mes</p>
+                                    <p className="text-pink-200">por {LAUNCH_CONFIG.monthsFree} meses</p>
                                     <div className="inline-block bg-yellow-400 text-yellow-900 px-4 py-1 rounded-full text-sm font-bold mt-2">
-                                        -{LAUNCH_CONFIG.discount}% DESCUENTO
+                                        🎉 OFERTA DE LANZAMIENTO
                                     </div>
                                     <p className="text-xs text-pink-200 mt-2">
-                                        Válido hasta {LAUNCH_CONFIG.deadline} o primeros 100 negocios
+                                        Después solo ${LAUNCH_CONFIG.regularPrice} MXN/mes • Quedan {LAUNCH_CONFIG.spotsLeft.toLocaleString()} lugares
                                     </p>
                                 </>
                             ) : (
@@ -206,11 +207,11 @@ const UpgradePage = () => {
                         <ul className="space-y-3 mb-8">
                             <li className="flex items-start">
                                 <Check className="w-5 h-5 text-yellow-300 mr-3 mt-0.5 flex-shrink-0" />
-                                <span><strong>Negocios ilimitados</strong></span>
+                                <span>Hasta <strong>5 negocios</strong></span>
                             </li>
                             <li className="flex items-start">
                                 <Camera className="w-5 h-5 text-yellow-300 mr-3 mt-0.5 flex-shrink-0" />
-                                <span>Hasta <strong>20 fotos</strong> por negocio</span>
+                                <span>Hasta <strong>10 fotos</strong> por negocio</span>
                             </li>
                             <li className="flex items-start">
                                 <MapPin className="w-5 h-5 text-yellow-300 mr-3 mt-0.5 flex-shrink-0" />
@@ -249,9 +250,9 @@ const UpgradePage = () => {
                         >
                             {loading ? 'Procesando...' : (
                                 <>
-                                    Actualizar a Premium →
+                                    🎁 ¡Obtener {LAUNCH_CONFIG.monthsFree} Meses GRATIS! →
                                     {LAUNCH_CONFIG.isLaunchActive && (
-                                        <span className="block text-xs font-normal mt-1">Aprovecha precio de lanzamiento</span>
+                                        <span className="block text-xs font-normal mt-1">Solo {LAUNCH_CONFIG.spotsLeft.toLocaleString()} lugares disponibles</span>
                                     )}
                                 </>
                             )}
@@ -317,12 +318,16 @@ const UpgradePage = () => {
                     <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">Preguntas Frecuentes</h2>
                     <div className="space-y-4">
                         <details className="bg-white rounded-lg shadow-md p-6">
-                            <summary className="font-bold text-lg cursor-pointer">¿Puedo cancelar en cualquier momento?</summary>
-                            <p className="text-gray-600 mt-2">Sí, puedes cancelar tu suscripción Premium cuando quieras, sin penalizaciones.</p>
+                            <summary className="font-bold text-lg cursor-pointer">¿Realmente son 3 meses GRATIS?</summary>
+                            <p className="text-gray-600 mt-2">¡Sí! Los primeros {LAUNCH_CONFIG.totalSpots.toLocaleString()} negocios que se registren obtienen Premium gratis por 3 meses. Después de ese periodo, puedes continuar por ${LAUNCH_CONFIG.regularPrice}/mes o cancelar sin costo.</p>
                         </details>
                         <details className="bg-white rounded-lg shadow-md p-6">
-                            <summary className="font-bold text-lg cursor-pointer">¿El precio de lanzamiento es permanente?</summary>
-                            <p className="text-gray-600 mt-2">El precio de ${LAUNCH_CONFIG.launchPrice}/mes aplica los primeros 3 meses. Después, el precio regular es ${LAUNCH_CONFIG.regularPrice}/mes.</p>
+                            <summary className="font-bold text-lg cursor-pointer">¿Cuántos negocios puedo registrar?</summary>
+                            <p className="text-gray-600 mt-2">Con Premium puedes registrar hasta 5 negocios, cada uno con hasta 10 fotos. Ideal para emprendedores con múltiples locales o franquiciantes.</p>
+                        </details>
+                        <details className="bg-white rounded-lg shadow-md p-6">
+                            <summary className="font-bold text-lg cursor-pointer">¿Puedo cancelar en cualquier momento?</summary>
+                            <p className="text-gray-600 mt-2">Sí, puedes cancelar tu suscripción Premium cuando quieras, sin penalizaciones. Incluso durante el periodo de prueba gratuito.</p>
                         </details>
                         <details className="bg-white rounded-lg shadow-md p-6">
                             <summary className="font-bold text-lg cursor-pointer">¿Qué redes sociales puedo conectar?</summary>

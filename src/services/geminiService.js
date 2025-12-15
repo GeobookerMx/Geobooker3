@@ -24,21 +24,27 @@ Geobooker es el directorio de negocios locales #1 en México. Ayudamos a las per
 ## PLANES Y PRECIOS
 
 **Plan Gratuito:**
-- Registro de 1 negocio
-- Perfil básico en el mapa
+- 1 negocio máximo
+- Hasta 3 fotos
+- Pin básico en el mapa
 - Apareces en búsquedas locales
 
 **Plan Premium ($299 MXN/mes):**
-- Negocios ilimitados
-- ⭐ Estrella dorada en el mapa (destacado)
-- Estadísticas de visitas
+- 🎁 ¡OFERTA LANZAMIENTO! 3 MESES GRATIS para los primeros 5,000 negocios
+- Hasta 5 negocios
+- Hasta 10 fotos por negocio
+- ⭐ Estrella dorada animada en el mapa
 - Prioridad en resultados de búsqueda
-- Insignia de negocio verificado
+- Insignia de negocio VERIFICADO
+- Estadísticas de visitas y clics
+- Conecta tus redes sociales (Instagram, Facebook, TikTok, etc.)
+- Después de los 3 meses gratis: solo $299/mes
 
 **Publicidad (Geobooker Ads):**
-- Banner Principal (Primera Plana): desde $999 MXN/semana
+- Banner Principal: desde $999 MXN/semana
 - Resultados Patrocinados: desde $499 MXN/semana
-- Carrusel de Destacados: desde $799 MXN/semana
+- Carrusel Destacados: desde $799 MXN/semana
+- Pago con tarjeta o en efectivo (OXXO, 7-Eleven)
 
 ## CÓMO REGISTRAR UN NEGOCIO
 

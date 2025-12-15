@@ -13,9 +13,20 @@ const LocationPrompt = () => {
     useEffect(() => {
         // Solo mostrar si no hay ubicación y no se ha descartado
         const wasDismissed = localStorage.getItem('locationPromptDismissed');
+        const remindLaterTime = localStorage.getItem('locationRemindLater');
+
+        // Si eligió "recordar después", esperar 1 hora antes de mostrar de nuevo
+        if (remindLaterTime) {
+            const oneHour = 60 * 60 * 1000;
+            const timePassed = Date.now() - parseInt(remindLaterTime);
+            if (timePassed < oneHour) {
+                return; // No mostrar aún
+            }
+        }
+
         if (!userLocation && !permissionGranted && !wasDismissed) {
             // Esperar un poco antes de mostrar para no ser intrusivo
-            const timer = setTimeout(() => setIsVisible(true), 2000);
+            const timer = setTimeout(() => setIsVisible(true), 3000);
             return () => clearTimeout(timer);
         }
     }, [userLocation, permissionGranted]);
@@ -46,12 +57,8 @@ const LocationPrompt = () => {
 
     const handleRemindLater = () => {
         setIsVisible(false);
-        // Mostrar de nuevo en 5 minutos
-        setTimeout(() => {
-            if (!permissionGranted) {
-                setIsVisible(true);
-            }
-        }, 5 * 60 * 1000);
+        // Guardar en localStorage que el usuario eligió recordar después
+        localStorage.setItem('locationRemindLater', Date.now().toString());
     };
 
     if (!isVisible || dismissed || permissionGranted) return null;

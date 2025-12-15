@@ -138,26 +138,6 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading }) => {
             ))}
         </div>
       )}
-
-      {/* Estado de ubicación */}
-      {!permissionGranted && (
-        <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <span className="text-orange-500 mr-2">📍</span>
-              <p className="text-orange-700 text-sm">
-                {t('home.needLocation')}
-              </p>
-            </div>
-            <button
-              onClick={handleRetryLocation}
-              className="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-orange-600 transition duration-200"
-            >
-              {t('home.allowLocation')}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

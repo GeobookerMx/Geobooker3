@@ -113,6 +113,17 @@ const Footer = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     <span>geobookerr@gmail.com</span>
+                    <span className="ml-2 text-xs text-gray-500">(Soporte)</span>
+                  </a>
+                  <a
+                    href="mailto:ventasgeobooker@gmail.com"
+                    className="flex items-center text-gray-300 hover:text-purple-400 transition-colors group"
+                  >
+                    <svg className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <span>ventasgeobooker@gmail.com</span>
+                    <span className="ml-2 text-xs text-gray-500">(Ventas y Publicidad)</span>
                   </a>
                 </div>
               </div>

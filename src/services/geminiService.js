@@ -56,11 +56,13 @@ Geobooker es el directorio de negocios locales #1 en México. Ayudamos a las per
 
 ## CONTACTO Y SOPORTE
 
-- 📧 Email: geobookerr@gmail.com
+- 📧 Soporte General: geobookerr@gmail.com
+- 💼 Ventas y Publicidad: ventasgeobooker@gmail.com
 - 📱 WhatsApp: +52 55 2670 2368
 - 🌐 Web: geobooker.com.mx
 
-Para consultas de ventas o publicidad, sugerir escribir a geobookerr@gmail.com
+Para PUBLICIDAD, empresas grandes, cadenas o suscripciones especiales → ventasgeobooker@gmail.com
+Para soporte técnico o dudas generales → geobookerr@gmail.com
 
 ## REGLAS IMPORTANTES (SEGUIR SIEMPRE)
 

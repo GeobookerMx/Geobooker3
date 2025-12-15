@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Check, X, Star, Zap, TrendingUp, Camera, MapPin, BarChart, Clock, Instagram, Facebook, Globe } from 'lucide-react';
+import { Check, X, Star, Zap, TrendingUp, Camera, MapPin, BarChart, Clock, Instagram, Facebook, Globe, CreditCard, Store } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
+import OxxoVoucher from '../components/payment/OxxoVoucher';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_sample');
 
@@ -11,6 +12,9 @@ const UpgradePage = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [priceId, setPriceId] = useState(null);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState('card');
+    const [oxxoVoucher, setOxxoVoucher] = useState(null);
 
     // Configuración de lanzamiento
     const LAUNCH_CONFIG = {
@@ -39,19 +43,23 @@ const UpgradePage = () => {
         fetchPlanConfig();
     }, []);
 
-    const handleUpgrade = async () => {
+    // Abrir modal de selección de pago
+    const handleStartUpgrade = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            toast.error('Debes iniciar sesión para actualizar');
+            navigate('/login');
+            return;
+        }
+        setShowPaymentModal(true);
+    };
+
+    // Procesar pago con tarjeta
+    const handleCardPayment = async () => {
         setLoading(true);
         const toastId = toast.loading('Preparando pago seguro...');
         try {
             const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                toast.error('Debes iniciar sesión para actualizar', { id: toastId });
-                navigate('/login');
-                return;
-            }
-
-            console.log('Iniciando checkout con priceId:', priceId);
-
             const stripe = await stripePromise;
             if (!stripe) throw new Error('Stripe no pudo cargarse');
 
@@ -65,26 +73,71 @@ const UpgradePage = () => {
                     successUrl: window.location.origin + '/dashboard?success=true',
                     cancelUrl: window.location.origin + '/dashboard/upgrade?canceled=true',
                     countryCode: 'MX',
-                    mode: 'subscription', // IMPORTANTE: Para suscripciones recurrentes
-                    metadata: {
-                        type: 'premium_subscription'
-                    }
+                    mode: 'subscription',
+                    metadata: { type: 'premium_subscription' }
                 }),
             });
 
-            console.log('Response status:', response.status);
             const sessionData = await response.json();
-            console.log('Session data:', sessionData);
-
             if (sessionData.error) throw new Error(sessionData.error);
 
-            // Redirigir directamente a Stripe Checkout usando la URL
             toast.success('Redirigiendo a Stripe...', { id: toastId });
             window.location.href = sessionData.url;
         } catch (error) {
             console.error('Error en checkout:', error);
             toast.error(`Error: ${error.message}`, { id: toastId });
             setLoading(false);
+        }
+    };
+
+    // Procesar pago con OXXO
+    const handleOxxoPayment = async () => {
+        setLoading(true);
+        const toastId = toast.loading('Generando voucher OXXO...');
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+
+            const response = await fetch('/.netlify/functions/create-oxxo-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: LAUNCH_CONFIG.regularPrice, // $299 para después de los 3 meses gratis
+                    email: session.user.email,
+                    productName: 'Premium Geobooker (3 meses gratis)',
+                    productId: 'premium_subscription',
+                    userId: session.user.id,
+                    description: 'Suscripción Premium Geobooker - 3 meses gratis incluidos'
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Error al generar voucher');
+            }
+
+            toast.success('¡Voucher generado!', { id: toastId });
+            setOxxoVoucher({
+                voucherUrl: data.voucher.hostedVoucherUrl,
+                referenceNumber: data.voucher.number,
+                expiresAt: data.voucher.expiresAfter,
+                amount: data.amount
+            });
+            setShowPaymentModal(false);
+        } catch (error) {
+            console.error('Error OXXO:', error);
+            toast.error(`Error: ${error.message}`, { id: toastId });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Confirmar método de pago
+    const handleConfirmPayment = () => {
+        if (paymentMethod === 'card') {
+            handleCardPayment();
+        } else {
+            handleOxxoPayment();
         }
     };
 
@@ -244,7 +297,7 @@ const UpgradePage = () => {
                         </ul>
 
                         <button
-                            onClick={handleUpgrade}
+                            onClick={handleStartUpgrade}
                             disabled={loading}
                             className={`w-full bg-yellow-400 text-gray-900 py-4 rounded-xl font-bold text-lg hover:bg-yellow-300 transition transform hover:scale-[1.02] shadow-lg ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
                         >
@@ -336,6 +389,123 @@ const UpgradePage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Modal de Selección de Método de Pago */}
+            {showPaymentModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-fade-in">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-gray-900">💳 Método de Pago</h2>
+                            <button
+                                onClick={() => setShowPaymentModal(false)}
+                                className="text-gray-400 hover:text-gray-600 text-2xl"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <p className="text-gray-600 mb-6">
+                            Elige cómo quieres activar tu prueba de <strong>{LAUNCH_CONFIG.monthsFree} meses GRATIS</strong>:
+                        </p>
+
+                        {/* Opción Tarjeta */}
+                        <button
+                            onClick={() => setPaymentMethod('card')}
+                            className={`w-full p-4 rounded-xl border-2 mb-3 text-left transition-all ${paymentMethod === 'card'
+                                    ? 'border-blue-500 bg-blue-50'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className={`p-2 rounded-lg ${paymentMethod === 'card' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}>
+                                    <CreditCard className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold">Tarjeta de Crédito/Débito</h4>
+                                    <p className="text-sm text-gray-500">Visa, Mastercard, AMEX</p>
+                                </div>
+                                {paymentMethod === 'card' && (
+                                    <Check className="w-5 h-5 text-blue-500 ml-auto" />
+                                )}
+                            </div>
+                            {paymentMethod === 'card' && (
+                                <p className="text-xs text-blue-600 mt-2 pl-11">
+                                    ✓ Activación inmediata • Renovación automática
+                                </p>
+                            )}
+                        </button>
+
+                        {/* Opción OXXO */}
+                        <button
+                            onClick={() => setPaymentMethod('oxxo')}
+                            className={`w-full p-4 rounded-xl border-2 mb-6 text-left transition-all ${paymentMethod === 'oxxo'
+                                    ? 'border-yellow-500 bg-yellow-50'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className={`p-2 rounded-lg ${paymentMethod === 'oxxo' ? 'bg-yellow-500 text-white' : 'bg-gray-100'}`}>
+                                    <Store className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold">Pago en Efectivo</h4>
+                                    <p className="text-sm text-gray-500">OXXO, 7-Eleven, Farmacias</p>
+                                </div>
+                                {paymentMethod === 'oxxo' && (
+                                    <Check className="w-5 h-5 text-yellow-500 ml-auto" />
+                                )}
+                            </div>
+                            {paymentMethod === 'oxxo' && (
+                                <p className="text-xs text-yellow-700 mt-2 pl-11">
+                                    ⏱ Tienes 3 días para pagar • Activación en 1-24 hrs
+                                </p>
+                            )}
+                        </button>
+
+                        {/* Resumen */}
+                        <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600">Total a pagar hoy:</span>
+                                <span className="text-2xl font-bold text-green-600">$0 MXN</span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                                Después de {LAUNCH_CONFIG.monthsFree} meses: ${LAUNCH_CONFIG.regularPrice}/mes
+                            </p>
+                        </div>
+
+                        {/* Botón Confirmar */}
+                        <button
+                            onClick={handleConfirmPayment}
+                            disabled={loading}
+                            className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold text-lg hover:from-purple-700 hover:to-pink-700 transition disabled:opacity-50"
+                        >
+                            {loading ? 'Procesando...' : (
+                                paymentMethod === 'card'
+                                    ? '🔒 Continuar con Tarjeta'
+                                    : '🏪 Generar Voucher OXXO'
+                            )}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Voucher OXXO generado */}
+            {oxxoVoucher && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="max-w-md w-full">
+                        <OxxoVoucher
+                            voucherUrl={oxxoVoucher.voucherUrl}
+                            referenceNumber={oxxoVoucher.referenceNumber}
+                            expiresAt={oxxoVoucher.expiresAt}
+                            amount={oxxoVoucher.amount}
+                            onClose={() => {
+                                setOxxoVoucher(null);
+                                navigate('/dashboard');
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

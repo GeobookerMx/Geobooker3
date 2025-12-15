@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { ArrowLeft, ArrowRight, Image as ImageIcon, CreditCard, Loader, Globe, MapPin, Map, Building } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Image as ImageIcon, CreditCard, Loader, Globe, MapPin, Map, Building, Store, Check } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import toast from 'react-hot-toast';
+import OxxoVoucher from '../../components/payment/OxxoVoucher';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -17,6 +18,10 @@ const CampaignCreateWizard = () => {
     const [uploading, setUploading] = useState(false);
     const [spaceId] = useState(searchParams.get('space') || '');
     const [adSpace, setAdSpace] = useState(null);
+
+    // Estados para método de pago
+    const [paymentMethod, setPaymentMethod] = useState('card');
+    const [oxxoVoucher, setOxxoVoucher] = useState(null);
 
     // Geographic data - Organized by regions
     const [countries] = useState([
@@ -225,44 +230,70 @@ const CampaignCreateWizard = () => {
 
             if (error) throw error;
 
-            // 2. Ahora iniciar el checkout de Stripe
-            const stripe = await stripePromise;
-            if (!stripe) throw new Error('Stripe no pudo cargarse');
+            // 2. Procesar según método de pago
+            if (paymentMethod === 'card') {
+                // Pago con tarjeta - Stripe Checkout
+                const stripe = await stripePromise;
+                if (!stripe) throw new Error('Stripe no pudo cargarse');
 
-            const { data: { user } } = await supabase.auth.getUser();
+                const { data: { user } } = await supabase.auth.getUser();
 
-            const response = await fetch('/.netlify/functions/create-checkout-session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    priceId: adSpace.stripe_price_id || null,
-                    productId: adSpace.stripe_product_id || null,
-                    amount: Math.round(adSpace.price_monthly * 100), // En centavos
-                    userId: user?.id || null,
-                    customerEmail: formData.advertiser_email,
-                    successUrl: window.location.origin + '/advertise/success?campaign=' + campaignId,
-                    cancelUrl: window.location.origin + '/advertise/create?space=' + spaceId + '&canceled=true',
-                    countryCode: formData.target_country || 'MX',
-                    mode: 'payment', // Pago único para publicidad
-                    metadata: {
-                        type: 'ad_payment',
-                        campaign_id: campaignId,
-                        ad_space_id: spaceId,
-                        ad_space_name: adSpace.name
-                    }
-                }),
-            });
+                const response = await fetch('/.netlify/functions/create-checkout-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        priceId: adSpace.stripe_price_id || null,
+                        productId: adSpace.stripe_product_id || null,
+                        amount: Math.round(adSpace.price_monthly * 100),
+                        userId: user?.id || null,
+                        customerEmail: formData.advertiser_email,
+                        successUrl: window.location.origin + '/advertise/success?campaign=' + campaignId,
+                        cancelUrl: window.location.origin + '/advertise/create?space=' + spaceId + '&canceled=true',
+                        countryCode: formData.target_country || 'MX',
+                        mode: 'payment',
+                        metadata: {
+                            type: 'ad_payment',
+                            campaign_id: campaignId,
+                            ad_space_id: spaceId,
+                            ad_space_name: adSpace.name
+                        }
+                    }),
+                });
 
-            const sessionData = await response.json();
+                const sessionData = await response.json();
+                if (sessionData.error) throw new Error(sessionData.error);
 
-            if (sessionData.error) {
-                throw new Error(sessionData.error);
+                toast.success('Redirigiendo a pago seguro...', { id: toastId });
+                window.location.href = sessionData.url;
+
+            } else {
+                // Pago en OXXO
+                const response = await fetch('/.netlify/functions/create-oxxo-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        amount: adSpace.price_monthly,
+                        email: formData.advertiser_email,
+                        productName: `Campaña ${adSpace.display_name}`,
+                        productId: campaignId,
+                        userId: (await supabase.auth.getUser()).data.user?.id,
+                        description: `Publicidad Geobooker - ${adSpace.display_name}`
+                    }),
+                });
+
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Error al generar voucher');
+                }
+
+                toast.success('¡Voucher generado!', { id: toastId });
+                setOxxoVoucher({
+                    voucherUrl: data.voucher.hostedVoucherUrl,
+                    referenceNumber: data.voucher.number,
+                    expiresAt: data.voucher.expiresAfter,
+                    amount: data.amount
+                });
             }
-
-            toast.success('Redirigiendo a pago seguro...', { id: toastId });
-
-            // 3. Redirigir a Stripe Checkout usando la URL directa
-            window.location.href = sessionData.url;
 
         } catch (error) {
             console.error('Error en campaña:', error);
@@ -468,6 +499,46 @@ const CampaignCreateWizard = () => {
                                 <div className="flex justify-between border-t pt-2 text-lg"><span>Total:</span><strong className="text-green-600">${adSpace.price_monthly} MXN/mes</strong></div>
                             </div>
 
+                            {/* Selector de Método de Pago */}
+                            <div className="space-y-3 mt-6">
+                                <h4 className="font-semibold text-gray-800">💳 Método de Pago</h4>
+
+                                <button
+                                    onClick={() => setPaymentMethod('card')}
+                                    className={`w-full p-3 rounded-xl border-2 text-left transition-all flex items-center gap-3 ${paymentMethod === 'card'
+                                            ? 'border-blue-500 bg-blue-50'
+                                            : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                >
+                                    <div className={`p-2 rounded-lg ${paymentMethod === 'card' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}>
+                                        <CreditCard className="w-5 h-5" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <span className="font-medium">Tarjeta</span>
+                                        <span className="text-xs text-gray-500 ml-2">Pago inmediato</span>
+                                    </div>
+                                    {paymentMethod === 'card' && <Check className="w-5 h-5 text-blue-500" />}
+                                </button>
+
+                                <button
+                                    onClick={() => setPaymentMethod('oxxo')}
+                                    disabled={adSpace.price_monthly > 10000}
+                                    className={`w-full p-3 rounded-xl border-2 text-left transition-all flex items-center gap-3 ${paymentMethod === 'oxxo'
+                                            ? 'border-yellow-500 bg-yellow-50'
+                                            : 'border-gray-200 hover:border-gray-300'
+                                        } ${adSpace.price_monthly > 10000 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    <div className={`p-2 rounded-lg ${paymentMethod === 'oxxo' ? 'bg-yellow-500 text-white' : 'bg-gray-100'}`}>
+                                        <Store className="w-5 h-5" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <span className="font-medium">Efectivo</span>
+                                        <span className="text-xs text-gray-500 ml-2">OXXO, 7-Eleven</span>
+                                    </div>
+                                    {paymentMethod === 'oxxo' && <Check className="w-5 h-5 text-yellow-500" />}
+                                </button>
+                            </div>
+
                             <p className="text-sm text-gray-500 text-center bg-yellow-50 p-3 rounded-lg">
                                 ⏳ Tu campaña será revisada por nuestro equipo en 24-48 horas antes de activarse.
                             </p>
@@ -489,13 +560,36 @@ const CampaignCreateWizard = () => {
                             </button>
                         ) : (
                             <button onClick={handleSubmit} disabled={loading}
-                                className="bg-green-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-green-700 disabled:opacity-50">
-                                {loading ? <Loader className="animate-spin" /> : 'Enviar Campaña'}
+                                className={`text-white px-8 py-3 rounded-lg font-bold disabled:opacity-50 ${paymentMethod === 'card'
+                                        ? 'bg-green-600 hover:bg-green-700'
+                                        : 'bg-yellow-600 hover:bg-yellow-700'
+                                    }`}>
+                                {loading ? <Loader className="animate-spin" /> : (
+                                    paymentMethod === 'card' ? '🔒 Pagar con Tarjeta' : '🏪 Generar Voucher OXXO'
+                                )}
                             </button>
                         )}
                     </div>
                 </div>
             </div>
+
+            {/* Modal de Voucher OXXO */}
+            {oxxoVoucher && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="max-w-md w-full">
+                        <OxxoVoucher
+                            voucherUrl={oxxoVoucher.voucherUrl}
+                            referenceNumber={oxxoVoucher.referenceNumber}
+                            expiresAt={oxxoVoucher.expiresAt}
+                            amount={oxxoVoucher.amount}
+                            onClose={() => {
+                                setOxxoVoucher(null);
+                                navigate('/advertise/pending');
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

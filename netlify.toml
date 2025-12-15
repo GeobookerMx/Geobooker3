@@ -12,16 +12,12 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
-# IMPORTANTE: Las funciones deben ir ANTES del redirect SPA
-# Las funciones de Netlify se acceden directamente
-[[redirects]]
-  from = "/.netlify/functions/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
-# SPA redirect para React Router (debe ir AL FINAL)
+# SPA redirect para React Router
+# force = false permite que las funciones de Netlify respondan primero
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  force = false
+
 

@@ -59,20 +59,17 @@ const HomePage = () => {
 
         if (error) throw error;
         if (data) {
-          // ⭐ Obtener estado Premium de los owners
+          // ⭐ Obtener estado Premium de los owners usando función RPC segura
           const ownerIds = [...new Set(data.map(b => b.owner_id).filter(Boolean))];
           let premiumOwners = {};
 
-          if (ownerIds.length > 0) {
-            const { data: profiles } = await supabase
-              .from('user_profiles')
-              .select('id, is_premium')
-              .in('id', ownerIds);
-
-            if (profiles) {
-              profiles.forEach(p => {
-                premiumOwners[p.id] = p.is_premium;
-              });
+          // Usar la función RPC para cada owner (evita error 406 de RLS)
+          for (const ownerId of ownerIds) {
+            try {
+              const { data: isPremium } = await supabase.rpc('get_user_premium_status', { user_id: ownerId });
+              premiumOwners[ownerId] = isPremium || false;
+            } catch (e) {
+              premiumOwners[ownerId] = false;
             }
           }
 

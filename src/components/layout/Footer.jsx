@@ -66,7 +66,7 @@ const Footer = () => {
                     </svg>
                   </a>
                   <a
-                    href="https://www.youtube.com/@geobookermx"
+                    href="https://www.youtube.com/@Geobooker"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-10 h-10 bg-gray-700 hover:bg-red-600 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110"

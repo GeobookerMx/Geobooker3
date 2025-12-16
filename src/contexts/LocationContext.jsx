@@ -103,9 +103,44 @@ export const LocationProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    // Ya no solicitamos ubicación automáticamente al cargar
-    // Se solicitará cuando el usuario intente buscar
-    setLoading(false);
+    // Verificar si ya tenemos permisos y obtener ubicación automáticamente
+    const checkPermissionAndGetLocation = async () => {
+      try {
+        // Verificar si el navegador soporta Permissions API
+        if (navigator.permissions && navigator.permissions.query) {
+          const result = await navigator.permissions.query({ name: 'geolocation' });
+
+          if (result.state === 'granted') {
+            // Ya tenemos permisos, obtener ubicación automáticamente
+            console.log('📍 Permisos de ubicación ya otorgados, obteniendo ubicación...');
+            await requestLocationPermission();
+          } else if (result.state === 'prompt') {
+            // El usuario aún no ha decidido, no mostrar nada automáticamente
+            setLoading(false);
+          } else {
+            // Permisos denegados
+            setLoading(false);
+            setPermissionGranted(false);
+          }
+
+          // Escuchar cambios en permisos
+          result.addEventListener('change', () => {
+            if (result.state === 'granted') {
+              requestLocationPermission();
+            }
+          });
+        } else {
+          // Navegador no soporta Permissions API (Safari antiguo, etc.)
+          // Intentar obtener ubicación directamente
+          setLoading(false);
+        }
+      } catch (error) {
+        console.log('Error checking permissions:', error);
+        setLoading(false);
+      }
+    };
+
+    checkPermissionAndGetLocation();
   }, []);
 
   const value = {

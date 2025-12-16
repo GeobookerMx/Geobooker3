@@ -172,7 +172,8 @@ export default function UsersPage() {
                     <table className="min-w-full">
                         <thead>
                             <tr className="border-b bg-gray-50">
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Email</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Usuario</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Teléfono</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tipo</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Premium</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Negocios</th>
@@ -183,7 +184,7 @@ export default function UsersPage() {
                         <tbody className="divide-y divide-gray-200">
                             {filteredUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                                    <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
                                         No se encontraron usuarios
                                     </td>
                                 </tr>
@@ -191,10 +192,26 @@ export default function UsersPage() {
                                 filteredUsers.map((user) => (
                                     <tr key={user.id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <Mail className="w-4 h-4 text-gray-400" />
-                                                <span className="font-medium text-gray-900">{user.email}</span>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                                                        {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-medium text-gray-900">{user.full_name || 'Sin nombre'}</p>
+                                                        <p className="text-xs text-gray-500">{user.id.substring(0, 8)}...</p>
+                                                    </div>
+                                                </div>
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {user.phone ? (
+                                                <a href={`tel:${user.phone}`} className="text-blue-600 hover:underline">
+                                                    {user.phone}
+                                                </a>
+                                            ) : (
+                                                <span className="text-gray-400 text-sm">No registrado</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4">
                                             {user.isAdmin ? (
@@ -223,6 +240,9 @@ export default function UsersPage() {
                                             ) : (
                                                 <span className="text-gray-400">0</span>
                                             )}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">
+                                            {user.created_at ? new Date(user.created_at).toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">

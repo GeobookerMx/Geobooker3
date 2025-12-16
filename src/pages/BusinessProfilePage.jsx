@@ -230,22 +230,37 @@ const BusinessProfilePage = () => {
                     )}
 
                     {/* Botones de acción principales */}
-                    <div className="grid grid-cols-2 gap-3 mb-6">
+                    <div className="grid grid-cols-3 gap-3 mb-6">
                         <button
                             onClick={handleDirections}
-                            className="flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-blue-700 transition"
+                            className="flex flex-col items-center justify-center gap-1 bg-blue-600 text-white py-3 px-2 rounded-xl font-semibold hover:bg-blue-700 transition"
                         >
                             <Navigation className="w-5 h-5" />
-                            Cómo llegar
+                            <span className="text-xs">Cómo llegar</span>
                         </button>
+
+                        {/* Botón Llamar */}
                         {business.phone && (
                             <button
                                 onClick={handleCall}
-                                className="flex items-center justify-center gap-2 bg-green-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-green-700 transition"
+                                className="flex flex-col items-center justify-center gap-1 bg-green-600 text-white py-3 px-2 rounded-xl font-semibold hover:bg-green-700 transition"
                             >
                                 <Phone className="w-5 h-5" />
-                                Llamar
+                                <span className="text-xs">Llamar</span>
                             </button>
+                        )}
+
+                        {/* Botón WhatsApp - Usa whatsapp específico o el teléfono del negocio */}
+                        {(business.whatsapp || business.phone) && (
+                            <a
+                                href={`https://wa.me/${(business.whatsapp || business.phone).replace(/\D/g, '')}?text=${encodeURIComponent(`Hola! Vi tu negocio ${business.name} en Geobooker y me gustaría más información.`)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex flex-col items-center justify-center gap-1 bg-[#25D366] text-white py-3 px-2 rounded-xl font-semibold hover:bg-[#128C7E] transition"
+                            >
+                                <MessageCircle className="w-5 h-5" />
+                                <span className="text-xs">WhatsApp</span>
+                            </a>
                         )}
                     </div>
 

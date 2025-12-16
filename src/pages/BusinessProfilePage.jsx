@@ -1,6 +1,6 @@
 // src/pages/BusinessProfilePage.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, Navigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import {
     MapPin, Phone, Globe, Clock, Star,
@@ -27,6 +27,11 @@ const BusinessProfilePage = () => {
     const [business, setBusiness] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isFavorite, setIsFavorite] = useState(false);
+
+    // Si no hay ID, redirigir al inicio
+    if (!id) {
+        return <Navigate to="/" replace />;
+    }
 
     useEffect(() => {
         const loadBusiness = async () => {

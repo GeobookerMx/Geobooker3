@@ -141,7 +141,7 @@ export default function BusinessFormPage() {
           .from('user_profiles')
           .select('is_premium')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         // Si NO es premium y ya tiene 1 negocio, mostrar modal
         if (!profile?.is_premium) {

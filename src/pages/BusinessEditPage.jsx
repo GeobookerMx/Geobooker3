@@ -118,7 +118,7 @@ const BusinessEditPage = () => {
                 .from('user_profiles')
                 .select('is_premium')
                 .eq('id', user.id)
-                .single();
+                .maybeSingle();
 
             setIsPremium(data?.is_premium || false);
         } catch (error) {

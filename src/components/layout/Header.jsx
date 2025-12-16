@@ -21,12 +21,12 @@ export default function Header() {
       if (session?.user) {
         setUser(session.user);
 
-        // Obtener perfil del usuario
+        // Obtener perfil del usuario (maybeSingle evita error 406 si no existe)
         const { data: profile } = await supabase
           .from('user_profiles')
           .select('*')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
 
         setUserProfile(profile);
       }

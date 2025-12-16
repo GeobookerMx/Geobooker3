@@ -25,7 +25,7 @@ const DashboardPage = () => {
         .from('user_profiles')
         .select('is_premium')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       setIsPremium(data?.is_premium || false);
     } catch (error) {
@@ -114,8 +114,8 @@ const DashboardPage = () => {
         <button
           onClick={() => setActiveTab('businesses')}
           className={`px-6 py-3 font-medium text-sm transition-colors duration-200 border-b-2 ${activeTab === 'businesses'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+            ? 'border-blue-600 text-blue-600'
+            : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
         >
           Mis Negocios
@@ -123,8 +123,8 @@ const DashboardPage = () => {
         <button
           onClick={() => setActiveTab('profile')}
           className={`px-6 py-3 font-medium text-sm transition-colors duration-200 border-b-2 ${activeTab === 'profile'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+            ? 'border-blue-600 text-blue-600'
+            : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
         >
           Mi Perfil

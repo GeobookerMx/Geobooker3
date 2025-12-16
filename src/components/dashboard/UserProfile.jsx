@@ -25,7 +25,7 @@ const UserProfile = () => {
                 .from('user_profiles')
                 .select('*')
                 .eq('id', user.id)
-                .single();
+                .maybeSingle();
 
             if (error) throw error;
 

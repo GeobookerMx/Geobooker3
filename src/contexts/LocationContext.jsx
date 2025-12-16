@@ -23,6 +23,7 @@ export const LocationProvider = ({ children }) => {
         return;
       }
 
+      // Primero intentar con baja precisión (más rápido, usa WiFi/IP)
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const location = {
@@ -30,36 +31,60 @@ export const LocationProvider = ({ children }) => {
             lng: position.coords.longitude,
             accuracy: position.coords.accuracy,
           };
+          console.log('📍 Ubicación obtenida:', location);
           setUserLocation(location);
           setPermissionGranted(true);
           setLoading(false);
           resolve(location);
         },
         (error) => {
-          setLoading(false);
-          setPermissionGranted(false);
+          // Si falla con baja precisión, intentar con alta precisión y más tiempo
+          console.log('⚠️ Reintentando con alta precisión...');
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const location = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+                accuracy: position.coords.accuracy,
+              };
+              console.log('📍 Ubicación obtenida (alta precisión):', location);
+              setUserLocation(location);
+              setPermissionGranted(true);
+              setLoading(false);
+              resolve(location);
+            },
+            (err) => {
+              setLoading(false);
+              setPermissionGranted(false);
 
-          let errorMessage = "Error al obtener la ubicación";
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              errorMessage = "Permiso de ubicación denegado";
-              break;
-            case error.POSITION_UNAVAILABLE:
-              errorMessage = "Información de ubicación no disponible";
-              break;
-            case error.TIMEOUT:
-              errorMessage = "Tiempo de espera agotado";
-              break;
-            default:
-              break;
-          }
+              let errorMessage = "Error al obtener la ubicación";
+              switch (err.code) {
+                case err.PERMISSION_DENIED:
+                  errorMessage = "Permiso de ubicación denegado";
+                  break;
+                case err.POSITION_UNAVAILABLE:
+                  errorMessage = "Información de ubicación no disponible";
+                  break;
+                case err.TIMEOUT:
+                  errorMessage = "Tiempo de espera agotado";
+                  break;
+                default:
+                  break;
+              }
 
-          reject(new Error(errorMessage));
+              reject(new Error(errorMessage));
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 30000, // 30 segundos para alta precisión
+              maximumAge: 60000, // Usar caché de hasta 1 minuto
+            }
+          );
         },
         {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 10000, // Reducido a 10s para ubicación más fresca en móviles
+          enableHighAccuracy: false, // Baja precisión primero (más rápido)
+          timeout: 10000, // 10 segundos
+          maximumAge: 300000, // Usar caché de hasta 5 minutos
         }
       );
     });

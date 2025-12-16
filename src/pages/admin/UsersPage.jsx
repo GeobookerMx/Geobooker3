@@ -34,14 +34,23 @@ export default function UsersPage() {
         try {
             setLoading(true);
 
-            // Cargar usuarios desde user_profiles (accesible desde frontend)
-            const { data: userProfiles, error: profileError } = await supabase
-                .from('user_profiles')
-                .select('*')
-                .order('created_at', { ascending: false });
+            // Intentar usar la función RPC que obtiene emails (requiere ejecutar el SQL en Supabase)
+            let usersData = [];
+            const { data: rpcData, error: rpcError } = await supabase.rpc('get_users_for_admin');
 
-            if (profileError) {
-                console.error('Error loading user_profiles:', profileError);
+            if (rpcError) {
+                console.warn('RPC get_users_for_admin no disponible, usando fallback:', rpcError.message);
+                // Fallback: usar user_profiles si la RPC no está disponible
+                const { data: userProfiles } = await supabase
+                    .from('user_profiles')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                usersData = (userProfiles || []).map(p => ({
+                    ...p,
+                    email: p.email || null // user_profiles no tiene email por defecto
+                }));
+            } else {
+                usersData = rpcData || [];
             }
 
             // Cargar negocios para contar cuántos tiene cada usuario
@@ -61,20 +70,21 @@ export default function UsersPage() {
             });
 
             // Combinar datos
-            const combinedUsers = (userProfiles || []).map(profile => {
-                const isAdmin = admins?.some(a => a.id === profile.id);
+            const combinedUsers = usersData.map(user => {
+                const isAdmin = admins?.some(a => a.id === user.id);
 
                 return {
-                    id: profile.id,
-                    email: profile.email || profile.id,
-                    created_at: profile.created_at,
-                    last_sign_in: profile.last_sign_in_at || profile.updated_at,
-                    confirmed: true, // Si está en user_profiles, está confirmado
+                    id: user.id,
+                    email: user.email || null,
+                    created_at: user.created_at,
+                    last_sign_in: user.last_sign_in_at,
+                    confirmed: true,
                     isAdmin,
-                    is_premium: profile.is_premium || false,
-                    business_count: businessCountByUser[profile.id] || 0,
-                    full_name: profile.full_name || '',
-                    ...profile
+                    is_premium: user.is_premium || false,
+                    business_count: businessCountByUser[user.id] || 0,
+                    full_name: user.full_name || '',
+                    phone: user.phone || '',
+                    avatar_url: user.avatar_url || '',
                 };
             });
 
@@ -97,7 +107,11 @@ export default function UsersPage() {
     };
 
     const filteredUsers = users.filter(user => {
-        const matchesSearch = user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+        const searchLower = searchTerm.toLowerCase();
+        const matchesSearch =
+            user.email?.toLowerCase().includes(searchLower) ||
+            user.full_name?.toLowerCase().includes(searchLower) ||
+            user.phone?.includes(searchTerm);
         const matchesFilter =
             filterStatus === 'all' ? true :
                 filterStatus === 'active' ? user.business_count > 0 :
@@ -141,7 +155,7 @@ export default function UsersPage() {
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Buscar por email..."
+                            placeholder="Buscar por nombre, email o teléfono..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -173,6 +187,7 @@ export default function UsersPage() {
                         <thead>
                             <tr className="border-b bg-gray-50">
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Usuario</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Email</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Teléfono</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tipo</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Premium</th>
@@ -184,7 +199,7 @@ export default function UsersPage() {
                         <tbody className="divide-y divide-gray-200">
                             {filteredUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                                    <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
                                         No se encontraron usuarios
                                     </td>
                                 </tr>
@@ -203,6 +218,15 @@ export default function UsersPage() {
                                                     </div>
                                                 </div>
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {user.email ? (
+                                                <a href={`mailto:${user.email}`} className="text-blue-600 hover:underline text-sm">
+                                                    {user.email}
+                                                </a>
+                                            ) : (
+                                                <span className="text-gray-400 text-sm italic">No disponible</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4">
                                             {user.phone ? (

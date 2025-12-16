@@ -22,7 +22,10 @@ CREATE POLICY "Admin Self Read" ON admin_users FOR SELECT USING (auth.uid() = id
 -- Inserta automáticamente al usuario autenticado actual como admin si ejecuta esto desde la consola SQL de Supabase
 -- NOTA: Esto solo funciona si ya existe en auth.users.
 -- Si esto falla, ignóralo, lo importante son las políticas de arriba.
+-- 4. INSERTAR TU USUARIO COMO ADMIN (SEGURO)
+-- Solo inserta si el email coincide con los administradores reales
 INSERT INTO admin_users (id, email, role)
 SELECT id, email, 'superadmin'
 FROM auth.users
+WHERE email IN ('juan.pablo.pg@hotmail.com', 'jpvaness85@gmail.com')
 ON CONFLICT (id) DO NOTHING;

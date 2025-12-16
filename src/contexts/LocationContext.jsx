@@ -3,6 +3,44 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 const LocationContext = createContext(null);
 
+const LOCATION_STORAGE_KEY = 'geobooker_last_location';
+
+// Función para guardar ubicación en localStorage
+const saveLocationToStorage = (location) => {
+  try {
+    const locationData = {
+      ...location,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(locationData));
+  } catch (e) {
+    console.log('Error saving location to storage:', e);
+  }
+};
+
+// Función para obtener última ubicación guardada
+const getStoredLocation = () => {
+  try {
+    const stored = localStorage.getItem(LOCATION_STORAGE_KEY);
+    if (stored) {
+      const locationData = JSON.parse(stored);
+      // Verificar si la ubicación no tiene más de 24 horas
+      const maxAge = 24 * 60 * 60 * 1000; // 24 horas
+      if (Date.now() - locationData.timestamp < maxAge) {
+        return {
+          lat: locationData.lat,
+          lng: locationData.lng,
+          accuracy: locationData.accuracy,
+          fromCache: true
+        };
+      }
+    }
+  } catch (e) {
+    console.log('Error reading stored location:', e);
+  }
+  return null;
+};
+
 export const useLocation = () => {
   const context = useContext(LocationContext);
   if (!context) {
@@ -12,8 +50,10 @@ export const useLocation = () => {
 };
 
 export const LocationProvider = ({ children }) => {
-  const [userLocation, setUserLocation] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Intentar cargar última ubicación guardada inmediatamente
+  const storedLocation = getStoredLocation();
+  const [userLocation, setUserLocation] = useState(storedLocation);
+  const [loading, setLoading] = useState(!storedLocation); // No loading si tenemos caché
   const [permissionGranted, setPermissionGranted] = useState(false);
 
   const requestLocationPermission = () => {
@@ -33,6 +73,7 @@ export const LocationProvider = ({ children }) => {
           };
           console.log('📍 Ubicación obtenida:', location);
           setUserLocation(location);
+          saveLocationToStorage(location); // Guardar en localStorage
           setPermissionGranted(true);
           setLoading(false);
           resolve(location);
@@ -49,6 +90,7 @@ export const LocationProvider = ({ children }) => {
               };
               console.log('📍 Ubicación obtenida (alta precisión):', location);
               setUserLocation(location);
+              saveLocationToStorage(location); // Guardar en localStorage
               setPermissionGranted(true);
               setLoading(false);
               resolve(location);
@@ -107,6 +149,7 @@ export const LocationProvider = ({ children }) => {
             accuracy: position.coords.accuracy,
           };
           setUserLocation(location);
+          saveLocationToStorage(location); // Guardar en localStorage
           setLoading(false);
           resolve(location);
         },

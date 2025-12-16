@@ -90,7 +90,7 @@ const WelcomePage = () => {
                     </Link>
 
                     <Link
-                        to="/home"
+                        to="/"
                         className="block w-full text-gray-500 text-center py-3 text-sm hover:text-purple-600 transition-colors"
                     >
                         Explorar sin cuenta →

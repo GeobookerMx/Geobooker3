@@ -1,6 +1,6 @@
 // src/router.jsx
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 // Layouts
 import PublicLayout from "./components/layout/PublicLayout.jsx";
@@ -83,6 +83,7 @@ export default function AppRouter() {
         <Route path="/guia-resico" element={<GuiaResicoPage />} />
 
         {/* Perfil público de negocio */}
+        <Route path="/business" element={<Navigate to="/" replace />} />
         <Route path="/business/:id" element={<BusinessProfilePage />} />
       </Route>
 

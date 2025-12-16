@@ -8,6 +8,10 @@ import {
   Eye,
   MousePointer,
   Plus,
+  Clock,
+  AlertCircle,
+  Image,
+  Info,
 } from 'lucide-react';
 import CampaignDetailsModal from '../../components/admin/CampaignDetailsModal';
 import EditAdSpaceModal from '../../components/admin/EditAdSpaceModal';
@@ -229,27 +233,34 @@ const AdsManagement = () => {
       </div>
 
       {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <StatsCard
-          title="Campañas Activas"
-          value={campaigns.length}
+          title="Pendientes"
+          value={campaigns.filter(c => c.status === 'pending_review').length}
+          icon={Clock}
+          color="yellow"
+          highlight={campaigns.filter(c => c.status === 'pending_review').length > 0}
+        />
+        <StatsCard
+          title="Activas"
+          value={campaigns.filter(c => c.status === 'active').length}
           icon={TrendingUp}
           color="blue"
         />
         <StatsCard
-          title="Ingresos del Mes"
+          title="Ingresos"
           value={`$${totalRevenue.toLocaleString()}`}
           icon={DollarSign}
           color="green"
         />
         <StatsCard
-          title="Impresiones Totales"
+          title="Impresiones"
           value={totalImpressions.toLocaleString()}
           icon={Eye}
           color="purple"
         />
         <StatsCard
-          title="CTR Promedio"
+          title="CTR"
           value={`${avgCTR}%`}
           icon={MousePointer}
           color="orange"
@@ -712,6 +723,36 @@ const AdsManagement = () => {
                       </div>
                     </div>
 
+                    {/* Especificaciones del Espacio */}
+                    <div className="pt-4 border-t border-gray-200">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 mb-2">
+                        <Info className="w-3 h-3" />
+                        Especificaciones para Publicitantes
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-3 text-xs space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">📐 Desktop:</span>
+                          <span className="font-medium text-gray-700">{space.size_desktop || 'Flexible'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">📱 Mobile:</span>
+                          <span className="font-medium text-gray-700">{space.size_mobile || 'Responsive'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">🖼️ Formatos:</span>
+                          <span className="font-medium text-gray-700">JPG, PNG, WebP</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">📦 Máximo:</span>
+                          <span className="font-medium text-gray-700">5 MB</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">💰 Precio:</span>
+                          <span className="font-medium text-green-600">${space.price_monthly?.toLocaleString()}/mes</span>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Action Button */}
                     <button
                       onClick={() => {
@@ -762,25 +803,25 @@ const AdsManagement = () => {
 export default AdsManagement;
 
 /** Card simple para las estadísticas de arriba */
-function StatsCard({ title, value, icon: Icon, color = 'blue' }) {
+function StatsCard({ title, value, icon: Icon, color = 'blue', highlight = false }) {
   const colorMap = {
     blue: 'text-blue-600 bg-blue-50',
     green: 'text-green-600 bg-green-50',
     purple: 'text-purple-600 bg-purple-50',
     orange: 'text-orange-600 bg-orange-50',
+    yellow: 'text-yellow-600 bg-yellow-50',
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-4 border border-gray-100 flex items-center">
+    <div className={`bg-white rounded-xl shadow-md p-4 border ${highlight ? 'border-yellow-400 ring-2 ring-yellow-200' : 'border-gray-100'} flex items-center`}>
       <div
-        className={`p-3 rounded-full mr-4 ${colorMap[color] || colorMap.blue
-          }`}
+        className={`p-3 rounded-full mr-4 ${colorMap[color] || colorMap.blue}`}
       >
         <Icon className="w-5 h-5" />
       </div>
       <div>
         <div className="text-sm text-gray-500">{title}</div>
-        <div className="text-xl font-bold text-gray-900">{value}</div>
+        <div className={`text-xl font-bold ${highlight ? 'text-yellow-600' : 'text-gray-900'}`}>{value}</div>
       </div>
     </div>
   );

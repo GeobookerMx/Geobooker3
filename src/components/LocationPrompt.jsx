@@ -66,10 +66,14 @@ const LocationPrompt = () => {
     return (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
             <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-slide-up">
-                {/* Header visual */}
+                {/* Header con logo de Geobooker */}
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white text-center">
-                    <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <MapPin className="w-8 h-8" />
+                    <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 p-2 shadow-lg">
+                        <img
+                            src="/images/geobooker-logo.png"
+                            alt="Geobooker"
+                            className="w-full h-full object-contain"
+                        />
                     </div>
                     <h3 className="text-xl font-bold mb-2">
                         📍 Mejora tu experiencia

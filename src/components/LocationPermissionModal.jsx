@@ -32,10 +32,14 @@ const LocationPermissionModal = ({
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-fade-in">
-                {/* Header con icono */}
+                {/* Header con logo de Geobooker */}
                 <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-center text-white">
-                    <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <MapPin className="w-10 h-10 text-white" />
+                    <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-4 p-2 shadow-lg">
+                        <img
+                            src="/images/geobooker-logo.png"
+                            alt="Geobooker"
+                            className="w-full h-full object-contain"
+                        />
                     </div>
                     <h2 className="text-2xl font-bold">Activa tu Ubicación</h2>
                     <p className="text-blue-100 mt-2">

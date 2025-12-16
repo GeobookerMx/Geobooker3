@@ -1,0 +1,26 @@
+# Robots.txt para Geobooker
+# https://geobooker.com.mx
+
+User-agent: *
+Allow: /
+
+# Directorios permitidos
+Allow: /business/
+Allow: /advertise/
+Allow: /guia-resico
+Allow: /seguridad
+
+# Bloquear rutas de admin
+Disallow: /admin/
+Disallow: /dashboard/
+
+# Bloquear rutas de autenticación
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+
+# Sitemap
+Sitemap: https://geobooker.com.mx/sitemap.xml
+
+# Crawl delay (opcional, para no sobrecargar el servidor)
+Crawl-delay: 1

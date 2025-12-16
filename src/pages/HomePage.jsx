@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useLocation } from '../contexts/LocationContext';
 import SearchBar from '../components/SearchBar';
 import BusinessMap from '../components/BusinessMap';
@@ -30,6 +30,7 @@ const HomePage = () => {
   const [geobookerBusinesses, setGeobookerBusinesses] = useState([]); // Native Businesses
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
+  const navigate = useNavigate();
 
   // Filtros de categoría desde URL
   const categoryFilter = searchParams.get('category');
@@ -164,6 +165,15 @@ const HomePage = () => {
       toast.success(t('home.locationObtained'));
     } catch (error) {
       toast.error(error.message);
+    }
+  };
+
+  // Handler para ver perfil de negocio nativo de Geobooker
+  const handleViewBusinessProfile = (business) => {
+    if (business?.id) {
+      navigate(`/business/${business.id}`);
+    } else {
+      toast.error('Este negocio no tiene perfil disponible');
     }
   };
 
@@ -305,6 +315,7 @@ const HomePage = () => {
             geobookerBusinesses={geobookerBusinesses} // Native Businesses
             selectedBusiness={selectedBusiness}
             onBusinessSelect={setSelectedBusiness}
+            onViewBusinessProfile={handleViewBusinessProfile}
             zoom={businesses.length > 0 ? 13 : 12}
           />
         </div>

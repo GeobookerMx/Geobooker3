@@ -59,8 +59,13 @@ const AdminLogin = () => {
             <div className="max-w-md w-full">
                 {/* Logo y título */}
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-white mb-2">Geobooker</h1>
-                    <p className="text-blue-100">Panel de Administración</p>
+                    <img
+                        src="/images/geobooker-logo.png"
+                        alt="Geobooker"
+                        className="h-20 w-auto mx-auto mb-4"
+                    />
+                    <h1 className="text-2xl font-bold text-white mb-2">Panel de Administración</h1>
+                    <p className="text-blue-100">Geobooker Admin</p>
                 </div>
 
                 {/* Formulario */}

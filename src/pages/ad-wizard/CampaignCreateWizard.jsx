@@ -375,7 +375,7 @@ const CampaignCreateWizard = () => {
                                                 Subir imagen o GIF
                                                 <input type="file" accept="image/*,.gif" onChange={handleImageUpload} className="hidden" />
                                             </label>
-                                            <p className="text-xs text-gray-400 mt-1">Max 2MB</p>
+                                            <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP o GIF • Max 5MB</p>
                                         </>
                                     )}
                                 </div>
@@ -506,8 +506,8 @@ const CampaignCreateWizard = () => {
                                 <button
                                     onClick={() => setPaymentMethod('card')}
                                     className={`w-full p-3 rounded-xl border-2 text-left transition-all flex items-center gap-3 ${paymentMethod === 'card'
-                                            ? 'border-blue-500 bg-blue-50'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                        ? 'border-blue-500 bg-blue-50'
+                                        : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
                                     <div className={`p-2 rounded-lg ${paymentMethod === 'card' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}>
@@ -524,8 +524,8 @@ const CampaignCreateWizard = () => {
                                     onClick={() => setPaymentMethod('oxxo')}
                                     disabled={adSpace.price_monthly > 10000}
                                     className={`w-full p-3 rounded-xl border-2 text-left transition-all flex items-center gap-3 ${paymentMethod === 'oxxo'
-                                            ? 'border-yellow-500 bg-yellow-50'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                        ? 'border-yellow-500 bg-yellow-50'
+                                        : 'border-gray-200 hover:border-gray-300'
                                         } ${adSpace.price_monthly > 10000 ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                     <div className={`p-2 rounded-lg ${paymentMethod === 'oxxo' ? 'bg-yellow-500 text-white' : 'bg-gray-100'}`}>
@@ -561,8 +561,8 @@ const CampaignCreateWizard = () => {
                         ) : (
                             <button onClick={handleSubmit} disabled={loading}
                                 className={`text-white px-8 py-3 rounded-lg font-bold disabled:opacity-50 ${paymentMethod === 'card'
-                                        ? 'bg-green-600 hover:bg-green-700'
-                                        : 'bg-yellow-600 hover:bg-yellow-700'
+                                    ? 'bg-green-600 hover:bg-green-700'
+                                    : 'bg-yellow-600 hover:bg-yellow-700'
                                     }`}>
                                 {loading ? <Loader className="animate-spin" /> : (
                                     paymentMethod === 'card' ? '🔒 Pagar con Tarjeta' : '🏪 Generar Voucher OXXO'

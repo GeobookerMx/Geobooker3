@@ -55,6 +55,8 @@ import BusinessProfilePage from "./pages/BusinessProfilePage.jsx";
 // Enterprise / Global Ads
 import EnterpriseLanding from "./pages/enterprise/EnterpriseLanding.jsx";
 import EnterpriseContact from "./pages/enterprise/EnterpriseContact.jsx";
+import EnterpriseCheckout from "./pages/enterprise/EnterpriseCheckout.jsx";
+import EnterpriseSuccess from "./pages/enterprise/EnterpriseSuccess.jsx";
 
 export default function AppRouter() {
   return (
@@ -89,6 +91,8 @@ export default function AppRouter() {
         {/* Enterprise / Global Ads */}
         <Route path="/enterprise" element={<EnterpriseLanding />} />
         <Route path="/enterprise/contact" element={<EnterpriseContact />} />
+        <Route path="/enterprise/checkout" element={<EnterpriseCheckout />} />
+        <Route path="/enterprise/success" element={<EnterpriseSuccess />} />
 
         {/* Perfil público de negocio */}
         <Route path="/business" element={<Navigate to="/" replace />} />

@@ -39,20 +39,47 @@ exports.handler = async (event) => {
                 const session = stripeEvent.data.object;
                 const metadata = session.metadata || {};
 
-                // CASO 1: Pago de Publicidad (Campaña)
+                // CASO 1: Pago de Publicidad (Campaña normal)
                 if (metadata.type === 'ad_payment') {
                     const campaignId = metadata.campaign_id;
                     if (campaignId) {
                         await supabase
                             .from('ad_campaigns')
                             .update({
-                                status: 'pending_review', // Pasa a revisión del admin
-                                payment_status: 'paid',   // (Si agregamos esta columna futura)
+                                status: 'pending_review',
+                                payment_status: 'paid',
                                 stripe_payment_intent: session.payment_intent
                             })
                             .eq('id', campaignId);
 
                         console.log(`Campaña ${campaignId} pagada y enviada a revisión.`);
+                    }
+                }
+                // CASO 1B: Campaña Enterprise (auto-activación para clientes verificados)
+                else if (metadata.type === 'enterprise_campaign') {
+                    const campaignId = metadata.campaign_id;
+                    if (campaignId) {
+                        // Enterprise campaigns go directly to pending_review
+                        // Admin can manually activate or we auto-activate after 24hrs
+                        const startDate = new Date();
+                        const durationMonths = parseInt(metadata.duration_months) || 1;
+                        const endDate = new Date(startDate);
+                        endDate.setMonth(endDate.getMonth() + durationMonths);
+
+                        await supabase
+                            .from('ad_campaigns')
+                            .update({
+                                status: 'pending_review',
+                                payment_status: 'paid',
+                                stripe_payment_intent: session.payment_intent,
+                                start_date: startDate.toISOString().split('T')[0],
+                                end_date: endDate.toISOString().split('T')[0],
+                                currency: 'USD',
+                                tax_status: metadata.billing_country === 'MX' ? 'domestic_mx' : 'export_0_iva'
+                            })
+                            .eq('id', campaignId);
+
+                        console.log(`Enterprise campaign ${campaignId} paid. Plan: ${metadata.plan}, Company: ${metadata.company}`);
                     }
                 }
                 // CASO 2: Suscripción Premium (Usuario)

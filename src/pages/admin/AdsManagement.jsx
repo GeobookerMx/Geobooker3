@@ -28,6 +28,7 @@ const AdsManagement = () => {
   const [activeTab, setActiveTab] = useState('spaces');
   const [statusFilter, setStatusFilter] = useState('active'); // filtro controlado
   const [selectedCampaign, setSelectedCampaign] = useState(null); // Para el modal de detalles
+  const [previewCampaign, setPreviewCampaign] = useState(null); // Para el modal de vista previa
   const [editingSpace, setEditingSpace] = useState(null); // Para el modal de editar espacio
   const [spaceFilter, setSpaceFilter] = useState('all'); // Filtro por espacio
   const [analyticsData, setAnalyticsData] = useState({ // Datos para gráficas
@@ -616,6 +617,20 @@ const AdsManagement = () => {
                               </button>
                             </>
                           )}
+                          {/* Botón Vista Previa */}
+                          <button
+                            onClick={async () => {
+                              const { data: creatives } = await supabase
+                                .from('ad_creatives')
+                                .select('*')
+                                .eq('campaign_id', campaign.id);
+                              setPreviewCampaign({ ...campaign, ad_creatives: creatives || [] });
+                            }}
+                            className="text-purple-600 hover:text-purple-900 bg-purple-50 px-3 py-1 rounded hover:bg-purple-100 transition flex items-center gap-1"
+                          >
+                            <Eye className="w-4 h-4" />
+                            Preview
+                          </button>
                           <button
                             onClick={async () => {
                               // Cargar creativos de la campaña
@@ -795,6 +810,134 @@ const AdsManagement = () => {
             loadData(statusFilter, spaceFilter);
           }}
         />
+      )}
+
+      {/* Modal de Vista Previa */}
+      {previewCampaign && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setPreviewCampaign(null)}>
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6 rounded-t-2xl">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-xl font-bold">👁️ Vista Previa del Anuncio</h3>
+                  <p className="text-purple-200 text-sm mt-1">Así se verá en el sitio una vez aprobado</p>
+                </div>
+                <button
+                  onClick={() => setPreviewCampaign(null)}
+                  className="text-white/80 hover:text-white text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            {/* Preview Content */}
+            <div className="p-6 space-y-6">
+              {/* Tipo de Espacio */}
+              <div className="bg-gray-50 rounded-lg p-3 text-center">
+                <span className="text-xs font-semibold text-gray-500 uppercase">Espacio Publicitario</span>
+                <p className="text-lg font-bold text-gray-800">{previewCampaign.ad_spaces?.display_name || 'Sin especificar'}</p>
+              </div>
+
+              {/* Creativo Preview */}
+              {previewCampaign.ad_creatives?.[0] ? (
+                <div className="border-2 border-dashed border-purple-300 rounded-xl overflow-hidden bg-gradient-to-br from-purple-50 to-indigo-50">
+                  <div className="bg-purple-100 px-3 py-1 text-xs text-purple-700 font-semibold">Vista Previa del Creativo</div>
+
+                  {/* Imagen */}
+                  {previewCampaign.ad_creatives[0].image_url ? (
+                    <div className="p-4">
+                      <img
+                        src={previewCampaign.ad_creatives[0].image_url}
+                        alt="Preview"
+                        className="w-full max-h-64 object-contain rounded-lg shadow-md mx-auto"
+                      />
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center text-gray-400">
+                      <Image className="w-16 h-16 mx-auto mb-2 opacity-50" />
+                      <p>Sin imagen cargada</p>
+                    </div>
+                  )}
+
+                  {/* Título y Descripción */}
+                  <div className="p-4 space-y-2 bg-white">
+                    <h4 className="font-bold text-lg text-gray-900">
+                      {previewCampaign.ad_creatives[0].title || 'Sin título'}
+                    </h4>
+                    {previewCampaign.ad_creatives[0].description && (
+                      <p className="text-gray-600 text-sm">
+                        {previewCampaign.ad_creatives[0].description}
+                      </p>
+                    )}
+
+                    {/* CTA Button Preview */}
+                    {previewCampaign.ad_creatives[0].cta_text && (
+                      <button className="mt-3 bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition inline-flex items-center gap-2">
+                        {previewCampaign.ad_creatives[0].cta_text}
+                        <span className="text-xs opacity-70">→</span>
+                      </button>
+                    )}
+
+                    {/* URL destino */}
+                    {previewCampaign.ad_creatives[0].cta_url && (
+                      <p className="text-xs text-gray-400 mt-2 truncate">
+                        🔗 {previewCampaign.ad_creatives[0].cta_url}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
+                  <AlertCircle className="w-12 h-12 mx-auto text-yellow-500 mb-2" />
+                  <p className="text-gray-600 font-semibold">Sin creativos</p>
+                  <p className="text-gray-400 text-sm">Esta campaña no tiene imágenes o creativos asociados</p>
+                </div>
+              )}
+
+              {/* Info del Anunciante */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-500">Anunciante:</span>
+                    <p className="font-semibold text-gray-800">{previewCampaign.advertiser_name}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Segmentación:</span>
+                    <p className="font-semibold text-gray-800">
+                      {previewCampaign.geographic_scope === 'global' ? '🌍 Global' : `📍 ${previewCampaign.target_location || 'Local'}`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Acciones */}
+              {previewCampaign.status === 'pending_review' && (
+                <div className="flex gap-3 pt-4 border-t">
+                  <button
+                    onClick={() => {
+                      handleApprove(previewCampaign.id);
+                      setPreviewCampaign(null);
+                    }}
+                    className="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition"
+                  >
+                    ✅ Aprobar Campaña
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleReject(previewCampaign.id);
+                      setPreviewCampaign(null);
+                    }}
+                    className="flex-1 bg-red-100 text-red-600 py-3 rounded-xl font-bold hover:bg-red-200 transition"
+                  >
+                    ❌ Rechazar
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

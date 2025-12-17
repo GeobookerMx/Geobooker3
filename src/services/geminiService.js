@@ -44,7 +44,13 @@ Geobooker es el directorio de negocios locales #1 en México. Ayudamos a las per
 - Banner Principal: desde $999 MXN/semana
 - Resultados Patrocinados: desde $499 MXN/semana
 - Carrusel Destacados: desde $799 MXN/semana
-- Pago con tarjeta o en efectivo (OXXO, 7-Eleven)
+- Pago con tarjeta o transferencia (NO efectivo)
+
+**Publicidad Enterprise (Empresas Grandes):**
+- 🌍 Campañas globales para marcas internacionales
+- 🏆 Ideal para eventos: FIFA 2026, Super Bowl, etc.
+- 💰 PROMOCIÓN 50% OFF: Desde $1,250 USD/mes
+- 📧 Cotizaciones: ventasgeobooker@gmail.com o geobooker.com.mx/enterprise
 
 ## CÓMO REGISTRAR UN NEGOCIO
 
@@ -145,10 +151,10 @@ export async function sendMessageToGemini(userMessage, conversationHistory = [])
             body: JSON.stringify({
                 contents,
                 generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 500,
-                    topP: 0.9,
-                    topK: 40
+                    temperature: 0.6, // Más consistente
+                    maxOutputTokens: 350, // Más conciso y rápido
+                    topP: 0.85,
+                    topK: 35
                 },
                 safetySettings: [
                     { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },

@@ -52,6 +52,10 @@ import GuiaResicoPage from "./pages/GuiaResicoPage.jsx";
 // Business Profile
 import BusinessProfilePage from "./pages/BusinessProfilePage.jsx";
 
+// Enterprise / Global Ads
+import EnterpriseLanding from "./pages/enterprise/EnterpriseLanding.jsx";
+import EnterpriseContact from "./pages/enterprise/EnterpriseContact.jsx";
+
 export default function AppRouter() {
   return (
     <Routes>
@@ -81,6 +85,10 @@ export default function AppRouter() {
 
         {/* Guía para darse de alta en el SAT como RESICO */}
         <Route path="/guia-resico" element={<GuiaResicoPage />} />
+
+        {/* Enterprise / Global Ads */}
+        <Route path="/enterprise" element={<EnterpriseLanding />} />
+        <Route path="/enterprise/contact" element={<EnterpriseContact />} />
 
         {/* Perfil público de negocio */}
         <Route path="/business" element={<Navigate to="/" replace />} />

@@ -11,6 +11,12 @@
   --accent: #f3dc2a;
   --light: #ffc3c5;
   --white: #ffffff;
+
+  /* Safe Area Support para PWA iOS */
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
 }
 
 /* --- Estilos Base --- */
@@ -98,4 +104,36 @@ body {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+/* ========================================= */
+/* Safe Area Utilities para PWA Mobile      */
+/* ========================================= */
+
+/* Padding seguro para contenedores principales */
+.safe-area-padding {
+  padding-top: var(--safe-area-inset-top);
+  padding-bottom: var(--safe-area-inset-bottom);
+  padding-left: max(1rem, var(--safe-area-inset-left));
+  padding-right: max(1rem, var(--safe-area-inset-right));
+}
+
+/* Para headers fijos */
+.safe-top {
+  padding-top: calc(0.5rem + var(--safe-area-inset-top));
+}
+
+/* Para navegación fija inferior */
+.safe-bottom {
+  padding-bottom: calc(1rem + var(--safe-area-inset-bottom));
+}
+
+/* Mobile-first container adjustments */
+@media (max-width: 640px) {
+
+  .container,
+  .container-custom {
+    padding-left: max(0.75rem, var(--safe-area-inset-left));
+    padding-right: max(0.75rem, var(--safe-area-inset-right));
+  }
 }

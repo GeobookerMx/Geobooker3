@@ -2,11 +2,17 @@
     "name": "Geobooker",
     "short_name": "Geobooker",
     "description": "Encuentra negocios cerca de ti",
-    "start_url": "/",
+    "start_url": "/?source=pwa",
+    "scope": "/",
     "display": "standalone",
+    "display_override": [
+        "standalone",
+        "minimal-ui"
+    ],
     "background_color": "#ffffff",
     "theme_color": "#5558c4",
     "orientation": "portrait-primary",
+    "prefer_related_applications": false,
     "icons": [
         {
             "src": "/images/geobooker-logo.png",
@@ -19,6 +25,20 @@
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Buscar Negocios",
+            "short_name": "Buscar",
+            "url": "/?action=search",
+            "description": "Buscar negocios cerca de ti"
+        },
+        {
+            "name": "Mi Dashboard",
+            "short_name": "Dashboard",
+            "url": "/dashboard",
+            "description": "Ver mi panel de control"
         }
     ],
     "categories": [

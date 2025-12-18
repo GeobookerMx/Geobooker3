@@ -94,6 +94,9 @@ export default function Header() {
           <Link to="/advertise" className="bg-red-500 text-white px-3 py-1 rounded-lg font-bold hover:bg-red-600 transition-colors flex items-center shadow-lg animate-pulse">
             📢 NUEVO: Publicítate
           </Link>
+          <Link to="/enterprise" className="text-geoPurple hover:text-geoPink transition-colors font-semibold">
+            🌐 Enterprise
+          </Link>
           <Link to="/business/register" className="bg-geoPink text-white px-4 py-2 rounded-full hover:bg-geoPurple transition-colors">+ {t('nav.addBusiness')}</Link>
           <LanguageSelector />
 
@@ -161,6 +164,9 @@ export default function Header() {
           <Link to="/categories" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">{t('nav.categories')}</Link>
           <Link to="/advertise" onClick={() => setIsOpen(false)} className="block text-red-600 font-bold bg-red-50 p-2 rounded">
             📢 NUEVO: Publicítate
+          </Link>
+          <Link to="/enterprise" onClick={() => setIsOpen(false)} className="block text-geoPurple font-semibold hover:text-geoPink">
+            🌐 Enterprise (Global Ads)
           </Link>
           <Link to="/business/register" onClick={() => setIsOpen(false)} className="block bg-geoPink text-white px-4 py-2 rounded-full w-max hover:bg-geoPurple transition">+ {t('nav.addBusiness')}</Link>
 

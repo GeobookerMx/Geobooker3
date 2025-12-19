@@ -68,7 +68,8 @@ const UpgradePage = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     // Use amount instead of priceId for one-time or trials
-                    amount: LAUNCH_CONFIG.launchPrice === 0 ? 100 : LAUNCH_CONFIG.regularPrice * 100, // cents
+                    // Stripe minimum is $10 MXN (1000 centavos)
+                    amount: LAUNCH_CONFIG.launchPrice === 0 ? 1000 : LAUNCH_CONFIG.regularPrice * 100, // cents
                     currency: 'mxn',
                     userId: session.user.id,
                     customerEmail: session.user.email,

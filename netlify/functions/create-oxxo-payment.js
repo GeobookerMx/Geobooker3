@@ -27,6 +27,7 @@ exports.handler = async (event, context) => {
         const {
             amount,           // Monto en MXN (ej: 119 para $119)
             email,            // Email del cliente
+            name,             // Nombre del cliente (requerido por Stripe OXXO)
             productName,      // Nombre del producto (ej: "Hero Banner")
             productId,        // ID del producto/campaña
             userId,           // ID del usuario en Supabase
@@ -80,6 +81,7 @@ exports.handler = async (event, context) => {
                 payment_method_data: {
                     type: 'oxxo',
                     billing_details: {
+                        name: name || email.split('@')[0] || 'Cliente Geobooker',
                         email: email,
                     },
                 },

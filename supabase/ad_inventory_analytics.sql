@@ -195,7 +195,10 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- PART 2: CAMPAIGN ANALYTICS / METRICS
 -- ============================================
 
--- 7. Tabla de métricas de campañas (para reportes)
+-- 7. Drop existing view if it exists (fix for conflict)
+DROP VIEW IF EXISTS ad_campaign_metrics CASCADE;
+
+-- 7b. Tabla de métricas de campañas (para reportes)
 CREATE TABLE IF NOT EXISTS ad_campaign_metrics (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     campaign_id UUID REFERENCES ad_campaigns(id) ON DELETE CASCADE,

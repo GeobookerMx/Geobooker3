@@ -67,14 +67,19 @@ const UpgradePage = () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    priceId: priceId || 'price_1Sc6qYRvtu8q72XsuBdILiPA',
+                    // Use amount instead of priceId for one-time or trials
+                    amount: LAUNCH_CONFIG.launchPrice === 0 ? 100 : LAUNCH_CONFIG.regularPrice * 100, // cents
+                    currency: 'mxn',
                     userId: session.user.id,
                     customerEmail: session.user.email,
                     successUrl: window.location.origin + '/dashboard?success=true',
                     cancelUrl: window.location.origin + '/dashboard/upgrade?canceled=true',
-                    countryCode: 'MX',
-                    mode: 'subscription',
-                    metadata: { type: 'premium_subscription' }
+                    mode: LAUNCH_CONFIG.launchPrice === 0 ? 'payment' : 'subscription',
+                    metadata: {
+                        type: 'premium_subscription',
+                        user_id: session.user.id,
+                        trial_months: LAUNCH_CONFIG.monthsFree
+                    }
                 }),
             });
 
@@ -412,8 +417,8 @@ const UpgradePage = () => {
                         <button
                             onClick={() => setPaymentMethod('card')}
                             className={`w-full p-4 rounded-xl border-2 mb-3 text-left transition-all ${paymentMethod === 'card'
-                                    ? 'border-blue-500 bg-blue-50'
-                                    : 'border-gray-200 hover:border-gray-300'
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-gray-200 hover:border-gray-300'
                                 }`}
                         >
                             <div className="flex items-center gap-3">
@@ -439,8 +444,8 @@ const UpgradePage = () => {
                         <button
                             onClick={() => setPaymentMethod('oxxo')}
                             className={`w-full p-4 rounded-xl border-2 mb-6 text-left transition-all ${paymentMethod === 'oxxo'
-                                    ? 'border-yellow-500 bg-yellow-50'
-                                    : 'border-gray-200 hover:border-gray-300'
+                                ? 'border-yellow-500 bg-yellow-50'
+                                : 'border-gray-200 hover:border-gray-300'
                                 }`}
                         >
                             <div className="flex items-center gap-3">

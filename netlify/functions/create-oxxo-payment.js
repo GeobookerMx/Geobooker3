@@ -81,7 +81,8 @@ exports.handler = async (event, context) => {
                 payment_method_data: {
                     type: 'oxxo',
                     billing_details: {
-                        name: name || email.split('@')[0] || 'Cliente Geobooker',
+                        // Stripe requires first AND last name, minimum 2 chars each
+                        name: name || 'Cliente Geobooker',
                         email: email,
                     },
                 },

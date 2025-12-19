@@ -86,6 +86,7 @@ export default function EnterpriseCheckout() {
         ctaText: 'Learn More',
         ctaUrl: 'https://',
         imageUrl: '',
+        isVideo: false,
 
         // Language for creative
         creativeLanguage: 'en'
@@ -140,22 +141,44 @@ export default function EnterpriseCheckout() {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        if (file.size > 5 * 1024 * 1024) {
-            toast.error('Image must be under 5MB');
+        // Check file type
+        const isVideo = file.type.startsWith('video/');
+        const isImage = file.type.startsWith('image/');
+
+        if (!isImage && !isVideo) {
+            toast.error('Please upload an image or video file');
+            return;
+        }
+
+        // Size limits: 5MB for images, 50MB for videos
+        const maxSize = isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+            toast.error(`File must be under ${isVideo ? '50MB' : '5MB'}`);
             return;
         }
 
         setUploading(true);
         try {
-            const filePath = `enterprise/${Date.now()}_${file.name}`;
-            const { error } = await supabase.storage.from('ad-creatives').upload(filePath, file);
+            // Clean filename and create path
+            const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+            const filePath = `enterprise/${Date.now()}_${cleanName}`;
+
+            const { error } = await supabase.storage
+                .from('ad-creatives')
+                .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+
             if (error) throw error;
 
             const { data: { publicUrl } } = supabase.storage.from('ad-creatives').getPublicUrl(filePath);
             handleChange('imageUrl', publicUrl);
-            toast.success('Image uploaded');
+            handleChange('isVideo', isVideo);
+            toast.success(`${isVideo ? 'Video' : 'Image'} uploaded successfully`);
         } catch (error) {
-            toast.error('Upload failed: ' + error.message);
+            console.error('Upload error:', error);
+            toast.error('Upload failed. Please try again or use a different file.');
         } finally {
             setUploading(false);
         }
@@ -270,8 +293,8 @@ export default function EnterpriseCheckout() {
                     {['Plan', 'Targeting', 'Creative', 'Payment'].map((label, i) => (
                         <div key={label} className="flex-1 text-center">
                             <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center mb-2 ${step > i + 1 ? 'bg-green-500 text-white' :
-                                    step === i + 1 ? 'bg-amber-500 text-white' :
-                                        'bg-gray-700 text-gray-400'
+                                step === i + 1 ? 'bg-amber-500 text-white' :
+                                    'bg-gray-700 text-gray-400'
                                 }`}>
                                 {step > i + 1 ? <Check className="w-4 h-4" /> : i + 1}
                             </div>
@@ -296,8 +319,8 @@ export default function EnterpriseCheckout() {
                                         key={plan.code}
                                         onClick={() => handleChange('selectedPlan', plan.code)}
                                         className={`p-5 rounded-xl border-2 text-left transition-all ${form.selectedPlan === plan.code
-                                                ? 'border-amber-500 bg-amber-500/10'
-                                                : 'border-gray-700 hover:border-gray-600'
+                                            ? 'border-amber-500 bg-amber-500/10'
+                                            : 'border-gray-700 hover:border-gray-600'
                                             }`}
                                     >
                                         <div className="flex justify-between items-start mb-3">
@@ -406,8 +429,8 @@ export default function EnterpriseCheckout() {
                                             key={country.code}
                                             onClick={() => toggleCountry(country.code)}
                                             className={`px-4 py-2 rounded-full text-sm transition-all ${form.targetCountries.includes(country.code)
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                                ? 'bg-blue-600 text-white'
+                                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                                                 }`}
                                         >
                                             {country.name}
@@ -442,8 +465,8 @@ export default function EnterpriseCheckout() {
                                                                 form.targetCities.length >= (selectedPlanData?.cities_included || 1)
                                                             }
                                                             className={`px-3 py-1.5 rounded-lg text-sm transition-all ${form.targetCities.includes(city)
-                                                                    ? 'bg-amber-500 text-white'
-                                                                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed'
+                                                                ? 'bg-amber-500 text-white'
+                                                                : 'bg-gray-800 text-gray-400 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed'
                                                                 }`}
                                                         >
                                                             <MapPin className="w-3 h-3 inline mr-1" />
@@ -563,13 +586,17 @@ export default function EnterpriseCheckout() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm text-gray-400 mb-1">Image</label>
+                                        <label className="block text-sm text-gray-400 mb-1">Image or Video</label>
                                         <div className="border-2 border-dashed border-gray-700 rounded-lg p-6 text-center">
                                             {form.imageUrl ? (
                                                 <div className="relative">
-                                                    <img src={form.imageUrl} alt="Preview" className="max-h-32 mx-auto rounded" />
+                                                    {form.isVideo ? (
+                                                        <video src={form.imageUrl} className="max-h-32 mx-auto rounded" controls muted />
+                                                    ) : (
+                                                        <img src={form.imageUrl} alt="Preview" className="max-h-32 mx-auto rounded" />
+                                                    )}
                                                     <button
-                                                        onClick={() => handleChange('imageUrl', '')}
+                                                        onClick={() => { handleChange('imageUrl', ''); handleChange('isVideo', false); }}
                                                         className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
                                                     >
                                                         ×
@@ -580,9 +607,9 @@ export default function EnterpriseCheckout() {
                                             ) : (
                                                 <label className="cursor-pointer">
                                                     <Upload className="w-8 h-8 mx-auto text-gray-500 mb-2" />
-                                                    <span className="text-amber-500 hover:underline">Upload image</span>
-                                                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                                                    <p className="text-xs text-gray-500 mt-1">JPG, PNG, WebP • Max 5MB</p>
+                                                    <span className="text-amber-500 hover:underline">Upload image or video</span>
+                                                    <input type="file" accept="image/*,video/mp4,video/webm,video/mov" onChange={handleImageUpload} className="hidden" />
+                                                    <p className="text-xs text-gray-500 mt-1">JPG, PNG, WebP, GIF, MP4, WebM • Max 5MB images / 50MB videos</p>
                                                 </label>
                                             )}
                                         </div>
@@ -594,7 +621,11 @@ export default function EnterpriseCheckout() {
                                     <p className="text-xs text-gray-500 mb-2">Ad Preview</p>
                                     <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                                         {form.imageUrl ? (
-                                            <img src={form.imageUrl} alt="Preview" className="w-full h-40 object-cover" />
+                                            form.isVideo ? (
+                                                <video src={form.imageUrl} className="w-full h-40 object-cover" muted loop autoPlay />
+                                            ) : (
+                                                <img src={form.imageUrl} alt="Preview" className="w-full h-40 object-cover" />
+                                            )
                                         ) : (
                                             <div className="w-full h-40 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
                                                 <ImageIcon className="w-12 h-12 text-gray-300" />

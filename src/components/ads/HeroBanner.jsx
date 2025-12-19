@@ -127,16 +127,16 @@ export default function HeroBanner() {
                     </span>
 
                     {/* Indicadores de rotación (si hay múltiples campañas) */}
-                    {campaigns.length > 1 && (
+                    {activeCampaigns.length > 1 && (
                         <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                            {campaigns.map((_, index) => (
+                            {activeCampaigns.map((_, index) => (
                                 <button
                                     key={index}
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        goToCampaign(index);
+                                        setEnterpriseIndex(index);
                                     }}
-                                    className={`w-2 h-2 rounded-full transition-all ${index === currentIndex
+                                    className={`w-2 h-2 rounded-full transition-all ${index === enterpriseIndex
                                         ? 'bg-white w-6'
                                         : 'bg-white/50 hover:bg-white/75'
                                         }`}

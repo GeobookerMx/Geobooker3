@@ -279,9 +279,46 @@ export default function EnterpriseCheckout() {
         }
 
         setLoading(true);
-        const toastId = toast.loading('Creating your campaign...');
+        const toastId = toast.loading('Checking availability...');
 
         try {
+            // 0. Validate slot availability before proceeding
+            const adLevel = selectedPlanData?.cities_included > 5 ? 'global' :
+                selectedPlanData?.countries_included > 1 ? 'regional' : 'city';
+
+            const startDate = form.startDate || new Date().toISOString().split('T')[0];
+            const endDate = new Date(new Date(startDate).setMonth(
+                new Date(startDate).getMonth() + (selectedPlanData?.duration_months || 1)
+            )).toISOString().split('T')[0];
+
+            // Check availability for each target location
+            for (const location of form.targetCountries) {
+                const { data: availability, error: availError } = await supabase.rpc(
+                    'check_ad_availability',
+                    {
+                        p_level: adLevel === 'global' ? 'global' : 'country',
+                        p_location_code: location,
+                        p_category_code: form.category || 'other',
+                        p_start_date: startDate,
+                        p_end_date: endDate
+                    }
+                );
+
+                if (!availError && availability && !availability.available) {
+                    toast.dismiss(toastId);
+                    setLoading(false);
+
+                    if (!availability.category_available) {
+                        toast.error(`Sorry, we already have 3 ads in your category for ${location}. Try different dates or locations.`);
+                    } else {
+                        toast.error(`Sorry, all ${availability.max_slots} slots are full for ${location}. Try different dates.`);
+                    }
+                    return;
+                }
+            }
+
+            toast.loading('Creating your campaign...', { id: toastId });
+
             // 1. Create enterprise campaign in database
             const { data: campaign, error: campaignError } = await supabase
                 .from('ad_campaigns')
@@ -289,6 +326,8 @@ export default function EnterpriseCheckout() {
                     advertiser_name: form.companyName,
                     advertiser_email: form.contactEmail,
                     campaign_type: selectedPlanData?.cities_included > 5 ? 'global' : 'regional',
+                    ad_level: adLevel,
+                    category_code: form.category || 'other',
                     target_cities: form.targetCities,
                     target_countries: form.targetCountries,
                     billing_country: form.billingCountry,
@@ -297,7 +336,14 @@ export default function EnterpriseCheckout() {
                     total_budget: selectedPlanData?.current_price_usd || 0,
                     currency: 'USD',
                     status: 'draft',
-                    start_date: form.startDate || new Date().toISOString().split('T')[0],
+                    start_date: startDate,
+                    end_date: endDate,
+                    // Creative fields
+                    headline: form.headline,
+                    description: form.description,
+                    cta_text: form.ctaText,
+                    cta_url: form.ctaUrl,
+                    creative_url: form.imageUrl,
                     multi_language_creatives: {
                         [form.creativeLanguage]: {
                             headline: form.headline,
@@ -312,6 +358,13 @@ export default function EnterpriseCheckout() {
                 .single();
 
             if (campaignError) throw campaignError;
+
+            // 1b. Notify admin via email (async, non-blocking)
+            fetch('/.netlify/functions/notify-admin-campaign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ campaign })
+            }).catch(err => console.warn('Admin notification failed:', err));
 
             // 2. Create Stripe checkout session
             const stripe = await stripePromise;
@@ -424,16 +477,32 @@ export default function EnterpriseCheckout() {
                                                     {formatPrice(plan.regular_price_usd)}
                                                 </span>
                                             )}
-                                            <span className="text-2xl font-bold text-white">
-                                                {formatPrice(plan.current_price_usd)}
-                                            </span>
-                                            <span className="text-gray-400 text-sm"> USD</span>
+                                            <div className="flex flex-col">
+                                                <div>
+                                                    <span className="text-2xl font-bold text-white">
+                                                        {formatPrice(plan.current_price_usd)}
+                                                    </span>
+                                                    <span className="text-gray-400 text-sm"> total</span>
+                                                </div>
+                                                <span className="text-emerald-400 text-sm">
+                                                    ≈ {formatPrice(Math.round(plan.current_price_usd / plan.duration_months))}/month
+                                                </span>
+                                            </div>
                                         </div>
 
                                         <div className="text-sm text-gray-400">
-                                            {plan.cities_included === 999 ? 'Unlimited cities' : `${plan.cities_included} ${plan.cities_included === 1 ? 'city' : 'cities'}`}
+                                            {plan.countries_included === 999
+                                                ? '🌍 All countries'
+                                                : `📍 ${plan.countries_included} ${plan.countries_included === 1 ? 'country' : 'countries'}`}
+                                            {' • '}
+                                            {plan.cities_included === 999
+                                                ? 'Unlimited cities'
+                                                : `${plan.cities_included} ${plan.cities_included === 1 ? 'city' : 'cities'}`}
                                             {' • '}{plan.duration_months} {plan.duration_months === 1 ? 'month' : 'months'}
                                         </div>
+                                        {plan.description && (
+                                            <div className="text-xs text-gray-500 mt-2">{plan.description}</div>
+                                        )}
                                     </button>
                                 ))}
                             </div>

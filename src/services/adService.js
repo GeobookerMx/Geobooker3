@@ -74,6 +74,73 @@ export async function loadActiveCampaigns(spaceName, context = {}) {
 }
 
 /**
+ * Load Enterprise ad campaigns with geographic targeting
+ * @param {Object} context - User context { country, city }
+ * @returns {Promise<Array>} - Filtered campaigns sorted by priority
+ */
+export async function loadEnterpriseCampaigns(context = {}) {
+    try {
+        const { country = null, city = null } = context;
+        const today = new Date().toISOString().split('T')[0];
+
+        // Query active Enterprise campaigns
+        const { data, error } = await supabase
+            .from('ad_campaigns')
+            .select('*')
+            .eq('status', 'active')
+            .lte('start_date', today)
+            .or(`end_date.gte.${today},end_date.is.null`);
+
+        if (error) throw error;
+
+        // Filter by user location
+        const filtered = (data || []).filter(campaign => {
+            // Global ads show everywhere
+            if (campaign.ad_level === 'global') return true;
+
+            // Country-level ads
+            if (country && campaign.target_countries?.includes(country)) return true;
+
+            // City-level ads (fuzzy match)
+            if (city && campaign.target_cities?.some(targetCity =>
+                targetCity.toLowerCase().includes(city.toLowerCase()) ||
+                city.toLowerCase().includes(targetCity.toLowerCase())
+            )) return true;
+
+            return false;
+        });
+
+        // Sort by priority: global first, then country, then city
+        const sorted = filtered.sort((a, b) => {
+            const priority = { global: 1, country: 2, region: 3, city: 4 };
+            return (priority[a.ad_level] || 5) - (priority[b.ad_level] || 5);
+        });
+
+        // Transform to ad component format
+        return sorted.map(campaign => ({
+            id: campaign.id,
+            advertiser_name: campaign.advertiser_name,
+            ad_level: campaign.ad_level,
+            ad_creatives: [{
+                id: campaign.id,
+                title: campaign.headline || campaign.advertiser_name,
+                description: campaign.description,
+                image_url: campaign.creative_url || campaign.image_url,
+                is_video: campaign.creative_url?.match(/\.(mp4|webm|mov)$/i),
+                cta_url: campaign.cta_url,
+                cta_text: campaign.cta_text || 'Learn More'
+            }],
+            target_countries: campaign.target_countries,
+            target_cities: campaign.target_cities
+        }));
+
+    } catch (error) {
+        console.error('Error loading Enterprise campaigns:', error);
+        return [];
+    }
+}
+
+/**
  * Registrar una impresión de anuncio
  * @param {string} campaignId - ID de la campaña
  */

@@ -56,6 +56,7 @@ const Sidebar = ({ onLogout }) => {
         { path: '/admin/businesses', icon: Store, label: 'Negocios', badge: pendingBusinesses, badgeColor: 'yellow' },
         { path: '/admin/users', icon: Users, label: 'Usuarios' },
         { path: '/admin/ads', icon: TrendingUp, label: '🚀 Geobooker Ads', badge: pendingCampaigns, badgeColor: 'red' },
+        { path: '/admin/inventory', icon: BarChart3, label: '📦 Ad Inventory' },
         { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
         { path: '/admin/revenue', icon: DollarSign, label: 'Ingresos' },
         { path: '/admin/settings', icon: Settings, label: 'Configuración' },

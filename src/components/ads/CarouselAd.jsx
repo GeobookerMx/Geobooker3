@@ -1,18 +1,19 @@
 // src/components/ads/CarouselAd.jsx
 import React, { useRef } from 'react';
 import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
-import useActiveCampaigns from '../../hooks/useActiveCampaigns';
+import useEnterprisePriorityCampaigns from '../../hooks/useEnterprisePriorityCampaigns';
 import useAdTracking from '../../hooks/useAdTracking';
 
 /**
  * Carrusel de negocios destacados (Primera Plana)
  * Ubicación: Antes de los resultados de búsqueda
  * Formato: Cards 280x200px en scroll horizontal
+ * PRIORITY: Enterprise first, Local fallback
  */
 export default function CarouselAd() {
     const scrollRef = useRef(null);
 
-    const { campaigns, hasCampaigns, loading } = useActiveCampaigns('featured_carousel', {
+    const { campaigns, hasCampaigns, loading, hasEnterprise } = useEnterprisePriorityCampaigns('featured_carousel', {
         autoRotate: false // Scroll manual por el usuario
     });
 

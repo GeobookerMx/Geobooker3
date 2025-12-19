@@ -1,10 +1,11 @@
 // src/components/ads/SponsoredResultCard.jsx
+// PRIORITY: Enterprise first, Local fallback
 import React from 'react';
-import useActiveCampaigns from '../../hooks/useActiveCampaigns';
+import useEnterprisePriorityCampaigns from '../../hooks/useEnterprisePriorityCampaigns';
 import { ExternalLink, MapPin } from 'lucide-react';
 
 export default function SponsoredResultCard({ context }) {
-    const { currentCampaign, hasCampaigns } = useActiveCampaigns('sponsored_results', context);
+    const { currentCampaign, hasCampaigns, hasEnterprise } = useEnterprisePriorityCampaigns('sponsored_results', context);
 
     if (!hasCampaigns || !currentCampaign) return null;
 

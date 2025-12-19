@@ -195,8 +195,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- PART 2: CAMPAIGN ANALYTICS / METRICS
 -- ============================================
 
--- 7. Drop existing view if it exists (fix for conflict)
-DROP VIEW IF EXISTS ad_campaign_metrics CASCADE;
+-- 7. Drop existing table if it exists (fix for conflict)
+DROP TABLE IF EXISTS ad_campaign_metrics CASCADE;
 
 -- 7b. Tabla de métricas de campañas (para reportes)
 CREATE TABLE IF NOT EXISTS ad_campaign_metrics (
@@ -376,6 +376,10 @@ ALTER TABLE ad_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ad_campaign_metrics ENABLE ROW LEVEL SECURITY;
 
 -- Everyone can read inventory and categories
+DROP POLICY IF EXISTS "Public read inventory" ON ad_inventory_slots;
+DROP POLICY IF EXISTS "Public read categories" ON ad_categories;
+DROP POLICY IF EXISTS "Users read own campaign metrics" ON ad_campaign_metrics;
+
 CREATE POLICY "Public read inventory" ON ad_inventory_slots FOR SELECT USING (true);
 CREATE POLICY "Public read categories" ON ad_categories FOR SELECT USING (true);
 

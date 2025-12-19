@@ -1,25 +1,59 @@
 // src/components/ads/HeroBanner.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import useActiveCampaigns from '../../hooks/useActiveCampaigns';
 import useAdTracking from '../../hooks/useAdTracking';
+import { loadEnterpriseCampaigns } from '../../services/adService';
 
 /**
  * Banner principal de publicidad (Primera Plana)
  * Ubicación: Debajo del SearchBar en HomePage
- * Tamaño: 728x90 (Desktop), 320x100 (Mobile)
+ * Muestra: Enterprise campaigns + regular campaigns con rotación
  */
 export default function HeroBanner() {
+    const [enterpriseCampaigns, setEnterpriseCampaigns] = useState([]);
+    const [enterpriseIndex, setEnterpriseIndex] = useState(0);
+
+    // Load Enterprise campaigns with geo-targeting
+    useEffect(() => {
+        const loadEnterprise = async () => {
+            const country = localStorage.getItem('userCountry') || 'unknown';
+            const city = localStorage.getItem('userCity') || 'unknown';
+
+            const campaigns = await loadEnterpriseCampaigns({ country, city });
+            setEnterpriseCampaigns(campaigns);
+        };
+        loadEnterprise();
+    }, []);
+
+    // Regular campaigns from ad_spaces (local)
     const {
-        currentCampaign,
-        hasCampaigns,
+        currentCampaign: regularCampaign,
+        hasCampaigns: hasRegular,
         loading,
         currentIndex,
-        campaigns,
+        campaigns: regularCampaigns,
         goToCampaign
     } = useActiveCampaigns('hero_banner', {
         autoRotate: true,
         rotationInterval: 10000 // 10 segundos
     });
+
+    // PRIORITY LOGIC: Enterprise first, local ONLY as fallback
+    // If Enterprise campaigns exist, only show those
+    // If NO Enterprise campaigns, then show local
+    const hasEnterprise = enterpriseCampaigns.length > 0;
+    const activeCampaigns = hasEnterprise ? enterpriseCampaigns : regularCampaigns;
+    const currentCampaign = activeCampaigns[enterpriseIndex] || regularCampaign;
+    const hasCampaigns = activeCampaigns.length > 0 || hasRegular;
+
+    // Rotate through active campaigns
+    useEffect(() => {
+        if (activeCampaigns.length <= 1) return;
+        const interval = setInterval(() => {
+            setEnterpriseIndex(prev => (prev + 1) % activeCampaigns.length);
+        }, hasEnterprise ? 8000 : 10000); // Enterprise: 8s, Local: 10s
+        return () => clearInterval(interval);
+    }, [activeCampaigns.length, hasEnterprise]);
 
     const { trackClick } = useAdTracking(
         currentCampaign?.id,
@@ -103,8 +137,8 @@ export default function HeroBanner() {
                                         goToCampaign(index);
                                     }}
                                     className={`w-2 h-2 rounded-full transition-all ${index === currentIndex
-                                            ? 'bg-white w-6'
-                                            : 'bg-white/50 hover:bg-white/75'
+                                        ? 'bg-white w-6'
+                                        : 'bg-white/50 hover:bg-white/75'
                                         }`}
                                     aria-label={`Ver anuncio ${index + 1}`}
                                 />

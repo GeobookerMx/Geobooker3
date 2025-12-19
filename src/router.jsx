@@ -58,6 +58,7 @@ import EnterpriseLanding from "./pages/enterprise/EnterpriseLanding.jsx";
 import EnterpriseContact from "./pages/enterprise/EnterpriseContact.jsx";
 import EnterpriseCheckout from "./pages/enterprise/EnterpriseCheckout.jsx";
 import EnterpriseSuccess from "./pages/enterprise/EnterpriseSuccess.jsx";
+import AdvertiserDashboard from "./pages/advertiser/AdvertiserDashboard.jsx";
 
 export default function AppRouter() {
   return (
@@ -94,6 +95,9 @@ export default function AppRouter() {
         <Route path="/enterprise/contact" element={<EnterpriseContact />} />
         <Route path="/enterprise/checkout" element={<EnterpriseCheckout />} />
         <Route path="/enterprise/success" element={<EnterpriseSuccess />} />
+
+        {/* Advertiser Dashboard */}
+        <Route path="/advertiser/dashboard" element={<AdvertiserDashboard />} />
 
         {/* Perfil público de negocio */}
         <Route path="/business" element={<Navigate to="/" replace />} />

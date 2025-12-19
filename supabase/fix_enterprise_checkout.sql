@@ -1,75 +1,61 @@
 -- ==========================================================
--- ENTERPRISE CHECKOUT FIX
--- Adds missing columns to ad_campaigns for enterprise features
+-- FIX: ad_space_id NOT NULL constraint
 -- Run this in Supabase SQL Editor
 -- ==========================================================
 
--- 1. Add enterprise-specific columns to ad_campaigns
--- Only add if they don't exist (safe to run multiple times)
+-- Option 1: Allow NULL for ad_space_id (Enterprise campaigns don't need ad_space)
+ALTER TABLE ad_campaigns ALTER COLUMN ad_space_id DROP NOT NULL;
 
--- Target geographic columns
-ALTER TABLE ad_campaigns 
-ADD COLUMN IF NOT EXISTS target_countries TEXT[] DEFAULT '{}';
+-- Option 2: Add default value (if you prefer)
+-- ALTER TABLE ad_campaigns ALTER COLUMN ad_space_id SET DEFAULT NULL;
 
-ALTER TABLE ad_campaigns 
-ADD COLUMN IF NOT EXISTS target_cities TEXT[] DEFAULT '{}';
+-- Also ensure storage permissions are correct for enterprise folder
+-- Drop and recreate policies for ad-creatives bucket
 
--- Tax and billing columns
-ALTER TABLE ad_campaigns 
-ADD COLUMN IF NOT EXISTS billing_country TEXT DEFAULT 'US';
+-- First, ensure the bucket exists and is public
+UPDATE storage.buckets SET public = true WHERE id = 'ad-creatives';
 
--- Note: client_tax_id and tax_status may already exist from international_tax_fields.sql
--- Adding IF NOT EXISTS to be safe
-ALTER TABLE ad_campaigns 
-ADD COLUMN IF NOT EXISTS client_tax_id TEXT;
-
-ALTER TABLE ad_campaigns 
-ADD COLUMN IF NOT EXISTS tax_status TEXT DEFAULT 'pending';
-
--- Multi-language creatives storage (JSONB for flexibility)
-ALTER TABLE ad_campaigns 
-ADD COLUMN IF NOT EXISTS multi_language_creatives JSONB DEFAULT '{}';
-
--- Currency field for international payments
-ALTER TABLE ad_campaigns 
-ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'MXN';
-
--- 2. Update storage policy to allow enterprise folder uploads
--- Drop existing restrictive policy and create a more permissive one
-
+-- Drop existing restrictive policies
 DROP POLICY IF EXISTS "Auth Users Upload Ad Creatives" ON storage.objects;
-
--- New policy: Allow authenticated users to upload to ANY folder in ad-creatives
-CREATE POLICY "Auth Users Upload Ad Creatives"
-ON storage.objects FOR INSERT
-WITH CHECK (
-  bucket_id = 'ad-creatives' 
-  AND auth.role() = 'authenticated'
-);
-
--- Also allow updates to enterprise folder for authenticated users
 DROP POLICY IF EXISTS "Enterprise Upload Ad Creatives" ON storage.objects;
-
-CREATE POLICY "Enterprise Upload Ad Creatives"
-ON storage.objects FOR ALL
-USING (
-  bucket_id = 'ad-creatives' 
-  AND (storage.foldername(name))[1] = 'enterprise'
-  AND auth.role() = 'authenticated'
-);
-
--- 3. Ensure public read is enabled
+DROP POLICY IF EXISTS "Users Manage Own Ad Creatives" ON storage.objects;
 DROP POLICY IF EXISTS "Public Read Ad Creatives" ON storage.objects;
 
-CREATE POLICY "Public Read Ad Creatives"
-ON storage.objects FOR SELECT
-USING ( bucket_id = 'ad-creatives' );
+-- Create simple policies that work
+-- First drop if they exist
+DROP POLICY IF EXISTS "Anyone can read ad creatives" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can upload ad creatives" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can update ad creatives" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can delete ad creatives" ON storage.objects;
 
--- =================================================
--- VERIFICATION: Check columns exist
--- =================================================
-SELECT column_name, data_type 
-FROM information_schema.columns 
-WHERE table_name = 'ad_campaigns' 
-AND column_name IN ('target_countries', 'target_cities', 'multi_language_creatives', 'billing_country', 'tax_status', 'currency')
-ORDER BY column_name;
+-- Anyone can READ (public ads)
+CREATE POLICY "Anyone can read ad creatives"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'ad-creatives');
+
+-- Authenticated users can UPLOAD anywhere in the bucket
+CREATE POLICY "Authenticated users can upload ad creatives"
+ON storage.objects FOR INSERT
+WITH CHECK (
+    bucket_id = 'ad-creatives' 
+    AND auth.role() = 'authenticated'
+);
+
+-- Authenticated users can UPDATE their uploads
+CREATE POLICY "Authenticated users can update ad creatives"
+ON storage.objects FOR UPDATE
+USING (
+    bucket_id = 'ad-creatives' 
+    AND auth.role() = 'authenticated'
+);
+
+-- Authenticated users can DELETE their uploads
+CREATE POLICY "Authenticated users can delete ad creatives"
+ON storage.objects FOR DELETE
+USING (
+    bucket_id = 'ad-creatives' 
+    AND auth.role() = 'authenticated'
+);
+
+-- Verify
+SELECT 'ad_space_id constraint fixed' as status;

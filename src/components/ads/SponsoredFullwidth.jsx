@@ -1,10 +1,11 @@
 // src/components/ads/SponsoredFullwidth.jsx
+// PRIORITY: Enterprise first, Local fallback
 import React from 'react';
-import useActiveCampaigns from '../../hooks/useActiveCampaigns';
+import useEnterprisePriorityCampaigns from '../../hooks/useEnterprisePriorityCampaigns';
 import { ExternalLink, Star } from 'lucide-react';
 
 export default function SponsoredFullwidth({ context }) {
-    const { currentCampaign, hasCampaigns } = useActiveCampaigns('sponsored_results_fullwidth', context);
+    const { currentCampaign, hasCampaigns, hasEnterprise } = useEnterprisePriorityCampaigns('sponsored_results_fullwidth', context);
 
     if (!hasCampaigns || !currentCampaign) return null;
 

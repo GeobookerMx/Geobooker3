@@ -101,12 +101,53 @@ export default function EnterpriseCheckout() {
                 setPricing(data || []);
             } catch (e) {
                 console.error('Error loading pricing:', e);
-                // Fallback pricing
+                // Fallback pricing - PRICES ARE TOTAL (not per month)
+                // With 50% launch discount applied
                 setPricing([
-                    { code: 'city_pack', name: 'City Pack', current_price_usd: 1250, regular_price_usd: 2500, discount_percent: 50, cities_included: 1, duration_months: 1 },
-                    { code: 'regional', name: 'Regional Pack', current_price_usd: 7500, regular_price_usd: 15000, discount_percent: 50, cities_included: 5, duration_months: 3 },
-                    { code: 'national', name: 'National Coverage', current_price_usd: 17500, regular_price_usd: 35000, discount_percent: 50, cities_included: 999, duration_months: 3 },
-                    { code: 'global_event', name: 'Global Event', current_price_usd: 25000, regular_price_usd: 50000, discount_percent: 50, cities_included: 999, duration_months: 3 }
+                    {
+                        code: 'city_pack',
+                        name: 'City Pack',
+                        current_price_usd: 1250,      // Total for 1 month
+                        regular_price_usd: 2500,
+                        discount_percent: 50,
+                        cities_included: 1,
+                        countries_included: 1,
+                        duration_months: 1,
+                        description: '1 city, 1 month'
+                    },
+                    {
+                        code: 'regional',
+                        name: 'Regional Pack',
+                        current_price_usd: 5000,      // Total for 3 months (~$1,666/mo)
+                        regular_price_usd: 10000,
+                        discount_percent: 50,
+                        cities_included: 5,
+                        countries_included: 2,
+                        duration_months: 3,
+                        description: 'Up to 5 cities in 2 countries, 3 months'
+                    },
+                    {
+                        code: 'national',
+                        name: 'National Coverage',
+                        current_price_usd: 10000,     // Total for 3 months (~$3,333/mo)
+                        regular_price_usd: 20000,
+                        discount_percent: 50,
+                        cities_included: 999,         // All cities
+                        countries_included: 1,        // But only 1 country
+                        duration_months: 3,
+                        description: 'All cities in 1 country, 3 months'
+                    },
+                    {
+                        code: 'global_event',
+                        name: 'Global Event',
+                        current_price_usd: 25000,     // Total for 3 months (~$8,333/mo)
+                        regular_price_usd: 50000,
+                        discount_percent: 50,
+                        cities_included: 999,
+                        countries_included: 999,
+                        duration_months: 3,
+                        description: 'Unlimited - All countries, all cities, 3 months'
+                    }
                 ]);
             }
         };
@@ -115,26 +156,49 @@ export default function EnterpriseCheckout() {
 
     const selectedPlanData = pricing.find(p => p.code === form.selectedPlan);
 
+    // Plan limits - use countries_included from plan data
+    const getMaxCountries = () => {
+        return selectedPlanData?.countries_included || 1;
+    };
+
     const handleChange = (field, value) => {
         setForm(prev => ({ ...prev, [field]: value }));
     };
 
     const toggleCity = (city) => {
-        setForm(prev => ({
-            ...prev,
-            targetCities: prev.targetCities.includes(city)
-                ? prev.targetCities.filter(c => c !== city)
-                : [...prev.targetCities, city]
-        }));
+        const maxCities = selectedPlanData?.cities_included || 1;
+        setForm(prev => {
+            if (prev.targetCities.includes(city)) {
+                return { ...prev, targetCities: prev.targetCities.filter(c => c !== city) };
+            }
+            // Check limit before adding
+            if (maxCities !== 999 && prev.targetCities.length >= maxCities) {
+                toast.error(`Your plan includes max ${maxCities} cities`);
+                return prev;
+            }
+            return { ...prev, targetCities: [...prev.targetCities, city] };
+        });
     };
 
     const toggleCountry = (code) => {
-        setForm(prev => ({
-            ...prev,
-            targetCountries: prev.targetCountries.includes(code)
-                ? prev.targetCountries.filter(c => c !== code)
-                : [...prev.targetCountries, code]
-        }));
+        const maxCountries = getMaxCountries();
+        setForm(prev => {
+            if (prev.targetCountries.includes(code)) {
+                // Also remove cities from this country
+                const citiesToRemove = MAJOR_CITIES[code] || [];
+                return {
+                    ...prev,
+                    targetCountries: prev.targetCountries.filter(c => c !== code),
+                    targetCities: prev.targetCities.filter(c => !citiesToRemove.includes(c))
+                };
+            }
+            // Check limit before adding
+            if (maxCountries !== 999 && prev.targetCountries.length >= maxCountries) {
+                toast.error(`Your plan allows max ${maxCountries} ${maxCountries === 1 ? 'country' : 'countries'}`);
+                return prev;
+            }
+            return { ...prev, targetCountries: [...prev.targetCountries, code] };
+        });
     };
 
     const handleImageUpload = async (e) => {

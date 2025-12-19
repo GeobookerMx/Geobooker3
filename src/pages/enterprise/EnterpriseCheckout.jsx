@@ -165,6 +165,20 @@ export default function EnterpriseCheckout() {
         setForm(prev => ({ ...prev, [field]: value }));
     };
 
+    // Helper: Get video duration before upload
+    const getVideoDuration = (file) => {
+        return new Promise((resolve) => {
+            const video = document.createElement('video');
+            video.preload = 'metadata';
+            video.onloadedmetadata = () => {
+                window.URL.revokeObjectURL(video.src);
+                resolve(video.duration);
+            };
+            video.onerror = () => resolve(0);
+            video.src = URL.createObjectURL(file);
+        });
+    };
+
     const toggleCity = (city) => {
         const maxCities = selectedPlanData?.cities_included || 1;
         setForm(prev => {
@@ -214,11 +228,21 @@ export default function EnterpriseCheckout() {
             return;
         }
 
-        // Size limits: 5MB for images, 50MB for videos
-        const maxSize = isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
+        // Size limits: 5MB for images, 30MB for videos (15s max = less size needed)
+        const maxSize = isVideo ? 30 * 1024 * 1024 : 5 * 1024 * 1024;
         if (file.size > maxSize) {
-            toast.error(`File must be under ${isVideo ? '50MB' : '5MB'}`);
+            toast.error(`File must be under ${isVideo ? '30MB' : '5MB'}`);
             return;
+        }
+
+        // For video: check duration (max 15 seconds)
+        if (isVideo) {
+            const duration = await getVideoDuration(file);
+            if (duration > 15) {
+                toast.error('Video must be 15 seconds or less. Users can skip after 7 seconds.');
+                return;
+            }
+            handleChange('videoDuration', duration);
         }
 
         setUploading(true);

@@ -291,37 +291,10 @@ export default function EnterpriseCheckout() {
                 new Date(startDate).getMonth() + (selectedPlanData?.duration_months || 1)
             )).toISOString().split('T')[0];
 
-            // Check availability for each target location (non-blocking - won't stop checkout if RPC fails)
-            try {
-                for (const location of form.targetCountries) {
-                    const { data: availability, error: availError } = await supabase.rpc(
-                        'check_ad_availability',
-                        {
-                            p_level: adLevel === 'global' ? 'global' : 'country',
-                            p_location_code: location,
-                            p_category_code: form.category || 'other',
-                            p_start_date: startDate,
-                            p_end_date: endDate
-                        }
-                    );
-
-                    // Only block if we got a valid response saying not available
-                    if (!availError && availability && availability.available === false) {
-                        toast.dismiss(toastId);
-                        setLoading(false);
-
-                        if (availability.category_available === false) {
-                            toast.error(`Sorry, we already have 3 ads in your category for ${location}. Try different dates or locations.`);
-                        } else {
-                            toast.error(`Sorry, all ${availability.max_slots || 5} slots are full for ${location}. Try different dates.`);
-                        }
-                        return;
-                    }
-                }
-            } catch (availabilityError) {
-                // RPC not available or error - proceed anyway (admin can review manually)
-                console.warn('Availability check skipped:', availabilityError.message);
-            }
+            // DISABLED: Availability check temporarily removed due to RPC issues
+            // Will be re-enabled once database function is properly configured
+            // Admin can manually review slot availability
+            console.log('Skipping availability check - proceeding to campaign creation');
 
             toast.loading('Creating your campaign...', { id: toastId });
 

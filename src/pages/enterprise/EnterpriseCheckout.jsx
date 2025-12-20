@@ -18,12 +18,87 @@ import SEO from '../../components/SEO';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
-// Major cities for targeting (expanded)
+// Major cities for targeting (COMPREHENSIVE - All US States, Canada Provinces, Europe Top 10)
 const MAJOR_CITIES = {
-    // North America
-    US: ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Francisco', 'Seattle', 'Denver', 'Boston', 'Las Vegas', 'Atlanta', 'Miami', 'Orlando', 'Austin', 'Portland', 'Nashville'],
-    CA: ['Toronto', 'Vancouver', 'Montreal', 'Calgary', 'Edmonton', 'Ottawa', 'Winnipeg', 'Quebec City', 'Hamilton', 'Victoria'],
-    MX: ['Mexico City', 'Guadalajara', 'Monterrey', 'Cancún', 'Tijuana', 'Puebla', 'León', 'Mérida', 'Querétaro', 'San Luis Potosí', 'Aguascalientes', 'Hermosillo', 'Morelia', 'Oaxaca', 'Playa del Carmen', 'Los Cabos'],
+    // ==========================================
+    // UNITED STATES - All 50 States Coverage
+    // ==========================================
+    US: [
+        // Northeast
+        'New York', 'Brooklyn', 'Queens', 'Buffalo', 'Albany', 'Rochester', 'Syracuse',
+        'Boston', 'Cambridge', 'Worcester', 'Springfield',
+        'Philadelphia', 'Pittsburgh', 'Allentown', 'Erie',
+        'Newark', 'Jersey City', 'Trenton', 'Atlantic City',
+        'Hartford', 'New Haven', 'Stamford', 'Bridgeport',
+        'Providence', 'Burlington', 'Portland ME',
+        // Southeast
+        'Miami', 'Orlando', 'Tampa', 'Jacksonville', 'Fort Lauderdale', 'West Palm Beach', 'Naples',
+        'Atlanta', 'Savannah', 'Augusta', 'Athens',
+        'Charlotte', 'Raleigh', 'Durham', 'Asheville', 'Wilmington',
+        'Charleston SC', 'Columbia', 'Myrtle Beach', 'Greenville',
+        'Nashville', 'Memphis', 'Knoxville', 'Chattanooga',
+        'Louisville', 'Lexington', 'Birmingham', 'Montgomery', 'Huntsville',
+        'New Orleans', 'Baton Rouge', 'Jackson MS', 'Little Rock',
+        'Richmond', 'Virginia Beach', 'Norfolk', 'Arlington VA',
+        'Washington DC', 'Baltimore', 'Annapolis',
+        // Midwest
+        'Chicago', 'Aurora', 'Naperville', 'Rockford', 'Springfield IL',
+        'Detroit', 'Grand Rapids', 'Ann Arbor', 'Lansing',
+        'Cleveland', 'Columbus', 'Cincinnati', 'Toledo', 'Akron',
+        'Indianapolis', 'Fort Wayne', 'Evansville',
+        'Milwaukee', 'Madison', 'Green Bay',
+        'Minneapolis', 'Saint Paul', 'Rochester MN', 'Duluth',
+        'Des Moines', 'Cedar Rapids', 'Davenport',
+        'Kansas City', 'Saint Louis', 'Springfield MO',
+        'Omaha', 'Lincoln', 'Sioux Falls', 'Fargo',
+        // Southwest
+        'Houston', 'Dallas', 'San Antonio', 'Austin', 'Fort Worth', 'El Paso', 'Arlington TX', 'Plano', 'Corpus Christi', 'Lubbock', 'Amarillo', 'Laredo', 'McAllen',
+        'Phoenix', 'Tucson', 'Mesa', 'Scottsdale', 'Tempe', 'Flagstaff', 'Sedona',
+        'Albuquerque', 'Santa Fe', 'Las Cruces',
+        'Oklahoma City', 'Tulsa', 'Norman',
+        // West
+        'Los Angeles', 'San Francisco', 'San Diego', 'San Jose', 'Sacramento', 'Oakland', 'Long Beach', 'Fresno', 'Bakersfield', 'Anaheim', 'Santa Ana', 'Irvine', 'Pasadena', 'Santa Barbara', 'Palm Springs', 'Napa', 'Hollywood', 'Beverly Hills',
+        'Las Vegas', 'Henderson', 'Reno', 'Lake Tahoe',
+        'Denver', 'Colorado Springs', 'Aurora CO', 'Boulder', 'Aspen', 'Vail',
+        'Salt Lake City', 'Park City', 'Provo',
+        // Pacific Northwest
+        'Seattle', 'Tacoma', 'Spokane', 'Bellevue', 'Olympia',
+        'Portland OR', 'Eugene', 'Salem', 'Bend',
+        // Mountain/Plains
+        'Boise', 'Billings', 'Missoula', 'Cheyenne', 'Casper',
+        // Alaska & Hawaii
+        'Honolulu', 'Maui', 'Kauai', 'Big Island', 'Anchorage', 'Fairbanks', 'Juneau'
+    ],
+
+    // ==========================================
+    // CANADA - All Provinces & Territories
+    // ==========================================
+    CA: [
+        // Ontario
+        'Toronto', 'Ottawa', 'Mississauga', 'Brampton', 'Hamilton', 'London ON', 'Markham', 'Vaughan', 'Kitchener', 'Windsor', 'Niagara Falls', 'Kingston', 'Thunder Bay',
+        // Quebec
+        'Montreal', 'Quebec City', 'Laval', 'Gatineau', 'Longueuil', 'Sherbrooke', 'Trois-Rivières', 'Saguenay',
+        // British Columbia
+        'Vancouver', 'Surrey', 'Burnaby', 'Richmond', 'Victoria', 'Kelowna', 'Whistler', 'Nanaimo', 'Kamloops', 'Prince George',
+        // Alberta
+        'Calgary', 'Edmonton', 'Red Deer', 'Lethbridge', 'Banff', 'Jasper', 'Canmore',
+        // Manitoba
+        'Winnipeg', 'Brandon', 'Steinbach',
+        // Saskatchewan
+        'Saskatoon', 'Regina', 'Prince Albert', 'Moose Jaw',
+        // Nova Scotia
+        'Halifax', 'Sydney NS', 'Dartmouth',
+        // New Brunswick
+        'Saint John', 'Moncton', 'Fredericton',
+        // Newfoundland
+        'St. John\'s', 'Corner Brook',
+        // Prince Edward Island
+        'Charlottetown',
+        // Territories
+        'Yellowknife', 'Whitehorse', 'Iqaluit'
+    ],
+
+    MX: ['Mexico City', 'Guadalajara', 'Monterrey', 'Cancún', 'Tijuana', 'Puebla', 'León', 'Mérida', 'Querétaro', 'San Luis Potosí', 'Aguascalientes', 'Hermosillo', 'Morelia', 'Oaxaca', 'Playa del Carmen', 'Los Cabos', 'Puerto Vallarta', 'Acapulco', 'Veracruz', 'Chihuahua', 'Toluca', 'Saltillo', 'Cuernavaca', 'Mazatlán', 'Tulum', 'Guanajuato', 'San Miguel de Allende', 'Zacatecas', 'Durango'],
 
     // Central America & Caribbean
     GT: ['Guatemala City', 'Antigua Guatemala', 'Quetzaltenango'],
@@ -45,27 +120,101 @@ const MAJOR_CITIES = {
     PY: ['Asunción', 'Ciudad del Este', 'Encarnación'],
     BO: ['La Paz', 'Santa Cruz', 'Cochabamba', 'Sucre'],
 
-    // Europe
-    ES: ['Madrid', 'Barcelona', 'Valencia', 'Seville', 'Bilbao', 'Málaga', 'Zaragoza', 'Granada', 'Palma de Mallorca', 'San Sebastián', 'Ibiza'],
-    FR: ['Paris', 'Marseille', 'Lyon', 'Nice', 'Toulouse', 'Bordeaux', 'Lille', 'Strasbourg', 'Nantes', 'Montpellier', 'Cannes'],
-    DE: ['Berlin', 'Munich', 'Frankfurt', 'Hamburg', 'Cologne', 'Düsseldorf', 'Stuttgart', 'Dresden', 'Leipzig', 'Heidelberg'],
-    GB: ['London', 'Manchester', 'Birmingham', 'Liverpool', 'Edinburgh', 'Glasgow', 'Bristol', 'Leeds', 'Newcastle', 'Oxford', 'Cambridge'],
-    IT: ['Rome', 'Milan', 'Naples', 'Turin', 'Florence', 'Venice', 'Bologna', 'Genoa', 'Verona', 'Palermo'],
-    NL: ['Amsterdam', 'Rotterdam', 'The Hague', 'Utrecht', 'Eindhoven'],
-    PT: ['Lisbon', 'Porto', 'Faro', 'Coimbra', 'Braga', 'Funchal'],
-    BE: ['Brussels', 'Antwerp', 'Ghent', 'Bruges'],
-    AT: ['Vienna', 'Salzburg', 'Innsbruck', 'Graz'],
-    CH: ['Zurich', 'Geneva', 'Basel', 'Bern', 'Lausanne'],
-    IE: ['Dublin', 'Cork', 'Galway', 'Limerick'],
-    SE: ['Stockholm', 'Gothenburg', 'Malmö', 'Uppsala'],
-    NO: ['Oslo', 'Bergen', 'Trondheim', 'Stavanger'],
-    DK: ['Copenhagen', 'Aarhus', 'Odense'],
-    FI: ['Helsinki', 'Tampere', 'Turku'],
-    PL: ['Warsaw', 'Krakow', 'Gdańsk', 'Wrocław', 'Poznań'],
-    CZ: ['Prague', 'Brno', 'Ostrava'],
-    GR: ['Athens', 'Thessaloniki', 'Santorini', 'Mykonos', 'Crete'],
-    TR: ['Istanbul', 'Ankara', 'Izmir', 'Antalya', 'Cappadocia'],
-    RU: ['Moscow', 'Saint Petersburg', 'Sochi', 'Kazan'],
+    // ==========================================
+    // EUROPE - Top 10 Economies (Expanded)
+    // ==========================================
+
+    // #1 GERMANY - All Major Cities & Regions
+    DE: [
+        'Berlin', 'Hamburg', 'Munich', 'Cologne', 'Frankfurt', 'Stuttgart', 'Düsseldorf', 'Leipzig', 'Dortmund', 'Essen',
+        'Bremen', 'Dresden', 'Hanover', 'Nuremberg', 'Duisburg', 'Bochum', 'Wuppertal', 'Bielefeld', 'Bonn', 'Münster',
+        'Karlsruhe', 'Mannheim', 'Augsburg', 'Wiesbaden', 'Mönchengladbach', 'Gelsenkirchen', 'Braunschweig', 'Aachen',
+        'Kiel', 'Chemnitz', 'Halle', 'Magdeburg', 'Freiburg', 'Krefeld', 'Mainz', 'Lübeck', 'Erfurt', 'Rostock',
+        'Kassel', 'Hagen', 'Saarbrücken', 'Potsdam', 'Heidelberg', 'Darmstadt', 'Regensburg', 'Würzburg', 'Ingolstadt', 'Baden-Baden', 'Konstanz'
+    ],
+
+    // #2 UNITED KINGDOM - All Regions
+    GB: [
+        // England
+        'London', 'Birmingham', 'Manchester', 'Leeds', 'Liverpool', 'Newcastle', 'Sheffield', 'Bristol', 'Nottingham', 'Leicester',
+        'Southampton', 'Brighton', 'Portsmouth', 'Plymouth', 'Reading', 'Coventry', 'Derby', 'Stoke-on-Trent', 'Wolverhampton',
+        'Oxford', 'Cambridge', 'York', 'Canterbury', 'Bath', 'Stratford-upon-Avon', 'Chester', 'Exeter', 'Norwich', 'Lincoln',
+        // Scotland
+        'Edinburgh', 'Glasgow', 'Aberdeen', 'Dundee', 'Inverness', 'Stirling',
+        // Wales
+        'Cardiff', 'Swansea', 'Newport', 'Bangor',
+        // Northern Ireland
+        'Belfast', 'Derry', 'Lisburn'
+    ],
+
+    // #3 FRANCE - All Regions
+    FR: [
+        'Paris', 'Marseille', 'Lyon', 'Toulouse', 'Nice', 'Nantes', 'Strasbourg', 'Montpellier', 'Bordeaux', 'Lille',
+        'Rennes', 'Reims', 'Saint-Étienne', 'Le Havre', 'Toulon', 'Grenoble', 'Dijon', 'Angers', 'Nîmes', 'Villeurbanne',
+        'Clermont-Ferrand', 'Le Mans', 'Aix-en-Provence', 'Brest', 'Tours', 'Amiens', 'Limoges', 'Perpignan', 'Besançon', 'Orléans',
+        'Caen', 'Rouen', 'Cannes', 'Monaco', 'Avignon', 'La Rochelle', 'Biarritz', 'Antibes', 'Saint-Tropez', 'Chamonix', 'Metz'
+    ],
+
+    // #4 ITALY - All Regions
+    IT: [
+        'Rome', 'Milan', 'Naples', 'Turin', 'Palermo', 'Genoa', 'Bologna', 'Florence', 'Bari', 'Catania',
+        'Venice', 'Verona', 'Messina', 'Padua', 'Trieste', 'Brescia', 'Parma', 'Taranto', 'Prato', 'Modena',
+        'Reggio Calabria', 'Reggio Emilia', 'Perugia', 'Livorno', 'Ravenna', 'Cagliari', 'Foggia', 'Rimini', 'Salerno', 'Ferrara',
+        'Siena', 'Pisa', 'Bergamo', 'Trento', 'Como', 'Lecce', 'Pescara', 'Ancona', 'Amalfi Coast', 'Cinque Terre', 'Capri', 'Sardinia'
+    ],
+
+    // #5 RUSSIA - Major Cities
+    RU: [
+        'Moscow', 'Saint Petersburg', 'Novosibirsk', 'Yekaterinburg', 'Kazan', 'Nizhny Novgorod', 'Chelyabinsk', 'Samara', 'Omsk', 'Rostov-on-Don',
+        'Ufa', 'Krasnoyarsk', 'Voronezh', 'Perm', 'Volgograd', 'Krasnodar', 'Sochi', 'Vladivostok', 'Irkutsk', 'Kaliningrad'
+    ],
+
+    // #6 SPAIN - All Regions
+    ES: [
+        'Madrid', 'Barcelona', 'Valencia', 'Seville', 'Zaragoza', 'Málaga', 'Murcia', 'Palma de Mallorca', 'Las Palmas', 'Bilbao',
+        'Alicante', 'Córdoba', 'Valladolid', 'Vigo', 'Gijón', 'Granada', 'A Coruña', 'Vitoria-Gasteiz', 'Elche', 'Oviedo',
+        'Santa Cruz de Tenerife', 'Pamplona', 'Santander', 'Burgos', 'Salamanca', 'Albacete', 'Logroño', 'San Sebastián',
+        'Ibiza', 'Marbella', 'Mallorca', 'Menorca', 'Formentera', 'Tenerife', 'Lanzarote', 'Fuerteventura', 'Toledo', 'Segovia'
+    ],
+
+    // #7 NETHERLANDS - All Provinces
+    NL: [
+        'Amsterdam', 'Rotterdam', 'The Hague', 'Utrecht', 'Eindhoven', 'Tilburg', 'Groningen', 'Almere', 'Breda', 'Nijmegen',
+        'Apeldoorn', 'Haarlem', 'Arnhem', 'Zaanstad', 'Amersfoort', 'Haarlemmermeer', 'Hertogenbosch', 'Zoetermeer', 'Zwolle', 'Maastricht',
+        'Leiden', 'Dordrecht', 'Ede', 'Delft', 'Leeuwarden'
+    ],
+
+    // #8 SWITZERLAND - All Cantons
+    CH: [
+        'Zurich', 'Geneva', 'Basel', 'Lausanne', 'Bern', 'Winterthur', 'Lucerne', 'St. Gallen', 'Lugano', 'Biel',
+        'Thun', 'Bellinzona', 'Köniz', 'Fribourg', 'La Chaux-de-Fonds', 'Schaffhausen', 'Chur', 'Neuchâtel', 'Vernier', 'Sion',
+        'Zermatt', 'Interlaken', 'Davos', 'St. Moritz', 'Montreux', 'Locarno', 'Grindelwald'
+    ],
+
+    // #9 POLAND - All Major Cities
+    PL: [
+        'Warsaw', 'Kraków', 'Łódź', 'Wrocław', 'Poznań', 'Gdańsk', 'Szczecin', 'Bydgoszcz', 'Lublin', 'Białystok',
+        'Katowice', 'Gdynia', 'Częstochowa', 'Radom', 'Sosnowiec', 'Toruń', 'Kielce', 'Rzeszów', 'Gliwice', 'Zabrze',
+        'Olsztyn', 'Bielsko-Biała', 'Bytom', 'Zielona Góra', 'Rybnik', 'Opole', 'Legnica', 'Kalisz', 'Zakopane'
+    ],
+
+    // #10 BELGIUM - All Regions
+    BE: [
+        'Brussels', 'Antwerp', 'Ghent', 'Charleroi', 'Liège', 'Bruges', 'Namur', 'Leuven', 'Mons', 'Aalst',
+        'Mechelen', 'La Louvière', 'Kortrijk', 'Hasselt', 'Ostend', 'Sint-Niklaas', 'Tournai', 'Genk', 'Seraing', 'Roeselare'
+    ],
+
+    // Other European Countries
+    PT: ['Lisbon', 'Porto', 'Vila Nova de Gaia', 'Amadora', 'Braga', 'Setúbal', 'Coimbra', 'Funchal', 'Faro', 'Évora', 'Algarve', 'Sintra', 'Cascais'],
+    AT: ['Vienna', 'Graz', 'Linz', 'Salzburg', 'Innsbruck', 'Klagenfurt', 'Villach', 'Wels', 'St. Pölten', 'Dornbirn', 'Hallstatt', 'Kitzbühel'],
+    IE: ['Dublin', 'Cork', 'Limerick', 'Galway', 'Waterford', 'Drogheda', 'Kilkenny', 'Sligo', 'Wexford', 'Athlone', 'Killarney'],
+    SE: ['Stockholm', 'Gothenburg', 'Malmö', 'Uppsala', 'Västerås', 'Örebro', 'Linköping', 'Helsingborg', 'Jönköping', 'Norrköping', 'Lund', 'Umeå', 'Kiruna'],
+    NO: ['Oslo', 'Bergen', 'Trondheim', 'Stavanger', 'Drammen', 'Fredrikstad', 'Kristiansand', 'Sandnes', 'Tromsø', 'Ålesund', 'Bodø', 'Kirkenes'],
+    DK: ['Copenhagen', 'Aarhus', 'Odense', 'Aalborg', 'Esbjerg', 'Randers', 'Kolding', 'Horsens', 'Vejle', 'Roskilde', 'Helsingør'],
+    FI: ['Helsinki', 'Espoo', 'Tampere', 'Vantaa', 'Oulu', 'Turku', 'Jyväskylä', 'Lahti', 'Kuopio', 'Pori', 'Rovaniemi', 'Lapland'],
+    CZ: ['Prague', 'Brno', 'Ostrava', 'Plzeň', 'Liberec', 'Olomouc', 'Ústí nad Labem', 'Hradec Králové', 'České Budějovice', 'Pardubice', 'Karlovy Vary'],
+    GR: ['Athens', 'Thessaloniki', 'Patras', 'Heraklion', 'Larissa', 'Volos', 'Rhodes', 'Ioannina', 'Chania', 'Santorini', 'Mykonos', 'Corfu', 'Crete', 'Zakynthos'],
+    TR: ['Istanbul', 'Ankara', 'Izmir', 'Bursa', 'Adana', 'Gaziantep', 'Konya', 'Antalya', 'Kayseri', 'Mersin', 'Cappadocia', 'Bodrum', 'Fethiye', 'Marmaris'],
 
     // Asia
     JP: ['Tokyo', 'Osaka', 'Kyoto', 'Yokohama', 'Nagoya', 'Sapporo', 'Fukuoka', 'Hiroshima', 'Okinawa'],

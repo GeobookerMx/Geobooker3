@@ -18,37 +18,155 @@ import SEO from '../../components/SEO';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
-// Major cities for targeting
+// Major cities for targeting (expanded)
 const MAJOR_CITIES = {
-    US: ['Los Angeles', 'New York', 'Miami', 'Dallas', 'Houston', 'Chicago', 'Phoenix', 'San Francisco'],
-    MX: ['Mexico City', 'Guadalajara', 'Monterrey', 'Cancun', 'Tijuana', 'Puebla'],
-    CA: ['Toronto', 'Vancouver', 'Montreal', 'Calgary'],
-    BR: ['São Paulo', 'Rio de Janeiro', 'Brasília', 'Salvador'],
-    CO: ['Bogotá', 'Medellín', 'Cali', 'Barranquilla'],
-    AR: ['Buenos Aires', 'Córdoba', 'Rosario'],
-    ES: ['Madrid', 'Barcelona', 'Valencia', 'Seville'],
-    FR: ['Paris', 'Marseille', 'Lyon', 'Nice'],
-    DE: ['Berlin', 'Munich', 'Frankfurt', 'Hamburg'],
-    GB: ['London', 'Manchester', 'Birmingham', 'Liverpool'],
-    IT: ['Rome', 'Milan', 'Naples', 'Turin']
+    // North America
+    US: ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Francisco', 'Seattle', 'Denver', 'Boston', 'Las Vegas', 'Atlanta', 'Miami', 'Orlando', 'Austin', 'Portland', 'Nashville'],
+    CA: ['Toronto', 'Vancouver', 'Montreal', 'Calgary', 'Edmonton', 'Ottawa', 'Winnipeg', 'Quebec City', 'Hamilton', 'Victoria'],
+    MX: ['Mexico City', 'Guadalajara', 'Monterrey', 'Cancún', 'Tijuana', 'Puebla', 'León', 'Mérida', 'Querétaro', 'San Luis Potosí', 'Aguascalientes', 'Hermosillo', 'Morelia', 'Oaxaca', 'Playa del Carmen', 'Los Cabos'],
+
+    // Central America & Caribbean
+    GT: ['Guatemala City', 'Antigua Guatemala', 'Quetzaltenango'],
+    PA: ['Panama City', 'Colón', 'David'],
+    CR: ['San José', 'Limón', 'Alajuela'],
+    DO: ['Santo Domingo', 'Punta Cana', 'Santiago'],
+    PR: ['San Juan', 'Ponce', 'Mayagüez'],
+    CU: ['Havana', 'Varadero', 'Santiago de Cuba'],
+
+    // South America
+    BR: ['São Paulo', 'Rio de Janeiro', 'Brasília', 'Salvador', 'Fortaleza', 'Belo Horizonte', 'Manaus', 'Curitiba', 'Recife', 'Porto Alegre', 'Florianópolis'],
+    AR: ['Buenos Aires', 'Córdoba', 'Rosario', 'Mendoza', 'Mar del Plata', 'La Plata', 'San Miguel de Tucumán', 'Bariloche', 'Salta'],
+    CO: ['Bogotá', 'Medellín', 'Cali', 'Barranquilla', 'Cartagena', 'Santa Marta', 'Bucaramanga', 'Pereira'],
+    CL: ['Santiago', 'Valparaíso', 'Concepción', 'Viña del Mar', 'Antofagasta', 'La Serena'],
+    PE: ['Lima', 'Arequipa', 'Cusco', 'Trujillo', 'Chiclayo', 'Piura'],
+    EC: ['Quito', 'Guayaquil', 'Cuenca', 'Manta', 'Galápagos'],
+    VE: ['Caracas', 'Maracaibo', 'Valencia', 'Barquisimeto', 'Margarita Island'],
+    UY: ['Montevideo', 'Punta del Este', 'Colonia del Sacramento'],
+    PY: ['Asunción', 'Ciudad del Este', 'Encarnación'],
+    BO: ['La Paz', 'Santa Cruz', 'Cochabamba', 'Sucre'],
+
+    // Europe
+    ES: ['Madrid', 'Barcelona', 'Valencia', 'Seville', 'Bilbao', 'Málaga', 'Zaragoza', 'Granada', 'Palma de Mallorca', 'San Sebastián', 'Ibiza'],
+    FR: ['Paris', 'Marseille', 'Lyon', 'Nice', 'Toulouse', 'Bordeaux', 'Lille', 'Strasbourg', 'Nantes', 'Montpellier', 'Cannes'],
+    DE: ['Berlin', 'Munich', 'Frankfurt', 'Hamburg', 'Cologne', 'Düsseldorf', 'Stuttgart', 'Dresden', 'Leipzig', 'Heidelberg'],
+    GB: ['London', 'Manchester', 'Birmingham', 'Liverpool', 'Edinburgh', 'Glasgow', 'Bristol', 'Leeds', 'Newcastle', 'Oxford', 'Cambridge'],
+    IT: ['Rome', 'Milan', 'Naples', 'Turin', 'Florence', 'Venice', 'Bologna', 'Genoa', 'Verona', 'Palermo'],
+    NL: ['Amsterdam', 'Rotterdam', 'The Hague', 'Utrecht', 'Eindhoven'],
+    PT: ['Lisbon', 'Porto', 'Faro', 'Coimbra', 'Braga', 'Funchal'],
+    BE: ['Brussels', 'Antwerp', 'Ghent', 'Bruges'],
+    AT: ['Vienna', 'Salzburg', 'Innsbruck', 'Graz'],
+    CH: ['Zurich', 'Geneva', 'Basel', 'Bern', 'Lausanne'],
+    IE: ['Dublin', 'Cork', 'Galway', 'Limerick'],
+    SE: ['Stockholm', 'Gothenburg', 'Malmö', 'Uppsala'],
+    NO: ['Oslo', 'Bergen', 'Trondheim', 'Stavanger'],
+    DK: ['Copenhagen', 'Aarhus', 'Odense'],
+    FI: ['Helsinki', 'Tampere', 'Turku'],
+    PL: ['Warsaw', 'Krakow', 'Gdańsk', 'Wrocław', 'Poznań'],
+    CZ: ['Prague', 'Brno', 'Ostrava'],
+    GR: ['Athens', 'Thessaloniki', 'Santorini', 'Mykonos', 'Crete'],
+    TR: ['Istanbul', 'Ankara', 'Izmir', 'Antalya', 'Cappadocia'],
+    RU: ['Moscow', 'Saint Petersburg', 'Sochi', 'Kazan'],
+
+    // Asia
+    JP: ['Tokyo', 'Osaka', 'Kyoto', 'Yokohama', 'Nagoya', 'Sapporo', 'Fukuoka', 'Hiroshima', 'Okinawa'],
+    KR: ['Seoul', 'Busan', 'Incheon', 'Jeju', 'Daegu'],
+    CN: ['Beijing', 'Shanghai', 'Guangzhou', 'Shenzhen', 'Hong Kong', 'Hangzhou', 'Chengdu', 'Xi\'an'],
+    TW: ['Taipei', 'Kaohsiung', 'Taichung'],
+    TH: ['Bangkok', 'Chiang Mai', 'Phuket', 'Pattaya', 'Krabi'],
+    VN: ['Ho Chi Minh City', 'Hanoi', 'Da Nang', 'Nha Trang'],
+    SG: ['Singapore'],
+    MY: ['Kuala Lumpur', 'Penang', 'Langkawi', 'Johor Bahru'],
+    ID: ['Jakarta', 'Bali', 'Bandung', 'Surabaya', 'Yogyakarta'],
+    PH: ['Manila', 'Cebu', 'Boracay', 'Davao'],
+    IN: ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Kolkata', 'Hyderabad', 'Goa', 'Jaipur'],
+    AE: ['Dubai', 'Abu Dhabi', 'Sharjah'],
+    SA: ['Riyadh', 'Jeddah', 'Mecca', 'Medina'],
+    IL: ['Tel Aviv', 'Jerusalem', 'Haifa', 'Eilat'],
+
+    // Oceania
+    AU: ['Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide', 'Gold Coast', 'Cairns', 'Hobart'],
+    NZ: ['Auckland', 'Wellington', 'Christchurch', 'Queenstown'],
+
+    // Africa
+    ZA: ['Cape Town', 'Johannesburg', 'Durban', 'Pretoria'],
+    EG: ['Cairo', 'Alexandria', 'Luxor', 'Sharm El Sheikh'],
+    MA: ['Marrakech', 'Casablanca', 'Fez', 'Tangier'],
+    KE: ['Nairobi', 'Mombasa']
 };
 
 const COUNTRIES = [
+    // North America
     { code: 'US', name: '🇺🇸 United States', region: 'northamerica' },
     { code: 'CA', name: '🇨🇦 Canada', region: 'northamerica' },
     { code: 'MX', name: '🇲🇽 Mexico', region: 'northamerica' },
-    { code: 'CO', name: '🇨🇴 Colombia', region: 'latam' },
+
+    // Central America & Caribbean
+    { code: 'GT', name: '🇬🇹 Guatemala', region: 'centralamerica' },
+    { code: 'PA', name: '🇵🇦 Panama', region: 'centralamerica' },
+    { code: 'CR', name: '🇨🇷 Costa Rica', region: 'centralamerica' },
+    { code: 'DO', name: '🇩🇴 Dominican Republic', region: 'caribbean' },
+    { code: 'PR', name: '🇵🇷 Puerto Rico', region: 'caribbean' },
+    { code: 'CU', name: '🇨🇺 Cuba', region: 'caribbean' },
+
+    // South America
     { code: 'BR', name: '🇧🇷 Brazil', region: 'latam' },
     { code: 'AR', name: '🇦🇷 Argentina', region: 'latam' },
+    { code: 'CO', name: '🇨🇴 Colombia', region: 'latam' },
     { code: 'CL', name: '🇨🇱 Chile', region: 'latam' },
     { code: 'PE', name: '🇵🇪 Peru', region: 'latam' },
+    { code: 'EC', name: '🇪🇨 Ecuador', region: 'latam' },
+    { code: 'VE', name: '🇻🇪 Venezuela', region: 'latam' },
+    { code: 'UY', name: '🇺🇾 Uruguay', region: 'latam' },
+    { code: 'PY', name: '🇵🇾 Paraguay', region: 'latam' },
+    { code: 'BO', name: '🇧🇴 Bolivia', region: 'latam' },
+
+    // Europe
     { code: 'ES', name: '🇪🇸 Spain', region: 'europe' },
     { code: 'FR', name: '🇫🇷 France', region: 'europe' },
     { code: 'DE', name: '🇩🇪 Germany', region: 'europe' },
-    { code: 'IT', name: '🇮🇹 Italy', region: 'europe' },
     { code: 'GB', name: '🇬🇧 United Kingdom', region: 'europe' },
+    { code: 'IT', name: '🇮🇹 Italy', region: 'europe' },
     { code: 'NL', name: '🇳🇱 Netherlands', region: 'europe' },
-    { code: 'PT', name: '🇵🇹 Portugal', region: 'europe' }
+    { code: 'PT', name: '🇵🇹 Portugal', region: 'europe' },
+    { code: 'BE', name: '🇧🇪 Belgium', region: 'europe' },
+    { code: 'AT', name: '🇦🇹 Austria', region: 'europe' },
+    { code: 'CH', name: '🇨🇭 Switzerland', region: 'europe' },
+    { code: 'IE', name: '🇮🇪 Ireland', region: 'europe' },
+    { code: 'SE', name: '🇸🇪 Sweden', region: 'europe' },
+    { code: 'NO', name: '🇳🇴 Norway', region: 'europe' },
+    { code: 'DK', name: '🇩🇰 Denmark', region: 'europe' },
+    { code: 'FI', name: '🇫🇮 Finland', region: 'europe' },
+    { code: 'PL', name: '🇵🇱 Poland', region: 'europe' },
+    { code: 'CZ', name: '🇨🇿 Czech Republic', region: 'europe' },
+    { code: 'GR', name: '🇬🇷 Greece', region: 'europe' },
+    { code: 'TR', name: '🇹🇷 Turkey', region: 'europe' },
+    { code: 'RU', name: '🇷🇺 Russia', region: 'europe' },
+
+    // Asia
+    { code: 'JP', name: '🇯🇵 Japan', region: 'asia' },
+    { code: 'KR', name: '🇰🇷 South Korea', region: 'asia' },
+    { code: 'CN', name: '🇨🇳 China', region: 'asia' },
+    { code: 'TW', name: '🇹🇼 Taiwan', region: 'asia' },
+    { code: 'TH', name: '🇹🇭 Thailand', region: 'asia' },
+    { code: 'VN', name: '🇻🇳 Vietnam', region: 'asia' },
+    { code: 'SG', name: '🇸🇬 Singapore', region: 'asia' },
+    { code: 'MY', name: '🇲🇾 Malaysia', region: 'asia' },
+    { code: 'ID', name: '🇮🇩 Indonesia', region: 'asia' },
+    { code: 'PH', name: '🇵🇭 Philippines', region: 'asia' },
+    { code: 'IN', name: '🇮🇳 India', region: 'asia' },
+    { code: 'AE', name: '🇦🇪 UAE', region: 'middleeast' },
+    { code: 'SA', name: '🇸🇦 Saudi Arabia', region: 'middleeast' },
+    { code: 'IL', name: '🇮🇱 Israel', region: 'middleeast' },
+
+    // Oceania
+    { code: 'AU', name: '🇦🇺 Australia', region: 'oceania' },
+    { code: 'NZ', name: '🇳🇿 New Zealand', region: 'oceania' },
+
+    // Africa
+    { code: 'ZA', name: '🇿🇦 South Africa', region: 'africa' },
+    { code: 'EG', name: '🇪🇬 Egypt', region: 'africa' },
+    { code: 'MA', name: '🇲🇦 Morocco', region: 'africa' },
+    { code: 'KE', name: '🇰🇪 Kenya', region: 'africa' }
 ];
 
 export default function EnterpriseCheckout() {

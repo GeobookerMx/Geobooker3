@@ -203,79 +203,129 @@ export default function AdvertiserDashboard() {
                             </a>
                         </div>
                     ) : (
-                        <div className="divide-y divide-gray-700">
-                            {campaigns.map(campaign => (
-                                <div key={campaign.id} className="p-6 hover:bg-gray-700/50 transition">
-                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <h3 className="font-bold text-white text-lg">
-                                                    {campaign.advertiser_name || 'Untitled Campaign'}
-                                                </h3>
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(campaign.status)}`}>
+                        <div className="overflow-x-auto">
+                            <table className="w-full min-w-[900px]">
+                                <thead className="bg-gray-900/50">
+                                    <tr className="text-left text-gray-400 text-sm border-b border-gray-700">
+                                        <th className="p-4 font-medium">Campaign</th>
+                                        <th className="p-4 font-medium">Status</th>
+                                        <th className="p-4 font-medium">Target</th>
+                                        <th className="p-4 font-medium">Duration</th>
+                                        <th className="p-4 font-medium">Budget</th>
+                                        <th className="p-4 font-medium">Preview</th>
+                                        <th className="p-4 font-medium text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-700">
+                                    {campaigns.map(campaign => (
+                                        <tr key={campaign.id} className="hover:bg-gray-700/30 transition">
+                                            {/* Campaign Name */}
+                                            <td className="p-4">
+                                                <div className="font-bold text-white">
+                                                    {campaign.advertiser_name || 'Untitled'}
+                                                </div>
+                                                <div className="text-xs text-gray-500 mt-1">
+                                                    {campaign.headline || 'No headline'}
+                                                </div>
+                                            </td>
+
+                                            {/* Status */}
+                                            <td className="p-4">
+                                                <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(campaign.status)}`}>
                                                     {getStatusLabel(campaign.status)}
                                                 </span>
-                                            </div>
-                                            <div className="flex flex-wrap gap-3 text-sm text-gray-400">
-                                                <span className="flex items-center gap-1">
-                                                    <MapPin className="w-4 h-4" />
+                                            </td>
+
+                                            {/* Target */}
+                                            <td className="p-4">
+                                                <div className="text-white text-sm">
+                                                    {campaign.target_countries?.length || 0} countries
+                                                </div>
+                                                <div className="text-gray-400 text-xs">
                                                     {campaign.target_cities?.length || 0} cities
-                                                </span>
-                                                <span className="flex items-center gap-1">
-                                                    <Clock className="w-4 h-4" />
-                                                    {campaign.start_date} → {campaign.end_date || 'Ongoing'}
-                                                </span>
-                                                <span className="text-green-400 font-medium">
-                                                    ${campaign.total_budget?.toLocaleString() || 0} USD
-                                                </span>
-                                            </div>
-                                        </div>
+                                                </div>
+                                            </td>
 
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedCampaign(campaign.id);
-                                                    setShowReport(true);
-                                                }}
-                                                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm"
-                                            >
-                                                <BarChart3 className="w-4 h-4" />
-                                                View Report
-                                            </button>
-                                            <button
-                                                onClick={() => window.print()}
-                                                className="flex items-center gap-2 bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-600 text-sm"
-                                            >
-                                                <Download className="w-4 h-4" />
-                                                PDF
-                                            </button>
-                                        </div>
-                                    </div>
+                                            {/* Duration */}
+                                            <td className="p-4">
+                                                <div className="text-white text-sm whitespace-nowrap">
+                                                    {campaign.start_date || 'TBD'}
+                                                </div>
+                                                <div className="text-gray-400 text-xs whitespace-nowrap">
+                                                    → {campaign.end_date || 'Ongoing'}
+                                                </div>
+                                            </td>
 
-                                    {/* Preview of the ad */}
-                                    {campaign.creative_url && (
-                                        <div className="mt-4 flex items-center gap-4">
-                                            {campaign.creative_url.match(/\.(mp4|webm)$/i) ? (
-                                                <video
-                                                    src={campaign.creative_url}
-                                                    className="w-24 h-16 object-cover rounded"
-                                                    muted
-                                                />
-                                            ) : (
-                                                <img
-                                                    src={campaign.creative_url}
-                                                    alt="Ad preview"
-                                                    className="w-24 h-16 object-cover rounded"
-                                                />
-                                            )}
-                                            <div className="text-sm">
-                                                <p className="text-white font-medium">{campaign.headline}</p>
-                                                <p className="text-gray-400 truncate max-w-md">{campaign.description}</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
+                                            {/* Budget */}
+                                            <td className="p-4">
+                                                <div className="text-green-400 font-bold whitespace-nowrap">
+                                                    ${campaign.total_budget?.toLocaleString() || 0}
+                                                </div>
+                                                <div className="text-gray-500 text-xs">USD</div>
+                                            </td>
+
+                                            {/* Preview */}
+                                            <td className="p-4">
+                                                {campaign.creative_url ? (
+                                                    campaign.creative_url.match(/\.(mp4|webm)$/i) ? (
+                                                        <video
+                                                            src={campaign.creative_url}
+                                                            className="w-16 h-10 object-cover rounded"
+                                                            muted
+                                                        />
+                                                    ) : (
+                                                        <img
+                                                            src={campaign.creative_url}
+                                                            alt="Preview"
+                                                            className="w-16 h-10 object-cover rounded"
+                                                        />
+                                                    )
+                                                ) : (
+                                                    <div className="w-16 h-10 bg-gray-700 rounded flex items-center justify-center">
+                                                        <FileText className="w-4 h-4 text-gray-500" />
+                                                    </div>
+                                                )}
+                                            </td>
+
+                                            {/* Actions */}
+                                            <td className="p-4">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    {/* Edit Button - Only for draft/pending campaigns */}
+                                                    {['draft', 'pending_review', 'paused'].includes(campaign.status) && (
+                                                        <a
+                                                            href={`/enterprise/edit/${campaign.id}`}
+                                                            className="flex items-center gap-1 bg-yellow-600 text-white px-3 py-1.5 rounded-lg hover:bg-yellow-500 text-xs font-medium"
+                                                        >
+                                                            ✏️ Edit
+                                                        </a>
+                                                    )}
+
+                                                    {/* View Report */}
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedCampaign(campaign.id);
+                                                            setShowReport(true);
+                                                        }}
+                                                        className="flex items-center gap-1 bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 text-xs font-medium"
+                                                    >
+                                                        <BarChart3 className="w-3 h-3" />
+                                                        Report
+                                                    </button>
+
+                                                    {/* PDF Download */}
+                                                    <button
+                                                        onClick={() => window.print()}
+                                                        className="flex items-center gap-1 bg-gray-700 text-white px-3 py-1.5 rounded-lg hover:bg-gray-600 text-xs font-medium"
+                                                    >
+                                                        <Download className="w-3 h-3" />
+                                                        PDF
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     )}
                 </div>

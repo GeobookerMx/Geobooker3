@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import UserProfile from '../components/dashboard/UserProfile';
 import BusinessList from '../components/business/BusinessList';
+import InviteButton from '../components/referral/InviteButton';
 import { Crown } from 'lucide-react';
 
 const DashboardPage = () => {
@@ -11,11 +12,13 @@ const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState('businesses');
   const [isPremium, setIsPremium] = useState(false);
   const [businessCount, setBusinessCount] = useState(0);
+  const [referralCode, setReferralCode] = useState(null);
 
   useEffect(() => {
     if (user) {
       checkPremiumStatus();
       countBusinesses();
+      loadReferralCode();
     }
   }, [user]);
 
@@ -43,6 +46,32 @@ const DashboardPage = () => {
       setBusinessCount(data?.length || 0);
     } catch (error) {
       console.error('Error counting businesses:', error);
+    }
+  };
+
+  const loadReferralCode = async () => {
+    try {
+      const { data } = await supabase
+        .from('user_profiles')
+        .select('referral_code')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (data?.referral_code) {
+        setReferralCode(data.referral_code);
+      } else {
+        // Generate new code if not exists
+        const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        await supabase
+          .from('user_profiles')
+          .update({ referral_code: newCode })
+          .eq('id', user.id);
+        setReferralCode(newCode);
+      }
+    } catch (error) {
+      console.error('Error loading referral code:', error);
+      // Fallback code
+      setReferralCode(user.id?.substring(0, 6).toUpperCase() || 'GEOBKR');
     }
   };
 
@@ -106,6 +135,13 @@ const DashboardPage = () => {
               <Crown className="w-24 h-24 text-yellow-500" />
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ===== REFERRAL INVITE SECTION ===== */}
+      {referralCode && (
+        <div className="mb-8">
+          <InviteButton referralCode={referralCode} />
         </div>
       )}
 

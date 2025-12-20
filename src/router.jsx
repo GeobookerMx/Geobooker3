@@ -53,6 +53,9 @@ import GuiaResicoPage from "./pages/GuiaResicoPage.jsx";
 // Business Profile
 import BusinessProfilePage from "./pages/BusinessProfilePage.jsx";
 
+// Referral System
+import ReferralLanding from "./pages/ReferralLanding.jsx";
+
 // Enterprise / Global Ads
 import EnterpriseLanding from "./pages/enterprise/EnterpriseLanding.jsx";
 import EnterpriseContact from "./pages/enterprise/EnterpriseContact.jsx";
@@ -78,6 +81,9 @@ export default function AppRouter() {
 
         {/* Página comercial de publicidad (SIN login) */}
         <Route path="/advertise" element={<AdvertisePage />} />
+
+        {/* Referral Landing Page */}
+        <Route path="/r/:code" element={<ReferralLanding />} />
 
         {/* Políticas de anuncios (página legal pública) */}
         <Route path="/legal/ads-policy" element={<AdsPolicyPage />} />

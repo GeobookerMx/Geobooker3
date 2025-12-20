@@ -107,8 +107,10 @@ const UpgradePage = () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    amount: LAUNCH_CONFIG.regularPrice, // $299 para después de los 3 meses gratis
+                    // Use same trial pricing as card: $10 MXN minimum for free trial
+                    amount: LAUNCH_CONFIG.launchPrice === 0 ? 10 : LAUNCH_CONFIG.regularPrice,
                     email: session.user.email,
+                    name: session.user.user_metadata?.full_name || 'Cliente Geobooker',
                     productName: 'Premium Geobooker (3 meses gratis)',
                     productId: 'premium_subscription',
                     userId: session.user.id,

@@ -46,7 +46,8 @@ const HomePage = () => {
         let query = supabase
           .from('businesses')
           .select('*')
-          .eq('status', 'approved');
+          .eq('status', 'approved')
+          .eq('is_visible', true); // Only show businesses that owners have set as visible
 
         // Aplicar filtros de categoría si vienen de CategoriesPage
         if (categoryFilter) {

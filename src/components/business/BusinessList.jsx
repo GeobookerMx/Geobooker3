@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
+import { Eye, EyeOff } from 'lucide-react';
 
 const BusinessList = () => {
     const { user } = useAuth();
     const [businesses, setBusinesses] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [togglingId, setTogglingId] = useState(null);
 
     useEffect(() => {
         if (user) {
@@ -30,6 +32,38 @@ const BusinessList = () => {
             toast.error('Error al cargar tus negocios');
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Toggle business visibility on/off
+    const handleToggleVisibility = async (businessId, currentVisibility) => {
+        setTogglingId(businessId);
+        try {
+            const newVisibility = !currentVisibility;
+            const { error } = await supabase
+                .from('businesses')
+                .update({ is_visible: newVisibility })
+                .eq('id', businessId)
+                .eq('owner_id', user.id); // Security: only owner can toggle
+
+            if (error) throw error;
+
+            // Update local state
+            setBusinesses(prev => prev.map(b =>
+                b.id === businessId ? { ...b, is_visible: newVisibility } : b
+            ));
+
+            toast.success(
+                newVisibility
+                    ? '✅ Tu negocio ahora es visible en el mapa'
+                    : '🔒 Tu negocio está oculto del mapa',
+                { duration: 3000 }
+            );
+        } catch (error) {
+            console.error('Error toggling visibility:', error);
+            toast.error('Error al cambiar la visibilidad');
+        } finally {
+            setTogglingId(null);
         }
     };
 
@@ -108,6 +142,35 @@ const BusinessList = () => {
                                     <span className="truncate">{business.address}</span>
                                 </div>
 
+                                {/* Visibility Toggle */}
+                                {business.status === 'approved' && (
+                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg mb-3">
+                                        <div className="flex items-center gap-2">
+                                            {business.is_visible !== false ? (
+                                                <Eye className="w-4 h-4 text-green-600" />
+                                            ) : (
+                                                <EyeOff className="w-4 h-4 text-gray-400" />
+                                            )}
+                                            <span className="text-sm font-medium text-gray-700">
+                                                Visible en mapa
+                                            </span>
+                                        </div>
+                                        <button
+                                            onClick={() => handleToggleVisibility(business.id, business.is_visible !== false)}
+                                            disabled={togglingId === business.id}
+                                            className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${business.is_visible !== false
+                                                    ? 'bg-green-500'
+                                                    : 'bg-gray-300'
+                                                } ${togglingId === business.id ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
+                                        >
+                                            <span
+                                                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${business.is_visible !== false ? 'translate-x-6' : 'translate-x-0'
+                                                    }`}
+                                            />
+                                        </button>
+                                    </div>
+                                )}
+
                                 <div className="flex justify-between items-center pt-3 border-t border-gray-100">
                                     <Link
                                         to={`/dashboard/business/${business.id}/edit`}
@@ -129,3 +192,4 @@ const BusinessList = () => {
 };
 
 export default BusinessList;
+

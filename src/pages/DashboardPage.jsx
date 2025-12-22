@@ -5,7 +5,9 @@ import { supabase } from '../lib/supabase';
 import UserProfile from '../components/dashboard/UserProfile';
 import BusinessList from '../components/business/BusinessList';
 import InviteButton from '../components/referral/InviteButton';
+import UserLevelCard from '../components/gamification/UserLevelCard';
 import { Crown } from 'lucide-react';
+
 
 const DashboardPage = () => {
   const { user } = useAuth();
@@ -138,10 +140,19 @@ const DashboardPage = () => {
         </div>
       )}
 
-      {/* ===== REFERRAL INVITE SECTION ===== */}
+      {/* ===== LEVEL & REFERRAL SECTION ===== */}
       {referralCode && (
         <div className="mb-8">
-          <InviteButton referralCode={referralCode} />
+          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            🎮 Tu Progreso y Recompensas
+          </h2>
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* User Level Card */}
+            <UserLevelCard />
+
+            {/* Invite Button */}
+            <InviteButton referralCode={referralCode} />
+          </div>
         </div>
       )}
 

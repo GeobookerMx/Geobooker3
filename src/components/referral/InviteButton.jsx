@@ -75,8 +75,8 @@ export default function InviteButton({ referralCode, variant = 'default', classN
                             🎁 ¿Conoces a alguien que busque más ventas?
                         </h3>
                         <p className="text-gray-300 text-sm mb-4">
-                            Invita a un amigo con negocio a Geobooker. Cuando registre su negocio,
-                            <span className="text-yellow-400 font-semibold"> ¡tú ganas 30 días Premium gratis!</span>
+                            Invita amigos con negocio a Geobooker.
+                            <span className="text-yellow-400 font-semibold"> ¡Por cada 5 negocios registrados, ganas 30 días Premium!</span>
                         </p>
 
                         {/* Action Buttons */}
@@ -108,7 +108,7 @@ export default function InviteButton({ referralCode, variant = 'default', classN
                     </div>
                     <div className="text-sm text-gray-500">
                         <Sparkles className="w-4 h-4 inline mr-1" />
-                        +30 días por cada referido
+                        +30 días por cada 5 negocios
                     </div>
                 </div>
             </div>
@@ -141,8 +141,8 @@ export default function InviteButton({ referralCode, variant = 'default', classN
                             <button
                                 onClick={handleCopy}
                                 className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${copied
-                                        ? 'bg-green-500/20 text-green-400'
-                                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                                    ? 'bg-green-500/20 text-green-400'
+                                    : 'bg-blue-600 text-white hover:bg-blue-700'
                                     }`}
                             >
                                 {copied ? (
@@ -199,7 +199,7 @@ export default function InviteButton({ referralCode, variant = 'default', classN
                         {/* Reward Info */}
                         <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
                             <p className="text-yellow-200 text-sm text-center">
-                                🎁 Por cada amigo que registre su negocio,
+                                🎁 Por cada <strong>5 amigos</strong> que registren su negocio,
                                 <strong> ganas 30 días de Premium gratis</strong>
                             </p>
                         </div>

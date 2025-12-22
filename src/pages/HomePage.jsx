@@ -20,6 +20,7 @@ import RecommendedSection from '../components/ads/RecommendedSection';
 import SponsoredResultCard from '../components/ads/SponsoredResultCard';
 import SponsoredFullwidth from '../components/ads/SponsoredFullwidth';
 import SEO from '../components/SEO';
+import ReferralFloatingWidget from '../components/referral/ReferralFloatingWidget';
 
 const HomePage = () => {
   const { t } = useTranslation();
@@ -515,6 +516,9 @@ const HomePage = () => {
       {showInterstitial && (
         <InterstitialAd onClose={closeInterstitial} />
       )}
+
+      {/* Floating Referral Widget - Gamified */}
+      <ReferralFloatingWidget />
     </div>
   );
 };

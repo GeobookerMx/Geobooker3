@@ -142,32 +142,63 @@ const BusinessList = () => {
                                     <span className="truncate">{business.address}</span>
                                 </div>
 
-                                {/* Visibility Toggle */}
+                                {/* Visibility Toggle - Digital Open/Close Feature */}
                                 {business.status === 'approved' && (
-                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg mb-3">
-                                        <div className="flex items-center gap-2">
-                                            {business.is_visible !== false ? (
-                                                <Eye className="w-4 h-4 text-green-600" />
-                                            ) : (
-                                                <EyeOff className="w-4 h-4 text-gray-400" />
-                                            )}
-                                            <span className="text-sm font-medium text-gray-700">
-                                                Visible en mapa
-                                            </span>
+                                    <div className={`p-3 rounded-lg mb-3 border-2 transition-all ${business.is_visible !== false
+                                            ? 'bg-green-50 border-green-200'
+                                            : 'bg-gray-50 border-gray-200'
+                                        }`}>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2">
+                                                {business.is_visible !== false ? (
+                                                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center animate-pulse">
+                                                        <Eye className="w-4 h-4 text-white" />
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                                                        <EyeOff className="w-4 h-4 text-gray-500" />
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <span className="text-sm font-bold text-gray-800 flex items-center gap-1">
+                                                        {business.is_visible !== false ? '🟢 Abierto' : '🔴 Cerrado'}
+                                                        <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-bold">
+                                                            FREE
+                                                        </span>
+                                                    </span>
+                                                    <p className="text-xs text-gray-500">
+                                                        {business.is_visible !== false
+                                                            ? 'Visible en el mapa'
+                                                            : 'Oculto del mapa'
+                                                        }
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => handleToggleVisibility(business.id, business.is_visible !== false)}
+                                                disabled={togglingId === business.id}
+                                                className={`relative w-14 h-7 rounded-full transition-all duration-300 shadow-inner ${business.is_visible !== false
+                                                        ? 'bg-gradient-to-r from-green-400 to-green-600'
+                                                        : 'bg-gray-300'
+                                                    } ${togglingId === business.id ? 'opacity-50 cursor-wait' : 'cursor-pointer hover:shadow-md'}`}
+                                            >
+                                                <span
+                                                    className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 flex items-center justify-center ${business.is_visible !== false ? 'translate-x-7' : 'translate-x-0'
+                                                        }`}
+                                                >
+                                                    {business.is_visible !== false
+                                                        ? <span className="text-xs">✓</span>
+                                                        : <span className="text-xs text-gray-400">×</span>
+                                                    }
+                                                </span>
+                                            </button>
                                         </div>
-                                        <button
-                                            onClick={() => handleToggleVisibility(business.id, business.is_visible !== false)}
-                                            disabled={togglingId === business.id}
-                                            className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${business.is_visible !== false
-                                                    ? 'bg-green-500'
-                                                    : 'bg-gray-300'
-                                                } ${togglingId === business.id ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
-                                        >
-                                            <span
-                                                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${business.is_visible !== false ? 'translate-x-6' : 'translate-x-0'
-                                                    }`}
-                                            />
-                                        </button>
+                                        {/* Benefits tooltip */}
+                                        <div className="text-[10px] text-gray-500 flex flex-wrap gap-2 mt-1">
+                                            <span>🔒 Seguridad</span>
+                                            <span>⏰ Control horario</span>
+                                            <span>📍 Privacidad</span>
+                                        </div>
                                     </div>
                                 )}
 

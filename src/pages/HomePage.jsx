@@ -21,6 +21,7 @@ import SponsoredResultCard from '../components/ads/SponsoredResultCard';
 import SponsoredFullwidth from '../components/ads/SponsoredFullwidth';
 import SEO from '../components/SEO';
 import ReferralFloatingWidget from '../components/referral/ReferralFloatingWidget';
+import ChristmasPromoModal from '../components/referral/ChristmasPromoModal';
 
 const HomePage = () => {
   const { t } = useTranslation();
@@ -519,6 +520,9 @@ const HomePage = () => {
 
       {/* Floating Referral Widget - Gamified */}
       <ReferralFloatingWidget />
+
+      {/* Christmas Promo Modal - Seasonal */}
+      <ChristmasPromoModal />
     </div>
   );
 };

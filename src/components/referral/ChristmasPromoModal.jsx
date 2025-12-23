@@ -13,18 +13,25 @@ export default function ChristmasPromoModal() {
     const [show, setShow] = useState(false);
     const [referralCode, setReferralCode] = useState(null);
 
+    // Promo valid until January 9, 2025
+    const PROMO_END_DATE = new Date('2025-01-10');
+
     useEffect(() => {
+        // Check if promo has expired
+        if (new Date() > PROMO_END_DATE) return;
+
         // Check if already dismissed today
         const dismissed = localStorage.getItem('xmas_promo_dismissed');
         const today = new Date().toDateString();
 
         if (dismissed === today) return;
 
-        // Show after 2 seconds
+        // Show after 2 seconds for ALL visitors
         const timer = setTimeout(() => {
+            setShow(true);
+            // Load referral code if user is logged in
             if (user) {
                 loadReferralCode();
-                setShow(true);
             }
         }, 2000);
 
@@ -50,7 +57,9 @@ export default function ChristmasPromoModal() {
     };
 
     const handleWhatsApp = () => {
-        const link = `https://geobooker.com.mx/r/${referralCode}`;
+        const link = referralCode
+            ? `https://geobooker.com.mx/r/${referralCode}`
+            : 'https://geobooker.com.mx/signup';
         const message = encodeURIComponent(
             `🎄 *REGALO DE NAVIDAD* 🎁\n\n` +
             `¡Hola! Te comparto una oportunidad increíble:\n\n` +
@@ -59,16 +68,22 @@ export default function ChristmasPromoModal() {
             `✅ Más clientes te encuentran\n` +
             `✅ Prende/apaga tu negocio cuando quieras\n` +
             `✅ 100% GRATIS\n\n` +
-            `🎯 *Promo Navideña:* Gana días Premium por cada referido\n\n` +
+            `🎯 *Promo de Año Nuevo:* ¡Empieza el 2025 con más clientes!\n\n` +
             `📲 Regístrate aquí:\n${link}\n\n` +
-            `¡Aprovecha antes de que termine el año! 🚀\n` +
+            `¡Aprovecha esta promoción! 🚀\n` +
             `_geobooker.com.mx_`
         );
         window.open(`https://wa.me/?text=${message}`, '_blank');
         handleDismiss();
     };
 
-    if (!show || !user) return null;
+    const handleRegister = () => {
+        window.location.href = '/signup';
+        handleDismiss();
+    };
+
+    if (!show) return null;
+
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
@@ -170,14 +185,27 @@ export default function ChristmasPromoModal() {
 
                     {/* CTA Buttons */}
                     <div className="space-y-3">
-                        <button
-                            onClick={handleWhatsApp}
-                            className="w-full flex items-center justify-center gap-3 bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-                        >
-                            <MessageCircle className="w-6 h-6" />
-                            Compartir en WhatsApp
-                            <ChevronRight className="w-5 h-5" />
-                        </button>
+                        {user ? (
+                            // Logged in user - Show WhatsApp share
+                            <button
+                                onClick={handleWhatsApp}
+                                className="w-full flex items-center justify-center gap-3 bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                            >
+                                <MessageCircle className="w-6 h-6" />
+                                Compartir en WhatsApp
+                                <ChevronRight className="w-5 h-5" />
+                            </button>
+                        ) : (
+                            // Not logged in - Show register button
+                            <button
+                                onClick={handleRegister}
+                                className="w-full flex items-center justify-center gap-3 bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                            >
+                                <Gift className="w-6 h-6" />
+                                ¡Registra tu negocio GRATIS!
+                                <ChevronRight className="w-5 h-5" />
+                            </button>
+                        )}
 
                         <button
                             onClick={handleDismiss}
@@ -190,7 +218,7 @@ export default function ChristmasPromoModal() {
                     {/* Footer */}
                     <div className="mt-6 pt-4 border-t border-white/20">
                         <p className="text-white/60 text-xs">
-                            🎄 Promoción válida hasta el 31 de diciembre 2024
+                            🎄 Promoción válida hasta el 9 de enero 2025
                         </p>
                         {referralCode && (
                             <p className="text-white/80 text-sm mt-2">

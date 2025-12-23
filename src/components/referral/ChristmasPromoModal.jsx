@@ -1,17 +1,96 @@
 // src/components/referral/ChristmasPromoModal.jsx
 /**
  * Festive Christmas/New Year promotional modal for referral program
- * Shows on homepage for logged-in users to encourage referrals
+ * Shows on homepage for ALL visitors to encourage referrals
+ * Bilingual: Spanish & English
  */
 import React, { useState, useEffect } from 'react';
 import { X, Gift, Sparkles, Star, Users, Crown, ChevronRight, MessageCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 
+// Bilingual text content
+const CONTENT = {
+    es: {
+        promoTag: 'PROMO NAVIDEÑA 2024',
+        title: '🎁 ¡Regalo de Navidad!',
+        subtitle: 'Invita amigos y gana',
+        subtitleHighlight: 'Premium GRATIS',
+        howItWorks: 'Así funciona:',
+        level1: '3 referidos',
+        level1Reward: '7 días de anuncio gratis',
+        level2: '10 referidos',
+        level2Reward: '14 días de anuncio',
+        level3: '25 referidos',
+        level3Reward: '30 días Premium',
+        level4: '50 referidos',
+        level4Reward: '90 días + Enterprise',
+        persuasiveTitle: '¿Conoces a alguien que quiera más clientes?',
+        persuasiveText: 'Tu familiar, amigo o vecino con negocio puede aparecer en Geobooker GRATIS. Ayúdales a iniciar el año con más ventas y tú ganas recompensas. ¡Todos ganan! 🎉',
+        shareWhatsApp: 'Compartir en WhatsApp',
+        registerFree: '¡Registra tu negocio GRATIS!',
+        notNow: 'Ahora no, gracias',
+        validUntil: '🎄 Promoción válida hasta el 9 de enero 2025',
+        yourCode: 'Tu código:',
+        whatsappMessage: (link) =>
+            `🎄 *REGALO DE NAVIDAD* 🎁\n\n` +
+            `¡Hola! Te comparto una oportunidad increíble:\n\n` +
+            `Registra tu negocio GRATIS en *Geobooker* y:\n\n` +
+            `✅ Apareces en el mapa\n` +
+            `✅ Más clientes te encuentran\n` +
+            `✅ Prende/apaga tu negocio cuando quieras\n` +
+            `✅ 100% GRATIS\n\n` +
+            `🎯 *Promo de Año Nuevo:* ¡Empieza el 2025 con más clientes!\n\n` +
+            `📲 Regístrate aquí:\n${link}\n\n` +
+            `¡Aprovecha esta promoción! 🚀\n` +
+            `_geobooker.com.mx_`
+    },
+    en: {
+        promoTag: 'HOLIDAY PROMO 2024',
+        title: '🎁 Holiday Gift!',
+        subtitle: 'Invite friends and earn',
+        subtitleHighlight: 'FREE Premium',
+        howItWorks: 'How it works:',
+        level1: '3 referrals',
+        level1Reward: '7 free ad days',
+        level2: '10 referrals',
+        level2Reward: '14 ad days',
+        level3: '25 referrals',
+        level3Reward: '30 Premium days',
+        level4: '50 referrals',
+        level4Reward: '90 days + Enterprise',
+        persuasiveTitle: 'Know someone who wants more customers?',
+        persuasiveText: 'Your friend, family member or neighbor with a business can be on Geobooker for FREE. Help them start the year with more sales and YOU earn rewards. Everyone wins! 🎉',
+        shareWhatsApp: 'Share on WhatsApp',
+        registerFree: 'Register your business FREE!',
+        notNow: 'Not now, thanks',
+        validUntil: '🎄 Promotion valid until January 9, 2025',
+        yourCode: 'Your code:',
+        whatsappMessage: (link) =>
+            `🎄 *HOLIDAY GIFT* 🎁\n\n` +
+            `Hey! I'm sharing an amazing opportunity:\n\n` +
+            `Register your business FREE on *Geobooker* and:\n\n` +
+            `✅ Appear on the map\n` +
+            `✅ More customers find you\n` +
+            `✅ Turn your business on/off anytime\n` +
+            `✅ 100% FREE\n\n` +
+            `🎯 *New Year Promo:* Start 2025 with more customers!\n\n` +
+            `📲 Sign up here:\n${link}\n\n` +
+            `Don't miss this promotion! 🚀\n` +
+            `_geobooker.com.mx_`
+    }
+};
+
 export default function ChristmasPromoModal() {
+    const { i18n } = useTranslation();
     const { user } = useAuth();
     const [show, setShow] = useState(false);
     const [referralCode, setReferralCode] = useState(null);
+
+    // Get current language content (default to Spanish)
+    const lang = i18n.language?.startsWith('en') ? 'en' : 'es';
+    const t = CONTENT[lang];
 
     // Promo valid until January 9, 2025
     const PROMO_END_DATE = new Date('2025-01-10');
@@ -60,19 +139,7 @@ export default function ChristmasPromoModal() {
         const link = referralCode
             ? `https://geobooker.com.mx/r/${referralCode}`
             : 'https://geobooker.com.mx/signup';
-        const message = encodeURIComponent(
-            `🎄 *REGALO DE NAVIDAD* 🎁\n\n` +
-            `¡Hola! Te comparto una oportunidad increíble:\n\n` +
-            `Registra tu negocio GRATIS en *Geobooker* y:\n\n` +
-            `✅ Apareces en el mapa\n` +
-            `✅ Más clientes te encuentran\n` +
-            `✅ Prende/apaga tu negocio cuando quieras\n` +
-            `✅ 100% GRATIS\n\n` +
-            `🎯 *Promo de Año Nuevo:* ¡Empieza el 2025 con más clientes!\n\n` +
-            `📲 Regístrate aquí:\n${link}\n\n` +
-            `¡Aprovecha esta promoción! 🚀\n` +
-            `_geobooker.com.mx_`
-        );
+        const message = encodeURIComponent(t.whatsappMessage(link));
         window.open(`https://wa.me/?text=${message}`, '_blank');
         handleDismiss();
     };
@@ -126,14 +193,14 @@ export default function ChristmasPromoModal() {
                     <div className="mb-6">
                         <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full mb-4">
                             <Sparkles className="w-4 h-4 text-yellow-300" />
-                            <span className="text-white font-medium text-sm">PROMO NAVIDEÑA 2024</span>
+                            <span className="text-white font-medium text-sm">{t.promoTag}</span>
                             <Sparkles className="w-4 h-4 text-yellow-300" />
                         </div>
                         <h2 className="text-3xl md:text-4xl font-black text-white mb-2">
-                            🎁 ¡Regalo de Navidad!
+                            {t.title}
                         </h2>
                         <p className="text-white/90 text-lg">
-                            Invita amigos y gana <span className="font-bold text-yellow-300">Premium GRATIS</span>
+                            {t.subtitle} <span className="font-bold text-yellow-300">{t.subtitleHighlight}</span>
                         </p>
                     </div>
 
@@ -141,28 +208,28 @@ export default function ChristmasPromoModal() {
                     <div className="bg-white/10 backdrop-blur rounded-2xl p-6 mb-6">
                         <h3 className="text-white font-bold mb-4 flex items-center justify-center gap-2">
                             <Gift className="w-5 h-5 text-yellow-300" />
-                            Así funciona:
+                            {t.howItWorks}
                         </h3>
                         <div className="grid grid-cols-2 gap-4 text-left">
                             <div className="bg-white/10 rounded-xl p-3">
                                 <div className="text-2xl mb-1">🥈</div>
-                                <div className="text-white font-bold">3 referidos</div>
-                                <div className="text-white/70 text-sm">7 días de anuncio gratis</div>
+                                <div className="text-white font-bold">{t.level1}</div>
+                                <div className="text-white/70 text-sm">{t.level1Reward}</div>
                             </div>
                             <div className="bg-white/10 rounded-xl p-3">
                                 <div className="text-2xl mb-1">🥇</div>
-                                <div className="text-white font-bold">10 referidos</div>
-                                <div className="text-white/70 text-sm">14 días de anuncio</div>
+                                <div className="text-white font-bold">{t.level2}</div>
+                                <div className="text-white/70 text-sm">{t.level2Reward}</div>
                             </div>
                             <div className="bg-white/10 rounded-xl p-3">
                                 <div className="text-2xl mb-1">💎</div>
-                                <div className="text-white font-bold">25 referidos</div>
-                                <div className="text-white/70 text-sm">30 días Premium</div>
+                                <div className="text-white font-bold">{t.level3}</div>
+                                <div className="text-white/70 text-sm">{t.level3Reward}</div>
                             </div>
                             <div className="bg-white/10 rounded-xl p-3">
                                 <div className="text-2xl mb-1">👑</div>
-                                <div className="text-white font-bold">50 referidos</div>
-                                <div className="text-white/70 text-sm">90 días + Enterprise</div>
+                                <div className="text-white font-bold">{t.level4}</div>
+                                <div className="text-white/70 text-sm">{t.level4Reward}</div>
                             </div>
                         </div>
                     </div>
@@ -173,11 +240,10 @@ export default function ChristmasPromoModal() {
                             <div className="text-3xl">💡</div>
                             <div className="text-left">
                                 <h4 className="text-white font-bold mb-1">
-                                    ¿Conoces a alguien que quiera más clientes?
+                                    {t.persuasiveTitle}
                                 </h4>
                                 <p className="text-white/90 text-sm">
-                                    Tu familiar, amigo o vecino con negocio puede <strong>aparecer en Geobooker GRATIS</strong>.
-                                    Ayúdales a iniciar el año con más ventas y <strong>tú ganas recompensas</strong>. ¡Todos ganan! 🎉
+                                    {t.persuasiveText}
                                 </p>
                             </div>
                         </div>
@@ -192,7 +258,7 @@ export default function ChristmasPromoModal() {
                                 className="w-full flex items-center justify-center gap-3 bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                             >
                                 <MessageCircle className="w-6 h-6" />
-                                Compartir en WhatsApp
+                                {t.shareWhatsApp}
                                 <ChevronRight className="w-5 h-5" />
                             </button>
                         ) : (
@@ -202,7 +268,7 @@ export default function ChristmasPromoModal() {
                                 className="w-full flex items-center justify-center gap-3 bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                             >
                                 <Gift className="w-6 h-6" />
-                                ¡Registra tu negocio GRATIS!
+                                {t.registerFree}
                                 <ChevronRight className="w-5 h-5" />
                             </button>
                         )}
@@ -211,18 +277,18 @@ export default function ChristmasPromoModal() {
                             onClick={handleDismiss}
                             className="w-full text-white/70 hover:text-white py-2 text-sm transition"
                         >
-                            Ahora no, gracias
+                            {t.notNow}
                         </button>
                     </div>
 
                     {/* Footer */}
                     <div className="mt-6 pt-4 border-t border-white/20">
                         <p className="text-white/60 text-xs">
-                            🎄 Promoción válida hasta el 9 de enero 2025
+                            {t.validUntil}
                         </p>
                         {referralCode && (
                             <p className="text-white/80 text-sm mt-2">
-                                Tu código: <span className="font-mono font-bold text-yellow-300">{referralCode}</span>
+                                {t.yourCode} <span className="font-mono font-bold text-yellow-300">{referralCode}</span>
                             </p>
                         )}
                     </div>

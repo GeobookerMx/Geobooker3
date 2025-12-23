@@ -6,7 +6,8 @@ import toast from "react-hot-toast";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 import {
   Utensils, Coffee, ShoppingBag, Briefcase, Wrench, HeartPulse, Film, GraduationCap,
-  MapPin, Clock, Dog, CreditCard, Truck, Wifi, Accessibility, Star
+  MapPin, Clock, Dog, CreditCard, Truck, Wifi, Accessibility, Star,
+  Hotel, Home, Banknote, Smartphone, PartyPopper
 } from 'lucide-react';
 import PhoneInput from '../components/PhoneInput';
 import { supabase } from '../lib/supabase';
@@ -23,12 +24,12 @@ const defaultCenter = {
   lng: -99.1332,
 };
 
-// 8 Categorías con subcategorías (igual que CategoriesPage)
+// 13 Categorías con subcategorías expandidas
 const CATEGORIES = {
   restaurantes: {
     name: 'Restaurantes & Comida',
     icon: Utensils,
-    subcategories: ['Taquerías', 'Comida Corrida', 'Comida Rápida', 'Pizzerías', 'Mariscos', 'Comida Mexicana', 'Internacional', 'Postres/Heladerías']
+    subcategories: ['Taquerías', 'Comida Corrida', 'Comida Rápida', 'Pizzerías', 'Mariscos', 'Comida Mexicana', 'Internacional', 'Postres/Heladerías', 'Vegano', 'Sushi', 'Bufet', 'Food Trucks']
   },
   bares: {
     name: 'Bares y Cafeterías',
@@ -38,26 +39,26 @@ const CATEGORIES = {
   tiendas: {
     name: 'Tiendas & Comercios',
     icon: ShoppingBag,
-    subcategories: ['Abarrotes', 'Minisúper', 'Ropa y Calzado', 'Papelerías', 'Electrónicos', 'Ferreterías', 'Mueblerías', 'Mascotas']
+    subcategories: ['Abarrotes', 'Minisúper', 'Ropa y Calzado', 'Papelerías', 'Electrónicos', 'Ferreterías', 'Pinturas y Barnices', 'Mueblerías', 'Mascotas', 'Joyerías', 'Floristerías', 'Jugueterías', 'Ópticas']
   },
   servicios: {
     name: 'Servicios Profesionales',
     icon: Briefcase,
-    subcategories: ['Abogados', 'Contadores', 'Consultoría', 'Diseñadores', 'Notarías', 'Arquitectos', 'Recursos Humanos']
+    subcategories: ['Abogados', 'Contadores', 'Consultoría', 'Diseñadores', 'Notarías', 'Arquitectos', 'Recursos Humanos', 'Seguros', 'Fotografía', 'Marketing Digital']
   },
   hogar_autos: {
     name: 'Hogar, Reparaciones & Autos',
     icon: Wrench,
     subcategories: [
       'Taller Mecánico', 'Vulcanizadora', 'Alineación y Balanceo', 'Taller Eléctrico',
-      'Motos', 'Tracto/Camiones', 'Diesel', 'Boutique Automotriz', 'Lavado de Autos',
+      'Motos', 'Tracto/Camiones', 'Servicios a Tractocamiones', 'Diesel', 'Boutique Automotriz', 'Lavado de Autos',
       'Plomería', 'Electricista', 'Cerrajero', 'Carpintería', 'Herrería', 'Vidriería', 'Limpieza'
     ]
   },
   salud: {
     name: 'Salud y Belleza',
     icon: HeartPulse,
-    subcategories: ['Consultorios', 'Clínicas', 'Dentistas', 'Psicología', 'Spa/Masajes', 'Gimnasios', 'Barberías', 'Salones de Belleza', 'Farmacias']
+    subcategories: ['Hospitales', 'Clínicas', 'Consultorios', 'Dentistas', 'Psicología', 'Veterinarias', 'Nutriólogos', 'Fisioterapia', 'Laboratorios', 'Farmacias', 'Spa/Masajes', 'Masajes', 'Gimnasios', 'Barberías', 'Salones de Belleza', 'Uñas', 'SkinCare']
   },
   entretenimiento: {
     name: 'Entretenimiento',
@@ -68,6 +69,32 @@ const CATEGORIES = {
     name: 'Educación',
     icon: GraduationCap,
     subcategories: ['Escuelas', 'Guarderías', 'Cursos y Talleres', 'Idiomas', 'Capacitación', 'Música/Danza']
+  },
+  // NUEVAS CATEGORÍAS
+  alojamiento: {
+    name: 'Alojamiento & Turismo',
+    icon: Hotel,
+    subcategories: ['Hoteles', 'Moteles', 'Airbnbs/Hospedaje', 'Cabañas', 'Tours', 'Agencias de Viaje', 'Balnearios']
+  },
+  inmobiliarias: {
+    name: 'Inmobiliarias',
+    icon: Home,
+    subcategories: ['Venta de Casas', 'Renta de Casas', 'Departamentos', 'Terrenos', 'Locales Comerciales', 'Bodegas', 'Oficinas']
+  },
+  finanzas: {
+    name: 'Finanzas & Seguros',
+    icon: Banknote,
+    subcategories: ['Bancos', 'Casas de Cambio', 'Préstamos', 'Seguros', 'Créditos', 'Inversiones', 'Contabilidad Fiscal']
+  },
+  tecnologia: {
+    name: 'Tecnología',
+    icon: Smartphone,
+    subcategories: ['Reparación de Celulares', 'Cibercafés', 'Impresión/Copias', 'Desarrollo Web', 'Soporte Técnico', 'Venta de Equipos', 'Accesorios']
+  },
+  eventos: {
+    name: 'Eventos & Fiestas',
+    icon: PartyPopper,
+    subcategories: ['Salones de Fiestas', 'Quinceañeras', 'Bodas', 'Catering', 'Fotógrafos', 'DJ/Música', 'Decoración', 'Piñatas', 'Pastelerías para Eventos']
   }
 };
 

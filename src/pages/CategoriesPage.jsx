@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Utensils, Coffee, ShoppingBag, Briefcase, Wrench, HeartPulse, Film, GraduationCap,
-  ArrowRight, MapPin, Search
+  ArrowRight, MapPin, Search, Hotel, Home, Banknote, Smartphone, PartyPopper
 } from 'lucide-react';
 
-// 8 Categorías con subcategorías para México
+// 13 Categorías expandidas con subcategorías para México
 const CATEGORIES = [
   {
     id: 'restaurantes',
@@ -13,7 +13,7 @@ const CATEGORIES = [
     icon: Utensils,
     description: 'Deliciosos lugares para comer',
     color: 'from-red-500 to-orange-500',
-    subcategories: ['Taquerías', 'Comida Corrida', 'Comida Rápida', 'Pizzerías', 'Mariscos', 'Comida Mexicana', 'Internacional', 'Postres/Heladerías']
+    subcategories: ['Taquerías', 'Comida Corrida', 'Comida Rápida', 'Pizzerías', 'Mariscos', 'Comida Mexicana', 'Internacional', 'Postres/Heladerías', 'Vegano', 'Sushi', 'Bufet', 'Food Trucks']
   },
   {
     id: 'bares',
@@ -29,7 +29,7 @@ const CATEGORIES = [
     icon: ShoppingBag,
     description: 'Encuentra lo que necesitas',
     color: 'from-blue-500 to-indigo-500',
-    subcategories: ['Abarrotes', 'Minisúper', 'Ropa y Calzado', 'Papelerías', 'Electrónicos', 'Ferreterías', 'Mueblerías', 'Mascotas']
+    subcategories: ['Abarrotes', 'Minisúper', 'Ropa y Calzado', 'Papelerías', 'Electrónicos', 'Ferreterías', 'Pinturas y Barnices', 'Mueblerías', 'Mascotas', 'Joyerías', 'Floristerías', 'Jugueterías', 'Ópticas']
   },
   {
     id: 'servicios',
@@ -37,7 +37,7 @@ const CATEGORIES = [
     icon: Briefcase,
     description: 'Expertos en lo que necesites',
     color: 'from-green-500 to-emerald-500',
-    subcategories: ['Abogados', 'Contadores', 'Consultoría', 'Diseñadores', 'Notarías', 'Arquitectos', 'Recursos Humanos']
+    subcategories: ['Abogados', 'Contadores', 'Consultoría', 'Diseñadores', 'Notarías', 'Arquitectos', 'Recursos Humanos', 'Seguros', 'Fotografía', 'Marketing Digital']
   },
   {
     id: 'hogar_autos',
@@ -47,7 +47,7 @@ const CATEGORIES = [
     color: 'from-gray-600 to-gray-800',
     subcategories: [
       'Taller Mecánico', 'Vulcanizadora', 'Alineación y Balanceo', 'Taller Eléctrico',
-      'Motos', 'Tracto/Camiones', 'Diesel', 'Boutique Automotriz', 'Lavado de Autos',
+      'Motos', 'Tracto/Camiones', 'Servicios a Tractocamiones', 'Diesel', 'Boutique Automotriz', 'Lavado de Autos',
       'Plomería', 'Electricista', 'Cerrajero', 'Carpintería', 'Herrería', 'Vidriería', 'Limpieza'
     ]
   },
@@ -57,7 +57,7 @@ const CATEGORIES = [
     icon: HeartPulse,
     description: 'Cuida de ti y tu bienestar',
     color: 'from-pink-500 to-rose-500',
-    subcategories: ['Consultorios', 'Clínicas', 'Dentistas', 'Psicología', 'Spa/Masajes', 'Gimnasios', 'Barberías', 'Salones de Belleza', 'Farmacias']
+    subcategories: ['Hospitales', 'Clínicas', 'Consultorios', 'Dentistas', 'Psicología', 'Veterinarias', 'Nutriólogos', 'Fisioterapia', 'Laboratorios', 'Farmacias', 'Spa/Masajes', 'Masajes', 'Gimnasios', 'Barberías', 'Salones de Belleza', 'Uñas', 'SkinCare']
   },
   {
     id: 'entretenimiento',
@@ -74,6 +74,47 @@ const CATEGORIES = [
     description: 'Aprende y crece',
     color: 'from-teal-500 to-cyan-500',
     subcategories: ['Escuelas', 'Guarderías', 'Cursos y Talleres', 'Idiomas', 'Capacitación', 'Música/Danza']
+  },
+  // NUEVAS CATEGORÍAS
+  {
+    id: 'alojamiento',
+    name: 'Alojamiento & Turismo',
+    icon: Hotel,
+    description: 'Hospedaje y viajes',
+    color: 'from-sky-500 to-blue-600',
+    subcategories: ['Hoteles', 'Moteles', 'Airbnbs/Hospedaje', 'Cabañas', 'Tours', 'Agencias de Viaje', 'Balnearios']
+  },
+  {
+    id: 'inmobiliarias',
+    name: 'Inmobiliarias',
+    icon: Home,
+    description: 'Compra, venta y renta',
+    color: 'from-lime-500 to-green-600',
+    subcategories: ['Venta de Casas', 'Renta de Casas', 'Departamentos', 'Terrenos', 'Locales Comerciales', 'Bodegas', 'Oficinas']
+  },
+  {
+    id: 'finanzas',
+    name: 'Finanzas & Seguros',
+    icon: Banknote,
+    description: 'Servicios financieros',
+    color: 'from-emerald-600 to-teal-700',
+    subcategories: ['Bancos', 'Casas de Cambio', 'Préstamos', 'Seguros', 'Créditos', 'Inversiones', 'Contabilidad Fiscal']
+  },
+  {
+    id: 'tecnologia',
+    name: 'Tecnología',
+    icon: Smartphone,
+    description: 'Reparación y servicios tech',
+    color: 'from-slate-600 to-zinc-800',
+    subcategories: ['Reparación de Celulares', 'Cibercafés', 'Impresión/Copias', 'Desarrollo Web', 'Soporte Técnico', 'Venta de Equipos', 'Accesorios']
+  },
+  {
+    id: 'eventos',
+    name: 'Eventos & Fiestas',
+    icon: PartyPopper,
+    description: 'Celebra en grande',
+    color: 'from-fuchsia-500 to-pink-600',
+    subcategories: ['Salones de Fiestas', 'Quinceañeras', 'Bodas', 'Catering', 'Fotógrafos', 'DJ/Música', 'Decoración', 'Piñatas', 'Pastelerías para Eventos']
   }
 ];
 

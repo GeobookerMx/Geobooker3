@@ -3,14 +3,20 @@
 import React from 'react';
 import useEnterprisePriorityCampaigns from '../../hooks/useEnterprisePriorityCampaigns';
 import { ExternalLink, MapPin } from 'lucide-react';
+import GeobookerPromoPlaceholder from './GeobookerPromoPlaceholder';
 
-export default function SponsoredResultCard({ context }) {
+export default function SponsoredResultCard({ context, showPlaceholder = true }) {
     const { currentCampaign, hasCampaigns, hasEnterprise } = useEnterprisePriorityCampaigns('sponsored_results', context);
 
-    if (!hasCampaigns || !currentCampaign) return null;
+    // Show placeholder when no campaigns (if enabled)
+    if (!hasCampaigns || !currentCampaign) {
+        return showPlaceholder ? <GeobookerPromoPlaceholder variant="inline" rotate={true} /> : null;
+    }
 
     const creative = currentCampaign.ad_creatives?.[0];
-    if (!creative) return null;
+    if (!creative) {
+        return showPlaceholder ? <GeobookerPromoPlaceholder variant="inline" rotate={true} /> : null;
+    }
 
     const handleClick = () => {
         // Track click event

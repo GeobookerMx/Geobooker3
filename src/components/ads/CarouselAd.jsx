@@ -3,12 +3,14 @@ import React, { useRef } from 'react';
 import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import useEnterprisePriorityCampaigns from '../../hooks/useEnterprisePriorityCampaigns';
 import useAdTracking from '../../hooks/useAdTracking';
+import GeobookerPromoPlaceholder from './GeobookerPromoPlaceholder';
 
 /**
  * Carrusel de negocios destacados (Primera Plana)
  * Ubicación: Antes de los resultados de búsqueda
  * Formato: Cards 280x200px en scroll horizontal
  * PRIORITY: Enterprise first, Local fallback
+ * Si no hay campañas, muestra placeholder de Geobooker
  */
 export default function CarouselAd() {
     const scrollRef = useRef(null);
@@ -29,7 +31,24 @@ export default function CarouselAd() {
         );
     }
 
-    if (!hasCampaigns) return null;
+    // Show promo section with placeholder card when no campaigns
+    if (!hasCampaigns) {
+        return (
+            <div className="my-8">
+                <div className="flex items-center justify-between mb-4 px-4">
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-900">Negocios Destacados</h2>
+                        <p className="text-sm text-gray-500">Espacios disponibles</p>
+                    </div>
+                </div>
+                <div className="flex space-x-4 px-4">
+                    <GeobookerPromoPlaceholder variant="card" rotate={false} />
+                    <GeobookerPromoPlaceholder variant="card" rotate={false} />
+                    <GeobookerPromoPlaceholder variant="card" rotate={false} />
+                </div>
+            </div>
+        );
+    }
 
     const scrollLeft = () => {
         if (scrollRef.current) {

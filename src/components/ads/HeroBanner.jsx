@@ -3,11 +3,13 @@ import React, { useState, useEffect } from 'react';
 import useActiveCampaigns from '../../hooks/useActiveCampaigns';
 import useAdTracking from '../../hooks/useAdTracking';
 import { loadEnterpriseCampaigns } from '../../services/adService';
+import GeobookerPromoPlaceholder from './GeobookerPromoPlaceholder';
 
 /**
  * Banner principal de publicidad (Primera Plana)
  * Ubicación: Debajo del SearchBar en HomePage
  * Muestra: Enterprise campaigns + regular campaigns con rotación
+ * Si no hay campañas, muestra placeholder de Geobooker
  */
 export default function HeroBanner() {
     const [enterpriseCampaigns, setEnterpriseCampaigns] = useState([]);
@@ -70,13 +72,16 @@ export default function HeroBanner() {
         );
     }
 
+    // Show Geobooker promo placeholder when no campaigns
     if (!hasCampaigns || !currentCampaign) {
-        return null; // No mostrar nada si no hay campañas
+        return <GeobookerPromoPlaceholder variant="banner" rotate={true} />;
     }
 
     const creative = currentCampaign.ad_creatives?.[0];
 
-    if (!creative) return null;
+    if (!creative) {
+        return <GeobookerPromoPlaceholder variant="banner" rotate={true} />;
+    }
 
     return (
         <div className="w-full bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 py-4 border-b border-gray-200">

@@ -9,3 +9,4 @@ export { default as CarouselAd } from './CarouselAd';
 export { default as SponsoredResult } from './SponsoredResult';
 export { default as StickyBanner } from './StickyBanner';
 export { default as InterstitialAd, useInterstitialTrigger } from './InterstitialAd';
+export { default as GeobookerPromoPlaceholder } from './GeobookerPromoPlaceholder';

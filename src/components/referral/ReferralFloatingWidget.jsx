@@ -49,12 +49,16 @@ export default function ReferralFloatingWidget() {
     const handleWhatsApp = () => {
         const link = `https://geobooker.com.mx/r/${referralCode}`;
         const message = encodeURIComponent(
+            `━━━━━━━━━━━━━━━━━\n` +
+            `🗺️ *GEOBOOKER* 📍\n` +
+            `━━━━━━━━━━━━━━━━━\n\n` +
             `¡Hola! 👋\n\n` +
-            `¿Tienes un negocio? Regístralo GRATIS en Geobooker y consigue más clientes 🚀\n\n` +
-            `📍 Apareces en el mapa\n` +
-            `📱 Te encuentran fácil\n` +
-            `💰 100% gratis\n\n` +
-            `${link}`
+            `¿Tienes un negocio? *Regístralo GRATIS* 🚀\n\n` +
+            `✅ Apareces en el mapa\n` +
+            `✅ Prende/apaga tu negocio\n` +
+            `✅ 100% gratis\n\n` +
+            `📲 *Regístrate:*\n${link}\n\n` +
+            `_geobooker.com.mx_`
         );
         window.open(`https://wa.me/?text=${message}`, '_blank');
         setAnimating(true);

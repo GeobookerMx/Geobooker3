@@ -18,18 +18,22 @@ export default function InviteButton({ referralCode, variant = 'default', classN
 
     const referralLink = `https://geobooker.com.mx/r/${referralCode}`;
 
-    // WhatsApp message in Spanish
+    // WhatsApp message in Spanish - with branding
     const whatsappMessage = encodeURIComponent(
+        `━━━━━━━━━━━━━━━━━━━━━\n` +
+        `🗺️ *GEOBOOKER* 📍\n` +
+        `━━━━━━━━━━━━━━━━━━━━━\n\n` +
         `¡Hola! 👋\n\n` +
-        `¿Tienes un negocio y quieres conseguir más clientes? 🚀\n\n` +
-        `Te invito a registrar tu negocio GRATIS en Geobooker, ` +
-        `una plataforma donde la gente encuentra negocios cerca de ellos.\n\n` +
-        `📍 Apareces en el mapa\n` +
-        `📱 Los clientes te encuentran fácil\n` +
-        `💰 Es 100% gratis\n\n` +
-        `Usa mi link para registrarte:\n` +
+        `¿Tienes un negocio y quieres más clientes? 🚀\n\n` +
+        `Te invito a *registrar tu negocio GRATIS* en Geobooker:\n\n` +
+        `✅ Apareces en el mapa para que te encuentren\n` +
+        `✅ Prende y apaga tu negocio cuando quieras\n` +
+        `✅ Es 100% gratis\n` +
+        `✅ Funciona con Google Maps\n\n` +
+        `📲 *Regístrate aquí:*\n` +
         `${referralLink}\n\n` +
-        `¡Te lo recomiendo! 🌟`
+        `¡Miles de negocios ya están en Geobooker! 🌟\n\n` +
+        `_geobooker.com.mx_`
     );
 
     const whatsappUrl = `https://wa.me/?text=${whatsappMessage}`;

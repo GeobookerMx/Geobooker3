@@ -125,9 +125,17 @@ function CommentSection({ postId, isSpanish }) {
 
             if (error) throw error;
 
-            toast.success(isSpanish ? '¡Comentario publicado!' : 'Comment posted!');
-            setNewComment('');
-            loadComments();
+            // Handle moderation response
+            if (data.blocked) {
+                toast.error(data.error || (isSpanish ? 'Comentario bloqueado' : 'Comment blocked'));
+            } else if (data.pending_review) {
+                toast.success(isSpanish ? 'Tu comentario será revisado antes de publicarse' : 'Your comment will be reviewed');
+                setNewComment('');
+            } else if (data.success) {
+                toast.success(data.message || (isSpanish ? '¡Comentario publicado!' : 'Comment posted!'));
+                setNewComment('');
+                loadComments();
+            }
         } catch (err) {
             console.error('Error posting comment:', err);
             toast.error(isSpanish ? 'Error al publicar comentario' : 'Error posting comment');
@@ -287,8 +295,8 @@ export default function CommunityPage() {
                         <button
                             onClick={() => setSelectedCategory('all')}
                             className={`flex-shrink-0 px-4 py-2 rounded-full font-medium transition ${selectedCategory === 'all'
-                                    ? 'bg-purple-600 text-white'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                ? 'bg-purple-600 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                         >
                             {isSpanish ? 'Todos' : 'All'}
@@ -298,8 +306,8 @@ export default function CommunityPage() {
                                 key={key}
                                 onClick={() => setSelectedCategory(key)}
                                 className={`flex-shrink-0 px-4 py-2 rounded-full font-medium transition flex items-center gap-2 ${selectedCategory === key
-                                        ? 'bg-purple-600 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ? 'bg-purple-600 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                             >
                                 <span>{cat.icon}</span>

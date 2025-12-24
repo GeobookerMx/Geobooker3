@@ -11,7 +11,8 @@ import {
     BarChart3,
     DollarSign,
     Menu,
-    X
+    X,
+    Newspaper
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -58,6 +59,7 @@ const Sidebar = ({ onLogout }) => {
         { path: '/admin/ads', icon: TrendingUp, label: '🚀 Geobooker Ads', badge: pendingCampaigns, badgeColor: 'red' },
         { path: '/admin/inventory', icon: BarChart3, label: '📦 Ad Inventory' },
         { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
+        { path: '/admin/blog', icon: Newspaper, label: '📝 Blog Comunidad' },
         { path: '/admin/revenue', icon: DollarSign, label: 'Ingresos' },
         { path: '/admin/settings', icon: Settings, label: 'Configuración' },
     ];

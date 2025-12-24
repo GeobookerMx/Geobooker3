@@ -24,6 +24,7 @@ import AnalyticsPage from "./pages/admin/AnalyticsPage.jsx";
 import UsersPage from "./pages/admin/UsersPage.jsx";
 import SettingsPage from "./pages/admin/SettingsPage.jsx";
 import AdInventory from "./pages/admin/AdInventory.jsx";
+import PostsManagement from "./pages/admin/PostsManagement.jsx";
 
 // User Pages
 import HomePage from "./pages/HomePage.jsx";
@@ -173,6 +174,8 @@ export default function AppRouter() {
         <Route path="revenue" element={<RevenuePage />} />
 
         <Route path="inventory" element={<AdInventory />} />
+
+        <Route path="blog" element={<PostsManagement />} />
 
         <Route path="settings" element={<SettingsPage />} />
       </Route>

@@ -56,6 +56,10 @@ import BusinessProfilePage from "./pages/BusinessProfilePage.jsx";
 // Referral System
 import ReferralLanding from "./pages/ReferralLanding.jsx";
 
+// Community Pages
+import AboutPage from "./pages/AboutPage.jsx";
+import CommunityPage from "./pages/CommunityPage.jsx";
+
 // Enterprise / Global Ads
 import EnterpriseLanding from "./pages/enterprise/EnterpriseLanding.jsx";
 import EnterpriseContact from "./pages/enterprise/EnterpriseContact.jsx";
@@ -90,6 +94,14 @@ export default function AppRouter() {
 
         {/* Página de seguridad y anti-extorsión */}
         <Route path="/seguridad" element={<SecurityPage />} />
+
+        {/* Quiénes Somos / About Us */}
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/quienes-somos" element={<AboutPage />} />
+
+        {/* Comunidad Geobooker */}
+        <Route path="/comunidad" element={<CommunityPage />} />
+        <Route path="/community" element={<CommunityPage />} />
 
         {/* Información fiscal para usuarios internacionales */}
         <Route path="/legal/fiscal" element={<FiscalInfoPage />} />

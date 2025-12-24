@@ -91,11 +91,10 @@ export default function Header() {
         <nav className="hidden md:flex items-center space-x-6 font-brand">
           <Link to="/" className="text-geoPurple hover:text-geoPink transition-colors">{t('nav.home')}</Link>
           <Link to="/categories" className="text-geoPurple hover:text-geoPink transition-colors">{t('nav.categories')}</Link>
+          <Link to="/quienes-somos" className="text-geoPurple hover:text-geoPink transition-colors">Nosotros</Link>
+          <Link to="/comunidad" className="text-geoPurple hover:text-geoPink transition-colors">Comunidad</Link>
           <Link to="/advertise" className="bg-red-500 text-white px-3 py-1 rounded-lg font-bold hover:bg-red-600 transition-colors flex items-center shadow-lg animate-pulse">
-            📢 NUEVO: Publicítate
-          </Link>
-          <Link to="/enterprise" className="text-geoPurple hover:text-geoPink transition-colors font-semibold">
-            🌐 Enterprise
+            📢 Publicítate
           </Link>
           <Link to="/business/register" className="bg-geoPink text-white px-4 py-2 rounded-full hover:bg-geoPurple transition-colors">+ {t('nav.addBusiness')}</Link>
           <LanguageSelector />
@@ -162,11 +161,10 @@ export default function Header() {
         <div className="md:hidden bg-geoYellow shadow-inner border-t border-geoPurple/10 px-4 py-4 space-y-4 font-brand">
           <Link to="/" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">{t('nav.home')}</Link>
           <Link to="/categories" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">{t('nav.categories')}</Link>
+          <Link to="/quienes-somos" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">Nosotros</Link>
+          <Link to="/comunidad" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">Comunidad</Link>
           <Link to="/advertise" onClick={() => setIsOpen(false)} className="block text-red-600 font-bold bg-red-50 p-2 rounded">
-            📢 NUEVO: Publicítate
-          </Link>
-          <Link to="/enterprise" onClick={() => setIsOpen(false)} className="block text-geoPurple font-semibold hover:text-geoPink">
-            🌐 Enterprise (Global Ads)
+            📢 Publicítate
           </Link>
           <Link to="/business/register" onClick={() => setIsOpen(false)} className="block bg-geoPink text-white px-4 py-2 rounded-full w-max hover:bg-geoPurple transition">+ {t('nav.addBusiness')}</Link>
 

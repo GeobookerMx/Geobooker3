@@ -101,7 +101,20 @@ export default function Header() {
 
           {/* User Menu */}
           {user ? (
-            <div className="relative">
+            <div className="relative flex items-center gap-2">
+              {/* Dashboard notification bell */}
+              <Link
+                to="/dashboard"
+                className="relative p-2 text-geoPurple hover:text-geoPink transition-colors group"
+                title="Conoce tu tablero"
+              >
+                <span className="text-xl">🔔</span>
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
+                <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  ✨ Conoce tu tablero
+                </span>
+              </Link>
+
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex items-center space-x-2 bg-geoPurple text-white px-3 py-2 rounded-full hover:bg-geoPink transition-colors"

@@ -38,7 +38,7 @@ const AuthCallback = () => {
                 if (session) {
                     setStatus('success');
                     // Pequeño delay para mostrar mensaje de éxito
-                    setTimeout(() => navigate('/dashboard'), 1000);
+                    setTimeout(() => navigate('/'), 1000);
                 } else {
                     // No hay sesión, puede que el token aún no se haya procesado
                     // Esperamos un momento y reintentamos
@@ -48,7 +48,7 @@ const AuthCallback = () => {
 
                     if (retrySession) {
                         setStatus('success');
-                        setTimeout(() => navigate('/dashboard'), 1000);
+                        setTimeout(() => navigate('/'), 1000);
                     } else {
                         setStatus('error');
                         setTimeout(() => navigate('/login'), 2000);

@@ -13,6 +13,7 @@ export default function Header() {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [businessLogo, setBusinessLogo] = useState(null);
 
   useEffect(() => {
     // Obtener usuario actual
@@ -29,6 +30,21 @@ export default function Header() {
           .maybeSingle();
 
         setUserProfile(profile);
+
+        // Obtener logo del primer negocio del usuario (si tiene)
+        try {
+          const { data: businesses, error: bizError } = await supabase
+            .from('businesses')
+            .select('*')
+            .eq('owner_id', session.user.id)
+            .limit(1);
+
+          if (!bizError && businesses && businesses.length > 0 && businesses[0].logo_url) {
+            setBusinessLogo(businesses[0].logo_url);
+          }
+        } catch (e) {
+          console.log('No logo available:', e);
+        }
       }
     };
 
@@ -39,6 +55,7 @@ export default function Header() {
       setUser(session?.user ?? null);
       if (!session?.user) {
         setUserProfile(null);
+        setBusinessLogo(null);
       }
     });
 
@@ -105,23 +122,28 @@ export default function Header() {
               {/* Dashboard notification bell */}
               <Link
                 to="/dashboard"
-                className="relative p-2 text-geoPurple hover:text-geoPink transition-colors group"
+                className="relative p-2 text-geoPurple hover:text-geoPink transition-colors"
                 title="Conoce tu tablero"
               >
                 <span className="text-xl">🔔</span>
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
-                <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                  ✨ Conoce tu tablero
-                </span>
+                <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
               </Link>
 
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex items-center space-x-2 bg-geoPurple text-white px-3 py-2 rounded-full hover:bg-geoPink transition-colors"
               >
-                <div className="w-8 h-8 bg-white text-geoPurple rounded-full flex items-center justify-center font-bold text-sm">
-                  {getUserInitials()}
-                </div>
+                {businessLogo ? (
+                  <img
+                    src={businessLogo}
+                    alt="Logo"
+                    className="w-8 h-8 rounded-full object-cover border-2 border-white"
+                  />
+                ) : (
+                  <div className="w-8 h-8 bg-white text-geoPurple rounded-full flex items-center justify-center font-bold text-sm">
+                    {getUserInitials()}
+                  </div>
+                )}
                 <span className="hidden lg:block">{userProfile?.full_name || 'Usuario'}</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -130,7 +152,7 @@ export default function Header() {
 
               {/* Dropdown Menu */}
               {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
                   <div className="px-4 py-2 border-b border-gray-200">
                     <p className="text-sm font-semibold text-gray-900">{userProfile?.full_name || 'Usuario'}</p>
                     <p className="text-xs text-gray-500 truncate">{user.email}</p>

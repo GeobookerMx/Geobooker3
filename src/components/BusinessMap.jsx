@@ -19,12 +19,9 @@ const defaultCenter = {
 
 // Iconos personalizados - USUARIO (Círculo azul estilo Google Maps)
 const USER_ICON = {
-  path: 0, // google.maps.SymbolPath.CIRCLE
-  fillColor: '#4285F4',
-  fillOpacity: 1,
-  strokeColor: '#ffffff',
-  strokeWeight: 3,
-  scale: 12
+  url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzQyODVGNCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIzIi8+CiAgPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iNCIgZmlsbD0id2hpdGUiLz4KPC9zdmc+',
+  scaledSize: { width: 24, height: 24 },
+  anchor: { x: 12, y: 12 }
 };
 
 const BUSINESS_ICON = {

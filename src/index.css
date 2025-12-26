@@ -4,6 +4,9 @@
 
 /* --- Variables CSS Optimizadas --- */
 :root {
+  /* Force light mode only - prevent dark mode on mobile */
+  color-scheme: light only;
+
   --primary: #5558c4;
   --primary-dark: #4548a5;
   --secondary: #e33a60;

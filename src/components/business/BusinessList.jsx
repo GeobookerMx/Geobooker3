@@ -3,13 +3,15 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, MapPin } from 'lucide-react';
+import LocationEditModal from './LocationEditModal';
 
 const BusinessList = () => {
     const { user } = useAuth();
     const [businesses, setBusinesses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [togglingId, setTogglingId] = useState(null);
+    const [locationModalBusiness, setLocationModalBusiness] = useState(null);
 
     useEffect(() => {
         if (user) {
@@ -145,8 +147,8 @@ const BusinessList = () => {
                                 {/* Visibility Toggle - Digital Open/Close Feature */}
                                 {business.status === 'approved' && (
                                     <div className={`p-3 rounded-lg mb-3 border-2 transition-all ${business.is_visible !== false
-                                            ? 'bg-green-50 border-green-200'
-                                            : 'bg-gray-50 border-gray-200'
+                                        ? 'bg-green-50 border-green-200'
+                                        : 'bg-gray-50 border-gray-200'
                                         }`}>
                                         <div className="flex items-center justify-between mb-2">
                                             <div className="flex items-center gap-2">
@@ -178,8 +180,8 @@ const BusinessList = () => {
                                                 onClick={() => handleToggleVisibility(business.id, business.is_visible !== false)}
                                                 disabled={togglingId === business.id}
                                                 className={`relative w-14 h-7 rounded-full transition-all duration-300 shadow-inner ${business.is_visible !== false
-                                                        ? 'bg-gradient-to-r from-green-400 to-green-600'
-                                                        : 'bg-gray-300'
+                                                    ? 'bg-gradient-to-r from-green-400 to-green-600'
+                                                    : 'bg-gray-300'
                                                     } ${togglingId === business.id ? 'opacity-50 cursor-wait' : 'cursor-pointer hover:shadow-md'}`}
                                             >
                                                 <span
@@ -203,12 +205,21 @@ const BusinessList = () => {
                                 )}
 
                                 <div className="flex justify-between items-center pt-3 border-t border-gray-100">
-                                    <Link
-                                        to={`/dashboard/business/${business.id}/edit`}
-                                        className="text-blue-600 text-sm font-semibold hover:text-blue-800"
-                                    >
-                                        Editar
-                                    </Link>
+                                    <div className="flex gap-2">
+                                        <Link
+                                            to={`/dashboard/business/${business.id}/edit`}
+                                            className="text-blue-600 text-sm font-semibold hover:text-blue-800"
+                                        >
+                                            Editar
+                                        </Link>
+                                        <button
+                                            onClick={() => setLocationModalBusiness(business)}
+                                            className="text-green-600 text-sm font-semibold hover:text-green-800 flex items-center gap-1"
+                                        >
+                                            <MapPin className="w-3 h-3" />
+                                            Ubicación
+                                        </button>
+                                    </div>
                                     <span className="text-gray-400 text-xs">
                                         {new Date(business.created_at).toLocaleDateString()}
                                     </span>
@@ -218,9 +229,20 @@ const BusinessList = () => {
                     ))}
                 </div>
             )}
+
+            {/* Location Edit Modal */}
+            {locationModalBusiness && (
+                <LocationEditModal
+                    business={locationModalBusiness}
+                    onClose={() => setLocationModalBusiness(null)}
+                    onSuccess={() => {
+                        setLocationModalBusiness(null);
+                        fetchBusinesses();
+                    }}
+                />
+            )}
         </div>
     );
 };
 
 export default BusinessList;
-

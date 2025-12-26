@@ -93,8 +93,8 @@ export default function Header() {
           <Link to="/categories" className="text-geoPurple hover:text-geoPink transition-colors">{t('nav.categories')}</Link>
           <Link to="/quienes-somos" className="text-geoPurple hover:text-geoPink transition-colors">Nosotros</Link>
           <Link to="/comunidad" className="text-geoPurple hover:text-geoPink transition-colors">Comunidad</Link>
-          <Link to="/advertise" className="bg-red-500 text-white px-3 py-1 rounded-lg font-bold hover:bg-red-600 transition-colors flex items-center shadow-lg animate-pulse">
-            📢 Publicítate
+          <Link to="/advertise" className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 py-1.5 rounded-lg font-bold hover:from-red-600 hover:to-orange-600 transition-all flex items-center gap-1 shadow-lg hover:scale-105">
+            🚀 ¿Más ventas?
           </Link>
           <Link to="/business/register" className="bg-geoPink text-white px-4 py-2 rounded-full hover:bg-geoPurple transition-colors">+ {t('nav.addBusiness')}</Link>
           <LanguageSelector />
@@ -164,7 +164,7 @@ export default function Header() {
           <Link to="/quienes-somos" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">Nosotros</Link>
           <Link to="/comunidad" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">Comunidad</Link>
           <Link to="/advertise" onClick={() => setIsOpen(false)} className="block text-red-600 font-bold bg-red-50 p-2 rounded">
-            📢 Publicítate
+            🚀 ¿Más ventas?
           </Link>
           <Link to="/business/register" onClick={() => setIsOpen(false)} className="block bg-geoPink text-white px-4 py-2 rounded-full w-max hover:bg-geoPurple transition">+ {t('nav.addBusiness')}</Link>
 

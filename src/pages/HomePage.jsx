@@ -22,6 +22,9 @@ import SponsoredFullwidth from '../components/ads/SponsoredFullwidth';
 import SEO from '../components/SEO';
 import ReferralFloatingWidget from '../components/referral/ReferralFloatingWidget';
 import ChristmasPromoModal from '../components/referral/ChristmasPromoModal';
+// Guest search limit
+import { useGuestSearchLimit } from '../hooks/useGuestSearchLimit';
+import GuestLoginPromptModal from '../components/modals/GuestLoginPromptModal';
 
 const HomePage = () => {
   const { t } = useTranslation();
@@ -40,6 +43,15 @@ const HomePage = () => {
 
   // Sistema de Interstitial Ads
   const { showInterstitial, incrementSearchCount, closeInterstitial } = useInterstitialTrigger();
+
+  // Sistema de límite de búsquedas para invitados
+  const {
+    canSearch: canGuestSearch,
+    recordSearch: recordGuestSearch,
+    showLoginPrompt,
+    closeLoginPrompt,
+    isGuest
+  } = useGuestSearchLimit();
 
   // Cargar negocios nativos de Geobooker (con filtros de categoría)
   useEffect(() => {
@@ -154,6 +166,11 @@ const HomePage = () => {
     setBusinesses(foundBusinesses);
     // Incrementar contador de búsquedas para trigger de interstitial
     incrementSearchCount();
+
+    // Registrar búsqueda de invitado (mostrará modal si excede límite)
+    if (isGuest) {
+      recordGuestSearch();
+    }
 
     if (foundBusinesses.length === 0) {
       toast.error(t('home.noBusinessesFound'));
@@ -523,6 +540,12 @@ const HomePage = () => {
 
       {/* Christmas Promo Modal - Seasonal */}
       <ChristmasPromoModal />
+
+      {/* Guest Login Prompt - Aparece después de 1 búsqueda sin cuenta */}
+      <GuestLoginPromptModal
+        isOpen={showLoginPrompt}
+        onClose={closeLoginPrompt}
+      />
     </div>
   );
 };

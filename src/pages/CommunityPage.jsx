@@ -95,15 +95,19 @@ function CommentSection({ postId, isSpanish }) {
 
     const loadComments = async () => {
         try {
+            console.log('Loading comments for post:', postId);
             const { data, error } = await supabase
                 .from('community_comments')
                 .select('*')
                 .eq('post_id', postId)
-                .eq('is_approved', true)
                 .order('created_at', { ascending: false });
 
+            console.log('Comments loaded:', data, 'Error:', error);
+
             if (error) throw error;
-            setComments(data || []);
+            // Filter approved comments (or show all for now to debug)
+            const approvedComments = data?.filter(c => c.is_approved !== false) || [];
+            setComments(approvedComments);
         } catch (err) {
             console.error('Error loading comments:', err);
         }
@@ -118,27 +122,54 @@ function CommentSection({ postId, isSpanish }) {
 
         setLoading(true);
         try {
+            console.log('Sending comment to post:', postId);
             const { data, error } = await supabase.rpc('add_community_comment', {
                 p_post_id: postId,
                 p_content: newComment.trim()
             });
 
-            if (error) throw error;
+            console.log('Comment RPC response DATA:', JSON.stringify(data, null, 2));
+            console.log('Comment RPC response ERROR:', error);
 
-            // Handle moderation response
-            if (data.blocked) {
-                toast.error(data.error || (isSpanish ? 'Comentario bloqueado' : 'Comment blocked'));
-            } else if (data.pending_review) {
-                toast.success(isSpanish ? 'Tu comentario será revisado antes de publicarse' : 'Your comment will be reviewed');
+            if (error) {
+                console.error('Supabase RPC error:', error);
+                throw error;
+            }
+
+            // Handle different response types
+            if (data === null || data === undefined) {
+                // Function returned nothing - might be old version returning UUID
+                toast.success(isSpanish ? '¡Comentario publicado!' : 'Comment posted!');
                 setNewComment('');
-            } else if (data.success) {
-                toast.success(data.message || (isSpanish ? '¡Comentario publicado!' : 'Comment posted!'));
+                loadComments();
+            } else if (typeof data === 'object') {
+                // New JSONB response format
+                if (data.blocked) {
+                    toast.error(data.error || (isSpanish ? 'Comentario bloqueado' : 'Comment blocked'));
+                } else if (data.pending_review) {
+                    toast.success(isSpanish ? 'Tu comentario será revisado antes de publicarse' : 'Your comment will be reviewed');
+                    setNewComment('');
+                } else if (data.success) {
+                    toast.success(data.message || (isSpanish ? '¡Comentario publicado!' : 'Comment posted!'));
+                    setNewComment('');
+                    loadComments();
+                } else if (data.error) {
+                    toast.error(data.error);
+                } else {
+                    // Unknown response, assume success
+                    toast.success(isSpanish ? '¡Comentario publicado!' : 'Comment posted!');
+                    setNewComment('');
+                    loadComments();
+                }
+            } else {
+                // UUID returned (old function)
+                toast.success(isSpanish ? '¡Comentario publicado!' : 'Comment posted!');
                 setNewComment('');
                 loadComments();
             }
         } catch (err) {
             console.error('Error posting comment:', err);
-            toast.error(isSpanish ? 'Error al publicar comentario' : 'Error posting comment');
+            toast.error((isSpanish ? 'Error: ' : 'Error: ') + (err.message || err.toString()));
         } finally {
             setLoading(false);
         }
@@ -268,23 +299,48 @@ export default function CommunityPage() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
             {/* Hero Section */}
-            <section className="bg-gradient-to-r from-purple-600 via-pink-600 to-red-500 text-white py-16">
-                <div className="max-w-6xl mx-auto px-4 text-center">
-                    <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
-                        <Sparkles className="w-4 h-4" />
-                        <span className="text-sm font-medium">
-                            {isSpanish ? 'Blog & Noticias' : 'Blog & News'}
-                        </span>
-                    </div>
+            <section className="bg-gradient-to-r from-purple-600 via-pink-600 to-red-500 text-white py-12 md:py-16 relative overflow-hidden">
+                {/* Background decorative elements */}
+                <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-10 left-10 text-8xl">📰</div>
+                    <div className="absolute bottom-10 right-10 text-8xl">💡</div>
+                    <div className="absolute top-1/2 left-1/4 text-6xl">⭐</div>
+                </div>
 
-                    <h1 className="text-4xl md:text-5xl font-black mb-4">
-                        {isSpanish ? 'Comunidad Geobooker' : 'Geobooker Community'}
-                    </h1>
-                    <p className="text-xl text-white/90 max-w-2xl mx-auto">
-                        {isSpanish
-                            ? 'Noticias, tips, recursos y actualizaciones para hacer crecer tu negocio'
-                            : 'News, tips, resources and updates to grow your business'}
-                    </p>
+                <div className="max-w-6xl mx-auto px-4">
+                    <div className="flex flex-col md:flex-row items-center gap-8">
+                        {/* Text content */}
+                        <div className="flex-1 text-center md:text-left">
+                            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
+                                <Sparkles className="w-4 h-4" />
+                                <span className="text-sm font-medium">
+                                    {isSpanish ? 'Blog & Noticias' : 'Blog & News'}
+                                </span>
+                            </div>
+
+                            <h1 className="text-4xl md:text-5xl font-black mb-4">
+                                {isSpanish ? 'Comunidad Geobooker' : 'Geobooker Community'}
+                            </h1>
+                            <p className="text-xl text-white/90 max-w-xl">
+                                {isSpanish
+                                    ? 'Noticias, tips, recursos y actualizaciones para hacer crecer tu negocio'
+                                    : 'News, tips, resources and updates to grow your business'}
+                            </p>
+                        </div>
+
+                        {/* Illustration area - Geobooker workers */}
+                        <div className="hidden md:flex items-center justify-center">
+                            <div className="relative">
+                                {/* Worker illustration placeholder */}
+                                <div className="w-48 h-48 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
+                                    <div className="text-center">
+                                        <div className="text-6xl mb-2">👷‍♂️👩‍🍳🧑‍💼</div>
+                                        <p className="text-sm text-white/80">Comunidad</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 

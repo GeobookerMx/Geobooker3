@@ -59,6 +59,15 @@ export const LocationProvider = ({ children }) => {
   const requestLocationPermission = () => {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
+        // Use cached if available
+        const cached = getStoredLocation();
+        if (cached) {
+          console.log('📍 Usando ubicación cacheada (sin geolocalización)');
+          setUserLocation(cached);
+          setLoading(false);
+          resolve(cached);
+          return;
+        }
         reject(new Error("Geolocalización no soportada"));
         return;
       }
@@ -96,37 +105,40 @@ export const LocationProvider = ({ children }) => {
               resolve(location);
             },
             (err) => {
-              setLoading(false);
-              setPermissionGranted(false);
-
-              let errorMessage = "Error al obtener la ubicación";
-              switch (err.code) {
-                case err.PERMISSION_DENIED:
-                  errorMessage = "Permiso de ubicación denegado";
-                  break;
-                case err.POSITION_UNAVAILABLE:
-                  errorMessage = "Información de ubicación no disponible";
-                  break;
-                case err.TIMEOUT:
-                  errorMessage = "Tiempo de espera agotado";
-                  break;
-                default:
-                  break;
+              // FALLBACK: Usar ubicación cacheada si existe
+              const cachedLocation = getStoredLocation();
+              if (cachedLocation) {
+                console.log('📍 Usando ubicación cacheada por timeout:', cachedLocation);
+                setUserLocation(cachedLocation);
+                setPermissionGranted(true);
+                setLoading(false);
+                resolve(cachedLocation);
+                return;
               }
 
-              reject(new Error(errorMessage));
+              // FALLBACK 2: Usar ubicación por defecto (CDMX)
+              console.log('📍 Usando ubicación por defecto (CDMX)');
+              const defaultLocation = {
+                lat: 19.4326,
+                lng: -99.1332,
+                accuracy: 10000,
+                isDefault: true
+              };
+              setUserLocation(defaultLocation);
+              setLoading(false);
+              resolve(defaultLocation);
             },
             {
               enableHighAccuracy: true,
-              timeout: 30000, // 30 segundos para alta precisión
-              maximumAge: 60000, // Usar caché de hasta 1 minuto
+              timeout: 15000, // 15 segundos para alta precisión
+              maximumAge: 300000, // Usar caché de hasta 5 minutos
             }
           );
         },
         {
           enableHighAccuracy: false, // Baja precisión primero (más rápido)
-          timeout: 10000, // 10 segundos
-          maximumAge: 300000, // Usar caché de hasta 5 minutos
+          timeout: 8000, // 8 segundos
+          maximumAge: 600000, // Usar caché de hasta 10 minutos
         }
       );
     });

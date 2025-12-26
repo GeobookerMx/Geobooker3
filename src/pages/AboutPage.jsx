@@ -55,24 +55,51 @@ export default function AboutPage() {
                     <div className="absolute bottom-10 right-10 w-96 h-96 bg-white rounded-full filter blur-3xl" />
                 </div>
 
-                <div className="relative max-w-6xl mx-auto px-4 py-20 md:py-28">
-                    <div className="text-center">
-                        <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
-                            <Sparkles className="w-4 h-4" />
-                            <span className="text-sm font-medium">
-                                {isSpanish ? 'Conoce nuestra historia' : 'Learn our story'}
-                            </span>
+                <div className="relative max-w-6xl mx-auto px-4 py-16 md:py-24">
+                    <div className="flex flex-col md:flex-row items-center gap-8">
+                        {/* Text content */}
+                        <div className="flex-1 text-center md:text-left">
+                            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
+                                <Sparkles className="w-4 h-4" />
+                                <span className="text-sm font-medium">
+                                    {isSpanish ? 'Conoce nuestra historia' : 'Learn our story'}
+                                </span>
+                            </div>
+
+                            <h1 className="text-4xl md:text-6xl font-black mb-6">
+                                {isSpanish ? '¿Quiénes Somos?' : 'About Us'}
+                            </h1>
+
+                            <p className="text-xl md:text-2xl text-white/90 max-w-xl">
+                                {isSpanish
+                                    ? 'Somos la plataforma que conecta a tu comunidad con los mejores negocios locales'
+                                    : 'We are the platform connecting your community with the best local businesses'}
+                            </p>
                         </div>
 
-                        <h1 className="text-4xl md:text-6xl font-black mb-6">
-                            {isSpanish ? '¿Quiénes Somos?' : 'About Us'}
-                        </h1>
+                        {/* Illustration area - Geobooker team/workers */}
+                        <div className="hidden md:block">
+                            <div className="relative">
+                                {/* Main illustration container */}
+                                <div className="w-64 h-64 bg-white/10 rounded-2xl backdrop-blur-sm p-6 flex flex-col items-center justify-center">
+                                    <div className="text-7xl mb-4 animate-bounce">🗺️</div>
+                                    <div className="flex gap-2 text-4xl">
+                                        <span className="animate-pulse" style={{ animationDelay: '0s' }}>👨‍🍳</span>
+                                        <span className="animate-pulse" style={{ animationDelay: '0.2s' }}>👩‍⚕️</span>
+                                        <span className="animate-pulse" style={{ animationDelay: '0.4s' }}>👨‍🔧</span>
+                                        <span className="animate-pulse" style={{ animationDelay: '0.6s' }}>👩‍💼</span>
+                                    </div>
+                                    <p className="text-white/80 mt-4 text-center text-sm">
+                                        {isSpanish ? 'Apoyando negocios locales' : 'Supporting local businesses'}
+                                    </p>
+                                </div>
 
-                        <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
-                            {isSpanish
-                                ? 'Somos la plataforma que conecta a tu comunidad con los mejores negocios locales'
-                                : 'We are the platform connecting your community with the best local businesses'}
-                        </p>
+                                {/* Decorative badges */}
+                                <div className="absolute -top-4 -right-4 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                                    🇲🇽 Made in México
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

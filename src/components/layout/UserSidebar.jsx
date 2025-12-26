@@ -64,12 +64,12 @@ const UserSidebar = () => {
     const SidebarContent = () => (
         <>
             {/* Logo */}
-            <div className="p-6 border-b border-gray-200">
+            <div className="p-4 border-b border-gray-200">
                 <button onClick={() => handleNavigate('/')} className="flex items-center">
                     <img
-                        src="/images/geobooker-logo-horizontal.png"
-                        alt="Geobooker"
-                        className="h-8 w-auto"
+                        src="/images/geobooker-logo-horizontal-new.png"
+                        alt="GeoBooker"
+                        className="h-10 max-w-[180px] object-contain"
                     />
                 </button>
             </div>
@@ -146,9 +146,9 @@ const UserSidebar = () => {
             <div className="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50 px-4 py-3 flex items-center justify-between">
                 <button onClick={() => handleNavigate('/')} className="flex items-center">
                     <img
-                        src="/images/geobooker-logo-horizontal.png"
-                        alt="Geobooker"
-                        className="h-6 w-auto"
+                        src="/images/geobooker-logo-horizontal-new.png"
+                        alt="GeoBooker"
+                        className="h-8 max-w-[140px] object-contain"
                     />
                 </button>
                 <button

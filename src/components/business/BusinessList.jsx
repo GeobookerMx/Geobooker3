@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
-import { Eye, EyeOff, MapPin } from 'lucide-react';
+import { Eye, EyeOff, MapPin, Info, Crown, Lock } from 'lucide-react';
 import LocationEditModal from './LocationEditModal';
+
+const FREE_BUSINESS_LIMIT = 2;
 
 const BusinessList = () => {
     const { user } = useAuth();
@@ -12,12 +14,27 @@ const BusinessList = () => {
     const [loading, setLoading] = useState(true);
     const [togglingId, setTogglingId] = useState(null);
     const [locationModalBusiness, setLocationModalBusiness] = useState(null);
+    const [isPremium, setIsPremium] = useState(false);
 
     useEffect(() => {
         if (user) {
             fetchBusinesses();
+            checkPremiumStatus();
         }
     }, [user]);
+
+    const checkPremiumStatus = async () => {
+        try {
+            const { data } = await supabase
+                .from('user_profiles')
+                .select('is_premium')
+                .eq('id', user.id)
+                .maybeSingle();
+            setIsPremium(data?.is_premium || false);
+        } catch (error) {
+            console.error('Error checking premium:', error);
+        }
+    };
 
     const fetchBusinesses = async () => {
         try {
@@ -36,6 +53,9 @@ const BusinessList = () => {
             setLoading(false);
         }
     };
+
+    const canAddMoreBusinesses = isPremium || businesses.length < FREE_BUSINESS_LIMIT;
+    const businessesRemaining = FREE_BUSINESS_LIMIT - businesses.length;
 
     // Toggle business visibility on/off
     const handleToggleVisibility = async (businessId, currentVisibility) => {
@@ -92,15 +112,68 @@ const BusinessList = () => {
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">Mis Negocios</h2>
-                <Link
-                    to="/business/register"
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 font-semibold flex items-center"
-                >
-                    <span className="mr-2">+</span> Registrar Negocio
-                </Link>
+            {/* Header with limit info */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                        Mis Negocios
+                        {isPremium && (
+                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full flex items-center gap-1">
+                                <Crown className="w-3 h-3 fill-yellow-500" /> Premium
+                            </span>
+                        )}
+                    </h2>
+                    {!isPremium && businesses.length > 0 && (
+                        <p className="text-sm text-gray-500 mt-1">
+                            {businessesRemaining > 0
+                                ? `${businessesRemaining} negocio${businessesRemaining > 1 ? 's' : ''} gratis restante${businessesRemaining > 1 ? 's' : ''}`
+                                : '⚠️ Límite de negocios gratis alcanzado'
+                            }
+                        </p>
+                    )}
+                </div>
+
+                {canAddMoreBusinesses ? (
+                    <Link
+                        to="/business/register"
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 font-semibold flex items-center"
+                    >
+                        <span className="mr-2">+</span> Registrar Negocio
+                    </Link>
+                ) : (
+                    <Link
+                        to="/dashboard/upgrade"
+                        className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2 rounded-lg hover:from-yellow-600 hover:to-orange-600 transition duration-200 font-semibold flex items-center gap-2"
+                    >
+                        <Lock className="w-4 h-4" />
+                        Desbloquear más negocios
+                    </Link>
+                )}
             </div>
+
+            {/* Premium benefits banner for location changes */}
+            {businesses.length > 0 && (
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100 rounded-xl p-4 mb-6">
+                    <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <MapPin className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                            <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+                                📍 ¿Tu negocio cambió de ubicación?
+                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">GRATIS</span>
+                            </h4>
+                            <p className="text-sm text-gray-600 mt-1">
+                                Puedes cambiar la ubicación de tu negocio <strong>hasta 3 veces al mes</strong>.
+                                Ideal para food trucks, vendedores ambulantes o si te mudaste.
+                            </p>
+                            <p className="text-xs text-gray-500 mt-2">
+                                Haz clic en el botón <span className="text-green-600 font-semibold">📍 Ubicación</span> de cualquier negocio para cambiarla.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {businesses.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">

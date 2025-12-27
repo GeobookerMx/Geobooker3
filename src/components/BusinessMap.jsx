@@ -1,4 +1,4 @@
-import React, { useMemo, memo } from 'react';
+import React, { useMemo, memo, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 
@@ -243,6 +243,8 @@ export const BusinessMap = memo(({
 }) => {
   const { t, i18n } = useTranslation();
   const mapCenter = userLocation || defaultCenter;
+  const mapRef = useRef(null);
+  const userCircleRef = useRef(null);
 
   // ⚡ useJsApiLoader en lugar de LoadScript - evita cargas múltiples
   const { isLoaded, loadError } = useJsApiLoader({
@@ -250,6 +252,44 @@ export const BusinessMap = memo(({
     libraries: GOOGLE_MAPS_LIBRARIES,
     language: i18n.language
   });
+
+  // Estado para saber si el mapa ya cargó
+  const [mapLoaded, setMapLoaded] = React.useState(false);
+
+  // Callback cuando el mapa se carga
+  const onMapLoad = useCallback((map) => {
+    mapRef.current = map;
+    setMapLoaded(true);
+  }, []);
+
+  // Crear/actualizar círculo de usuario con API nativa
+  useEffect(() => {
+    if (!mapRef.current || !userLocation?.lat || !userLocation?.lng || !window.google) return;
+
+    // Eliminar círculo anterior si existe
+    if (userCircleRef.current) {
+      userCircleRef.current.setMap(null);
+    }
+
+    // Crear nuevo círculo con API nativa de Google Maps - Colores Geobooker
+    userCircleRef.current = new window.google.maps.Circle({
+      map: mapRef.current,
+      center: { lat: userLocation.lat, lng: userLocation.lng },
+      radius: 150,  // 150m - visible pero no excesivo
+      fillColor: '#8B5CF6',  // geoPurple
+      fillOpacity: 0.25,
+      strokeColor: '#EC4899',  // geoPink
+      strokeOpacity: 1,
+      strokeWeight: 3,
+      zIndex: 999
+    });
+
+    return () => {
+      if (userCircleRef.current) {
+        userCircleRef.current.setMap(null);
+      }
+    };
+  }, [userLocation?.lat, userLocation?.lng, mapLoaded]);
 
   const mapOptions = useMemo(() => ({
     styles: [
@@ -330,16 +370,9 @@ export const BusinessMap = memo(({
         center={mapCenter}
         zoom={zoom}
         options={mapOptions}
+        onLoad={onMapLoad}
       >
-        {/* Marcador del usuario */}
-        {userLocation && (
-          <Marker
-            position={userLocation}
-            icon={USER_ICON}
-            title={t('map.yourLocation')}
-            zIndex={1000}
-          />
-        )}
+        {/* Círculo de ubicación se crea vía useEffect con API nativa */}
 
         {/* Marcadores de Google Places (Rosa) */}
         {googleMarkers.map((business) => (

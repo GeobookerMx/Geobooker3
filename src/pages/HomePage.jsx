@@ -509,6 +509,32 @@ const HomePage = () => {
         </div>
       </div>
 
+      {/* Banner de Negocios Geobooker */}
+      <div className="py-12 bg-gray-100">
+        <div className="container mx-auto px-4">
+          <h3 className="text-2xl font-bold text-center text-gray-800 mb-8">
+            Negocios que ya usan Geobooker 💼
+          </h3>
+          <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory scrollbar-hide">
+            <div className="flex-shrink-0 w-48 snap-center">
+              <img src="/images/barista.jpg" alt="Cafetería" className="w-full h-64 object-cover rounded-xl shadow-lg" />
+            </div>
+            <div className="flex-shrink-0 w-48 snap-center">
+              <img src="/images/mecanico.jpg" alt="Mecánico" className="w-full h-64 object-cover rounded-xl shadow-lg" />
+            </div>
+            <div className="flex-shrink-0 w-48 snap-center">
+              <img src="/images/panadera.jpg" alt="Panadería" className="w-full h-64 object-cover rounded-xl shadow-lg" />
+            </div>
+            <div className="flex-shrink-0 w-48 snap-center">
+              <img src="/images/estilistas.jpg" alt="Estilistas" className="w-full h-64 object-cover rounded-xl shadow-lg" />
+            </div>
+            <div className="flex-shrink-0 w-48 snap-center">
+              <img src="/images/electricista.jpg" alt="Electricista" className="w-full h-64 object-cover rounded-xl shadow-lg" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Call to Action Final */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
         <div className="container mx-auto px-4 text-center">

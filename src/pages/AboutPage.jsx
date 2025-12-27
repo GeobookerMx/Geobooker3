@@ -171,6 +171,87 @@ export default function AboutPage() {
                 </div>
             </section>
 
+            {/* Negocios que confían en nosotros */}
+            <section className="py-16 bg-white">
+                <div className="max-w-6xl mx-auto px-4">
+                    <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-4">
+                        {isSpanish ? 'Negocios que confían en Geobooker' : 'Businesses that trust Geobooker'}
+                    </h2>
+                    <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+                        {isSpanish
+                            ? 'Desde cafeterías hasta talleres mecánicos, cientos de negocios ya son parte de nuestra comunidad'
+                            : 'From coffee shops to auto repair, hundreds of businesses are already part of our community'}
+                    </p>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        {/* Barista/Cafetería */}
+                        <div className="group relative overflow-hidden rounded-xl shadow-lg aspect-[3/4]">
+                            <img
+                                src="/images/barista.jpg"
+                                alt="Cafetería Geobooker"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                            <div className="absolute bottom-3 left-3 text-white">
+                                <p className="font-bold text-sm">☕ {isSpanish ? 'Cafetería' : 'Coffee Shop'}</p>
+                            </div>
+                        </div>
+
+                        {/* Mecánico */}
+                        <div className="group relative overflow-hidden rounded-xl shadow-lg aspect-[3/4]">
+                            <img
+                                src="/images/mecanico.jpg"
+                                alt="Taller Mecánico Geobooker"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                            <div className="absolute bottom-3 left-3 text-white">
+                                <p className="font-bold text-sm">🔧 {isSpanish ? 'Taller Mecánico' : 'Auto Repair'}</p>
+                            </div>
+                        </div>
+
+                        {/* Panadería */}
+                        <div className="group relative overflow-hidden rounded-xl shadow-lg aspect-[3/4]">
+                            <img
+                                src="/images/panadera.jpg"
+                                alt="Panadería Geobooker"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                            <div className="absolute bottom-3 left-3 text-white">
+                                <p className="font-bold text-sm">🥖 {isSpanish ? 'Panadería' : 'Bakery'}</p>
+                            </div>
+                        </div>
+
+                        {/* Estilistas */}
+                        <div className="group relative overflow-hidden rounded-xl shadow-lg aspect-[3/4]">
+                            <img
+                                src="/images/estilistas.jpg"
+                                alt="Estilistas Geobooker"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                            <div className="absolute bottom-3 left-3 text-white">
+                                <p className="font-bold text-sm">💇 {isSpanish ? 'Estilistas' : 'Stylists'}</p>
+                            </div>
+                        </div>
+
+                        {/* Electricista */}
+                        <div className="group relative overflow-hidden rounded-xl shadow-lg aspect-[3/4]">
+                            <img
+                                src="/images/electricista.jpg"
+                                alt="Electricista Geobooker"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                            <div className="absolute bottom-3 left-3 text-white">
+                                <p className="font-bold text-sm">⚡ {isSpanish ? 'Electricista' : 'Electrician'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* CTA Section */}
             <section className="py-16">
                 <div className="max-w-4xl mx-auto px-4 text-center">

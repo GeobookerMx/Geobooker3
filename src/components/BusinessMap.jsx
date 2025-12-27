@@ -262,26 +262,34 @@ export const BusinessMap = memo(({
     setMapLoaded(true);
   }, []);
 
-  // Crear/actualizar círculo de usuario con API nativa
+  // Crear/actualizar marcador de usuario con API nativa
   useEffect(() => {
     if (!mapRef.current || !userLocation?.lat || !userLocation?.lng || !window.google) return;
 
-    // Eliminar círculo anterior si existe
+    // Eliminar marcador anterior si existe
     if (userCircleRef.current) {
       userCircleRef.current.setMap(null);
     }
 
-    // Crear nuevo círculo con API nativa de Google Maps - Colores Geobooker
-    userCircleRef.current = new window.google.maps.Circle({
+    // Icono de ubicación del usuario - mismo tamaño que negocios (40x40)
+    const userIcon = {
+      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+        <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="20" cy="20" r="18" fill="#8B5CF6" stroke="#EF4444" stroke-width="4"/>
+          <circle cx="20" cy="20" r="6" fill="white"/>
+        </svg>
+      `),
+      scaledSize: new window.google.maps.Size(40, 40),
+      anchor: new window.google.maps.Point(20, 20)
+    };
+
+    // Crear marcador con API nativa de Google Maps
+    userCircleRef.current = new window.google.maps.Marker({
       map: mapRef.current,
-      center: { lat: userLocation.lat, lng: userLocation.lng },
-      radius: 150,  // 150m - visible pero no excesivo
-      fillColor: '#8B5CF6',  // geoPurple
-      fillOpacity: 0.25,
-      strokeColor: '#EC4899',  // geoPink
-      strokeOpacity: 1,
-      strokeWeight: 3,
-      zIndex: 999
+      position: { lat: userLocation.lat, lng: userLocation.lng },
+      icon: userIcon,
+      title: 'Tu ubicación',
+      zIndex: 1000
     });
 
     return () => {

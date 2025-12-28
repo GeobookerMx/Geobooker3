@@ -403,6 +403,42 @@ const HomePage = () => {
             </p>
           </div>
         </div>
+
+        {/* Video Demo Section */}
+        <div className="mt-16 max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">📹 Mira cómo funciona</h3>
+            <p className="text-gray-600">Ve un ejemplo real de cómo usar Geobooker</p>
+          </div>
+
+          {/* YouTube Video Embed */}
+          <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
+            <iframe
+              className="absolute top-0 left-0 w-full h-full"
+              src="https://www.youtube.com/embed/videoseries?list=UU@Geobooker&autoplay=0"
+              title="Geobooker - Cómo funciona"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+            {/* Fallback si no hay video específico */}
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-600 text-white">
+              <div className="text-center p-8">
+                <div className="text-6xl mb-4">🎬</div>
+                <p className="text-xl font-bold mb-2">¡Próximamente!</p>
+                <p className="text-blue-100">Video tutorial de Geobooker</p>
+                <a
+                  href="https://www.youtube.com/@Geobooker"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-4 bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-full font-bold transition"
+                >
+                  🔔 Suscríbete al canal
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Estadísticas */}
@@ -510,26 +546,97 @@ const HomePage = () => {
       </div>
 
       {/* Banner de Negocios Geobooker */}
-      <div className="py-12 bg-gray-100">
+      <div className="py-16 bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-4">
-          <h3 className="text-2xl font-bold text-center text-gray-800 mb-8">
-            Negocios que ya usan Geobooker 💼
-          </h3>
-          <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory scrollbar-hide">
-            <div className="flex-shrink-0 w-48 snap-center">
-              <img src="/images/barista.jpg" alt="Cafetería" className="w-full h-64 object-cover rounded-xl shadow-lg" />
+          <div className="text-center mb-10">
+            <span className="bg-purple-100 text-purple-700 px-4 py-1 rounded-full text-sm font-semibold">
+              ⭐ Negocios Verificados
+            </span>
+            <h3 className="text-3xl font-bold text-gray-900 mt-4 mb-2">
+              Ellos ya confían en Geobooker 💼
+            </h3>
+            <p className="text-gray-600">Únete a cientos de negocios que ya encontraron más clientes</p>
+          </div>
+
+          <div className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory scrollbar-hide justify-center flex-wrap md:flex-nowrap">
+            {/* Cafetería */}
+            <div className="group relative flex-shrink-0 w-56 snap-center cursor-pointer">
+              <div className="relative overflow-hidden rounded-2xl shadow-xl aspect-[3/4]">
+                <img
+                  src="/images/barista.jpg"
+                  alt="Cafetería"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute bottom-4 left-4 text-white">
+                  <p className="font-bold text-lg">☕ Cafetería</p>
+                  <p className="text-sm text-white/80">Arte latte con Geobooker</p>
+                </div>
+              </div>
             </div>
-            <div className="flex-shrink-0 w-48 snap-center">
-              <img src="/images/mecanico.jpg" alt="Mecánico" className="w-full h-64 object-cover rounded-xl shadow-lg" />
+
+            {/* Mecánico */}
+            <div className="group relative flex-shrink-0 w-56 snap-center cursor-pointer">
+              <div className="relative overflow-hidden rounded-2xl shadow-xl aspect-[3/4]">
+                <img
+                  src="/images/mecanico.jpg"
+                  alt="Mecánico"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute bottom-4 left-4 text-white">
+                  <p className="font-bold text-lg">🔧 Taller Mecánico</p>
+                  <p className="text-sm text-white/80">Servicio de confianza</p>
+                </div>
+              </div>
             </div>
-            <div className="flex-shrink-0 w-48 snap-center">
-              <img src="/images/panadera.jpg" alt="Panadería" className="w-full h-64 object-cover rounded-xl shadow-lg" />
+
+            {/* Panadería */}
+            <div className="group relative flex-shrink-0 w-56 snap-center cursor-pointer">
+              <div className="relative overflow-hidden rounded-2xl shadow-xl aspect-[3/4]">
+                <img
+                  src="/images/panadera.jpg"
+                  alt="Panadería"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute bottom-4 left-4 text-white">
+                  <p className="font-bold text-lg">🥖 Panadería</p>
+                  <p className="text-sm text-white/80">Abriendo con Geobooker</p>
+                </div>
+              </div>
             </div>
-            <div className="flex-shrink-0 w-48 snap-center">
-              <img src="/images/estilistas.jpg" alt="Estilistas" className="w-full h-64 object-cover rounded-xl shadow-lg" />
+
+            {/* Estilistas */}
+            <div className="group relative flex-shrink-0 w-56 snap-center cursor-pointer">
+              <div className="relative overflow-hidden rounded-2xl shadow-xl aspect-[3/4]">
+                <img
+                  src="/images/estilistas.jpg"
+                  alt="Estilistas"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute bottom-4 left-4 text-white">
+                  <p className="font-bold text-lg">💇 Estilistas</p>
+                  <p className="text-sm text-white/80">Negocio en crecimiento</p>
+                </div>
+              </div>
             </div>
-            <div className="flex-shrink-0 w-48 snap-center">
-              <img src="/images/electricista.jpg" alt="Electricista" className="w-full h-64 object-cover rounded-xl shadow-lg" />
+
+            {/* Electricista */}
+            <div className="group relative flex-shrink-0 w-56 snap-center cursor-pointer">
+              <div className="relative overflow-hidden rounded-2xl shadow-xl aspect-[3/4]">
+                <img
+                  src="/images/electricista.jpg"
+                  alt="Electricista"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute bottom-4 left-4 text-white">
+                  <p className="font-bold text-lg">⚡ Electricista</p>
+                  <p className="text-sm text-white/80">Profesional verificado</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

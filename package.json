@@ -17,6 +17,7 @@
     "@vercel/speed-insights": "^1.2.0",
     "i18next": "^25.6.3",
     "lucide-react": "^0.544.0",
+    "qrcode.react": "^4.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.6.0",

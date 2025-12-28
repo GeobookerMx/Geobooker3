@@ -3,6 +3,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import SafetyBanner from '../SafetyBanner';
+import AppQRCode from '../common/AppQRCode';
 
 const Footer = () => {
   const { t } = useTranslation();
@@ -217,6 +218,18 @@ const Footer = () => {
                   </a>
                 </li>
               </ul>
+            </div>
+          </div>
+
+          {/* QR Code Section */}
+          <div className="flex justify-center mb-8">
+            <div className="bg-gray-800 rounded-2xl px-8 py-6 flex flex-col md:flex-row items-center gap-6">
+              <AppQRCode size={100} darkMode={true} />
+              <div className="text-center md:text-left">
+                <h4 className="text-white font-bold text-lg mb-1">¡Comparte Geobooker!</h4>
+                <p className="text-gray-400 text-sm">Escanea el QR con tu celular para abrir la app</p>
+                <p className="text-blue-400 text-xs mt-1">geobooker.com.mx</p>
+              </div>
             </div>
           </div>
 

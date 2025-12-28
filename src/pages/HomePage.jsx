@@ -22,6 +22,7 @@ import SponsoredFullwidth from '../components/ads/SponsoredFullwidth';
 import SEO from '../components/SEO';
 import ReferralFloatingWidget from '../components/referral/ReferralFloatingWidget';
 import ChristmasPromoModal from '../components/referral/ChristmasPromoModal';
+import AIRecommendations from '../components/recommendations/AIRecommendations';
 // Guest search limit
 import { useGuestSearchLimit } from '../hooks/useGuestSearchLimit';
 import GuestLoginPromptModal from '../components/modals/GuestLoginPromptModal';
@@ -301,6 +302,11 @@ const HomePage = () => {
 
       {/* Hero Banner Publicitario (Primera Plana) */}
       <HeroBanner />
+
+      {/* 🤖 La IA de Geobooker te recomienda */}
+      <div className="container mx-auto px-4 py-4">
+        <AIRecommendations />
+      </div>
 
       {/* Resultados Patrocinados - Solo si hay búsqueda activa */}
       {businesses.length > 0 && (

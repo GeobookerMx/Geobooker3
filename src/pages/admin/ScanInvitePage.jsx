@@ -120,7 +120,7 @@ const ScanInvitePage = () => {
         }
     };
 
-    // Iniciar escaneo (simulado por ahora - requiere API de Google Places)
+    // Iniciar escaneo REAL con Google Places API
     const startScan = async () => {
         if (!userLocation) {
             toast.error('Primero necesito tu ubicación');
@@ -128,16 +128,23 @@ const ScanInvitePage = () => {
             return;
         }
 
+        if (!window.google || !window.google.maps) {
+            toast.error('Google Maps no está cargado. Recarga la página.');
+            return;
+        }
+
         setScanning(true);
         setScanStatus('scanning');
         toast.success('Escaneo iniciado en 3km de radio');
 
-        // Crear registro de scan
         try {
-            const { data: scanRun, error } = await supabase
+            const user = (await supabase.auth.getUser()).data.user;
+
+            // Crear registro de scan
+            const { data: scanRun, error: scanError } = await supabase
                 .from('scan_runs')
                 .insert({
-                    user_id: (await supabase.auth.getUser()).data.user.id,
+                    user_id: user.id,
                     latitude: userLocation.lat,
                     longitude: userLocation.lng,
                     radius_km: 3,
@@ -146,24 +153,174 @@ const ScanInvitePage = () => {
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (scanError) throw scanError;
 
-            // Aquí iría la lógica de Google Places API
-            // Por ahora simulamos con un timeout
-            setTimeout(() => {
-                setScanStatus('done');
-                setScanning(false);
-                toast.success('Escaneo completado');
-                loadLeads();
-                loadStats();
-            }, 3000);
+            // Crear servicio de Places
+            const service = new window.google.maps.places.PlacesService(
+                document.createElement('div')
+            );
+
+            // Buscar negocios cercanos (varios tipos)
+            const types = ['restaurant', 'store', 'cafe', 'pharmacy', 'hair_care', 'car_repair'];
+            let allPlaces = [];
+            let scannedCount = 0;
+            let newCount = 0;
+            let duplicateCount = 0;
+
+            for (const type of types) {
+                try {
+                    const places = await new Promise((resolve, reject) => {
+                        service.nearbySearch({
+                            location: new window.google.maps.LatLng(userLocation.lat, userLocation.lng),
+                            radius: 3000, // 3km
+                            type: type,
+                            language: 'es'
+                        }, (results, status) => {
+                            if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+                                resolve(results || []);
+                            } else {
+                                resolve([]); // No error, just empty
+                            }
+                        });
+                    });
+
+                    // Procesar cada negocio
+                    for (const place of places.slice(0, 5)) { // Limitar a 5 por tipo
+                        scannedCount++;
+
+                        // Verificar si ya existe
+                        const { data: existing } = await supabase
+                            .from('scan_leads')
+                            .select('id')
+                            .eq('place_id', place.place_id)
+                            .maybeSingle();
+
+                        if (existing) {
+                            duplicateCount++;
+                            continue;
+                        }
+
+                        // Obtener detalles (incluye teléfono)
+                        let phone = null;
+                        let website = null;
+                        let googleMapsUrl = null;
+
+                        try {
+                            const details = await new Promise((resolve, reject) => {
+                                service.getDetails({
+                                    placeId: place.place_id,
+                                    fields: ['formatted_phone_number', 'international_phone_number', 'website', 'url']
+                                }, (result, status) => {
+                                    if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+                                        resolve(result);
+                                    } else {
+                                        resolve(null);
+                                    }
+                                });
+                            });
+
+                            if (details) {
+                                phone = details.international_phone_number || details.formatted_phone_number;
+                                website = details.website;
+                                googleMapsUrl = details.url;
+                            }
+                        } catch (e) {
+                            console.log('No se pudo obtener detalles de:', place.name);
+                        }
+
+                        // Calcular distancia
+                        const distance = calculateDistance(
+                            userLocation.lat, userLocation.lng,
+                            place.geometry.location.lat(), place.geometry.location.lng()
+                        );
+
+                        // Guardar lead
+                        const { data: newLead, error: leadError } = await supabase
+                            .from('scan_leads')
+                            .insert({
+                                scan_run_id: scanRun.id,
+                                place_id: place.place_id,
+                                name: place.name,
+                                category: place.types?.[0] || type,
+                                address: place.vicinity,
+                                latitude: place.geometry.location.lat(),
+                                longitude: place.geometry.location.lng(),
+                                distance_km: distance.toFixed(2),
+                                website: website,
+                                google_maps_url: googleMapsUrl,
+                                status: 'new'
+                            })
+                            .select()
+                            .single();
+
+                        if (leadError) {
+                            console.error('Error guardando lead:', leadError);
+                            continue;
+                        }
+
+                        // Guardar contacto si hay teléfono
+                        if (phone && newLead) {
+                            await supabase.from('scan_lead_contacts').insert({
+                                lead_id: newLead.id,
+                                type: 'phone',
+                                value: phone,
+                                normalized_value: normalizePhone(phone),
+                                source: 'google_places'
+                            });
+                        }
+
+                        newCount++;
+                        allPlaces.push(place);
+                    }
+                } catch (e) {
+                    console.error('Error buscando tipo:', type, e);
+                }
+            }
+
+            // Actualizar scan_run
+            await supabase
+                .from('scan_runs')
+                .update({
+                    status: 'completed',
+                    total_found: scannedCount,
+                    total_new: newCount,
+                    total_duplicates: duplicateCount,
+                    completed_at: new Date().toISOString()
+                })
+                .eq('id', scanRun.id);
+
+            setScanStatus('done');
+            setScanning(false);
+            toast.success(`✅ Escaneo completado: ${newCount} nuevos leads, ${duplicateCount} duplicados`);
+            loadLeads();
+            loadStats();
 
         } catch (error) {
             console.error('Error en scan:', error);
-            toast.error('Error al iniciar escaneo');
+            toast.error('Error al escanear: ' + error.message);
             setScanning(false);
             setScanStatus('idle');
         }
+    };
+
+    // Normalizar teléfono mexicano
+    const normalizePhone = (phone) => {
+        const clean = phone.replace(/\D/g, '');
+        if (clean.length === 10) return '+52' + clean;
+        if (clean.length === 12 && clean.startsWith('52')) return '+' + clean;
+        return phone;
+    };
+
+    // Calcular distancia en km
+    const calculateDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     };
 
     // Pausar escaneo

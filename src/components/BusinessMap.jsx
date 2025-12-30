@@ -1,7 +1,7 @@
 import React, { useMemo, memo, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
-
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow, MarkerClusterer } from '@react-google-maps/api';
+import LastUpdatedBadge from './common/LastUpdatedBadge';
 // ⚡ IMPORTANTE: Constantes fuera del componente para evitar recargas
 const GOOGLE_MAPS_LIBRARIES = ['places'];
 
@@ -200,7 +200,7 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
         <p className="text-gray-500 text-xs mb-3">
           <span className="font-semibold">{t('business.address')}:</span> {business.address}
         </p>
-        <div className="flex justify-between items-center mb-3">
+        <div className="flex justify-between items-center mb-2">
           <span className="text-yellow-500 text-sm font-semibold">
             ★ {business.rating || 'N/A'}
           </span>
@@ -210,6 +210,12 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
             </span>
           )}
         </div>
+        {/* Badge de frescura de datos - Solo para negocios Geobooker */}
+        {isGeobooker && business.updated_at && (
+          <div className="mb-3">
+            <LastUpdatedBadge updatedAt={business.updated_at} size="sm" />
+          </div>
+        )}
         <div className="flex gap-2">
           <a
             href={googleMapsUrl}
@@ -239,6 +245,7 @@ export const BusinessMap = memo(({
   selectedBusiness,
   onBusinessSelect,
   onViewBusinessProfile,
+  onMapIdle = null, // Callback cuando el mapa termina de moverse (para debounced queries)
   zoom = 14
 }) => {
   const { t, i18n } = useTranslation();
@@ -379,19 +386,56 @@ export const BusinessMap = memo(({
         zoom={zoom}
         options={mapOptions}
         onLoad={onMapLoad}
+        onIdle={() => {
+          // Cuando el mapa deja de moverse, notificar al padre (para debounced queries)
+          if (onMapIdle && mapRef.current) {
+            const bounds = mapRef.current.getBounds();
+            if (bounds) {
+              const ne = bounds.getNorthEast();
+              const sw = bounds.getSouthWest();
+              onMapIdle({
+                bounds: {
+                  north: ne.lat(),
+                  south: sw.lat(),
+                  east: ne.lng(),
+                  west: sw.lng()
+                },
+                center: {
+                  lat: mapRef.current.getCenter().lat(),
+                  lng: mapRef.current.getCenter().lng()
+                },
+                zoom: mapRef.current.getZoom()
+              });
+            }
+          }
+        }}
       >
         {/* Círculo de ubicación se crea vía useEffect con API nativa */}
 
-        {/* Marcadores de Google Places (Rosa) */}
-        {googleMarkers.map((business) => (
-          <Marker
-            key={`google-${business.id}`}
-            position={{ lat: business.latitude, lng: business.longitude }}
-            onClick={() => onBusinessSelect(business)}
-            icon={BUSINESS_ICON}
-            title={business.name}
-          />
-        ))}
+        {/* Marcadores de Google Places (Rosa) con Clustering */}
+        {googleMarkers.length > 0 && (
+          <MarkerClusterer
+            options={{
+              imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m',
+              gridSize: 60,
+              minimumClusterSize: 3,
+              maxZoom: 15, // No cluster después de zoom 15
+            }}
+          >
+            {(clusterer) =>
+              googleMarkers.map((business) => (
+                <Marker
+                  key={`google-${business.id}`}
+                  position={{ lat: business.latitude, lng: business.longitude }}
+                  onClick={() => onBusinessSelect(business)}
+                  icon={BUSINESS_ICON}
+                  title={business.name}
+                  clusterer={clusterer}
+                />
+              ))
+            }
+          </MarkerClusterer>
+        )}
 
         {/* Marcadores de Geobooker (Íconos por categoría, Premium con estrella dorada) */}
         {geobookerMarkers.map((business) => {

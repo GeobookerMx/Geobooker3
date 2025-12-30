@@ -6,13 +6,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
+import { useJsApiLoader } from '@react-google-maps/api';
 import {
     Search, MapPin, Phone, Mail, Globe, ExternalLink,
     Play, Pause, CheckCircle, XCircle, MessageCircle,
-    Filter, RefreshCw, Ban, Clock, Users, Building2
+    Filter, RefreshCw, Ban, Clock, Users, Building2, Loader2
 } from 'lucide-react';
 
+// Libraries needed for Places API
+const libraries = ['places'];
+
 const ScanInvitePage = () => {
+    // Load Google Maps API
+    const { isLoaded: googleMapsLoaded } = useJsApiLoader({
+        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+        libraries: libraries,
+    });
+
     // Estados
     const [scanning, setScanning] = useState(false);
     const [scanStatus, setScanStatus] = useState('idle'); // idle, scanning, paused, done
@@ -31,7 +41,11 @@ const ScanInvitePage = () => {
     });
 
     // Mensaje de WhatsApp precargado
-    const whatsappMessage = `Hola 👋 Soy del equipo de Geobooker. Estamos sumando negocios para que la gente los encuentre cerca de ellos en minutos (WhatsApp, llamadas y rutas).
+    const whatsappMessage = `Hola 👋 Soy del equipo de *Geobooker*. Estamos sumando negocios para que la gente los encuentre cerca de ellos en minutos (WhatsApp, llamadas y rutas).
+
+📍 Conoce nuestra plataforma: geobooker.com.mx
+#cercadeti
+
 ¿Te puedo mandar info rápida? Si prefieres que no te contacte, dime NO y listo.`;
 
     // Cargar datos iniciales
@@ -122,23 +136,32 @@ const ScanInvitePage = () => {
 
     // Iniciar escaneo REAL con Google Places API
     const startScan = async () => {
+        console.log('🔍 startScan called');
+        console.log('🔍 userLocation:', userLocation);
+        console.log('🔍 window.google:', window.google);
+        console.log('🔍 googleMapsLoaded:', googleMapsLoaded);
+
         if (!userLocation) {
+            console.log('❌ No userLocation');
             toast.error('Primero necesito tu ubicación');
             getUserLocation();
             return;
         }
 
-        if (!window.google || !window.google.maps) {
-            toast.error('Google Maps no está cargado. Recarga la página.');
+        if (!googleMapsLoaded || !window.google?.maps) {
+            console.log('❌ Google Maps no está listo');
+            toast.error('Google Maps está cargando... espera un momento');
             return;
         }
 
+        console.log('✅ Iniciando escaneo...');
         setScanning(true);
         setScanStatus('scanning');
         toast.success('Escaneo iniciado en 3km de radio');
 
         try {
             const user = (await supabase.auth.getUser()).data.user;
+            console.log('👤 User:', user?.id);
 
             // Crear registro de scan
             const { data: scanRun, error: scanError } = await supabase

@@ -1,13 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useLocation } from '../contexts/LocationContext';
 import SearchBar from '../components/SearchBar';
-import BusinessMap from '../components/BusinessMap';
+// Lazy load the map component for faster initial load
+const BusinessMap = lazy(() => import('../components/BusinessMap'));
 import LocationPermissionModal from '../components/LocationPermissionModal';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { searchNearbyPlaces } from '../services/googlePlacesService';
+import { MapPin, Loader2 } from 'lucide-react';
+
+// Map loading fallback component
+const MapLoadingFallback = () => (
+  <div className="w-full h-[500px] bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl flex flex-col items-center justify-center">
+    <div className="animate-spin mb-4">
+      <MapPin className="w-12 h-12 text-blue-500" />
+    </div>
+    <p className="text-gray-600 font-medium">Cargando mapa...</p>
+    <p className="text-gray-400 text-sm mt-1">Ubicando negocios cercanos</p>
+  </div>
+);
 // Componentes de Publicidad
 import {
   HeroBanner,
@@ -26,6 +39,8 @@ import AIRecommendations from '../components/recommendations/AIRecommendations';
 // Guest search limit
 import { useGuestSearchLimit } from '../hooks/useGuestSearchLimit';
 import GuestLoginPromptModal from '../components/modals/GuestLoginPromptModal';
+import OpenNowFilter from '../components/common/OpenNowFilter';
+import { isBusinessOpen } from '../utils/businessHours';
 
 const HomePage = () => {
   const { t } = useTranslation();
@@ -36,6 +51,7 @@ const HomePage = () => {
   const [geobookerBusinesses, setGeobookerBusinesses] = useState([]); // Native Businesses
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
+  const [openNowFilter, setOpenNowFilter] = useState(false); // Filtro abierto ahora
   const navigate = useNavigate();
 
   // Filtros de categoría desde URL
@@ -296,6 +312,16 @@ const HomePage = () => {
                 </button>
               </div>
             )}
+
+            {/* Filtro Abierto Ahora */}
+            {permissionGranted && userLocation && (
+              <div className="flex justify-center mt-4">
+                <OpenNowFilter
+                  isActive={openNowFilter}
+                  onToggle={() => setOpenNowFilter(!openNowFilter)}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -335,15 +361,25 @@ const HomePage = () => {
             </h2>
           </div>
 
-          <BusinessMap
-            userLocation={userLocation}
-            businesses={businesses} // Google Places
-            geobookerBusinesses={geobookerBusinesses} // Native Businesses
-            selectedBusiness={selectedBusiness}
-            onBusinessSelect={setSelectedBusiness}
-            onViewBusinessProfile={handleViewBusinessProfile}
-            zoom={businesses.length > 0 ? 13 : 12}
-          />
+          <Suspense fallback={<MapLoadingFallback />}>
+            <BusinessMap
+              userLocation={userLocation}
+              businesses={businesses} // Google Places
+              geobookerBusinesses={
+                // Aplicar filtro "Abierto ahora" si está activo
+                openNowFilter
+                  ? geobookerBusinesses.filter(b => {
+                    const result = isBusinessOpen(b.opening_hours);
+                    return result.isOpen === true;
+                  })
+                  : geobookerBusinesses
+              }
+              selectedBusiness={selectedBusiness}
+              onBusinessSelect={setSelectedBusiness}
+              onViewBusinessProfile={handleViewBusinessProfile}
+              zoom={businesses.length > 0 ? 13 : 12}
+            />
+          </Suspense>
         </div>
       </div>
 

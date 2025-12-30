@@ -110,9 +110,10 @@ export async function loadEnterpriseCampaigns(context = {}) {
             return false;
         });
 
-        // Sort by priority: global first, then country, then city
+        // Sort by priority: city first (most specific), then country, then global
+        // Lower number = higher priority = shown first
         const sorted = filtered.sort((a, b) => {
-            const priority = { global: 1, country: 2, region: 3, city: 4 };
+            const priority = { city: 1, region: 2, country: 3, global: 4 };
             return (priority[a.ad_level] || 5) - (priority[b.ad_level] || 5);
         });
 

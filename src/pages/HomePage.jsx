@@ -347,6 +347,45 @@ const HomePage = () => {
         </div>
       </div>
 
+      {/* CEO Quote / Pitch Section */}
+      <div className="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-16">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            {/* Quote icon */}
+            <div className="mb-6">
+              <svg className="w-12 h-12 mx-auto text-purple-400 opacity-60" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+              </svg>
+            </div>
+
+            {/* Quote text */}
+            <blockquote className="mb-8">
+              <p className="text-2xl md:text-3xl lg:text-4xl font-light text-white leading-relaxed" style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}>
+                "Hoy millones buscan negocios <span className="text-purple-300 font-medium">'cerca de mí'</span> pero muchas búsquedas fallan por información desactualizada.
+                <span className="block mt-4 text-purple-200">Geobooker resuelve eso con fichas verificables, actualización simple, y geolocalización real.</span>
+                <span className="block mt-4 text-xl md:text-2xl text-gray-300">Para anunciantes: publicidad por territorio con slots limitados y métricas claras."</span>
+              </p>
+            </blockquote>
+
+            {/* Author */}
+            <div className="flex items-center justify-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                JP
+              </div>
+              <div className="text-left">
+                <p className="text-white font-semibold text-lg">Lic. Juan Pablo Peña García</p>
+                <p className="text-purple-300 text-sm">CEO & Founder, Geobooker Inc.</p>
+              </div>
+            </div>
+
+            {/* Decorative line */}
+            <div className="mt-8 flex justify-center">
+              <div className="w-24 h-1 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Sección Recomendados (Segunda Plana) */}
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-sm mx-auto lg:max-w-none lg:grid lg:grid-cols-4 lg:gap-6">

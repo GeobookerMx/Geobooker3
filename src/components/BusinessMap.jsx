@@ -2,6 +2,7 @@ import React, { useMemo, memo, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow, MarkerClusterer } from '@react-google-maps/api';
 import LastUpdatedBadge from './common/LastUpdatedBadge';
+import { trackRouteClick, trackBusinessView } from '../services/analyticsService';
 // ⚡ IMPORTANTE: Constantes fuera del componente para evitar recargas
 const GOOGLE_MAPS_LIBRARIES = ['places'];
 
@@ -221,6 +222,7 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
             href={googleMapsUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackRouteClick(business.id, business.name)}
             className="flex-1 bg-green-600 text-white text-center py-2 rounded text-sm hover:bg-green-700 transition duration-200 font-semibold"
           >
             {t('business.getDirections')} 🚗

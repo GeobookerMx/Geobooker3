@@ -38,9 +38,26 @@ export default function AdsQATool() {
     const [matchedAds, setMatchedAds] = useState([]);
     const [loading, setLoading] = useState(false);
     const [showPriorityInfo, setShowPriorityInfo] = useState(false);
+    const [useCustomLocation, setUseCustomLocation] = useState(false);
+    const [customLocation, setCustomLocation] = useState({
+        name: 'Ubicación Personalizada',
+        lat: '',
+        lng: '',
+        country: '',
+        city: ''
+    });
 
     const simulateAdTargeting = async () => {
         setLoading(true);
+
+        // Determinar qué ubicación usar (predefinida o personalizada)
+        const locationToUse = useCustomLocation ? customLocation : selectedLocation;
+
+        if (useCustomLocation && (!customLocation.country || !customLocation.city)) {
+            toast.error('Por favor ingresa país y ciudad');
+            setLoading(false);
+            return;
+        }
 
         try {
             const now = new Date().toISOString();
@@ -55,7 +72,7 @@ export default function AdsQATool() {
                 .eq('status', 'active')
                 .lte('start_date', now)
                 .gte('end_date', now)
-                .or(`target_cities.cs.{${selectedLocation.city}}, target_cities.is.null`);
+                .or(`target_cities.cs.{${locationToUse.city}}, target_cities.is.null`);
 
             // 2. Buscar anuncios que coincidan con país
             const { data: countryAds } = await supabase
@@ -64,14 +81,14 @@ export default function AdsQATool() {
                 .eq('status', 'active')
                 .lte('start_date', now)
                 .gte('end_date', now)
-                .or(`target_countries.cs.{${selectedLocation.country}}, target_countries.is.null`);
+                .or(`target_countries.cs.{${locationToUse.country}}, target_countries.is.null`);
 
             // 3. Combinar y ordenar por prioridad
             const allMatches = [];
 
             // Agregar matches de ciudad
             (cityAds || []).forEach(ad => {
-                if (ad.target_cities?.includes(selectedLocation.city)) {
+                if (ad.target_cities?.includes(locationToUse.city)) {
                     allMatches.push({ ...ad, matchedScope: 'city', priority: 1 });
                 }
             });
@@ -79,7 +96,7 @@ export default function AdsQATool() {
             // Agregar matches de país (si no ya están)
             (countryAds || []).forEach(ad => {
                 const alreadyAdded = allMatches.some(a => a.id === ad.id);
-                if (!alreadyAdded && ad.target_countries?.includes(selectedLocation.country)) {
+                if (!alreadyAdded && ad.target_countries?.includes(locationToUse.country)) {
                     allMatches.push({ ...ad, matchedScope: 'country', priority: 2 });
                 }
             });
@@ -104,7 +121,8 @@ export default function AdsQATool() {
             allMatches.sort((a, b) => a.priority - b.priority);
 
             setMatchedAds(allMatches);
-            toast.success(`Se encontraron ${allMatches.length} anuncios para ${selectedLocation.name}`);
+            const locationName = useCustomLocation ? `${locationToUse.city} (${locationToUse.country})` : locationToUse.name;
+            toast.success(`Se encontraron ${allMatches.length} anuncios para ${locationName}`);
 
         } catch (error) {
             console.error('Error simulando ads:', error);
@@ -177,23 +195,95 @@ export default function AdsQATool() {
                     Selecciona ubicación a simular
                 </h2>
 
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                    {TEST_LOCATIONS.map((loc) => (
-                        <button
-                            key={loc.city}
-                            onClick={() => setSelectedLocation(loc)}
-                            className={`p-3 rounded-lg border-2 text-left transition-all ${selectedLocation.city === loc.city
+                {/* Toggle Custom Location */}
+                <div className="flex items-center gap-3 mb-4">
+                    <label className="flex items-center cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={useCustomLocation}
+                            onChange={(e) => setUseCustomLocation(e.target.checked)}
+                            className="sr-only"
+                        />
+                        <div className={`w-11 h-6 rounded-full transition-colors ${useCustomLocation ? 'bg-purple-600' : 'bg-gray-300'}`}>
+                            <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${useCustomLocation ? 'translate-x-5' : 'translate-x-0.5'} mt-0.5`} />
+                        </div>
+                        <span className="ml-2 text-sm font-medium text-gray-700">Ubicación personalizada</span>
+                    </label>
+                </div>
+
+                {!useCustomLocation ? (
+                    /* Predefined Locations */
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                        {TEST_LOCATIONS.map((loc) => (
+                            <button
+                                key={loc.city}
+                                onClick={() => setSelectedLocation(loc)}
+                                className={`p-3 rounded-lg border-2 text-left transition-all ${selectedLocation.city === loc.city
                                     ? 'border-blue-500 bg-blue-50'
                                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                }`}
-                        >
-                            <div className="font-medium text-sm">{loc.name}</div>
-                            <div className="text-xs text-gray-500 mt-1">
-                                {loc.lat.toFixed(2)}, {loc.lng.toFixed(2)}
+                                    }`}
+                            >
+                                <div className="font-medium text-sm">{loc.name}</div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                    {loc.lat.toFixed(2)}, {loc.lng.toFixed(2)}
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                ) : (
+                    /* Custom Location Input */
+                    <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                        <h3 className="font-semibold text-purple-800 mb-3">🌍 Simular desde cualquier lugar del mundo</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">País (código)</label>
+                                <input
+                                    type="text"
+                                    value={customLocation.country}
+                                    onChange={(e) => setCustomLocation({ ...customLocation, country: e.target.value.toUpperCase() })}
+                                    placeholder="MX, US, ES..."
+                                    maxLength={2}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 uppercase"
+                                />
                             </div>
-                        </button>
-                    ))}
-                </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad</label>
+                                <input
+                                    type="text"
+                                    value={customLocation.city}
+                                    onChange={(e) => setCustomLocation({ ...customLocation, city: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+                                    placeholder="mexico-city"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Latitud</label>
+                                <input
+                                    type="number"
+                                    step="0.0001"
+                                    value={customLocation.lat}
+                                    onChange={(e) => setCustomLocation({ ...customLocation, lat: parseFloat(e.target.value) || '' })}
+                                    placeholder="19.4326"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Longitud</label>
+                                <input
+                                    type="number"
+                                    step="0.0001"
+                                    value={customLocation.lng}
+                                    onChange={(e) => setCustomLocation({ ...customLocation, lng: parseFloat(e.target.value) || '' })}
+                                    placeholder="-99.1332"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                />
+                            </div>
+                        </div>
+                        <p className="text-xs text-purple-600 mt-3">
+                            💡 Tip: Puedes buscar coordenadas de cualquier ciudad en Google Maps (clic derecho → ¿Qué hay aquí?)
+                        </p>
+                    </div>
+                )}
 
                 <div className="mt-6 flex items-center gap-4">
                     <button

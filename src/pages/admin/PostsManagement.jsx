@@ -207,67 +207,69 @@ export default function PostsManagement() {
                         No hay posts. ¡Crea el primero!
                     </div>
                 ) : (
-                    <table className="w-full">
-                        <thead className="bg-gray-50 border-b">
-                            <tr>
-                                <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Título</th>
-                                <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Categoría</th>
-                                <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Estado</th>
-                                <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Fecha</th>
-                                <th className="text-right px-4 py-3 text-sm font-medium text-gray-600">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                            {posts.map(post => {
-                                const cat = CATEGORIES.find(c => c.value === post.category) || CATEGORIES[4];
-                                return (
-                                    <tr key={post.id} className="hover:bg-gray-50">
-                                        <td className="px-4 py-3">
-                                            <div className="font-medium text-gray-900 line-clamp-1">{post.title}</div>
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">{cat.label}</td>
-                                        <td className="px-4 py-3">
-                                            {post.is_published ? (
-                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                                                    <Eye className="w-3 h-3" /> Publicado
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
-                                                    <EyeOff className="w-3 h-3" /> Borrador
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-500">{formatDate(post.created_at)}</td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    onClick={() => togglePublish(post)}
-                                                    className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition"
-                                                    title={post.is_published ? 'Ocultar' : 'Publicar'}
-                                                >
-                                                    {post.is_published ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                                </button>
-                                                <button
-                                                    onClick={() => openEditor(post)}
-                                                    className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                                                    title="Editar"
-                                                >
-                                                    <Edit2 className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(post)}
-                                                    className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                                                    title="Eliminar"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-[700px]">
+                            <thead className="bg-gray-50 border-b">
+                                <tr>
+                                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Título</th>
+                                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Categoría</th>
+                                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Estado</th>
+                                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Fecha</th>
+                                    <th className="text-right px-4 py-3 text-sm font-medium text-gray-600">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y">
+                                {posts.map(post => {
+                                    const cat = CATEGORIES.find(c => c.value === post.category) || CATEGORIES[4];
+                                    return (
+                                        <tr key={post.id} className="hover:bg-gray-50">
+                                            <td className="px-4 py-3">
+                                                <div className="font-medium text-gray-900 line-clamp-1">{post.title}</div>
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-gray-600">{cat.label}</td>
+                                            <td className="px-4 py-3">
+                                                {post.is_published ? (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                                        <Eye className="w-3 h-3" /> Publicado
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
+                                                        <EyeOff className="w-3 h-3" /> Borrador
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-gray-500">{formatDate(post.created_at)}</td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={() => togglePublish(post)}
+                                                        className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition"
+                                                        title={post.is_published ? 'Ocultar' : 'Publicar'}
+                                                    >
+                                                        {post.is_published ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => openEditor(post)}
+                                                        className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                                                        title="Editar"
+                                                    >
+                                                        <Edit2 className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(post)}
+                                                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                                                        title="Eliminar"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
                 )}
             </div>
 

@@ -129,8 +129,8 @@ function enrichSpace(space) {
       (space.type === "1ra_plana"
         ? "1ra plana"
         : space.type === "2da_plana"
-        ? "2da plana"
-        : space.type),
+          ? "2da plana"
+          : space.type),
     tipoLabel: meta.tipoLabel || "Espacio publicitario",
     badge: meta.badge || null,
     idealPara:
@@ -295,13 +295,12 @@ const AdvertisePage = () => {
                 <div className="p-7 flex-grow flex flex-col">
                   <div className="flex items-center justify-between mb-4">
                     <div
-                      className={`p-3 rounded-xl ${
-                        space.type === "interstitial"
+                      className={`p-3 rounded-xl ${space.type === "interstitial"
                           ? "bg-purple-100 text-purple-600"
                           : space.type === "1ra_plana"
-                          ? "bg-blue-100 text-blue-600"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
+                            ? "bg-blue-100 text-blue-600"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
                     >
                       {space.type === "interstitial" ? (
                         <Smartphone className="w-6 h-6" />
@@ -463,7 +462,7 @@ const AdvertisePage = () => {
           segmentación avanzada y reportes a la medida.
         </p>
         <Link
-          to="/contact"
+          to="/enterprise/contact"
           className="text-blue-600 font-semibold hover:text-blue-800 underline text-sm"
         >
           Contáctanos para un plan corporativo

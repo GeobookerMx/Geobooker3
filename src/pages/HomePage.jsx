@@ -40,6 +40,7 @@ import AIRecommendations from '../components/recommendations/AIRecommendations';
 import { useGuestSearchLimit } from '../hooks/useGuestSearchLimit';
 import GuestLoginPromptModal from '../components/modals/GuestLoginPromptModal';
 import OpenNowFilter from '../components/common/OpenNowFilter';
+import LocationRefreshButton from '../components/common/LocationRefreshButton';
 import { isBusinessOpen } from '../utils/businessHours';
 
 const HomePage = () => {
@@ -359,6 +360,8 @@ const HomePage = () => {
                 ? `${businesses.length} ${t('home.businessesFound')}`
                 : t('home.businessMap')}
             </h2>
+            {/* Botón flotante para actualizar ubicación */}
+            <LocationRefreshButton />
           </div>
 
           <Suspense fallback={<MapLoadingFallback />}>

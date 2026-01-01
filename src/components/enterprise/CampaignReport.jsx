@@ -9,9 +9,82 @@ import { supabase } from '../../lib/supabase';
 import {
     Eye, MousePointer, Percent, TrendingUp, Calendar,
     Download, Globe, MapPin, Smartphone, Monitor, Tablet,
-    Clock, BarChart3, PieChart, ArrowUp, ArrowDown, Loader2
+    Clock, BarChart3, PieChart, ArrowUp, ArrowDown, Loader2,
+    FileText, Sparkles, Lightbulb, Target, CheckCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+// Función para generar sugerencias de IA basadas en métricas
+const generateAISuggestions = (report, dailyMetrics) => {
+    const suggestions = [];
+    const ctr = report?.metrics?.ctr_percent || 0;
+    const totalImpressions = report?.metrics?.total_impressions || 0;
+    const totalClicks = report?.metrics?.total_clicks || 0;
+
+    // Sugerencia basada en CTR
+    if (ctr < 0.5) {
+        suggestions.push({
+            type: 'ctr_low',
+            icon: '💡',
+            title: 'CTR por debajo del promedio',
+            text: `Tu CTR actual (${ctr}%) está por debajo del promedio de la industria (0.5%). Considera usar un CTA más directo como "Obtén 20% OFF" o cambiar la imagen principal para captar más atención.`,
+            priority: 'high'
+        });
+    } else if (ctr >= 1.0) {
+        suggestions.push({
+            type: 'ctr_excellent',
+            icon: '🎉',
+            title: '¡Excelente CTR!',
+            text: `Tu CTR de ${ctr}% está muy por encima del promedio. Tu creatividad está funcionando muy bien. Considera aumentar el presupuesto para maximizar el alcance.`,
+            priority: 'success'
+        });
+    }
+
+    // Sugerencia basada en días de la semana
+    if (dailyMetrics && dailyMetrics.length >= 7) {
+        const weekendImpressions = dailyMetrics.filter(d => {
+            const day = new Date(d.date).getDay();
+            return day === 0 || day === 6;
+        }).reduce((sum, d) => sum + (d.impressions || 0), 0);
+
+        const weekdayImpressions = dailyMetrics.filter(d => {
+            const day = new Date(d.date).getDay();
+            return day >= 1 && day <= 5;
+        }).reduce((sum, d) => sum + (d.impressions || 0), 0);
+
+        if (weekendImpressions > weekdayImpressions * 0.6) {
+            suggestions.push({
+                type: 'weekend_strong',
+                icon: '📅',
+                title: 'Fines de semana destacados',
+                text: 'Tus anuncios tienen mayor engagement los fines de semana. Considera concentrar mayor presupuesto en sábado y domingo para maximizar resultados.',
+                priority: 'medium'
+            });
+        }
+    }
+
+    // Sugerencia sobre dispositivos (asumimos 70% mobile por defecto en LatAm)
+    suggestions.push({
+        type: 'mobile_focus',
+        icon: '📱',
+        title: 'Optimiza para móvil',
+        text: 'El 70% de tu audiencia probablemente usa móvil. Asegúrate de que tu landing page cargue en menos de 3 segundos y tenga botón de WhatsApp visible.',
+        priority: 'medium'
+    });
+
+    // Sugerencia de expansión si hay buen rendimiento
+    if (totalImpressions > 10000 && ctr >= 0.5) {
+        suggestions.push({
+            type: 'expand_regions',
+            icon: '🌍',
+            title: 'Considera expandir regiones',
+            text: 'Con buenos resultados en tu campaña actual, podrías considerar expandir a nuevas ciudades o regiones para aumentar tu alcance.',
+            priority: 'low'
+        });
+    }
+
+    return suggestions;
+};
 
 export default function CampaignReport({ campaignId, onClose }) {
     const [loading, setLoading] = useState(true);
@@ -310,15 +383,25 @@ export default function CampaignReport({ campaignId, onClose }) {
                         )}
                     </div>
 
-                    {/* Campaign Details */}
-                    <div className="bg-gray-900 rounded-xl p-6">
-                        <h3 className="text-lg font-semibold text-white mb-4">Campaign Details</h3>
+                    {/* Contract & Campaign Details */}
+                    <div className="bg-gray-900 rounded-xl p-6 mb-6">
+                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-blue-400" />
+                            Contract & Campaign Details
+                        </h3>
                         <div className="grid md:grid-cols-2 gap-4">
+                            {/* Número de Contrato */}
+                            <div className="flex justify-between py-2 border-b border-gray-700">
+                                <span className="text-gray-400">Contract Number</span>
+                                <span className="text-amber-400 font-mono font-medium">
+                                    {report.campaign?.contract_number || 'N/A'}
+                                </span>
+                            </div>
                             <div className="flex justify-between py-2 border-b border-gray-700">
                                 <span className="text-gray-400">Status</span>
                                 <span className={`font-medium ${report.campaign?.status === 'active' ? 'text-green-400' :
-                                        report.campaign?.status === 'pending_review' ? 'text-yellow-400' :
-                                            'text-gray-400'
+                                    report.campaign?.status === 'pending_review' ? 'text-yellow-400' :
+                                        'text-gray-400'
                                     }`}>
                                     {report.campaign?.status}
                                 </span>
@@ -327,6 +410,12 @@ export default function CampaignReport({ campaignId, onClose }) {
                                 <span className="text-gray-400">Budget</span>
                                 <span className="text-white font-medium">
                                     {formatCurrency(report.campaign?.budget_usd || 0)}
+                                </span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-gray-700">
+                                <span className="text-gray-400">Promised Impressions</span>
+                                <span className="text-white">
+                                    {formatNumber(report.campaign?.promised_impressions || 0)}
                                 </span>
                             </div>
                             <div className="flex justify-between py-2 border-b border-gray-700">
@@ -350,6 +439,57 @@ export default function CampaignReport({ campaignId, onClose }) {
                                     }
                                 </span>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Target Regions */}
+                    {report.campaign?.target_regions && report.campaign.target_regions.length > 0 && (
+                        <div className="bg-gray-900 rounded-xl p-6 mb-6">
+                            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                <Target className="w-5 h-5 text-green-400" />
+                                Target Regions
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                                {(report.campaign.target_regions || []).map((region, idx) => (
+                                    <span key={idx} className="bg-blue-600/20 text-blue-300 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                                        <MapPin className="w-3 h-3" />
+                                        {region}
+                                    </span>
+                                ))}
+                            </div>
+                            {report.campaign?.target_countries && (
+                                <div className="mt-3 text-gray-400 text-sm">
+                                    Countries: {report.campaign.target_countries.join(', ')}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* AI Suggestions */}
+                    <div className="bg-gradient-to-br from-purple-900/50 to-blue-900/50 rounded-xl p-6 border border-purple-500/30">
+                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <Sparkles className="w-5 h-5 text-amber-400" />
+                            AI Recommendations
+                            <span className="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full">Powered by Geobooker AI</span>
+                        </h3>
+                        <div className="space-y-4">
+                            {generateAISuggestions(report, dailyMetrics).map((suggestion, idx) => (
+                                <div
+                                    key={idx}
+                                    className={`p-4 rounded-lg border ${suggestion.priority === 'high' ? 'bg-red-900/20 border-red-500/30' :
+                                            suggestion.priority === 'success' ? 'bg-green-900/20 border-green-500/30' :
+                                                'bg-gray-800/50 border-gray-600/30'
+                                        }`}
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <span className="text-2xl">{suggestion.icon}</span>
+                                        <div>
+                                            <h4 className="font-semibold text-white mb-1">{suggestion.title}</h4>
+                                            <p className="text-gray-300 text-sm">{suggestion.text}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>

@@ -91,6 +91,9 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 
 -- 4. MODIFICAR: Cuando referido agrega negocio, dar +0.5 adicional
+-- Primero eliminar la función existente (tiene tipo de retorno diferente)
+DROP FUNCTION IF EXISTS reward_referrer_business_added(UUID);
+
 CREATE OR REPLACE FUNCTION reward_referrer_business_added(p_referred_id UUID)
 RETURNS JSONB AS $$
 DECLARE

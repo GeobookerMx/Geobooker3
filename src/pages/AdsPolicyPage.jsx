@@ -52,7 +52,28 @@ const AdsPolicyPage = () => {
                             No permitimos segmentar audiencias basándose en datos sensibles como raza, religión, orientación sexual o salud.
                         </p>
                     </section>
+
+                    <section>
+                        <h2 className="text-xl font-bold text-gray-900 border-b pb-2 mb-4">4. Garantía de Servicio (Fase de Lanzamiento)</h2>
+                        <p>
+                            Durante nuestra fase de lanzamiento (promoción 70% OFF hasta marzo 2026), Geobooker <strong>no garantiza métricas específicas</strong> de impresiones, clics o conversiones.
+                        </p>
+                        <p className="mt-3">
+                            <strong>Extensión por fallas técnicas:</strong> Si tu campaña experimenta fallas técnicas atribuibles a nuestra plataforma
+                            (anuncio no visible, errores de carga, interrupciones del servicio), te ofreceremos una <strong>extensión gratuita de hasta 15 días</strong> proporcional al tiempo afectado.
+                        </p>
+                        <p className="mt-3">
+                            <strong>Informe de rendimiento:</strong> Al finalizar tu pauta, recibirás un informe con las métricas reales de tu campaña (impresiones, clics, CTR).
+                            Esto es un compromiso de transparencia, no una garantía de resultados.
+                        </p>
+                        <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mt-4">
+                            <p className="text-sm text-yellow-800">
+                                <strong>Nota:</strong> Esta política de garantía puede cambiar conforme la plataforma crezca. Los términos vigentes al momento de contratar serán los que apliquen a tu campaña.
+                            </p>
+                        </div>
+                    </section>
                 </div>
+
             </div>
         </div>
     );

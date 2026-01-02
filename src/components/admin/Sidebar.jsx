@@ -58,7 +58,8 @@ const Sidebar = ({ onLogout }) => {
         { path: '/admin/users', icon: Users, label: 'Usuarios' },
         { path: '/admin/ads', icon: TrendingUp, label: '🚀 Geobooker Ads', badge: pendingCampaigns, badgeColor: 'red' },
         { path: '/admin/ads-qa', icon: BarChart3, label: '🧪 Ads QA Tool' },
-        { path: '/admin/reports', icon: BarChart3, label: '⚠️ Reportes' },
+        { path: '/admin/reports', icon: BarChart3, label: '⚠️ Reportes Negocios' },
+        { path: '/admin/ad-reports', icon: BarChart3, label: '🚩 Reportes Anuncios' },
         { path: '/admin/inventory', icon: BarChart3, label: '📦 Ad Inventory' },
         { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
         { path: '/admin/scan-invite', icon: Users, label: '🔍 Scan & Invite' },
@@ -66,6 +67,7 @@ const Sidebar = ({ onLogout }) => {
         { path: '/admin/revenue', icon: DollarSign, label: 'Ingresos' },
         { path: '/admin/settings', icon: Settings, label: 'Configuración' },
     ];
+
 
     const isActive = (path) => location.pathname === path;
 

@@ -2,6 +2,7 @@
 import React from 'react';
 import { MapPin, Phone, ExternalLink, Star } from 'lucide-react';
 import useAdTracking from '../../hooks/useAdTracking';
+import ReportAdButton from './ReportAdButton';
 
 /**
  * Resultado de búsqueda patrocinado (Primera Plana - PPC)
@@ -99,11 +100,17 @@ export default function SponsoredResult({ campaign, position = 1 }) {
                 </div>
             </div>
 
-            {/* Footer con disclaimer */}
-            <div className="mt-3 pt-3 border-t border-yellow-200">
-                <p className="text-xs text-gray-500 text-center">
+            {/* Footer con disclaimer y reporte */}
+            <div className="mt-3 pt-3 border-t border-yellow-200 flex items-center justify-between">
+                <p className="text-xs text-gray-500">
                     Este negocio está pagando para aparecer en los primeros resultados
                 </p>
+                <ReportAdButton
+                    campaignId={campaign.id}
+                    adSpaceType="sponsored_result"
+                    variant="text"
+                    className="text-xs"
+                />
             </div>
         </div>
     );

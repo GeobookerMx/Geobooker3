@@ -4,6 +4,7 @@ import useActiveCampaigns from '../../hooks/useActiveCampaigns';
 import useAdTracking from '../../hooks/useAdTracking';
 import { loadEnterpriseCampaigns } from '../../services/adService';
 import GeobookerPromoPlaceholder from './GeobookerPromoPlaceholder';
+import ReportAdButton from './ReportAdButton';
 
 /**
  * Banner principal de publicidad (Primera Plana)
@@ -153,10 +154,16 @@ export default function HeroBanner() {
                 </div>
 
                 {/* Información del anunciante (solo en hover en desktop) */}
-                <div className="hidden md:block mt-2 text-center">
+                <div className="hidden md:flex mt-2 items-center justify-center gap-4">
                     <p className="text-xs text-gray-500">
                         Anuncio de {currentCampaign.advertiser_name}
                     </p>
+                    <ReportAdButton
+                        campaignId={currentCampaign.id}
+                        adSpaceType="hero_banner"
+                        variant="text"
+                        className="text-xs"
+                    />
                 </div>
             </div>
         </div>

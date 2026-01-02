@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import CampaignReport from '../../components/enterprise/CampaignReport';
+import CampaignReportButton from '../../components/ads/CampaignReportButton';
 
 export default function AdvertiserDashboard() {
     const { user } = useAuth();
@@ -312,14 +313,13 @@ export default function AdvertiserDashboard() {
                                                         Report
                                                     </button>
 
-                                                    {/* PDF Download */}
-                                                    <button
-                                                        onClick={() => window.print()}
-                                                        className="flex items-center gap-1 bg-gray-700 text-white px-3 py-1.5 rounded-lg hover:bg-gray-600 text-xs font-medium"
-                                                    >
-                                                        <Download className="w-3 h-3" />
-                                                        PDF
-                                                    </button>
+                                                    {/* PDF Download - Nuevo componente */}
+                                                    <CampaignReportButton
+                                                        campaignId={campaign.id}
+                                                        campaignName={campaign.advertiser_name}
+                                                        variant="icon"
+                                                        className="bg-gray-700 hover:bg-gray-600 p-2 rounded-lg"
+                                                    />
                                                 </div>
                                             </td>
                                         </tr>

@@ -28,6 +28,7 @@ import PostsManagement from "./pages/admin/PostsManagement.jsx";
 import ScanInvitePage from "./pages/admin/ScanInvitePage.jsx";
 import AdsQATool from "./pages/admin/AdsQATool.jsx";
 import ReportsModeration from "./pages/admin/ReportsModeration.jsx";
+import AdReportsModeration from "./pages/admin/AdReportsModeration.jsx";
 
 // User Pages
 import HomePage from "./pages/HomePage.jsx";
@@ -63,6 +64,7 @@ import ReferralLanding from "./pages/ReferralLanding.jsx";
 // Community Pages
 import AboutPage from "./pages/AboutPage.jsx";
 import CommunityPage from "./pages/CommunityPage.jsx";
+import AppDevelopmentPage from "./pages/AppDevelopmentPage.jsx";
 
 // Enterprise / Global Ads
 import EnterpriseLanding from "./pages/enterprise/EnterpriseLanding.jsx";
@@ -110,6 +112,9 @@ export default function AppRouter() {
         {/* Comunidad Geobooker */}
         <Route path="/comunidad" element={<CommunityPage />} />
         <Route path="/community" element={<CommunityPage />} />
+
+        {/* Desarrollo de Apps - Cotización */}
+        <Route path="/desarrollo-apps" element={<AppDevelopmentPage />} />
 
         {/* Información fiscal para usuarios internacionales */}
         <Route path="/legal/fiscal" element={<FiscalInfoPage />} />
@@ -178,6 +183,8 @@ export default function AppRouter() {
         <Route path="ads-qa" element={<AdsQATool />} />
 
         <Route path="reports" element={<ReportsModeration />} />
+
+        <Route path="ad-reports" element={<AdReportsModeration />} />
 
         <Route path="analytics" element={<AnalyticsPage />} />
 

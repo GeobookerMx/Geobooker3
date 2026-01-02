@@ -275,13 +275,22 @@ const BusinessApprovals = () => {
                                             </>
                                         )}
                                         {business.status === 'rejected' && (
-                                            <button
-                                                onClick={() => handleMoveToPending(business.id)}
-                                                className="text-orange-600 hover:text-orange-900"
-                                                title="Re-evaluar (Mover a Pendiente)"
-                                            >
-                                                <RotateCcw className="w-5 h-5 inline" />
-                                            </button>
+                                            <>
+                                                <button
+                                                    onClick={() => handleApprove(business.id)}
+                                                    className="text-green-600 hover:text-green-900 mr-2"
+                                                    title="Aprobar Directo"
+                                                >
+                                                    <Check className="w-5 h-5 inline" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleMoveToPending(business.id)}
+                                                    className="text-orange-600 hover:text-orange-900"
+                                                    title="Re-evaluar (Mover a Pendiente)"
+                                                >
+                                                    <RotateCcw className="w-5 h-5 inline" />
+                                                </button>
+                                            </>
                                         )}
                                     </td>
                                 </tr>
@@ -471,10 +480,17 @@ const BusinessApprovals = () => {
                             )}
 
                             {selectedBusiness.status === 'rejected' && (
-                                <div className="flex gap-4 pt-4 border-t border-gray-200">
+                                <div className="flex flex-col gap-3 pt-4 border-t border-gray-200">
+                                    <button
+                                        onClick={() => handleApprove(selectedBusiness.id)}
+                                        className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition flex items-center justify-center"
+                                    >
+                                        <Check className="w-5 h-5 mr-2" />
+                                        Aprobar Negocio (Directo)
+                                    </button>
                                     <button
                                         onClick={() => handleMoveToPending(selectedBusiness.id)}
-                                        className="flex-1 bg-orange-600 text-white py-3 rounded-lg font-bold hover:bg-orange-700 transition flex items-center justify-center"
+                                        className="w-full bg-orange-500 text-white py-3 rounded-lg font-bold hover:bg-orange-600 transition flex items-center justify-center"
                                     >
                                         <RotateCcw className="w-5 h-5 mr-2" />
                                         Mover a Pendiente para Re-evaluar

@@ -245,5 +245,37 @@
         "loadingMap": "Loading map...",
         "mapError": "Error loading Google Maps. Check your API Key.",
         "yourLocation": "Your current location"
+    },
+    "adReport": {
+        "reportAd": "Report this ad",
+        "reportReason": "Why are you reporting this ad?",
+        "inappropriate": "Inappropriate content",
+        "misleading": "Misleading advertising",
+        "offensive": "Offensive content",
+        "spam": "Spam / Repetitive",
+        "illegal": "Illegal product",
+        "wrongLocation": "Wrong location",
+        "other": "Other issue",
+        "details": "Additional details (optional)",
+        "submit": "Submit Report",
+        "thankYou": "Thank you for your report"
+    },
+    "appDev": {
+        "title": "Get Your Custom App Quote",
+        "subtitle": "We develop custom web and mobile apps for your business.",
+        "name": "Full name",
+        "email": "Email",
+        "phone": "Phone / WhatsApp",
+        "company": "Company / Business",
+        "projectType": "What type of project?",
+        "description": "Describe your project",
+        "budget": "Approximate budget",
+        "timeline": "When do you need it?",
+        "submit": "Submit Quote Request"
+    },
+    "footer": {
+        "needApp": "Need your own App?",
+        "appDevDesc": "We develop custom web and mobile apps.",
+        "requestQuote": "Request a quote"
     }
 }

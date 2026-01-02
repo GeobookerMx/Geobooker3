@@ -221,6 +221,36 @@ const Footer = () => {
             </div>
           </div>
 
+          {/* Sección: Desarrollo de Apps */}
+          <div className="bg-gradient-to-r from-purple-900/50 to-blue-900/50 rounded-2xl p-6 mb-8 border border-purple-500/30">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="text-center md:text-left">
+                <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
+                  <span className="text-3xl">📱</span>
+                  <h3 className="text-xl font-bold text-white">¿Necesitas tu propia App?</h3>
+                </div>
+                <p className="text-gray-300 text-sm max-w-lg">
+                  También desarrollamos <strong className="text-purple-300">aplicaciones web y móviles personalizadas</strong> para tu negocio.
+                  PWA, sitios web, sistemas, landing pages y más.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Link
+                  to="/desarrollo-apps"
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-semibold text-center transition-all transform hover:scale-105 shadow-lg"
+                >
+                  📝 Solicitar cotización
+                </Link>
+                <a
+                  href="mailto:geobookerr@gmail.com?subject=Cotización desarrollo de app"
+                  className="text-gray-400 hover:text-white text-sm text-center transition-colors"
+                >
+                  o escríbenos: geobookerr@gmail.com
+                </a>
+              </div>
+            </div>
+          </div>
+
           {/* QR Code Section */}
           <div className="flex justify-center mb-8">
             <div className="bg-gray-800 rounded-2xl px-8 py-6 flex flex-col md:flex-row items-center gap-6">

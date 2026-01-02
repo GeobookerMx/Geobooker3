@@ -245,5 +245,37 @@
         "loadingMap": "Cargando mapa...",
         "mapError": "Error cargando Google Maps. Verifica tu API Key.",
         "yourLocation": "Tu ubicación actual"
+    },
+    "adReport": {
+        "reportAd": "Reportar este anuncio",
+        "reportReason": "¿Por qué reportas este anuncio?",
+        "inappropriate": "Contenido inapropiado",
+        "misleading": "Publicidad engañosa",
+        "offensive": "Contenido ofensivo",
+        "spam": "Spam / Repetitivo",
+        "illegal": "Producto ilegal",
+        "wrongLocation": "Ubicación incorrecta",
+        "other": "Otro problema",
+        "details": "Detalles adicionales (opcional)",
+        "submit": "Enviar Reporte",
+        "thankYou": "Gracias por tu reporte"
+    },
+    "appDev": {
+        "title": "Cotiza tu App Personalizada",
+        "subtitle": "Desarrollamos aplicaciones web y móviles a la medida.",
+        "name": "Nombre completo",
+        "email": "Correo electrónico",
+        "phone": "Teléfono / WhatsApp",
+        "company": "Empresa / Negocio",
+        "projectType": "¿Qué tipo de proyecto?",
+        "description": "Describe tu proyecto",
+        "budget": "Presupuesto aproximado",
+        "timeline": "¿Para cuándo lo necesitas?",
+        "submit": "Enviar Solicitud"
+    },
+    "footer": {
+        "needApp": "¿Necesitas tu propia App?",
+        "appDevDesc": "Desarrollamos apps web y móviles personalizadas.",
+        "requestQuote": "Solicitar cotización"
     }
 }

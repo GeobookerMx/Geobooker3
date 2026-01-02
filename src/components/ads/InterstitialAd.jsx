@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import useActiveCampaigns from '../../hooks/useActiveCampaigns';
 import useAdTracking from '../../hooks/useAdTracking';
+import ReportAdButton from './ReportAdButton';
 
 /**
  * Anuncio Interstitial de pantalla completa
@@ -114,11 +115,19 @@ export default function InterstitialAd({ onClose }) {
                     {/* Anunciante */}
                     <div className="mt-6 pt-4 border-t border-gray-200 flex items-center justify-between text-sm text-gray-500">
                         <span>Anuncio de {currentCampaign.advertiser_name}</span>
-                        <span className="text-xs">
-                            {currentCampaign.geographic_scope === 'global'
-                                ? 'Disponible globalmente'
-                                : `Disponible en ${currentCampaign.target_location}`}
-                        </span>
+                        <div className="flex items-center gap-4">
+                            <span className="text-xs">
+                                {currentCampaign.geographic_scope === 'global'
+                                    ? 'Disponible globalmente'
+                                    : `Disponible en ${currentCampaign.target_location}`}
+                            </span>
+                            <ReportAdButton
+                                campaignId={currentCampaign.id}
+                                adSpaceType="interstitial"
+                                variant="text"
+                                className="text-xs"
+                            />
+                        </div>
                     </div>
                 </div>
             </div>

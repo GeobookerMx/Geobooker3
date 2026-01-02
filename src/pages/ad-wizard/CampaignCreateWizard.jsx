@@ -491,12 +491,42 @@ const CampaignCreateWizard = () => {
                                 </div>
                             </div>
 
-                            {/* Resumen */}
+                            {/* Resumen con IVA */}
                             <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                                 <div className="flex justify-between"><span className="text-gray-600">Espacio:</span><strong>{adSpace.display_name}</strong></div>
                                 <div className="flex justify-between"><span className="text-gray-600">Alcance:</span><strong>{getTargetLocation()}</strong></div>
                                 <div className="flex justify-between"><span className="text-gray-600">URL destino:</span><span className="text-blue-600 text-sm truncate max-w-[200px]">{formData.cta_url}</span></div>
-                                <div className="flex justify-between border-t pt-2 text-lg"><span>Total:</span><strong className="text-green-600">${adSpace.price_monthly} MXN/mes</strong></div>
+
+                                {/* Desglose de precios */}
+                                <div className="border-t pt-3 mt-3 space-y-1">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-600">Subtotal:</span>
+                                        <span>${adSpace.price_monthly?.toLocaleString('es-MX')} MXN</span>
+                                    </div>
+                                    {formData.target_country === 'MX' ? (
+                                        <>
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-gray-600">IVA (16%):</span>
+                                                <span>${(adSpace.price_monthly * 0.16).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN</span>
+                                            </div>
+                                            <div className="flex justify-between text-lg font-bold border-t pt-2">
+                                                <span>Total:</span>
+                                                <span className="text-green-600">${(adSpace.price_monthly * 1.16).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN/mes</span>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="flex justify-between text-sm text-green-600">
+                                                <span>IVA (Exportación):</span>
+                                                <span>$0.00 MXN (Tasa 0%)</span>
+                                            </div>
+                                            <div className="flex justify-between text-lg font-bold border-t pt-2">
+                                                <span>Total:</span>
+                                                <span className="text-green-600">${adSpace.price_monthly?.toLocaleString('es-MX')} MXN/mes</span>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Selector de Método de Pago */}
@@ -539,9 +569,21 @@ const CampaignCreateWizard = () => {
                                 </button>
                             </div>
 
-                            <p className="text-sm text-gray-500 text-center bg-yellow-50 p-3 rounded-lg">
-                                ⏳ Tu campaña será revisada por nuestro equipo en 24-48 horas antes de activarse.
-                            </p>
+                            {/* Avisos importantes */}
+                            <div className="space-y-3 mt-4">
+                                <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+                                    <p className="text-sm text-amber-800 font-medium mb-1">⏳ Tiempo de revisión: 24-48 horas</p>
+                                    <p className="text-xs text-amber-700">Tu campaña será revisada por nuestro equipo antes de activarse para asegurar que cumple con las políticas de contenido.</p>
+                                </div>
+
+                                <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                                    <p className="text-sm text-blue-800 font-medium mb-1">🧾 Facturación</p>
+                                    <p className="text-xs text-blue-700">
+                                        Una vez que tu campaña sea aprobada y entre en pauta, recibirás tu factura por correo electrónico al email proporcionado.
+                                        {formData.target_country === 'MX' && ' Se incluirá el desglose de IVA (16%).'}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     )}
 

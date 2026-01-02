@@ -284,6 +284,39 @@ const AdvertisePage = () => {
           </div>
         </div>
 
+        {/* AVISOS IMPORTANTES ANTES DE CONTRATAR */}
+        <div className="max-w-4xl mx-auto mb-10 grid md:grid-cols-3 gap-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⏳</span>
+              <div>
+                <h4 className="font-semibold text-amber-800 text-sm">Revisión: 24-48 hrs</h4>
+                <p className="text-xs text-amber-700 mt-1">Tu campaña será revisada antes de publicarse para asegurar que cumple con nuestras políticas.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">🧾</span>
+              <div>
+                <h4 className="font-semibold text-blue-800 text-sm">Facturación automática</h4>
+                <p className="text-xs text-blue-700 mt-1">Recibirás tu factura por email cuando tu campaña entre en pauta activa.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">💰</span>
+              <div>
+                <h4 className="font-semibold text-green-800 text-sm">IVA incluido (México)</h4>
+                <p className="text-xs text-green-700 mt-1">Clientes en México: +16% IVA. Clientes internacionales: Tasa 0% (exportación).</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* TÍTULO DE ESPACIOS */}
         <div className="text-center mb-10">
           <h2 className="text-3xl font-bold text-gray-900 mb-3">
@@ -483,20 +516,18 @@ const AdvertisePage = () => {
                 vigentes.
               </li>
               <li>
+                • <strong>Clientes en México:</strong> Se aplica <strong>IVA del 16%</strong> sobre el monto facturado. El total con IVA se mostrará antes de confirmar el pago.
+              </li>
+              <li>
+                • <strong>Clientes internacionales:</strong> Tasa 0% de IVA por ser <strong>exportación de servicios digitales</strong> conforme al Artículo 29 de la Ley del IVA mexicana.
+              </li>
+              <li>
                 • En <strong>Resultados Patrocinados</strong> aplicamos modelo
                 de <strong>Pago por Clic (PPC)</strong>: el cobro se basa en los
-                clics generados, con un valor desde $1.50 MXN por clic y posible
-                consumo mínimo mensual (según paquete).
+                clics generados, con un valor desde $1.50 MXN por clic.
               </li>
               <li>
-                • Todos los precios se consideran{" "}
-                <strong>+ impuestos</strong> según corresponda en tu país.
-              </li>
-              <li>
-                • En clientes fuera de México, la publicidad puede considerarse{" "}
-                <strong>exportación de servicios digitales</strong>, aplicando
-                tasa 0% de IVA conforme a la legislación vigente (sujeto a
-                validación fiscal).
+                • <strong>Facturación:</strong> Una vez que tu campaña sea aprobada y entre en pauta, recibirás tu factura al correo registrado. La factura incluirá el desglose de impuestos correspondiente.
               </li>
             </ul>
           </div>
@@ -527,14 +558,20 @@ const AdvertisePage = () => {
                   • No acumulable con otras promociones. Sujeto a disponibilidad de espacios.
                 </li>
                 <li>
-                  • <strong>Garantía Makegood:</strong> Si tu campaña no alcanza el 80% de las impresiones proyectadas durante el periodo contratado,
-                  extenderemos la duración de tu campaña sin costo adicional hasta cumplir el objetivo acordado.
+                  • <strong>Garantía de Servicio:</strong> Durante esta fase de lanzamiento, <strong>no garantizamos métricas específicas</strong> de impresiones o clics.
+                  Sin embargo, si tu campaña experimenta <strong>fallas técnicas</strong> de nuestra plataforma (anuncio no visible, errores de carga, etc.),
+                  te ofreceremos una <strong>extensión gratuita de hasta 15 días</strong> proporcional al tiempo afectado.
+                </li>
+                <li>
+                  • <strong>Transparencia:</strong> Al finalizar tu pauta, recibirás un informe con las métricas de rendimiento real de tu campaña
+                  (impresiones, clics, CTR). Sin promesas, solo datos reales.
                 </li>
                 <li>
                   • Los espacios se asignan por orden de contratación. Cada espacio tiene un <strong>cupo máximo</strong> de anunciantes simultáneos
-                  para evitar saturación y garantizar visibilidad.
+                  para evitar saturación.
                 </li>
               </ul>
+
             </div>
           )}
         </div>

@@ -7,7 +7,31 @@ import { toast } from 'react-hot-toast';
 export default function CampaignDetailsModal({ campaign, onClose }) {
     if (!campaign) return null;
 
-    const creative = campaign.ad_creatives?.[0];
+    // Creative puede venir de ad_creatives (PyMEs) o directamente de la campaña (Enterprise)
+    const externalCreative = campaign.ad_creatives?.[0];
+    const creative = externalCreative || {
+        title: campaign.headline || campaign.title || '',
+        description: campaign.description || '',
+        image_url: campaign.creative_url || campaign.image_url || '',
+        cta_text: campaign.cta_text || 'Ver más',
+        cta_url: campaign.cta_url || ''
+    };
+
+    // También revisar multi_language_creatives si existe
+    const multiLangCreatives = campaign.multi_language_creatives;
+    const firstLangCreative = multiLangCreatives ? Object.values(multiLangCreatives)[0] : null;
+
+    // Usar el creativo más completo disponible
+    const displayCreative = externalCreative || (firstLangCreative?.headline ? {
+        title: firstLangCreative.headline,
+        description: firstLangCreative.description,
+        image_url: firstLangCreative.image_url,
+        cta_text: firstLangCreative.cta_text,
+        cta_url: firstLangCreative.cta_url
+    } : creative);
+
+    const hasCreativeData = displayCreative?.title || displayCreative?.image_url || displayCreative?.description;
+
     const ctr = campaign.impressions > 0
         ? ((campaign.clicks / campaign.impressions) * 100).toFixed(2)
         : 0;
@@ -57,40 +81,50 @@ export default function CampaignDetailsModal({ campaign, onClose }) {
                     </div>
 
                     {/* Creative Preview */}
-                    {creative && (
+                    {hasCreativeData ? (
                         <div className="bg-gray-50 rounded-lg p-6">
                             <h3 className="text-lg font-bold text-gray-900 mb-4">
                                 📸 Vista Previa del Anuncio
                             </h3>
 
-                            {creative.image_url ? (
-                                <div className="bg-white rounded-lg overflow-hidden shadow-md">
+                            <div className="bg-white rounded-lg overflow-hidden shadow-md">
+                                {displayCreative.image_url ? (
                                     <img
-                                        src={creative.image_url}
-                                        alt={creative.title}
+                                        src={displayCreative.image_url}
+                                        alt={displayCreative.title}
                                         className="w-full h-64 object-cover"
                                     />
-                                    <div className="p-4">
-                                        <h4 className="text-xl font-bold text-gray-900 mb-2">
-                                            {creative.title}
-                                        </h4>
-                                        <p className="text-gray-600 mb-4">{creative.description}</p>
-                                        <button className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700">
-                                            {creative.cta_text || 'Ver más'}
-                                        </button>
+                                ) : (
+                                    <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                                        <span className="text-gray-400 text-sm">Sin imagen</span>
                                     </div>
-                                </div>
-                            ) : (
-                                <div className="bg-white rounded-lg p-6 border-2 border-dashed border-gray-300">
+                                )}
+                                <div className="p-4">
                                     <h4 className="text-xl font-bold text-gray-900 mb-2">
-                                        {creative.title}
+                                        {displayCreative.title || 'Sin título'}
                                     </h4>
-                                    <p className="text-gray-600 mb-4">{creative.description}</p>
-                                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold">
-                                        {creative.cta_text || 'Ver más'}
-                                    </button>
+                                    <p className="text-gray-600 mb-4">{displayCreative.description || 'Sin descripción'}</p>
+                                    {displayCreative.cta_url && (
+                                        <a
+                                            href={displayCreative.cta_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 inline-block"
+                                        >
+                                            {displayCreative.cta_text || 'Ver más'}
+                                        </a>
+                                    )}
                                 </div>
-                            )}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                            <h3 className="text-lg font-bold text-yellow-800 mb-2">
+                                ⚠️ Sin datos de creativo
+                            </h3>
+                            <p className="text-yellow-700 text-sm">
+                                Esta campaña no tiene imagen ni texto de anuncio registrado.
+                            </p>
                         </div>
                     )}
 

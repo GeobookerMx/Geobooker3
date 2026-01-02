@@ -3,6 +3,7 @@
 import React from 'react';
 import useEnterprisePriorityCampaigns from '../../hooks/useEnterprisePriorityCampaigns';
 import { ExternalLink, Star } from 'lucide-react';
+import ReportAdButton from './ReportAdButton';
 
 export default function SponsoredFullwidth({ context }) {
     const { currentCampaign, hasCampaigns, hasEnterprise } = useEnterprisePriorityCampaigns('sponsored_results_fullwidth', context);
@@ -58,8 +59,14 @@ export default function SponsoredFullwidth({ context }) {
 
                     {/* Footer */}
                     <div className="flex items-center justify-between">
-                        <div className="text-sm text-gray-600">
-                            Por <span className="font-semibold text-purple-600">{currentCampaign.advertiser_name}</span>
+                        <div className="flex items-center gap-3 text-sm text-gray-600">
+                            <span>Por <span className="font-semibold text-purple-600">{currentCampaign.advertiser_name}</span></span>
+                            <ReportAdButton
+                                campaignId={currentCampaign.id}
+                                adSpaceType="sponsored_fullwidth"
+                                variant="text"
+                                className="text-xs"
+                            />
                         </div>
 
                         <button className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition flex items-center gap-2">

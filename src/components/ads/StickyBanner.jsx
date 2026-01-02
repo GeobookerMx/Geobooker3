@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import useActiveCampaigns from '../../hooks/useActiveCampaigns';
 import useAdTracking from '../../hooks/useAdTracking';
+import ReportAdButton from './ReportAdButton';
 
 /**
  * Banner inferior pegajoso (Segunda Plana)
@@ -93,8 +94,14 @@ export default function StickyBanner() {
                 </div>
 
                 {/* Disclaimer */}
-                <div className="absolute bottom-0 left-4 text-xs text-gray-400">
-                    Publicidad
+                <div className="absolute bottom-0 left-4 right-12 flex items-center justify-between text-xs text-gray-400">
+                    <span>Publicidad</span>
+                    <ReportAdButton
+                        campaignId={currentCampaign.id}
+                        adSpaceType="bottom_banner"
+                        variant="text"
+                        className="text-xs"
+                    />
                 </div>
             </div>
         </div>

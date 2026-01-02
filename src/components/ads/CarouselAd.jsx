@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import useEnterprisePriorityCampaigns from '../../hooks/useEnterprisePriorityCampaigns';
 import useAdTracking from '../../hooks/useAdTracking';
 import GeobookerPromoPlaceholder from './GeobookerPromoPlaceholder';
+import ReportAdButton from './ReportAdButton';
 
 /**
  * Carrusel de negocios destacados (Primera Plana)
@@ -157,10 +158,18 @@ function CarouselCard({ campaign }) {
                         <ExternalLink className="w-4 h-4 ml-1" />
                     </button>
 
-                    {/* Anunciante */}
-                    <span className="text-xs text-gray-400">
-                        {campaign.advertiser_name}
-                    </span>
+                    {/* Anunciante y Reporte */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400">
+                            {campaign.advertiser_name}
+                        </span>
+                        <ReportAdButton
+                            campaignId={campaign.id}
+                            adSpaceType="featured_carousel"
+                            variant="icon"
+                            className="opacity-50 hover:opacity-100"
+                        />
+                    </div>
                 </div>
             </div>
         </div>

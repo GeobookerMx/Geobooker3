@@ -1,6 +1,6 @@
 import React, { useMemo, memo, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow, MarkerClusterer } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow, MarkerClusterer, Circle } from '@react-google-maps/api';
 import LastUpdatedBadge from './common/LastUpdatedBadge';
 import { trackRouteClick, trackBusinessView } from '../services/analyticsService';
 // ⚡ IMPORTANTE: Constantes fuera del componente para evitar recargas
@@ -271,42 +271,9 @@ export const BusinessMap = memo(({
     setMapLoaded(true);
   }, []);
 
-  // Crear/actualizar marcador de usuario con API nativa
-  useEffect(() => {
-    if (!mapRef.current || !userLocation?.lat || !userLocation?.lng || !window.google) return;
 
-    // Eliminar marcador anterior si existe
-    if (userCircleRef.current) {
-      userCircleRef.current.setMap(null);
-    }
-
-    // Icono de ubicación del usuario - mismo tamaño que negocios (40x40)
-    const userIcon = {
-      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-        <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="20" cy="20" r="18" fill="#8B5CF6" stroke="#EF4444" stroke-width="4"/>
-          <circle cx="20" cy="20" r="6" fill="white"/>
-        </svg>
-      `),
-      scaledSize: new window.google.maps.Size(40, 40),
-      anchor: new window.google.maps.Point(20, 20)
-    };
-
-    // Crear marcador con API nativa de Google Maps
-    userCircleRef.current = new window.google.maps.Marker({
-      map: mapRef.current,
-      position: { lat: userLocation.lat, lng: userLocation.lng },
-      icon: userIcon,
-      title: 'Tu ubicación',
-      zIndex: 1000
-    });
-
-    return () => {
-      if (userCircleRef.current) {
-        userCircleRef.current.setMap(null);
-      }
-    };
-  }, [userLocation?.lat, userLocation?.lng, mapLoaded]);
+  // NOTA: El marcador de usuario ahora se renderiza como <Circle> y <Marker>
+  // directamente en el JSX del GoogleMap (líneas 428-457)
 
   const mapOptions = useMemo(() => ({
     styles: [
@@ -412,7 +379,34 @@ export const BusinessMap = memo(({
           }
         }}
       >
-        {/* Círculo de ubicación se crea vía useEffect con API nativa */}
+        {/* Círculo de ubicación del usuario */}
+        {userLocation?.lat && userLocation?.lng && (
+          <>
+            {console.log('🎯 Renderizando marcador de usuario en:', userLocation.lat, userLocation.lng)}
+            <Circle
+              center={{ lat: userLocation.lat, lng: userLocation.lng }}
+              radius={150}
+              options={{
+                fillColor: '#7C3AED',
+                fillOpacity: 0.25,
+                strokeColor: '#7C3AED',
+                strokeWeight: 2,
+                strokeOpacity: 0.6,
+                zIndex: 9999
+              }}
+            />
+            {/* Pin de ubicación - usando imagen pública de Google */}
+            <Marker
+              position={{ lat: userLocation.lat, lng: userLocation.lng }}
+              icon={{
+                url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+                scaledSize: { width: 40, height: 40 }
+              }}
+              title="📍 Tu ubicación actual"
+              zIndex={10000}
+            />
+          </>
+        )}
 
         {/* Marcadores de Google Places (Rosa) con Clustering */}
         {googleMarkers.length > 0 && (

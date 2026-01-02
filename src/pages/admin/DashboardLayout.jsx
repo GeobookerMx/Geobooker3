@@ -92,7 +92,7 @@ const DashboardLayout = () => {
             <Sidebar onLogout={handleLogout} />
 
             {/* Main Content - responsive: sin margen en móvil, con margen en desktop */}
-            <div className="flex-1 md:ml-64 overflow-y-auto overflow-x-hidden min-h-screen">
+            <div className="flex-1 md:ml-64 overflow-y-auto overflow-x-auto min-h-screen">
                 {/* Header */}
                 <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
                     <div className="px-4 md:px-8 py-4 flex justify-between items-center">

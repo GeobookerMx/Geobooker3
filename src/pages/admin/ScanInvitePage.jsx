@@ -10,7 +10,7 @@ import { useJsApiLoader } from '@react-google-maps/api';
 import {
     Search, MapPin, Phone, Mail, Globe, ExternalLink,
     Play, Pause, CheckCircle, XCircle, MessageCircle,
-    Filter, RefreshCw, Ban, Clock, Users, Building2, Loader2
+    Filter, RefreshCw, Ban, Clock, Users, Building2, Loader2, Trash2
 } from 'lucide-react';
 
 // Libraries needed for Places API
@@ -32,6 +32,8 @@ const ScanInvitePage = () => {
     const [loading, setLoading] = useState(true);
     const [dailyLimit, setDailyLimit] = useState(20);
     const [dailyCount, setDailyCount] = useState(0);
+    const [sessionLeadIds, setSessionLeadIds] = useState(new Set()); // Leads añadidos en esta sesión
+    const [hiddenLeadIds, setHiddenLeadIds] = useState(new Set()); // Leads ocultados tras contactar
 
     // Filtros
     const [filters, setFilters] = useState({
@@ -384,12 +386,28 @@ const ScanInvitePage = () => {
             // Abrir WhatsApp
             window.open(whatsappUrl, '_blank');
 
-            toast.success('WhatsApp abierto - ¡Envía el mensaje!');
+            // Ocultar lead de la lista visual (marcar como procesado)
+            setHiddenLeadIds(prev => new Set([...prev, lead.id]));
+
+            toast.success('WhatsApp abierto - Lead marcado como contactado');
             loadStats();
             loadLeads();
         } catch (error) {
             console.error('Error registrando outreach:', error);
         }
+    };
+
+    // Limpiar lista de leads visibles (solo oculta, no borra de DB)
+    const clearVisibleList = () => {
+        const allVisibleIds = filteredLeads.map(l => l.id);
+        setHiddenLeadIds(new Set(allVisibleIds));
+        toast.success('Lista visual limpiada. Los leads siguen en la base de datos.');
+    };
+
+    // Resetear vista (mostrar todos los leads de nuevo)
+    const resetHiddenLeads = () => {
+        setHiddenLeadIds(new Set());
+        toast('Vista restaurada', { icon: '🔄' });
     };
 
     // Agregar a blacklist
@@ -417,8 +435,10 @@ const ScanInvitePage = () => {
         }
     };
 
-    // Filtrar leads
+    // Filtrar leads (con exclusión de ocultos)
     const filteredLeads = leads.filter(lead => {
+        // Excluir leads ocultos manualmente
+        if (hiddenLeadIds.has(lead.id)) return false;
         if (filters.status !== 'all' && lead.status !== filters.status) return false;
         if (filters.contactType === 'phone') {
             return lead.scan_lead_contacts?.some(c => c.type === 'phone');
@@ -593,6 +613,24 @@ const ScanInvitePage = () => {
                             <RefreshCw className="w-4 h-4" />
                             Actualizar
                         </button>
+
+                        <button
+                            onClick={clearVisibleList}
+                            className="flex items-center gap-1 text-orange-600 hover:text-orange-800 text-sm"
+                            title="Limpiar lista visual (no borra de DB)"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Limpiar Lista
+                        </button>
+
+                        {hiddenLeadIds.size > 0 && (
+                            <button
+                                onClick={resetHiddenLeads}
+                                className="flex items-center gap-1 text-gray-500 hover:text-gray-700 text-sm"
+                            >
+                                Mostrar {hiddenLeadIds.size} ocultos
+                            </button>
+                        )}
                     </div>
                 </div>
 

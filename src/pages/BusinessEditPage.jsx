@@ -114,13 +114,9 @@ const BusinessEditPage = () => {
 
     const checkPremiumStatus = async () => {
         try {
-            const { data } = await supabase
-                .from('user_profiles')
-                .select('is_premium')
-                .eq('id', user.id)
-                .maybeSingle();
-
-            setIsPremium(data?.is_premium || false);
+            const { data, error } = await supabase.rpc('get_user_premium_status', { user_id: user.id });
+            if (error) throw error;
+            setIsPremium(data || false);
         } catch (error) {
             console.error('Error checking premium status:', error);
         }

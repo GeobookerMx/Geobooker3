@@ -10,6 +10,7 @@ import { initializeGA4, trackSessionStart } from "./services/analyticsService";
 
 import AppRouter from "./router";
 import ChatWidget from "./components/agent/ChatWidget";
+import { checkAppVersion } from "./services/cacheVersionService";
 
 // Component to activate session timeout monitoring
 function SessionTimeoutMonitor() {
@@ -17,11 +18,15 @@ function SessionTimeoutMonitor() {
   return null;
 }
 
-// Component to initialize analytics
-function AnalyticsInitializer() {
+// Component to initialize app (cache clearing, analytics)
+function AppInitializer() {
   useEffect(() => {
+    // 1. Verificar versión y limpiar caché si es necesario
+    checkAppVersion();
+
+    // 2. Inicializar GA4
     initializeGA4();
-    trackSessionStart(false); // Will be updated when auth state changes
+    trackSessionStart(false);
   }, []);
   return null;
 }
@@ -31,7 +36,7 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <SessionTimeoutMonitor />
-        <AnalyticsInitializer />
+        <AppInitializer />
         <AppProvider>
           <LocationProvider>
             <AppRouter />

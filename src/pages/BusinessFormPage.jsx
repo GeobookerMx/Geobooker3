@@ -164,14 +164,12 @@ export default function BusinessFormPage() {
 
       // Si ya tiene 1+ negocio, verificar si es premium
       if (count >= 1) {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('is_premium')
-          .eq('id', user.id)
-          .maybeSingle();
+        const { data: isPremium, error: rpcError } = await supabase.rpc('get_user_premium_status', { user_id: user.id });
+
+        if (rpcError) throw rpcError;
 
         // Si NO es premium y ya tiene 1 negocio, mostrar modal
-        if (!profile?.is_premium) {
+        if (!isPremium) {
           setShowUpgradeModal(true);
         }
       }

@@ -9,6 +9,7 @@ import LocationPermissionModal from '../components/LocationPermissionModal';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { searchNearbyPlaces } from '../services/googlePlacesService';
+import { cacheBusinesses, getCachedBusinesses, isCacheValid } from '../services/businessCacheService';
 import { MapPin, Loader2 } from 'lucide-react';
 
 // Map loading fallback component
@@ -71,10 +72,25 @@ const HomePage = () => {
     isGuest
   } = useGuestSearchLimit();
 
-  // Cargar negocios nativos de Geobooker (con filtros de categoría)
+  // Cargar negocios nativos de Geobooker (CON CACHÉ IndexedDB)
   useEffect(() => {
     const fetchGeobookerBusinesses = async () => {
       try {
+        // ⚡ PASO 1: Intentar cargar desde caché primero (instantáneo)
+        const cacheStatus = await isCacheValid(userLocation);
+        if (cacheStatus.isValid && !categoryFilter) {
+          console.log(`📦 Caché válido (${cacheStatus.age} min), cargando...`);
+          const cachedBusinesses = await getCachedBusinesses();
+          if (cachedBusinesses.length > 0) {
+            setGeobookerBusinesses(cachedBusinesses);
+            console.log(`✅ ${cachedBusinesses.length} negocios cargados del caché`);
+            return; // Usar caché, no llamar a Supabase
+          }
+        }
+
+        // ⚡ PASO 2: Si caché no es válido o está vacío, cargar desde Supabase
+        console.log(`🔄 Cargando negocios desde Supabase (${cacheStatus.reason || 'no cache'})...`);
+
         let query = supabase
           .from('businesses')
           .select('*')
@@ -115,6 +131,11 @@ const HomePage = () => {
 
           setGeobookerBusinesses(businessesWithPremium);
 
+          // ⚡ PASO 3: Guardar en caché para futuras cargas (solo sin filtro)
+          if (!categoryFilter && userLocation && businessesWithPremium.length > 0) {
+            cacheBusinesses(businessesWithPremium, userLocation);
+          }
+
           if (categoryFilter) {
             if (businessesWithPremium.length > 0) {
               toast.success(`📍 ${businessesWithPremium.length} negocios encontrados en ${categoryFilter}`, { duration: 3000 });
@@ -132,7 +153,7 @@ const HomePage = () => {
     };
 
     fetchGeobookerBusinesses();
-  }, [categoryFilter, subcategoryFilter]);
+  }, [categoryFilter, subcategoryFilter, userLocation]);
 
   // ⚡ NUEVO: Buscar en Google Places automáticamente cuando hay filtro de categoría
   useEffect(() => {

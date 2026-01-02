@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
-import { Check, X, Eye, MapPin, Phone, Mail, Calendar, User, Building2, FileText, Briefcase } from 'lucide-react';
+import { Check, X, Eye, MapPin, Phone, Mail, Calendar, User, Building2, FileText, Briefcase, RotateCcw } from 'lucide-react';
 
 const BusinessApprovals = () => {
     const [businesses, setBusinesses] = useState([]);
@@ -86,6 +86,28 @@ const BusinessApprovals = () => {
         } catch (error) {
             console.error('Error rejecting business:', error);
             toast.error('Error al rechazar negocio');
+        }
+    };
+
+    const handleMoveToPending = async (businessId) => {
+        const loadingToast = toast.loading('Moviedo a pendiente para re-evaluación...');
+        try {
+            const { error } = await supabase
+                .from('businesses')
+                .update({
+                    status: 'pending',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', businessId);
+
+            if (error) throw error;
+
+            toast.success('Negocio movido a Pendiente ✅', { id: loadingToast });
+            fetchBusinesses();
+            setShowModal(false);
+        } catch (error) {
+            console.error('Error moving business to pending:', error);
+            toast.error('Error al mover a pendiente', { id: loadingToast });
         }
     };
 
@@ -239,16 +261,27 @@ const BusinessApprovals = () => {
                                                 <button
                                                     onClick={() => handleApprove(business.id)}
                                                     className="text-green-600 hover:text-green-900 mr-2"
+                                                    title="Aprobar"
                                                 >
                                                     <Check className="w-5 h-5 inline" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleReject(business.id)}
                                                     className="text-red-600 hover:text-red-900"
+                                                    title="Rechazar"
                                                 >
                                                     <X className="w-5 h-5 inline" />
                                                 </button>
                                             </>
+                                        )}
+                                        {business.status === 'rejected' && (
+                                            <button
+                                                onClick={() => handleMoveToPending(business.id)}
+                                                className="text-orange-600 hover:text-orange-900"
+                                                title="Re-evaluar (Mover a Pendiente)"
+                                            >
+                                                <RotateCcw className="w-5 h-5 inline" />
+                                            </button>
                                         )}
                                     </td>
                                 </tr>
@@ -433,6 +466,18 @@ const BusinessApprovals = () => {
                                     >
                                         <X className="w-5 h-5 mr-2" />
                                         Rechazar
+                                    </button>
+                                </div>
+                            )}
+
+                            {selectedBusiness.status === 'rejected' && (
+                                <div className="flex gap-4 pt-4 border-t border-gray-200">
+                                    <button
+                                        onClick={() => handleMoveToPending(selectedBusiness.id)}
+                                        className="flex-1 bg-orange-600 text-white py-3 rounded-lg font-bold hover:bg-orange-700 transition flex items-center justify-center"
+                                    >
+                                        <RotateCcw className="w-5 h-5 mr-2" />
+                                        Mover a Pendiente para Re-evaluar
                                     </button>
                                 </div>
                             )}

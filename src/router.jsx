@@ -87,6 +87,10 @@ export default function AppRouter() {
         <Route path="/terms" element={<TermsOfServicePage />} />
         <Route path="/faq" element={<FAQPage />} />
 
+        {/* 🆕 Páginas públicas para acceso de invitados (con límite de búsqueda) */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/categories" element={<CategoriesPage />} />
+
         {/* Página comercial de publicidad (SIN login) */}
         <Route path="/advertise" element={<AdvertisePage />} />
 
@@ -128,7 +132,7 @@ export default function AppRouter() {
         <Route path="/business/:id" element={<BusinessProfilePage />} />
       </Route>
 
-      {/* 🔐 Rutas protegidas que usan el mismo layout público */}
+      {/* 🔐 Rutas protegidas (requieren login) */}
       <Route
         element={
           <ProtectedRoute>
@@ -136,11 +140,10 @@ export default function AppRouter() {
           </ProtectedRoute>
         }
       >
-        <Route path="/" element={<HomePage />} />
-        <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/business/register" element={<BusinessFormPage />} />
         <Route path="/register" element={<RegisterPage />} />
       </Route>
+
 
       {/* 📊 Dashboard de usuario (layout tipo panel) */}
       <Route

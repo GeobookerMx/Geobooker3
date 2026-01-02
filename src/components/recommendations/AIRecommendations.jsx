@@ -53,13 +53,12 @@ const AIRecommendations = () => {
         try {
             setLoading(true);
 
-            // Query base: negocios con buen rating, Premium primero
+            // Query base: negocios aprobados, más recientes primero
             let query = supabase
                 .from('businesses')
                 .select('*')
                 .eq('status', 'approved')
-                .order('is_premium', { ascending: false })
-                .order('rating', { ascending: false })
+                .order('created_at', { ascending: false })
                 .limit(10);
 
             // Filtrar por categorías si es hora específica
@@ -84,9 +83,11 @@ const AIRecommendations = () => {
                     )
                 }));
 
-                // Ordenar: Premium + cerca primero
+                // Ordenar: mejor rating y cerca primero
                 withDistance.sort((a, b) => {
-                    if (a.is_premium !== b.is_premium) return b.is_premium ? 1 : -1;
+                    // Primero por rating
+                    if ((b.rating || 0) !== (a.rating || 0)) return (b.rating || 0) - (a.rating || 0);
+                    // Luego por distancia
                     return a.distance - b.distance;
                 });
 
@@ -284,8 +285,8 @@ const AIRecommendations = () => {
                         key={i}
                         onClick={() => setCurrentIndex(i * 2)}
                         className={`w-2 h-2 rounded-full transition-all ${Math.floor(currentIndex / 2) === i
-                                ? 'w-6 bg-purple-600'
-                                : 'bg-gray-300 hover:bg-gray-400'
+                            ? 'w-6 bg-purple-600'
+                            : 'bg-gray-300 hover:bg-gray-400'
                             }`}
                     />
                 ))}

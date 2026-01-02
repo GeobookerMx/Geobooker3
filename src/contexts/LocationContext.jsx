@@ -54,7 +54,7 @@ export const LocationProvider = ({ children }) => {
   const storedLocation = getStoredLocation();
   const [userLocation, setUserLocation] = useState(storedLocation);
   const [loading, setLoading] = useState(!storedLocation); // No loading si tenemos caché
-  const [permissionGranted, setPermissionGranted] = useState(false);
+  const [permissionGranted, setPermissionGranted] = useState(!!storedLocation); // Si hay caché, asumimos "permiso otorgado" para desbloquear UI
 
   const requestLocationPermission = () => {
     return new Promise((resolve, reject) => {
@@ -125,19 +125,20 @@ export const LocationProvider = ({ children }) => {
                 isDefault: true
               };
               setUserLocation(defaultLocation);
+              setPermissionGranted(true); // Permitir ver el mapa incluso con default
               setLoading(false);
               resolve(defaultLocation);
             },
             {
               enableHighAccuracy: true,
-              timeout: 15000, // 15 segundos para alta precisión
+              timeout: 10000, // 10 segundos (un poco menos para no desesperar)
               maximumAge: 300000, // Usar caché de hasta 5 minutos
             }
           );
         },
         {
           enableHighAccuracy: false, // Baja precisión primero (más rápido)
-          timeout: 8000, // 8 segundos
+          timeout: 5000, // 5 segundos rápido
           maximumAge: 600000, // Usar caché de hasta 10 minutos
         }
       );

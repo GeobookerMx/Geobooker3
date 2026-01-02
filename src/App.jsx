@@ -11,6 +11,7 @@ import { initializeGA4, trackSessionStart } from "./services/analyticsService";
 import AppRouter from "./router";
 import ChatWidget from "./components/agent/ChatWidget";
 import { checkAppVersion } from "./services/cacheVersionService";
+import InstallPWAButton from "./components/common/InstallPWAButton";
 
 // Component to activate session timeout monitoring
 function SessionTimeoutMonitor() {
@@ -42,6 +43,8 @@ function App() {
             <AppRouter />
             {/* Asistente AI flotante */}
             <ChatWidget />
+            {/* Banner de instalación PWA */}
+            <InstallPWAButton variant="banner" />
           </LocationProvider>
         </AppProvider>
       </AuthProvider>

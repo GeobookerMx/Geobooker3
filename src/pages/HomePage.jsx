@@ -747,6 +747,50 @@ const HomePage = () => {
         </div>
       </div>
 
+      {/* Sección Promoción Geobooker Global */}
+      <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-16 px-4">
+        <div className="container mx-auto max-w-5xl text-center">
+          <div className="inline-flex items-center gap-2 bg-blue-600/30 backdrop-blur-sm text-blue-300 px-4 py-2 rounded-full mb-6">
+            <span className="text-lg">🌎</span>
+            <span className="text-sm font-medium">{t('globalPromo.badge', 'Publicidad Global')}</span>
+          </div>
+
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            {t('globalPromo.homeTitle', '¿Quieres que tu marca aparezca al otro lado del mundo?')}
+          </h2>
+          <p className="text-gray-300 mb-10 max-w-2xl mx-auto text-lg">
+            {t('globalPromo.homeSubtitle', 'Lanza o expande tu marca en una ciudad específica con Geobooker Global. Segmentación por país, idioma y categoría.')}
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-6 mb-10 text-left max-w-3xl mx-auto">
+            <div className="bg-white/10 backdrop-blur rounded-xl p-5 border border-white/20">
+              <div className="text-3xl mb-3">🏪</div>
+              <h4 className="font-bold text-white mb-2">Geobooker Local</h4>
+              <p className="text-gray-400 text-sm">Perfecto para negocios locales y PyMEs que quieren aparecer en su ciudad. Desde $900 MXN/mes.</p>
+              <Link to="/advertise" className="text-blue-400 hover:text-blue-300 text-sm font-medium mt-3 inline-block">
+                Ver espacios →
+              </Link>
+            </div>
+            <div className="bg-white/10 backdrop-blur rounded-xl p-5 border border-white/20">
+              <div className="text-3xl mb-3">🌍</div>
+              <h4 className="font-bold text-white mb-2">Geobooker Global</h4>
+              <p className="text-gray-400 text-sm">Para marcas internacionales: FIFA 2026, Super Bowl, Olimpiadas. Piloto 30 días gratis.</p>
+              <Link to="/enterprise" className="text-amber-400 hover:text-amber-300 text-sm font-medium mt-3 inline-block">
+                Ver planes Enterprise →
+              </Link>
+            </div>
+          </div>
+
+          <Link
+            to="/advertise"
+            className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all inline-flex items-center gap-2"
+          >
+            {t('globalPromo.ctaLearnMore', 'Aprende cómo hacerlo')}
+            <span>→</span>
+          </Link>
+        </div>
+      </div>
+
       {/* Call to Action Final */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
         <div className="container mx-auto px-4 text-center">

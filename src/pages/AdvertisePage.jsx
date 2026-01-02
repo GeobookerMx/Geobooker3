@@ -101,20 +101,39 @@ const MOCK_SPACES = [
 ];
 
 /**
+ * Configuración de promoción de lanzamiento
+ */
+const PROMO_CONFIG = {
+  discountPercent: 70,
+  endDate: new Date('2026-03-01T23:59:59'),
+  isActive: () => new Date() < PROMO_CONFIG.endDate
+};
+
+/**
  * Helper para formatear el precio visible al usuario
  * - Para Resultados Patrocinados usamos la descripción PPC
- * - Para el resto usamos price_monthly como $X,XXX MXN / mes
+ * - Para el resto usamos price_monthly con descuento de lanzamiento
  */
 function getPricingLabel(space) {
   const meta = AD_SPACE_META[space.name];
   if (meta?.pricingLabel) {
-    return meta.pricingLabel;
+    return { display: meta.pricingLabel, original: null, hasDiscount: false };
   }
 
   const price = Number(space.price_monthly || 0);
-  if (!price || Number.isNaN(price)) return "Consultar precio";
+  if (!price || Number.isNaN(price)) return { display: "Consultar precio", original: null, hasDiscount: false };
 
-  return `$${price.toLocaleString("es-MX")} MXN / mes`;
+  if (PROMO_CONFIG.isActive()) {
+    const discountedPrice = Math.round(price * (1 - PROMO_CONFIG.discountPercent / 100));
+    return {
+      display: `$${discountedPrice.toLocaleString("es-MX")} MXN / mes`,
+      original: `$${price.toLocaleString("es-MX")} MXN`,
+      hasDiscount: true,
+      discountPercent: PROMO_CONFIG.discountPercent
+    };
+  }
+
+  return { display: `$${price.toLocaleString("es-MX")} MXN / mes`, original: null, hasDiscount: false };
 }
 
 /**
@@ -180,6 +199,24 @@ const AdvertisePage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen font-sans">
+      {/* PROMO BANNER STICKY */}
+      {PROMO_CONFIG.isActive() && (
+        <div className="sticky top-0 z-50 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 text-white py-3 px-4">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🚀</span>
+              <span className="font-bold">¡LANZAMIENTO! 70% OFF en todos los espacios</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="opacity-90">Válido hasta:</span>
+              <span className="bg-white/20 backdrop-blur px-3 py-1 rounded font-bold">
+                1 de Marzo 2026
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* HERO */}
       <div className="bg-[#1e3a8a] text-white py-20 px-4 text-center relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none">
@@ -296,10 +333,10 @@ const AdvertisePage = () => {
                   <div className="flex items-center justify-between mb-4">
                     <div
                       className={`p-3 rounded-xl ${space.type === "interstitial"
-                          ? "bg-purple-100 text-purple-600"
-                          : space.type === "1ra_plana"
-                            ? "bg-blue-100 text-blue-600"
-                            : "bg-gray-100 text-gray-600"
+                        ? "bg-purple-100 text-purple-600"
+                        : space.type === "1ra_plana"
+                          ? "bg-blue-100 text-blue-600"
+                          : "bg-gray-100 text-gray-600"
                         }`}
                     >
                       {space.type === "interstitial" ? (
@@ -331,14 +368,28 @@ const AdvertisePage = () => {
                       "Espacio premium de alta visibilidad para maximizar tu alcance."}
                   </p>
 
-                  {/* Precio visible */}
+                  {/* Precio visible con descuento */}
                   <div className="mb-4">
                     <p className="text-[11px] uppercase text-gray-500 font-semibold">
                       Inversión de referencia
                     </p>
-                    <p className="text-sm font-bold text-gray-900">
-                      {space.pricingLabel}
-                    </p>
+                    {space.pricingLabel.hasDiscount && (
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">
+                          -{space.pricingLabel.discountPercent}% LANZAMIENTO
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-baseline gap-2">
+                      {space.pricingLabel.original && (
+                        <span className="text-sm text-gray-400 line-through">
+                          {space.pricingLabel.original}
+                        </span>
+                      )}
+                      <p className="text-lg font-bold text-green-600">
+                        {space.pricingLabel.display}
+                      </p>
+                    </div>
                     {space.name === "sponsored_results" && (
                       <p className="text-[11px] text-gray-500 mt-1">
                         Modelo de pago por clic (PPC). El monto mensual final
@@ -449,24 +500,103 @@ const AdvertisePage = () => {
               </li>
             </ul>
           </div>
+
+          {/* Términos de la Promoción de Lanzamiento */}
+          {PROMO_CONFIG.isActive() && (
+            <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl shadow-sm border border-red-200 p-6">
+              <div className="flex items-start mb-3">
+                <span className="text-2xl mr-2">🎉</span>
+                <h3 className="text-lg font-bold text-gray-900">
+                  Términos y Condiciones - Promoción de Lanzamiento 70% OFF
+                </h3>
+              </div>
+              <ul className="text-sm text-gray-700 space-y-2">
+                <li>
+                  • <strong>Descuento del 70%</strong> aplicable a todos los espacios publicitarios durante los primeros 3 meses de contrato.
+                </li>
+                <li>
+                  • El periodo de 3 meses comienza a partir de la <strong>fecha de pago confirmado</strong>.
+                </li>
+                <li>
+                  • Esta promoción es válida para contratos iniciados <strong>hasta el 1 de Marzo de 2026</strong>.
+                </li>
+                <li>
+                  • Al finalizar los 3 meses promocionales, el precio regresa a la tarifa regular vigente.
+                </li>
+                <li>
+                  • No acumulable con otras promociones. Sujeto a disponibilidad de espacios.
+                </li>
+                <li>
+                  • <strong>Garantía Makegood:</strong> Si tu campaña no alcanza el 80% de las impresiones proyectadas durante el periodo contratado,
+                  extenderemos la duración de tu campaña sin costo adicional hasta cumplir el objetivo acordado.
+                </li>
+                <li>
+                  • Los espacios se asignan por orden de contratación. Cada espacio tiene un <strong>cupo máximo</strong> de anunciantes simultáneos
+                  para evitar saturación y garantizar visibilidad.
+                </li>
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* SECCIÓN ENTERPRISE / GLOBAL */}
+      <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-16 px-4">
+        <div className="max-w-5xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 bg-blue-600/30 backdrop-blur-sm text-blue-300 px-4 py-2 rounded-full mb-6">
+            <Globe className="w-4 h-4" />
+            <span className="text-sm font-medium">Publicidad Global</span>
+          </div>
+
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            ¿Eres una marca internacional o empresa grande?
+          </h2>
+          <p className="text-gray-300 mb-8 max-w-2xl mx-auto text-lg">
+            Tenemos planes especiales para eventos globales como <strong className="text-yellow-400">FIFA 2026</strong>,
+            Super Bowl, Olimpiadas y más. Segmentación por país, idioma y categoría.
+          </p>
+
+          <div className="grid md:grid-cols-3 gap-6 mb-10 text-left">
+            <div className="bg-white/10 backdrop-blur rounded-xl p-5 border border-white/20">
+              <div className="text-3xl mb-3">🌎</div>
+              <h4 className="font-bold text-white mb-2">Segmentación Global</h4>
+              <p className="text-gray-400 text-sm">Por país, ciudad, idioma y categoría de negocio. Alcance en 50+ ciudades.</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur rounded-xl p-5 border border-white/20">
+              <div className="text-3xl mb-3">🎯</div>
+              <h4 className="font-bold text-white mb-2">Piloto 30 Días Gratis</h4>
+              <p className="text-gray-400 text-sm">Prueba sin riesgo para marcas selectas. Mide resultados antes de comprometerte.</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur rounded-xl p-5 border border-white/20">
+              <div className="text-3xl mb-3">📊</div>
+              <h4 className="font-bold text-white mb-2">Informes Personalizados</h4>
+              <p className="text-gray-400 text-sm">Reportes semanales de impresiones, clics, CTR y conversiones estimadas.</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              to="/enterprise"
+              className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+            >
+              Ver Planes Enterprise
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <Link
+              to="/enterprise/contact"
+              className="text-gray-300 hover:text-white px-6 py-4 rounded-xl font-medium border border-gray-600 hover:border-gray-400 transition-colors"
+            >
+              Contactar un asesor
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* CTA FINAL */}
-      <div className="bg-white py-14 px-4 text-center border-t border-gray-200">
-        <h2 className="text-2xl font-bold text-gray-900 mb-3">
-          ¿Tienes una empresa grande o una marca internacional?
-        </h2>
-        <p className="text-gray-600 mb-6 text-sm md:text-base">
-          Podemos armar planes especiales combinando varios espacios,
-          segmentación avanzada y reportes a la medida.
+      <div className="bg-white py-10 px-4 text-center border-t border-gray-200">
+        <p className="text-gray-500 text-sm">
+          ¿Dudas? Escríbenos a <a href="mailto:ads@geobooker.com.mx" className="text-blue-600 hover:underline">ads@geobooker.com.mx</a>
         </p>
-        <Link
-          to="/enterprise/contact"
-          className="text-blue-600 font-semibold hover:text-blue-800 underline text-sm"
-        >
-          Contáctanos para un plan corporativo
-        </Link>
       </div>
     </div>
   );

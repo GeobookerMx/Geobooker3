@@ -306,12 +306,15 @@ const AdvertisePage = () => {
             </div>
           </div>
 
-          <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
             <div className="flex items-start gap-3">
               <span className="text-2xl">💰</span>
               <div>
-                <h4 className="font-semibold text-green-800 text-sm">IVA incluido (México)</h4>
-                <p className="text-xs text-green-700 mt-1">Clientes en México: +16% IVA. Clientes internacionales: Tasa 0% (exportación).</p>
+                <h4 className="font-semibold text-amber-800 text-sm">Precios + IVA (México)</h4>
+                <p className="text-xs text-amber-700 mt-1">
+                  <strong>Clientes en México:</strong> Todos los precios están sujetos a +16% IVA adicional.
+                  <strong>Clientes internacionales:</strong> Tasa 0% IVA (exportación).
+                </p>
               </div>
             </div>
           </div>
@@ -516,7 +519,7 @@ const AdvertisePage = () => {
                 vigentes.
               </li>
               <li>
-                • <strong>Clientes en México:</strong> Se aplica <strong>IVA del 16%</strong> sobre el monto facturado. El total con IVA se mostrará antes de confirmar el pago.
+                • <strong>Clientes en México:</strong> Los precios mostrados son <strong>+ IVA (16%)</strong>. El IVA se agrega al momento del pago y corre por cuenta del cliente. El total a pagar se mostrará antes de confirmar.
               </li>
               <li>
                 • <strong>Clientes internacionales:</strong> Tasa 0% de IVA por ser <strong>exportación de servicios digitales</strong> conforme al Artículo 29 de la Ley del IVA mexicana.

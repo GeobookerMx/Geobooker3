@@ -1098,8 +1098,8 @@ export default function EnterpriseCheckout() {
                                 <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
                                 <div className="text-sm text-blue-200">
                                     {form.billingCountry === 'MX'
-                                        ? 'Mexican customers: 16% IVA will be added at checkout.'
-                                        : 'International customers: 0% VAT (software export exempt).'}
+                                        ? '⚠️ Precios + IVA: Los clientes en México pagan 16% IVA adicional. El IVA corre por cuenta del cliente.'
+                                        : '✅ International customers: 0% VAT (software export exempt).'}
                                 </div>
                             </div>
 

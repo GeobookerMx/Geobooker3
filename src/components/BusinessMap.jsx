@@ -448,7 +448,7 @@ export const BusinessMap = memo(({
               icon={categoryIcon}
               title={isPremium ? `⭐ ${business.name} (Premium)` : business.name}
               zIndex={isPremium ? 1000 : 900}
-              animation={isPremium ? window.google?.maps?.Animation?.BOUNCE : undefined}
+              animation={isPremium ? window.google?.maps?.Animation?.DROP : undefined}
             />
           );
         })}

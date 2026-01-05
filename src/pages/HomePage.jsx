@@ -54,6 +54,7 @@ const HomePage = () => {
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [openNowFilter, setOpenNowFilter] = useState(false); // Filtro abierto ahora
+  const [lastSearchQuery, setLastSearchQuery] = useState(''); // Para persistencia
   const navigate = useNavigate();
 
   // Filtros de categoría desde URL
@@ -71,6 +72,54 @@ const HomePage = () => {
     closeLoginPrompt,
     isGuest
   } = useGuestSearchLimit();
+
+  // ==========================================
+  // PERSISTENCIA DE ESTADO DE BÚSQUEDA
+  // ==========================================
+
+  // Restaurar estado desde sessionStorage al montar
+  useEffect(() => {
+    const savedState = sessionStorage.getItem('geobooker_search_state');
+    if (savedState) {
+      try {
+        const state = JSON.parse(savedState);
+        // Restaurar negocios de Places si hay guardados
+        if (state.businesses && state.businesses.length > 0) {
+          setBusinesses(state.businesses);
+          console.log('📦 Restaurados', state.businesses.length, 'negocios de búsqueda anterior');
+        }
+        // Restaurar query
+        if (state.lastQuery) {
+          setLastSearchQuery(state.lastQuery);
+        }
+      } catch (e) {
+        console.log('Error restaurando estado:', e);
+      }
+    }
+  }, []);
+
+  // Guardar estado cuando cambian los negocios
+  useEffect(() => {
+    if (businesses.length > 0 || lastSearchQuery) {
+      const stateToSave = {
+        businesses: businesses.slice(0, 50), // Limitar para no saturar storage
+        lastQuery: lastSearchQuery,
+        timestamp: Date.now()
+      };
+      sessionStorage.setItem('geobooker_search_state', JSON.stringify(stateToSave));
+    }
+  }, [businesses, lastSearchQuery]);
+
+  // Limpiar búsqueda (botón separado)
+  const handleClearSearch = () => {
+    setBusinesses([]);
+    setLastSearchQuery('');
+    setSelectedBusiness(null);
+    sessionStorage.removeItem('geobooker_search_state');
+    // Limpiar URL params de búsqueda pero mantener ubicación
+    setSearchParams({});
+    toast.success('Búsqueda limpiada');
+  };
 
   // Cargar negocios nativos de Geobooker (CON CACHÉ IndexedDB)
   useEffect(() => {
@@ -227,11 +276,23 @@ const HomePage = () => {
     }
   };
 
-  // Handler para ver perfil de negocio nativo de Geobooker
+  // Handler para ver perfil de negocio - DISTINGUE entre Places y Nativos
   const handleViewBusinessProfile = (business) => {
-    if (business?.id) {
+    if (!business) {
+      toast.error('Este negocio no tiene perfil disponible');
+      return;
+    }
+
+    // Si es de Google Places (tiene placeId o isFromGoogle)
+    if (business.isFromGoogle || (business.placeId && !business.owner_id)) {
+      const placeId = business.placeId || business.id;
+      navigate(`/place/${placeId}`);
+    }
+    // Si es negocio nativo de Geobooker (tiene owner_id o id válido de Supabase)
+    else if (business.id) {
       navigate(`/business/${business.id}`);
-    } else {
+    }
+    else {
       toast.error('Este negocio no tiene perfil disponible');
     }
   };

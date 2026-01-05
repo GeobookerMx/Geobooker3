@@ -57,6 +57,7 @@ import GuiaResicoPage from "./pages/GuiaResicoPage.jsx";
 
 // Business Profile
 import BusinessProfilePage from "./pages/BusinessProfilePage.jsx";
+import PlaceProfilePage from "./pages/PlaceProfilePage.jsx";
 
 // Referral System
 import ReferralLanding from "./pages/ReferralLanding.jsx";
@@ -135,6 +136,9 @@ export default function AppRouter() {
         {/* Perfil público de negocio */}
         <Route path="/business" element={<Navigate to="/" replace />} />
         <Route path="/business/:id" element={<BusinessProfilePage />} />
+
+        {/* Perfil de negocio de Google Places */}
+        <Route path="/place/:placeId" element={<PlaceProfilePage />} />
       </Route>
 
       {/* 🔐 Rutas protegidas (requieren login) */}

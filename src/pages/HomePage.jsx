@@ -570,39 +570,38 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* Video Demo Section */}
-        <div className="mt-16 max-w-4xl mx-auto">
+        {/* Video Demo Section - YouTube Short */}
+        <div className="mt-16 max-w-md mx-auto">
           <div className="text-center mb-8">
             <h3 className="text-2xl font-bold text-gray-800 mb-2">📹 Mira cómo funciona</h3>
-            <p className="text-gray-600">Ve un ejemplo real de cómo usar Geobooker</p>
+            <p className="text-gray-600">Descubre cómo encontrar negocios cerca de ti</p>
           </div>
 
-          {/* YouTube Video Embed */}
-          <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
+          {/* YouTube Short Embed - Vertical Format */}
+          <div className="relative w-full aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-black">
             <iframe
               className="absolute top-0 left-0 w-full h-full"
-              src="https://www.youtube.com/embed/videoseries?list=UU@Geobooker&autoplay=0"
+              src="https://www.youtube.com/embed/2IaVw19pgzY"
               title="Geobooker - Cómo funciona"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
-            {/* Fallback si no hay video específico */}
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-600 text-white">
-              <div className="text-center p-8">
-                <div className="text-6xl mb-4">🎬</div>
-                <p className="text-xl font-bold mb-2">¡Próximamente!</p>
-                <p className="text-blue-100">Video tutorial de Geobooker</p>
-                <a
-                  href="https://www.youtube.com/@Geobooker"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block mt-4 bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-full font-bold transition"
-                >
-                  🔔 Suscríbete al canal
-                </a>
-              </div>
-            </div>
+          </div>
+
+          {/* Subscribe CTA */}
+          <div className="text-center mt-6">
+            <a
+              href="https://www.youtube.com/@Geobooker"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-full font-bold transition shadow-lg hover:shadow-xl"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+              </svg>
+              Suscríbete al canal
+            </a>
           </div>
         </div>
       </div>

@@ -321,9 +321,9 @@ export default function AdsQATool() {
                                             #{index + 1}
                                         </div>
                                         <div>
-                                            <h3 className="font-semibold text-gray-800">{ad.name}</h3>
+                                            <h3 className="font-semibold text-gray-800">{ad.advertiser_name || 'Sin nombre'}</h3>
                                             <p className="text-sm text-gray-600">
-                                                {ad.advertiser_name || 'Anunciante'} • Slot: {ad.slot_type || 'banner'}
+                                                {ad.advertiser_email || 'No email'} • Nivel: {ad.ad_level || 'N/A'}
                                             </p>
                                         </div>
                                     </div>
@@ -333,6 +333,52 @@ export default function AdsQATool() {
                                     </span>
                                 </div>
 
+                                {/* Preview del Creativo */}
+                                <div className="mt-4 bg-gray-900 rounded-lg p-3">
+                                    <p className="text-xs text-gray-400 mb-2">📺 Preview del Creativo:</p>
+                                    {ad.creative_url ? (
+                                        ad.creative_url.includes('youtube') ? (
+                                            <a
+                                                href={ad.creative_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-2"
+                                            >
+                                                🎬 Ver video en YouTube: {ad.creative_url}
+                                            </a>
+                                        ) : ad.creative_url.match(/\.(mp4|webm|mov)$/i) ? (
+                                            <video src={ad.creative_url} controls className="max-h-32 rounded" />
+                                        ) : (
+                                            <img src={ad.creative_url} alt="Creative" className="max-h-32 rounded" />
+                                        )
+                                    ) : (
+                                        <p className="text-gray-500 text-sm">Sin creativo cargado</p>
+                                    )}
+                                </div>
+
+                                {/* Detalles de la campaña */}
+                                <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                                    <div className="bg-blue-50 p-2 rounded">
+                                        <span className="text-gray-500">📅 Inicio:</span>
+                                        <div className="font-semibold text-gray-800">{ad.start_date || 'N/A'}</div>
+                                    </div>
+                                    <div className="bg-blue-50 p-2 rounded">
+                                        <span className="text-gray-500">📅 Fin:</span>
+                                        <div className="font-semibold text-gray-800">{ad.end_date || 'N/A'}</div>
+                                    </div>
+                                    <div className="bg-green-50 p-2 rounded">
+                                        <span className="text-gray-500">💰 Presupuesto:</span>
+                                        <div className="font-semibold text-gray-800">${ad.total_budget?.toLocaleString()} {ad.currency}</div>
+                                    </div>
+                                    <div className="bg-yellow-50 p-2 rounded">
+                                        <span className="text-gray-500">🔄 Última modificación:</span>
+                                        <div className="font-semibold text-gray-800">
+                                            {ad.updated_at ? new Date(ad.updated_at).toLocaleDateString('es-MX') : 'N/A'}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Razón del match */}
                                 <div className="mt-3 text-xs text-gray-500 bg-gray-50 p-2 rounded">
                                     <strong>Razón del match:</strong> {
                                         ad.matchedScope === 'city' ? `Ciudad "${ad.target_cities?.join(', ')}" coincide con ${selectedLocation.city}` :
@@ -341,6 +387,14 @@ export default function AdsQATool() {
                                                     'Coincidencia por región'
                                     }
                                 </div>
+
+                                {/* Advertencia si fue modificado recientemente */}
+                                {ad.updated_at && new Date(ad.updated_at) > new Date(ad.created_at) && (
+                                    <div className="mt-2 px-3 py-2 bg-orange-50 border border-orange-200 rounded text-xs text-orange-700 flex items-center gap-2">
+                                        <AlertCircle className="w-4 h-4" />
+                                        ⚠️ Esta campaña fue modificada después de su creación
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>

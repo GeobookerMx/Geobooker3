@@ -9,9 +9,10 @@ import {
     Globe, MapPin, Calendar, TrendingUp, DollarSign,
     BarChart3, Eye, MousePointer, Percent, Download,
     ChevronDown, ChevronRight, AlertCircle, CheckCircle,
-    Filter, RefreshCw, Check, X, ExternalLink, Edit, Trash2
+    Filter, RefreshCw, Check, X, ExternalLink, Edit, Trash2, Mail
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import PostSaleEmailModal from '../../components/admin/PostSaleEmailModal';
 
 export default function AdInventory() {
     const [loading, setLoading] = useState(true);
@@ -22,6 +23,8 @@ export default function AdInventory() {
     const [expandedLevels, setExpandedLevels] = useState(['global', 'region']);
     const [selectedCampaign, setSelectedCampaign] = useState(null);
     const [showModal, setShowModal] = useState(false);
+    const [showEmailModal, setShowEmailModal] = useState(false);
+    const [emailCampaign, setEmailCampaign] = useState(null);
 
     useEffect(() => {
         loadData();
@@ -486,8 +489,8 @@ export default function AdInventory() {
                                         <div className="flex-1 flex relative h-6">
                                             <div
                                                 className={`absolute h-full rounded cursor-pointer hover:opacity-80 ${campaign.status === 'active' ? 'bg-green-500' :
-                                                        campaign.status === 'pending_review' ? 'bg-yellow-500' :
-                                                            'bg-blue-500'
+                                                    campaign.status === 'pending_review' ? 'bg-yellow-500' :
+                                                        'bg-blue-500'
                                                     }`}
                                                 style={{
                                                     left: `${(startMonth / 12) * 100}%`,
@@ -616,6 +619,19 @@ export default function AdInventory() {
                                     </button>
                                 )}
 
+                                {/* Botón Correo Post-Venta */}
+                                {(selectedCampaign.status === 'active' || selectedCampaign.status === 'completed' || selectedCampaign.status === 'approved') && (
+                                    <button
+                                        onClick={() => {
+                                            setEmailCampaign(selectedCampaign);
+                                            setShowEmailModal(true);
+                                        }}
+                                        className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition"
+                                    >
+                                        <Mail className="w-5 h-5" /> Correo Post-Venta
+                                    </button>
+                                )}
+
                                 <button
                                     onClick={() => handleDeleteCampaign(selectedCampaign.id)}
                                     className="bg-gray-700 hover:bg-red-600 text-white px-4 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition"
@@ -628,6 +644,16 @@ export default function AdInventory() {
                     </div>
                 </div>
             )}
+
+            {/* Post-Sale Email Modal */}
+            <PostSaleEmailModal
+                campaign={emailCampaign}
+                isOpen={showEmailModal}
+                onClose={() => {
+                    setShowEmailModal(false);
+                    setEmailCampaign(null);
+                }}
+            />
         </div>
     );
 }

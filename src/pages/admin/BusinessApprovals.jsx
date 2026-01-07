@@ -43,23 +43,14 @@ const BusinessApprovals = () => {
         const loadingToast = toast.loading('Aprobando negocio...');
 
         try {
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from('businesses')
                 .update({ status: 'approved' })
-                .eq('id', businessId)
-                .select(); // Agregar .select() para ver el resultado
-
-            console.log('📊 Resultado de aprobación:', { data, error });
+                .eq('id', businessId);
 
             if (error) {
                 console.error('❌ Error de Supabase:', error);
                 throw error;
-            }
-
-            if (!data || data.length === 0) {
-                console.warn('⚠️ No se actualizó ningún registro. Posible problema de RLS.');
-                toast.error('No se pudo actualizar. Verifica permisos en Supabase.', { id: loadingToast });
-                return;
             }
 
             toast.success('Negocio aprobado ✅', { id: loadingToast });
@@ -70,6 +61,7 @@ const BusinessApprovals = () => {
             toast.error(`Error: ${error.message || 'Error desconocido'}`, { id: loadingToast });
         }
     };
+
 
     const handleReject = async (businessId) => {
         try {

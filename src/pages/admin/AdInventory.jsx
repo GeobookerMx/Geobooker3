@@ -270,6 +270,50 @@ export default function AdInventory() {
                     </button>
                 </div>
 
+                {/* PROMO BANNER - Configurable */}
+                {(() => {
+                    const PROMO_CONFIG = {
+                        active: true,
+                        discount: 70,
+                        endDate: '2026-03-01',
+                        label: '🚀 LANZAMIENTO',
+                        message: '¡Promoción activa! Todos los espacios con 70% OFF'
+                    };
+
+                    const promoEndDate = new Date(PROMO_CONFIG.endDate);
+                    const today = new Date();
+                    const daysRemaining = Math.ceil((promoEndDate - today) / (1000 * 60 * 60 * 24));
+                    const isPromoActive = PROMO_CONFIG.active && today < promoEndDate;
+
+                    if (!isPromoActive) return null;
+
+                    return (
+                        <div className="mb-6 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 rounded-xl p-4 shadow-lg">
+                            <div className="flex items-center justify-between flex-wrap gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-white/20 px-3 py-1 rounded-full text-white font-bold text-sm animate-pulse">
+                                        -{PROMO_CONFIG.discount}% OFF
+                                    </div>
+                                    <div>
+                                        <p className="text-white font-bold text-lg">{PROMO_CONFIG.message}</p>
+                                        <p className="text-white/80 text-sm">
+                                            Válido hasta: {promoEndDate.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                            {daysRemaining <= 30 && (
+                                                <span className="ml-2 bg-white/20 px-2 py-0.5 rounded text-xs">
+                                                    ⏳ {daysRemaining} días restantes
+                                                </span>
+                                            )}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 text-white/90 text-sm">
+                                    <span>💡 Los precios mostrados son BASE. Clientes pagan con descuento aplicado.</span>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()}
+
                 {/* Quick Stats */}
                 {metrics && (
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">

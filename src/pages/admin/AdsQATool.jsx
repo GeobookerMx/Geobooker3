@@ -60,60 +60,50 @@ export default function AdsQATool() {
         }
 
         try {
-            const now = new Date().toISOString();
+            const today = new Date().toISOString().split('T')[0];
 
-            // 1. Buscar anuncios que coincidan con ciudad exacta
-            const { data: cityAds } = await supabase
+            // Obtener TODAS las campañas activas y filtrar en JS
+            const { data: allCampaigns, error } = await supabase
                 .from('ad_campaigns')
-                .select(`
-          *,
-          ad_creatives (*)
-        `)
+                .select('*')
                 .eq('status', 'active')
-                .lte('start_date', now)
-                .gte('end_date', now)
-                .or(`target_cities.cs.{${locationToUse.city}}, target_cities.is.null`);
+                .lte('start_date', today)
+                .gte('end_date', today);
 
-            // 2. Buscar anuncios que coincidan con país
-            const { data: countryAds } = await supabase
-                .from('ad_campaigns')
-                .select('*, ad_creatives (*)')
-                .eq('status', 'active')
-                .lte('start_date', now)
-                .gte('end_date', now)
-                .or(`target_countries.cs.{${locationToUse.country}}, target_countries.is.null`);
+            if (error) {
+                console.error('Error fetching campaigns:', error);
+                throw error;
+            }
 
-            // 3. Combinar y ordenar por prioridad
             const allMatches = [];
+            const userCountry = locationToUse.country.toUpperCase();
+            const userCity = locationToUse.city.toLowerCase();
 
-            // Agregar matches de ciudad
-            (cityAds || []).forEach(ad => {
-                if (ad.target_cities?.includes(locationToUse.city)) {
-                    allMatches.push({ ...ad, matchedScope: 'city', priority: 1 });
+            (allCampaigns || []).forEach(campaign => {
+                // Verificar match por ciudad (prioridad 1)
+                const targetCities = campaign.target_cities || [];
+                const cityMatch = targetCities.some(city =>
+                    city.toLowerCase().includes(userCity) ||
+                    userCity.includes(city.toLowerCase())
+                );
+
+                if (cityMatch) {
+                    allMatches.push({ ...campaign, matchedScope: 'city', priority: 1 });
+                    return;
                 }
-            });
 
-            // Agregar matches de país (si no ya están)
-            (countryAds || []).forEach(ad => {
-                const alreadyAdded = allMatches.some(a => a.id === ad.id);
-                if (!alreadyAdded && ad.target_countries?.includes(locationToUse.country)) {
-                    allMatches.push({ ...ad, matchedScope: 'country', priority: 2 });
+                // Verificar match por país (prioridad 2)
+                const targetCountries = campaign.target_countries || [];
+                const countryMatch = targetCountries.includes(userCountry);
+
+                if (countryMatch) {
+                    allMatches.push({ ...campaign, matchedScope: 'country', priority: 2 });
+                    return;
                 }
-            });
 
-            // Agregar globales
-            const { data: globalAds } = await supabase
-                .from('ad_campaigns')
-                .select('*, ad_creatives (*)')
-                .eq('status', 'active')
-                .eq('scope', 'global')
-                .lte('start_date', now)
-                .gte('end_date', now);
-
-            (globalAds || []).forEach(ad => {
-                const alreadyAdded = allMatches.some(a => a.id === ad.id);
-                if (!alreadyAdded) {
-                    allMatches.push({ ...ad, matchedScope: 'global', priority: 4 });
+                // Verificar si es global (prioridad 4)
+                if (campaign.ad_level === 'global') {
+                    allMatches.push({ ...campaign, matchedScope: 'global', priority: 4 });
                 }
             });
 
@@ -131,6 +121,7 @@ export default function AdsQATool() {
             setLoading(false);
         }
     };
+
 
     const getScopeColor = (scope) => {
         const priority = AD_PRIORITY.find(p => p.scope === scope);

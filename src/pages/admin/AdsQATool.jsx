@@ -8,8 +8,11 @@ import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import {
     Globe, MapPin, PlayCircle, Eye, RefreshCw,
-    ChevronDown, Info, CheckCircle, AlertCircle
+    ChevronDown, Info, CheckCircle, AlertCircle,
+    X, Calendar, DollarSign, Target, TrendingUp,
+    MousePointer, Percent, Check, Ban, Mail, Download, ExternalLink
 } from 'lucide-react';
+import PostSaleEmailModal from '../../components/admin/PostSaleEmailModal';
 
 // Ubicaciones predefinidas para testing
 const TEST_LOCATIONS = [
@@ -46,6 +49,9 @@ export default function AdsQATool() {
         country: '',
         city: ''
     });
+    const [selectedCampaign, setSelectedCampaign] = useState(null);
+    const [showDetailModal, setShowDetailModal] = useState(false);
+    const [showEmailModal, setShowEmailModal] = useState(false);
 
     const simulateAdTargeting = async () => {
         setLoading(true);
@@ -395,11 +401,241 @@ export default function AdsQATool() {
                                         ⚠️ Esta campaña fue modificada después de su creación
                                     </div>
                                 )}
+
+                                {/* Botón Ver Detalles */}
+                                <button
+                                    onClick={() => {
+                                        setSelectedCampaign(ad);
+                                        setShowDetailModal(true);
+                                    }}
+                                    className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition"
+                                >
+                                    <Eye className="w-4 h-4" />
+                                    Ver Detalles Completos
+                                </button>
                             </div>
                         ))}
                     </div>
                 )}
             </div>
+
+            {/* Campaign Detail Modal */}
+            {showDetailModal && selectedCampaign && (
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+                    <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto shadow-2xl">
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 sticky top-0 z-10">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-2xl font-bold">{selectedCampaign.advertiser_name || 'Campaña'}</h2>
+                                    <p className="text-blue-200">{selectedCampaign.advertiser_email || 'Sin email'}</p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${selectedCampaign.status === 'active' ? 'bg-green-500' :
+                                            selectedCampaign.status === 'pending_review' ? 'bg-yellow-500' :
+                                                selectedCampaign.status === 'approved' ? 'bg-blue-500' :
+                                                    'bg-gray-500'
+                                        }`}>
+                                        {selectedCampaign.status?.toUpperCase()}
+                                    </span>
+                                    <button
+                                        onClick={() => setShowDetailModal(false)}
+                                        className="p-2 hover:bg-white/20 rounded-full"
+                                    >
+                                        <X className="w-6 h-6" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 space-y-6">
+                            {/* Creative Preview */}
+                            <div className="bg-gray-900 rounded-xl p-6">
+                                <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+                                    <PlayCircle className="w-5 h-5 text-purple-400" />
+                                    Preview del Creativo
+                                </h3>
+                                {selectedCampaign.creative_url ? (
+                                    selectedCampaign.creative_url.includes('youtube') ? (
+                                        <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                                            <iframe
+                                                src={selectedCampaign.creative_url.replace('youtube.com/shorts/', 'youtube.com/embed/')}
+                                                className="w-full h-full"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                            />
+                                        </div>
+                                    ) : selectedCampaign.creative_url.match(/\.(mp4|webm|mov)$/i) ? (
+                                        <video src={selectedCampaign.creative_url} controls className="w-full rounded-lg" />
+                                    ) : (
+                                        <img src={selectedCampaign.creative_url} alt="Creative" className="max-h-64 mx-auto rounded-lg" />
+                                    )
+                                ) : (
+                                    <div className="text-center py-8 text-gray-500">
+                                        Sin creativo cargado
+                                    </div>
+                                )}
+                                {selectedCampaign.creative_url && (
+                                    <a
+                                        href={selectedCampaign.creative_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="mt-3 flex items-center justify-center gap-2 text-purple-400 hover:text-purple-300 text-sm"
+                                    >
+                                        <ExternalLink className="w-4 h-4" />
+                                        Abrir en nueva pestaña
+                                    </a>
+                                )}
+                            </div>
+
+                            {/* Metrics Grid */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+                                    <Eye className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                                    <div className="text-2xl font-bold text-blue-800">{(selectedCampaign.impressions || 0).toLocaleString()}</div>
+                                    <div className="text-xs text-blue-600">Impresiones</div>
+                                </div>
+                                <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+                                    <MousePointer className="w-6 h-6 text-green-600 mx-auto mb-2" />
+                                    <div className="text-2xl font-bold text-green-800">{(selectedCampaign.clicks || 0).toLocaleString()}</div>
+                                    <div className="text-xs text-green-600">Clics</div>
+                                </div>
+                                <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-center">
+                                    <Percent className="w-6 h-6 text-purple-600 mx-auto mb-2" />
+                                    <div className="text-2xl font-bold text-purple-800">{selectedCampaign.ctr || '0.00'}%</div>
+                                    <div className="text-xs text-purple-600">CTR</div>
+                                </div>
+                                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
+                                    <DollarSign className="w-6 h-6 text-emerald-600 mx-auto mb-2" />
+                                    <div className="text-2xl font-bold text-emerald-800">${selectedCampaign.total_budget?.toLocaleString()}</div>
+                                    <div className="text-xs text-emerald-600">{selectedCampaign.currency || 'MXN'}</div>
+                                </div>
+                            </div>
+
+                            {/* Campaign Details */}
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {/* Dates */}
+                                <div className="bg-gray-50 rounded-xl p-5">
+                                    <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                        <Calendar className="w-5 h-5 text-blue-500" />
+                                        Fechas de Campaña
+                                    </h4>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Inicio:</span>
+                                            <span className="font-semibold">{selectedCampaign.start_date || 'N/A'}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Fin:</span>
+                                            <span className="font-semibold">{selectedCampaign.end_date || 'N/A'}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Creada:</span>
+                                            <span className="font-semibold">{selectedCampaign.created_at ? new Date(selectedCampaign.created_at).toLocaleDateString('es-MX') : 'N/A'}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Última modificación:</span>
+                                            <span className="font-semibold">{selectedCampaign.updated_at ? new Date(selectedCampaign.updated_at).toLocaleDateString('es-MX') : 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Targeting */}
+                                <div className="bg-gray-50 rounded-xl p-5">
+                                    <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                        <Target className="w-5 h-5 text-red-500" />
+                                        Segmentación
+                                    </h4>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <span className="text-gray-600 text-sm">Nivel:</span>
+                                            <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded text-sm font-medium">
+                                                {selectedCampaign.ad_level || 'N/A'}
+                                            </span>
+                                        </div>
+                                        {selectedCampaign.target_countries?.length > 0 && (
+                                            <div>
+                                                <span className="text-gray-600 text-sm">Países:</span>
+                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                    {selectedCampaign.target_countries.map(c => (
+                                                        <span key={c} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
+                                                            {c}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {selectedCampaign.target_cities?.length > 0 && (
+                                            <div>
+                                                <span className="text-gray-600 text-sm">Ciudades:</span>
+                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                    {selectedCampaign.target_cities.map(c => (
+                                                        <span key={c} className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium">
+                                                            {c}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
+                                {selectedCampaign.status === 'pending_review' && (
+                                    <>
+                                        <button
+                                            onClick={async () => {
+                                                const { error } = await supabase.from('ad_campaigns').update({ status: 'approved' }).eq('id', selectedCampaign.id);
+                                                if (!error) {
+                                                    toast.success('Campaña aprobada');
+                                                    setShowDetailModal(false);
+                                                }
+                                            }}
+                                            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold"
+                                        >
+                                            <Check className="w-5 h-5" />
+                                            Aprobar
+                                        </button>
+                                        <button
+                                            onClick={async () => {
+                                                const { error } = await supabase.from('ad_campaigns').update({ status: 'rejected' }).eq('id', selectedCampaign.id);
+                                                if (!error) {
+                                                    toast.success('Campaña rechazada');
+                                                    setShowDetailModal(false);
+                                                }
+                                            }}
+                                            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold"
+                                        >
+                                            <Ban className="w-5 h-5" />
+                                            Rechazar
+                                        </button>
+                                    </>
+                                )}
+
+                                <button
+                                    onClick={() => {
+                                        setShowDetailModal(false);
+                                        setShowEmailModal(true);
+                                    }}
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold"
+                                >
+                                    <Mail className="w-5 h-5" />
+                                    Enviar Reporte
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Post-Sale Email Modal */}
+            <PostSaleEmailModal
+                campaign={selectedCampaign}
+                isOpen={showEmailModal}
+                onClose={() => setShowEmailModal(false)}
+            />
         </div>
     );
 }

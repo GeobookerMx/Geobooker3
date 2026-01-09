@@ -724,18 +724,34 @@ const HomePage = () => {
           </div>
 
           <div className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory scrollbar-hide justify-center flex-wrap md:flex-nowrap">
-            {/* Cafetería */}
+            {/* Veterinario */}
             <div className="group relative flex-shrink-0 w-56 snap-center cursor-pointer">
               <div className="relative overflow-hidden rounded-2xl shadow-xl aspect-[3/4]">
                 <img
-                  src="/images/barista.jpg"
-                  alt="Cafetería"
+                  src="/images/community/veterinario.jpg"
+                  alt="Veterinario"
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-4 left-4 text-white">
-                  <p className="font-bold text-lg">☕ Cafetería</p>
-                  <p className="text-sm text-white/80">Arte latte con Geobooker</p>
+                  <p className="font-bold text-lg">🐕 Veterinario</p>
+                  <p className="text-sm text-white/80">Cuidado profesional</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Estilista */}
+            <div className="group relative flex-shrink-0 w-56 snap-center cursor-pointer">
+              <div className="relative overflow-hidden rounded-2xl shadow-xl aspect-[3/4]">
+                <img
+                  src="/images/community/estilista.jpg"
+                  alt="Estilista"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute bottom-4 left-4 text-white">
+                  <p className="font-bold text-lg">✂️ Estilista</p>
+                  <p className="text-sm text-white/80">Experta en corte</p>
                 </div>
               </div>
             </div>
@@ -744,7 +760,7 @@ const HomePage = () => {
             <div className="group relative flex-shrink-0 w-56 snap-center cursor-pointer">
               <div className="relative overflow-hidden rounded-2xl shadow-xl aspect-[3/4]">
                 <img
-                  src="/images/mecanico.jpg"
+                  src="/images/community/mecanico.jpg"
                   alt="Mecánico"
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
@@ -756,50 +772,18 @@ const HomePage = () => {
               </div>
             </div>
 
-            {/* Panadería */}
+            {/* Restaurante */}
             <div className="group relative flex-shrink-0 w-56 snap-center cursor-pointer">
               <div className="relative overflow-hidden rounded-2xl shadow-xl aspect-[3/4]">
                 <img
-                  src="/images/panadera.jpg"
-                  alt="Panadería"
+                  src="/images/community/restaurante.jpg"
+                  alt="Restaurante"
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-4 left-4 text-white">
-                  <p className="font-bold text-lg">🥖 Panadería</p>
-                  <p className="text-sm text-white/80">Abriendo con Geobooker</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Estilistas */}
-            <div className="group relative flex-shrink-0 w-56 snap-center cursor-pointer">
-              <div className="relative overflow-hidden rounded-2xl shadow-xl aspect-[3/4]">
-                <img
-                  src="/images/estilistas.jpg"
-                  alt="Estilistas"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                <div className="absolute bottom-4 left-4 text-white">
-                  <p className="font-bold text-lg">💇 Estilistas</p>
-                  <p className="text-sm text-white/80">Negocio en crecimiento</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Electricista */}
-            <div className="group relative flex-shrink-0 w-56 snap-center cursor-pointer">
-              <div className="relative overflow-hidden rounded-2xl shadow-xl aspect-[3/4]">
-                <img
-                  src="/images/electricista.jpg"
-                  alt="Electricista"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                <div className="absolute bottom-4 left-4 text-white">
-                  <p className="font-bold text-lg">⚡ Electricista</p>
-                  <p className="text-sm text-white/80">Profesional verificado</p>
+                  <p className="font-bold text-lg">🍽️ Restaurante</p>
+                  <p className="text-sm text-white/80">Cocina mexicana</p>
                 </div>
               </div>
             </div>

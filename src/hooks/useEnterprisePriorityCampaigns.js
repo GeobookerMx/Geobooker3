@@ -33,7 +33,37 @@ export default function useEnterprisePriorityCampaigns(localSpaceName, options =
                 const country = localStorage.getItem('userCountry') || 'unknown';
                 const city = localStorage.getItem('userCity') || 'unknown';
                 const campaigns = await loadEnterpriseCampaigns({ country, city });
-                setEnterpriseCampaigns(campaigns);
+
+                // Transform campaigns to match component expected structure
+                const transformedCampaigns = campaigns.map(campaign => {
+                    // Get YouTube thumbnail if it's a YouTube URL
+                    let imageUrl = campaign.creative_url || campaign.image_url;
+                    const isYouTube = imageUrl?.includes('youtube.com') || imageUrl?.includes('youtu.be');
+
+                    if (isYouTube) {
+                        // Extract video ID and use YouTube thumbnail
+                        const videoId = extractYouTubeId(imageUrl);
+                        if (videoId) {
+                            imageUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+                        }
+                    }
+
+                    return {
+                        ...campaign,
+                        ad_creatives: [{
+                            id: campaign.id,
+                            title: campaign.advertiser_name || campaign.name,
+                            description: campaign.description || '',
+                            image_url: imageUrl,
+                            cta_url: campaign.cta_url || campaign.creative_url || '#',
+                            cta_text: campaign.cta_text || 'Learn More',
+                            is_youtube: isYouTube,
+                            youtube_url: isYouTube ? campaign.creative_url : null
+                        }]
+                    };
+                });
+
+                setEnterpriseCampaigns(transformedCampaigns);
             } catch (error) {
                 console.error('Error loading Enterprise campaigns:', error);
                 setEnterpriseCampaigns([]);
@@ -43,6 +73,29 @@ export default function useEnterprisePriorityCampaigns(localSpaceName, options =
         };
         loadEnterprise();
     }, []);
+
+    // Helper to extract YouTube video ID
+    function extractYouTubeId(url) {
+        if (!url) return null;
+
+        // Handle youtube.com/shorts/ID
+        const shortsMatch = url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/);
+        if (shortsMatch) return shortsMatch[1];
+
+        // Handle youtube.com/watch?v=ID
+        const watchMatch = url.match(/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/);
+        if (watchMatch) return watchMatch[1];
+
+        // Handle youtu.be/ID
+        const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+        if (shortMatch) return shortMatch[1];
+
+        // Handle youtube.com/embed/ID
+        const embedMatch = url.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]+)/);
+        if (embedMatch) return embedMatch[1];
+
+        return null;
+    }
 
     // Load Local campaigns from ad_spaces
     const {

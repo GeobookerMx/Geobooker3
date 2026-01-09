@@ -139,29 +139,42 @@ export default function AnalyticsPage() {
                 { term: 'Papelerías', count: 112, trend: '+7%' }
             ];
 
-            // Horarios pico de uso
+            // Horarios pico de uso - 24 HORAS COMPLETAS
             const hours = [
-                { hora: '6am', usuarios: 15, busquedas: 25 },
-                { hora: '8am', usuarios: 45, busquedas: 80 },
-                { hora: '10am', usuarios: 85, busquedas: 150 },
+                { hora: '12am', usuarios: 12, busquedas: 18 },
+                { hora: '1am', usuarios: 8, busquedas: 12 },
+                { hora: '2am', usuarios: 5, busquedas: 8 },
+                { hora: '3am', usuarios: 3, busquedas: 5 },
+                { hora: '4am', usuarios: 4, busquedas: 6 },
+                { hora: '5am', usuarios: 8, busquedas: 12 },
+                { hora: '6am', usuarios: 18, busquedas: 28 },
+                { hora: '7am', usuarios: 35, busquedas: 55 },
+                { hora: '8am', usuarios: 52, busquedas: 85 },
+                { hora: '9am', usuarios: 68, busquedas: 110 },
+                { hora: '10am', usuarios: 85, busquedas: 140 },
+                { hora: '11am', usuarios: 95, busquedas: 165 },
                 { hora: '12pm', usuarios: 120, busquedas: 220 },
-                { hora: '2pm', usuarios: 95, busquedas: 180 },
-                { hora: '4pm', usuarios: 75, busquedas: 140 },
-                { hora: '6pm', usuarios: 110, busquedas: 200 },
-                { hora: '8pm', usuarios: 130, busquedas: 250 },
-                { hora: '10pm', usuarios: 60, busquedas: 100 },
-                { hora: '12am', usuarios: 20, busquedas: 35 }
+                { hora: '1pm', usuarios: 115, busquedas: 205 },
+                { hora: '2pm', usuarios: 95, busquedas: 175 },
+                { hora: '3pm', usuarios: 78, busquedas: 135 },
+                { hora: '4pm', usuarios: 72, busquedas: 125 },
+                { hora: '5pm', usuarios: 85, busquedas: 145 },
+                { hora: '6pm', usuarios: 105, busquedas: 185 },
+                { hora: '7pm', usuarios: 118, busquedas: 210 },
+                { hora: '8pm', usuarios: 135, busquedas: 255 },
+                { hora: '9pm', usuarios: 125, busquedas: 235 },
+                { hora: '10pm', usuarios: 85, busquedas: 145 },
+                { hora: '11pm', usuarios: 45, busquedas: 72 }
             ];
 
-            // Distribución geográfica
+            // Distribución geográfica - INTERNACIONAL
             const geo = [
-                { name: 'CDMX', value: 35, searches: 485 },
-                { name: 'Guadalajara', value: 18, searches: 248 },
-                { name: 'Monterrey', value: 15, searches: 207 },
-                { name: 'Querétaro', value: 10, searches: 138 },
-                { name: 'Puebla', value: 8, searches: 110 },
-                { name: 'Mérida', value: 6, searches: 83 },
-                { name: 'Otros', value: 8, searches: 110 }
+                { name: 'México 🇲🇽', value: 62, searches: 1145, cities: 'CDMX, Monterrey, Guadalajara' },
+                { name: 'USA 🇺🇸', value: 18, searches: 332, cities: 'Los Angeles, Houston, Chicago' },
+                { name: 'España 🇪🇸', value: 7, searches: 129, cities: 'Madrid, Barcelona' },
+                { name: 'Colombia 🇨🇴', value: 5, searches: 92, cities: 'Bogotá, Medellín' },
+                { name: 'Argentina 🇦🇷', value: 4, searches: 74, cities: 'Buenos Aires' },
+                { name: 'Otros 🌎', value: 4, searches: 74, cities: 'Varios países' }
             ];
 
             // Dispositivos
@@ -302,23 +315,35 @@ export default function AnalyticsPage() {
                     </ResponsiveContainer>
                 </div>
 
-                {/* Peak Hours */}
+                {/* Peak Hours - 24 HORAS */}
                 <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">🕐 Horarios Pico de Uso</h3>
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">🕐 Actividad por Hora (24h)</h3>
                     <ResponsiveContainer width="100%" height={280}>
                         <BarChart data={peakHours}>
                             <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="hora" />
+                            <XAxis
+                                dataKey="hora"
+                                tick={{ fontSize: 10 }}
+                                interval={2}
+                            />
                             <YAxis />
-                            <Tooltip />
+                            <Tooltip
+                                formatter={(value, name) => [value, name === 'usuarios' ? 'Usuarios' : 'Búsquedas']}
+                                labelFormatter={(label) => `Hora: ${label}`}
+                            />
                             <Legend />
-                            <Bar dataKey="usuarios" fill="#3B82F6" name="Usuarios activos" />
-                            <Bar dataKey="busquedas" fill="#10B981" name="Búsquedas" />
+                            <Bar dataKey="usuarios" fill="#3B82F6" name="Usuarios activos" radius={[2, 2, 0, 0]} />
+                            <Bar dataKey="busquedas" fill="#10B981" name="Búsquedas" radius={[2, 2, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
-                    <p className="text-sm text-gray-500 mt-2 text-center">
-                        💡 Horarios pico: <strong>12pm-2pm</strong> y <strong>8pm-10pm</strong> - ideales para publicidad
-                    </p>
+                    <div className="flex justify-between items-center mt-3 px-2">
+                        <p className="text-sm text-gray-500">
+                            💡 Picos: <strong>12pm-2pm</strong> y <strong>8pm-10pm</strong>
+                        </p>
+                        <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full">
+                            Zona horaria: México (CST)
+                        </span>
+                    </div>
                 </div>
             </div>
 

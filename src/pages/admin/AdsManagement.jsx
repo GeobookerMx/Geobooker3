@@ -888,6 +888,57 @@ const AdsManagement = () => {
                     )}
                   </div>
                 </div>
+              ) : previewCampaign.creative_url ? (
+                // Fallback: usa creative_url directamente de la campaña
+                <div className="border-2 border-dashed border-purple-300 rounded-xl overflow-hidden bg-gradient-to-br from-purple-50 to-indigo-50">
+                  <div className="bg-purple-100 px-3 py-1 text-xs text-purple-700 font-semibold">Vista Previa del Creativo</div>
+
+                  <div className="p-4">
+                    {previewCampaign.creative_url.includes('youtube') ? (
+                      // YouTube embed
+                      <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                        <iframe
+                          src={previewCampaign.creative_url.replace('youtube.com/shorts/', 'youtube.com/embed/').replace('watch?v=', 'embed/')}
+                          className="w-full h-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                    ) : previewCampaign.creative_url.match(/\.(mp4|webm|mov)$/i) ? (
+                      // Video file
+                      <video
+                        src={previewCampaign.creative_url}
+                        controls
+                        className="w-full max-h-64 rounded-lg shadow-md mx-auto"
+                      />
+                    ) : (
+                      // Image
+                      <img
+                        src={previewCampaign.creative_url}
+                        alt="Preview"
+                        className="w-full max-h-64 object-contain rounded-lg shadow-md mx-auto"
+                      />
+                    )}
+                  </div>
+
+                  {/* Info de la campaña */}
+                  <div className="p-4 space-y-2 bg-white">
+                    <h4 className="font-bold text-lg text-gray-900">
+                      {previewCampaign.advertiser_name || 'Sin título'}
+                    </h4>
+                    {previewCampaign.description && (
+                      <p className="text-gray-600 text-sm">{previewCampaign.description}</p>
+                    )}
+                    {previewCampaign.cta_text && (
+                      <button className="mt-3 bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold">
+                        {previewCampaign.cta_text}
+                      </button>
+                    )}
+                    {previewCampaign.cta_url && (
+                      <p className="text-xs text-gray-400 mt-2 truncate">🔗 {previewCampaign.cta_url}</p>
+                    )}
+                  </div>
+                </div>
               ) : (
                 <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
                   <AlertCircle className="w-12 h-12 mx-auto text-yellow-500 mb-2" />

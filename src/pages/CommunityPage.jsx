@@ -344,6 +344,100 @@ export default function CommunityPage() {
                 </div>
             </section>
 
+            {/* Community Showcase - Professional Images */}
+            <section className="py-12 bg-white">
+                <div className="max-w-6xl mx-auto px-4">
+                    <div className="text-center mb-8">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                            {isSpanish ? 'Negocios que confían en Geobooker' : 'Businesses that trust Geobooker'}
+                        </h2>
+                        <p className="text-gray-600">
+                            {isSpanish ? 'Profesionales verificados en nuestra plataforma' : 'Verified professionals on our platform'}
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        {/* Barbero */}
+                        <div className="group relative aspect-[3/4] rounded-xl overflow-hidden shadow-lg cursor-pointer">
+                            <img
+                                src="/images/community/barbero.jpg"
+                                alt="Barbero"
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                            <div className="absolute bottom-3 left-3 text-white">
+                                <p className="font-bold text-sm">💈 Barbero</p>
+                            </div>
+                        </div>
+
+                        {/* Estilista */}
+                        <div className="group relative aspect-[3/4] rounded-xl overflow-hidden shadow-lg cursor-pointer">
+                            <img
+                                src="/images/community/estilista.jpg"
+                                alt="Estilista"
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                            <div className="absolute bottom-3 left-3 text-white">
+                                <p className="font-bold text-sm">✂️ Estilista</p>
+                            </div>
+                        </div>
+
+                        {/* Veterinaria */}
+                        <div className="group relative aspect-[3/4] rounded-xl overflow-hidden shadow-lg cursor-pointer">
+                            <img
+                                src="/images/community/veterinaria-corgi.jpg"
+                                alt="Veterinaria"
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                            <div className="absolute bottom-3 left-3 text-white">
+                                <p className="font-bold text-sm">🐕 Veterinaria</p>
+                            </div>
+                        </div>
+
+                        {/* Mecánico */}
+                        <div className="group relative aspect-[3/4] rounded-xl overflow-hidden shadow-lg cursor-pointer">
+                            <img
+                                src="/images/community/mecanico-taller.jpg"
+                                alt="Mecánico"
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                            <div className="absolute bottom-3 left-3 text-white">
+                                <p className="font-bold text-sm">🔧 Mecánico</p>
+                            </div>
+                        </div>
+
+                        {/* Maquillista */}
+                        <div className="group relative aspect-[3/4] rounded-xl overflow-hidden shadow-lg cursor-pointer">
+                            <img
+                                src="/images/community/maquillista.jpg"
+                                alt="Maquillista"
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                            <div className="absolute bottom-3 left-3 text-white">
+                                <p className="font-bold text-sm">💄 Maquillista</p>
+                            </div>
+                        </div>
+
+                        {/* Electricista */}
+                        <div className="group relative aspect-[3/4] rounded-xl overflow-hidden shadow-lg cursor-pointer">
+                            <img
+                                src="/images/community/electricista.jpg"
+                                alt="Electricista"
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                            <div className="absolute bottom-3 left-3 text-white">
+                                <p className="font-bold text-sm">⚡ Electricista</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Category Filter */}
             <section className="py-6 border-b border-gray-100 bg-white sticky top-0 z-10">
                 <div className="max-w-4xl mx-auto px-4">

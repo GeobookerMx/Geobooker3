@@ -740,38 +740,6 @@ const HomePage = () => {
               </div>
             </div>
 
-            {/* Estilista */}
-            <div className="group relative flex-shrink-0 w-56 snap-center cursor-pointer">
-              <div className="relative overflow-hidden rounded-2xl shadow-xl aspect-[3/4]">
-                <img
-                  src="/images/community/estilista.jpg"
-                  alt="Estilista"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                <div className="absolute bottom-4 left-4 text-white">
-                  <p className="font-bold text-lg">✂️ Estilista</p>
-                  <p className="text-sm text-white/80">Experta en corte</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Mecánico */}
-            <div className="group relative flex-shrink-0 w-56 snap-center cursor-pointer">
-              <div className="relative overflow-hidden rounded-2xl shadow-xl aspect-[3/4]">
-                <img
-                  src="/images/community/mecanico.jpg"
-                  alt="Mecánico"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                <div className="absolute bottom-4 left-4 text-white">
-                  <p className="font-bold text-lg">🔧 Taller Mecánico</p>
-                  <p className="text-sm text-white/80">Servicio de confianza</p>
-                </div>
-              </div>
-            </div>
-
             {/* Restaurante */}
             <div className="group relative flex-shrink-0 w-56 snap-center cursor-pointer">
               <div className="relative overflow-hidden rounded-2xl shadow-xl aspect-[3/4]">

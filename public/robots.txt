@@ -1,26 +1,67 @@
-# Robots.txt para Geobooker
-# https://geobooker.com.mx
+# https://www.robotstxt.org/robotstxt.html
+
+# Geobooker.com.mx - Robots.txt
+# Optimizado para SEO global
 
 User-agent: *
 Allow: /
 
-# Directorios permitidos
-Allow: /business/
-Allow: /advertise/
-Allow: /guia-resico
+# Páginas importantes
+Allow: /
+Allow: /categories
+Allow: /community
+Allow: /advertise
+Allow: /global
+Allow: /business/*
 Allow: /seguridad
 
-# Bloquear rutas de admin
-Disallow: /admin/
-Disallow: /dashboard/
+# Bloquear páginas privadas
+Disallow: /admin/*
+Disallow: /dashboard/*
+Disallow: /api/*
+Disallow: /auth/*
+Disallow: /*.json$
+Disallow: /*?debug=*
 
-# Bloquear rutas de autenticación
-Disallow: /login
-Disallow: /signup
-Disallow: /forgot-password
+# Bloquear recursos no relevantes para SEO
+Disallow: /assets/
+Disallow: /*.js$
+Disallow: /*.css$
 
-# Sitemap
+# Pero permitir recursos necesarios para renderizado
+Allow: /assets/*.js
+Allow: /assets/*.css
+
+# Sitemaps
 Sitemap: https://geobooker.com.mx/sitemap.xml
 
-# Crawl delay (opcional, para no sobrecargar el servidor)
+# Crawl-delay para ser amigable con el servidor
 Crawl-delay: 1
+
+# Google específico
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Bing específico
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# Google Images
+User-agent: Googlebot-Image
+Allow: /images/
+Allow: /public/images/
+
+# Bloquear bots de scrapers conocidos
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /

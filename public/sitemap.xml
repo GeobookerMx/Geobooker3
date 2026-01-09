@@ -1,54 +1,138 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Página principal -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  
+  <!-- PÁGINAS PRINCIPALES -->
   <url>
     <loc>https://geobooker.com.mx/</loc>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://geobooker.com.mx/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com.mx/en/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geobooker.com.mx/"/>
+    <lastmod>2026-01-09</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   
-  <!-- Página de bienvenida -->
   <url>
-    <loc>https://geobooker.com.mx/welcome</loc>
-    <changefreq>monthly</changefreq>
+    <loc>https://geobooker.com.mx/categories</loc>
+    <lastmod>2026-01-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <url>
+    <loc>https://geobooker.com.mx/community</loc>
+    <lastmod>2026-01-09</lastmod>
+    <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   
-  <!-- Publicidad -->
   <url>
     <loc>https://geobooker.com.mx/advertise</loc>
-    <changefreq>weekly</changefreq>
+    <lastmod>2026-01-09</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
-  <!-- Guía RESICO -->
   <url>
-    <loc>https://geobooker.com.mx/guia-resico</loc>
+    <loc>https://geobooker.com.mx/global</loc>
+    <lastmod>2026-01-09</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
   
-  <!-- Seguridad -->
   <url>
     <loc>https://geobooker.com.mx/seguridad</loc>
+    <lastmod>2026-01-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   
-  <!-- Políticas -->
+  <url>
+    <loc>https://geobooker.com.mx/login</loc>
+    <lastmod>2026-01-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://geobooker.com.mx/signup</loc>
+    <lastmod>2026-01-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <!-- CATEGORÍAS PRINCIPALES -->
+  <url>
+    <loc>https://geobooker.com.mx/?category=restaurantes</loc>
+    <lastmod>2026-01-09</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <url>
+    <loc>https://geobooker.com.mx/?category=salud</loc>
+    <lastmod>2026-01-09</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <url>
+    <loc>https://geobooker.com.mx/?category=servicios</loc>
+    <lastmod>2026-01-09</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <url>
+    <loc>https://geobooker.com.mx/?category=tiendas</loc>
+    <lastmod>2026-01-09</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <url>
+    <loc>https://geobooker.com.mx/?category=hogar_autos</loc>
+    <lastmod>2026-01-09</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <url>
+    <loc>https://geobooker.com.mx/?category=entretenimiento</loc>
+    <lastmod>2026-01-09</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://geobooker.com.mx/?category=educacion</loc>
+    <lastmod>2026-01-09</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://geobooker.com.mx/?category=bares</loc>
+    <lastmod>2026-01-09</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- PÁGINAS LEGALES -->
   <url>
     <loc>https://geobooker.com.mx/privacy</loc>
+    <lastmod>2026-01-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
+  
   <url>
     <loc>https://geobooker.com.mx/terms</loc>
+    <lastmod>2026-01-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
-  <url>
-    <loc>https://geobooker.com.mx/fiscal</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
+  
 </urlset>

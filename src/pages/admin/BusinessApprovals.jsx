@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { Check, X, Eye, MapPin, Phone, Mail, Calendar, User, Building2, FileText, Briefcase, RotateCcw } from 'lucide-react';
+import { sendBusinessApprovedEmail, sendBusinessRejectedEmail } from '../../services/notificationService';
 
 const BusinessApprovals = () => {
     const [businesses, setBusinesses] = useState([]);
@@ -19,7 +20,10 @@ const BusinessApprovals = () => {
             setLoading(true);
             let query = supabase
                 .from('businesses')
-                .select('*')
+                .select(`
+                    *,
+                    owner:user_profiles(id, full_name, email)
+                `)
                 .order('created_at', { ascending: false });
 
             if (filter !== 'all') {
@@ -43,6 +47,8 @@ const BusinessApprovals = () => {
         const loadingToast = toast.loading('Aprobando negocio...');
 
         try {
+            const business = businesses.find(b => b.id === businessId);
+
             const { error } = await supabase
                 .from('businesses')
                 .update({ status: 'approved' })
@@ -51,6 +57,16 @@ const BusinessApprovals = () => {
             if (error) {
                 console.error('❌ Error de Supabase:', error);
                 throw error;
+            }
+
+            // Enviar notificación por correo
+            if (business?.owner?.email) {
+                await sendBusinessApprovedEmail(
+                    business.owner.email,
+                    business.owner.full_name || 'Usuario',
+                    business.name,
+                    business.id
+                );
             }
 
             toast.success('Negocio aprobado ✅', { id: loadingToast });
@@ -63,14 +79,26 @@ const BusinessApprovals = () => {
     };
 
 
-    const handleReject = async (businessId) => {
+    const handleReject = async (businessId, reason = '') => {
         try {
+            const business = businesses.find(b => b.id === businessId);
+
             const { error } = await supabase
                 .from('businesses')
                 .update({ status: 'rejected' })
                 .eq('id', businessId);
 
             if (error) throw error;
+
+            // Enviar notificación por correo
+            if (business?.owner?.email) {
+                await sendBusinessRejectedEmail(
+                    business.owner.email,
+                    business.owner.full_name || 'Usuario',
+                    business.name,
+                    reason
+                );
+            }
 
             toast.success('Negocio rechazado');
             fetchBusinesses();

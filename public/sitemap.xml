@@ -63,58 +63,52 @@
     <priority>0.5</priority>
   </url>
   
-  <!-- CATEGORÍAS PRINCIPALES -->
+  <!-- CATEGORÍAS PRINCIPALES (SEO FRIENDLY) -->
   <url>
-    <loc>https://geobooker.com.mx/?category=restaurantes</loc>
+    <loc>https://geobooker.com.mx/c/restaurantes</loc>
     <lastmod>2026-01-09</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
-    <loc>https://geobooker.com.mx/?category=salud</loc>
+    <loc>https://geobooker.com.mx/c/salud</loc>
     <lastmod>2026-01-09</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
-    <loc>https://geobooker.com.mx/?category=servicios</loc>
+    <loc>https://geobooker.com.mx/c/servicios</loc>
     <lastmod>2026-01-09</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
-    <loc>https://geobooker.com.mx/?category=tiendas</loc>
+    <loc>https://geobooker.com.mx/c/tiendas</loc>
     <lastmod>2026-01-09</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
-  
+
+  <!-- CIUDADES PRINCIPALES (SEO LANDINGS) -->
   <url>
-    <loc>https://geobooker.com.mx/?category=hogar_autos</loc>
+    <loc>https://geobooker.com.mx/ciudad/puebla</loc>
     <lastmod>2026-01-09</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
-  
+
   <url>
-    <loc>https://geobooker.com.mx/?category=entretenimiento</loc>
+    <loc>https://geobooker.com.mx/ciudad/cdmx</loc>
     <lastmod>2026-01-09</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.8</priority>
+    <priority>0.9</priority>
   </url>
-  
+
   <url>
-    <loc>https://geobooker.com.mx/?category=educacion</loc>
-    <lastmod>2026-01-09</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <url>
-    <loc>https://geobooker.com.mx/?category=bares</loc>
+    <loc>https://geobooker.com.mx/ciudad/guadalajara</loc>
     <lastmod>2026-01-09</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>

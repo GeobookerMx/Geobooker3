@@ -1,6 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { useLocation } from '../contexts/LocationContext';
 import SearchBar from '../components/SearchBar';
 // Lazy load the map component for faster initial load
@@ -46,6 +46,7 @@ import { isBusinessOpen } from '../utils/businessHours';
 
 const HomePage = () => {
   const { t } = useTranslation();
+  const { category, subcategory, city } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const { userLocation, loading: locationLoading, permissionGranted, requestLocationPermission, refreshLocation } = useLocation();
   const [searchLoading, setSearchLoading] = useState(false);
@@ -57,9 +58,23 @@ const HomePage = () => {
   const [lastSearchQuery, setLastSearchQuery] = useState(''); // Para persistencia
   const navigate = useNavigate();
 
-  // Filtros de categoría desde URL
-  const categoryFilter = searchParams.get('category');
-  const subcategoryFilter = searchParams.get('subcategory');
+  // Filtros de categoría desde URL (parámetros de consulta o ruta)
+  const categoryFilter = category || searchParams.get('category');
+  const subcategoryFilter = subcategory || searchParams.get('subcategory');
+  const cityFilter = city || searchParams.get('city');
+
+  // SEO dinámico basado en filtros
+  const getSEOTitle = () => {
+    if (cityFilter && categoryFilter) return `Los mejores ${categoryFilter} en ${cityFilter}`;
+    if (categoryFilter) return `${categoryFilter} cerca de mí`;
+    if (cityFilter) return `Negocios y servicios en ${cityFilter}`;
+    return 'Geobooker - Encuentra Negocios Cerca de Ti';
+  };
+
+  const getSEODescription = () => {
+    if (cityFilter) return `Explora el mapa interactivo de ${cityFilter}. Encuentra restaurantes, farmacias, tiendas y más en Geobooker.`;
+    return 'Encuentra negocios locales cerca de tu ubicación. Mapa interactivo con restaurantes, tiendas y servicios.';
+  };
 
   // Sistema de Interstitial Ads
   const { showInterstitial, incrementSearchCount, closeInterstitial } = useInterstitialTrigger();
@@ -301,8 +316,8 @@ const HomePage = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* SEO Meta Tags */}
       <SEO
-        title="Geobooker - Directorio de Negocios Locales"
-        description="Encuentra los mejores negocios cerca de ti. Restaurantes, farmacias, tiendas, servicios y más. El mejor directorio de negocios en México."
+        title={getSEOTitle()}
+        description={getSEODescription()}
       />
 
       {/* Modal de permiso de ubicación */}

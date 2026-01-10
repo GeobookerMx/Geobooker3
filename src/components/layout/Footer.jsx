@@ -251,6 +251,27 @@ const Footer = () => {
             </div>
           </div>
 
+          {/* Métodos de pago aceptados */}
+          <div className="flex justify-center mb-8">
+            <div className="bg-gray-800/50 rounded-xl px-6 py-4 flex flex-col md:flex-row items-center gap-4">
+              <span className="text-gray-400 text-sm font-medium">Métodos de pago:</span>
+              <div className="flex items-center gap-4">
+                {/* OXXO Pay */}
+                <div className="flex items-center gap-2 bg-yellow-500/20 px-3 py-1.5 rounded-lg">
+                  <span className="text-yellow-400 font-bold text-sm">🏪 OXXO Pay</span>
+                </div>
+                {/* Visa */}
+                <div className="flex items-center gap-1 bg-blue-500/20 px-3 py-1.5 rounded-lg">
+                  <span className="text-blue-400 font-bold text-sm">💳 Visa</span>
+                </div>
+                {/* Mastercard */}
+                <div className="flex items-center gap-1 bg-orange-500/20 px-3 py-1.5 rounded-lg">
+                  <span className="text-orange-400 font-bold text-sm">Mastercard</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* QR Code Section */}
           <div className="flex justify-center mb-8">
             <div className="bg-gray-800 rounded-2xl px-8 py-6 flex flex-col md:flex-row items-center gap-6">

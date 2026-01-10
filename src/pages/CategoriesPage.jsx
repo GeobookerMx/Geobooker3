@@ -230,6 +230,46 @@ const CategoriesPage = () => {
           </div>
         )}
 
+        {/* Imágenes de negocios destacados */}
+        <div className="mb-12">
+          <h2 className="text-xl font-bold text-gray-900 mb-4 text-center">Negocios que ya están en Geobooker</h2>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="group relative aspect-[4/3] rounded-xl overflow-hidden shadow-lg">
+              <img
+                src="/images/community/restaurante.jpg"
+                alt="Restaurante"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              <div className="absolute bottom-3 left-3 text-white">
+                <p className="font-bold text-sm">🍽️ Restaurante</p>
+              </div>
+            </div>
+            <div className="group relative aspect-[4/3] rounded-xl overflow-hidden shadow-lg">
+              <img
+                src="/images/community/mecanico.jpg"
+                alt="Mecánico"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              <div className="absolute bottom-3 left-3 text-white">
+                <p className="font-bold text-sm">🔧 Mecánico</p>
+              </div>
+            </div>
+            <div className="group relative aspect-[4/3] rounded-xl overflow-hidden shadow-lg">
+              <img
+                src="/images/community/veterinario.jpg"
+                alt="Veterinario"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              <div className="absolute bottom-3 left-3 text-white">
+                <p className="font-bold text-sm">🐕 Veterinario</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* CTA para registrar negocio */}
         <div className="text-center mt-12 p-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl">
           <p className="text-gray-700 mb-4 text-lg">

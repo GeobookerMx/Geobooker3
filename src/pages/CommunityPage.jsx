@@ -356,7 +356,7 @@ export default function CommunityPage() {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Barbero */}
                         <div className="group relative aspect-[3/4] rounded-xl overflow-hidden shadow-lg cursor-pointer">
                             <img
@@ -383,32 +383,6 @@ export default function CommunityPage() {
                             </div>
                         </div>
 
-                        {/* Veterinaria */}
-                        <div className="group relative aspect-[3/4] rounded-xl overflow-hidden shadow-lg cursor-pointer">
-                            <img
-                                src="/images/community/veterinaria-corgi.jpg"
-                                alt="Veterinaria"
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                            <div className="absolute bottom-3 left-3 text-white">
-                                <p className="font-bold text-sm">🐕 Veterinaria</p>
-                            </div>
-                        </div>
-
-                        {/* Mecánico */}
-                        <div className="group relative aspect-[3/4] rounded-xl overflow-hidden shadow-lg cursor-pointer">
-                            <img
-                                src="/images/community/mecanico-taller.jpg"
-                                alt="Mecánico"
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                            <div className="absolute bottom-3 left-3 text-white">
-                                <p className="font-bold text-sm">🔧 Mecánico</p>
-                            </div>
-                        </div>
-
                         {/* Maquillista */}
                         <div className="group relative aspect-[3/4] rounded-xl overflow-hidden shadow-lg cursor-pointer">
                             <img
@@ -419,19 +393,6 @@ export default function CommunityPage() {
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                             <div className="absolute bottom-3 left-3 text-white">
                                 <p className="font-bold text-sm">💄 Maquillista</p>
-                            </div>
-                        </div>
-
-                        {/* Electricista */}
-                        <div className="group relative aspect-[3/4] rounded-xl overflow-hidden shadow-lg cursor-pointer">
-                            <img
-                                src="/images/community/electricista.jpg"
-                                alt="Electricista"
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                            <div className="absolute bottom-3 left-3 text-white">
-                                <p className="font-bold text-sm">⚡ Electricista</p>
                             </div>
                         </div>
                     </div>

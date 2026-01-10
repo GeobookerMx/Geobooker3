@@ -6,6 +6,7 @@ import UserProfile from '../components/dashboard/UserProfile';
 import BusinessList from '../components/business/BusinessList';
 import InviteButton from '../components/referral/InviteButton';
 import UserLevelCard from '../components/gamification/UserLevelCard';
+import ReferralDashboard from '../components/referral/ReferralDashboard';
 import { Crown } from 'lucide-react';
 
 
@@ -164,6 +165,15 @@ const DashboardPage = () => {
           Mis Negocios
         </button>
         <button
+          onClick={() => setActiveTab('referrals')}
+          className={`px-6 py-3 font-medium text-sm transition-colors duration-200 border-b-2 ${activeTab === 'referrals'
+            ? 'border-blue-600 text-blue-600'
+            : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+        >
+          🎁 Referidos
+        </button>
+        <button
           onClick={() => setActiveTab('profile')}
           className={`px-6 py-3 font-medium text-sm transition-colors duration-200 border-b-2 ${activeTab === 'profile'
             ? 'border-blue-600 text-blue-600'
@@ -178,6 +188,8 @@ const DashboardPage = () => {
       <div className="min-h-[400px]">
         {activeTab === 'businesses' ? (
           <BusinessList />
+        ) : activeTab === 'referrals' ? (
+          <ReferralDashboard />
         ) : (
           <UserProfile />
         )}

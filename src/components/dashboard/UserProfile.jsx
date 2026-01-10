@@ -122,13 +122,46 @@ const UserProfile = () => {
                     />
                 </div>
 
-                <div className="pt-4">
+                <div className="pt-4 border-t border-gray-100 mt-6">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Notificaciones Push</h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                        Recibe actualizaciones sobre tus negocios, campañas y recompensas directamente en tu dispositivo.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            try {
+                                const permission = await Notification.requestPermission();
+                                if (permission === 'granted') {
+                                    toast.success('¡Notificaciones activadas!');
+                                    // Aquí se podría guardar el subscription token en la DB
+                                } else {
+                                    toast.error('Permiso de notificaciones denegado');
+                                }
+                            } catch (error) {
+                                console.error('Error requesting notification permission:', error);
+                            }
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition"
+                    >
+                        Activar Notificaciones en este dispositivo
+                    </button>
+                </div>
+
+                <div className="pt-6 border-t border-gray-100 flex gap-4">
                     <button
                         type="submit"
                         disabled={loading}
                         className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-200 font-semibold disabled:opacity-50"
                     >
-                        {loading ? 'Guardando...' : 'Guardar Cambios'}
+                        {loading ? 'Guardando...' : 'Guardar Perfil'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => window.location.reload()}
+                        className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                    >
+                        Cancelar
                     </button>
                 </div>
             </form>

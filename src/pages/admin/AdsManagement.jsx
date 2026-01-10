@@ -3,16 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import {
-  TrendingUp,
-  DollarSign,
-  Eye,
-  MousePointer,
-  Plus,
-  Clock,
-  AlertCircle,
-  Image,
-  Info,
+  BarChart3, Users, Building, MousePointer2,
+  Calendar, CheckCircle2, AlertCircle, Clock,
+  ChevronRight, Filter, Search, Plus, Eye,
+  Settings, Trash2, Edit2, Play, Pause, X
 } from 'lucide-react';
+import { sendCampaignApprovedEmail } from '../../services/notificationService';
 import CampaignDetailsModal from '../../components/admin/CampaignDetailsModal';
 import EditAdSpaceModal from '../../components/admin/EditAdSpaceModal';
 import ImpressionsChart from '../../components/admin/charts/ImpressionsChart';
@@ -160,12 +156,29 @@ const AdsManagement = () => {
   const handleApprove = async (campaignId) => {
     setActionLoading(campaignId);
     try {
+      const campaign = campaigns.find(c => c.id === campaignId);
+
       const { error } = await supabase
         .from('ad_campaigns')
         .update({ status: 'active' })
         .eq('id', campaignId);
 
       if (error) throw error;
+
+      // Enviar notificación por correo
+      const email = campaign?.advertiser_email;
+      const name = campaign?.advertiser_name || 'Anunciante';
+      const adSpace = campaign?.ad_spaces?.display_name || 'Espacio Publicitario';
+
+      if (email) {
+        await sendCampaignApprovedEmail(
+          email,
+          name,
+          adSpace,
+          campaign?.start_date || 'Inmediato',
+          campaign?.total_budget || 0
+        );
+      }
 
       toast.success('Campaña aprobada y activa 🚀');
       await loadData('pending_review'); // Recargar lista de pendientes
@@ -182,6 +195,7 @@ const AdsManagement = () => {
 
     setActionLoading(campaignId);
     try {
+      // Podríamos agregar un campo de razón de rechazo en el futuro
       const { error } = await supabase
         .from('ad_campaigns')
         .update({ status: 'rejected' })

@@ -74,6 +74,7 @@ import EnterpriseCheckout from "./pages/enterprise/EnterpriseCheckout.jsx";
 import EnterpriseSuccess from "./pages/enterprise/EnterpriseSuccess.jsx";
 import EnterpriseEdit from "./pages/enterprise/EnterpriseEdit.jsx";
 import AdvertiserDashboard from "./pages/advertiser/AdvertiserDashboard.jsx";
+import OxxoPendingPage from "./pages/OxxoPendingPage.jsx";
 
 export default function AppRouter() {
   return (
@@ -92,6 +93,9 @@ export default function AppRouter() {
 
         {/* 🆕 Páginas públicas para acceso de invitados (con límite de búsqueda) */}
         <Route path="/" element={<HomePage />} />
+        <Route path="/c/:category" element={<HomePage />} />
+        <Route path="/c/:category/:subcategory" element={<HomePage />} />
+        <Route path="/ciudad/:city" element={<HomePage />} />
         <Route path="/categories" element={<CategoriesPage />} />
 
         {/* Página comercial de publicidad (SIN login) */}
@@ -122,6 +126,9 @@ export default function AppRouter() {
 
         {/* Guía para darse de alta en el SAT como RESICO */}
         <Route path="/guia-resico" element={<GuiaResicoPage />} />
+
+        {/* Página de pago OXXO pendiente */}
+        <Route path="/payment/oxxo-pending" element={<OxxoPendingPage />} />
 
         {/* Enterprise / Global Ads */}
         <Route path="/enterprise" element={<EnterpriseLanding />} />

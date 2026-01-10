@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
+import { sendWelcomeEmail, sendReferralBonusEmail } from '../services/notificationService';
 
 const SignupPage = () => {
     const { t } = useTranslation();
@@ -51,17 +52,63 @@ const SignupPage = () => {
         setLoading(true);
 
         try {
+            // Obtener código de referido si existe
+            const referralCode = localStorage.getItem('referral_code');
+
             const { data, error } = await supabase.auth.signUp({
                 email: formData.email,
                 password: formData.password,
                 options: {
                     data: {
-                        full_name: formData.fullName
+                        full_name: formData.fullName,
+                        referred_by: referralCode || null
                     }
                 }
             });
 
             if (error) throw error;
+
+            // Enviar correo de bienvenida
+            if (data?.user?.email) {
+                sendWelcomeEmail(data.user.email, formData.fullName);
+            }
+
+            // Si hay código de referido, procesarlo
+            if (referralCode && data?.user?.id) {
+                try {
+                    const { data: refResult, error: referralError } = await supabase.rpc('process_referral_login', {
+                        p_referred_id: data.user.id,
+                        p_referral_code: referralCode
+                    });
+
+                    if (!referralError && refResult?.referrer_id) {
+                        console.log('✅ Referral processed successfully');
+
+                        // Notificar al referidor
+                        const { data: referrerProfile } = await supabase
+                            .from('user_profiles')
+                            .select('email, full_name, referral_count')
+                            .eq('id', refResult.referrer_id)
+                            .single();
+
+                        if (referrerProfile?.email) {
+                            await sendReferralBonusEmail(
+                                referrerProfile.email,
+                                referrerProfile.full_name || 'Amigo',
+                                formData.fullName,
+                                '0.5 puntos (Pronto +30 días Premium)',
+                                referrerProfile.referral_count,
+                                'Subiendo de nivel'
+                            );
+                        }
+
+                        // Limpiar el código después de procesarlo
+                        localStorage.removeItem('referral_code');
+                    }
+                } catch (refErr) {
+                    console.warn('Could not process referral:', refErr);
+                }
+            }
 
             toast.success(t('signup.success'));
 
@@ -224,7 +271,7 @@ const SignupPage = () => {
                                 const { error } = await supabase.auth.signInWithOAuth({
                                     provider: 'google',
                                     options: {
-                                        redirectTo: `${window.location.origin}/auth/callback`,
+                                        redirectTo: `${window.location.origin} /auth/callback`,
                                         queryParams: {
                                             access_type: 'offline',
                                             prompt: 'select_account',
@@ -255,7 +302,7 @@ const SignupPage = () => {
                                 const { error } = await supabase.auth.signInWithOAuth({
                                     provider: 'apple',
                                     options: {
-                                        redirectTo: `${window.location.origin}/auth/callback`
+                                        redirectTo: `${window.location.origin} /auth/callback`
                                     }
                                 });
                                 if (error) throw error;

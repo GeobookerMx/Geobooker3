@@ -1,6 +1,7 @@
 // src/contexts/AppContext.jsx
 import React, { createContext, useContext, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { trackSearch } from "../services/analyticsService";
 
 const AppContext = createContext(null);
 
@@ -36,7 +37,7 @@ export const AppProvider = ({ children }) => {
   };
 
   // 🔍 Buscar negocios por texto
-  const searchBusinesses = async (searchTerm) => {
+  const searchBusinesses = async (searchTerm, options = {}) => {
     if (!searchTerm || searchTerm.trim() === "") {
       setSearchResults([]);
       return [];
@@ -54,6 +55,14 @@ export const AppProvider = ({ children }) => {
       if (error) throw error;
 
       setSearchResults(data || []);
+
+      // Track the search for analytics
+      trackSearch(searchTerm, {
+        category: options.category || null,
+        subcategory: options.subcategory || null,
+        resultsCount: data?.length || 0
+      });
+
       return data;
     } catch (error) {
       console.error("Error searching businesses:", error);

@@ -4,8 +4,12 @@ import { Outlet } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
 import LocationPrompt from "../LocationPrompt";
+import { usePageTracking } from "../../hooks/usePageTracking";
 
 export default function PublicLayout() {
+  // Track page views automatically
+  usePageTracking();
+
   return (
     <>
       <Header />

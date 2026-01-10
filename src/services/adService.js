@@ -112,6 +112,12 @@ export async function loadEnterpriseCampaigns(context = {}) {
 
         // Filter by user location
         const filtered = (data || []).filter(campaign => {
+            // DEMO campaigns always show (regardless of location)
+            if (campaign.is_demo === true) {
+                console.log(`  ✅ Campaign "${campaign.advertiser_name}" - DEMO (always shown)`);
+                return true;
+            }
+
             // Global ads show everywhere (ALWAYS pass)
             if (!campaign.ad_level || campaign.ad_level === 'global') {
                 console.log(`  ✅ Campaign "${campaign.advertiser_name}" - GLOBAL (always shown)`);

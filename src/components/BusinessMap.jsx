@@ -1,6 +1,6 @@
 import React, { useMemo, memo, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow, MarkerClusterer, Circle } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, MarkerClusterer, CircleF } from '@react-google-maps/api';
 import LastUpdatedBadge from './common/LastUpdatedBadge';
 import { trackRouteClick, trackBusinessView } from '../services/analyticsService';
 // ⚡ IMPORTANTE: Constantes fuera del componente para evitar recargas
@@ -18,11 +18,16 @@ const defaultCenter = {
   lng: -99.1332
 };
 
-// Iconos personalizados - USUARIO (Círculo azul estilo Google Maps)
-const USER_ICON = {
-  url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzQyODVGNCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIzIi8+CiAgPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iNCIgZmlsbD0id2hpdGUiLz4KPC9zdmc+',
-  scaledSize: { width: 24, height: 24 },
-  anchor: { x: 12, y: 12 }
+// Iconos personalizados - USUARIO (Círculo morado con borde rosa y centro blanco - colores Geobooker)
+// Usamos una definición de icono más robusta para Google Maps
+const USER_ICON_CONFIG = {
+  path: 'M 0,0 m -12,0 a 12,12 0 1,0 24,0 a 12,12 0 1,0 -24,0',
+  fillColor: '#7C3AED', // Morado Geobooker
+  fillOpacity: 1,
+  strokeColor: '#EC4899', // Rosa Geobooker
+  strokeWeight: 3,
+  scale: 1,
+  anchor: { x: 0, y: 0 }
 };
 
 const BUSINESS_ICON = {
@@ -182,7 +187,7 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
   const isGeobooker = !!business.owner_id;
 
   return (
-    <InfoWindow
+    <InfoWindowF
       position={{ lat: business.latitude, lng: business.longitude }}
       onCloseClick={onCloseClick}
     >
@@ -235,7 +240,7 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
           </button>
         </div>
       </div>
-    </InfoWindow>
+    </InfoWindowF>
   );
 });
 
@@ -302,27 +307,35 @@ export const BusinessMap = memo(({
     return R * c;
   }
 
-  const googleMarkers = useMemo(() =>
-    businesses.map((business) => ({
+  const googleMarkers = useMemo(() => {
+    const validMarkers = businesses.filter(b => b && !isNaN(Number(b.latitude)) && !isNaN(Number(b.longitude)));
+    if (businesses.length > 0 && validMarkers.length === 0) {
+      console.warn("⚠️ Todos los negocios de Google tienen coordenadas inválidas:", businesses);
+    }
+    return validMarkers.map((business) => ({
       ...business,
       distance: userLocation ? calculateDistance(
         userLocation.lat, userLocation.lng,
-        business.latitude, business.longitude
+        Number(business.latitude), Number(business.longitude)
       ) : null,
       type: 'google'
-    })), [businesses, userLocation]
-  );
+    }));
+  }, [businesses, userLocation]);
 
-  const geobookerMarkers = useMemo(() =>
-    geobookerBusinesses.map((business) => ({
+  const geobookerMarkers = useMemo(() => {
+    const validMarkers = geobookerBusinesses.filter(b => b && !isNaN(Number(b.latitude)) && !isNaN(Number(b.longitude)));
+    if (geobookerBusinesses.length > 0) {
+      console.log(`📍 BusinessMap: Procesando ${geobookerBusinesses.length} negocios de Geobooker (${validMarkers.length} válidos)`);
+    }
+    return validMarkers.map((business) => ({
       ...business,
       distance: userLocation ? calculateDistance(
         userLocation.lat, userLocation.lng,
-        business.latitude, business.longitude
+        Number(business.latitude), Number(business.longitude)
       ) : null,
       type: 'geobooker'
-    })), [geobookerBusinesses, userLocation]
-  );
+    }));
+  }, [geobookerBusinesses, userLocation]);
 
   // Estado de carga
   if (loadError) {
@@ -382,28 +395,44 @@ export const BusinessMap = memo(({
         {/* Círculo de ubicación del usuario */}
         {userLocation?.lat && userLocation?.lng && (
           <>
-            {console.log('🎯 Renderizando marcador de usuario en:', userLocation.lat, userLocation.lng)}
-            <Circle
-              center={{ lat: userLocation.lat, lng: userLocation.lng }}
+            {/* Área de precisión - círculo exterior morado */}
+            <CircleF
+              center={{
+                lat: Number(userLocation.lat),
+                lng: Number(userLocation.lng)
+              }}
               radius={150}
               options={{
                 fillColor: '#7C3AED',
-                fillOpacity: 0.25,
-                strokeColor: '#7C3AED',
+                fillOpacity: 0.2,
+                strokeColor: '#EC4899',
                 strokeWeight: 2,
                 strokeOpacity: 0.6,
-                zIndex: 9999
+                zIndex: 9998
               }}
             />
-            {/* Pin de ubicación - usando imagen pública de Google */}
-            <Marker
-              position={{ lat: userLocation.lat, lng: userLocation.lng }}
-              icon={{
-                url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-                scaledSize: { width: 40, height: 40 }
+            {/* Marcador de usuario - Punto Central Blanco */}
+            <MarkerF
+              position={{
+                lat: Number(userLocation.lat),
+                lng: Number(userLocation.lng)
               }}
-              title="📍 Tu ubicación actual"
-              zIndex={10000}
+              label={{
+                text: "📍 Tú",
+                color: "#7C3AED",
+                fontSize: "12px",
+                fontWeight: "bold",
+                className: "map-label-user" // Clase opcional por si se quiere dar estilo extra
+              }}
+              zIndex={20000}
+              icon={typeof window !== 'undefined' && window.google ? {
+                path: window.google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                fillColor: "#7C3AED", // Morado Geobooker
+                fillOpacity: 1,
+                strokeWeight: 3,
+                strokeColor: "#EC4899", // Rosa Geobooker
+              } : USER_ICON_CONFIG}
             />
           </>
         )}
@@ -420,9 +449,9 @@ export const BusinessMap = memo(({
           >
             {(clusterer) =>
               googleMarkers.map((business) => (
-                <Marker
+                <MarkerF
                   key={`google-${business.id}`}
-                  position={{ lat: business.latitude, lng: business.longitude }}
+                  position={{ lat: Number(business.latitude), lng: Number(business.longitude) }}
                   onClick={() => onBusinessSelect(business)}
                   icon={BUSINESS_ICON}
                   title={business.name}
@@ -441,9 +470,9 @@ export const BusinessMap = memo(({
           const categoryIcon = getCategoryIcon(business.category, isPremium);
 
           return (
-            <Marker
+            <MarkerF
               key={`geobooker-${business.id}`}
-              position={{ lat: business.latitude, lng: business.longitude }}
+              position={{ lat: Number(business.latitude), lng: Number(business.longitude) }}
               onClick={() => onBusinessSelect(business)}
               icon={categoryIcon}
               title={isPremium ? `⭐ ${business.name} (Premium)` : business.name}

@@ -120,6 +120,11 @@ const BusinessProfilePage = () => {
                 image={business.image_url || '/images/geobooker-og.png'}
                 type="business.business"
                 business={business}
+                breadcrumbs={[
+                    { name: 'Inicio', item: '/' },
+                    { name: business.category, item: `/c/${business.category.toLowerCase().replace(/ /g, '-')}` },
+                    { name: business.name, item: `/business/${id}` }
+                ]}
             />
 
             {/* Header con imagen */}
@@ -373,12 +378,32 @@ const BusinessProfilePage = () => {
                     </div>
                 )}
 
+                {/* Banner de Reclamación (Growth Hack) */}
+                {business.is_claimed === false && (
+                    <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-6 text-center mb-6">
+                        <div className="bg-amber-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Shield className="w-6 h-6 text-amber-600" />
+                        </div>
+                        <h3 className="text-xl font-bold text-amber-900 mb-2">¿Eres el dueño de este negocio?</h3>
+                        <p className="text-amber-800 mb-4 text-sm">
+                            Este negocio fue agregado automáticamente al directorio. Reclámalo gratis para gestionar tu información,
+                            subir fotos y responder a tus clientes.
+                        </p>
+                        <button
+                            onClick={() => toast.success('¡Genial! Hemos recibido tu solicitud. Un asesor se pondrá en contacto contigo para verificar la propiedad.')}
+                            className="bg-amber-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-amber-700 transition-all shadow-md active:scale-95"
+                        >
+                            Reclamar mi Negocio
+                        </button>
+                    </div>
+                )}
+
                 {/* CTA Premium */}
-                {!business.is_premium && (
+                {business.is_claimed !== false && !business.is_premium && (
                     <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 text-center text-white mb-6">
-                        <h3 className="text-xl font-bold mb-2">¿Este es tu negocio?</h3>
+                        <h3 className="text-xl font-bold mb-2">Eleva tu negocio</h3>
                         <p className="text-purple-100 mb-4">
-                            Obtén el Badge de Verificado y más visibilidad
+                            Desbloquea redes sociales, fotos ilimitadas y mayor exposición.
                         </p>
                         <Link
                             to="/dashboard/upgrade"

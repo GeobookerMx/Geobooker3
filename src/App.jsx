@@ -12,6 +12,7 @@ import AppRouter from "./router";
 import ChatWidget from "./components/agent/ChatWidget";
 import { checkAppVersion } from "./services/cacheVersionService";
 import InstallPWAButton from "./components/common/InstallPWAButton";
+import ScrollToTop from "./components/common/ScrollToTop";
 
 // Component to activate session timeout monitoring
 function SessionTimeoutMonitor() {
@@ -35,6 +36,7 @@ function AppInitializer() {
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AuthProvider>
         <SessionTimeoutMonitor />
         <AppInitializer />

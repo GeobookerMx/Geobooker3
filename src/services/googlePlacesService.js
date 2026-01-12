@@ -141,7 +141,7 @@ export const searchNearbyPlaces = async (location, keyword, radius = 5000, force
             location: new window.google.maps.LatLng(location.lat, location.lng),
             radius: radius,
             keyword: keyword,
-            language: 'es' // Resultados en español
+            language: window.localStorage.getItem('language') || 'es' // Sincronizado con i18next
         };
 
         console.log(`🔍 Buscando en Google Places: "${keyword}" cerca de (${location.lat.toFixed(4)}, ${location.lng.toFixed(4)})`);
@@ -228,10 +228,8 @@ export const getPlaceDetails = async (placeId, forceRefresh = false) => {
                 'geometry',
                 'types',
                 'url'
-                // NOTA: Excluimos 'photos' y 'reviews' para reducir costos
-                // Agregar solo si el usuario lo solicita explícitamente
             ],
-            language: 'es'
+            language: window.localStorage.getItem('language') || 'es'
         };
 
         console.log(`📋 Obteniendo detalles de Google Places: ${placeId}`);
@@ -299,7 +297,7 @@ export const searchByType = async (location, type, radius = 5000, forceRefresh =
             location: new window.google.maps.LatLng(location.lat, location.lng),
             radius: radius,
             type: type,
-            language: 'es'
+            language: window.localStorage.getItem('language') || 'es'
         };
 
         console.log(`🔍 Buscando por tipo en Google Places: "${type}"`);

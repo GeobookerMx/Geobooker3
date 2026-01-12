@@ -500,18 +500,57 @@ export default function CommunityPage() {
 
                                             {/* Summary or Full Content */}
                                             {isExpanded ? (
-                                                <div className="prose max-w-none">
-                                                    {renderContent(post.content)}
+                                                <div className="space-y-6">
+                                                    <div className="prose max-w-none">
+                                                        {renderContent(post.content)}
+                                                    </div>
+
+                                                    {/* Image Gallery */}
+                                                    {post.images && post.images.length > 0 && (
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                                                            {post.images.map((img, idx) => (
+                                                                <div key={idx} className="rounded-xl overflow-hidden shadow-md">
+                                                                    <img
+                                                                        src={img}
+                                                                        alt={`Post image ${idx + 1}`}
+                                                                        className="w-full h-auto object-cover hover:scale-105 transition duration-500"
+                                                                    />
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {/* External Links Section */}
+                                                    {post.external_links && post.external_links.length > 0 && (
+                                                        <div className="pt-6 border-t font-semibold">
+                                                            <h3 className="text-gray-900 mb-3 flex items-center gap-2">
+                                                                <ExternalLink className="w-5 h-5 text-purple-600" />
+                                                                {isSpanish ? 'Enlaces y Recursos' : 'Links & Resources'}
+                                                            </h3>
+                                                            <div className="flex flex-wrap gap-3">
+                                                                {post.external_links.map((lnk, idx) => (
+                                                                    <a
+                                                                        key={idx}
+                                                                        href={lnk.url}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-xl hover:bg-purple-100 transition border border-purple-100 shadow-sm"
+                                                                    >
+                                                                        <span className="font-bold">{lnk.label}</span>
+                                                                        <ArrowRight className="w-4 h-4" />
+                                                                    </a>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Comments Section */}
+                                                    <CommentSection postId={post.id} isSpanish={isSpanish} />
                                                 </div>
                                             ) : (
                                                 <p className="text-gray-600 line-clamp-2">
                                                     {post.summary || post.content?.substring(0, 150) + '...'}
                                                 </p>
-                                            )}
-
-                                            {/* Comments Section */}
-                                            {isExpanded && (
-                                                <CommentSection postId={post.id} isSpanish={isSpanish} />
                                             )}
                                         </div>
                                     </article>

@@ -7,7 +7,7 @@
  */
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { X, MapPin, AlertCircle, Check, Navigation } from 'lucide-react';
-import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+import { GoogleMap, MarkerF, useJsApiLoader } from '@react-google-maps/api';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -203,7 +203,7 @@ export default function LocationEditModal({
                                 mapTypeControl: false,
                             }}
                         >
-                            <Marker
+                            <MarkerF
                                 position={position}
                                 draggable={canChange}
                                 onDragEnd={(e) => {

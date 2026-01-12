@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
+import { GoogleMap, LoadScript, MarkerF } from '@react-google-maps/api';
 import { toast } from 'react-hot-toast';
 import { Upload, X, MapPin, Clock, Phone, Globe, Mail, Image as ImageIcon, Briefcase, FileText, Share2 } from 'lucide-react';
 
@@ -424,7 +424,7 @@ const BusinessEditPage = () => {
                                 }}
                             >
                                 {formData.latitude && formData.longitude && (
-                                    <Marker
+                                    <MarkerF
                                         position={{ lat: formData.latitude, lng: formData.longitude }}
                                         draggable={true}
                                         onDragEnd={onMarkerDragEnd}

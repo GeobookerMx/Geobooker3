@@ -78,5 +78,23 @@ export async function createBusiness(form, user) {
   }
 
   console.log("✅ Negocio creado:", data);
+
+  // Procesar conversión de referido si es el primer negocio
+  try {
+    const { count } = await supabase
+      .from("businesses")
+      .select("*", { count: "exact", head: true })
+      .eq("owner_id", user.id);
+
+    if (count === 1) { // Es el primer negocio
+      console.log("🚀 Primer negocio detectado, procesando conversión de referido...");
+      await supabase.rpc('convert_referral_on_business_created', {
+        p_user_id: user.id
+      });
+    }
+  } catch (refErr) {
+    console.warn("⚠️ Error al procesar conversión de referido:", refErr);
+  }
+
   return data;
 }

@@ -462,6 +462,7 @@ const HomePage = () => {
           </div>
 
           <Suspense fallback={<MapLoadingFallback />}>
+            {console.log(`🗺️ Renderizando Mapa con: ${businesses.length} Google, ${geobookerBusinesses.length} Geobooker (Filtro Abierto: ${openNowFilter})`)}
             <BusinessMap
               userLocation={userLocation}
               businesses={businesses} // Google Places

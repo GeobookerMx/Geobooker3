@@ -2,8 +2,71 @@
 /**
  * Servicio de Analytics Interno para Geobooker
  * Registra eventos de usuario en Supabase para KPIs en tiempo real
+ * También incluye funciones de compatibilidad con GA4
  */
 import { supabase } from '../lib/supabase';
+
+// ============================================
+// FUNCIONES DE COMPATIBILIDAD CON GA4
+// ============================================
+
+/**
+ * Inicializar Google Analytics 4 (stub - GA4 se carga via gtag en index.html)
+ */
+export function initializeGA4() {
+    console.log('📊 [Analytics] GA4 initialized via gtag');
+}
+
+/**
+ * Registrar inicio de sesión
+ */
+export function trackSessionStart(isReturning = false) {
+    console.log(`📊 [Analytics] Session start (returning: ${isReturning})`);
+    // Page views are tracked automatically by usePageTracking hook
+}
+
+/**
+ * Trackear evento genérico (compatible con GA4)
+ */
+export function trackEvent(eventName, params = {}) {
+    console.log(`📊 [Analytics] Event: ${eventName}`, params);
+    // Si gtag está disponible, enviar a GA4 también
+    if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', eventName, params);
+    }
+}
+
+/**
+ * Trackear vista de negocio
+ */
+export function trackBusinessView(businessId, businessName, source = 'map') {
+    trackEvent('view_business', {
+        business_id: businessId,
+        business_name: businessName,
+        source: source
+    });
+}
+
+/**
+ * Trackear click en negocio
+ */
+export function trackBusinessClick(businessId, businessName, action = 'click') {
+    trackEvent('click_business', {
+        business_id: businessId,
+        business_name: businessName,
+        action: action
+    });
+}
+
+/**
+ * Trackear click en botón de rutas/direcciones
+ */
+export function trackRouteClick(businessId, businessName) {
+    trackEvent('click_route', {
+        business_id: businessId,
+        business_name: businessName
+    });
+}
 
 // Generar o recuperar session ID
 const getSessionId = () => {

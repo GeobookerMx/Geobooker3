@@ -28,7 +28,7 @@ const ProfilePage = () => {
       if (user) {
         // Obtener perfil extendido desde la tabla profiles
         const { data: profile, error } = await supabase
-          .from('profiles')
+          .from('user_profiles')
           .select('*')
           .eq('id', user.id)
           .single();
@@ -58,9 +58,9 @@ const ProfilePage = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuario no autenticado');
 
-      // Actualizar perfil en la tabla profiles
+      // Actualizar perfil en la tabla user_profiles
       const { error } = await supabase
-        .from('profiles')
+        .from('user_profiles')
         .upsert({
           id: user.id,
           first_name: userData.first_name,
@@ -171,7 +171,7 @@ const ProfilePage = () => {
                     placeholder="Tu nombre"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2">
                     Apellidos <span className="text-red-500">*</span>
@@ -220,7 +220,7 @@ const ProfilePage = () => {
                   />
                   <p className="text-sm text-gray-500 mt-1">Contacta con soporte para cambiar el email</p>
                 </div>
-                
+
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2">
                     Teléfono
@@ -275,8 +275,8 @@ const ProfilePage = () => {
                 <span className="text-gray-400 text-2xl">🏢</span>
               </div>
               <p className="text-gray-600 mb-4">Aún no tienes negocios registrados</p>
-              <a 
-                href="/add-business" 
+              <a
+                href="/add-business"
                 className="inline-flex items-center bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-300 font-semibold"
               >
                 <span className="mr-2">+</span>

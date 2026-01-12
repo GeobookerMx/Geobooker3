@@ -8,18 +8,39 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Gift, Users, Star, ArrowRight, Sparkles, MapPin } from 'lucide-react';
 import SEO from '../components/SEO';
+import { supabase } from '../lib/supabase';
 
 export default function ReferralLanding() {
     const { code } = useParams();
     const navigate = useNavigate();
     const [referrerName, setReferrerName] = useState('un amigo');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         // Store referral code for later use during signup
         if (code) {
             localStorage.setItem('referral_code', code.toUpperCase());
+            loadReferrerInfo(code.toUpperCase());
         }
     }, [code]);
+
+    const loadReferrerInfo = async (refCode) => {
+        try {
+            const { data, error } = await supabase
+                .from('user_profiles')
+                .select('full_name')
+                .eq('referral_code', refCode)
+                .single();
+
+            if (data && data.full_name) {
+                setReferrerName(data.full_name);
+            }
+        } catch (error) {
+            console.warn('Could not load referrer info');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleGetStarted = () => {
         navigate('/signup');

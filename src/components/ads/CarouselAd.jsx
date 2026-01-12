@@ -107,31 +107,43 @@ export default function CarouselAd() {
 
 /**
  * Card individual del carrusel
+ * Soporta tanto campañas enterprise (ad_creatives) como demo (creative_url directo)
  */
 function CarouselCard({ campaign }) {
     const { trackClick } = useAdTracking(campaign.id, true);
     const creative = campaign.ad_creatives?.[0];
 
-    if (!creative) return null;
+    // Fallback para campañas demo que no tienen ad_creatives
+    const imageUrl = creative?.image_url || campaign.creative_url || null;
+    const title = creative?.title || campaign.headline || campaign.advertiser_name;
+    const description = creative?.description || campaign.description || '';
+    const ctaText = creative?.cta_text || campaign.cta_text || 'Ver más';
+    const ctaUrl = creative?.cta_url || campaign.cta_url || '#';
 
     return (
         <div
             className="flex-shrink-0 w-72 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer group"
-            onClick={() => trackClick(creative.cta_url)}
+            onClick={() => trackClick(ctaUrl)}
         >
             {/* Imagen */}
             <div className="relative h-40 bg-gradient-to-br from-blue-100 to-purple-100 overflow-hidden">
-                {creative.image_url ? (
+                {imageUrl ? (
                     <img
-                        src={creative.image_url}
-                        alt={creative.title}
+                        src={imageUrl}
+                        alt={title}
                         className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                        onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                        }}
                     />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <p className="text-4xl">🏢</p>
-                    </div>
-                )}
+                ) : null}
+                <div
+                    className={`w-full h-full items-center justify-center ${imageUrl ? 'hidden' : 'flex'}`}
+                    style={{ display: imageUrl ? 'none' : 'flex' }}
+                >
+                    <p className="text-4xl">🏢</p>
+                </div>
 
                 {/* Badge patrocinado */}
                 <span className="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full">
@@ -142,19 +154,19 @@ function CarouselCard({ campaign }) {
             {/* Contenido */}
             <div className="p-4">
                 <h3 className="font-bold text-lg text-gray-900 mb-1 line-clamp-1">
-                    {creative.title}
+                    {title}
                 </h3>
 
-                {creative.description && (
+                {description && (
                     <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                        {creative.description}
+                        {description}
                     </p>
                 )}
 
                 {/* CTA Button */}
                 <div className="flex items-center justify-between">
                     <button className="flex items-center text-blue-600 hover:text-blue-700 font-semibold text-sm group-hover:underline transition">
-                        {creative.cta_text || 'Ver más'}
+                        {ctaText}
                         <ExternalLink className="w-4 h-4 ml-1" />
                     </button>
 

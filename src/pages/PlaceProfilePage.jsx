@@ -163,7 +163,24 @@ const PlaceProfilePage = () => {
         <div className="min-h-screen bg-gray-50">
             <SEO
                 title={`${place.name} | Geobooker`}
-                description={`${place.name} - ${place.address}. Encuentra negocios cerca de ti en Geobooker.`}
+                description={`${place.name} - ${place.address}. Encuentra los mejores negocios cerca de ti en Geobooker.`}
+                image={place.photos?.[0] || '/images/geobooker-og.png'}
+                type="business.business"
+                business={{
+                    name: place.name,
+                    description: place.address,
+                    address: place.address,
+                    latitude: place.latitude,
+                    longitude: place.longitude,
+                    rating: place.rating,
+                    review_count: place.userRatingsTotal,
+                    image_url: place.photos?.[0]
+                }}
+                breadcrumbs={[
+                    { name: 'Inicio', item: '/' },
+                    { name: getReadableType(place.types), item: '/' },
+                    { name: place.name, item: `/place/${placeId}` }
+                ]}
             />
 
             {/* Header con foto */}

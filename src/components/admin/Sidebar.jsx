@@ -12,7 +12,10 @@ import {
     DollarSign,
     Menu,
     X,
-    Newspaper
+    Newspaper,
+    Gift,
+    Database,
+    Mail
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -63,7 +66,10 @@ const Sidebar = ({ onLogout }) => {
         { path: '/admin/inventory', icon: BarChart3, label: '📦 Ad Inventory' },
         { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
         { path: '/admin/scan-invite', icon: Users, label: '🔍 Scan & Invite' },
+        { path: '/admin/referrals', icon: Gift, label: '🎁 Referidos' },
         { path: '/admin/blog', icon: Newspaper, label: '📝 Blog Comunidad' },
+        { path: '/admin/import', icon: Database, label: '📥 Importar Datos' },
+        { path: '/admin/campaigns', icon: Mail, label: '📨 Campañas Email' },
         { path: '/admin/revenue', icon: DollarSign, label: 'Ingresos' },
         { path: '/admin/settings', icon: Settings, label: 'Configuración' },
     ];

@@ -31,18 +31,24 @@ export default function ReferralFloatingWidget() {
 
     const loadReferralData = async () => {
         try {
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from('user_profiles')
                 .select('referral_code, referral_count')
                 .eq('id', user.id)
-                .single();
+                .maybeSingle();
+
+            if (error) {
+                console.warn('Referral data not available:', error.message);
+                return; // Don't crash, just return
+            }
 
             if (data) {
                 setReferralCode(data.referral_code);
                 setReferralCount(data.referral_count || 0);
             }
         } catch (error) {
-            console.error('Error loading referral data:', error);
+            console.warn('Error loading referral data:', error);
+            // Don't crash the app, just log the error
         }
     };
 

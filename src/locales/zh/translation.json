@@ -1,0 +1,22 @@
+{
+    "common": {
+        "loading": "加载中...",
+        "error": "错误",
+        "success": "成功",
+        "cancel": "取消",
+        "save": "保存",
+        "search": "搜索"
+    },
+    "nav": {
+        "home": "首页",
+        "businesses": "商家",
+        "categories": "分类",
+        "login": "登录",
+        "register": "注册"
+    },
+    "home": {
+        "title": "寻找附近的商家",
+        "subtitle": "发现您所在地区的最佳场所",
+        "searchPlaceholder": "您在找什么商家或服务？"
+    }
+}

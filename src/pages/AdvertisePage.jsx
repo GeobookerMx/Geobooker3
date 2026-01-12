@@ -253,74 +253,8 @@ const AdvertisePage = () => {
 
       {/* CONTENIDO */}
       <div className="max-w-7xl mx-auto px-4 py-16">
-        {/* STATS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 text-center">
-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-            <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Globe className="w-8 h-8 text-blue-600" />
-            </div>
-            <h3 className="text-4xl font-bold text-gray-900 mb-1">25+</h3>
-            <p className="text-gray-500 font-medium text-sm">
-              Países alcanzados
-            </p>
-          </div>
-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Monitor className="w-8 h-8 text-green-600" />
-            </div>
-            <h3 className="text-4xl font-bold text-gray-900 mb-1">1M+</h3>
-            <p className="text-gray-500 font-medium text-sm">
-              Impresiones mensuales proyectadas
-            </p>
-          </div>
-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-            <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <TrendingUp className="w-8 h-8 text-purple-600" />
-            </div>
-            <h3 className="text-4xl font-bold text-gray-900 mb-1">3X</h3>
-            <p className="text-gray-500 font-medium text-sm">
-              Retorno promedio estimado
-            </p>
-          </div>
-        </div>
 
-        {/* AVISOS IMPORTANTES ANTES DE CONTRATAR */}
-        <div className="max-w-4xl mx-auto mb-10 grid md:grid-cols-3 gap-4">
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">⏳</span>
-              <div>
-                <h4 className="font-semibold text-amber-800 text-sm">Revisión: 24-48 hrs</h4>
-                <p className="text-xs text-amber-700 mt-1">Tu campaña será revisada antes de publicarse para asegurar que cumple con nuestras políticas.</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">🧾</span>
-              <div>
-                <h4 className="font-semibold text-blue-800 text-sm">Facturación automática</h4>
-                <p className="text-xs text-blue-700 mt-1">Recibirás tu factura por email cuando tu campaña entre en pauta activa.</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">💰</span>
-              <div>
-                <h4 className="font-semibold text-amber-800 text-sm">Precios + IVA (México)</h4>
-                <p className="text-xs text-amber-700 mt-1">
-                  <strong>Clientes en México:</strong> Todos los precios están sujetos a +16% IVA adicional.
-                  <strong>Clientes internacionales:</strong> Tasa 0% IVA (exportación).
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* TÍTULO DE ESPACIOS */}
+        {/* TÍTULO DE ESPACIOS - AHORA PRIMERO */}
         <div className="text-center mb-10">
           <h2 className="text-3xl font-bold text-gray-900 mb-3">
             Elige el espacio ideal para tu marca
@@ -332,7 +266,7 @@ const AdvertisePage = () => {
           </p>
         </div>
 
-        {/* CARDS DE ESPACIOS */}
+        {/* CARDS DE ESPACIOS - AHORA PRIMERO */}
         {loading ? (
           <div className="flex justify-center p-12">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
@@ -471,6 +405,73 @@ const AdvertisePage = () => {
           </div>
         )}
 
+        {/* STATS - MOVIDO ABAJO */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 my-16 text-center">
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+            <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Globe className="w-8 h-8 text-blue-600" />
+            </div>
+            <h3 className="text-4xl font-bold text-gray-900 mb-1">25+</h3>
+            <p className="text-gray-500 font-medium text-sm">
+              Países alcanzados
+            </p>
+          </div>
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Monitor className="w-8 h-8 text-green-600" />
+            </div>
+            <h3 className="text-4xl font-bold text-gray-900 mb-1">1M+</h3>
+            <p className="text-gray-500 font-medium text-sm">
+              Impresiones mensuales proyectadas
+            </p>
+          </div>
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+            <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <TrendingUp className="w-8 h-8 text-purple-600" />
+            </div>
+            <h3 className="text-4xl font-bold text-gray-900 mb-1">3X</h3>
+            <p className="text-gray-500 font-medium text-sm">
+              Retorno promedio estimado
+            </p>
+          </div>
+        </div>
+
+        {/* AVISOS IMPORTANTES - MOVIDO ABAJO */}
+        <div className="max-w-4xl mx-auto mb-10 grid md:grid-cols-3 gap-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⏳</span>
+              <div>
+                <h4 className="font-semibold text-amber-800 text-sm">Revisión: 24-48 hrs</h4>
+                <p className="text-xs text-amber-700 mt-1">Tu campaña será revisada antes de publicarse para asegurar que cumple con nuestras políticas.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">🧾</span>
+              <div>
+                <h4 className="font-semibold text-blue-800 text-sm">Facturación automática</h4>
+                <p className="text-xs text-blue-700 mt-1">Recibirás tu factura por email cuando tu campaña entre en pauta activa.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">💰</span>
+              <div>
+                <h4 className="font-semibold text-amber-800 text-sm">Precios + IVA (México)</h4>
+                <p className="text-xs text-amber-700 mt-1">
+                  <strong>Clientes en México:</strong> Todos los precios están sujetos a +16% IVA adicional.
+                  <strong>Clientes internacionales:</strong> Tasa 0% IVA (exportación).
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* MINI MANUAL OPERATIVO / NOTAS */}
         <div className="mt-16 grid gap-8 md:grid-cols-2">
           {/* Flujo operativo */}
@@ -489,12 +490,12 @@ const AdvertisePage = () => {
               </li>
               <li>
                 Tu campaña entra en estado{" "}
-                <span className="font-semibold">“Pendiente de revisión”</span>{" "}
+                <span className="font-semibold">"Pendiente de revisión"</span>{" "}
                 para validar que cumpla las políticas de contenido.
               </li>
               <li>
                 Una vez aprobada por el equipo de Geobooker, pasa a estado{" "}
-                <span className="font-semibold">“Activa”</span> y comienza a
+                <span className="font-semibold">"Activa"</span> y comienza a
                 mostrarse a los usuarios según la segmentación definida.
               </li>
               <li>

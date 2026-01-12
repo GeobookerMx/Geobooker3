@@ -7,7 +7,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Clock, CheckCircle, XCircle, Store, FileText, ArrowLeft, RefreshCw } from 'lucide-react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabase';
 
 const OxxoPendingPage = () => {
     const [searchParams] = useSearchParams();

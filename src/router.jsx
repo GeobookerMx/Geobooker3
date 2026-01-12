@@ -29,6 +29,10 @@ import ScanInvitePage from "./pages/admin/ScanInvitePage.jsx";
 import AdsQATool from "./pages/admin/AdsQATool.jsx";
 import ReportsModeration from "./pages/admin/ReportsModeration.jsx";
 import AdReportsModeration from "./pages/admin/AdReportsModeration.jsx";
+import ReferralManagement from "./pages/admin/ReferralManagement.jsx";
+import BulkImport from "./pages/admin/BulkImport.jsx";
+import EmailCampaigns from "./pages/admin/EmailCampaigns.jsx";
+import UnsubscribePage from "./pages/UnsubscribePage.jsx";
 
 // User Pages
 import HomePage from "./pages/HomePage.jsx";
@@ -88,6 +92,7 @@ export default function AppRouter() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/unsubscribe" element={<UnsubscribePage />} />
         <Route path="/terms" element={<TermsOfServicePage />} />
         <Route path="/faq" element={<FAQPage />} />
 
@@ -208,6 +213,9 @@ export default function AppRouter() {
         <Route path="scan-invite" element={<ScanInvitePage />} />
 
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="referrals" element={<ReferralManagement />} />
+        <Route path="import" element={<BulkImport />} />
+        <Route path="campaigns" element={<EmailCampaigns />} />
       </Route>
     </Routes>
   );

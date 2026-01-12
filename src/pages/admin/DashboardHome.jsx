@@ -11,9 +11,18 @@ import {
   CheckCircle,
   Clock,
   ArrowUpRight,
-  Activity
+  Activity,
+  Search,
+  Smartphone,
+  Monitor,
+  Globe
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import {
+  getAnalyticsSummary,
+  getTopSearches,
+  getDeviceBreakdown
+} from '../../services/analyticsService';
 
 export default function DashboardHome() {
   const [stats, setStats] = useState({
@@ -24,17 +33,43 @@ export default function DashboardHome() {
     loading: true
   });
 
+  const [analyticsStats, setAnalyticsStats] = useState({
+    pageViews: 0,
+    uniqueVisitors: 0,
+    searches: 0,
+    todayPageViews: 0,
+    todaySearches: 0
+  });
+
+  const [topSearches, setTopSearches] = useState([]);
+  const [deviceBreakdown, setDeviceBreakdown] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
 
   useEffect(() => {
     loadDashboardData();
+    loadAnalyticsData();
   }, []);
+
+  const loadAnalyticsData = async () => {
+    try {
+      const [summary, searches, devices] = await Promise.all([
+        getAnalyticsSummary(7),
+        getTopSearches(5, 7),
+        getDeviceBreakdown(30)
+      ]);
+      setAnalyticsStats(summary);
+      setTopSearches(searches);
+      setDeviceBreakdown(devices);
+    } catch (error) {
+      console.error('Error loading analytics:', error);
+    }
+  };
 
   const loadDashboardData = async () => {
     try {
       // Total de usuarios
       const { count: usersCount } = await supabase
-        .from('profiles')
+        .from('user_profiles')
         .select('*', { count: 'exact', head: true });
 
       // Total de negocios
@@ -144,6 +179,95 @@ export default function DashboardHome() {
           color="orange"
           link="/admin/revenue"
         />
+      </div>
+
+      {/* Analytics KPIs - Tráfico en tiempo real */}
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <Eye className="w-5 h-5" />
+          📊 Analytics en Tiempo Real (últimos 7 días)
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="bg-white/10 rounded-lg p-4">
+            <p className="text-indigo-100 text-sm">Visitas Totales</p>
+            <p className="text-2xl font-bold mt-1">{analyticsStats.pageViews.toLocaleString()}</p>
+          </div>
+          <div className="bg-white/10 rounded-lg p-4">
+            <p className="text-indigo-100 text-sm">Visitantes Únicos</p>
+            <p className="text-2xl font-bold mt-1">{analyticsStats.uniqueVisitors.toLocaleString()}</p>
+          </div>
+          <div className="bg-white/10 rounded-lg p-4">
+            <p className="text-indigo-100 text-sm">Búsquedas</p>
+            <p className="text-2xl font-bold mt-1">{analyticsStats.searches.toLocaleString()}</p>
+          </div>
+          <div className="bg-white/10 rounded-lg p-4">
+            <p className="text-indigo-100 text-sm">Visitas Hoy</p>
+            <p className="text-2xl font-bold mt-1">{analyticsStats.todayPageViews.toLocaleString()}</p>
+          </div>
+          <div className="bg-white/10 rounded-lg p-4">
+            <p className="text-indigo-100 text-sm">Búsquedas Hoy</p>
+            <p className="text-2xl font-bold mt-1">{analyticsStats.todaySearches.toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Dispositivos y Búsquedas Populares */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Dispositivos */}
+        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Smartphone className="w-5 h-5 text-purple-600" />
+            Dispositivos
+          </h3>
+          <div className="space-y-3">
+            {deviceBreakdown.length === 0 ? (
+              <p className="text-gray-500 text-sm">Sin datos aún</p>
+            ) : (
+              deviceBreakdown.map(item => (
+                <div key={item.device} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {item.device === 'mobile' && <Smartphone className="w-4 h-4 text-blue-500" />}
+                    {item.device === 'desktop' && <Monitor className="w-4 h-4 text-green-500" />}
+                    {item.device === 'tablet' && <Smartphone className="w-4 h-4 text-orange-500" />}
+                    <span className="capitalize text-gray-700">{item.device}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-24 bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-blue-600 h-2 rounded-full"
+                        style={{ width: `${item.percentage}%` }}
+                      />
+                    </div>
+                    <span className="text-sm text-gray-600 w-12 text-right">{item.percentage}%</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Búsquedas Populares */}
+        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Search className="w-5 h-5 text-blue-600" />
+            Búsquedas Populares
+          </h3>
+          <div className="space-y-2">
+            {topSearches.length === 0 ? (
+              <p className="text-gray-500 text-sm">Sin búsquedas aún</p>
+            ) : (
+              topSearches.map((item, idx) => (
+                <div key={item.query} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-400 text-sm">#{idx + 1}</span>
+                    <span className="text-gray-800 font-medium">{item.query}</span>
+                  </div>
+                  <span className="text-sm text-blue-600 font-semibold">{item.count} veces</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Main Content Grid */}

@@ -35,6 +35,10 @@ export default function PostsManagement() {
     const [summary, setSummary] = useState('');
     const [category, setCategory] = useState('tips');
     const [isPublished, setIsPublished] = useState(true);
+    const [images, setImages] = useState([]);
+    const [links, setLinks] = useState([]);
+    const [newImageUrl, setNewImageUrl] = useState('');
+    const [newLink, setNewLink] = useState({ label: '', url: '' });
 
     useEffect(() => {
         loadPosts();
@@ -63,6 +67,8 @@ export default function PostsManagement() {
         setSummary('');
         setCategory('tips');
         setIsPublished(true);
+        setImages([]);
+        setLinks([]);
         setEditingPost(null);
     };
 
@@ -74,6 +80,8 @@ export default function PostsManagement() {
             setSummary(post.summary || '');
             setCategory(post.category || 'tips');
             setIsPublished(post.is_published);
+            setImages(post.images || []);
+            setLinks(post.external_links || []);
         } else {
             resetForm();
         }
@@ -100,7 +108,9 @@ export default function PostsManagement() {
                 category,
                 is_published: isPublished,
                 author_name: 'Equipo Geobooker',
-                published_at: isPublished ? new Date().toISOString() : null
+                published_at: isPublished ? new Date().toISOString() : null,
+                images,
+                external_links: links
             };
 
             if (editingPost) {
@@ -354,6 +364,98 @@ Usa > para citas"
                                 />
                                 <span className="text-gray-700">Publicar inmediatamente</span>
                             </label>
+
+                            {/* Images Management */}
+                            <div className="border-t pt-4">
+                                <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                    🖼️ Imágenes adicionales
+                                </h3>
+                                <div className="flex gap-2 mb-3">
+                                    <input
+                                        type="url"
+                                        value={newImageUrl}
+                                        onChange={(e) => setNewImageUrl(e.target.value)}
+                                        placeholder="URL de la imagen (JPG, PNG, WebP)"
+                                        className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            if (newImageUrl.trim()) {
+                                                setImages([...images, newImageUrl.trim()]);
+                                                setNewImageUrl('');
+                                            }
+                                        }}
+                                        className="px-4 py-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 font-bold"
+                                    >
+                                        Añadir
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {images.map((img, idx) => (
+                                        <div key={idx} className="relative group rounded-lg overflow-hidden h-24 border">
+                                            <img src={img} alt="Post" className="w-full h-full object-cover" />
+                                            <button
+                                                onClick={() => setImages(images.filter((_, i) => i !== idx))}
+                                                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Links Management */}
+                            <div className="border-t pt-4">
+                                <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                    🔗 Enlaces externos
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+                                    <input
+                                        type="text"
+                                        value={newLink.label}
+                                        onChange={(e) => setNewLink({ ...newLink, label: e.target.value })}
+                                        placeholder="Etiqueta (ej: Ver video)"
+                                        className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                    />
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="url"
+                                            value={newLink.url}
+                                            onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
+                                            placeholder="URL (https://...)"
+                                            className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                if (newLink.label.trim() && newLink.url.trim()) {
+                                                    setLinks([...links, { ...newLink }]);
+                                                    setNewLink({ label: '', url: '' });
+                                                }
+                                            }}
+                                            className="px-4 py-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 font-bold"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    {links.map((lnk, idx) => (
+                                        <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border">
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-sm text-gray-800">{lnk.label}</span>
+                                                <span className="text-xs text-gray-500 truncate max-w-[200px]">{lnk.url}</span>
+                                            </div>
+                                            <button
+                                                onClick={() => setLinks(links.filter((_, i) => i !== idx))}
+                                                className="text-red-500 hover:text-red-700 p-1"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
 
                         {/* Modal Footer */}

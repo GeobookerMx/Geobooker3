@@ -95,10 +95,10 @@ export async function loadEnterpriseCampaigns(context = {}) {
 
         console.log(`🔍 [Enterprise Ads] Loading campaigns for: country=${country}, city=${city}, date=${today}`);
 
-        // Query active Enterprise campaigns
+        // Query active Enterprise campaigns with their creatives
         const { data, error } = await supabase
             .from('ad_campaigns')
-            .select('*')
+            .select('*, ad_creatives(*)')
             .eq('status', 'active')
             .lte('start_date', today)
             .or(`end_date.gte.${today},end_date.is.null`);
@@ -109,6 +109,15 @@ export async function loadEnterpriseCampaigns(context = {}) {
         }
 
         console.log(`📦 [Enterprise Ads] Found ${data?.length || 0} active campaigns in DB`);
+        // DEBUG: Show first campaign raw data to verify creative_url column
+        if (data?.[0]) {
+            console.log('🔍 [DEBUG] First campaign raw data:', {
+                advertiser_name: data[0].advertiser_name,
+                creative_url: data[0].creative_url,
+                headline: data[0].headline,
+                columns: Object.keys(data[0])
+            });
+        }
 
         // Filter by user location
         const filtered = (data || []).filter(campaign => {
@@ -161,22 +170,28 @@ export async function loadEnterpriseCampaigns(context = {}) {
         console.log(`📊 [Enterprise Ads] Final order: ${sorted.map(c => `${c.advertiser_name}${c.is_demo ? ' (DEMO)' : ''}`).join(', ')}`);
 
         // Transform to ad component format
-        return sorted.map(campaign => ({
-            id: campaign.id,
-            advertiser_name: campaign.advertiser_name,
-            ad_level: campaign.ad_level,
-            ad_creatives: [{
+        // Priorizar ad_creatives del join (anunciantes reales) sobre campos directos (campañas demo)
+        return sorted.map(campaign => {
+            const creative = campaign.ad_creatives?.[0];
+
+            return {
                 id: campaign.id,
-                title: campaign.headline || campaign.advertiser_name,
-                description: campaign.description,
-                image_url: campaign.creative_url || campaign.image_url,
-                is_video: campaign.creative_url?.match(/\.(mp4|webm|mov)$/i),
-                cta_url: campaign.cta_url,
-                cta_text: campaign.cta_text || 'Learn More'
-            }],
-            target_countries: campaign.target_countries,
-            target_cities: campaign.target_cities
-        }));
+                advertiser_name: campaign.advertiser_name,
+                ad_level: campaign.ad_level,
+                ad_creatives: [{
+                    id: creative?.id || campaign.id,
+                    title: creative?.title || campaign.headline || campaign.advertiser_name,
+                    description: creative?.description || campaign.description,
+                    // Priorizar: creative.image_url (real) > campaign.creative_url (demo)
+                    image_url: creative?.image_url || campaign.creative_url || campaign.image_url,
+                    is_video: (creative?.image_url || campaign.creative_url)?.match(/\.(mp4|webm|mov)$/i),
+                    cta_url: creative?.cta_url || campaign.cta_url,
+                    cta_text: creative?.cta_text || campaign.cta_text || 'Learn More'
+                }],
+                target_countries: campaign.target_countries,
+                target_cities: campaign.target_cities
+            };
+        });
 
     } catch (error) {
         console.error('Error loading Enterprise campaigns:', error);

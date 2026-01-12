@@ -3,7 +3,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { createBusiness } from "../services/businessService";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
+import { GoogleMap, LoadScript, MarkerF } from "@react-google-maps/api";
 import {
   Utensils, Coffee, ShoppingBag, Briefcase, Wrench, HeartPulse, Film, GraduationCap,
   MapPin, Clock, Dog, CreditCard, Truck, Wifi, Accessibility, Star,
@@ -409,13 +409,14 @@ export default function BusinessFormPage() {
                     onClick={onMapClick}
                     options={{ streetViewControl: false, mapTypeControl: false }}
                   >
-                    {form.latitude && form.longitude && (
-                      <Marker
-                        position={{ lat: form.latitude, lng: form.longitude }}
-                        draggable={true}
-                        onDragEnd={onMarkerDragEnd}
-                      />
-                    )}
+                    <MarkerF
+                      position={form.latitude && form.longitude ? {
+                        lat: parseFloat(form.latitude),
+                        lng: parseFloat(form.longitude)
+                      } : null}
+                      draggable={true}
+                      onDragEnd={onMarkerDragEnd}
+                    />
                   </GoogleMap>
                 </LoadScript>
               </div>

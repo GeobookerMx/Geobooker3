@@ -9,12 +9,18 @@ export default function RecommendedSection({ context }) {
     if (!hasCampaigns || !currentCampaign) return null;
 
     const creative = currentCampaign.ad_creatives?.[0];
-    if (!creative) return null;
+
+    // Fallback para campañas demo que no tienen ad_creatives
+    const imageUrl = creative?.image_url || currentCampaign.creative_url || null;
+    const title = creative?.title || currentCampaign.headline || currentCampaign.advertiser_name;
+    const description = creative?.description || currentCampaign.description || '';
+    const ctaText = creative?.cta_text || currentCampaign.cta_text || 'Ver detalles';
+    const targetUrl = creative?.target_url || currentCampaign.cta_url || '#';
 
     const handleClick = () => {
         console.log('Recommended section clicked:', currentCampaign.id);
-        if (creative.target_url) {
-            window.open(creative.target_url, '_blank');
+        if (targetUrl && targetUrl !== '#') {
+            window.open(targetUrl, '_blank');
         }
     };
 
@@ -31,22 +37,25 @@ export default function RecommendedSection({ context }) {
             {/* Card clickeable */}
             <div className="p-6 cursor-pointer" onClick={handleClick}>
                 {/* Imagen */}
-                {creative.image_url && (
+                {imageUrl && (
                     <img
-                        src={creative.image_url}
-                        alt={creative.title}
+                        src={imageUrl}
+                        alt={title}
                         className="w-full h-48 object-cover rounded-lg mb-4"
+                        onError={(e) => { e.target.style.display = 'none'; }}
                     />
                 )}
 
                 {/* Contenido */}
                 <h4 className="text-xl font-bold text-gray-900 mb-2 hover:text-orange-600 transition">
-                    {creative.title}
+                    {title}
                 </h4>
 
-                <p className="text-gray-700 mb-4 line-clamp-3">
-                    {creative.description}
-                </p>
+                {description && (
+                    <p className="text-gray-700 mb-4 line-clamp-3">
+                        {description}
+                    </p>
+                )}
 
                 {/* Ubicación */}
                 {currentCampaign.target_location && (
@@ -58,7 +67,7 @@ export default function RecommendedSection({ context }) {
 
                 {/* CTA */}
                 <button className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold py-3 px-4 rounded-lg hover:from-yellow-600 hover:to-orange-600 transition flex items-center justify-center gap-2">
-                    {creative.cta_text || 'Ver detalles'}
+                    {ctaText}
                     <ExternalLink className="w-4 h-4" />
                 </button>
 
@@ -72,3 +81,4 @@ export default function RecommendedSection({ context }) {
         </div>
     );
 }
+

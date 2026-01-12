@@ -10,6 +10,7 @@ import { useEffect } from 'react';
  * @param {string} props.url - URL canónica de la página
  * @param {string} props.type - Tipo de contenido (website, article, business.business)
  * @param {Object} props.business - Datos del negocio para Schema.org
+ * @param {Array} props.breadcrumbs - Arreglo de {name, item} para Breadcrumbs
  */
 const SEO = ({
     title = 'Geobooker - Directorio de Negocios',
@@ -17,11 +18,17 @@ const SEO = ({
     image = '/images/geobooker-og.png',
     url,
     type = 'website',
-    business = null
+    business = null,
+    breadcrumbs = []
 }) => {
     useEffect(() => {
-        // Actualizar título
+        const canonicalUrl = url || window.location.href;
+        const ogImage = image.startsWith('http') ? image : `${window.location.origin}${image}`;
+        const currentLang = localStorage.getItem('language') || 'es';
+
+        // Actualizar título y atributo lang en <html>
         document.title = title.includes('Geobooker') ? title : `${title} | Geobooker`;
+        document.documentElement.lang = currentLang;
 
         // Actualizar meta tags
         updateMetaTag('description', description);
@@ -29,37 +36,54 @@ const SEO = ({
         // Open Graph
         updateMetaTag('og:title', title, 'property');
         updateMetaTag('og:description', description, 'property');
-        updateMetaTag('og:image', image.startsWith('http') ? image : `${window.location.origin}${image}`, 'property');
-        updateMetaTag('og:url', url || window.location.href, 'property');
+        updateMetaTag('og:image', ogImage, 'property');
+        updateMetaTag('og:url', canonicalUrl, 'property');
         updateMetaTag('og:type', type, 'property');
         updateMetaTag('og:site_name', 'Geobooker', 'property');
-        updateMetaTag('og:locale', 'es_MX', 'property');
+
+        // Locale dinámico
+        const locales = { es: 'es_MX', en: 'en_US', zh: 'zh_CN', ja: 'ja_JP', ko: 'ko_KR' };
+        updateMetaTag('og:locale', locales[currentLang] || 'es_MX', 'property');
 
         // Twitter Card
         updateMetaTag('twitter:card', 'summary_large_image');
         updateMetaTag('twitter:title', title);
         updateMetaTag('twitter:description', description);
-        updateMetaTag('twitter:image', image.startsWith('http') ? image : `${window.location.origin}${image}`);
+        updateMetaTag('twitter:image', ogImage);
 
-        // Canonical URL
-        updateLinkTag('canonical', url || window.location.href);
+        // Canonical URL y Hreflang
+        updateLinkTag('canonical', canonicalUrl);
+
+        // Hreflang - Indicar versiones a buscadores
+        const supportedLangs = ['es', 'en', 'zh', 'ja', 'ko'];
+        const baseUrl = window.location.origin + window.location.pathname;
+
+        supportedLangs.forEach(lang => {
+            updateHreflangTag(lang, baseUrl);
+        });
+        updateHreflangTag('x-default', baseUrl);
 
         // Schema.org para negocios locales
         if (business) {
             addBusinessSchema(business);
         }
 
+        // Schema.org para Breadcrumbs
+        if (breadcrumbs && breadcrumbs.length > 0) {
+            addBreadcrumbSchema(breadcrumbs);
+        }
+
         // Cleanup
         return () => {
-            // Remove business schema on unmount
-            const existingSchema = document.querySelector('script[data-schema="business"]');
-            if (existingSchema) {
-                existingSchema.remove();
-            }
+            const schemas = ['business', 'breadcrumbs'];
+            schemas.forEach(s => {
+                const existing = document.querySelector(`script[data-schema="${s}"]`);
+                if (existing) existing.remove();
+            });
         };
-    }, [title, description, image, url, type, business]);
+    }, [title, description, image, url, type, business, breadcrumbs]);
 
-    return null; // No renderiza nada visual
+    return null;
 };
 
 // Helper para actualizar meta tags
@@ -79,6 +103,18 @@ const updateLinkTag = (rel, href) => {
     if (!link) {
         link = document.createElement('link');
         link.setAttribute('rel', rel);
+        document.head.appendChild(link);
+    }
+    link.setAttribute('href', href);
+};
+
+// Helper para hreflang
+const updateHreflangTag = (lang, href) => {
+    let link = document.querySelector(`link[hreflang="${lang}"]`);
+    if (!link) {
+        link = document.createElement('link');
+        link.setAttribute('rel', 'alternate');
+        link.setAttribute('hreflang', lang);
         document.head.appendChild(link);
     }
     link.setAttribute('href', href);
@@ -132,6 +168,31 @@ const addBusinessSchema = (business) => {
     const script = document.createElement('script');
     script.type = 'application/ld+json';
     script.setAttribute('data-schema', 'business');
+    script.textContent = JSON.stringify(schema);
+    document.head.appendChild(script);
+};
+
+// Helper para agregar Breadcrumb Schema.org
+const addBreadcrumbSchema = (breadcrumbs) => {
+    const existingSchema = document.querySelector('script[data-schema="breadcrumbs"]');
+    if (existingSchema) {
+        existingSchema.remove();
+    }
+
+    const schema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": breadcrumbs.map((crumb, index) => ({
+            "@type": "ListItem",
+            "position": index + 1,
+            "name": crumb.name,
+            "item": crumb.item.startsWith('http') ? crumb.item : `${window.location.origin}${crumb.item}`
+        }))
+    };
+
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.setAttribute('data-schema', 'breadcrumbs');
     script.textContent = JSON.stringify(schema);
     document.head.appendChild(script);
 };

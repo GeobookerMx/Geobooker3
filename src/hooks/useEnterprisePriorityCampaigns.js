@@ -34,10 +34,13 @@ export default function useEnterprisePriorityCampaigns(localSpaceName, options =
                 const city = localStorage.getItem('userCity') || 'unknown';
                 const campaigns = await loadEnterpriseCampaigns({ country, city });
 
-                // Transform campaigns to match component expected structure
-                const transformedCampaigns = campaigns.map(campaign => {
-                    // Get YouTube thumbnail if it's a YouTube URL
-                    let imageUrl = campaign.creative_url || campaign.image_url;
+                // loadEnterpriseCampaigns ya transforma los datos y crea ad_creatives
+                // Solo necesitamos procesar URLs de YouTube para thumbnails
+                const processedCampaigns = campaigns.map(campaign => {
+                    const creative = campaign.ad_creatives?.[0];
+                    if (!creative) return campaign;
+
+                    let imageUrl = creative.image_url;
                     const isYouTube = imageUrl?.includes('youtube.com') || imageUrl?.includes('youtu.be');
 
                     if (isYouTube) {
@@ -48,22 +51,21 @@ export default function useEnterprisePriorityCampaigns(localSpaceName, options =
                         }
                     }
 
+                    // DEBUG: Log campaign image info
+                    console.log(`🖼️ [Campaign] ${campaign.advertiser_name}: image_url=${imageUrl?.substring(0, 50)}`);
+
                     return {
                         ...campaign,
                         ad_creatives: [{
-                            id: campaign.id,
-                            title: campaign.advertiser_name || campaign.name,
-                            description: campaign.description || '',
+                            ...creative,
                             image_url: imageUrl,
-                            cta_url: campaign.cta_url || campaign.creative_url || '#',
-                            cta_text: campaign.cta_text || 'Learn More',
                             is_youtube: isYouTube,
-                            youtube_url: isYouTube ? campaign.creative_url : null
+                            youtube_url: isYouTube ? creative.image_url : null
                         }]
                     };
                 });
 
-                setEnterpriseCampaigns(transformedCampaigns);
+                setEnterpriseCampaigns(processedCampaigns);
             } catch (error) {
                 console.error('Error loading Enterprise campaigns:', error);
                 setEnterpriseCampaigns([]);

@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS email_templates (
     name TEXT NOT NULL,
     subject TEXT NOT NULL,
     body_html TEXT NOT NULL,
+    category TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

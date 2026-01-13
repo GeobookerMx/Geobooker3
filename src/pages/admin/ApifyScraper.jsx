@@ -29,23 +29,69 @@ const ApifyScraper = () => {
     const [selectedLeads, setSelectedLeads] = useState(new Set());
     const [importing, setImporting] = useState(false);
 
-    // Pre-defined locations for quick access
-    const popularLocations = [
-        { label: '🇲🇽 Ciudad de México', value: 'Ciudad de México, México' },
-        { label: '🇲🇽 Guadalajara', value: 'Guadalajara, Jalisco, México' },
-        { label: '🇲🇽 Monterrey', value: 'Monterrey, Nuevo León, México' },
-        { label: '🇺🇸 Miami, FL', value: 'Miami, Florida, USA' },
-        { label: '🇺🇸 Los Angeles', value: 'Los Angeles, California, USA' },
-        { label: '🇺🇸 Houston, TX', value: 'Houston, Texas, USA' },
-        { label: '🇪🇸 Madrid', value: 'Madrid, España' },
-        { label: '🇪🇸 Barcelona', value: 'Barcelona, España' },
-        { label: '🇬🇧 London', value: 'London, UK' },
-        { label: '🇨🇦 Toronto', value: 'Toronto, Canada' },
-        { label: '🇦🇷 Buenos Aires', value: 'Buenos Aires, Argentina' },
-        { label: '🇨🇴 Bogotá', value: 'Bogotá, Colombia' },
+    // Categorías y subcategorías de negocios
+    const businessCategories = [
+        { category: '🍽️ Gastronomía', items: ['Restaurantes', 'Cafeterías', 'Bares', 'Food Trucks', 'Pastelerías', 'Pizzerías', 'Taquerías', 'Comida Rápida'] },
+        { category: '💆 Belleza y Salud', items: ['Salones de Belleza', 'Spas', 'Barberías', 'Clínicas Estéticas', 'Gimnasios', 'Yoga Studios', 'Dentistas', 'Farmacias'] },
+        { category: '🏥 Servicios Médicos', items: ['Hospitales', 'Clínicas', 'Laboratorios', 'Consultorios Médicos', 'Ópticas', 'Veterinarias', 'Fisioterapia'] },
+        { category: '🏪 Comercio', items: ['Tiendas de Ropa', 'Zapaterías', 'Ferreterías', 'Papelerías', 'Joyerías', 'Florerías', 'Supermercados', 'Tiendas de Electrónica'] },
+        { category: '🚗 Automotriz', items: ['Talleres Mecánicos', 'Refaccionarias', 'Lavados de Autos', 'Llanterías', 'Agencias de Autos', 'Grúas'] },
+        { category: '💼 Servicios Profesionales', items: ['Abogados', 'Contadores', 'Arquitectos', 'Notarías', 'Agencias de Seguros', 'Consultorías', 'Agencias de Marketing'] },
+        { category: '🏨 Hospedaje', items: ['Hoteles', 'Hostales', 'Airbnb', 'Moteles', 'Resorts', 'Cabañas'] },
+        { category: '🎓 Educación', items: ['Escuelas', 'Universidades', 'Academias de Idiomas', 'Tutorías', 'Guarderías', 'Coworkings'] },
+        { category: '🎉 Entretenimiento', items: ['Cines', 'Teatros', 'Clubs Nocturnos', 'Karaokes', 'Salones de Fiestas', 'Parques de Diversiones'] },
+        { category: '🏠 Hogar', items: ['Plomeros', 'Electricistas', 'Cerrajeros', 'Limpieza', 'Jardinería', 'Mudanzas', 'Pintores'] }
     ];
 
-    // Search businesses using Apify
+    // Regiones globales organizadas por continente
+    const globalRegions = [
+        {
+            continent: '🇲🇽 México', cities: [
+                'Ciudad de México, México', 'Guadalajara, Jalisco, México', 'Monterrey, Nuevo León, México',
+                'Cancún, Quintana Roo, México', 'Puebla, México', 'Tijuana, Baja California, México',
+                'León, Guanajuato, México', 'Mérida, Yucatán, México', 'Querétaro, México',
+                'San Luis Potosí, México', 'Aguascalientes, México', 'Hermosillo, Sonora, México'
+            ]
+        },
+        {
+            continent: '🇺🇸 Estados Unidos', cities: [
+                'Miami, Florida, USA', 'Los Angeles, California, USA', 'Houston, Texas, USA',
+                'New York, NY, USA', 'Chicago, Illinois, USA', 'Dallas, Texas, USA',
+                'Phoenix, Arizona, USA', 'San Antonio, Texas, USA', 'San Diego, California, USA',
+                'Las Vegas, Nevada, USA', 'Denver, Colorado, USA', 'Austin, Texas, USA'
+            ]
+        },
+        {
+            continent: '🇪🇺 Europa', cities: [
+                'Madrid, España', 'Barcelona, España', 'London, UK', 'Paris, France',
+                'Berlin, Germany', 'Rome, Italy', 'Amsterdam, Netherlands', 'Lisbon, Portugal',
+                'Vienna, Austria', 'Prague, Czech Republic', 'Dublin, Ireland'
+            ]
+        },
+        {
+            continent: '🌎 Latinoamérica', cities: [
+                'Buenos Aires, Argentina', 'Bogotá, Colombia', 'São Paulo, Brazil',
+                'Lima, Peru', 'Santiago, Chile', 'Medellín, Colombia',
+                'Cartagena, Colombia', 'Montevideo, Uruguay', 'Quito, Ecuador',
+                'Panama City, Panama', 'San José, Costa Rica', 'Guatemala City, Guatemala'
+            ]
+        },
+        {
+            continent: '🌏 Asia y Oceanía', cities: [
+                'Tokyo, Japan', 'Singapore', 'Sydney, Australia', 'Dubai, UAE',
+                'Hong Kong', 'Bangkok, Thailand', 'Seoul, South Korea',
+                'Melbourne, Australia', 'Auckland, New Zealand', 'Mumbai, India'
+            ]
+        },
+        {
+            continent: '🇨🇦 Canadá', cities: [
+                'Toronto, Canada', 'Vancouver, Canada', 'Montreal, Canada',
+                'Calgary, Canada', 'Ottawa, Canada', 'Edmonton, Canada'
+            ]
+        }
+    ];
+
+    // Search businesses using Apify (async start + poll pattern)
     const handleSearch = async () => {
         if (!searchQuery.trim() || !location.trim()) {
             toast.error('Ingresa qué buscar y dónde');
@@ -58,32 +104,75 @@ const ApifyScraper = () => {
         setSelectedLeads(new Set());
 
         try {
-            const response = await fetch('/.netlify/functions/apify-scraper', {
+            // PASO 1: Iniciar el job
+            const startResponse = await fetch('/.netlify/functions/apify-scraper', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    action: 'start',
                     searchQuery: searchQuery.trim(),
                     location: location.trim(),
                     maxResults
                 })
             });
 
-            const data = await response.json();
+            const startData = await startResponse.json();
 
-            if (!response.ok) {
-                throw new Error(data.error || 'Error en el scraping');
+            if (!startResponse.ok || !startData.runId) {
+                throw new Error(startData.error || 'Error iniciando scraper');
             }
 
-            if (data.success) {
-                setResults(data.businesses || []);
-                toast.success(`✅ ${data.count} negocios encontrados`);
-            } else {
-                setError(data.message || 'No se encontraron resultados');
-            }
+            toast.success('🚀 Búsqueda iniciada, espera...');
+
+            // PASO 2: Poll cada 5 segundos hasta que termine
+            const runId = startData.runId;
+            let attempts = 0;
+            const maxAttempts = 40; // 40 * 5s = 200 segundos max
+
+            const pollForResults = async () => {
+                while (attempts < maxAttempts) {
+                    attempts++;
+
+                    // Esperar 5 segundos
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+
+                    const pollResponse = await fetch('/.netlify/functions/apify-scraper', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'poll',
+                            runId
+                        })
+                    });
+
+                    const pollData = await pollResponse.json();
+
+                    if (pollData.status === 'completed') {
+                        setResults(pollData.businesses || []);
+                        toast.success(`✅ ${pollData.count} negocios encontrados`);
+                        return;
+                    }
+
+                    if (pollData.status === 'failed') {
+                        throw new Error('El scraping falló');
+                    }
+
+                    // Si sigue running, continuar
+                    if (attempts % 4 === 0) {
+                        toast.loading(`Buscando... (${attempts * 5}s)`, { id: 'search-progress' });
+                    }
+                }
+
+                throw new Error('Timeout: la búsqueda tardó demasiado');
+            };
+
+            await pollForResults();
+            toast.dismiss('search-progress');
+
         } catch (err) {
-            console.error('Search error:', err);
             setError(err.message);
             toast.error(err.message);
+            toast.dismiss('search-progress');
         } finally {
             setLoading(false);
         }
@@ -149,7 +238,6 @@ const ApifyScraper = () => {
                 _imported: importedIndexes.has(i) ? true : r._imported
             })));
         } catch (err) {
-            console.error('Import error:', err);
             toast.error('Error importando: ' + err.message);
         } finally {
             setImporting(false);
@@ -250,20 +338,63 @@ const ApifyScraper = () => {
                     </div>
                 </div>
 
-                {/* Quick Location Buttons */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                    {popularLocations.slice(0, 6).map((loc, i) => (
-                        <button
-                            key={i}
-                            onClick={() => setLocation(loc.value)}
-                            className={`px-3 py-1.5 rounded-full text-sm transition ${location === loc.value
-                                    ? 'bg-green-600 text-white'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
-                        >
-                            {loc.label}
-                        </button>
-                    ))}
+                {/* Category Suggestions */}
+                <div className="mb-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">📂 Categorías sugeridas:</p>
+                    <div className="flex flex-wrap gap-2">
+                        {businessCategories.map((cat, i) => (
+                            <div key={i} className="relative group">
+                                <button
+                                    className="px-3 py-1.5 rounded-full text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+                                >
+                                    {cat.category}
+                                </button>
+                                {/* Dropdown on hover */}
+                                <div className="absolute left-0 top-full mt-1 bg-white border rounded-lg shadow-lg p-2 z-20 hidden group-hover:block min-w-[180px]">
+                                    {cat.items.map((item, j) => (
+                                        <button
+                                            key={j}
+                                            onClick={() => setSearchQuery(item)}
+                                            className="block w-full text-left px-3 py-1 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 rounded"
+                                        >
+                                            {item}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Region Selector */}
+                <div className="mb-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">🌍 Regiones populares:</p>
+                    <div className="flex flex-wrap gap-2">
+                        {globalRegions.map((region, i) => (
+                            <div key={i} className="relative group">
+                                <button
+                                    className="px-3 py-1.5 rounded-full text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 transition"
+                                >
+                                    {region.continent}
+                                </button>
+                                {/* Dropdown on hover */}
+                                <div className="absolute left-0 top-full mt-1 bg-white border rounded-lg shadow-lg p-2 z-20 hidden group-hover:block min-w-[220px] max-h-[300px] overflow-y-auto">
+                                    {region.cities.map((city, j) => (
+                                        <button
+                                            key={j}
+                                            onClick={() => setLocation(city)}
+                                            className={`block w-full text-left px-3 py-1 text-sm rounded ${location === city
+                                                    ? 'bg-green-100 text-green-700 font-medium'
+                                                    : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
+                                                }`}
+                                        >
+                                            {city}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Search Button */}

@@ -1,148 +1,181 @@
 // netlify/functions/apify-scraper.js
 /**
- * Apify Google Maps Scraper Integration
+ * Apify Scraper - Lightweight version using native fetch
  * 
- * Uses Apify's official client to run Google Maps scrapers
- * This provides more comprehensive data than Google Places API
- * 
- * Required env var: APIFY_API_TOKEN
- * 
- * Apify Actors disponibles:
- * - compass/crawler-google-places (Google Maps Scraper - más popular)
- * - apify/google-maps-scraper (alternativo)
+ * Uses native fetch instead of ApifyClient to reduce cold start time
+ * Pattern: start job -> return runId -> poll for results
  */
 
-import { ApifyClient } from 'apify-client';
-
 export async function handler(event) {
-    if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, body: 'Method Not Allowed' };
+    const headers = {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+    };
+
+    if (event.httpMethod === 'OPTIONS') {
+        return { statusCode: 200, headers, body: '' };
     }
+
+    if (event.httpMethod !== 'POST') {
+        return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) };
+    }
+
+    const APIFY_API_TOKEN = process.env.APIFY_API_TOKEN;
+
+    if (!APIFY_API_TOKEN) {
+        return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({ error: 'APIFY_API_TOKEN no configurado' })
+        };
+    }
+
+    let body;
+    try {
+        body = JSON.parse(event.body || '{}');
+    } catch {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) };
+    }
+
+    const { action = 'start' } = body;
+    const ACTOR_ID = 'compass~crawler-google-places';
+    const BASE_URL = 'https://api.apify.com/v2';
 
     try {
-        const { searchQuery, location, maxResults = 50 } = JSON.parse(event.body);
+        // ========== START: Iniciar el actor ==========
+        if (action === 'start') {
+            const { searchQuery, location, maxResults = 20 } = body;
 
-        const APIFY_API_TOKEN = process.env.APIFY_API_TOKEN;
+            if (!searchQuery || !location) {
+                return { statusCode: 400, headers, body: JSON.stringify({ error: 'searchQuery y location requeridos' }) };
+            }
 
-        if (!APIFY_API_TOKEN) {
+            const input = {
+                searchStringsArray: [`${searchQuery} ${location}`],
+                maxCrawledPlacesPerSearch: Math.min(maxResults, 50),
+                language: 'es',
+                deeperCityScrape: false,
+                maxReviews: 0,
+                maxImages: 0,
+                skipClosedPlaces: true
+            };
+
+            console.log(`🚀 Starting: "${searchQuery}" in ${location}`);
+
+            // Llamada directa a Apify API para iniciar actor
+            const startRes = await fetch(`${BASE_URL}/acts/${ACTOR_ID}/runs?token=${APIFY_API_TOKEN}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(input)
+            });
+
+            if (!startRes.ok) {
+                const err = await startRes.text();
+                console.error('Apify start error:', err);
+                return { statusCode: 500, headers, body: JSON.stringify({ error: 'Error iniciando actor', details: err }) };
+            }
+
+            const runData = await startRes.json();
+
             return {
-                statusCode: 400,
+                statusCode: 200,
+                headers,
                 body: JSON.stringify({
-                    error: 'APIFY_API_TOKEN no configurado',
-                    message: 'Configura la variable de entorno APIFY_API_TOKEN en Netlify',
-                    setup: {
-                        step1: 'Crea cuenta en https://apify.com',
-                        step2: 'Ve a Settings → Integrations → API token',
-                        step3: 'Copia el token y agrégalo en Netlify como APIFY_API_TOKEN'
-                    }
+                    success: true,
+                    status: 'started',
+                    runId: runData.data?.id,
+                    message: 'Job iniciado. Polling...'
                 })
             };
         }
 
-        // Inicializar cliente Apify
-        const client = new ApifyClient({ token: APIFY_API_TOKEN });
+        // ========== POLL: Verificar estado ==========
+        if (action === 'poll') {
+            const { runId } = body;
 
-        // Configuración del actor Google Maps Scraper
-        const input = {
-            searchStringsArray: [searchQuery],
-            locationQuery: location,
-            maxCrawledPlacesPerSearch: maxResults,
-            language: 'es',
-            deeperCityScrape: false,
-            includeWebResults: false,
-            exportPlaceUrls: false,
-            oneReviewPerRow: false,
-            maxReviews: 0,
-            maxImages: 0,
-            scrapeResponseFromOwnerText: false
-        };
+            if (!runId) {
+                return { statusCode: 400, headers, body: JSON.stringify({ error: 'runId requerido' }) };
+            }
 
-        console.log(`🔍 Iniciando Apify scraper: "${searchQuery}" en ${location}`);
+            // Obtener estado del run
+            const statusRes = await fetch(`${BASE_URL}/actor-runs/${runId}?token=${APIFY_API_TOKEN}`);
 
-        // Ejecutar actor y esperar resultados
-        const run = await client.actor('compass/crawler-google-places').call(input);
+            if (!statusRes.ok) {
+                return { statusCode: 404, headers, body: JSON.stringify({ error: 'Run no encontrado' }) };
+            }
 
-        console.log(`✅ Scraping completado. Dataset ID: ${run.defaultDatasetId}`);
+            const runInfo = await statusRes.json();
+            const status = runInfo.data?.status;
 
-        // Obtener resultados del dataset
-        const { items } = await client.dataset(run.defaultDatasetId).listItems();
+            // Si sigue corriendo
+            if (status === 'RUNNING' || status === 'READY') {
+                return {
+                    statusCode: 200,
+                    headers,
+                    body: JSON.stringify({ success: true, status: 'running', runId })
+                };
+            }
 
-        // Transformar resultados al formato de Geobooker
-        const businesses = items.map(place => ({
-            name: place.title,
-            address: place.address,
-            phone: place.phone,
-            website: place.website,
-            email: extractEmail(place.website), // Intentar extraer email
-            category: place.categoryName,
-            rating: place.totalScore,
-            reviewCount: place.reviewsCount,
-            latitude: place.location?.lat,
-            longitude: place.location?.lng,
-            googleMapsUrl: place.url,
-            placeId: place.placeId,
-            openingHours: place.openingHours,
-            priceLevel: place.price,
-            // Datos adicionales que Apify proporciona
-            permanentlyClosed: place.permanentlyClosed,
-            temporarilyClosed: place.temporarilyClosed,
-            claimThisBusiness: place.claimThisBusiness // útil para identificar negocios no reclamados
-        }));
+            // Si falló
+            if (status === 'FAILED' || status === 'ABORTED' || status === 'TIMED-OUT') {
+                return {
+                    statusCode: 200,
+                    headers,
+                    body: JSON.stringify({ success: false, status: 'failed', error: `Status: ${status}` })
+                };
+            }
 
-        // Filtrar negocios cerrados
-        const activeBusinesses = businesses.filter(b => !b.permanentlyClosed);
+            // Si terminó (SUCCEEDED)
+            if (status === 'SUCCEEDED') {
+                const datasetId = runInfo.data?.defaultDatasetId;
 
-        return {
-            statusCode: 200,
-            body: JSON.stringify({
-                success: true,
-                count: activeBusinesses.length,
-                totalScraped: businesses.length,
-                closedFiltered: businesses.length - activeBusinesses.length,
-                businesses: activeBusinesses,
-                runId: run.id,
-                datasetId: run.defaultDatasetId
-            })
-        };
+                if (!datasetId) {
+                    return { statusCode: 200, headers, body: JSON.stringify({ success: true, status: 'completed', count: 0, businesses: [] }) };
+                }
+
+                // Obtener resultados del dataset
+                const dataRes = await fetch(`${BASE_URL}/datasets/${datasetId}/items?token=${APIFY_API_TOKEN}&limit=100`);
+                const items = await dataRes.json();
+
+                const businesses = (Array.isArray(items) ? items : []).map(place => ({
+                    name: place.title || place.name,
+                    address: place.address,
+                    phone: place.phone,
+                    website: place.website,
+                    category: place.categoryName || place.categories?.[0],
+                    rating: place.totalScore || place.rating,
+                    reviewCount: place.reviewsCount || place.reviews,
+                    latitude: place.location?.lat,
+                    longitude: place.location?.lng,
+                    googleMapsUrl: place.url,
+                    placeId: place.placeId,
+                    permanentlyClosed: place.permanentlyClosed
+                })).filter(b => !b.permanentlyClosed);
+
+                return {
+                    statusCode: 200,
+                    headers,
+                    body: JSON.stringify({
+                        success: true,
+                        status: 'completed',
+                        count: businesses.length,
+                        businesses
+                    })
+                };
+            }
+
+            // Estado desconocido
+            return { statusCode: 200, headers, body: JSON.stringify({ success: true, status: status?.toLowerCase() || 'unknown', runId }) };
+        }
+
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Acción inválida. Usa start o poll' }) };
 
     } catch (error) {
-        console.error('❌ Apify error:', error);
-
-        // Manejar errores específicos
-        if (error.message?.includes('401')) {
-            return {
-                statusCode: 401,
-                body: JSON.stringify({
-                    error: 'Token inválido',
-                    message: 'Verifica tu APIFY_API_TOKEN'
-                })
-            };
-        }
-
-        if (error.message?.includes('insufficient')) {
-            return {
-                statusCode: 402,
-                body: JSON.stringify({
-                    error: 'Créditos insuficientes',
-                    message: 'Tu cuenta de Apify no tiene suficientes créditos'
-                })
-            };
-        }
-
+        console.error('❌ Error:', error);
         return {
             statusCode: 500,
-            body: JSON.stringify({
-                error: error.message,
-                type: 'scraping_error'
-            })
+            headers,
+            body: JSON.stringify({ error: error.message || 'Error desconocido' })
         };
     }
-}
-
-// Función auxiliar para intentar extraer email de un sitio web
-function extractEmail(website) {
-    if (!website) return null;
-    // Esto es básico - en producción podrías hacer un scrape del sitio
-    // Por ahora retornamos null, pero Apify puede configurarse para extraer emails
-    return null;
 }

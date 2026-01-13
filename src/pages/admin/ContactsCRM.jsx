@@ -2,10 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
     Upload, Users, Mail, Send, Filter, Search, CheckSquare, Square,
     Eye, Trash2, Download, RefreshCw, FileSpreadsheet, X, Loader2,
-    ChevronDown, Building2, User, Phone, MapPin
+    ChevronDown, Building2, User, Phone, MapPin, FileDown
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
+import * as XLSX from 'xlsx';
 
 const ContactsCRM = () => {
     // Estado principal
@@ -324,6 +325,64 @@ const ContactsCRM = () => {
         }
     };
 
+    // Exportar contactos filtrados a Excel
+    const exportToExcel = () => {
+        if (filteredContacts.length === 0) {
+            toast.error('No hay contactos para exportar');
+            return;
+        }
+
+        try {
+            // Preparar datos para Excel
+            const exportData = filteredContacts.map(c => ({
+                'Nombre': c.name || '',
+                'Email': c.email || '',
+                'Empresa': c.company || '',
+                'Puesto': c.position || '',
+                'Teléfono': c.phone || '',
+                'Ciudad': c.city || '',
+                'Nivel': c.tier || 'A',
+                'Tipo Empresa': c.company_type || '',
+                'Website': c.website || '',
+                'Veces Contactado': c.contact_count || 0,
+                'Último Contacto': c.last_contacted_at ? new Date(c.last_contacted_at).toLocaleDateString() : '',
+                'Fecha Registro': c.created_at ? new Date(c.created_at).toLocaleDateString() : ''
+            }));
+
+            // Crear workbook y worksheet
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(exportData);
+
+            // Ajustar anchos de columna
+            ws['!cols'] = [
+                { wch: 25 }, // Nombre
+                { wch: 30 }, // Email
+                { wch: 25 }, // Empresa
+                { wch: 20 }, // Puesto
+                { wch: 15 }, // Teléfono
+                { wch: 15 }, // Ciudad
+                { wch: 8 },  // Nivel
+                { wch: 15 }, // Tipo Empresa
+                { wch: 30 }, // Website
+                { wch: 12 }, // Veces Contactado
+                { wch: 15 }, // Último Contacto
+                { wch: 15 }, // Fecha Registro
+            ];
+
+            XLSX.utils.book_append_sheet(wb, ws, 'Contactos CRM');
+
+            // Generar nombre con fecha
+            const fecha = new Date().toISOString().split('T')[0];
+            const fileName = `geobooker_contactos_${fecha}.xlsx`;
+
+            // Descargar
+            XLSX.writeFile(wb, fileName);
+            toast.success(`✅ ${filteredContacts.length} contactos exportados`);
+        } catch (error) {
+            toast.error('Error exportando: ' + error.message);
+        }
+    };
+
     // Eliminar contactos seleccionados
     const deleteSelected = async () => {
         if (selectedContacts.size === 0) return;
@@ -366,6 +425,15 @@ const ContactsCRM = () => {
                     </div>
                 </div>
                 <div className="flex gap-3">
+                    {/* Exportar Excel */}
+                    <button
+                        onClick={exportToExcel}
+                        disabled={filteredContacts.length === 0}
+                        className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium disabled:bg-gray-400"
+                    >
+                        <FileDown className="w-5 h-5" />
+                        Exportar Excel
+                    </button>
                     <label className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-green-700 transition font-medium">
                         <Upload className="w-5 h-5" />
                         Importar CSV
@@ -415,8 +483,8 @@ const ContactsCRM = () => {
                                 key={tier}
                                 onClick={() => setFilterTier(filterTier === tier ? 'ALL' : tier)}
                                 className={`px-3 py-1 rounded-full text-sm font-medium cursor-pointer transition ${filterTier === tier
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     }`}
                             >
                                 {tier}: {contacts.filter(c => c.tier === tier).length}
@@ -546,9 +614,9 @@ const ContactsCRM = () => {
                                 </td>
                                 <td className="px-4 py-3">
                                     <span className={`px-2 py-1 rounded-full text-xs font-bold ${contact.tier === 'AAA' ? 'bg-purple-100 text-purple-700' :
-                                            contact.tier === 'AA' ? 'bg-blue-100 text-blue-700' :
-                                                contact.tier === 'A' ? 'bg-green-100 text-green-700' :
-                                                    'bg-gray-100 text-gray-700'
+                                        contact.tier === 'AA' ? 'bg-blue-100 text-blue-700' :
+                                            contact.tier === 'A' ? 'bg-green-100 text-green-700' :
+                                                'bg-gray-100 text-gray-700'
                                         }`}>
                                         {contact.tier}
                                     </span>

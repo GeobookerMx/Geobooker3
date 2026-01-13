@@ -37,8 +37,6 @@ export function processTemplate(content, data) {
  */
 export async function sendEmail({ to, subject, html }) {
     try {
-        console.log(`✉️ Enviando email a: ${to} | Asunto: ${subject}`);
-
         const response = await fetch('/.netlify/functions/send-notification-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

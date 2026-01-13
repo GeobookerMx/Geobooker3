@@ -22,9 +22,9 @@
 
 ### Datos del Proyecto
 - **Fecha de inicio desarrollo:** 24 de noviembre de 2025
-- **Fecha de corte documental:** 5 de enero de 2026
-- **Total de commits:** 169+
-- **Líneas de código estimadas:** 50,000+
+- **Fecha de corte documental:** 12 de enero de 2026
+- **Total de commits:** 185+
+- **Líneas de código estimadas:** 55,000+
 
 ---
 
@@ -96,10 +96,11 @@ geobooker3/
 │   │   ├── advertiser/     # Dashboard de anunciantes
 │   │   ├── ad-wizard/      # Wizard de creación de campañas
 │   │   └── enterprise/     # Publicidad empresarial
-│   ├── services/           # 9 servicios de negocio
+│   ├── services/           # 10 servicios de negocio
 │   │   ├── analyticsService.js
 │   │   ├── geminiService.js
 │   │   ├── googlePlacesService.js
+│   │   ├── mailService.js
 │   │   ├── navigationService.js
 │   │   └── reportService.js
 │   ├── contexts/           # 3 contextos de estado global
@@ -122,6 +123,8 @@ geobooker3/
 | HomePage.jsx | 850 | Mapa principal con búsqueda |
 | BusinessProfilePage.jsx | 400 | Perfil de negocio nativo |
 | PlaceProfilePage.jsx | 330 | Perfil de negocio de Google |
+| ContactsCRM.jsx | 650 | Gestión de contactos y email marketing |
+| ApifyScraper.jsx | 450 | Scraping global de negocios |
 | AdvertisePage.jsx | 650 | Catálogo de espacios publicitarios |
 | CampaignCreateWizard.jsx | 640 | Wizard de creación de campañas |
 | DashboardPage.jsx | 300 | Panel de usuario |
@@ -175,6 +178,16 @@ Lógica para distinguir entre negocios de Google Places y negocios nativos de Ge
 - Detección de plataforma (iOS/Android/Desktop)
 - Instrucciones específicas para Safari
 - Manifest.json con shortcuts personalizados
+
+### 5.6 Sistema de CRM Integrado con Marketing
+- Importación y segmentación de contactos
+- Gestión dinámica de firmas y remitentes por campaña
+- Logging de envíos y tracking de entregas
+
+### 5.7 Lead Scraper Global Automatizado
+- Integración con Apify para búsquedas masivas internacionales
+- Algoritmo de transformación de datos para leads propios
+- Flujos de trabajo directo de prospección (WhatsApp/Email)
 
 ---
 

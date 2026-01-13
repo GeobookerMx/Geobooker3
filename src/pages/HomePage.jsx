@@ -101,7 +101,6 @@ const HomePage = () => {
         // Restaurar negocios de Places si hay guardados
         if (state.businesses && state.businesses.length > 0) {
           setBusinesses(state.businesses);
-          console.log('📦 Restaurados', state.businesses.length, 'negocios de búsqueda anterior');
         }
         // Restaurar query
         if (state.lastQuery) {
@@ -143,17 +142,14 @@ const HomePage = () => {
         // ⚡ PASO 1: Intentar cargar desde caché primero (instantáneo)
         const cacheStatus = await isCacheValid(userLocation);
         if (cacheStatus.isValid && !categoryFilter) {
-          console.log(`📦 Caché válido (${cacheStatus.age} min), cargando...`);
           const cachedBusinesses = await getCachedBusinesses();
           if (cachedBusinesses.length > 0) {
             setGeobookerBusinesses(cachedBusinesses);
-            console.log(`✅ ${cachedBusinesses.length} negocios cargados del caché`);
             return; // Usar caché, no llamar a Supabase
           }
         }
 
         // ⚡ PASO 2: Si caché no es válido o está vacío, cargar desde Supabase
-        console.log(`🔄 Cargando negocios desde Supabase (${cacheStatus.reason || 'no cache'})...`);
 
         let query = supabase
           .from('businesses')
@@ -462,7 +458,6 @@ const HomePage = () => {
           </div>
 
           <Suspense fallback={<MapLoadingFallback />}>
-            {console.log(`🗺️ Renderizando Mapa con: ${businesses.length} Google, ${geobookerBusinesses.length} Geobooker (Filtro Abierto: ${openNowFilter})`)}
             <BusinessMap
               userLocation={userLocation}
               businesses={businesses} // Google Places

@@ -314,9 +314,11 @@ const ApifyScraper = () => {
                             list="locations"
                         />
                         <datalist id="locations">
-                            {popularLocations.map((loc, i) => (
-                                <option key={i} value={loc.value}>{loc.label}</option>
-                            ))}
+                            {globalRegions.flatMap(region =>
+                                region.cities.map((city, i) => (
+                                    <option key={`${region.continent}-${i}`} value={city}>{city}</option>
+                                ))
+                            )}
                         </datalist>
                     </div>
 
@@ -384,8 +386,8 @@ const ApifyScraper = () => {
                                             key={j}
                                             onClick={() => setLocation(city)}
                                             className={`block w-full text-left px-3 py-1 text-sm rounded ${location === city
-                                                    ? 'bg-green-100 text-green-700 font-medium'
-                                                    : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
+                                                ? 'bg-green-100 text-green-700 font-medium'
+                                                : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
                                                 }`}
                                         >
                                             {city}

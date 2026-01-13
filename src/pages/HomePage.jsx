@@ -316,6 +316,25 @@ const HomePage = () => {
         description={getSEODescription()}
       />
 
+      {/* PROMO BANNER - 70% OFF LANZAMIENTO */}
+      <div className="bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 text-white py-3 px-4">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🚀</span>
+            <span className="font-bold">¡LANZAMIENTO! 70% OFF en todos los espacios publicitarios</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="opacity-90">Válido hasta:</span>
+            <span className="bg-white/20 backdrop-blur px-3 py-1 rounded font-bold">
+              1 de Marzo 2026
+            </span>
+            <a href="/advertise" className="ml-2 bg-white text-red-600 px-3 py-1 rounded font-bold hover:bg-gray-100 transition">
+              Ver ofertas →
+            </a>
+          </div>
+        </div>
+      </div>
+
       {/* Modal de permiso de ubicación */}
       <LocationPermissionModal
         isOpen={showLocationModal}

@@ -193,14 +193,19 @@ export default function EnterpriseLanding() {
                         {t('enterprise.whySubtitle')}
                     </p>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {[
                             { icon: Target, title: t('enterprise.featurePrecise'), desc: t('enterprise.featurePreciseDesc'), color: 'text-blue-400 bg-blue-400/10' },
                             { icon: Languages, title: t('enterprise.featureMultilingual'), desc: t('enterprise.featureMultilingualDesc'), color: 'text-green-400 bg-green-400/10' },
                             { icon: Calendar, title: t('enterprise.featureEvents'), desc: t('enterprise.featureEventsDesc'), color: 'text-purple-400 bg-purple-400/10' },
                             { icon: BarChart3, title: t('enterprise.featureAnalytics'), desc: t('enterprise.featureAnalyticsDesc'), color: 'text-amber-400 bg-amber-400/10' },
                             { icon: Shield, title: t('enterprise.featureSafety'), desc: t('enterprise.featureSafetyDesc'), color: 'text-red-400 bg-red-400/10' },
-                            { icon: Users, title: t('enterprise.featureManager'), desc: t('enterprise.featureManagerDesc'), color: 'text-cyan-400 bg-cyan-400/10' }
+                            { icon: Users, title: t('enterprise.featureManager'), desc: t('enterprise.featureManagerDesc'), color: 'text-cyan-400 bg-cyan-400/10' },
+                            // 4 nuevos beneficios
+                            { icon: Clock, title: '⏰ Abre y Cierra Digitalmente', desc: 'Controla el horario de tu negocio desde cualquier dispositivo. Tus clientes siempre sabrán si estás disponible.', color: 'text-teal-400 bg-teal-400/10' },
+                            { icon: MapPin, title: '📍 Siempre en el Mapa', desc: 'Tu negocio visible 24/7 en el mapa interactivo de Geobooker. Nunca pierdas un cliente potencial.', color: 'text-pink-400 bg-pink-400/10' },
+                            { icon: Building2, title: '🏢 Multi-Ubicación', desc: 'Gestiona múltiples sucursales desde un solo dashboard. Reportes unificados y control centralizado.', color: 'text-orange-400 bg-orange-400/10' },
+                            { icon: Sparkles, title: '🎁 Programa de Referidos', desc: 'Sistema de referidos integrado: tus clientes invitan, tú ganas. Recompensas automáticas y tracking en tiempo real.', color: 'text-indigo-400 bg-indigo-400/10' }
                         ].map((feature, i) => (
                             <div key={i} className="bg-gray-800/50 backdrop-blur border border-gray-700/50 rounded-2xl p-6 hover:border-gray-600 transition-colors">
                                 <div className={`w-12 h-12 rounded-xl ${feature.color} flex items-center justify-center mb-4`}>
@@ -235,8 +240,8 @@ export default function EnterpriseLanding() {
                             <div
                                 key={plan.code}
                                 className={`relative bg-gray-800/80 backdrop-blur border rounded-2xl p-6 ${plan.code === 'regional'
-                                        ? 'border-amber-500 shadow-lg shadow-amber-500/20'
-                                        : 'border-gray-700'
+                                    ? 'border-amber-500 shadow-lg shadow-amber-500/20'
+                                    : 'border-gray-700'
                                     }`}
                             >
                                 {plan.code === 'regional' && (
@@ -286,8 +291,8 @@ export default function EnterpriseLanding() {
                                 <Link
                                     to={`/enterprise/checkout?plan=${plan.code}`}
                                     className={`block text-center py-3 px-4 rounded-xl font-semibold transition-all ${plan.code === 'regional'
-                                            ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:shadow-lg hover:shadow-amber-500/30'
-                                            : 'bg-gray-700 text-white hover:bg-gray-600'
+                                        ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:shadow-lg hover:shadow-amber-500/30'
+                                        : 'bg-gray-700 text-white hover:bg-gray-600'
                                         }`}
                                 >
                                     {t('enterprise.getStarted')}
@@ -312,21 +317,165 @@ export default function EnterpriseLanding() {
                         {t('enterprise.useCasesTitle')}
                     </h2>
 
-                    <div className="grid md:grid-cols-3 gap-8">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {[
                             { title: 'FIFA World Cup 2026', emoji: '⚽', desc: t('enterprise.useCaseFifa'), results: t('enterprise.useCaseFifaResult') },
                             { title: 'Super Bowl LXII', emoji: '🏈', desc: t('enterprise.useCaseSuperbowl'), results: t('enterprise.useCaseSuperbowlResult') },
-                            { title: 'F1 Las Vegas GP', emoji: '🏎️', desc: t('enterprise.useCaseF1'), results: t('enterprise.useCaseF1Result') }
+                            { title: 'F1 Las Vegas GP', emoji: '🏎️', desc: t('enterprise.useCaseF1'), results: t('enterprise.useCaseF1Result') },
+                            { title: 'Lanzamiento de Sucursal', emoji: '🏬', desc: 'Cadena de farmacias anuncia apertura de 10 nuevas sucursales en Monterrey con campaña geolocalizada.', results: '1.5M+ impresiones locales' },
+                            { title: 'Conciertos y Festivales', emoji: '🎤', desc: 'Marca de bebidas energéticas activa promociones exclusivas durante festival de música en Guadalajara.', results: '800K+ interacciones' },
+                            { title: 'Campaña Segmentada', emoji: '🎯', desc: 'Banco digital lanza tarjeta de crédito para millennials con anuncios en zonas universitarias de CDMX.', results: '2M+ alcance joven' }
                         ].map((useCase, i) => (
-                            <div key={i} className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-2xl p-8 text-center">
+                            <div key={i} className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-2xl p-8 text-center hover:border-gray-600 transition">
                                 <div className="text-5xl mb-4">{useCase.emoji}</div>
                                 <h3 className="text-xl font-bold text-white mb-2">{useCase.title}</h3>
-                                <p className="text-gray-400 mb-4">{useCase.desc}</p>
+                                <p className="text-gray-400 mb-4 text-sm">{useCase.desc}</p>
                                 <div className="inline-block bg-green-500/20 text-green-400 text-sm font-medium px-3 py-1 rounded-full">
                                     {useCase.results}
                                 </div>
                             </div>
                         ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Data & KPIs Section */}
+            <section className="py-20 px-4 bg-gradient-to-b from-slate-900 via-blue-900/20 to-slate-900">
+                <div className="max-w-7xl mx-auto">
+                    <div className="text-center mb-12">
+                        <div className="inline-flex items-center gap-2 bg-green-500/20 backdrop-blur-sm text-green-400 px-4 py-2 rounded-full mb-4">
+                            <BarChart3 className="w-4 h-4" />
+                            <span className="font-bold">📊 Datos en Vivo & KPIs</span>
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                            Datos Incluidos en tu Contrato Enterprise
+                        </h2>
+                        <p className="text-gray-400 max-w-2xl mx-auto">
+                            Transparencia total. Recibirás acceso a métricas en tiempo real y reportes personalizados para optimizar tus campañas.
+                        </p>
+                    </div>
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+                        {[
+                            { value: '10M+', label: 'Impresiones/mes', icon: TrendingUp, color: 'from-blue-500 to-cyan-500' },
+                            { value: '50+', label: 'Ciudades', icon: MapPin, color: 'from-green-500 to-emerald-500' },
+                            { value: '4.8★', label: 'Satisfacción', icon: Star, color: 'from-yellow-500 to-orange-500' },
+                            { value: '150%', label: 'ROI Promedio', icon: BarChart3, color: 'from-purple-500 to-pink-500' }
+                        ].map((stat, i) => (
+                            <div key={i} className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur border border-gray-700/50 rounded-2xl p-6 text-center hover:border-gray-600 transition">
+                                <div className={`w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-r ${stat.color} flex items-center justify-center`}>
+                                    <stat.icon className="w-6 h-6 text-white" />
+                                </div>
+                                <div className="text-3xl md:text-4xl font-bold text-white mb-1">{stat.value}</div>
+                                <div className="text-gray-400 text-sm">{stat.label}</div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* KPIs & Features Grid */}
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {/* Live Data */}
+                        <div className="bg-gray-800/50 backdrop-blur border border-gray-700/50 rounded-2xl p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 bg-green-500/20 text-green-400 rounded-lg flex items-center justify-center">
+                                    <Zap className="w-5 h-5" />
+                                </div>
+                                <h3 className="text-lg font-bold text-white">📡 Datos en Tiempo Real</h3>
+                            </div>
+                            <ul className="space-y-2 text-gray-300 text-sm">
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Dashboard con métricas en vivo</li>
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Actualizaciones cada 24 horas</li>
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Alertas de rendimiento</li>
+                            </ul>
+                        </div>
+
+                        {/* KPIs Measured */}
+                        <div className="bg-gray-800/50 backdrop-blur border border-gray-700/50 rounded-2xl p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 bg-blue-500/20 text-blue-400 rounded-lg flex items-center justify-center">
+                                    <BarChart3 className="w-5 h-5" />
+                                </div>
+                                <h3 className="text-lg font-bold text-white">📈 KPIs que Medimos</h3>
+                            </div>
+                            <ul className="space-y-2 text-gray-300 text-sm">
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Impresiones totales</li>
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Clics únicos (CTR)</li>
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Alcance por región/ciudad</li>
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Tasa de engagement</li>
+                            </ul>
+                        </div>
+
+                        {/* Optimization */}
+                        <div className="bg-gray-800/50 backdrop-blur border border-gray-700/50 rounded-2xl p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 bg-purple-500/20 text-purple-400 rounded-lg flex items-center justify-center">
+                                    <Target className="w-5 h-5" />
+                                </div>
+                                <h3 className="text-lg font-bold text-white">🎯 Optimización de Campañas</h3>
+                            </div>
+                            <ul className="space-y-2 text-gray-300 text-sm">
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Sugerencias AI para creativos</li>
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Mejores horarios de publicación</li>
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> A/B testing automático</li>
+                            </ul>
+                        </div>
+
+                        {/* Weekly Reports */}
+                        <div className="bg-gray-800/50 backdrop-blur border border-gray-700/50 rounded-2xl p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 bg-amber-500/20 text-amber-400 rounded-lg flex items-center justify-center">
+                                    <Calendar className="w-5 h-5" />
+                                </div>
+                                <h3 className="text-lg font-bold text-white">📅 Reportes Semanales</h3>
+                            </div>
+                            <ul className="space-y-2 text-gray-300 text-sm">
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Informe PDF cada lunes</li>
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Comparativas vs semana anterior</li>
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Top ciudades y audiencias</li>
+                            </ul>
+                        </div>
+
+                        {/* Segmentation */}
+                        <div className="bg-gray-800/50 backdrop-blur border border-gray-700/50 rounded-2xl p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 bg-cyan-500/20 text-cyan-400 rounded-lg flex items-center justify-center">
+                                    <Globe className="w-5 h-5" />
+                                </div>
+                                <h3 className="text-lg font-bold text-white">🌍 Segmentación Global</h3>
+                            </div>
+                            <ul className="space-y-2 text-gray-300 text-sm">
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Datos por país y ciudad</li>
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Idioma de la audiencia</li>
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Dispositivo (mobile/desktop)</li>
+                            </ul>
+                        </div>
+
+                        {/* Dedicated Support */}
+                        <div className="bg-gray-800/50 backdrop-blur border border-gray-700/50 rounded-2xl p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 bg-red-500/20 text-red-400 rounded-lg flex items-center justify-center">
+                                    <Users className="w-5 h-5" />
+                                </div>
+                                <h3 className="text-lg font-bold text-white">👤 Account Manager Dedicado</h3>
+                            </div>
+                            <ul className="space-y-2 text-gray-300 text-sm">
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Ejecutivo asignado 24/7</li>
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Llamadas de seguimiento</li>
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Prioridad en soporte</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    {/* Guarantee Banner */}
+                    <div className="mt-12 bg-gradient-to-r from-green-600/20 to-emerald-600/20 border border-green-500/30 rounded-2xl p-6 text-center">
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                            <Shield className="w-6 h-6 text-green-400" />
+                            <h3 className="text-xl font-bold text-white">Garantía de Transparencia</h3>
+                        </div>
+                        <p className="text-gray-300 max-w-2xl mx-auto">
+                            Si en cualquier momento no tienes acceso a tus métricas o reportes, te extendemos tu campaña <strong className="text-green-400">+15 días gratis</strong>.
+                        </p>
                     </div>
                 </div>
             </section>

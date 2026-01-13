@@ -331,12 +331,13 @@ export default function CommunityPage() {
                         {/* Illustration area - Geobooker workers */}
                         <div className="hidden md:flex items-center justify-center">
                             <div className="relative">
-                                {/* Worker illustration placeholder */}
-                                <div className="w-48 h-48 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
-                                    <div className="text-center">
-                                        <div className="text-6xl mb-2">👷‍♂️👩‍🍳🧑‍💼</div>
-                                        <p className="text-sm text-white/80">Comunidad</p>
-                                    </div>
+                                {/* Worker illustration */}
+                                <div className="w-56 h-44 rounded-2xl overflow-hidden shadow-2xl">
+                                    <img
+                                        src="/images/comunidad.jpg"
+                                        alt="Comunidad Geobooker"
+                                        className="w-full h-full object-cover"
+                                    />
                                 </div>
                             </div>
                         </div>

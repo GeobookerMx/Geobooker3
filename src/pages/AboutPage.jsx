@@ -81,17 +81,12 @@ export default function AboutPage() {
                         <div className="hidden md:block">
                             <div className="relative">
                                 {/* Main illustration container */}
-                                <div className="w-64 h-64 bg-white/10 rounded-2xl backdrop-blur-sm p-6 flex flex-col items-center justify-center">
-                                    <div className="text-7xl mb-4 animate-bounce">🗺️</div>
-                                    <div className="flex gap-2 text-4xl">
-                                        <span className="animate-pulse" style={{ animationDelay: '0s' }}>👨‍🍳</span>
-                                        <span className="animate-pulse" style={{ animationDelay: '0.2s' }}>👩‍⚕️</span>
-                                        <span className="animate-pulse" style={{ animationDelay: '0.4s' }}>👨‍🔧</span>
-                                        <span className="animate-pulse" style={{ animationDelay: '0.6s' }}>👩‍💼</span>
-                                    </div>
-                                    <p className="text-white/80 mt-4 text-center text-sm">
-                                        {isSpanish ? 'Apoyando negocios locales' : 'Supporting local businesses'}
-                                    </p>
+                                <div className="w-72 h-56 rounded-2xl overflow-hidden shadow-2xl">
+                                    <img
+                                        src="/images/quienes-somos.jpg"
+                                        alt="Equipo Geobooker"
+                                        className="w-full h-full object-cover"
+                                    />
                                 </div>
 
                                 {/* Decorative badges */}

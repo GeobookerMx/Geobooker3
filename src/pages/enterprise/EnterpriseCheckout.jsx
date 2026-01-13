@@ -892,20 +892,25 @@ export default function EnterpriseCheckout() {
                                 <div className="grid md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm text-gray-400 mb-1">Start Date</label>
-                                        <input
-                                            type="date"
-                                            value={form.startDate}
-                                            onChange={(e) => handleChange('startDate', e.target.value)}
-                                            min={new Date().toISOString().split('T')[0]}
-                                            className="w-full bg-gray-900 border border-gray-700 text-white px-4 py-3 rounded-lg"
-                                        />
+                                        <div className="relative">
+                                            <input
+                                                type="date"
+                                                value={form.startDate}
+                                                onChange={(e) => handleChange('startDate', e.target.value)}
+                                                min={new Date().toISOString().split('T')[0]}
+                                                className="w-full bg-gray-900 border border-gray-700 text-white px-4 py-3 rounded-lg cursor-pointer focus:ring-2 focus:ring-amber-500 [color-scheme:dark]"
+                                                style={{ colorScheme: 'dark' }}
+                                            />
+                                            <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1">Click to open calendar</p>
                                     </div>
                                     <div>
                                         <label className="block text-sm text-gray-400 mb-1">Duration</label>
                                         <select
                                             value={form.durationMonths}
                                             onChange={(e) => handleChange('durationMonths', parseInt(e.target.value))}
-                                            className="w-full bg-gray-900 border border-gray-700 text-white px-4 py-3 rounded-lg"
+                                            className="w-full bg-gray-900 border border-gray-700 text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-amber-500"
                                         >
                                             <option value={1}>1 month</option>
                                             <option value={3}>3 months</option>

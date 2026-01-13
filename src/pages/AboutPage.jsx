@@ -99,22 +99,7 @@ export default function AboutPage() {
                 </div>
             </section>
 
-            {/* Stats Section */}
-            <section className="py-12 -mt-10">
-                <div className="max-w-6xl mx-auto px-4">
-                    <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 grid grid-cols-2 md:grid-cols-4 gap-6">
-                        {stats.map((stat, index) => (
-                            <div key={index} className="text-center">
-                                <div className="w-12 h-12 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                    <stat.icon className="w-6 h-6 text-blue-600" />
-                                </div>
-                                <div className="text-2xl md:text-3xl font-black text-gray-900">{stat.value}</div>
-                                <div className="text-sm text-gray-500">{stat.label}</div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
+
 
             {/* Values Section */}
             <section className="py-16">
@@ -243,6 +228,41 @@ export default function AboutPage() {
                                 <p className="font-bold text-sm">⚡ {isSpanish ? 'Electricista' : 'Electrician'}</p>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Inspirational Quote */}
+            <section className="py-16 bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900">
+                <div className="max-w-4xl mx-auto px-4 text-center">
+                    <div className="text-5xl mb-6">💡</div>
+                    <blockquote className="text-2xl md:text-3xl font-light text-white italic leading-relaxed mb-6">
+                        {isSpanish
+                            ? '"El secreto del éxito en los negocios no es hacer lo que otros hacen, sino ser diferente y hacerlo mejor."'
+                            : '"The secret to success in business is not doing what others do, but being different and doing it better."'}
+                    </blockquote>
+                    <cite className="text-blue-300 font-semibold text-lg">
+                        — Richard Branson
+                    </cite>
+                </div>
+            </section>
+
+            {/* Stats Section */}
+            <section className="py-16 bg-white">
+                <div className="max-w-6xl mx-auto px-4">
+                    <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-12">
+                        {isSpanish ? 'Geobooker en Números' : 'Geobooker by Numbers'}
+                    </h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                        {stats.map((stat, index) => (
+                            <div key={index} className="text-center p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl">
+                                <div className="w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                                    <stat.icon className="w-7 h-7 text-white" />
+                                </div>
+                                <div className="text-3xl md:text-4xl font-black text-gray-900">{stat.value}</div>
+                                <div className="text-sm text-gray-600 mt-1">{stat.label}</div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </section>

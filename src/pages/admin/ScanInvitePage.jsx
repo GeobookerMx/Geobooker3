@@ -38,7 +38,7 @@ const ScanInvitePage = () => {
     // Filtros
     const [filters, setFilters] = useState({
         contactType: 'all', // all, phone, email
-        status: 'all', // all, new, contacted, etc.
+        status: 'new', // all, new, contacted, etc. - Default to 'new' to hide contacted
         category: 'all'
     });
 

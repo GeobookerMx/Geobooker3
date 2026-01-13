@@ -15,7 +15,7 @@ export async function handler(event) {
         const { type, data } = JSON.parse(event.body);
 
         const RESEND_API_KEY = process.env.RESEND_API_KEY;
-        const FROM_EMAIL = 'Geobooker <hola@geobooker.com.mx>';
+        const DEFAULT_FROM_EMAIL = 'Geobooker <hola@geobooker.com.mx>';
 
         if (!RESEND_API_KEY) {
             console.warn('RESEND_API_KEY not configured');
@@ -35,6 +35,14 @@ export async function handler(event) {
             };
         }
 
+        // Determine sender (for CRM campaigns, use dynamic sender)
+        let fromEmail = DEFAULT_FROM_EMAIL;
+        if (type === 'crm_campaign' && data.fromEmail && data.fromName) {
+            fromEmail = `${data.fromName} <${data.fromEmail}>`;
+        } else if (data.fromEmail) {
+            fromEmail = data.fromEmail;
+        }
+
         // Send via Resend
         const response = await fetch('https://api.resend.com/emails', {
             method: 'POST',
@@ -43,7 +51,7 @@ export async function handler(event) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                from: FROM_EMAIL,
+                from: fromEmail,
                 to: [data.email],
                 subject: emailTemplate.subject,
                 html: emailTemplate.html
@@ -283,6 +291,18 @@ function getEmailTemplate(type, data) {
                     </div>
                 </body></html>
             `
+        },
+
+        // ==================== CUSTOM EMAIL (for campaigns) ====================
+        custom: {
+            subject: data.subject || 'Mensaje de Geobooker',
+            html: data.html || '<p>Mensaje sin contenido</p>'
+        },
+
+        // ==================== CRM CAMPAIGN EMAIL ====================
+        crm_campaign: {
+            subject: data.subject || 'Mensaje de Geobooker',
+            html: data.html || '<p>Mensaje sin contenido</p>'
         }
     };
 

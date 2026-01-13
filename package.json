@@ -15,6 +15,7 @@
     "@stripe/stripe-js": "^8.5.3",
     "@supabase/supabase-js": "^2.83.0",
     "@vercel/speed-insights": "^1.2.0",
+    "apify-client": "^2.21.0",
     "i18next": "^25.6.3",
     "lucide-react": "^0.544.0",
     "qrcode.react": "^4.2.0",

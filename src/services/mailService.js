@@ -33,16 +33,32 @@ export function processTemplate(content, data) {
 
 /**
  * Envía un correo a través de la infraestructura de Geobooker
- * NOTA: Esto normalmente dispararía una Supabase Edge Function o un endpoint backend.
+ * Usa la Netlify Function send-notification-email que conecta con Resend
  */
 export async function sendEmail({ to, subject, html }) {
     try {
-        // En una implementación real, aquí llamaríamos a Resend API 
-        // o a una Supabase Edge Function de Geobooker.
         console.log(`✉️ Enviando email a: ${to} | Asunto: ${subject}`);
 
-        // Simulación de envío exitoso
-        return { success: true };
+        const response = await fetch('/.netlify/functions/send-notification-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'custom',  // Para emails de campañas personalizadas
+                data: {
+                    email: to,
+                    subject,
+                    html
+                }
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || 'Error enviando email');
+        }
+
+        return { success: true, emailId: result.emailId };
     } catch (error) {
         console.error('Error enviando email:', error);
         return { success: false, error: error.message };

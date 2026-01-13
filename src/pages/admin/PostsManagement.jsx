@@ -39,6 +39,7 @@ export default function PostsManagement() {
     const [links, setLinks] = useState([]);
     const [newImageUrl, setNewImageUrl] = useState('');
     const [newLink, setNewLink] = useState({ label: '', url: '' });
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     useEffect(() => {
         loadPosts();
@@ -176,6 +177,54 @@ export default function PostsManagement() {
         } catch (err) {
             console.error('Error deleting post:', err);
             toast.error('Error al eliminar');
+        }
+    };
+
+    // Handle file upload to Supabase storage
+    const handleImageUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'];
+        if (!validTypes.includes(file.type)) {
+            toast.error('Solo imágenes (JPG, PNG, WebP) y videos (MP4, WebM)');
+            return;
+        }
+
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            toast.error('Archivo muy grande (máximo 10MB)');
+            return;
+        }
+
+        setUploadingImage(true);
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `posts/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+
+            const { data, error } = await supabase.storage
+                .from('public-assets')
+                .upload(fileName, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+
+            if (error) throw error;
+
+            // Get public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('public-assets')
+                .getPublicUrl(fileName);
+
+            setImages([...images, publicUrl]);
+            toast.success('Archivo subido correctamente');
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            toast.error('Error al subir archivo');
+        } finally {
+            setUploadingImage(false);
+            e.target.value = ''; // Reset input
         }
     };
 
@@ -368,14 +417,38 @@ Usa > para citas"
                             {/* Images Management */}
                             <div className="border-t pt-4">
                                 <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                                    🖼️ Imágenes adicionales
+                                    🖼️ Imágenes y Videos
                                 </h3>
+
+                                {/* File Upload Button */}
+                                <div className="flex gap-2 mb-3">
+                                    <label className={`flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer font-bold transition ${uploadingImage
+                                            ? 'bg-gray-200 text-gray-500'
+                                            : 'bg-green-100 text-green-600 hover:bg-green-200'
+                                        }`}>
+                                        {uploadingImage ? (
+                                            <>⏳ Subiendo...</>
+                                        ) : (
+                                            <>📤 Subir archivo</>
+                                        )}
+                                        <input
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
+                                            onChange={handleImageUpload}
+                                            disabled={uploadingImage}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                    <span className="text-xs text-gray-400 self-center">(JPG, PNG, WebP, MP4, WebM - máx 10MB)</span>
+                                </div>
+
+                                {/* URL Input (alternative) */}
                                 <div className="flex gap-2 mb-3">
                                     <input
                                         type="url"
                                         value={newImageUrl}
                                         onChange={(e) => setNewImageUrl(e.target.value)}
-                                        placeholder="URL de la imagen (JPG, PNG, WebP)"
+                                        placeholder="O pega la URL de una imagen..."
                                         className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500"
                                     />
                                     <button

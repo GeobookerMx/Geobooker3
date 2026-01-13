@@ -32,6 +32,8 @@ import AdReportsModeration from "./pages/admin/AdReportsModeration.jsx";
 import ReferralManagement from "./pages/admin/ReferralManagement.jsx";
 import BulkImport from "./pages/admin/BulkImport.jsx";
 import EmailCampaigns from "./pages/admin/EmailCampaigns.jsx";
+import ContactsCRM from "./pages/admin/ContactsCRM.jsx";
+import ApifyScraper from "./pages/admin/ApifyScraper.jsx";
 import UnsubscribePage from "./pages/UnsubscribePage.jsx";
 
 // User Pages
@@ -216,6 +218,8 @@ export default function AppRouter() {
         <Route path="referrals" element={<ReferralManagement />} />
         <Route path="import" element={<BulkImport />} />
         <Route path="campaigns" element={<EmailCampaigns />} />
+        <Route path="crm" element={<ContactsCRM />} />
+        <Route path="scraper" element={<ApifyScraper />} />
       </Route>
     </Routes>
   );

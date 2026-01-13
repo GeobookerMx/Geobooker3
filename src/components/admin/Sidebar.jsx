@@ -15,7 +15,8 @@ import {
     Newspaper,
     Gift,
     Database,
-    Mail
+    Mail,
+    Globe
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -70,6 +71,8 @@ const Sidebar = ({ onLogout }) => {
         { path: '/admin/blog', icon: Newspaper, label: '📝 Blog Comunidad' },
         { path: '/admin/import', icon: Database, label: '📥 Importar Datos' },
         { path: '/admin/campaigns', icon: Mail, label: '📨 Campañas Email' },
+        { path: '/admin/crm', icon: Users, label: '👥 CRM Contactos' },
+        { path: '/admin/scraper', icon: Globe, label: '🌍 Lead Scraper' },
         { path: '/admin/revenue', icon: DollarSign, label: 'Ingresos' },
         { path: '/admin/settings', icon: Settings, label: 'Configuración' },
     ];

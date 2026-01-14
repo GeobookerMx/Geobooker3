@@ -33,10 +33,38 @@ export default function AdInventory() {
     const loadData = async () => {
         setLoading(true);
         try {
-            // Load inventory status
-            const { data: invData, error: invError } = await supabase.rpc('get_ad_inventory_status');
-            if (invError) throw invError;
+            // Load inventory status directly from table (fallback if RPC doesn't exist)
+            let invData = [];
+            try {
+                const { data: rpcData, error: rpcError } = await supabase.rpc('get_ad_inventory_status');
+                if (!rpcError && rpcData) {
+                    invData = rpcData;
+                } else {
+                    // Fallback: query the table directly
+                    console.log('RPC failed, loading from table directly');
+                    const { data: tableData, error: tableError } = await supabase
+                        .from('ad_inventory_slots')
+                        .select('*')
+                        .order('level', { ascending: true });
+
+                    if (!tableError && tableData) {
+                        invData = tableData.map(slot => ({
+                            level: slot.level,
+                            location_code: slot.location_code,
+                            location_name: slot.location_name,
+                            max_slots: slot.max_concurrent_ads,
+                            active_campaigns: 0,
+                            available_slots: slot.max_concurrent_ads,
+                            price_usd: slot.price_usd_per_month
+                        }));
+                    }
+                }
+            } catch (e) {
+                console.error('Both methods failed:', e);
+            }
+
             setInventory(invData || []);
+            console.log('Loaded inventory:', invData?.length || 0, 'slots');
 
             // Load active/recent campaigns
             const { data: campData, error: campError } = await supabase

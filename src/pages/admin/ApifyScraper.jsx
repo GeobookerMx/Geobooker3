@@ -39,12 +39,45 @@ const ApifyScraper = () => {
     const [hourlyCount, setHourlyCount] = useState(0);
     const [hourlyResetTime, setHourlyResetTime] = useState(null);
 
-    // WhatsApp Business Configuration
-    const WHATSAPP_BUSINESS_PHONE = '525526702368';
-    const RATE_LIMIT = {
-        cooldownMs: 45000, // 45 seconds between messages
-        maxPerHour: 30,    // Max 30 messages per hour (conservative)
-        warningAt: 25      // Show warning at 25 messages
+    // WhatsApp Business Configuration (Default values, will be overridden by DB)
+    const [whatsappSettings, setWhatsappSettings] = useState({
+        phone: '525526702368',
+        display_number: '+52 55 2670 2368',
+        default_message: '¡Hola! Vi tu perfil en Geobooker y me gustaría platicar sobre cómo pueden ayudarte a crecer. ¿Tienes unos minutos?'
+    });
+
+    const [rateLimitConfig, setRateLimitConfig] = useState({
+        cooldownMs: 45000,
+        maxPerHour: 30,
+        warningAt: 25
+    });
+
+    useEffect(() => {
+        loadSettings();
+    }, []);
+
+    const loadSettings = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('crm_settings')
+                .select('*');
+
+            if (error) throw error;
+
+            data.forEach(s => {
+                if (s.setting_key === 'whatsapp_business') {
+                    setWhatsappSettings(s.setting_value);
+                }
+                if (s.setting_key === 'campaign_limits') {
+                    setRateLimitConfig(prev => ({
+                        ...prev,
+                        maxPerHour: Math.ceil((s.setting_value.daily_whatsapp_limit || 50) / 8) // Approx per hour
+                    }));
+                }
+            });
+        } catch (err) {
+            console.error('Error loading scraper settings:', err);
+        }
     };
 
     // Categorías y subcategorías de negocios
@@ -166,8 +199,14 @@ const ApifyScraper = () => {
                     const pollData = await pollResponse.json();
 
                     if (pollData.status === 'completed') {
-                        setResults(pollData.businesses || []);
+                        const businesses = pollData.businesses || [];
+                        setResults(businesses);
                         toast.success(`✅ ${pollData.count} negocios encontrados`);
+
+                        // Auto-save to scraping_history
+                        if (businesses.length > 0) {
+                            saveToHistory(businesses);
+                        }
                         return;
                     }
 
@@ -193,6 +232,43 @@ const ApifyScraper = () => {
             toast.dismiss('search-progress');
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Auto-save results to scraping_history table
+    const saveToHistory = async (businesses) => {
+        try {
+            const historyRecords = businesses.map(lead => ({
+                name: lead.name || '',
+                phone: lead.phone || null,
+                email: lead.email || null,
+                website: lead.website || null,
+                address: lead.address || null,
+                city: extractCity(lead.address),
+                category: lead.category || searchQuery,
+                rating: lead.rating || null,
+                review_count: lead.reviewCount || 0,
+                google_maps_url: lead.googleMapsUrl || null,
+                search_query: searchQuery,
+                search_location: location,
+                tier: determineTier(lead),
+                source: 'apify'
+            }));
+
+            const { error } = await supabase
+                .from('scraping_history')
+                .upsert(historyRecords, {
+                    onConflict: 'phone,search_query,search_location',
+                    ignoreDuplicates: true
+                });
+
+            if (error) {
+                console.warn('Auto-save warning:', error.message);
+            } else {
+                console.log(`💾 ${businesses.length} leads guardados en historial`);
+            }
+        } catch (err) {
+            console.warn('Auto-save error:', err);
         }
     };
 
@@ -301,7 +377,7 @@ const ApifyScraper = () => {
             setHourlyResetTime(null);
             return true; // Reset happened, allow
         }
-        return hourlyCount < RATE_LIMIT.maxPerHour;
+        return hourlyCount < rateLimitConfig.maxPerHour;
     };
 
     // Open WhatsApp with lead's phone and track/remove (with rate limiting)
@@ -315,7 +391,7 @@ const ApifyScraper = () => {
         // Check hourly limit
         if (!checkHourlyLimit()) {
             const resetIn = hourlyResetTime ? Math.ceil((hourlyResetTime - Date.now()) / 60000) : 0;
-            toast.error(`🚫 Límite por hora alcanzado (${RATE_LIMIT.maxPerHour}). Espera ${resetIn} minutos.`);
+            toast.error(`🚫 Límite por hora alcanzado (${rateLimitConfig.maxPerHour}). Espera ${resetIn} minutos.`);
             return;
         }
 
@@ -325,7 +401,7 @@ const ApifyScraper = () => {
         }
 
         const phone = lead.phone.replace(/\D/g, '');
-        const message = encodeURIComponent(`Hola, los contacto de parte de Geobooker. ¿Podemos platicar sobre cómo podemos ayudarles a conseguir más clientes?`);
+        const message = encodeURIComponent(whatsappSettings.default_message || `Hola, los contacto de parte de Geobooker. ¿Podemos platicar sobre cómo podemos ayudarles a conseguir más clientes?`);
         window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
 
         // Track the message
@@ -357,8 +433,8 @@ const ApifyScraper = () => {
         });
 
         // Show appropriate message
-        if (newHourlyCount >= RATE_LIMIT.warningAt) {
-            toast(`⚠️ WhatsApp ${newWhatsappCount} - Cerca del límite (${newHourlyCount}/${RATE_LIMIT.maxPerHour} por hora)`, { icon: '⚠️' });
+        if (newHourlyCount >= rateLimitConfig.warningAt) {
+            toast(`⚠️ WhatsApp ${newWhatsappCount} - Cerca del límite (${newHourlyCount}/${rateLimitConfig.maxPerHour} por hora)`, { icon: '⚠️' });
         } else {
             toast.success(`✅ WhatsApp enviado (${newWhatsappCount} total) - Próximo en 45s`);
         }

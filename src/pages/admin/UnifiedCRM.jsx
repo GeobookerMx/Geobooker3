@@ -53,6 +53,7 @@ const UnifiedCRM = () => {
     const [isSending, setIsSending] = useState(false);
     const [sendProgress, setSendProgress] = useState(0);
     const [waSearchTier, setWaSearchTier] = useState('all');
+    const [emailSearchTier, setEmailSearchTier] = useState('all');
 
     // History State
     const [emailLogs, setEmailLogs] = useState([]);
@@ -421,7 +422,8 @@ const UnifiedCRM = () => {
                 const { data, error } = await supabase
                     .rpc('generate_email_queue', {
                         daily_limit: dailyLimit,
-                        min_per_type: 5
+                        min_per_type: 5,
+                        target_tier: emailSearchTier === 'all' ? null : emailSearchTier
                     });
 
                 if (error) throw error;
@@ -970,6 +972,22 @@ const UnifiedCRM = () => {
                                         <option value={200}>200</option>
                                     </select>
                                 </div>
+                                {campaignType === 'email' && (
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Filtrar por Tier</label>
+                                        <select
+                                            value={emailSearchTier}
+                                            onChange={(e) => setEmailSearchTier(e.target.value)}
+                                            className="w-full p-3 border rounded-xl"
+                                        >
+                                            <option value="all">Sugerencia Inteligente (Mix)</option>
+                                            <option value="AAA">Sólo Tier AAA (Top)</option>
+                                            <option value="AA">Sólo Tier AA (Premium)</option>
+                                            <option value="A">Sólo Tier A (Base)</option>
+                                            <option value="B">Sólo Tier B (Exploratorio)</option>
+                                        </select>
+                                    </div>
+                                )}
                                 {campaignType === 'whatsapp' && (
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Filtrar por Tier</label>

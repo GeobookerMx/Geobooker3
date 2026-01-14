@@ -48,7 +48,8 @@ ORDER BY
 -- 3. Función para generar cola de emails distribuida por tipo
 CREATE OR REPLACE FUNCTION generate_email_queue(
     daily_limit INTEGER DEFAULT 200,
-    min_per_type INTEGER DEFAULT 5
+    min_per_type INTEGER DEFAULT 5,
+    target_tier TEXT DEFAULT NULL
 )
 RETURNS TABLE (
     contact_id UUID,
@@ -108,6 +109,7 @@ BEGIN
         WHERE c.email IS NOT NULL 
           AND c.email != ''
           AND (c.email_sent IS NULL OR c.email_sent = FALSE)
+          AND (target_tier IS NULL OR c.tier = target_tier)
     )
     SELECT 
         r.id,

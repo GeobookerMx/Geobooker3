@@ -36,6 +36,8 @@ import ContactsCRM from "./pages/admin/ContactsCRM.jsx";
 import SmartCampaignLauncher from "./pages/admin/SmartCampaignLauncher.jsx";
 import UnifiedCRM from "./pages/admin/UnifiedCRM.jsx";
 import ApifyScraper from "./pages/admin/ApifyScraper.jsx";
+import LeadsHistory from "./pages/admin/LeadsHistory.jsx";
+import FiscalManagement from "./pages/admin/FiscalManagement.jsx";
 import UnsubscribePage from "./pages/UnsubscribePage.jsx";
 
 // User Pages
@@ -54,6 +56,7 @@ import UpgradePage from "./pages/UpgradePage.jsx";
 import AdvertisePage from "./pages/AdvertisePage.jsx";
 import AdsPolicyPage from "./pages/AdsPolicyPage.jsx";
 import AdvertiseSuccessPage from "./pages/AdvertiseSuccessPage.jsx";
+import BillingPortal from "./pages/BillingPortal.jsx";
 import CampaignCreateWizard from "./pages/ad-wizard/CampaignCreateWizard.jsx";
 
 // Security
@@ -188,6 +191,7 @@ export default function AppRouter() {
         {/* Wizard de creación de campañas (Protegido, dentro del dashboard) */}
         <Route path="/advertise/create" element={<CampaignCreateWizard />} />
         <Route path="/advertise/success" element={<AdvertiseSuccessPage />} />
+        <Route path="/dashboard/billing" element={<BillingPortal />} />
       </Route>
 
       {/* 🛠️ Rutas de administrador */}
@@ -224,6 +228,8 @@ export default function AppRouter() {
         <Route path="marketing" element={<UnifiedCRM />} />
         <Route path="smart-campaigns" element={<SmartCampaignLauncher />} />
         <Route path="scraper" element={<ApifyScraper />} />
+        <Route path="scraper-history" element={<LeadsHistory />} />
+        <Route path="fiscal" element={<FiscalManagement />} />
       </Route>
     </Routes>
   );

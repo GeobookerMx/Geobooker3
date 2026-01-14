@@ -4,6 +4,8 @@
 
 -- 1. Función para reiniciar el estado de contacto (Re-engagement)
 -- Permite que contactos antiguos vuelvan a aparecer en la cola
+DROP FUNCTION IF EXISTS reset_contact_status(TEXT, INTEGER, BOOLEAN, BOOLEAN);
+
 CREATE OR REPLACE FUNCTION reset_contact_status(
     target_tier TEXT DEFAULT NULL,
     days_since_last_contact INTEGER DEFAULT 15,

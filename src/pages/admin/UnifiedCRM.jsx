@@ -603,6 +603,102 @@ const UnifiedCRM = () => {
         }
     };
 
+    // ============ SEND TEST EMAIL ============
+    const sendTestEmail = async () => {
+        if (!selectedTemplate) {
+            toast.error('Selecciona una plantilla primero');
+            return;
+        }
+        if (!selectedSender) {
+            toast.error('Selecciona un remitente primero');
+            return;
+        }
+
+        const testEmails = window.prompt(
+            'Ingresa los emails de prueba (separados por coma):',
+            'juan.pablo.pg@hotmail.com, geobookerr@gmail.com'
+        );
+
+        if (!testEmails) return;
+
+        const emails = testEmails.split(',').map(e => e.trim()).filter(e => e.includes('@'));
+
+        if (emails.length === 0) {
+            toast.error('No se encontraron emails válidos');
+            return;
+        }
+
+        const toastId = toast.loading(`Enviando prueba a ${emails.length} correo(s)...`);
+
+        try {
+            // Process template with sample data
+            let processedSubject = selectedTemplate.subject;
+            let processedBody = selectedTemplate.body_html;
+
+            const sampleVariables = {
+                empresa: 'Mi Empresa de Prueba',
+                nombre: 'Usuario de Prueba',
+                tier: 'AAA'
+            };
+
+            Object.keys(sampleVariables).forEach(key => {
+                const regex = new RegExp(`{{${key}}}`, 'g');
+                processedSubject = processedSubject.replace(regex, sampleVariables[key]);
+                processedBody = processedBody.replace(regex, sampleVariables[key]);
+            });
+
+            const finalHtml = `${processedBody} ${selectedSender.signature || ''}`;
+
+            let successCount = 0;
+            for (const email of emails) {
+                try {
+                    const response = await fetch('/.netlify/functions/send-notification-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            type: 'custom',
+                            data: {
+                                email: email,
+                                subject: `[PRUEBA] ${processedSubject}`,
+                                html: `<div style="background:#fff3cd;padding:10px;margin-bottom:20px;border-radius:8px;border:1px solid #ffc107;"><strong>⚠️ ESTO ES UNA PRUEBA</strong> - El correo real no tendrá este aviso.</div>${finalHtml}`,
+                                from_name: selectedSender.name,
+                                from_email: selectedSender.email
+                            }
+                        })
+                    });
+
+                    if (response.ok) successCount++;
+                } catch (err) {
+                    console.error('Test send error:', err);
+                }
+            }
+
+            toast.success(`✅ Prueba enviada a ${successCount}/${emails.length} correos. Revisa tu bandeja.`, { id: toastId });
+        } catch (err) {
+            toast.error('Error enviando prueba: ' + err.message, { id: toastId });
+        }
+    };
+
+    // ============ SEND TEST WHATSAPP ============
+    const sendTestWhatsApp = () => {
+        const phone = window.prompt(
+            'Ingresa el número de teléfono para la prueba (con código de país):',
+            '521234567890'
+        );
+
+        if (!phone) return;
+
+        const cleanPhone = phone.replace(/\D/g, '');
+        const message = encodeURIComponent(
+            `🧪 *PRUEBA DE WHATSAPP*\n\nEste es un mensaje de prueba del CRM de Geobooker.\n\nSi recibes esto, la configuración funciona correctamente. ✅\n\nEl mensaje real a los contactos será diferente.`
+        );
+
+        const waUrl = `https://wa.me/${cleanPhone}?text=${message}`;
+        window.open(waUrl, '_blank');
+        toast.success('Abriendo WhatsApp Web para prueba...');
+    };
+
+
     // ============ TABS CONFIG ============
     const tabs = [
         { id: 'contactos', label: '📥 Contactos', icon: Users },
@@ -1094,25 +1190,35 @@ const UnifiedCRM = () => {
                                 {/* Step 4: Queue Preview */}
                                 {emailQueue.length > 0 && (
                                     <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-                                        <div className="p-4 border-b flex justify-between items-center">
+                                        <div className="p-4 border-b flex flex-wrap justify-between items-center gap-2">
                                             <h3 className="font-bold">4. Cola de Envío Masivo ({emailQueue.length})</h3>
-                                            <button
-                                                onClick={sendCampaign}
-                                                disabled={isSending || !selectedTemplate}
-                                                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-medium disabled:opacity-50"
-                                            >
-                                                {isSending ? (
-                                                    <>
-                                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                                        {sendProgress}%
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Send className="w-4 h-4" />
-                                                        Enviar Todo Ahora
-                                                    </>
-                                                )}
-                                            </button>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={sendTestEmail}
+                                                    disabled={isSending || !selectedTemplate}
+                                                    className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg font-medium disabled:opacity-50 hover:bg-yellow-600"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                    Enviar Prueba
+                                                </button>
+                                                <button
+                                                    onClick={sendCampaign}
+                                                    disabled={isSending || !selectedTemplate}
+                                                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-medium disabled:opacity-50"
+                                                >
+                                                    {isSending ? (
+                                                        <>
+                                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                                            {sendProgress}%
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Send className="w-4 h-4" />
+                                                            Enviar Todo Ahora
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
                                         </div>
                                         <div className="overflow-x-auto max-h-64">
                                             <table className="w-full min-w-[400px] text-sm">
@@ -1148,9 +1254,18 @@ const UnifiedCRM = () => {
                                 {/* WhatsApp Queue */}
                                 {waQueue.length > 0 ? (
                                     <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-                                        <div className="p-4 border-b">
-                                            <h3 className="font-bold">Cola de Envío Collective WhatsApp ({waQueue.length})</h3>
-                                            <p className="text-xs text-gray-500 mt-1">Haz clic en "Enviar" para abrir WhatsApp Web y luego marcar como "Hecho".</p>
+                                        <div className="p-4 border-b flex flex-wrap justify-between items-center gap-2">
+                                            <div>
+                                                <h3 className="font-bold">Cola de Envío Colectivo WhatsApp ({waQueue.length})</h3>
+                                                <p className="text-xs text-gray-500 mt-1">Haz clic en "Enviar" para abrir WhatsApp Web y luego marcar como "Hecho".</p>
+                                            </div>
+                                            <button
+                                                onClick={sendTestWhatsApp}
+                                                className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg font-medium hover:bg-yellow-600"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                                Probar WhatsApp
+                                            </button>
                                         </div>
                                         <div className="overflow-x-auto">
                                             <table className="w-full text-sm">

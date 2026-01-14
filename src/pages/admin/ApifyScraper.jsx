@@ -9,10 +9,11 @@ import React, { useState, useCallback, useEffect } from 'react';
 import {
     Search, Globe, MapPin, Phone, Mail, ExternalLink, Download,
     Loader2, Building2, Star, MessageCircle, Send, CheckCircle,
-    Users, Filter, RefreshCw, AlertCircle, Clock, Timer
+    Users, Filter, RefreshCw, AlertCircle, Clock, Timer, FolderOpen
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
+import * as XLSX from 'xlsx';
 
 const ApifyScraper = () => {
     // Search state
@@ -464,38 +465,41 @@ const ApifyScraper = () => {
         }
     };
 
-    // Export results to CSV
-    const exportToCSV = () => {
+    // Export results to Excel
+    const exportToExcel = () => {
         if (results.length === 0) {
             toast.error('No hay resultados para exportar');
             return;
         }
 
-        const headers = ['Nombre', 'Teléfono', 'Email', 'Website', 'Dirección', 'Categoría', 'Rating', 'Reviews', 'Google Maps URL'];
-        const csvContent = [
-            headers.join(','),
-            ...results.map(lead => [
-                `"${(lead.name || '').replace(/"/g, '""')}"`,
-                `"${lead.phone || ''}"`,
-                `"${lead.email || ''}"`,
-                `"${lead.website || ''}"`,
-                `"${(lead.address || '').replace(/"/g, '""')}"`,
-                `"${lead.category || ''}"`,
-                lead.rating || '',
-                lead.reviewCount || '',
-                `"${lead.googleMapsUrl || ''}"`
-            ].join(','))
-        ].join('\n');
+        try {
+            const data = results.map(lead => ({
+                'Nombre': lead.name || '',
+                'Teléfono': lead.phone || '',
+                'Email': lead.email || '',
+                'Website': lead.website || '',
+                'Dirección': lead.address || '',
+                'Categoría': lead.category || '',
+                'Rating': lead.rating || '',
+                'Reviews': lead.reviewCount || '',
+                'Google Maps URL': lead.googleMapsUrl || ''
+            }));
 
-        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `leads_${searchQuery}_${location}_${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
-        URL.revokeObjectURL(url);
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Leads');
 
-        toast.success(`📥 ${results.length} leads exportados a CSV`);
+            // Generate sanitized filename
+            const cleanQuery = searchQuery.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            const date = new Date().toISOString().split('T')[0];
+            const fileName = `Leads x Scrapping - ${cleanQuery} - ${date}.xlsx`;
+
+            XLSX.writeFile(workbook, fileName);
+            toast.success(`📥 ${results.length} leads exportados a Excel`);
+        } catch (err) {
+            console.error('Error exporting to Excel:', err);
+            toast.error('Error exportando a Excel');
+        }
     };
 
     return (
@@ -726,13 +730,20 @@ const ApifyScraper = () => {
                                 Importar al CRM ({selectedLeads.size})
                             </button>
                             <button
-                                onClick={exportToCSV}
-                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
-                                title="Descargar todos los resultados como CSV"
+                                onClick={exportToExcel}
+                                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium"
+                                title="Descargar todos los resultados como Excel"
                             >
                                 <Download className="w-4 h-4" />
-                                Exportar CSV
+                                Exportar Excel
                             </button>
+                            <Link
+                                to="/admin/scraper-history"
+                                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium border"
+                            >
+                                <FolderOpen className="w-4 h-4" />
+                                Leads x Scrapping
+                            </Link>
                         </div>
                     </div>
 

@@ -72,6 +72,8 @@ const Sidebar = ({ onLogout }) => {
         { path: '/admin/import', icon: Database, label: '📥 Importar Datos' },
         { path: '/admin/marketing', icon: Mail, label: '🎯 CRM & Marketing' },
         { path: '/admin/scraper', icon: Globe, label: '🌍 Lead Scraper' },
+        { path: '/admin/scraper-history', icon: Database, label: '📂 Leads x Scrapping' },
+        { path: '/admin/fiscal', icon: Database, label: '🧾 Control Fiscal' },
         { path: '/admin/revenue', icon: DollarSign, label: 'Ingresos' },
         { path: '/admin/settings', icon: Settings, label: 'Configuración' },
     ];

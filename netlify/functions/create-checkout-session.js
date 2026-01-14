@@ -37,9 +37,14 @@ exports.handler = async (event) => {
             successUrl,
             cancelUrl,
             customerEmail,
+            currency = 'mxn', // Default to MXN, but can be 'usd' for Enterprise
             mode = 'payment',
             metadata = {}
         } = JSON.parse(event.body);
+
+        // Validate currency
+        const validCurrencies = ['mxn', 'usd'];
+        const finalCurrency = validCurrencies.includes(currency?.toLowerCase()) ? currency.toLowerCase() : 'mxn';
 
         // Build form data for Stripe API
         const formData = new URLSearchParams();
@@ -49,8 +54,8 @@ exports.handler = async (event) => {
             formData.append('line_items[0][price]', priceId);
             formData.append('line_items[0][quantity]', '1');
         } else if (amount) {
-            formData.append('line_items[0][price_data][currency]', 'mxn');
-            formData.append('line_items[0][price_data][product_data][name]', productName || 'Publicidad Geobooker');
+            formData.append('line_items[0][price_data][currency]', finalCurrency);
+            formData.append('line_items[0][price_data][product_data][name]', productName || 'Geobooker Ads');
             formData.append('line_items[0][price_data][unit_amount]', String(amount));
             formData.append('line_items[0][quantity]', '1');
         } else {

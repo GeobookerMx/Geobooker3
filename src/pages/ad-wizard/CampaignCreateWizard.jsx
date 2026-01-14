@@ -234,9 +234,21 @@ const CampaignCreateWizard = () => {
             if (paymentMethod === 'card') {
                 // Pago con tarjeta - Stripe Checkout
                 const stripe = await stripePromise;
-                if (!stripe) throw new Error('Stripe no pudo cargarse');
+                if (!stripe) {
+                    console.error('Stripe failed to load. Check VITE_STRIPE_PUBLIC_KEY');
+                    throw new Error('Stripe no pudo cargarse. Verifica la configuración.');
+                }
 
                 const { data: { user } } = await supabase.auth.getUser();
+
+                // Determine currency based on country
+                const currency = ['US', 'CA'].includes(formData.target_country) ? 'usd' : 'mxn';
+
+                console.log('Creating checkout session...', {
+                    adSpace: adSpace.name,
+                    amount: adSpace.price_monthly,
+                    currency
+                });
 
                 const response = await fetch('/.netlify/functions/create-checkout-session', {
                     method: 'POST',
@@ -244,12 +256,13 @@ const CampaignCreateWizard = () => {
                     body: JSON.stringify({
                         priceId: adSpace.stripe_price_id || null,
                         productId: adSpace.stripe_product_id || null,
+                        productName: `Geobooker Ads - ${adSpace.display_name}`,
                         amount: Math.round(adSpace.price_monthly * 100),
+                        currency: currency,
                         userId: user?.id || null,
                         customerEmail: formData.advertiser_email,
                         successUrl: window.location.origin + '/advertise/success?campaign=' + campaignId,
                         cancelUrl: window.location.origin + '/advertise/create?space=' + spaceId + '&canceled=true',
-                        countryCode: formData.target_country || 'MX',
                         mode: 'payment',
                         metadata: {
                             type: 'ad_payment',
@@ -261,7 +274,15 @@ const CampaignCreateWizard = () => {
                 });
 
                 const sessionData = await response.json();
-                if (sessionData.error) throw new Error(sessionData.error);
+                console.log('Checkout session response:', sessionData);
+
+                if (!response.ok || sessionData.error) {
+                    throw new Error(sessionData.error || 'Error al crear sesión de pago');
+                }
+
+                if (!sessionData.url) {
+                    throw new Error('No se recibió URL de pago');
+                }
 
                 toast.success('Redirigiendo a pago seguro...', { id: toastId });
                 window.location.href = sessionData.url;

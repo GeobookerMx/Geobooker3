@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import OxxoVoucher from '../components/payment/OxxoVoucher';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_sample');
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 const UpgradePage = () => {
     const navigate = useNavigate();
@@ -61,7 +61,13 @@ const UpgradePage = () => {
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const stripe = await stripePromise;
-            if (!stripe) throw new Error('Stripe no pudo cargarse');
+
+            if (!stripe) {
+                console.error('Stripe failed to load. Check VITE_STRIPE_PUBLIC_KEY');
+                throw new Error('Stripe no pudo cargarse. Verifica la configuración.');
+            }
+
+            console.log('Creating premium checkout session...');
 
             const response = await fetch('/.netlify/functions/create-checkout-session', {
                 method: 'POST',
@@ -71,11 +77,12 @@ const UpgradePage = () => {
                     // Stripe minimum is $10 MXN (1000 centavos)
                     amount: LAUNCH_CONFIG.launchPrice === 0 ? 1000 : LAUNCH_CONFIG.regularPrice * 100, // cents
                     currency: 'mxn',
+                    productName: 'Geobooker Premium - 3 meses gratis',
                     userId: session.user.id,
                     customerEmail: session.user.email,
                     successUrl: window.location.origin + '/dashboard?success=true',
                     cancelUrl: window.location.origin + '/dashboard/upgrade?canceled=true',
-                    mode: LAUNCH_CONFIG.launchPrice === 0 ? 'payment' : 'subscription',
+                    mode: 'payment',
                     metadata: {
                         type: 'premium_subscription',
                         user_id: session.user.id,
@@ -84,8 +91,17 @@ const UpgradePage = () => {
                 }),
             });
 
+            console.log('Premium checkout response status:', response.status);
             const sessionData = await response.json();
-            if (sessionData.error) throw new Error(sessionData.error);
+            console.log('Premium checkout session:', sessionData);
+
+            if (!response.ok || sessionData.error) {
+                throw new Error(sessionData.error || sessionData.debug || 'Error en el servicio de pagos');
+            }
+
+            if (!sessionData.url) {
+                throw new Error('No se recibió URL de pago');
+            }
 
             toast.success('Redirigiendo a Stripe...', { id: toastId });
             window.location.href = sessionData.url;

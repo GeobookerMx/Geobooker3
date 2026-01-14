@@ -622,6 +622,7 @@ export default function EnterpriseCheckout() {
                 body: JSON.stringify({
                     amount: Math.round((selectedPlanData?.current_price_usd || 1250) * 100),
                     currency: 'usd',
+                    productName: `Geobooker Enterprise - ${selectedPlanData?.name || form.selectedPlan}`,
                     customerEmail: form.contactEmail,
                     successUrl: `${window.location.origin}/enterprise/success?campaign=${campaign.id}`,
                     cancelUrl: `${window.location.origin}/enterprise/checkout?plan=${form.selectedPlan}&canceled=true`,
@@ -635,8 +636,17 @@ export default function EnterpriseCheckout() {
                 })
             });
 
+            console.log('Enterprise checkout response status:', response.status);
             const session = await response.json();
-            if (session.error) throw new Error(session.error);
+            console.log('Enterprise checkout session:', session);
+
+            if (!response.ok || session.error) {
+                throw new Error(session.error || session.debug || 'Payment service error');
+            }
+
+            if (!session.url) {
+                throw new Error('No checkout URL received from Stripe');
+            }
 
             toast.success('Redirecting to secure payment...', { id: toastId });
             window.location.href = session.url;

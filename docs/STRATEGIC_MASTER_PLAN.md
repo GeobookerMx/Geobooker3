@@ -359,37 +359,71 @@ export function detectUserLocale() {
 
 ## 📋 Plan de Implementación en Fases
 
-### FASE 3A: Fundamentos del Agent Builder (2-3 semanas)
+### FASE 1: Analytics y Heatmaps (1 día) ⭐ PRIORIDAD
+- [ ] Crear cuenta Microsoft Clarity (gratis)
+- [ ] Agregar script de tracking en `index.html`
+- [ ] Configurar heatmaps y grabaciones de sesión
+- [ ] Dashboard de análisis de comportamiento
+
+**Código a agregar:**
+```html
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "TU_CLARITY_ID");
+</script>
+```
+
+---
+
+### FASE 2: Automatización n8n (1-2 semanas) ⭐ PRIORIDAD
+- [ ] Instalar n8n (self-hosted o cloud)
+- [ ] Conectar webhook de Supabase
+- [ ] Automatizar seguimiento de leads:
+  - Lead sin respuesta en 3 días → Email recordatorio
+  - Lead abrió email → Marcar como "interesado"
+  - Lead visitó web → Notificación a CRM
+- [ ] Automatizar WhatsApp con n8n + Twilio
+- [ ] Dashboard de flujos automatizados
+
+**Flujos sugeridos:**
+1. `Nuevo Lead → Enriquecer datos → Asignar tier → Email bienvenida`
+2. `Lead inactivo 7 días → Email follow-up → WhatsApp si no responde`
+3. `Pago recibido → Crear factura → Enviar email confirmación`
+
+---
+
+### FASE 3: Publicar en Play Store (2-3 días) ⭐ PRIORIDAD
+- [ ] Verificar PWA con Lighthouse (≥90)
+- [ ] Crear cuenta Google Play Console ($25 USD)
+- [ ] Generar TWA con PWA Builder
+- [ ] Configurar assetlinks.json
+- [ ] Subir AAB y ficha de la tienda
+- [ ] Esperar aprobación (1-7 días)
+
+---
+
+### FASE 4: Agent Builder (2-3 semanas)
 - [ ] Crear tabla `agent_conversations` en Supabase
 - [ ] Integrar OpenAI API para agente web
 - [ ] Construir componente `<ChatWidget>` en React
 - [ ] Entrenar agente con contenido de Guía de Negocios
 
-### FASE 3B: WhatsApp (2 semanas)
+### FASE 5: WhatsApp Business (2 semanas)
 - [ ] Registrar número de WhatsApp Business
 - [ ] Configurar Twilio o Meta Business API
 - [ ] Crear webhook para mensajes entrantes
 - [ ] Sincronizar conversaciones con DB
 
-### FASE 3C: Sistema de Tickets (1 semana)
-- [ ] Configurar Mailgun/SendGrid
-- [ ] Crear tabla `support_tickets`
-- [ ] Dashboard admin para tickets
-- [ ] Categorización automática
-
-### FASE 4: Guía de Negocios (3-4 semanas)
+### FASE 6: Guía de Negocios (3-4 semanas)
 - [ ] Escribir contenido de los 5 módulos
 - [ ] Diseñar UI de learning platform
 - [ ] Componentes: `<CourseModule>`, `<Checklist>`, `<Quiz>`
 - [ ] Gamificación (progreso, badges)
 
-### FASE 5: Publicidad (1-2 semanas)
-- [ ] Tabla `ad_placements` en Supabase
-- [ ] Componentes `<Banner>`, `<SponsoredPin>`
-- [ ] Dashboard de compra de espacios
-- [ ] Analytics de impresiones/clicks
-
-### FASE 6: i18n (1 semana)
+### FASE 7: i18n (1 semana)
 - [ ] Traducir todos los textos a EN, PT, FR
 - [ ] Implementar selector de idioma
 - [ ] Geo-detection automática
@@ -399,21 +433,27 @@ export function detectUserLocale() {
 
 ## 🎯 Recomendación de Prioridad
 
-**AHORA (Corto Plazo):**
-1. ✅ Terminar Admin Dashboard (aprobar negocios)
+**COMPLETADO:**
+1. ✅ Admin Dashboard (aprobar negocios)
 2. ✅ Configurar SQL y Storage
-3. 🔄 Crear Guía de Negocios (MVP con 2-3 módulos)
-4. 🔄 Agent Builder Web (ChatGPT + OpenAI API)
+3. ✅ Sistema Fiscal (facturas CFDI)
+4. ✅ CRM de Marketing con campañas de email
+5. ✅ Lead Scraper con exportación Excel
+6. ✅ Banner PWA para instalación
+
+**AHORA (Corto Plazo):**
+7. 🔄 **Microsoft Clarity** - Heatmaps y grabaciones de sesión (GRATIS)
+8. 🔄 **n8n** - Automatización de leads y seguimientos
+9. 🔄 **Publicar en Play Store** como TWA ($25 USD)
 
 **SIGUIENTE (Mediano Plazo):**
-5. WhatsApp Integration
-6. Sistema de Publicidad
-7. PWA notifications
+10. WhatsApp Business API Integration
+11. Guía de Negocios (plataforma educativa)
+12. Agent Builder Web (ChatGPT + Gemini)
 
 **FUTURO (Largo Plazo):**
-8. Internacionalización completa
-9. App móvil nativa
-10. Marketplace de servicios adicionales
+13. Internacionalización completa (EN, PT, FR)
+14. Marketplace de servicios adicionales
 
 ---
 

@@ -46,6 +46,9 @@ ORDER BY
     END;
 
 -- 3. Función para generar cola de emails distribuida por tipo
+DROP FUNCTION IF EXISTS generate_email_queue(INTEGER, INTEGER);
+DROP FUNCTION IF EXISTS generate_email_queue(INTEGER, INTEGER, TEXT);
+
 CREATE OR REPLACE FUNCTION generate_email_queue(
     daily_limit INTEGER DEFAULT 200,
     min_per_type INTEGER DEFAULT 5,
@@ -128,6 +131,9 @@ END;
 $$;
 
 -- 4. Función para generar cola de WhatsApp por tier
+DROP FUNCTION IF EXISTS generate_whatsapp_queue(INTEGER);
+DROP FUNCTION IF EXISTS generate_whatsapp_queue(INTEGER, TEXT);
+
 CREATE OR REPLACE FUNCTION generate_whatsapp_queue(
     daily_limit INTEGER DEFAULT 50,
     target_tier TEXT DEFAULT NULL -- NULL = todos, o 'AAA', 'AA', 'A', 'B'

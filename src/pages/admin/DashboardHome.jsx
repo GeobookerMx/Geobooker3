@@ -15,7 +15,10 @@ import {
   Search,
   Smartphone,
   Monitor,
-  Globe
+  Globe,
+  ExternalLink,
+  Flame,
+  Video
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -344,6 +347,51 @@ export default function DashboardHome() {
               label="Gestionar Usuarios"
               color="purple"
             />
+          </div>
+
+          {/* Analytics Externos */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              📊 Analytics Externos
+            </h3>
+            <div className="space-y-2">
+              <a
+                href="https://analytics.google.com/analytics/web/#/p123456789/reports/dashboard"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition group"
+              >
+                <div className="p-2 rounded-lg bg-orange-50 text-orange-600">
+                  <TrendingUp className="w-4 h-4" />
+                </div>
+                <span className="text-gray-700 group-hover:text-gray-900 font-medium">Google Analytics</span>
+                <ExternalLink className="w-4 h-4 text-gray-400 ml-auto group-hover:text-blue-600" />
+              </a>
+              <a
+                href="https://clarity.microsoft.com/projects/view/v1j8dut5lg/dashboard"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition group"
+              >
+                <div className="p-2 rounded-lg bg-red-50 text-red-600">
+                  <Flame className="w-4 h-4" />
+                </div>
+                <span className="text-gray-700 group-hover:text-gray-900 font-medium">Heatmaps (Clarity)</span>
+                <ExternalLink className="w-4 h-4 text-gray-400 ml-auto group-hover:text-blue-600" />
+              </a>
+              <a
+                href="https://clarity.microsoft.com/projects/view/v1j8dut5lg/recordings"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition group"
+              >
+                <div className="p-2 rounded-lg bg-purple-50 text-purple-600">
+                  <Video className="w-4 h-4" />
+                </div>
+                <span className="text-gray-700 group-hover:text-gray-900 font-medium">Grabaciones</span>
+                <ExternalLink className="w-4 h-4 text-gray-400 ml-auto group-hover:text-blue-600" />
+              </a>
+            </div>
           </div>
         </div>
       </div>

@@ -58,6 +58,8 @@ const UnifiedCRM = () => {
     // History State
     const [emailLogs, setEmailLogs] = useState([]);
     const [waLogs, setWaLogs] = useState([]);
+    const [followUpDays, setFollowUpDays] = useState(15);
+    const [isResetting, setIsResetting] = useState(false);
 
     // Settings State
     const [senders, setSenders] = useState([]);
@@ -484,6 +486,29 @@ const UnifiedCRM = () => {
             loadStats();
         } catch (err) {
             toast.error('Error al marcar');
+        }
+    };
+
+    const handleResetCampaign = async (type) => {
+        if (!confirm(`¿Estás seguro de reiniciar los contactos de ${type} que tengan más de ${followUpDays} días? Esto los pondrá de nuevo en la cola.`)) return;
+
+        setIsResetting(true);
+        try {
+            const { data, error } = await supabase.rpc('reset_contact_status', {
+                days_since_last_contact: parseInt(followUpDays),
+                reset_email: type === 'email' || type === 'both',
+                reset_whatsapp: type === 'whatsapp' || type === 'both',
+                target_tier: emailSearchTier === 'all' ? null : emailSearchTier
+            });
+
+            if (error) throw error;
+            toast.success(`${data} contactos reiniciados para seguimiento`);
+            loadStats();
+        } catch (err) {
+            toast.error('Error al reiniciar campaña');
+            console.error(err);
+        } finally {
+            setIsResetting(false);
         }
     };
 
@@ -1374,6 +1399,53 @@ const UnifiedCRM = () => {
                                         <li>Semana 2: Aumentar a 40 emails / día</li>
                                         <li>Meta: 100-200 emails / día para evitar spam</li>
                                     </ul>
+                                </div>
+                            </div>
+
+                            {/* Re-engagement Section */}
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-orange-100 text-left">
+                                <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-orange-700">
+                                    <RefreshCw className="w-5 h-5" />
+                                    Re-engagement (Seguimiento)
+                                </h2>
+                                <p className="text-sm text-gray-600 mb-6">
+                                    Permite que contactos ya contactados vuelvan a la cola si no han respondido después de cierto tiempo.
+                                </p>
+
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">
+                                            Días para volver a contactar
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={followUpDays}
+                                            onChange={(e) => setFollowUpDays(parseInt(e.target.value))}
+                                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                                            min="1"
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Solo se reiniciarán aquellos contactados hace más de {followUpDays} días.
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <button
+                                            onClick={() => handleResetCampaign('email')}
+                                            disabled={isResetting}
+                                            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition flex items-center justify-center gap-2 disabled:opacity-50 text-sm font-bold shadow-sm"
+                                        >
+                                            <Mail className="w-4 h-4" />
+                                            Reciclar Cola de Emails
+                                        </button>
+                                        <button
+                                            onClick={() => handleResetCampaign('whatsapp')}
+                                            disabled={isResetting}
+                                            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2 disabled:opacity-50 text-sm font-bold shadow-sm"
+                                        >
+                                            <MessageCircle className="w-4 h-4" />
+                                            Reciclar Cola de WhatsApp
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

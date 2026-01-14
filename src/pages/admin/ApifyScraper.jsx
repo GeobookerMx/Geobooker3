@@ -5,7 +5,7 @@
  * - Import to CRM
  * - Send WhatsApp/Email directly
  */
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
     Search, Globe, MapPin, Phone, Mail, ExternalLink, Download,
     Loader2, Building2, Star, MessageCircle, Send, CheckCircle,

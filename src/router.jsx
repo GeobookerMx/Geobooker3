@@ -33,6 +33,7 @@ import ReferralManagement from "./pages/admin/ReferralManagement.jsx";
 import BulkImport from "./pages/admin/BulkImport.jsx";
 import EmailCampaigns from "./pages/admin/EmailCampaigns.jsx";
 import ContactsCRM from "./pages/admin/ContactsCRM.jsx";
+import SmartCampaignLauncher from "./pages/admin/SmartCampaignLauncher.jsx";
 import ApifyScraper from "./pages/admin/ApifyScraper.jsx";
 import UnsubscribePage from "./pages/UnsubscribePage.jsx";
 
@@ -219,6 +220,7 @@ export default function AppRouter() {
         <Route path="import" element={<BulkImport />} />
         <Route path="campaigns" element={<EmailCampaigns />} />
         <Route path="crm" element={<ContactsCRM />} />
+        <Route path="smart-campaigns" element={<SmartCampaignLauncher />} />
         <Route path="scraper" element={<ApifyScraper />} />
       </Route>
     </Routes>

@@ -72,6 +72,7 @@ const Sidebar = ({ onLogout }) => {
         { path: '/admin/import', icon: Database, label: '📥 Importar Datos' },
         { path: '/admin/campaigns', icon: Mail, label: '📨 Campañas Email' },
         { path: '/admin/crm', icon: Users, label: '👥 CRM Contactos' },
+        { path: '/admin/smart-campaigns', icon: BarChart3, label: '🎯 Smart Campaigns' },
         { path: '/admin/scraper', icon: Globe, label: '🌍 Lead Scraper' },
         { path: '/admin/revenue', icon: DollarSign, label: 'Ingresos' },
         { path: '/admin/settings', icon: Settings, label: 'Configuración' },

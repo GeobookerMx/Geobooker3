@@ -3,10 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import {
-  BarChart3, Users, Building, MousePointer2,
+  BarChart3, Users, Building, MousePointer2, MousePointer,
   Calendar, CheckCircle2, AlertCircle, Clock,
   ChevronRight, Filter, Search, Plus, Eye,
-  Settings, Trash2, Edit2, Play, Pause, X
+  Settings, Trash2, Edit2, Play, Pause, X,
+  TrendingUp, DollarSign, Info
 } from 'lucide-react';
 import { sendCampaignApprovedEmail } from '../../services/notificationService';
 import CampaignDetailsModal from '../../components/admin/CampaignDetailsModal';

@@ -145,8 +145,30 @@ const EmailCampaigns = () => {
                             <h3 className="font-bold text-gray-900 mb-1">{tmpl.name}</h3>
                             <p className="text-sm text-gray-500 mb-4">{tmpl.subject}</p>
                             <div className="flex justify-end gap-2">
-                                <button className="p-2 text-gray-400 hover:text-blue-600"><Plus className="w-5 h-5" /></button>
-                                <button className="p-2 text-gray-400 hover:text-red-600"><Trash2 className="w-5 h-5" /></button>
+                                <button
+                                    onClick={() => {
+                                        setSelectedTemplate(tmpl.id);
+                                        setActiveTab('launch');
+                                        toast.success('Plantilla seleccionada para campaña');
+                                    }}
+                                    className="p-2 text-gray-400 hover:text-green-600"
+                                    title="Usar en campaña"
+                                >
+                                    <Send className="w-5 h-5" />
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        if (confirm('¿Eliminar esta plantilla?')) {
+                                            await supabase.from('email_templates').delete().eq('id', tmpl.id);
+                                            toast.success('Plantilla eliminada');
+                                            loadData();
+                                        }
+                                    }}
+                                    className="p-2 text-gray-400 hover:text-red-600"
+                                    title="Eliminar plantilla"
+                                >
+                                    <Trash2 className="w-5 h-5" />
+                                </button>
                             </div>
                         </div>
                     ))}

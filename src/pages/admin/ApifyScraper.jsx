@@ -9,7 +9,7 @@ import React, { useState, useCallback } from 'react';
 import {
     Search, Globe, MapPin, Phone, Mail, ExternalLink, Download,
     Loader2, Building2, Star, MessageCircle, Send, CheckCircle,
-    Users, Filter, RefreshCw, AlertCircle
+    Users, Filter, RefreshCw, AlertCircle, Clock, Timer
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
@@ -28,6 +28,24 @@ const ApifyScraper = () => {
     // Selection state
     const [selectedLeads, setSelectedLeads] = useState(new Set());
     const [importing, setImporting] = useState(false);
+
+    // WhatsApp tracking state
+    const [whatsappSent, setWhatsappSent] = useState(0);
+    const [contactedPhones, setContactedPhones] = useState(new Set()); // Phones already messaged
+    const [sessionPhones, setSessionPhones] = useState(new Set()); // Phones from current results (for dedup)
+
+    // Rate limiting state
+    const [cooldownSeconds, setCooldownSeconds] = useState(0);
+    const [hourlyCount, setHourlyCount] = useState(0);
+    const [hourlyResetTime, setHourlyResetTime] = useState(null);
+
+    // WhatsApp Business Configuration
+    const WHATSAPP_BUSINESS_PHONE = '525526702368';
+    const RATE_LIMIT = {
+        cooldownMs: 45000, // 45 seconds between messages
+        maxPerHour: 30,    // Max 30 messages per hour (conservative)
+        warningAt: 25      // Show warning at 25 messages
+    };
 
     // Categorías y subcategorías de negocios
     const businessCategories = [
@@ -259,15 +277,149 @@ const ApifyScraper = () => {
         return parts.length > 1 ? parts[parts.length - 2]?.trim() : parts[0]?.trim();
     };
 
-    // Open WhatsApp with lead's phone
-    const openWhatsApp = (lead) => {
+    // Start cooldown timer
+    const startCooldown = () => {
+        const seconds = Math.ceil(RATE_LIMIT.cooldownMs / 1000);
+        setCooldownSeconds(seconds);
+
+        const interval = setInterval(() => {
+            setCooldownSeconds(prev => {
+                if (prev <= 1) {
+                    clearInterval(interval);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    };
+
+    // Check and reset hourly limit
+    const checkHourlyLimit = () => {
+        const now = Date.now();
+        if (hourlyResetTime && now > hourlyResetTime) {
+            setHourlyCount(0);
+            setHourlyResetTime(null);
+            return true; // Reset happened, allow
+        }
+        return hourlyCount < RATE_LIMIT.maxPerHour;
+    };
+
+    // Open WhatsApp with lead's phone and track/remove (with rate limiting)
+    const openWhatsApp = (lead, index) => {
+        // Check cooldown
+        if (cooldownSeconds > 0) {
+            toast.error(`⏱️ Espera ${cooldownSeconds}s antes del siguiente mensaje`);
+            return;
+        }
+
+        // Check hourly limit
+        if (!checkHourlyLimit()) {
+            const resetIn = hourlyResetTime ? Math.ceil((hourlyResetTime - Date.now()) / 60000) : 0;
+            toast.error(`🚫 Límite por hora alcanzado (${RATE_LIMIT.maxPerHour}). Espera ${resetIn} minutos.`);
+            return;
+        }
+
         if (!lead.phone) {
             toast.error('Este negocio no tiene teléfono');
             return;
         }
+
         const phone = lead.phone.replace(/\D/g, '');
         const message = encodeURIComponent(`Hola, los contacto de parte de Geobooker. ¿Podemos platicar sobre cómo podemos ayudarles a conseguir más clientes?`);
         window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+
+        // Track the message
+        const newWhatsappCount = whatsappSent + 1;
+        setWhatsappSent(newWhatsappCount);
+        setContactedPhones(prev => new Set([...prev, phone]));
+
+        // Update hourly count
+        const newHourlyCount = hourlyCount + 1;
+        setHourlyCount(newHourlyCount);
+        if (!hourlyResetTime) {
+            setHourlyResetTime(Date.now() + 3600000); // 1 hour from now
+        }
+
+        // Start cooldown
+        startCooldown();
+
+        // Remove from results list after sending
+        setResults(prev => prev.filter((_, i) => i !== index));
+
+        // Update selected leads (shift indexes)
+        setSelectedLeads(prev => {
+            const newSelected = new Set();
+            prev.forEach(i => {
+                if (i < index) newSelected.add(i);
+                else if (i > index) newSelected.add(i - 1);
+            });
+            return newSelected;
+        });
+
+        // Show appropriate message
+        if (newHourlyCount >= RATE_LIMIT.warningAt) {
+            toast(`⚠️ WhatsApp ${newWhatsappCount} - Cerca del límite (${newHourlyCount}/${RATE_LIMIT.maxPerHour} por hora)`, { icon: '⚠️' });
+        } else {
+            toast.success(`✅ WhatsApp enviado (${newWhatsappCount} total) - Próximo en 45s`);
+        }
+    };
+
+    // Remove duplicate phones from results
+    const removeDuplicates = () => {
+        const seenPhones = new Set();
+        const uniqueResults = results.filter(lead => {
+            if (!lead.phone) return true; // Keep leads without phone
+            const phone = lead.phone.replace(/\D/g, '');
+            if (seenPhones.has(phone) || contactedPhones.has(phone)) {
+                return false; // Duplicate or already contacted
+            }
+            seenPhones.add(phone);
+            return true;
+        });
+
+        const removed = results.length - uniqueResults.length;
+        setResults(uniqueResults);
+        setSelectedLeads(new Set());
+
+        if (removed > 0) {
+            toast.success(`🧹 ${removed} duplicados eliminados`);
+        } else {
+            toast('No hay duplicados', { icon: '✨' });
+        }
+    };
+
+    // Export results to CSV
+    const exportToCSV = () => {
+        if (results.length === 0) {
+            toast.error('No hay resultados para exportar');
+            return;
+        }
+
+        const headers = ['Nombre', 'Teléfono', 'Email', 'Website', 'Dirección', 'Categoría', 'Rating', 'Reviews', 'Google Maps URL'];
+        const csvContent = [
+            headers.join(','),
+            ...results.map(lead => [
+                `"${(lead.name || '').replace(/"/g, '""')}"`,
+                `"${lead.phone || ''}"`,
+                `"${lead.email || ''}"`,
+                `"${lead.website || ''}"`,
+                `"${(lead.address || '').replace(/"/g, '""')}"`,
+                `"${lead.category || ''}"`,
+                lead.rating || '',
+                lead.reviewCount || '',
+                `"${lead.googleMapsUrl || ''}"`
+            ].join(','))
+        ].join('\n');
+
+        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `leads_${searchQuery}_${location}_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+
+        toast.success(`📥 ${results.length} leads exportados a CSV`);
     };
 
     return (
@@ -351,17 +503,19 @@ const ApifyScraper = () => {
                                 >
                                     {cat.category}
                                 </button>
-                                {/* Dropdown on hover */}
-                                <div className="absolute left-0 top-full mt-1 bg-white border rounded-lg shadow-lg p-2 z-20 hidden group-hover:block min-w-[180px]">
-                                    {cat.items.map((item, j) => (
-                                        <button
-                                            key={j}
-                                            onClick={() => setSearchQuery(item)}
-                                            className="block w-full text-left px-3 py-1 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 rounded"
-                                        >
-                                            {item}
-                                        </button>
-                                    ))}
+                                {/* Dropdown on hover - with padding bridge to prevent gap issues */}
+                                <div className="absolute left-0 top-full pt-2 z-20 hidden group-hover:block">
+                                    <div className="bg-white border rounded-lg shadow-lg p-2 min-w-[180px] max-h-[280px] overflow-y-auto">
+                                        {cat.items.map((item, j) => (
+                                            <button
+                                                key={j}
+                                                onClick={() => setSearchQuery(item)}
+                                                className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 rounded cursor-pointer"
+                                            >
+                                                {item}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -379,20 +533,22 @@ const ApifyScraper = () => {
                                 >
                                     {region.continent}
                                 </button>
-                                {/* Dropdown on hover */}
-                                <div className="absolute left-0 top-full mt-1 bg-white border rounded-lg shadow-lg p-2 z-20 hidden group-hover:block min-w-[220px] max-h-[300px] overflow-y-auto">
-                                    {region.cities.map((city, j) => (
-                                        <button
-                                            key={j}
-                                            onClick={() => setLocation(city)}
-                                            className={`block w-full text-left px-3 py-1 text-sm rounded ${location === city
-                                                ? 'bg-green-100 text-green-700 font-medium'
-                                                : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
-                                                }`}
-                                        >
-                                            {city}
-                                        </button>
-                                    ))}
+                                {/* Dropdown on hover - with padding bridge to prevent gap issues */}
+                                <div className="absolute left-0 top-full pt-2 z-20 hidden group-hover:block">
+                                    <div className="bg-white border rounded-lg shadow-lg p-2 min-w-[220px] max-h-[300px] overflow-y-auto">
+                                        {region.cities.map((city, j) => (
+                                            <button
+                                                key={j}
+                                                onClick={() => setLocation(city)}
+                                                className={`block w-full text-left px-3 py-2 text-sm rounded cursor-pointer ${location === city
+                                                    ? 'bg-green-100 text-green-700 font-medium'
+                                                    : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
+                                                    }`}
+                                            >
+                                                {city}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -438,7 +594,7 @@ const ApifyScraper = () => {
             {results.length > 0 && (
                 <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
                     {/* Results Header */}
-                    <div className="bg-gray-50 border-b px-6 py-4 flex items-center justify-between">
+                    <div className="bg-gray-50 border-b px-6 py-4 flex flex-wrap items-center justify-between gap-3">
                         <div className="flex items-center gap-4">
                             <span className="font-bold text-gray-700">
                                 {results.length} negocios encontrados
@@ -446,8 +602,35 @@ const ApifyScraper = () => {
                             <span className="text-sm text-gray-500">
                                 {selectedLeads.size} seleccionados
                             </span>
+                            {whatsappSent > 0 && (
+                                <span className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                                    <MessageCircle className="w-3 h-3" />
+                                    {whatsappSent} WhatsApp enviados
+                                </span>
+                            )}
+                            {cooldownSeconds > 0 && (
+                                <span className="flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium animate-pulse">
+                                    ⏱️ Próximo en {cooldownSeconds}s
+                                </span>
+                            )}
+                            {hourlyCount > 0 && (
+                                <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${hourlyCount >= RATE_LIMIT.warningAt
+                                    ? 'bg-red-100 text-red-700'
+                                    : 'bg-blue-100 text-blue-700'
+                                    }`}>
+                                    📊 {hourlyCount}/{RATE_LIMIT.maxPerHour} esta hora
+                                </span>
+                            )}
                         </div>
                         <div className="flex items-center gap-3">
+                            <button
+                                onClick={removeDuplicates}
+                                className="flex items-center gap-2 px-3 py-2 text-sm bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 font-medium"
+                                title="Eliminar teléfonos duplicados"
+                            >
+                                <RefreshCw className="w-4 h-4" />
+                                Quitar duplicados
+                            </button>
                             <button
                                 onClick={selectAll}
                                 className="text-sm text-blue-600 hover:text-blue-800"
@@ -465,6 +648,14 @@ const ApifyScraper = () => {
                                     <Download className="w-4 h-4" />
                                 )}
                                 Importar al CRM ({selectedLeads.size})
+                            </button>
+                            <button
+                                onClick={exportToCSV}
+                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
+                                title="Descargar todos los resultados como CSV"
+                            >
+                                <Download className="w-4 h-4" />
+                                Exportar CSV
                             </button>
                         </div>
                     </div>
@@ -550,9 +741,9 @@ const ApifyScraper = () => {
                                             <div className="flex items-center gap-2">
                                                 {lead.phone && (
                                                     <button
-                                                        onClick={() => openWhatsApp(lead)}
+                                                        onClick={() => openWhatsApp(lead, index)}
                                                         className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-                                                        title="WhatsApp"
+                                                        title="Enviar WhatsApp (se eliminará de la lista)"
                                                     >
                                                         <MessageCircle className="w-4 h-4" />
                                                     </button>

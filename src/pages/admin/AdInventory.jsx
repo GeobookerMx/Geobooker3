@@ -316,7 +316,20 @@ export default function AdInventory() {
 
                 {/* Quick Stats */}
                 {metrics && (
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+                    <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
+                        {/* NEW: Total Slots Summary */}
+                        <div className="bg-gradient-to-br from-indigo-600 to-purple-600 border border-indigo-500 rounded-xl p-4">
+                            <div className="flex items-center gap-2 text-indigo-100 text-sm mb-1">
+                                <Globe className="w-4 h-4" />
+                                Total Slots Disponibles
+                            </div>
+                            <div className="text-2xl font-bold text-white">
+                                {inventory.reduce((sum, item) => sum + Number(item.available_slots || 0), 0)}/{inventory.reduce((sum, item) => sum + (item.max_slots || 0), 0)}
+                            </div>
+                            <div className="text-xs text-indigo-200 mt-1">
+                                {inventory.length} ubicaciones activas
+                            </div>
+                        </div>
                         <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
                             <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
                                 <Calendar className="w-4 h-4" />

@@ -82,8 +82,11 @@ export default function InstallPWAButton({ variant = 'button', showDismiss = tru
     // No mostrar si ya está instalada o fue descartada
     if (isInstalled || dismissed) return null;
 
-    // No mostrar si no hay soporte y no es iOS
-    if (!deferredPrompt && !isIOS) return null;
+    // En móviles, siempre mostrar el banner (iOS o Android)
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    // No mostrar en desktop si no hay soporte y no es iOS
+    if (!isMobile && !deferredPrompt && !isIOS) return null;
 
     // VARIANTE: Banner flotante (más visible)
     if (variant === 'banner') {

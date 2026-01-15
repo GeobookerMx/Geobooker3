@@ -17,6 +17,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
+import EmailTester from '../../components/admin/EmailTester';
 
 const UnifiedCRM = () => {
     // Active Tab
@@ -1351,6 +1352,9 @@ const UnifiedCRM = () => {
                 {/* ============ TAB: CONFIG ============ */}
                 {activeTab === 'config' && (
                     <div className="space-y-6">
+                        {/* Email Testing Section */}
+                        <EmailTester />
+
                         {/* WhatsApp Section */}
                         <div className="bg-white rounded-xl shadow-sm border p-6">
                             <h3 className="text-lg font-bold mb-4 flex items-center gap-2">

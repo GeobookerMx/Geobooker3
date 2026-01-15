@@ -418,7 +418,10 @@ const UnifiedCRM = () => {
         }
     };
 
+
     const generateQueue = async () => {
+        const toastId = toast.loading(campaignType === 'email' ? 'Buscando contactos con email...' : 'Buscando contactos con WhatsApp...');
+
         try {
             if (campaignType === 'email') {
                 const { data, error } = await supabase
@@ -430,7 +433,12 @@ const UnifiedCRM = () => {
 
                 if (error) throw error;
                 setEmailQueue(data || []);
-                toast.success(`Cola generada: ${data?.length || 0} emails`);
+
+                if (data && data.length > 0) {
+                    toast.success(`✅ Cola generada: ${data.length} emails listos para enviar`, { id: toastId });
+                } else {
+                    toast.error(`❌ No se encontraron contactos con email que cumplan los criterios:\n- Tier: ${emailSearchTier === 'all' ? 'Todos' : emailSearchTier}\n- Estado: Sin enviar`, { id: toastId, duration: 5000 });
+                }
             } else {
                 const { data, error } = await supabase
                     .rpc('generate_whatsapp_queue', {
@@ -440,12 +448,19 @@ const UnifiedCRM = () => {
 
                 if (error) throw error;
                 setWaQueue(data || []);
-                toast.success(`Cola generada: ${data?.length || 0} WhatsApps`);
+
+                if (data && data.length > 0) {
+                    toast.success(`✅ Cola generada: ${data.length} contactos con WhatsApp listos`, { id: toastId });
+                } else {
+                    toast.error(`❌ No se encontraron contactos que cumplan los criterios:\n- Con número de teléfono válido\n- Tier: ${waSearchTier === 'all' ? 'Todos' : waSearchTier}\n- Sin WhatsApp enviado`, { id: toastId, duration: 5000 });
+                }
             }
         } catch (err) {
-            toast.error('Error generando cola');
+            console.error('Error generating queue:', err);
+            toast.error(`Error generando cola: ${err.message}`, { id: toastId });
         }
     };
+
 
     // ============ HISTORY FUNCTIONS ============
     const loadHistory = async () => {
@@ -1220,22 +1235,24 @@ const UnifiedCRM = () => {
                                                 </button>
                                             </div>
                                         </div>
-                                        <div className="overflow-x-auto max-h-64">
-                                            <table className="w-full min-w-[400px] text-sm">
-                                                <thead className="bg-gray-50 font-bold">
+                                        <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: '400px' }}>
+                                            <table className="w-full min-w-[600px] text-sm">
+                                                <thead className="bg-gray-50 font-bold sticky top-0 z-10">
                                                     <tr>
                                                         <th className="p-2 text-left">#</th>
                                                         <th className="p-2 text-left">Nombre</th>
                                                         <th className="p-2 text-left">Email</th>
+                                                        <th className="p-2 text-left">Empresa</th>
                                                         <th className="p-2 text-left">Tier</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y text-gray-600">
                                                     {emailQueue.slice(0, 50).map((item, i) => (
-                                                        <tr key={item.contact_id}>
+                                                        <tr key={item.contact_id} className="hover:bg-gray-50">
                                                             <td className="p-2 text-gray-400">{i + 1}</td>
                                                             <td className="p-2 font-medium">{item.contact_name || '-'}</td>
                                                             <td className="p-2 text-blue-600">{item.contact_email}</td>
+                                                            <td className="p-2 text-sm text-gray-500">{item.company_name || '-'}</td>
                                                             <td className="p-2">
                                                                 <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${getTierColor(item.contact_tier)}`}>
                                                                     {item.contact_tier}
@@ -1267,11 +1284,12 @@ const UnifiedCRM = () => {
                                                 Probar WhatsApp
                                             </button>
                                         </div>
-                                        <div className="overflow-x-auto">
-                                            <table className="w-full text-sm">
-                                                <thead className="bg-gray-50 font-bold">
+                                        <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: '500px' }}>
+                                            <table className="w-full min-w-[700px] text-sm">
+                                                <thead className="bg-gray-50 font-bold sticky top-0 z-10">
                                                     <tr>
                                                         <th className="p-3 text-left">Contacto / Empresa</th>
+                                                        <th className="p-3 text-left">Teléfono</th>
                                                         <th className="p-3 text-left">Tier</th>
                                                         <th className="p-3 text-center">Acciones</th>
                                                     </tr>
@@ -1282,7 +1300,9 @@ const UnifiedCRM = () => {
                                                             <td className="p-3">
                                                                 <div className="font-bold">{item.contact_name}</div>
                                                                 <div className="text-xs text-gray-500">{item.company_name}</div>
-                                                                <div className="text-xs text-blue-600">{item.contact_phone}</div>
+                                                            </td>
+                                                            <td className="p-3">
+                                                                <div className="text-xs text-blue-600 font-medium">{item.contact_phone}</div>
                                                             </td>
                                                             <td className="p-3">
                                                                 <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${getTierColor(item.contact_tier)}`}>

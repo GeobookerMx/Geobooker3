@@ -70,7 +70,7 @@ const EmailTester = () => {
             </div>
           </div>
         `,
-                from: 'Geobooker Test <onboarding@resend.dev>'
+                from: 'Geobooker <ventas@geobooker.com>' // ✅ Dominio verificado
             });
 
             setResult(response);
@@ -130,8 +130,8 @@ const EmailTester = () => {
 
                 {result && (
                     <div className={`p-3 rounded-lg flex items-start gap-2 ${result.success
-                            ? 'bg-green-50 border border-green-200'
-                            : 'bg-red-50 border border-red-200'
+                        ? 'bg-green-50 border border-green-200'
+                        : 'bg-red-50 border border-red-200'
                         }`}>
                         {result.success ? (
                             <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />

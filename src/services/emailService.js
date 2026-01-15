@@ -11,39 +11,39 @@
  * @returns {Promise<Object>} - Resultado del envío
  */
 export async function sendEmail({ to, subject, html, from }) {
-    try {
-        const response = await fetch('/.netlify/functions/send-email', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                to,
-                subject,
-                html,
-                from // Opcional: 'Geobooker <ventasgeobooker@gmail.com>'
-            })
-        });
+  try {
+    const response = await fetch('/.netlify/functions/send-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to,
+        subject,
+        html,
+        from // Opcional: 'Geobooker <ventasgeobooker@gmail.com>'
+      })
+    });
 
-        const data = await response.json();
+    const data = await response.json();
 
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to send email');
-        }
-
-        return {
-            success: true,
-            messageId: data.messageId,
-            message: data.message
-        };
-
-    } catch (error) {
-        console.error('Error sending email:', error);
-        return {
-            success: false,
-            error: error.message
-        };
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to send email');
     }
+
+    return {
+      success: true,
+      messageId: data.messageId,
+      message: data.message
+    };
+
+  } catch (error) {
+    console.error('Error sending email:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
 }
 
 /**
@@ -55,13 +55,13 @@ export async function sendEmail({ to, subject, html, from }) {
  * @returns {string} - HTML del email
  */
 export function generateCampaignEmailHTML({ company_name, contact_name }, tier) {
-    const greeting = contact_name || 'Estimado/a';
-    const companyName = company_name || 'su empresa';
+  const greeting = contact_name || 'Estimado/a';
+  const companyName = company_name || 'su empresa';
 
-    // Template diferente según tier
-    const isPremium = ['AAA', 'AA'].includes(tier);
+  // Template diferente según tier
+  const isPremium = ['AAA', 'AA'].includes(tier);
 
-    return `
+  return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -154,16 +154,16 @@ export function generateCampaignEmailHTML({ company_name, contact_name }, tier) 
  * @returns {Promise<Object>} - Resultado del envío
  */
 export async function sendCampaignEmail(contact) {
-    const html = generateCampaignEmailHTML(contact, contact.tier);
+  const html = generateCampaignEmailHTML(contact, contact.tier);
 
-    const subject = contact.tier === 'AAA' || contact.tier === 'AA'
-        ? `${contact.company_name} - Solución Premium de Geobooker`
-        : `Aumenta la visibilidad de ${contact.company_name} con Geobooker`;
+  const subject = contact.tier === 'AAA' || contact.tier === 'AA'
+    ? `${contact.company_name} - Solución Premium de Geobooker`
+    : `Aumenta la visibilidad de ${contact.company_name} con Geobooker`;
 
-    return await sendEmail({
-        to: contact.email,
-        subject,
-        html,
-        from: 'Geobooker <onboarding@resend.dev>' // Cambiar cuando configures tu dominio
-    });
+  return await sendEmail({
+    to: contact.email,
+    subject,
+    html,
+    from: 'Geobooker <ventas@geobooker.com>' // ✅ Dominio verificado
+  });
 }

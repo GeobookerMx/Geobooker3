@@ -12,6 +12,7 @@ import AppRouter from "./router";
 import ChatWidget from "./components/agent/ChatWidget";
 import { checkAppVersion } from "./services/cacheVersionService";
 import InstallPWAButton from "./components/common/InstallPWAButton";
+import DownloadAppModal from "./components/pwa/DownloadAppModal";
 import ScrollToTop from "./components/common/ScrollToTop";
 
 // Component to activate session timeout monitoring
@@ -47,6 +48,8 @@ function App() {
             <ChatWidget />
             {/* Banner de instalación PWA */}
             <InstallPWAButton variant="banner" />
+            {/* Modal de descarga de app */}
+            <DownloadAppModal />
           </LocationProvider>
         </AppProvider>
       </AuthProvider>

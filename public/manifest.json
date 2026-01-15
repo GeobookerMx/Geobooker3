@@ -46,9 +46,9 @@
             "purpose": "any maskable"
         },
         {
-            "src": "/images/geobooker-logo.png",
+            "src": "/images/geobooker-app-icon-original.jpg",
             "sizes": "512x512",
-            "type": "image/png",
+            "type": "image/jpeg",
             "purpose": "any maskable"
         }
     ],

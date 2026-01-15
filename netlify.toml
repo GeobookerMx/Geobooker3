@@ -1,23 +1,101 @@
+# Netlify Configuration
+# Optimizaciones para rendimiento global y CDN
+
 [build]
-  command = "npm run build"
   publish = "dist"
-  functions = "netlify/functions"
+  command = "npm run build"
 
-[build.environment]
-  NODE_VERSION = "20"
-  NPM_FLAGS = "--legacy-peer-deps"
+# ==========================================
+# CDN EDGE - Configuración Global Performance
+# ==========================================
 
-# Configuración de funciones
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"
+# Headers para assets estáticos (imágenes, fonts, etc)
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+    X-Content-Type-Options = "nosniff"
 
-# SPA redirect para React Router
-# force = false permite que las funciones de Netlify respondan primero
+[[headers]]
+  for = "/fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+    
+[[headers]]
+  for = "/*.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+    
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+    
+[[headers]]
+  for = "/*.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Headers para JavaScript y CSS
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Headers para HTML (no cachear para tener updates inmediatos)
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    
+# Headers para index.html
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+
+# ==========================================
+# Redirects y Rewrites
+# ==========================================
+
+# SPA: Redirigir todas las rutas al index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  force = false
 
+# ==========================================
+# Build Processing (Optimizaciones)
+# ==========================================
 
+[build.processing]
+  skip_processing = false
+
+[build.processing.css]
+  bundle = true
+  minify = true
+
+[build.processing.js]
+  bundle = true
+  minify = true
+
+[build.processing.html]
+  pretty_urls = true
+
+[build.processing.images]
+  compress = true
+
+# ==========================================
+# Dev Settings
+# ==========================================
+
+[dev]
+  command = "npm run dev"
+  port = 5173
+  targetPort = 5173
+  framework = "#vite"

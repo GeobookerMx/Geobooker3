@@ -218,23 +218,35 @@ const HomePage = () => {
   // ⚡ NUEVO: Buscar en Google Places automáticamente cuando hay filtro de categoría
   useEffect(() => {
     const searchGooglePlacesWithCategory = async () => {
-      // Solo buscar si hay filtro de categoría Y tenemos ubicación del usuario
+      // Solo buscar si hay filtro de categoría Y tenemos ubicación del usuar io
       if (!categoryFilter || !userLocation) return;
 
       try {
-        setSearchLoading(true);
-
-        // Usar la subcategoría si existe, sino la categoría
+        // ⚡ OPTIMIZACIÓN: Mostrar caché inmediatamente (loading optimista)
+        const { getFromCache, generateCacheKey } = await import('../services/googlePlacesService');
         const searchTerm = subcategoryFilter || categoryFilter;
+        const cacheKey = generateCacheKey(userLocation, searchTerm, 'search');
+        const cachedResults = getFromCache(cacheKey);
 
-        // Buscar en Google Places
+        if (cachedResults && cachedResults.length > 0) {
+          setBusinesses(cachedResults);
+          toast.success(`💾 ${cachedResults.length} negocios (caché instantáneo)`, { duration: 2000 });
+        } else {
+          setSearchLoading(true);
+        }
+
+        // Buscar en Google Places (actualiza en background)
+        const { searchNearbyPlaces } = await import('../services/googlePlacesService');
         const results = await searchNearbyPlaces(userLocation, searchTerm, 10000);
 
         if (results && results.length > 0) {
           setBusinesses(results);
-          toast.success(`🔍 ${results.length} negocios de Google encontrados para "${searchTerm}"`, { duration: 3000 });
-        } else {
-          toast(`No se encontraron negocios de Google para "${searchTerm}"`, { icon: '📭', duration: 3000 });
+          // Si no había caché, mostrar mensaje de éxito
+          if (!cachedResults || cachedResults.length === 0) {
+            toast.success(`🔍 ${results.length} negocios encontrados para "${searchTerm}"`, { duration: 3000 });
+          }
+        } else if (!cachedResults || cachedResults.length === 0) {
+          toast(`No se encontraron negocios para "${searchTerm}"`, { icon: '📭', duration: 3000 });
         }
       } catch (error) {
         console.error('Error buscando en Google Places:', error);

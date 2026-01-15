@@ -13,9 +13,9 @@
 // SISTEMA DE CACHÉ
 // ==========================================
 const CACHE_CONFIG = {
-    SEARCH_TTL: 60 * 60 * 1000,      // 1 hora para búsquedas
-    DETAILS_TTL: 4 * 60 * 60 * 1000, // 4 horas para detalles
-    LOCATION_PRECISION: 3,           // Decimales para agrupar ubicaciones (~111m)
+    SEARCH_TTL: 24 * 60 * 60 * 1000,      // 24 horas para búsquedas (antes: 1 hora)
+    DETAILS_TTL: 48 * 60 * 60 * 1000,     // 48 horas para detalles (antes: 4 horas)
+    LOCATION_PRECISION: 3,                // Decimales para agrupar ubicaciones (~111m)
     STORAGE_KEY_PREFIX: 'gp_cache_'
 };
 
@@ -23,7 +23,8 @@ const CACHE_CONFIG = {
  * Genera una clave de caché basada en ubicación y keyword
  * Redondea la ubicación para agrupar búsquedas cercanas
  */
-const generateCacheKey = (location, keyword, type = 'search') => {
+// EXPORTAR para uso en loading optimista
+export const generateCacheKey = (location, keyword, type = 'search') => {
     const roundedLat = location.lat.toFixed(CACHE_CONFIG.LOCATION_PRECISION);
     const roundedLng = location.lng.toFixed(CACHE_CONFIG.LOCATION_PRECISION);
     const normalizedKeyword = (keyword || 'nearby').toLowerCase().trim().replace(/\s+/g, '_');
@@ -52,7 +53,8 @@ const saveToCache = (key, data, ttl) => {
 /**
  * Obtiene datos del caché si no han expirado
  */
-const getFromCache = (key) => {
+// EXPORTAR para uso en loading optimista
+export const getFromCache = (key) => {
     try {
         const cached = localStorage.getItem(key);
         if (!cached) return null;
@@ -60,7 +62,7 @@ const getFromCache = (key) => {
         const entry = JSON.parse(cached);
         if (Date.now() > entry.expires) {
             localStorage.removeItem(key);
-            console.log(`🗑️ Caché expirado: ${key}`);
+            console.log(`🗑️ Caché expirad o: ${key}`);
             return null;
         }
 

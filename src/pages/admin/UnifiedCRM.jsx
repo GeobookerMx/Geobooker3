@@ -18,6 +18,8 @@ import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
 import EmailTester from '../../components/admin/EmailTester';
+import MarketingDashboard from '../../components/admin/MarketingDashboard';
+import WhatsAppQueueManager from '../../components/admin/WhatsAppQueueManager';
 
 const UnifiedCRM = () => {
     // Active Tab
@@ -1000,71 +1002,7 @@ const UnifiedCRM = () => {
 
                 {/* ============ TAB: STATS ============ */}
                 {activeTab === 'stats' && (
-                    <div className="space-y-6">
-                        {/* Tier Stats */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                            {tierStats.map(tier => (
-                                <div
-                                    key={tier.tier}
-                                    className={`p-4 rounded-xl ${tier.tier === 'AAA' ? 'bg-gradient-to-br from-yellow-400 to-amber-500 text-white' :
-                                        tier.tier === 'AA' ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white' :
-                                            tier.tier === 'A' ? 'bg-gradient-to-br from-blue-500 to-cyan-600 text-white' :
-                                                'bg-gray-200 text-gray-800'
-                                        }`}
-                                >
-                                    <div className="text-2xl font-bold">{tier.tier}</div>
-                                    <div className="text-sm opacity-90">{tier.total_contacts} contactos</div>
-                                    <div className="text-xs opacity-75 mt-1">
-                                        📧 {tier.with_email} | 📱 {tier.with_phone}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Company Type Stats */}
-                        <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-                            <div className="p-4 border-b flex justify-between items-center">
-                                <h3 className="font-bold text-gray-900">Por Tipo de Empresa</h3>
-                                <button
-                                    onClick={loadStats}
-                                    className="p-2 hover:bg-gray-100 rounded-lg"
-                                >
-                                    <RefreshCw className={`w-4 h-4 ${statsLoading ? 'animate-spin' : ''}`} />
-                                </button>
-                            </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full min-w-[500px]">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="text-left p-3 text-xs font-semibold">Tipo</th>
-                                            <th className="text-right p-3 text-xs font-semibold">Total</th>
-                                            <th className="text-right p-3 text-xs font-semibold">Email</th>
-                                            <th className="text-right p-3 text-xs font-semibold">Enviados</th>
-                                            <th className="text-right p-3 text-xs font-semibold">%</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y">
-                                        {companyTypeStats.map((stat, i) => (
-                                            <tr key={i} className="hover:bg-gray-50">
-                                                <td className="p-3 font-medium text-sm">{stat.company_type}</td>
-                                                <td className="p-3 text-right text-sm">{stat.total_contacts}</td>
-                                                <td className="p-3 text-right text-sm text-green-600">{stat.with_email}</td>
-                                                <td className="p-3 text-right text-sm text-gray-500">{stat.emails_sent || 0}</td>
-                                                <td className="p-3 text-right">
-                                                    <span className={`px-2 py-0.5 rounded text-xs ${(stat.email_coverage_pct || 0) > 50
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : 'bg-gray-100 text-gray-600'
-                                                        }`}>
-                                                        {stat.email_coverage_pct || 0}%
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+                    <MarketingDashboard />
                 )}
 
                 {/* ============ TAB: LANZAR ============ */}

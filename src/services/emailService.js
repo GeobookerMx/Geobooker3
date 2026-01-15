@@ -120,6 +120,21 @@ export function generateCampaignEmailHTML({ company_name, contact_name }, tier) 
                 </a>
               </div>
 
+              <!-- Download App Section -->
+              <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 8px; padding: 20px; margin: 25px 0; text-align: center;">
+                <h3 style="color: #ffffff; margin: 0 0 10px 0; font-size: 18px;">📱 Descarga nuestra App</h3>
+                <p style="color: #ffffff; margin: 0 0 15px 0; font-size: 14px; opacity: 0.95;">
+                  Accede a Geobooker desde tu celular en cualquier momento
+                </p>
+                <a href="https://geobooker.com.mx#descargar-app" 
+                   style="display: inline-block; background: #ffffff; color: #059669; text-decoration: none; padding: 12px 30px; border-radius: 25px; font-weight: bold; font-size: 14px; margin: 5px;">
+                  📲 Descargar App
+                </a>
+                <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 11px; opacity: 0.8;">
+                  Compatible con Android e iOS • Gratis
+                </p>
+              </div>
+
               <p style="color: #555; line-height: 1.6; margin: 20px 0 0 0;">
                 Saludos cordiales,<br>
                 <strong>Equipo Geobooker</strong>

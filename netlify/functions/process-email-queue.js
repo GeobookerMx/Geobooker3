@@ -90,23 +90,51 @@ exports.handler = async (event, context) => {
             errors: []
         };
 
+        // Obtener el template por defecto o el asignado
+        const { data: defaultTemplate } = await supabase
+            .from('email_templates')
+            .select('*')
+            .eq('is_active', true)
+            .limit(1)
+            .single();
+
         for (const item of queueItems) {
             try {
                 const contact = item.marketing_contacts;
 
-                // Generar HTML del email (template simple)
-                const html = generateEmailHTML(contact);
+                // 1. Buscar template específico por tier
+                const { data: tierTemplate } = await supabase
+                    .from('email_templates')
+                    .select('*')
+                    .eq('tier_target', contact.tier)
+                    .eq('is_active', true)
+                    .limit(1)
+                    .single();
 
-                const subject = contact.tier === 'AAA' || contact.tier === 'AA'
-                    ? `${contact.company_name} - Solución Premium de Geobooker`
-                    : `Aumenta la visibilidad de ${contact.company_name} con Geobooker`;
+                const template = tierTemplate || defaultTemplate;
+
+                if (!template) {
+                    throw new Error('No se encontró ninguna plantilla de email activa');
+                }
+
+                // 2. Reemplazar variables en el HTML y Subject
+                const greeting = contact.contact_name || 'Estimado/a';
+                const companyName = contact.company_name || 'su empresa';
+
+                let finalHtml = template.html_content
+                    .replace(/{contact_name}/g, greeting)
+                    .replace(/{company_name}/g, companyName);
+
+                let finalSubject = template.subject
+                    .replace(/{contact_name}/g, greeting)
+                    .replace(/{company_name}/g, companyName);
 
                 // Enviar email con Resend
                 const emailResult = await resend.emails.send({
                     from: 'Geobooker <ventas@geobooker.com>',
                     to: contact.email,
-                    subject,
-                    html
+                    subject: finalSubject,
+                    html: finalHtml
                 });
 
                 // Registrar en historial
@@ -118,7 +146,11 @@ exports.handler = async (event, context) => {
                         status: 'sent',
                         sent_at: new Date().toISOString(),
                         message_id: emailResult.id,
-                        details: { subject, tier: contact.tier }
+                        details: {
+                            subject: finalSubject,
+                            tier: contact.tier,
+                            template_id: template.id
+                        }
                     });
 
                 // Actualizar estado en cola
@@ -141,15 +173,20 @@ exports.handler = async (event, context) => {
                     .eq('id', item.contact_id);
 
                 results.sent++;
-                console.log(`✅ Email enviado a: ${contact.email}`);
+                console.log(`✅ Email enviado a: ${contact.email} (${contact.tier})`);
 
                 // Delay para no saturar (100ms entre emails)
                 await new Promise(resolve => setTimeout(resolve, 100));
 
             } catch (emailError) {
                 console.error(`❌ Error enviando a ${item.marketing_contacts.email}:`, emailError);
+                results.failed++;
+                results.errors.push({
+                    email: item.marketing_contacts?.email || 'unknown',
+                    error: emailError.message
+                });
 
-                // Marcar como fallido
+                // Marcar como fallido en la cola
                 await supabase
                     .from('email_queue')
                     .update({
@@ -157,20 +194,12 @@ exports.handler = async (event, context) => {
                         error_message: emailError.message
                     })
                     .eq('id', item.id);
-
-                results.failed++;
-                results.errors.push({
-                    email: item.marketing_contacts.email,
-                    error: emailError.message
-                });
             }
         }
 
         return {
             statusCode: 200,
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 success: true,
                 message: `Procesamiento completado: ${results.sent} enviados, ${results.failed} fallidos`,
@@ -185,106 +214,9 @@ exports.handler = async (event, context) => {
 
     } catch (error) {
         console.error('❌ Error en process-email-queue:', error);
-
         return {
             statusCode: 500,
-            body: JSON.stringify({
-                success: false,
-                error: error.message
-            })
+            body: JSON.stringify({ success: false, error: error.message })
         };
     }
 };
-
-// Helper: Generar HTML del email
-function generateEmailHTML(contact) {
-    const greeting = contact.contact_name || 'Estimado/a';
-    const companyName = contact.company_name || 'su empresa';
-    const isPremium = ['AAA', 'AA'].includes(contact.tier);
-
-    return `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
-        <tr>
-            <td align="center">
-                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
-                    
-                    <!-- Header -->
-                    <tr>
-                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
-                            <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Geobooker</h1>
-                            <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 14px;">Tu plataforma de geolocalización empresarial</p>
-                        </td>
-                    </tr>
-
-                    <!-- Content -->
-                    <tr>
-                        <td style="padding: 40px 30px;">
-                            <h2 style="color: #333; margin: 0 0 20px 0;">Hola ${greeting},</h2>
-                            
-                            <p style="color: #555; line-height: 1.6; margin: 0 0 15px 0;">
-                                Nos complace presentarle <strong>Geobooker</strong>, la plataforma líder en geolocalización de negocios en México.
-                            </p>
-
-                            ${isPremium ? `
-                            <p style="color: #555; line-height: 1.6; margin: 0 0 15px 0;">
-                                Hemos notado que <strong>${companyName}</strong> es una empresa destacada en su sector. Nos gustaría ofrecerle acceso prioritario a nuestras soluciones premium.
-                            </p>
-                            ` : `
-                            <p style="color: #555; line-height: 1.6; margin: 0 0 15px 0;">
-                                Geobooker puede ayudar a <strong>${companyName}</strong> a aumentar su visibilidad y atraer más clientes en su zona.
-                            </p>
-                            `}
-
-                            <!-- Benefits -->
-                            <div style="background-color: #f8f9fa; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0;">
-                                <h3 style="color: #667eea; margin: 0 0 15px 0;">¿Qué ofrecemos?</h3>
-                                <ul style="color: #555; line-height: 1.8; margin: 0; padding-left: 20px;">
-                                    <li>Posicionamiento destacado en búsquedas locales</li>
-                                    <li>Analíticas en tiempo real de tu visibilidad</li>
-                                    <li>Publicidad geolocalizada efectiva</li>
-                                    <li>Gestión de reseñas y reputación online</li>
-                                </ul>
-                            </div>
-
-                            <!-- CTA Button -->
-                            <div style="text-align: center; margin: 30px 0;">
-                                <a href="https://geobooker.com.mx" 
-                                   style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-weight: bold; font-size: 16px;">
-                                    Conocer más
-                                </a>
-                            </div>
-
-                            <p style="color: #555; line-height: 1.6; margin: 20px 0 0 0;">
-                                Saludos cordiales,<br>
-                                <strong>Equipo Geobooker</strong>
-                            </p>
-                        </td>
-                    </tr>
-
-                    <!-- Footer -->
-                    <tr>
-                        <td style="background-color: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #e0e0e0;">
-                            <p style="color: #888; font-size: 12px; margin: 0 0 10px 0;">
-                                © 2026 Geobooker. Todos los derechos reservados.
-                            </p>
-                            <p style="color: #888; font-size: 12px; margin: 0;">
-                                <a href="https://geobooker.com.mx" style="color: #667eea; text-decoration: none;">geobooker.com.mx</a>
-                            </p>
-                        </td>
-                    </tr>
-
-                </table>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>
-    `.trim();
-}

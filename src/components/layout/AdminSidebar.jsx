@@ -9,6 +9,8 @@ const AdminSidebar = () => {
     { path: '/admin', label: 'Dashboard', icon: '📊' },
     { path: '/admin/businesses', label: 'Gestión de Negocios', icon: '🏢' },
     { path: '/admin/users', label: 'Gestión de Usuarios', icon: '👥' },
+    { path: '/admin/marketing-dashboard', label: 'Marketing Email', icon: '📧' },
+    { path: '/admin/unified-crm', label: 'CRM WhatsApp', icon: '📱' },
     { path: '/admin/advertising', label: 'Publicidad', icon: '📢' },
     { path: '/admin/analytics', label: 'Analíticas', icon: '📈' },
   ];

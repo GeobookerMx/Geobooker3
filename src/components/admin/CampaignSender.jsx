@@ -2,7 +2,7 @@
 // Path: src/components/admin/CampaignSender.jsx
 
 import React, { useState } from 'react';
-import { Mail, Send, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Mail, Send, AlertCircle, CheckCircle, Loader2, Zap, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 
@@ -27,6 +27,9 @@ const CampaignSender = ({ metrics, onCampaignComplete }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ limit: available })
             });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Error desconocido en el servidor');
 
             console.log('✅ Respuesta de preparación:', result);
             toast.success(`✅ Cola preparada: ${result.contacts_added} contactos listos`);

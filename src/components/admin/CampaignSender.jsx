@@ -12,12 +12,14 @@ const CampaignSender = ({ metrics, onCampaignComplete }) => {
     const [progress, setProgress] = useState({ sent: 0, total: 0 });
 
     const prepareQueue = async () => {
-        console.log('🔄 Iniciando preparación de cola...');
+        alert('DEBUG: Botón "Preparar Cola" presionado.');
+        console.log('🔄 Iniciando preparación de cola desde v1.3.0...');
         setPreparing(true);
         try {
             const available = metrics.dailyLimit - metrics.sentToday;
             console.log(`📊 Disponibles: ${available}, Límite: ${metrics.dailyLimit}, Enviados hoy: ${metrics.sentToday}`);
             if (available <= 0) {
+                alert('INFO: Límite diario alcanzado.');
                 toast.error('Ya alcanzaste el límite diario');
                 return;
             }

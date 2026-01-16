@@ -136,20 +136,18 @@ const UnifiedCRM = () => {
         try {
             // Get total count first
             const { count: totalCount } = await supabase
-                .from('crm_contacts')
+                .from('marketing_contacts')
                 .select('*', { count: 'exact', head: true });
 
-            // Get tier distribution (Proper grouped count)
-            const tiers = ['AAA', 'AA', 'A', 'B'];
-            const tierCounts = {};
+            // Get tier distribution
+            const { data: tierCountsRaw } = await supabase
+                .from('marketing_contacts')
+                .select('tier');
 
-            await Promise.all(tiers.map(async (tier) => {
-                const { count } = await supabase
-                    .from('crm_contacts')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('tier', tier);
-                tierCounts[tier] = count || 0;
-            }));
+            const tierCounts = (tierCountsRaw || []).reduce((acc, curr) => {
+                acc[curr.tier] = (acc[curr.tier] || 0) + 1;
+                return acc;
+            }, {});
 
             setTierStats(Object.entries(tierCounts).map(([tier, count]) => ({
                 tier,
@@ -160,7 +158,7 @@ const UnifiedCRM = () => {
 
             // Get sample for display
             const { data, error } = await supabase
-                .from('crm_contacts')
+                .from('marketing_contacts')
                 .select('*')
                 .order('created_at', { ascending: false })
                 .limit(500);
@@ -1009,593 +1007,533 @@ const UnifiedCRM = () => {
                 {activeTab === 'lanzar' && (
                     <div className="space-y-6">
                         {/* Canal Selector */}
-                        <div className="flex bg-gray-100 p-1 rounded-xl w-fit">
-                            <button
-                                onClick={() => setCampaignType('email')}
-                                className={`px-6 py-2 rounded-lg font-bold transition-all ${campaignType === 'email' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500'}`}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Mail className="w-4 h-4" />
-                                    Email
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => setCampaignType('whatsapp')}
-                                className={`px-6 py-2 rounded-lg font-bold transition-all ${campaignType === 'whatsapp' ? 'bg-white shadow-sm text-green-600' : 'text-gray-500'}`}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <MessageCircle className="w-4 h-4" />
-                                    WhatsApp
-                                </div>
-                            </button>
-                        </div>
-
-                        {/* Step 1: Configure */}
-                        <div className="bg-white rounded-xl p-6 shadow-sm border">
-                            <h3 className="font-bold text-lg mb-4">1. Configurar Envío {campaignType === 'email' ? 'Masivo' : 'Colectivo'}</h3>
-                            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Límite diario</label>
-                                    <select
-                                        value={dailyLimit}
-                                        onChange={(e) => setDailyLimit(parseInt(e.target.value))}
-                                        className="w-full p-3 border rounded-xl"
-                                    >
-                                        <option value={campaignType === 'whatsapp' ? 10 : 20}>{campaignType === 'whatsapp' ? 10 : 20} (seguro)</option>
-                                        <option value={campaignType === 'whatsapp' ? 30 : 50}>{campaignType === 'whatsapp' ? 30 : 50}</option>
-                                        <option value={100}>100</option>
-                                        <option value={200}>200</option>
-                                    </select>
-                                </div>
-                                {campaignType === 'email' && (
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Filtrar por Tier</label>
-                                        <select
-                                            value={emailSearchTier}
-                                            onChange={(e) => setEmailSearchTier(e.target.value)}
-                                            className="w-full p-3 border rounded-xl"
-                                        >
-                                            <option value="all">Sugerencia Inteligente (Mix)</option>
-                                            <option value="AAA">Sólo Tier AAA (Top)</option>
-                                            <option value="AA">Sólo Tier AA (Premium)</option>
-                                            <option value="A">Sólo Tier A (Base)</option>
-                                            <option value="B">Sólo Tier B (Exploratorio)</option>
-                                        </select>
-                                    </div>
-                                )}
-                                {campaignType === 'whatsapp' && (
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Filtrar por Tier</label>
-                                        <select
-                                            value={waSearchTier}
-                                            onChange={(e) => setWaSearchTier(e.target.value)}
-                                            className="w-full p-3 border rounded-xl"
-                                        >
-                                            <option value="all">Todos los Tiers</option>
-                                            <option value="AAA">Sólo Tier AAA (Alianzas)</option>
-                                            <option value="AA">Sólo Tier AA (Premium)</option>
-                                            <option value="A">Sólo Tier A (Base)</option>
-                                        </select>
-                                    </div>
-                                )}
-                                <div className="flex items-end">
-                                    <button
-                                        onClick={generateQueue}
-                                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold"
-                                    >
-                                        <RefreshCw className="w-5 h-5" />
-                                        Generar Nueva Cola
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                    </div>
 
                         {campaignType === 'email' ? (
-                            <>
-                                {/* Step 2: Sender */}
-                                <div className="bg-white rounded-xl p-6 shadow-sm border">
-                                    <h3 className="font-bold text-lg mb-4">2. Seleccionar Remitente</h3>
-                                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {senders.map((sender, idx) => (
-                                            <div
-                                                key={idx}
-                                                onClick={() => setSelectedSender(sender)}
-                                                className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedSender?.email === sender.email
-                                                    ? 'border-blue-500 bg-blue-50'
-                                                    : 'border-gray-100 hover:border-gray-200 bg-gray-50/50'
-                                                    }`}
-                                            >
-                                                <div className="font-bold text-sm">{sender.name}</div>
-                                                <div className="text-xs text-gray-500 truncate">{sender.email}</div>
-                                                {selectedSender?.email === sender.email && (
-                                                    <div className="mt-1 text-[10px] text-blue-600 font-bold uppercase">Seleccionado</div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Step 3: Template */}
-                                <div className="bg-white rounded-xl p-6 shadow-sm border">
-                                    <h3 className="font-bold text-lg mb-4">3. Seleccionar Plantilla</h3>
-                                    {selectedTemplate ? (
-                                        <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-200">
-                                            <div>
-                                                <span className="font-semibold">{selectedTemplate.name}</span>
-                                                <p className="text-sm text-gray-600">{selectedTemplate.subject}</p>
-                                            </div>
-                                            <button
-                                                onClick={() => setActiveTab('plantillas')}
-                                                className="text-blue-600 text-sm"
-                                            >
-                                                Cambiar
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <button
-                                            onClick={() => setActiveTab('plantillas')}
-                                            className="w-full p-4 border-2 border-dashed rounded-xl text-gray-500 hover:border-blue-400 hover:text-blue-600"
-                                        >
-                                            ← Ir a Plantillas para seleccionar
-                                        </button>
-                                    )}
-                                </div>
-
-                                {/* Step 4: Queue Preview */}
-                                {emailQueue.length > 0 && (
-                                    <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-                                        <div className="p-4 border-b flex flex-wrap justify-between items-center gap-2">
-                                            <h3 className="font-bold">4. Cola de Envío Masivo ({emailQueue.length})</h3>
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={sendTestEmail}
-                                                    disabled={isSending || !selectedTemplate}
-                                                    className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg font-medium disabled:opacity-50 hover:bg-yellow-600"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                    Enviar Prueba
-                                                </button>
-                                                <button
-                                                    onClick={sendCampaign}
-                                                    disabled={isSending || !selectedTemplate}
-                                                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-medium disabled:opacity-50"
-                                                >
-                                                    {isSending ? (
-                                                        <>
-                                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                                            {sendProgress}%
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Send className="w-4 h-4" />
-                                                            Enviar Todo Ahora
-                                                        </>
-                                                    )}
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: '400px' }}>
-                                            <table className="w-full min-w-[600px] text-sm">
-                                                <thead className="bg-gray-50 font-bold sticky top-0 z-10">
-                                                    <tr>
-                                                        <th className="p-2 text-left">#</th>
-                                                        <th className="p-2 text-left">Nombre</th>
-                                                        <th className="p-2 text-left">Email</th>
-                                                        <th className="p-2 text-left">Empresa</th>
-                                                        <th className="p-2 text-left">Tier</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y text-gray-600">
-                                                    {emailQueue.slice(0, 50).map((item, i) => (
-                                                        <tr key={item.contact_id} className="hover:bg-gray-50">
-                                                            <td className="p-2 text-gray-400">{i + 1}</td>
-                                                            <td className="p-2 font-medium">{item.contact_name || '-'}</td>
-                                                            <td className="p-2 text-blue-600">{item.contact_email}</td>
-                                                            <td className="p-2 text-sm text-gray-500">{item.company_name || '-'}</td>
-                                                            <td className="p-2">
-                                                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${getTierColor(item.contact_tier)}`}>
-                                                                    {item.contact_tier}
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                )}
-                            </>
-                        ) : (
-                            <>
-                                {/* WhatsApp Queue */}
-                                {waQueue.length > 0 ? (
-                                    <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-                                        <div className="p-4 border-b flex flex-wrap justify-between items-center gap-2">
-                                            <div>
-                                                <h3 className="font-bold">Cola de Envío Colectivo WhatsApp ({waQueue.length})</h3>
-                                                <p className="text-xs text-gray-500 mt-1">Haz clic en "Enviar" para abrir WhatsApp Web y luego marcar como "Hecho".</p>
-                                            </div>
-                                            <button
-                                                onClick={sendTestWhatsApp}
-                                                className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg font-medium hover:bg-yellow-600"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                                Probar WhatsApp
-                                            </button>
-                                        </div>
-                                        <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: '500px' }}>
-                                            <table className="w-full min-w-[700px] text-sm">
-                                                <thead className="bg-gray-50 font-bold sticky top-0 z-10">
-                                                    <tr>
-                                                        <th className="p-3 text-left">Contacto / Empresa</th>
-                                                        <th className="p-3 text-left">Teléfono</th>
-                                                        <th className="p-3 text-left">Tier</th>
-                                                        <th className="p-3 text-center">Acciones</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y">
-                                                    {waQueue.map((item) => (
-                                                        <tr key={item.contact_id} className="hover:bg-gray-50">
-                                                            <td className="p-3">
-                                                                <div className="font-bold">{item.contact_name}</div>
-                                                                <div className="text-xs text-gray-500">{item.company_name}</div>
-                                                            </td>
-                                                            <td className="p-3">
-                                                                <div className="text-xs text-blue-600 font-medium">{item.contact_phone}</div>
-                                                            </td>
-                                                            <td className="p-3">
-                                                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${getTierColor(item.contact_tier)}`}>
-                                                                    {item.contact_tier}
-                                                                </span>
-                                                            </td>
-                                                            <td className="p-3">
-                                                                <div className="flex justify-center gap-2">
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            const phone = item.contact_phone.replace(/\D/g, '');
-                                                                            const msg = whatsappConfig.default_message || 'Hola!';
-                                                                            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-                                                                        }}
-                                                                        className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
-                                                                    >
-                                                                        <MessageCircle className="w-4 h-4" />
-                                                                        Enviar
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => markWaSent(item.contact_id)}
-                                                                        className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200"
-                                                                    >
-                                                                        Hecho
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="bg-white rounded-xl p-12 text-center border-2 border-dashed">
-                                        <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                                        <h4 className="text-lg font-medium text-gray-900">No hay cola de WhatsApp</h4>
-                                        <p className="text-gray-500 max-w-xs mx-auto mt-2">Usa el botón "Generar Nueva Cola" arriba buscando contactos con teléfono pendientes.</p>
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </div>
-                )}
-
-                {/* ============ TAB: CONFIG ============ */}
-                {activeTab === 'config' && (
                     <div className="space-y-6">
-                        {/* Email Testing Section */}
-                        <EmailTester />
-
-                        {/* WhatsApp Section */}
-                        <div className="bg-white rounded-xl shadow-sm border p-6">
-                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                <MessageCircle className="w-5 h-5 text-green-600" />
-                                WhatsApp Business
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Número de Teléfono (Formato Internacional)</label>
-                                        <input
-                                            type="text"
-                                            value={whatsappConfig.phone}
-                                            onChange={(e) => setWhatsappConfig(prev => ({ ...prev, phone: e.target.value }))}
-                                            className="w-full p-2 border rounded-lg"
-                                            placeholder="525512345678"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nombre para Mostrar</label>
-                                        <input
-                                            type="text"
-                                            value={whatsappConfig.display_number}
-                                            onChange={(e) => setWhatsappConfig(prev => ({ ...prev, display_number: e.target.value }))}
-                                            className="w-full p-2 border rounded-lg"
-                                            placeholder="+52 55 1234 5678"
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={() => saveSettings('whatsapp_business', whatsappConfig)}
-                                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                                    >
-                                        Guardar WhatsApp
-                                    </button>
+                        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-xl">
+                            <div className="flex">
+                                <div className="flex-shrink-0">
+                                    <Mail className="h-5 w-5 text-blue-400" />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Mensaje Predeterminado</label>
-                                    <textarea
-                                        rows={4}
-                                        value={whatsappConfig.default_message}
-                                        onChange={(e) => setWhatsappConfig(prev => ({ ...prev, default_message: e.target.value }))}
-                                        className="w-full p-2 border rounded-lg text-sm"
-                                        placeholder="¡Hola! Vi tu perfil en Geobooker..."
-                                    />
-                                    <p className="text-xs text-gray-400 mt-2">Este mensaje se usará cuando abras un chat desde el Scraper o contactos.</p>
+                                <div className="ml-3">
+                                    <p className="text-sm text-blue-700">
+                                        Estás usando el nuevo motor de <strong>Email Marketing Profesional</strong>.
+                                        Este sistema maneja automáticamente los 15,000+ leads, las plantillas dinámicas y los límites diarios.
+                                    </p>
                                 </div>
                             </div>
                         </div>
-
-                        {/* Email Senders Section */}
-                        <div className="bg-white rounded-xl shadow-sm border p-6">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-bold flex items-center gap-2">
-                                    <Mail className="w-5 h-5 text-blue-600" />
-                                    Remitentes de Email
-                                </h3>
-                                <button
-                                    onClick={() => setSenders(prev => [...prev, { name: '', email: '', signature: '', use_for: [] }])}
-                                    className="text-sm text-blue-600 hover:bg-blue-50 px-3 py-1 rounded-lg flex items-center gap-1"
-                                >
-                                    <Plus className="w-4 h-4" /> Agregar Remitente
-                                </button>
-                            </div>
-
-                            <div className="space-y-4">
+                        <MarketingDashboard />
+                    </div>
+                ) : (
+                    <>
+                        {/* Step 2: Sender */}
+                        <div className="bg-white rounded-xl p-6 shadow-sm border">
+                            <h3 className="font-bold text-lg mb-4">2. Seleccionar Remitente</h3>
+                            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {senders.map((sender, idx) => (
-                                    <div key={idx} className="p-4 border rounded-xl bg-gray-50/50 space-y-3">
-                                        <div className="flex flex-col md:flex-row gap-4">
-                                            <div className="flex-1">
-                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre</label>
-                                                <input
-                                                    type="text"
-                                                    value={sender.name}
-                                                    onChange={(e) => {
-                                                        const newSenders = [...senders];
-                                                        newSenders[idx].name = e.target.value;
-                                                        setSenders(newSenders);
-                                                    }}
-                                                    className="w-full p-2 border rounded-lg"
-                                                    placeholder="Juan Pablo CEO"
-                                                />
-                                            </div>
-                                            <div className="flex-1">
-                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Correo Electrónico</label>
-                                                <input
-                                                    type="email"
-                                                    value={sender.email}
-                                                    onChange={(e) => {
-                                                        const newSenders = [...senders];
-                                                        newSenders[idx].email = e.target.value;
-                                                        setSenders(newSenders);
-                                                    }}
-                                                    className="w-full p-2 border rounded-lg"
-                                                    placeholder="juanpablopg@geobooker.com.mx"
-                                                />
-                                            </div>
-                                            <button
-                                                onClick={() => setSenders(prev => prev.filter((_, i) => i !== idx))}
-                                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg self-end"
-                                            >
-                                                <Trash2 className="w-5 h-5" />
-                                            </button>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Firma HTML</label>
-                                            <textarea
-                                                rows={3}
-                                                value={sender.signature}
-                                                onChange={(e) => {
-                                                    const newSenders = [...senders];
-                                                    newSenders[idx].signature = e.target.value;
-                                                    setSenders(newSenders);
-                                                }}
-                                                className="w-full p-2 border rounded-lg text-xs font-mono"
-                                                placeholder="<div>...</div>"
-                                            />
-                                        </div>
+                                    <div
+                                        key={idx}
+                                        onClick={() => setSelectedSender(sender)}
+                                        className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedSender?.email === sender.email
+                                            ? 'border-blue-500 bg-blue-50'
+                                            : 'border-gray-100 hover:border-gray-200 bg-gray-50/50'
+                                            }`}
+                                    >
+                                        <div className="font-bold text-sm">{sender.name}</div>
+                                        <div className="text-xs text-gray-500 truncate">{sender.email}</div>
+                                        {selectedSender?.email === sender.email && (
+                                            <div className="mt-1 text-[10px] text-blue-600 font-bold uppercase">Seleccionado</div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
+                        </div>
 
-                            {senders.length > 0 && (
+                        {/* Step 3: Template */}
+                        <div className="bg-white rounded-xl p-6 shadow-sm border">
+                            <h3 className="font-bold text-lg mb-4">3. Seleccionar Plantilla</h3>
+                            {selectedTemplate ? (
+                                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-200">
+                                    <div>
+                                        <span className="font-semibold">{selectedTemplate.name}</span>
+                                        <p className="text-sm text-gray-600">{selectedTemplate.subject}</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setActiveTab('plantillas')}
+                                        className="text-blue-600 text-sm"
+                                    >
+                                        Cambiar
+                                    </button>
+                                </div>
+                            ) : (
                                 <button
-                                    onClick={() => saveSettings('email_senders', senders)}
-                                    className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                                    onClick={() => setActiveTab('plantillas')}
+                                    className="w-full p-4 border-2 border-dashed rounded-xl text-gray-500 hover:border-blue-400 hover:text-blue-600"
                                 >
-                                    Guardar Remitentes
+                                    ← Ir a Plantillas para seleccionar
                                 </button>
                             )}
                         </div>
 
-                        {/* Limits Section */}
-                        <div className="bg-white rounded-xl shadow-sm border p-6">
-                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                <TrendingUp className="w-5 h-5 text-purple-600" />
-                                Límites de Campaña
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-4">
-                                    <div>
-                                        <div className="flex justify-between mb-2">
-                                            <label className="text-sm font-medium">Emails por Día</label>
-                                            <span className="font-bold text-blue-600">{campaignLimits.daily_email_limit}</span>
-                                        </div>
-                                        <input
-                                            type="range"
-                                            min="1"
-                                            max="500"
-                                            value={campaignLimits.daily_email_limit}
-                                            onChange={(e) => setCampaignLimits(prev => ({ ...prev, daily_email_limit: parseInt(e.target.value) }))}
-                                            className="w-full"
-                                        />
+                        {/* Step 4: Queue Preview */}
+                        {emailQueue.length > 0 && (
+                            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+                                <div className="p-4 border-b flex flex-wrap justify-between items-center gap-2">
+                                    <h3 className="font-bold">4. Cola de Envío Masivo ({emailQueue.length})</h3>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={sendTestEmail}
+                                            disabled={isSending || !selectedTemplate}
+                                            className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg font-medium disabled:opacity-50 hover:bg-yellow-600"
+                                        >
+                                            <Eye className="w-4 h-4" />
+                                            Enviar Prueba
+                                        </button>
+                                        <button
+                                            onClick={sendCampaign}
+                                            disabled={isSending || !selectedTemplate}
+                                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-medium disabled:opacity-50"
+                                        >
+                                            {isSending ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    {sendProgress}%
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Send className="w-4 h-4" />
+                                                    Enviar Todo Ahora
+                                                </>
+                                            )}
+                                        </button>
                                     </div>
-                                    <div>
-                                        <div className="flex justify-between mb-2">
-                                            <label className="text-sm font-medium">WhatsApp por Día</label>
-                                            <span className="font-bold text-green-600">{campaignLimits.daily_whatsapp_limit}</span>
-                                        </div>
-                                        <input
-                                            type="range"
-                                            min="1"
-                                            max="200"
-                                            value={campaignLimits.daily_whatsapp_limit}
-                                            onChange={(e) => setCampaignLimits(prev => ({ ...prev, daily_whatsapp_limit: parseInt(e.target.value) }))}
-                                            className="w-full"
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={() => saveSettings('campaign_limits', campaignLimits)}
-                                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                                    >
-                                        Guardar Límites
-                                    </button>
                                 </div>
-                                <div className="bg-blue-50 p-4 rounded-xl text-sm text-blue-800">
-                                    <h4 className="font-bold mb-2 flex items-center gap-2">
-                                        💡 Recomendación de Calentamiento
-                                    </h4>
-                                    <ul className="space-y-1 list-disc list-inside">
-                                        <li>Semana 1: Máximo 20 emails / día</li>
-                                        <li>Semana 2: Aumentar a 40 emails / día</li>
-                                        <li>Meta: 100-200 emails / día para evitar spam</li>
-                                    </ul>
+                                <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: '400px' }}>
+                                    <table className="w-full min-w-[600px] text-sm">
+                                        <thead className="bg-gray-50 font-bold sticky top-0 z-10">
+                                            <tr>
+                                                <th className="p-2 text-left">#</th>
+                                                <th className="p-2 text-left">Nombre</th>
+                                                <th className="p-2 text-left">Email</th>
+                                                <th className="p-2 text-left">Empresa</th>
+                                                <th className="p-2 text-left">Tier</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y text-gray-600">
+                                            {emailQueue.slice(0, 50).map((item, i) => (
+                                                <tr key={item.contact_id} className="hover:bg-gray-50">
+                                                    <td className="p-2 text-gray-400">{i + 1}</td>
+                                                    <td className="p-2 font-medium">{item.contact_name || '-'}</td>
+                                                    <td className="p-2 text-blue-600">{item.contact_email}</td>
+                                                    <td className="p-2 text-sm text-gray-500">{item.company_name || '-'}</td>
+                                                    <td className="p-2">
+                                                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${getTierColor(item.contact_tier)}`}>
+                                                            {item.contact_tier}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
-
-                            {/* Re-engagement Section */}
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-orange-100 text-left">
-                                <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-orange-700">
-                                    <RefreshCw className="w-5 h-5" />
-                                    Re-engagement (Seguimiento)
-                                </h2>
-                                <p className="text-sm text-gray-600 mb-6">
-                                    Permite que contactos ya contactados vuelvan a la cola si no han respondido después de cierto tiempo.
-                                </p>
-
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">
-                                            Días para volver a contactar
-                                        </label>
-                                        <input
-                                            type="number"
-                                            value={followUpDays}
-                                            onChange={(e) => setFollowUpDays(parseInt(e.target.value))}
-                                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
-                                            min="1"
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            Solo se reiniciarán aquellos contactados hace más de {followUpDays} días.
-                                        </p>
-                                    </div>
-                                    <div className="flex flex-col gap-2">
-                                        <button
-                                            onClick={() => handleResetCampaign('email')}
-                                            disabled={isResetting}
-                                            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition flex items-center justify-center gap-2 disabled:opacity-50 text-sm font-bold shadow-sm"
-                                        >
-                                            <Mail className="w-4 h-4" />
-                                            Reciclar Cola de Emails
-                                        </button>
-                                        <button
-                                            onClick={() => handleResetCampaign('whatsapp')}
-                                            disabled={isResetting}
-                                            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2 disabled:opacity-50 text-sm font-bold shadow-sm"
-                                        >
-                                            <MessageCircle className="w-4 h-4" />
-                                            Reciclar Cola de WhatsApp
-                                        </button>
-                                    </div>
+                        )}
+                    </>
+                ) : (
+                <>
+                    {/* WhatsApp Queue */}
+                    {waQueue.length > 0 ? (
+                        <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+                            <div className="p-4 border-b flex flex-wrap justify-between items-center gap-2">
+                                <div>
+                                    <h3 className="font-bold">Cola de Envío Colectivo WhatsApp ({waQueue.length})</h3>
+                                    <p className="text-xs text-gray-500 mt-1">Haz clic en "Enviar" para abrir WhatsApp Web y luego marcar como "Hecho".</p>
                                 </div>
+                                <button
+                                    onClick={sendTestWhatsApp}
+                                    className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg font-medium hover:bg-yellow-600"
+                                >
+                                    <Eye className="w-4 h-4" />
+                                    Probar WhatsApp
+                                </button>
+                            </div>
+                            <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: '500px' }}>
+                                <table className="w-full min-w-[700px] text-sm">
+                                    <thead className="bg-gray-50 font-bold sticky top-0 z-10">
+                                        <tr>
+                                            <th className="p-3 text-left">Contacto / Empresa</th>
+                                            <th className="p-3 text-left">Teléfono</th>
+                                            <th className="p-3 text-left">Tier</th>
+                                            <th className="p-3 text-center">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y">
+                                        {waQueue.map((item) => (
+                                            <tr key={item.contact_id} className="hover:bg-gray-50">
+                                                <td className="p-3">
+                                                    <div className="font-bold">{item.contact_name}</div>
+                                                    <div className="text-xs text-gray-500">{item.company_name}</div>
+                                                </td>
+                                                <td className="p-3">
+                                                    <div className="text-xs text-blue-600 font-medium">{item.contact_phone}</div>
+                                                </td>
+                                                <td className="p-3">
+                                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${getTierColor(item.contact_tier)}`}>
+                                                        {item.contact_tier}
+                                                    </span>
+                                                </td>
+                                                <td className="p-3">
+                                                    <div className="flex justify-center gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                const phone = item.contact_phone.replace(/\D/g, '');
+                                                                const msg = whatsappConfig.default_message || 'Hola!';
+                                                                window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+                                                            }}
+                                                            className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
+                                                        >
+                                                            <MessageCircle className="w-4 h-4" />
+                                                            Enviar
+                                                        </button>
+                                                        <button
+                                                            onClick={() => markWaSent(item.contact_id)}
+                                                            className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200"
+                                                        >
+                                                            Hecho
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="bg-white rounded-xl p-12 text-center border-2 border-dashed">
+                            <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                            <h4 className="text-lg font-medium text-gray-900">No hay cola de WhatsApp</h4>
+                            <p className="text-gray-500 max-w-xs mx-auto mt-2">Usa el botón "Generar Nueva Cola" arriba buscando contactos con teléfono pendientes.</p>
+                        </div>
+                    )}
+                </>
+                        )}
+            </div>
+                )}
+
+            {/* ============ TAB: CONFIG ============ */}
+            {activeTab === 'config' && (
+                <div className="space-y-6">
+                    {/* Email Testing Section */}
+                    <EmailTester />
+
+                    {/* WhatsApp Section */}
+                    <div className="bg-white rounded-xl shadow-sm border p-6">
+                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                            <MessageCircle className="w-5 h-5 text-green-600" />
+                            WhatsApp Business
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Número de Teléfono (Formato Internacional)</label>
+                                    <input
+                                        type="text"
+                                        value={whatsappConfig.phone}
+                                        onChange={(e) => setWhatsappConfig(prev => ({ ...prev, phone: e.target.value }))}
+                                        className="w-full p-2 border rounded-lg"
+                                        placeholder="525512345678"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre para Mostrar</label>
+                                    <input
+                                        type="text"
+                                        value={whatsappConfig.display_number}
+                                        onChange={(e) => setWhatsappConfig(prev => ({ ...prev, display_number: e.target.value }))}
+                                        className="w-full p-2 border rounded-lg"
+                                        placeholder="+52 55 1234 5678"
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => saveSettings('whatsapp_business', whatsappConfig)}
+                                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                                >
+                                    Guardar WhatsApp
+                                </button>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Mensaje Predeterminado</label>
+                                <textarea
+                                    rows={4}
+                                    value={whatsappConfig.default_message}
+                                    onChange={(e) => setWhatsappConfig(prev => ({ ...prev, default_message: e.target.value }))}
+                                    className="w-full p-2 border rounded-lg text-sm"
+                                    placeholder="¡Hola! Vi tu perfil en Geobooker..."
+                                />
+                                <p className="text-xs text-gray-400 mt-2">Este mensaje se usará cuando abras un chat desde el Scraper o contactos.</p>
                             </div>
                         </div>
                     </div>
-                )}
-            </div>
 
-            {/* Template Modal */}
-            {showTemplateModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="p-6 border-b flex justify-between items-center sticky top-0 bg-white">
-                            <h2 className="text-xl font-bold">
-                                {selectedTemplate ? 'Editar Plantilla' : 'Nueva Plantilla'}
+                    {/* Email Senders Section */}
+                    <div className="bg-white rounded-xl shadow-sm border p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold flex items-center gap-2">
+                                <Mail className="w-5 h-5 text-blue-600" />
+                                Remitentes de Email
+                            </h3>
+                            <button
+                                onClick={() => setSenders(prev => [...prev, { name: '', email: '', signature: '', use_for: [] }])}
+                                className="text-sm text-blue-600 hover:bg-blue-50 px-3 py-1 rounded-lg flex items-center gap-1"
+                            >
+                                <Plus className="w-4 h-4" /> Agregar Remitente
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            {senders.map((sender, idx) => (
+                                <div key={idx} className="p-4 border rounded-xl bg-gray-50/50 space-y-3">
+                                    <div className="flex flex-col md:flex-row gap-4">
+                                        <div className="flex-1">
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre</label>
+                                            <input
+                                                type="text"
+                                                value={sender.name}
+                                                onChange={(e) => {
+                                                    const newSenders = [...senders];
+                                                    newSenders[idx].name = e.target.value;
+                                                    setSenders(newSenders);
+                                                }}
+                                                className="w-full p-2 border rounded-lg"
+                                                placeholder="Juan Pablo CEO"
+                                            />
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Correo Electrónico</label>
+                                            <input
+                                                type="email"
+                                                value={sender.email}
+                                                onChange={(e) => {
+                                                    const newSenders = [...senders];
+                                                    newSenders[idx].email = e.target.value;
+                                                    setSenders(newSenders);
+                                                }}
+                                                className="w-full p-2 border rounded-lg"
+                                                placeholder="juanpablopg@geobooker.com.mx"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={() => setSenders(prev => prev.filter((_, i) => i !== idx))}
+                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg self-end"
+                                        >
+                                            <Trash2 className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Firma HTML</label>
+                                        <textarea
+                                            rows={3}
+                                            value={sender.signature}
+                                            onChange={(e) => {
+                                                const newSenders = [...senders];
+                                                newSenders[idx].signature = e.target.value;
+                                                setSenders(newSenders);
+                                            }}
+                                            className="w-full p-2 border rounded-lg text-xs font-mono"
+                                            placeholder="<div>...</div>"
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {senders.length > 0 && (
+                            <button
+                                onClick={() => saveSettings('email_senders', senders)}
+                                className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                            >
+                                Guardar Remitentes
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Limits Section */}
+                    <div className="bg-white rounded-xl shadow-sm border p-6">
+                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                            <TrendingUp className="w-5 h-5 text-purple-600" />
+                            Límites de Campaña
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <div>
+                                    <div className="flex justify-between mb-2">
+                                        <label className="text-sm font-medium">Emails por Día</label>
+                                        <span className="font-bold text-blue-600">{campaignLimits.daily_email_limit}</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="1"
+                                        max="500"
+                                        value={campaignLimits.daily_email_limit}
+                                        onChange={(e) => setCampaignLimits(prev => ({ ...prev, daily_email_limit: parseInt(e.target.value) }))}
+                                        className="w-full"
+                                    />
+                                </div>
+                                <div>
+                                    <div className="flex justify-between mb-2">
+                                        <label className="text-sm font-medium">WhatsApp por Día</label>
+                                        <span className="font-bold text-green-600">{campaignLimits.daily_whatsapp_limit}</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="1"
+                                        max="200"
+                                        value={campaignLimits.daily_whatsapp_limit}
+                                        onChange={(e) => setCampaignLimits(prev => ({ ...prev, daily_whatsapp_limit: parseInt(e.target.value) }))}
+                                        className="w-full"
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => saveSettings('campaign_limits', campaignLimits)}
+                                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                                >
+                                    Guardar Límites
+                                </button>
+                            </div>
+                            <div className="bg-blue-50 p-4 rounded-xl text-sm text-blue-800">
+                                <h4 className="font-bold mb-2 flex items-center gap-2">
+                                    💡 Recomendación de Calentamiento
+                                </h4>
+                                <ul className="space-y-1 list-disc list-inside">
+                                    <li>Semana 1: Máximo 20 emails / día</li>
+                                    <li>Semana 2: Aumentar a 40 emails / día</li>
+                                    <li>Meta: 100-200 emails / día para evitar spam</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Re-engagement Section */}
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-orange-100 text-left">
+                            <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-orange-700">
+                                <RefreshCw className="w-5 h-5" />
+                                Re-engagement (Seguimiento)
                             </h2>
-                            <button
-                                onClick={() => setShowTemplateModal(false)}
-                                className="p-2 hover:bg-gray-100 rounded-lg"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Nombre</label>
-                                <input
-                                    type="text"
-                                    value={templateForm.name}
-                                    onChange={(e) => setTemplateForm(p => ({ ...p, name: e.target.value }))}
-                                    className="w-full p-3 border rounded-xl"
-                                    placeholder="Ej: Gancho Restaurantes"
-                                />
+                            <p className="text-sm text-gray-600 mb-6">
+                                Permite que contactos ya contactados vuelvan a la cola si no han respondido después de cierto tiempo.
+                            </p>
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Días para volver a contactar
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={followUpDays}
+                                        onChange={(e) => setFollowUpDays(parseInt(e.target.value))}
+                                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                                        min="1"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Solo se reiniciarán aquellos contactados hace más de {followUpDays} días.
+                                    </p>
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <button
+                                        onClick={() => handleResetCampaign('email')}
+                                        disabled={isResetting}
+                                        className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition flex items-center justify-center gap-2 disabled:opacity-50 text-sm font-bold shadow-sm"
+                                    >
+                                        <Mail className="w-4 h-4" />
+                                        Reciclar Cola de Emails
+                                    </button>
+                                    <button
+                                        onClick={() => handleResetCampaign('whatsapp')}
+                                        disabled={isResetting}
+                                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2 disabled:opacity-50 text-sm font-bold shadow-sm"
+                                    >
+                                        <MessageCircle className="w-4 h-4" />
+                                        Reciclar Cola de WhatsApp
+                                    </button>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Asunto</label>
-                                <input
-                                    type="text"
-                                    value={templateForm.subject}
-                                    onChange={(e) => setTemplateForm(p => ({ ...p, subject: e.target.value }))}
-                                    className="w-full p-3 border rounded-xl"
-                                    placeholder="Usa {{empresa}}, {{nombre}} para personalizar"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Cuerpo (HTML)</label>
-                                <textarea
-                                    value={templateForm.body_html}
-                                    onChange={(e) => setTemplateForm(p => ({ ...p, body_html: e.target.value }))}
-                                    className="w-full p-3 border rounded-xl h-48 font-mono text-sm"
-                                    placeholder="<p>Hola {{nombre}},</p>"
-                                />
-                            </div>
-                        </div>
-                        <div className="p-6 border-t flex justify-end gap-3">
-                            <button
-                                onClick={() => setShowTemplateModal(false)}
-                                className="px-4 py-2 text-gray-600"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={saveTemplate}
-                                className="px-6 py-2 bg-blue-600 text-white rounded-xl font-medium"
-                            >
-                                Guardar
-                            </button>
                         </div>
                     </div>
                 </div>
             )}
+        </div>
 
-            {/* Mobile-friendly scrollbar styles */}
-            <style>{`
+            {/* Template Modal */ }
+    {
+        showTemplateModal && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="p-6 border-b flex justify-between items-center sticky top-0 bg-white">
+                        <h2 className="text-xl font-bold">
+                            {selectedTemplate ? 'Editar Plantilla' : 'Nueva Plantilla'}
+                        </h2>
+                        <button
+                            onClick={() => setShowTemplateModal(false)}
+                            className="p-2 hover:bg-gray-100 rounded-lg"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+                    <div className="p-6 space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Nombre</label>
+                            <input
+                                type="text"
+                                value={templateForm.name}
+                                onChange={(e) => setTemplateForm(p => ({ ...p, name: e.target.value }))}
+                                className="w-full p-3 border rounded-xl"
+                                placeholder="Ej: Gancho Restaurantes"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Asunto</label>
+                            <input
+                                type="text"
+                                value={templateForm.subject}
+                                onChange={(e) => setTemplateForm(p => ({ ...p, subject: e.target.value }))}
+                                className="w-full p-3 border rounded-xl"
+                                placeholder="Usa {{empresa}}, {{nombre}} para personalizar"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Cuerpo (HTML)</label>
+                            <textarea
+                                value={templateForm.body_html}
+                                onChange={(e) => setTemplateForm(p => ({ ...p, body_html: e.target.value }))}
+                                className="w-full p-3 border rounded-xl h-48 font-mono text-sm"
+                                placeholder="<p>Hola {{nombre}},</p>"
+                            />
+                        </div>
+                    </div>
+                    <div className="p-6 border-t flex justify-end gap-3">
+                        <button
+                            onClick={() => setShowTemplateModal(false)}
+                            className="px-4 py-2 text-gray-600"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={saveTemplate}
+                            className="px-6 py-2 bg-blue-600 text-white rounded-xl font-medium"
+                        >
+                            Guardar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    {/* Mobile-friendly scrollbar styles */ }
+    <style>{`
                 .scrollbar-hide::-webkit-scrollbar {
                     display: none;
                 }
@@ -1604,7 +1542,7 @@ const UnifiedCRM = () => {
                     scrollbar-width: none;
                 }
             `}</style>
-        </div>
+        </div >
     );
 };
 

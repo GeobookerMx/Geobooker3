@@ -72,20 +72,27 @@ const MarketingDashboard = () => {
 
             const dailyLimit = config?.daily_limit || 100;
 
-            // 6. Proyecciones
-            const pending = statusData?.pending || 0;
-            const daysToComplete = Math.ceil(pending / dailyLimit);
+            // 6. Conteo en Cola de Envío (NUEVO)
+            const { count: queueCount } = await supabase
+                .from('email_queue')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'pending');
+
+            // 7. Proyecciones
+            const contactsPending = statusData?.pending || 0;
+            const daysToComplete = Math.ceil(contactsPending / dailyLimit);
             const completionDate = new Date();
-            completionDate.setDate(completionDate.getDate() + daysToComplete);
+            completionDate.setDate(completionDate.getDate() + (daysToComplete || 0));
 
             setMetrics({
                 total: total || 0,
                 byTier: tierData || {},
                 byStatus: statusData || {},
                 sentToday: sentToday || 0,
+                queueCount: queueCount || 0,
                 dailyLimit,
                 projections: {
-                    pending,
+                    pending: contactsPending,
                     daysToComplete,
                     completionDate: completionDate.toLocaleDateString('es-MX')
                 }

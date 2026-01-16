@@ -8,11 +8,15 @@ import { supabase } from '../../lib/supabase';
 
 const CampaignSender = ({ metrics, onCampaignComplete }) => {
     const [preparing, setPreparing] = useState(false);
+    const [sending, setSending] = useState(false);
+    const [progress, setProgress] = useState({ sent: 0, total: 0 });
 
     const prepareQueue = async () => {
+        console.log('🔄 Iniciando preparación de cola...');
         setPreparing(true);
         try {
             const available = metrics.dailyLimit - metrics.sentToday;
+            console.log(`📊 Disponibles: ${available}, Límite: ${metrics.dailyLimit}, Enviados hoy: ${metrics.sentToday}`);
             if (available <= 0) {
                 toast.error('Ya alcanzaste el límite diario');
                 return;
@@ -24,13 +28,12 @@ const CampaignSender = ({ metrics, onCampaignComplete }) => {
                 body: JSON.stringify({ limit: available })
             });
 
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error);
-
+            console.log('✅ Respuesta de preparación:', result);
             toast.success(`✅ Cola preparada: ${result.contacts_added} contactos listos`);
             if (onCampaignComplete) onCampaignComplete();
 
         } catch (error) {
+            console.error('❌ Error preparando cola:', error);
             toast.error(`Error preparando cola: ${error.message}`);
         } finally {
             setPreparing(false);
@@ -84,6 +87,7 @@ const CampaignSender = ({ metrics, onCampaignComplete }) => {
 
     const hasQueue = (metrics.queueCount || 0) > 0;
     const canPrepare = metrics.sentToday < metrics.dailyLimit;
+    const canSend = hasQueue && metrics.sentToday < metrics.dailyLimit;
 
     return (
         <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl p-6 text-white shadow-xl">

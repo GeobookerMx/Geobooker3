@@ -1,6 +1,6 @@
 // src/services/cacheVersionService.js
 
-const APP_VERSION = '1.2.0'; // Incrementa esto para forzar limpieza de caché
+const APP_VERSION = '1.3.0'; // Incrementa esto para forzar limpieza de caché
 const VERSION_KEY = 'gb_app_version';
 const DB_NAMES = ['business-cache', 'google-places-cache'];
 

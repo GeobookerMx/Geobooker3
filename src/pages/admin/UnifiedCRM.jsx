@@ -298,52 +298,6 @@ const UnifiedCRM = () => {
         return 'B';
     };
 
-    const toggleContact = (id) => {
-        setSelectedContacts(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(id)) newSet.delete(id);
-            else newSet.add(id);
-            return newSet;
-        });
-    };
-
-    const selectAll = () => {
-        if (selectedContacts.size === filteredContacts.length) {
-            setSelectedContacts(new Set());
-        } else {
-            setSelectedContacts(new Set(filteredContacts.map(c => c.id)));
-        }
-    };
-
-    const deleteSelected = async () => {
-        if (!confirm(`¿Eliminar ${selectedContacts.size} contactos?`)) return;
-
-        const toastId = toast.loading('Eliminando...');
-        try {
-            const { error } = await supabase
-                .from('crm_contacts')
-                .delete()
-                .in('id', Array.from(selectedContacts));
-
-            if (error) throw error;
-            toast.success('Contactos eliminados', { id: toastId });
-            setSelectedContacts(new Set());
-            loadContacts();
-        } catch (err) {
-            toast.error('Error eliminando', { id: toastId });
-        }
-    };
-
-    const filteredContacts = contacts.filter(c => {
-        const matchSearch = !searchTerm ||
-            c.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.company?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchTier = tierFilter === 'all' || c.tier === tierFilter;
-        const matchType = typeFilter === 'all' || c.company_type === typeFilter;
-        return matchSearch && matchTier && matchType;
-    });
-
     // ============ TEMPLATES FUNCTIONS ============
     const loadTemplates = async () => {
         try {

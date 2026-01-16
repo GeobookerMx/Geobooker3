@@ -223,8 +223,8 @@ export default function AppRouter() {
         <Route path="settings" element={<SettingsPage />} />
         <Route path="referrals" element={<ReferralManagement />} />
         <Route path="import" element={<BulkImport />} />
-        <Route path="campaigns" element={<EmailCampaigns />} />
-        <Route path="crm" element={<ContactsCRM />} />
+        <Route path="campaigns" element={<UnifiedCRM />} />
+        <Route path="crm" element={<UnifiedCRM />} />
         <Route path="marketing" element={<UnifiedCRM />} />
         <Route path="smart-campaigns" element={<SmartCampaignLauncher />} />
         <Route path="scraper" element={<ApifyScraper />} />

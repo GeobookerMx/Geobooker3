@@ -338,9 +338,9 @@ export default function ReferralManagement() {
                             </div>
                         </div>
                     </div>
-                </div>
+                </>
+            )}
         </div>
-        </div >
     );
 }
 

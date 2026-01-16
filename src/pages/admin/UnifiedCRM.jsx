@@ -242,7 +242,7 @@ const UnifiedCRM = () => {
             const contacts = data.map(row => ({
                 name: row.Nombre || row.name || row.Name || '',
                 email: (row.Email || row.email || row['Email corporativo'] || '').trim().toLowerCase(),
-                company: row.Empresa || row.company || row.Company || '',
+                company: row.Empresa || row.company || row.Company || row.Compañía || '',
                 position: row.Puesto || row.position || row.Position || '',
                 phone: row.Telefono || row.phone || row.Phone || row['Teléfono'] || '',
                 tier: normalizeTier(row.Tier || row.tier || 'A'),
@@ -258,9 +258,9 @@ const UnifiedCRM = () => {
 
             console.log(`Importing ${contacts.length} contacts...`);
 
-            // Use insert instead of upsert if upsert fails
+            // Use marketing_contacts table
             const { error } = await supabase
-                .from('crm_contacts')
+                .from('marketing_contacts')
                 .upsert(contacts, {
                     onConflict: 'email',
                     ignoreDuplicates: true
@@ -272,7 +272,7 @@ const UnifiedCRM = () => {
                 let imported = 0;
                 for (const contact of contacts) {
                     const { error: insertError } = await supabase
-                        .from('crm_contacts')
+                        .from('marketing_contacts')
                         .insert([contact])
                         .select();
                     if (!insertError) imported++;

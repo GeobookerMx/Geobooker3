@@ -14,6 +14,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
+import WhatsAppService from '../../services/whatsappService';
 
 const ApifyScraper = () => {
     // Search state
@@ -381,63 +382,33 @@ const ApifyScraper = () => {
         return hourlyCount < rateLimitConfig.maxPerHour;
     };
 
-    // Open WhatsApp with lead's phone and track/remove (with rate limiting)
-    const openWhatsApp = (lead, index) => {
-        // Check cooldown
-        if (cooldownSeconds > 0) {
-            toast.error(`⏱️ Espera ${cooldownSeconds}s antes del siguiente mensaje`);
-            return;
-        }
-
-        // Check hourly limit
-        if (!checkHourlyLimit()) {
-            const resetIn = hourlyResetTime ? Math.ceil((hourlyResetTime - Date.now()) / 60000) : 0;
-            toast.error(`🚫 Límite por hora alcanzado (${rateLimitConfig.maxPerHour}). Espera ${resetIn} minutos.`);
-            return;
-        }
-
+    // Open WhatsApp with lead's phone (usando sistema unificado)
+    const openWhatsApp = async (lead, index) => {
         if (!lead.phone) {
             toast.error('Este negocio no tiene teléfono');
             return;
         }
 
-        const phone = lead.phone.replace(/\D/g, '');
-        const message = encodeURIComponent(whatsappSettings.default_message || `Hola, los contacto de parte de Geobooker. ¿Podemos platicar sobre cómo podemos ayudarles a conseguir más clientes?`);
-        window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+        // Detectar idioma por ubicación
+        const language = location?.match(/US|UK|Canada|Australia/i) ? 'en' : 'es';
 
-        // Track the message
-        const newWhatsappCount = whatsappSent + 1;
-        setWhatsappSent(newWhatsappCount);
-        setContactedPhones(prev => new Set([...prev, phone]));
+        try {
+            const result = await WhatsAppService.sendMessage({
+                phone: lead.phone,
+                name: lead.name || lead.title,
+                company: lead.name || lead.title,
+                language: language
+            }, 'apify');
 
-        // Update hourly count
-        const newHourlyCount = hourlyCount + 1;
-        setHourlyCount(newHourlyCount);
-        if (!hourlyResetTime) {
-            setHourlyResetTime(Date.now() + 3600000); // 1 hour from now
-        }
-
-        // Start cooldown
-        startCooldown();
-
-        // Remove from results list after sending
-        setResults(prev => prev.filter((_, i) => i !== index));
-
-        // Update selected leads (shift indexes)
-        setSelectedLeads(prev => {
-            const newSelected = new Set();
-            prev.forEach(i => {
-                if (i < index) newSelected.add(i);
-                else if (i > index) newSelected.add(i - 1);
-            });
-            return newSelected;
-        });
-
-        // Show appropriate message
-        if (newHourlyCount >= rateLimitConfig.warningAt) {
-            toast(`⚠️ WhatsApp ${newWhatsappCount} - Cerca del límite (${newHourlyCount}/${rateLimitConfig.maxPerHour} por hora)`, { icon: '⚠️' });
-        } else {
-            toast.success(`✅ WhatsApp enviado (${newWhatsappCount} total) - Próximo en 45s`);
+            if (result.success) {
+                // Remover de lista actual
+                const newResults = results.filter((_, i) => i !== index);
+                setResults(newResults);
+                setSelectedLeads(new Set()); // Clear selections
+                toast.success(`WhatsApp enviado. ${result.remaining} restantes hoy`);
+            }
+        } catch (error) {
+            console.error('Error sending WhatsApp:', error);
         }
     };
 

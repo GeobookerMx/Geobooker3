@@ -187,17 +187,21 @@ const BusinessProfilePage = () => {
                         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
                             {business.name}
                         </h1>
-                        <div className="flex items-center gap-2 text-gray-600">
+                        <div className="flex flex-wrap items-center gap-2 text-gray-600 mb-3">
                             <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
                                 {business.category}
                             </span>
                             {business.subcategory && (
-                                <span className="text-gray-400">•</span>
-                            )}
-                            {business.subcategory && (
-                                <span className="text-gray-500 text-sm">{business.subcategory}</span>
+                                <>
+                                    <span className="text-gray-400">•</span>
+                                    <span className="text-gray-500 text-sm">{business.subcategory}</span>
+                                </>
                             )}
                         </div>
+                        {/* Trust Badges */}
+                        {business.active_badges && business.active_badges.length > 0 && (
+                            <BadgeDisplay badges={business.active_badges} layout="horizontal" />
+                        )}
                     </div>
 
                     {/* Rating */}
@@ -413,6 +417,25 @@ const BusinessProfilePage = () => {
                         </Link>
                     </div>
                 )}
+                {/* Photo Gallery */}
+                <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+                    <PhotoGallery businessId={id} isOwner={false} />
+                </div>
+
+                {/* Reviews Section */}
+                <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+                    <ReviewsSection businessId={id} ownerId={business.owner_id} />
+                </div>
+
+                {/* Trust Score Widget (Desktop Sidebar) */}
+                <div className="hidden lg:block fixed right-8 top-32 w-80">
+                    <TrustScoreWidget trustScore={business.trust_score || 0} />
+                </div>
+
+                {/* Trust Score Widget (Mobile) */}
+                <div className="lg:hidden bg-white rounded-2xl shadow-xl p-6 mb-6">
+                    <TrustScoreWidget trustScore={business.trust_score || 0} />
+                </div>
             </div>
         </div>
     );

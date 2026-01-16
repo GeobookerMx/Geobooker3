@@ -99,3 +99,14 @@
   port = 5173
   targetPort = 5173
   framework = "#vite"
+
+# ==========================================
+# Scheduled Functions (Cron Jobs)
+# ==========================================
+
+# Cron Job: Check Outdated Businesses (Diario 9am CST)
+[functions."check-outdated-businesses"]
+  schedule = "0 15 * * *"  # 15:00 UTC = 9:00 AM CST (UTC-6)
+
+# Nota: El cron ejecuta la función en netlify/functions/check-outdated-businesses.js
+# que verifica negocios desactualizados y envía emails automáticamente

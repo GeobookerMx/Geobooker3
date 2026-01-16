@@ -12,6 +12,7 @@ import {
     Play, Pause, CheckCircle, XCircle, MessageCircle,
     Filter, RefreshCw, Ban, Clock, Users, Building2, Loader2, Trash2
 } from 'lucide-react';
+import WhatsAppService from '../../services/whatsappService';
 
 // Libraries needed for Places API
 const libraries = ['places'];
@@ -355,45 +356,32 @@ const ScanInvitePage = () => {
         toast('Escaneo pausado', { icon: '⏸️' });
     };
 
-    // Enviar invitación por WhatsApp
+    // Enviar invitación por WhatsApp (usando sistema unificado)
     const sendWhatsAppInvite = async (lead, contact) => {
-        if (dailyCount >= dailyLimit) {
-            toast.error(`Límite diario alcanzado (${dailyLimit} invitaciones)`);
-            return;
-        }
-
-        const phone = contact.normalized_value || contact.value;
-        const cleanPhone = phone.replace(/\D/g, '');
-        const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(whatsappMessage)}`;
-
-        // Registrar intento
         try {
-            await supabase.from('scan_outreach').insert({
-                lead_id: lead.id,
-                contact_id: contact.id,
-                user_id: (await supabase.auth.getUser()).data.user.id,
-                channel: 'whatsapp',
-                message_template: whatsappMessage,
-                status: 'sent'
-            });
+            const result = await WhatsAppService.sendMessage({
+                phone: contact.value,
+                name: lead.name,
+                company: lead.name,
+                language: 'es'
+            }, 'scan_invite');
 
-            // Actualizar estado del lead
-            await supabase
-                .from('scan_leads')
-                .update({ status: 'contacted', updated_at: new Date().toISOString() })
-                .eq('id', lead.id);
+            if (result.success) {
+                // Actualizar estado del lead en tabla scan_leads
+                await supabase
+                    .from('scan_leads')
+                    .update({ status: 'contacted', updated_at: new Date().toISOString() })
+                    .eq('id', lead.id);
 
-            // Abrir WhatsApp
-            window.open(whatsappUrl, '_blank');
+                // Ocultar lead de la lista visual
+                setHiddenLeadIds(prev => new Set([...prev, lead.id]));
 
-            // Ocultar lead de la lista visual (marcar como procesado)
-            setHiddenLeadIds(prev => new Set([...prev, lead.id]));
-
-            toast.success('WhatsApp abierto - Lead marcado como contactado');
-            loadStats();
-            loadLeads();
+                // Recargar stats
+                loadStats();
+                loadLeads();
+            }
         } catch (error) {
-            console.error('Error registrando outreach:', error);
+            console.error('Error al enviar WhatsApp:', error);
         }
     };
 

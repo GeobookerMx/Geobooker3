@@ -240,15 +240,15 @@ const UnifiedCRM = () => {
         const toastId = toast.loading('Importando contactos...');
         try {
             const contacts = data.map(row => ({
-                name: row.Nombre || row.name || row.Name || '',
+                contact_name: row.Nombre || row.name || row.Name || '',
                 email: (row.Email || row.email || row['Email corporativo'] || '').trim().toLowerCase(),
-                company: row.Empresa || row.company || row.Company || row.Compañía || '',
+                company_name: row.Empresa || row.company || row.Company || row.Compañía || '',
                 position: row.Puesto || row.position || row.Position || '',
                 phone: row.Telefono || row.phone || row.Phone || row['Teléfono'] || '',
-                tier: normalizeTier(row.Tier || row.tier || 'A'),
+                tier: normalizeTier(row.Tier || row.tier || row.Tamaño || 'A'),
                 company_type: row['Tipo de empresa'] || row.company_type || row.Tipo || '',
                 city: row.Ciudad || row.city || row.City || '',
-                website: row.Web || row.website || row['Sitio web'] || ''
+                website: row.Web || row.website || row['Sitio web'] || row.www || ''
             })).filter(c => c.email && c.email.includes('@')); // Only contacts with valid email
 
             if (contacts.length === 0) {

@@ -436,6 +436,95 @@ const AdvertisePage = () => {
           </div>
         </div>
 
+        {/* BENEFICIOS ENTERPRISE - NUEVO */}
+        <div className="my-20">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-full mb-4">
+              <TrendingUp className="w-4 h-4" />
+              <span className="text-sm font-semibold">Beneficios Enterprise</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+              Más que Publicidad: Una Plataforma Completa
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Al publicitarte en Geobooker, accedes a herramientas empresariales avanzadas
+              para gestionar y hacer crecer tu negocio.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Beneficio 1: Abre y Cierra Digitalmente */}
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 border-2 border-blue-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <div className="bg-blue-600 w-14 h-14 rounded-xl flex items-center justify-center mb-4">
+                <span className="text-3xl">⏰</span>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                Abre y Cierra Digitalmente
+              </h3>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                Controla el horario de tu negocio desde cualquier dispositivo.
+                Tus clientes siempre sabrán  si estás disponible.
+              </p>
+            </div>
+
+            {/* Beneficio 2: Siempre en el Mapa */}
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 border-2 border-green-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <div className="bg-green-600 w-14 h-14 rounded-xl flex items-center justify-center mb-4">
+                <span className="text-3xl">📍</span>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                Siempre en el Mapa
+              </h3>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                Tu negocio visible 24/7 en el mapa interactivo de Geobooker.
+                Nunca pierdas un cliente potencial.
+              </p>
+            </div>
+
+            {/* Beneficio 3: Multi-Ubicación */}
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 border-2 border-purple-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <div className="bg-purple-600 w-14 h-14 rounded-xl flex items-center justify-center mb-4">
+                <span className="text-3xl">🏢</span>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                Multi-Ubicación
+              </h3>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                Gestiona múltiples sucursales desde un solo dashboard.
+                Reportes unificados y control centralizado.
+              </p>
+            </div>
+
+            {/* Beneficio 4: Programa de Referidos */}
+            <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-6 border-2 border-amber-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <div className="bg-amber-600 w-14 h-14 rounded-xl flex items-center justify-center mb-4">
+                <span className="text-3xl">🎁</span>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                Programa de Referidos
+              </h3>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                Sistema de referidos integrado: tus clientes invitan, tú ganas.
+                Recompensas automáticas y tracking en tiempo real.
+              </p>
+            </div>
+          </div>
+
+          {/* CTA Enterprise */}
+          <div className="mt-10 text-center">
+            <Link
+              to="/enterprise"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-2xl transition-all hover:scale-105"
+            >
+              Conocer Planes Enterprise
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <p className="text-sm text-gray-500 mt-3">
+              Herramientas avanzadas para empresas que quieren crecer
+            </p>
+          </div>
+        </div>
+
         {/* AVISOS IMPORTANTES - MOVIDO ABAJO */}
         <div className="max-w-4xl mx-auto mb-10 grid md:grid-cols-3 gap-4">
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">

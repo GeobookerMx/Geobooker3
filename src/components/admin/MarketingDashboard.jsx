@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { BarChart3, TrendingUp, Users, Mail, CheckCircle, Clock, Target, Zap } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { supabase } from '../../lib/supabase';
+import CampaignSender from './CampaignSender';
 
 const MarketingDashboard = () => {
     const [metrics, setMetrics] = useState({
@@ -171,6 +172,9 @@ const MarketingDashboard = () => {
                     <p className="text-sm opacity-80 mt-1">días para completar</p>
                 </div>
             </div>
+
+            {/* Campaign Sender - NUEVO */}
+            <CampaignSender metrics={metrics} onCampaignComplete={loadMetrics} />
 
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

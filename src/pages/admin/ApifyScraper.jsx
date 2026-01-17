@@ -791,6 +791,11 @@ const ApifyScraper = () => {
                                                         <Phone className="w-3 h-3" /> {lead.phone}
                                                     </p>
                                                 )}
+                                                {lead.email && (
+                                                    <p className="text-sm flex items-center gap-1 text-purple-600 truncate max-w-[150px]">
+                                                        <Mail className="w-3 h-3" /> {lead.email}
+                                                    </p>
+                                                )}
                                                 {lead.website && (
                                                     <a
                                                         href={lead.website}

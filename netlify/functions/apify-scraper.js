@@ -141,6 +141,7 @@ export async function handler(event) {
                     name: place.title || place.name,
                     address: place.address,
                     phone: place.phone,
+                    email: place.email || (place.contactInfo?.email) || null,
                     website: place.website,
                     category: place.categoryName || place.categories?.[0],
                     rating: place.totalScore || place.rating,

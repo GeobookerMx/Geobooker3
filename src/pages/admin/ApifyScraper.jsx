@@ -9,7 +9,8 @@ import React, { useState, useCallback, useEffect } from 'react';
 import {
     Search, Globe, MapPin, Phone, Mail, ExternalLink, Download,
     Loader2, Building2, Star, MessageCircle, Send, CheckCircle,
-    Users, Filter, RefreshCw, AlertCircle, Clock, Timer, FolderOpen
+    Users, Filter, RefreshCw, AlertCircle, Clock, Timer, FolderOpen,
+    X, Trash2, UserX
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
@@ -273,6 +274,21 @@ const ApifyScraper = () => {
         } catch (err) {
             console.warn('Auto-save error:', err);
         }
+    };
+
+    // Skip/Remove result from list
+    const skipResult = (index) => {
+        const newResults = results.filter((_, i) => i !== index);
+        setResults(newResults);
+
+        // Clear from selection if it was there
+        if (selectedLeads.has(index)) {
+            const newSelected = new Set(selectedLeads);
+            newSelected.delete(index);
+            setSelectedLeads(newSelected);
+        }
+
+        toast.success('Lead omitido');
     };
 
     // Toggle selection
@@ -802,11 +818,18 @@ const ApifyScraper = () => {
                                                     <button
                                                         onClick={() => openWhatsApp(lead, index)}
                                                         className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-                                                        title="Enviar WhatsApp (se eliminará de la lista)"
+                                                        title="Enviar WhatsApp"
                                                     >
                                                         <MessageCircle className="w-4 h-4" />
                                                     </button>
                                                 )}
+                                                <button
+                                                    onClick={() => skipResult(index)}
+                                                    className="p-2 bg-gray-100 text-gray-500 rounded-lg hover:bg-red-50 hover:text-red-500 transition-colors"
+                                                    title="Saltar/Eliminar de la lista"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
                                                 {lead.googleMapsUrl && (
                                                     <a
                                                         href={lead.googleMapsUrl}

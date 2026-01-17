@@ -21,7 +21,7 @@ ALTER TABLE email_templates ADD CONSTRAINT email_templates_name_unique UNIQUE (n
 -- ============================================================
 -- PLANTILLA 1: GANCHO LOCAL (MÉXICO) - PROSPECTING
 -- ============================================================
-INSERT INTO email_templates (name, subject, body_html, category)
+INSERT INTO email_templates (name, subject, html_content, category)
 VALUES (
     'Gancho Local México',
     '🚀 {{empresa}}: ¿Listo para que más clientes te encuentren en el mapa?',
@@ -69,12 +69,12 @@ VALUES (
         </div>
     </div>',
     'prospecting'
-) ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, body_html = EXCLUDED.body_html, category = EXCLUDED.category;
+) ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, html_content = EXCLUDED.html_content, category = EXCLUDED.category;
 
 -- ============================================================
 -- PLANTILLA 2: EXPANSIÓN GLOBAL (ENGLISH)
 -- ============================================================
-INSERT INTO email_templates (name, subject, body_html, category)
+INSERT INTO email_templates (name, subject, html_content, category)
 VALUES (
     'Global Expansion Hook',
     '🌍 {{empresa}}: Expand your reach to the Mexican market',
@@ -125,12 +125,12 @@ VALUES (
         </div>
     </div>',
     'global'
-) ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, body_html = EXCLUDED.body_html, category = EXCLUDED.category;
+) ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, html_content = EXCLUDED.html_content, category = EXCLUDED.category;
 
 -- ============================================================
 -- PLANTILLA 3: NICHO - RESTAURANTES Y GASTRONOMÍA
 -- ============================================================
-INSERT INTO email_templates (name, subject, body_html, category)
+INSERT INTO email_templates (name, subject, html_content, category)
 VALUES (
     'Nicho: Restaurantes',
     '🍔 {{empresa}}: ¡Que el hambre de tus clientes trabaje a tu favor!',
@@ -175,12 +175,12 @@ VALUES (
         </div>
     </div>',
     'niche_food'
-) ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, body_html = EXCLUDED.body_html, category = EXCLUDED.category;
+) ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, html_content = EXCLUDED.html_content, category = EXCLUDED.category;
 
 -- ============================================================
 -- PLANTILLA 4: NICHO - SALUD (Doctores, Clínicas, Farmacias)
 -- ============================================================
-INSERT INTO email_templates (name, subject, body_html, category)
+INSERT INTO email_templates (name, subject, html_content, category)
 VALUES (
     'Nicho: Salud y Bienestar',
     '🏥 {{empresa}}: Que tus pacientes te encuentren cuando más te necesitan',
@@ -218,12 +218,12 @@ VALUES (
         </div>
     </div>',
     'niche_health'
-) ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, body_html = EXCLUDED.body_html, category = EXCLUDED.category;
+) ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, html_content = EXCLUDED.html_content, category = EXCLUDED.category;
 
 -- ============================================================
 -- PLANTILLA 5: NICHO - BELLEZA (Salones, Spas, Estéticas)
 -- ============================================================
-INSERT INTO email_templates (name, subject, body_html, category)
+INSERT INTO email_templates (name, subject, html_content, category)
 VALUES (
     'Nicho: Belleza y Estética',
     '💅 {{empresa}}: ¡Haz que tus clientes se vean y se sientan increíbles!',
@@ -261,12 +261,12 @@ VALUES (
         </div>
     </div>',
     'niche_beauty'
-) ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, body_html = EXCLUDED.body_html, category = EXCLUDED.category;
+) ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, html_content = EXCLUDED.html_content, category = EXCLUDED.category;
 
 -- ============================================================
 -- PLANTILLA 6: NICHO - SERVICIOS PROFESIONALES (Abogados, Contadores, etc.)
 -- ============================================================
-INSERT INTO email_templates (name, subject, body_html, category)
+INSERT INTO email_templates (name, subject, html_content, category)
 VALUES (
     'Nicho: Servicios Profesionales',
     '💼 {{empresa}}: Que tus clientes encuentren tu expertise fácilmente',
@@ -303,12 +303,12 @@ VALUES (
         </div>
     </div>',
     'niche_professional'
-) ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, body_html = EXCLUDED.body_html, category = EXCLUDED.category;
+) ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, html_content = EXCLUDED.html_content, category = EXCLUDED.category;
 
 -- ============================================================
 -- PLANTILLA 7: NICHO - COMERCIO (Tiendas, Boutiques, Ferreterías)
 -- ============================================================
-INSERT INTO email_templates (name, subject, body_html, category)
+INSERT INTO email_templates (name, subject, html_content, category)
 VALUES (
     'Nicho: Comercio y Retail',
     '🛍️ {{empresa}}: Que tus productos lleguen a más clientes locales',
@@ -345,12 +345,12 @@ VALUES (
         </div>
     </div>',
     'niche_retail'
-) ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, body_html = EXCLUDED.body_html, category = EXCLUDED.category;
+) ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, html_content = EXCLUDED.html_content, category = EXCLUDED.category;
 
 -- ============================================================
 -- PLANTILLA 8: NICHO - AUTOMOTRIZ (Talleres, Refaccionarias, Lavados)
 -- ============================================================
-INSERT INTO email_templates (name, subject, body_html, category)
+INSERT INTO email_templates (name, subject, html_content, category)
 VALUES (
     'Nicho: Automotriz',
     '🚗 {{empresa}}: Que los conductores te encuentren cuando más te necesitan',
@@ -387,4 +387,4 @@ VALUES (
         </div>
     </div>',
     'niche_auto'
-) ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, body_html = EXCLUDED.body_html, category = EXCLUDED.category;
+) ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, html_content = EXCLUDED.html_content, category = EXCLUDED.category;

@@ -50,7 +50,7 @@ const initDB = () => {
 
         request.onsuccess = () => {
             db = request.result;
-            console.log('📦 IndexedDB inicializada');
+            console.debug('📦 IndexedDB inicializada');
             resolve(db);
         };
 

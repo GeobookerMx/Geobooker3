@@ -14,13 +14,14 @@ import {
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
+import { Link } from 'react-router-dom';
 import WhatsAppService from '../../services/whatsappService';
 
 const ApifyScraper = () => {
     // Search state
     const [searchQuery, setSearchQuery] = useState('');
     const [location, setLocation] = useState('');
-    const [maxResults, setMaxResults] = useState(50);
+    const [maxResults, setMaxResults] = useState(10);
 
     // Results state
     const [results, setResults] = useState([]);
@@ -535,10 +536,10 @@ const ApifyScraper = () => {
                             onChange={(e) => setMaxResults(parseInt(e.target.value))}
                             className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500"
                         >
+                            <option value={10}>10 negocios (Recomendado)</option>
                             <option value={20}>20 negocios</option>
                             <option value={50}>50 negocios</option>
                             <option value={100}>100 negocios</option>
-                            <option value={200}>200 negocios</option>
                         </select>
                     </div>
                 </div>
@@ -726,7 +727,7 @@ const ApifyScraper = () => {
                                     <th className="px-4 py-3 text-left w-10">
                                         <input
                                             type="checkbox"
-                                            checked={selectedLeads.size === results.length}
+                                            checked={selectedLeads.size === Math.min(results.length, 10)}
                                             onChange={selectAll}
                                             className="w-4 h-4 rounded"
                                         />
@@ -739,7 +740,7 @@ const ApifyScraper = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y">
-                                {results.map((lead, index) => (
+                                {results.slice(0, 10).map((lead, index) => (
                                     <tr
                                         key={index}
                                         className={`hover:bg-gray-50 ${lead._imported ? 'bg-green-50' : ''

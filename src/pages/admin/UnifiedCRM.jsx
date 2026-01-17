@@ -20,6 +20,7 @@ import * as XLSX from 'xlsx';
 import EmailTester from '../../components/admin/EmailTester';
 import MarketingDashboard from '../../components/admin/MarketingDashboard';
 import WhatsAppQueueManager from '../../components/admin/WhatsAppQueueManager';
+import WhatsAppCRM from '../../components/admin/WhatsAppCRM';
 
 const UnifiedCRM = () => {
     // Active Tab
@@ -39,7 +40,7 @@ const UnifiedCRM = () => {
     const [selectedTemplate, setSelectedTemplate] = useState(null);
     const [showTemplateModal, setShowTemplateModal] = useState(false);
     const [templateForm, setTemplateForm] = useState({
-        name: '', subject: '', body_html: '', template_type: 'promotional'
+        name: '', subject: '', html_content: '', template_type: 'promotional'
     });
 
     // Stats State
@@ -377,7 +378,7 @@ const UnifiedCRM = () => {
             toast.success('Plantilla guardada', { id: toastId });
             setShowTemplateModal(false);
             setSelectedTemplate(null);
-            setTemplateForm({ name: '', subject: '', body_html: '', template_type: 'promotional' });
+            setTemplateForm({ name: '', subject: '', html_content: '', template_type: 'promotional' });
             loadTemplates();
         } catch (err) {
             toast.error('Error guardando', { id: toastId });
@@ -556,7 +557,7 @@ const UnifiedCRM = () => {
                 const item = emailQueue[i];
 
                 // Process template with contact data
-                let processedBody = selectedTemplate.body_html;
+                let processedBody = selectedTemplate.html_content;
                 const variables = {
                     empresa: item.contact_name || 'Negocio',
                     nombre: item.contact_name || 'Amigo',
@@ -593,7 +594,7 @@ const UnifiedCRM = () => {
                     await supabase.from('crm_email_logs').insert({
                         recipient_email: item.contact_email,
                         subject: selectedTemplate.subject,
-                        body_html: finalHtml,
+                        html_content: finalHtml,
                         status: 'sent',
                         tier: item.contact_tier,
                         template_id: selectedTemplate.id
@@ -650,7 +651,7 @@ const UnifiedCRM = () => {
         try {
             // Process template with sample data
             let processedSubject = selectedTemplate.subject;
-            let processedBody = selectedTemplate.body_html;
+            let processedBody = selectedTemplate.html_content;
 
             const sampleVariables = {
                 empresa: 'Mi Empresa de Prueba',
@@ -720,8 +721,9 @@ const UnifiedCRM = () => {
     const tabs = [
         { id: 'contactos', label: '📥 Contactos', icon: Users },
         { id: 'plantillas', label: '📝 Plantillas', icon: Mail },
-        { id: 'stats', label: '📊 Stats', icon: BarChart3 },
-        { id: 'lanzar', label: '🚀 Lanzar', icon: Send },
+        { id: 'whatsapp', label: '📱 WhatsApp', icon: MessageCircle },
+        { id: 'email', label: '📧 Email', icon: Mail },
+        { id: 'kpis', label: '📊 KPIs', icon: BarChart3 },
         { id: 'historial', label: '📋 Historial', icon: Clock },
         { id: 'config', label: '⚙️ Config', icon: Settings }
     ];
@@ -857,9 +859,9 @@ const UnifiedCRM = () => {
 
                         {/* Contacts Table */}
                         <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="w-full min-w-[600px]">
-                                    <thead className="bg-gray-50">
+                            <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+                                <table className="w-full min-w-[800px]">
+                                    <thead className="bg-gray-50 sticky top-0">
                                         <tr>
                                             <th className="w-10 p-3">
                                                 <button onClick={selectAll}>
@@ -870,23 +872,24 @@ const UnifiedCRM = () => {
                                                     )}
                                                 </button>
                                             </th>
-                                            <th className="text-left p-3 text-xs font-semibold text-gray-600">Nombre</th>
-                                            <th className="text-left p-3 text-xs font-semibold text-gray-600">Email</th>
                                             <th className="text-left p-3 text-xs font-semibold text-gray-600">Empresa</th>
+                                            <th className="text-left p-3 text-xs font-semibold text-gray-600">Contacto</th>
+                                            <th className="text-left p-3 text-xs font-semibold text-gray-600">Teléfono</th>
+                                            <th className="text-left p-3 text-xs font-semibold text-gray-600">Email</th>
                                             <th className="text-left p-3 text-xs font-semibold text-gray-600">Tier</th>
-                                            <th className="text-left p-3 text-xs font-semibold text-gray-600">Tipo</th>
+                                            <th className="text-left p-3 text-xs font-semibold text-gray-600">Fuente</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y">
                                         {contactsLoading ? (
                                             <tr>
-                                                <td colSpan={6} className="p-8 text-center">
+                                                <td colSpan={7} className="p-8 text-center">
                                                     <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-600" />
                                                 </td>
                                             </tr>
                                         ) : filteredContacts.length === 0 ? (
                                             <tr>
-                                                <td colSpan={6} className="p-8 text-center text-gray-500">
+                                                <td colSpan={7} className="p-8 text-center text-gray-500">
                                                     No hay contactos. Importa un archivo CSV.
                                                 </td>
                                             </tr>
@@ -902,15 +905,36 @@ const UnifiedCRM = () => {
                                                             )}
                                                         </button>
                                                     </td>
-                                                    <td className="p-3 font-medium text-sm">{contact.name || '-'}</td>
-                                                    <td className="p-3 text-sm text-blue-600">{contact.email || '-'}</td>
-                                                    <td className="p-3 text-sm text-gray-600">{contact.company || '-'}</td>
+                                                    <td className="p-3 font-medium text-sm max-w-[200px] truncate" title={contact.company_name}>
+                                                        {contact.company_name || '-'}
+                                                    </td>
+                                                    <td className="p-3 text-sm text-gray-600">
+                                                        {contact.contact_name || '-'}
+                                                    </td>
+                                                    <td className="p-3 text-sm">
+                                                        {contact.phone ? (
+                                                            <span className="text-green-600 font-medium">{contact.phone}</span>
+                                                        ) : (
+                                                            <span className="text-gray-400">-</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="p-3 text-sm text-blue-600 max-w-[200px] truncate" title={contact.email}>
+                                                        {contact.email || '-'}
+                                                    </td>
                                                     <td className="p-3">
                                                         <span className={`px-2 py-0.5 rounded text-xs font-bold ${getTierColor(contact.tier)}`}>
                                                             {contact.tier}
                                                         </span>
                                                     </td>
-                                                    <td className="p-3 text-xs text-gray-500">{contact.company_type || '-'}</td>
+                                                    <td className="p-3 text-xs">
+                                                        {contact.source === 'google_places' ? (
+                                                            <span className="px-2 py-1 bg-green-100 text-green-700 rounded">🇲🇽 Nacional</span>
+                                                        ) : contact.source === 'apify' ? (
+                                                            <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded">🌍 Apify</span>
+                                                        ) : (
+                                                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">📁 CSV</span>
+                                                        )}
+                                                    </td>
                                                 </tr>
                                             ))
                                         )}
@@ -934,7 +958,7 @@ const UnifiedCRM = () => {
                             <button
                                 onClick={() => {
                                     setSelectedTemplate(null);
-                                    setTemplateForm({ name: '', subject: '', body_html: '', template_type: 'promotional' });
+                                    setTemplateForm({ name: '', subject: '', html_content: '', template_type: 'promotional' });
                                     setShowTemplateModal(true);
                                 }}
                                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium"
@@ -999,9 +1023,83 @@ const UnifiedCRM = () => {
                     </div>
                 )}
 
-                {/* ============ TAB: STATS ============ */}
-                {activeTab === 'stats' && (
-                    <MarketingDashboard />
+                {/* ============ TAB: WHATSAPP ============ */}
+                {activeTab === 'whatsapp' && (
+                    <WhatsAppCRM />
+                )}
+
+                {/* ============ TAB: EMAIL ============ */}
+                {activeTab === 'email' && (
+                    <div className="space-y-6">
+                        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-xl">
+                            <div className="flex">
+                                <div className="flex-shrink-0">
+                                    <Mail className="h-5 w-5 text-blue-400" />
+                                </div>
+                                <div className="ml-3">
+                                    <p className="text-sm text-blue-700">
+                                        <strong>Email Marketing</strong> - Solo contactos de CSV.
+                                        Los contactos con WhatsApp enviado hace 15+ días se reciclan aquí.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <MarketingDashboard />
+                    </div>
+                )}
+
+                {/* ============ TAB: KPIS ============ */}
+                {activeTab === 'kpis' && (
+                    <div className="space-y-6">
+                        <div className="grid md:grid-cols-2 gap-6">
+                            {/* WhatsApp Stats */}
+                            <div className="bg-white rounded-xl p-6 border shadow-sm">
+                                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                    <MessageCircle className="w-5 h-5 text-green-600" />
+                                    WhatsApp - Hoy
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                                        <p className="text-3xl font-bold text-green-600">--</p>
+                                        <p className="text-sm text-gray-600">Enviados</p>
+                                    </div>
+                                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                                        <p className="text-3xl font-bold text-blue-600">--</p>
+                                        <p className="text-sm text-gray-600">Respondidos</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Email Stats */}
+                            <div className="bg-white rounded-xl p-6 border shadow-sm">
+                                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                    <Mail className="w-5 h-5 text-blue-600" />
+                                    Email - Hoy
+                                </h3>
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                                        <p className="text-3xl font-bold text-blue-600">--</p>
+                                        <p className="text-sm text-gray-600">Enviados</p>
+                                    </div>
+                                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                                        <p className="text-3xl font-bold text-green-600">--</p>
+                                        <p className="text-sm text-gray-600">Abiertos</p>
+                                    </div>
+                                    <div className="text-center p-4 bg-purple-50 rounded-lg">
+                                        <p className="text-3xl font-bold text-purple-600">--</p>
+                                        <p className="text-sm text-gray-600">Clicks</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
+                            <p className="text-sm text-yellow-800">
+                                <strong>📊 Próximamente:</strong> Estadísticas detalladas por fuente (CSV vs Apify),
+                                tasas de conversión, y seguimiento de respuestas.
+                            </p>
+                        </div>
+                    </div>
                 )}
 
                 {/* ============ TAB: LANZAR ============ */}
@@ -1411,8 +1509,8 @@ const UnifiedCRM = () => {
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Cuerpo (HTML)</label>
                                     <textarea
-                                        value={templateForm.body_html}
-                                        onChange={(e) => setTemplateForm(p => ({ ...p, body_html: e.target.value }))}
+                                        value={templateForm.html_content}
+                                        onChange={(e) => setTemplateForm(p => ({ ...p, html_content: e.target.value }))}
                                         className="w-full p-3 border rounded-xl h-48 font-mono text-sm"
                                         placeholder="<p>Hola {{nombre}},</p>"
                                     />

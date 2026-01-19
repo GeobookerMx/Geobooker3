@@ -60,14 +60,20 @@
     X-Content-Type-Options = "nosniff"
 
 # ==========================================
-# Redirects y Rewrites
-# ==========================================
+# Sitemap Strategy (Cross-Domain)
+# 1. Si piden desde .COM -> Redirigir a .MX (GSC acepta 301)
+[[redirects]]
+  from = "https://geobooker.com/sitemap.xml"
+  to = "https://geobooker.com.mx/sitemap.xml"
+  status = 301
+  force = true
 
-# Sitemap Dinámico (Function)
+# 2. Si piden desde cualquier otro lado (inc .MX) -> Generar
 [[redirects]]
   from = "/sitemap.xml"
   to = "/.netlify/functions/sitemap-generator"
   status = 200
+  force = true
 
 # SPA: Redirigir todas las rutas al index.html
 [[redirects]]

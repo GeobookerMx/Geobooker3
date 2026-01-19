@@ -10,7 +10,7 @@ import { useJsApiLoader } from '@react-google-maps/api';
 import {
     Search, MapPin, Phone, Mail, Globe, ExternalLink,
     Play, Pause, CheckCircle, XCircle, MessageCircle,
-    Filter, RefreshCw, Ban, Clock, Users, Building2, Loader2, Trash2
+    Filter, RefreshCw, Ban, Clock, Users, Building2, Loader2, Trash2, AlertCircle
 } from 'lucide-react';
 import WhatsAppService from '../../services/whatsappService';
 
@@ -659,18 +659,34 @@ const ScanInvitePage = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="bg-white rounded-xl p-4 shadow-sm border">
+                    <div className={`bg-white rounded-xl p-4 shadow-sm border ${dailyCount >= dailyLimit ? 'ring-2 ring-red-500' : ''}`}>
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-orange-100 rounded-lg">
-                                <Clock className="w-5 h-5 text-orange-600" />
+                            <div className={`p-2 rounded-lg ${dailyCount >= dailyLimit ? 'bg-red-100' : 'bg-orange-100'}`}>
+                                <Clock className={`w-5 h-5 ${dailyCount >= dailyLimit ? 'text-red-600' : 'text-orange-600'}`} />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold">{dailyCount}/{dailyLimit}</p>
-                                <p className="text-sm text-gray-500">Hoy</p>
+                                <p className={`text-2xl font-bold ${dailyCount >= dailyLimit ? 'text-red-600' : ''}`}>{dailyCount}/{dailyLimit}</p>
+                                <p className="text-sm text-gray-500">WhatsApp Local</p>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                {/* Alert Banner when limit reached */}
+                {dailyCount >= dailyLimit && (
+                    <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-xl">
+                        <div className="flex items-center gap-3">
+                            <AlertCircle className="w-6 h-6 text-red-500" />
+                            <div>
+                                <p className="font-bold text-red-800">¡Límite diario alcanzado!</p>
+                                <p className="text-red-700 text-sm">
+                                    Has enviado {dailyCount} de {dailyLimit} WhatsApp locales hoy.
+                                    El contador se reinicia a medianoche.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Control Panel */}
                 <div className="bg-white rounded-2xl shadow-sm border p-6 mb-8">

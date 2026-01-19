@@ -59,9 +59,25 @@ const ApifyScraper = () => {
     // Language toggle for messages (ES = Spanish, EN = English)
     const [messageLanguage, setMessageLanguage] = useState('es');
 
+    // Global WhatsApp limit tracking
+    const [globalLimit, setGlobalLimit] = useState(10);
+    const [globalSent, setGlobalSent] = useState(0);
+
     useEffect(() => {
         loadSettings();
+        loadGlobalStats();
     }, []);
+
+    // Load global WhatsApp stats (Apify source)
+    const loadGlobalStats = async () => {
+        try {
+            const limit = await WhatsAppService.canSendToday('apify');
+            setGlobalSent(limit.sent || 0);
+            setGlobalLimit(limit.dailyLimit || 10);
+        } catch (err) {
+            console.error('Error loading global stats:', err);
+        }
+    };
 
     const loadSettings = async () => {
         try {
@@ -422,6 +438,8 @@ const ApifyScraper = () => {
                 const newResults = results.filter((_, i) => i !== index);
                 setResults(newResults);
                 setSelectedLeads(new Set()); // Clear selections
+                // Actualizar contador global
+                setGlobalSent(prev => prev + 1);
                 toast.success(`WhatsApp enviado. ${result.remaining} restantes hoy`);
             }
         } catch (error) {
@@ -493,15 +511,43 @@ const ApifyScraper = () => {
     return (
         <div className="p-6 max-w-7xl mx-auto">
             {/* Header */}
-            <div className="flex items-center gap-4 mb-8">
-                <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg">
-                    <Globe className="w-8 h-8 text-white" />
+            <div className="flex items-center justify-between gap-4 mb-6">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg">
+                        <Globe className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">🌍 Lead Scraper Global</h1>
+                        <p className="text-gray-500">Busca negocios en cualquier parte del mundo con Apify</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">🌍 Lead Scraper Global</h1>
-                    <p className="text-gray-500">Busca negocios en cualquier parte del mundo con Apify</p>
+                {/* Global WhatsApp Counter */}
+                <div className={`px-4 py-2 rounded-xl border ${globalSent >= globalLimit ? 'bg-red-50 border-red-300' : 'bg-green-50 border-green-300'}`}>
+                    <div className="flex items-center gap-2">
+                        <MessageCircle className={`w-5 h-5 ${globalSent >= globalLimit ? 'text-red-600' : 'text-green-600'}`} />
+                        <span className={`font-bold ${globalSent >= globalLimit ? 'text-red-600' : 'text-green-600'}`}>
+                            {globalSent}/{globalLimit}
+                        </span>
+                        <span className="text-sm text-gray-500">WhatsApp Global</span>
+                    </div>
                 </div>
             </div>
+
+            {/* Alert Banner when global limit reached */}
+            {globalSent >= globalLimit && (
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-xl">
+                    <div className="flex items-center gap-3">
+                        <AlertCircle className="w-6 h-6 text-red-500" />
+                        <div>
+                            <p className="font-bold text-red-800">¡Límite global alcanzado!</p>
+                            <p className="text-red-700 text-sm">
+                                Has enviado {globalSent} de {globalLimit} WhatsApp globales hoy.
+                                El contador se reinicia a medianoche.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Search Form */}
             <div className="bg-white rounded-2xl shadow-sm border p-6 mb-6">
@@ -567,8 +613,8 @@ const ApifyScraper = () => {
                         <button
                             onClick={() => setMessageLanguage('es')}
                             className={`px-4 py-2 rounded-lg font-medium transition ${messageLanguage === 'es'
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                         >
                             🇲🇽 Español
@@ -576,8 +622,8 @@ const ApifyScraper = () => {
                         <button
                             onClick={() => setMessageLanguage('en')}
                             className={`px-4 py-2 rounded-lg font-medium transition ${messageLanguage === 'en'
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                         >
                             🇺🇸 English

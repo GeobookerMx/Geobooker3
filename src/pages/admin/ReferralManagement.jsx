@@ -342,6 +342,79 @@ export default function ReferralManagement() {
                     </div>
                 </>
             )}
+
+            {/* Tab: Tienda de Premios */}
+            {activeTab === 'rewards' && (
+                <div className="space-y-6">
+                    {/* Catálogo de Premios */}
+                    <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+                        <h3 className="text-xl font-bold text-gray-900 mb-4">🛍️ Catálogo de Premios Canjeables</h3>
+                        <p className="text-gray-600 mb-6">
+                            Los usuarios pueden canjear sus puntos de referidos por estos premios de publicidad:
+                        </p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {[
+                                { name: 'Anuncio Básico', points: 3, duration: '7 días', color: 'blue', icon: '🎯' },
+                                { name: 'Segmentado por Ciudad', points: 5, duration: '14 días', color: 'green', icon: '📍' },
+                                { name: 'Resultado Patrocinado', points: 10, duration: '30 días', color: 'purple', icon: '⭐' },
+                                { name: 'Slot Premium', points: 20, duration: '60 días', color: 'yellow', icon: '👑' },
+                                { name: 'Campaña VIP', points: 50, duration: '180 días', color: 'red', icon: '🚀' },
+                            ].map((reward) => (
+                                <div key={reward.name} className={`border-2 border-${reward.color}-200 rounded-xl p-4 bg-${reward.color}-50`}>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-2xl">{reward.icon}</span>
+                                        <span className={`text-xl font-bold text-${reward.color}-600`}>{reward.points} pts</span>
+                                    </div>
+                                    <h4 className="font-bold text-gray-800">{reward.name}</h4>
+                                    <p className="text-sm text-gray-600">{reward.duration} de campaña</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Explicación del Sistema */}
+                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6 border border-purple-200">
+                        <h3 className="font-bold text-purple-900 mb-3">💡 ¿Cómo ganan puntos los usuarios?</h3>
+                        <div className="grid md:grid-cols-3 gap-4 text-sm">
+                            <div className="bg-white rounded-lg p-4 text-center">
+                                <p className="text-3xl mb-2">📤</p>
+                                <p className="font-medium text-gray-800">Comparten su código</p>
+                                <p className="text-gray-500 text-xs">Código único por usuario</p>
+                            </div>
+                            <div className="bg-white rounded-lg p-4 text-center">
+                                <p className="text-3xl mb-2">👤</p>
+                                <p className="font-medium text-gray-800">Alguien se registra</p>
+                                <p className="text-green-600 font-bold">+0.5 puntos</p>
+                            </div>
+                            <div className="bg-white rounded-lg p-4 text-center">
+                                <p className="text-3xl mb-2">🏪</p>
+                                <p className="font-medium text-gray-800">Agrega un negocio</p>
+                                <p className="text-yellow-600 font-bold">+0.5 puntos</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Tab: Campañas Activas */}
+            {activeTab === 'campaigns' && (
+                <div className="space-y-6">
+                    <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 text-center">
+                        <Rocket className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold text-gray-700 mb-2">Campañas de Referidos</h3>
+                        <p className="text-gray-500 mb-4">
+                            Aquí podrás crear campañas especiales con bonos extra para incentivar referidos.
+                        </p>
+                        <p className="text-sm text-gray-400">
+                            Ej: "Refiere 5 amigos este mes y gana 1 mes Premium gratis"
+                        </p>
+                        <button className="mt-6 px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition">
+                            🚀 Crear Primera Campaña
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

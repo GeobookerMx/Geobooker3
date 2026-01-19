@@ -95,6 +95,31 @@ export default function ReferralDashboard({ isModal = false, onClose = null }) {
         }
     };
 
+    // Copiar código al portapapeles
+    const handleCopyCode = async () => {
+        if (profile?.referral_code) {
+            await navigator.clipboard.writeText(profile.referral_code);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
+
+    // Copiar link completo
+    const handleCopyLink = async () => {
+        const link = `https://geobooker.com.mx/ref/${profile?.referral_code}`;
+        await navigator.clipboard.writeText(link);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    // Compartir por WhatsApp
+    const handleShareWhatsApp = () => {
+        const code = profile?.referral_code || '';
+        const link = `https://geobooker.com.mx/ref/${code}`;
+        const message = `🎁 ¡Únete a Geobooker y registra tu negocio GRATIS!\n\n📍 Geobooker es el directorio de negocios #cercadeti que te ayuda a conseguir más clientes.\n\n✨ Usa mi código: ${code}\n🔗 ${link}\n\n¡Es gratis y toma menos de 5 minutos!`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+    };
+
     if (loading) {
         return (
             <div className={`${isModal ? 'p-6' : 'bg-white rounded-2xl shadow-lg p-6'}`}>
@@ -274,14 +299,91 @@ export default function ReferralDashboard({ isModal = false, onClose = null }) {
                 )}
             </div>
 
-            {/* Cómo funciona */}
-            <div className="mt-6 bg-blue-50 rounded-xl p-4 text-xs">
-                <h4 className="font-bold text-blue-800 mb-2 whitespace-nowrap">📖 ¿Cómo funciona?</h4>
-                <ul className="text-blue-700 space-y-1">
-                    <li>• Comparte tu código con amigos con negocio</li>
-                    <li>• Registro: <strong>+0.5 pts</strong> | Negocio: <strong>+0.5 pts</strong></li>
-                    <li>• ¡Gana días Premium y Anuncios Gratis!</li>
-                </ul>
+            {/* 🎮 Cómo Funciona - Visual y Divertido */}
+            <div className="mt-6 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-2xl p-5 border border-purple-100">
+                <h4 className="font-bold text-purple-900 mb-4 flex items-center gap-2 text-base">
+                    🎮 ¿Cómo ganar puntos?
+                </h4>
+
+                {/* Pasos visuales */}
+                <div className="grid grid-cols-3 gap-3 mb-5">
+                    {/* Paso 1 */}
+                    <div className="text-center">
+                        <div className="w-12 h-12 mx-auto mb-2 bg-blue-100 rounded-full flex items-center justify-center text-2xl">
+                            📤
+                        </div>
+                        <p className="text-xs font-bold text-gray-800">1. Comparte</p>
+                        <p className="text-[10px] text-gray-500">Tu código único</p>
+                    </div>
+
+                    {/* Flecha */}
+                    <div className="flex items-center justify-center text-gray-300">
+                        <ChevronRight className="w-6 h-6" />
+                    </div>
+
+                    {/* Paso 2 */}
+                    <div className="text-center">
+                        <div className="w-12 h-12 mx-auto mb-2 bg-green-100 rounded-full flex items-center justify-center text-2xl">
+                            👤
+                        </div>
+                        <p className="text-xs font-bold text-gray-800">2. Registro</p>
+                        <p className="text-[10px] text-green-600 font-semibold">+0.5 pts</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3 mb-5">
+                    {/* Flecha */}
+                    <div className="flex items-center justify-center text-gray-300">
+                        <ChevronRight className="w-6 h-6 rotate-90" />
+                    </div>
+
+                    {/* Paso 3 */}
+                    <div className="text-center">
+                        <div className="w-12 h-12 mx-auto mb-2 bg-yellow-100 rounded-full flex items-center justify-center text-2xl animate-bounce">
+                            🏪
+                        </div>
+                        <p className="text-xs font-bold text-gray-800">3. Negocio</p>
+                        <p className="text-[10px] text-yellow-600 font-semibold">+0.5 pts</p>
+                    </div>
+
+                    {/* Total */}
+                    <div className="text-center">
+                        <div className="w-12 h-12 mx-auto mb-2 bg-purple-500 rounded-full flex items-center justify-center text-white text-lg font-bold">
+                            🎁
+                        </div>
+                        <p className="text-xs font-bold text-purple-700">= 1 punto</p>
+                        <p className="text-[10px] text-gray-500">Por referido</p>
+                    </div>
+                </div>
+
+                {/* Tabla de Premios */}
+                <div className="bg-white rounded-xl p-3 border border-purple-100">
+                    <h5 className="text-xs font-bold text-gray-700 mb-2 flex items-center gap-1">
+                        <Gift className="w-4 h-4 text-purple-500" /> Canjea tus puntos por:
+                    </h5>
+                    <div className="space-y-1.5">
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-600">🎯 Anuncio Básico (7d)</span>
+                            <span className="font-bold text-blue-600">3 pts</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-600">📍 Segmentado por ciudad (14d)</span>
+                            <span className="font-bold text-green-600">5 pts</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-600">⭐ Resultado Patrocinado (30d)</span>
+                            <span className="font-bold text-purple-600">10 pts</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-600">👑 Slot Premium (60d)</span>
+                            <span className="font-bold text-yellow-600">20 pts</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs bg-gradient-to-r from-red-50 to-orange-50 rounded-lg px-2 py-1">
+                            <span className="text-gray-700 font-medium">🚀 Campaña VIP (180d)</span>
+                            <span className="font-bold text-red-600">50 pts</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

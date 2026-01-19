@@ -49,24 +49,28 @@ exports.handler = async (event, context) => {
 
         console.log(`📊 Límite: ${dailyLimit}, Enviados hoy: ${sentToday}, Restantes: ${remaining}`);
 
-        // 3. Obtener contactos pendientes de la cola (priorizando por tier)
+        // 3. Obtener contactos pendientes de la cola (priorizando por tier y ronda)
         const { data: queueItems, error: queueError } = await supabase
             .from('email_queue')
             .select(`
                 id,
                 contact_id,
+                email_round,
                 marketing_contacts!inner (
                     email,
                     company_name,
                     contact_name,
                     tier,
-                    assigned_email_sender
+                    assigned_email_sender,
+                    email_sent_count
                 )
             `)
             .eq('status', 'pending')
             .order('priority', { ascending: false })
+            .order('email_round', { ascending: true })  // Priorizar ronda 1 primero
             .order('created_at', { ascending: true })
-            .limit(remaining);
+            // LÍMITE DE BATCH: máximo 25 emails por llamada para evitar timeout de Netlify (10s)
+            .limit(Math.min(remaining, 25));
 
         if (queueError) throw queueError;
 
@@ -87,10 +91,36 @@ exports.handler = async (event, context) => {
         const results = {
             sent: 0,
             failed: 0,
-            errors: []
+            errors: [],
+            byRound: { round1: 0, round2: 0, round3: 0 }
         };
 
-        // Obtener el template por defecto o el asignado
+        // Obtener templates por tipo de ronda
+        const templateTypes = {
+            1: 'invitation',      // Ronda 1: Invitación inicial
+            2: 'followup',        // Ronda 2: Seguimiento
+            3: 'reengagement'     // Ronda 3+: Re-engagement
+        };
+
+        // Cache de templates
+        const templateCache = {};
+
+        // Pre-cargar templates por tipo
+        for (const [round, templateType] of Object.entries(templateTypes)) {
+            const { data: template } = await supabase
+                .from('email_templates')
+                .select('*')
+                .eq('template_type', templateType)
+                .eq('is_active', true)
+                .limit(1)
+                .single();
+
+            if (template) {
+                templateCache[round] = template;
+            }
+        }
+
+        // Obtener template por defecto si no hay específicos
         const { data: defaultTemplate } = await supabase
             .from('email_templates')
             .select('*')
@@ -101,21 +131,32 @@ exports.handler = async (event, context) => {
         for (const item of queueItems) {
             try {
                 const contact = item.marketing_contacts;
+                const emailRound = item.email_round || 1;
 
-                // 1. Buscar template específico por tier
-                const { data: tierTemplate } = await supabase
-                    .from('email_templates')
-                    .select('*')
-                    .eq('tier_target', contact.tier)
-                    .eq('is_active', true)
-                    .limit(1)
-                    .single();
+                // 1. Seleccionar template por RONDA primero, luego por tier
+                // Prioridad: roundTemplate > tierTemplate > defaultTemplate
+                let template = templateCache[emailRound] || templateCache[Math.min(emailRound, 3)];
 
-                const template = tierTemplate || defaultTemplate;
+                // Si no hay template por ronda, buscar por tier
+                if (!template) {
+                    const { data: tierTemplate } = await supabase
+                        .from('email_templates')
+                        .select('*')
+                        .eq('tier_target', contact.tier)
+                        .eq('is_active', true)
+                        .limit(1)
+                        .single();
+
+                    template = tierTemplate || defaultTemplate;
+                }
 
                 if (!template) {
                     throw new Error('No se encontró ninguna plantilla de email activa');
                 }
+
+                // Log de la ronda
+                const roundName = emailRound === 1 ? 'INVITACIÓN' : emailRound === 2 ? 'SEGUIMIENTO' : 'RE-ENGAGEMENT';
+                console.log(`📧 Ronda ${emailRound} (${roundName}) para: ${contact.email}`);
 
                 // 2. Reemplazar variables en el HTML y Subject
                 const greeting = contact.contact_name || 'Estimado/a';
@@ -163,17 +204,23 @@ exports.handler = async (event, context) => {
                     })
                     .eq('id', item.id);
 
-                // Actualizar contacto
+                // Actualizar contacto: incrementar email_sent_count
                 await supabase
                     .from('marketing_contacts')
                     .update({
                         email_status: 'sent',
-                        last_email_sent: new Date().toISOString()
+                        last_email_sent: new Date().toISOString(),
+                        email_sent_count: (contact.email_sent_count || 0) + 1
                     })
                     .eq('id', item.contact_id);
 
                 results.sent++;
-                console.log(`✅ Email enviado a: ${contact.email} (${contact.tier})`);
+                // Rastrear por ronda
+                if (emailRound === 1) results.byRound.round1++;
+                else if (emailRound === 2) results.byRound.round2++;
+                else results.byRound.round3++;
+
+                console.log(`✅ Email enviado a: ${contact.email} (${contact.tier}, Ronda ${emailRound})`);
 
                 // Delay para no saturar (100ms entre emails)
                 await new Promise(resolve => setTimeout(resolve, 100));

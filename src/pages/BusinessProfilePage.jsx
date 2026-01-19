@@ -11,6 +11,10 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import SEO from '../components/SEO';
+import BadgeDisplay from '../components/business/BadgeDisplay';
+import PhotoGallery from '../components/business/PhotoGallery';
+import ReviewsSection from '../components/business/ReviewsSection';
+import TrustScoreWidget from '../components/business/TrustScoreWidget';
 
 // Mapeo de tags a iconos y nombres
 const TAG_CONFIG = {

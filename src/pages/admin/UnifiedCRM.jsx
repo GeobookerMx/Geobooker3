@@ -21,6 +21,7 @@ import EmailTester from '../../components/admin/EmailTester';
 import MarketingDashboard from '../../components/admin/MarketingDashboard';
 import WhatsAppQueueManager from '../../components/admin/WhatsAppQueueManager';
 import WhatsAppCRM from '../../components/admin/WhatsAppCRM';
+import WhatsAppService from '../../services/whatsappService';
 
 const UnifiedCRM = () => {
     // Active Tab
@@ -706,13 +707,9 @@ const UnifiedCRM = () => {
 
         if (!phone) return;
 
-        const cleanPhone = phone.replace(/\D/g, '');
-        const message = encodeURIComponent(
-            `🧪 *PRUEBA DE WHATSAPP*\n\nEste es un mensaje de prueba del CRM de Geobooker.\n\nSi recibes esto, la configuración funciona correctamente. ✅\n\nEl mensaje real a los contactos será diferente.`
-        );
+        const message = `🧪 *PRUEBA DE WHATSAPP*\n\nEste es un mensaje de prueba del CRM de Geobooker.\n\nSi recibes esto, la configuración funciona correctamente. ✅\n\nEl mensaje real a los contactos será diferente.`;
 
-        const waUrl = `https://wa.me/${cleanPhone}?text=${message}`;
-        window.open(waUrl, '_blank');
+        WhatsAppService.openWhatsApp(phone, message);
         toast.success('Abriendo WhatsApp Web para prueba...');
     };
 
@@ -1191,9 +1188,8 @@ const UnifiedCRM = () => {
                                                                 <div className="flex justify-center gap-2">
                                                                     <button
                                                                         onClick={() => {
-                                                                            const phone = item.contact_phone.replace(/\D/g, '');
                                                                             const msg = whatsappConfig.default_message || 'Hola!';
-                                                                            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+                                                                            WhatsAppService.openWhatsApp(item.contact_phone, msg);
                                                                         }}
                                                                         className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
                                                                     >

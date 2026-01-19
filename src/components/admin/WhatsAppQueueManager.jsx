@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { MessageCircle, Play, Loader2, CheckCircle, ExternalLink, Clock, Users } from 'lucide-react';
+import WhatsAppService from '../../services/whatsappService';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -109,15 +110,10 @@ const WhatsAppQueueManager = () => {
 
     const openWhatsApp = async (queueItem) => {
         const contact = queueItem.marketing_contacts;
-        const phone = contact.phone.replace(/\D/g, '');
-
-        // Template de mensaje personalizado
         const message = generateMessage(contact);
-        const encodedMessage = encodeURIComponent(message);
 
-        // Abrir WhatsApp Web
-        const waUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
-        window.open(waUrl, '_blank');
+        // Usar servicio centralizado (Maneja Texas/EUA y Móvil)
+        WhatsAppService.openWhatsApp(contact.phone, message);
 
         // Marcar como enviado
         try {

@@ -123,7 +123,7 @@ export class WhatsAppService {
     }
 
     /**
-     * Normalizar número de teléfono
+     * Normalizar número de teléfono (Smart Detection for Mexico/USA)
      */
     static normalizePhone(phone) {
         if (!phone) return '';
@@ -131,17 +131,45 @@ export class WhatsAppService {
         // Remover todo excepto números
         const clean = phone.replace(/\D/g, '');
 
-        // México: 10 dígitos → +52
+        // Listado de códigos de área de Texas (proporcionados por usuario)
+        const texasAreaCodes = [
+            '214', '469', '972', // Dallas
+            '713', '281', '832', '346', // Houston
+            '512', '737', // Austin
+            '210', '726', // San Antonio
+            '956', '361', '806', '817', '915', '940', '254' // Otros Texas
+        ];
+
+        // 1. Caso: El número ya empieza con 1 (USA/Canada) y tiene 11 dígitos
+        if (clean.length === 11 && clean.startsWith('1')) {
+            return '+' + clean;
+        }
+
+        // 2. Caso: El número tiene 10 dígitos (Sin código de país)
         if (clean.length === 10) {
+            const areaCode = clean.substring(0, 3);
+
+            // Si el código de área es de Texas, asumimos USA (+1)
+            if (texasAreaCodes.includes(areaCode)) {
+                return '+1' + clean;
+            }
+
+            // Por defecto, si tiene 10 dígitos y no es Texas, asumimos México (+52)
             return '+52' + clean;
         }
 
-        // Si ya tiene código de país sin +
+        // 3. Caso: Ya tiene código de país (52, 1, 44, 34, etc.)
         if (clean.length >= 11) {
-            if (clean.startsWith('52')) return '+' + clean; // México
-            if (clean.startsWith('1')) return '+' + clean;  // US/Canada
-            if (clean.startsWith('44')) return '+' + clean; // UK
-            if (clean.startsWith('34')) return '+' + clean; // España
+            // Si ya empieza con 52 (pero no es un número de 10 dígitos que empiece con 52)
+            if (clean.startsWith('52') && clean.length >= 12) return '+' + clean;
+            if (clean.startsWith('52') && clean.length === 12) return '+' + clean;
+
+            // Si empieza con 1 (USA) y tiene 11 dígitos
+            if (clean.startsWith('1') && clean.length === 11) return '+' + clean;
+
+            // Arreglo para México con el 1 extra (52 1 ...)
+            if (clean.startsWith('521') && clean.length === 13) return '+' + clean;
+
             return '+' + clean;
         }
 

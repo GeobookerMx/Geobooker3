@@ -10,6 +10,7 @@ import {
     MessageCircle, Play, Loader2, ExternalLink, RefreshCw,
     Users, Target, TrendingUp, Settings, CheckCircle, Phone, Globe
 } from 'lucide-react';
+import WhatsAppService from '../../services/whatsappService';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -207,8 +208,7 @@ Juan Pablo
         }
 
         // Abrir WhatsApp
-        const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-        window.open(waUrl, '_blank');
+        WhatsAppService.openWhatsApp(phone, message);
 
         // Marcar como enviado
         try {

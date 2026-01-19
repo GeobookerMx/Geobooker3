@@ -4,7 +4,7 @@ import {
     Database, Search, Download, Trash2, ExternalLink,
     Filter, Calendar, MapPin, Building2, Loader2,
     MessageCircle, ChevronLeft, ChevronRight, Phone,
-    Mail, Check, Users, Star, BarChart3
+    Mail, Check, Users, Star, BarChart3, RefreshCw
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
@@ -21,6 +21,7 @@ const LeadsHistory = () => {
     const [totalCount, setTotalCount] = useState(0);
     const [stats, setStats] = useState({ total: 0, withPhone: 0, withEmail: 0, contacted: 0 });
     const [exportingAll, setExportingAll] = useState(false);
+    const [syncing, setSyncing] = useState(false);
     const pageSize = 50;
 
     // WhatsApp config
@@ -209,6 +210,131 @@ const LeadsHistory = () => {
         }
     };
 
+    // Sincronizar TODOS los leads a marketing_contacts (sin duplicados)
+    const syncToMarketingContacts = async () => {
+        setSyncing(true);
+        const toastId = toast.loading('Sincronizando leads al CRM...');
+
+        try {
+            // Obtener todos los leads con teléfono o email
+            const { data: allLeads, error: fetchError } = await supabase
+                .from('scraping_history')
+                .select('*')
+                .or('phone.neq.,email.neq.');
+
+            if (fetchError) throw fetchError;
+
+            if (!allLeads || allLeads.length === 0) {
+                toast.error('No hay leads para sincronizar', { id: toastId });
+                return;
+            }
+
+            let insertedCount = 0;
+            let duplicateCount = 0;
+
+            // Procesar cada lead individualmente
+            for (const lead of allLeads) {
+                // Solo procesar si tiene email o teléfono
+                if (!lead.email && !lead.phone) {
+                    continue;
+                }
+
+                try {
+                    // Verificar si ya existe por email
+                    if (lead.email) {
+                        const { data: existingByEmail } = await supabase
+                            .from('marketing_contacts')
+                            .select('id')
+                            .eq('email', lead.email.trim().toLowerCase())
+                            .maybeSingle();
+
+                        if (existingByEmail) {
+                            duplicateCount++;
+                            continue;
+                        }
+                    }
+
+                    // Verificar si ya existe por teléfono
+                    if (lead.phone) {
+                        const { data: existingByPhone } = await supabase
+                            .from('marketing_contacts')
+                            .select('id')
+                            .eq('phone', lead.phone)
+                            .maybeSingle();
+
+                        if (existingByPhone) {
+                            duplicateCount++;
+                            continue;
+                        }
+                    }
+
+                    // Insertar nuevo contacto
+                    const contactData = {
+                        contact_name: lead.name || 'Sin nombre',
+                        email: lead.email?.trim().toLowerCase() || null,
+                        phone: lead.phone || null,
+                        company_name: lead.name || '',
+                        tier: lead.tier || 'B',
+                        industry: lead.category || '',
+                        city: lead.city || '',
+                        country: (lead.search_location?.includes('USA') || lead.search_location?.includes('UK')) ? 'Internacional' : 'México',
+                        source: 'apify_scraper',
+                        notes: `Scrapeado: ${lead.search_query || ''} en ${lead.search_location || ''}`
+                    };
+
+                    const { error: insertError } = await supabase
+                        .from('marketing_contacts')
+                        .insert(contactData);
+
+                    if (!insertError) {
+                        insertedCount++;
+                    } else {
+                        console.warn('Insert error:', insertError);
+                        duplicateCount++;
+                    }
+                } catch (e) {
+                    console.warn('Error processing lead:', e);
+                    duplicateCount++;
+                }
+            }
+
+            toast.success(`✅ ${insertedCount} leads sincronizados al CRM. ${duplicateCount} duplicados omitidos.`, { id: toastId });
+        } catch (err) {
+            console.error('Error syncing:', err);
+            toast.error('Error al sincronizar: ' + err.message, { id: toastId });
+        } finally {
+            setSyncing(false);
+        }
+    };
+
+    // Limpiar historial de scraping (después de sincronizar)
+    const clearHistory = async () => {
+        const confirm = window.confirm(
+            '⚠️ ¿Estás seguro de limpiar todo el historial de scraping?\n\n' +
+            'Asegúrate de haber sincronizado al CRM primero.\n' +
+            'Esta acción eliminará todos los ' + stats.total + ' leads de esta tabla.'
+        );
+
+        if (!confirm) return;
+
+        const toastId = toast.loading('Limpiando historial...');
+        try {
+            const { error } = await supabase
+                .from('scraping_history')
+                .delete()
+                .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+
+            if (error) throw error;
+
+            toast.success('✅ Historial limpiado. Listo para nuevo scraping.', { id: toastId });
+            setLeads([]);
+            setStats({ total: 0, withPhone: 0, withEmail: 0, contacted: 0 });
+        } catch (err) {
+            console.error('Error clearing:', err);
+            toast.error('Error al limpiar: ' + err.message, { id: toastId });
+        }
+    };
+
     const tierColors = {
         'AAA': 'bg-yellow-100 text-yellow-800 border-yellow-300',
         'AA': 'bg-purple-100 text-purple-800 border-purple-300',
@@ -229,13 +355,26 @@ const LeadsHistory = () => {
                         <p className="text-gray-500">Historial completo de negocios recolectados</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                     <Link
                         to="/admin/scraper"
                         className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition"
                     >
                         Nueva Búsqueda
                     </Link>
+                    <button
+                        onClick={syncToMarketingContacts}
+                        disabled={syncing || stats.total === 0}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm transition disabled:opacity-50"
+                        title="Sincronizar todos los leads a marketing_contacts sin duplicados"
+                    >
+                        {syncing ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                            <RefreshCw className="w-4 h-4" />
+                        )}
+                        Sincronizar al CRM
+                    </button>
                     <button
                         onClick={exportAllToExcel}
                         disabled={exportingAll}
@@ -247,6 +386,15 @@ const LeadsHistory = () => {
                             <Download className="w-4 h-4" />
                         )}
                         Exportar TODO ({stats.total})
+                    </button>
+                    <button
+                        onClick={clearHistory}
+                        disabled={stats.total === 0}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium shadow-sm transition disabled:opacity-50"
+                        title="Limpiar historial de scraping (después de sincronizar)"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                        Limpiar
                     </button>
                 </div>
             </div>
@@ -345,10 +493,11 @@ const LeadsHistory = () => {
                 </form>
             </div>
 
-            {/* Table */}
+            {/* Table with Top Scrollbar */}
             <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                {/* Scrollbar visible at top using CSS rotate trick */}
+                <div className="overflow-x-auto" style={{ transform: 'rotateX(180deg)' }}>
+                    <table className="w-full text-left border-collapse min-w-[800px]" style={{ transform: 'rotateX(180deg)' }}>
                         <thead className="bg-gray-50 border-b">
                             <tr>
                                 <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Negocio</th>

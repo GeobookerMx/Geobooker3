@@ -55,8 +55,15 @@ const MarketingDashboard = () => {
                     return { data: distribution };
                 });
 
-            // 4. Enviados hoy
-            const today = new Date().toISOString().split('T')[0];
+            // 4. Enviados hoy (usando hora de México)
+            const getTodayMexico = () => {
+                const now = new Date();
+                const mexicoOffset = -6 * 60;
+                const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+                const mexicoTime = new Date(utcTime + (mexicoOffset * 60000));
+                return mexicoTime.toISOString().split('T')[0];
+            };
+            const today = getTodayMexico();
             const { count: sentToday } = await supabase
                 .from('campaign_history')
                 .select('*', { count: 'exact', head: true })

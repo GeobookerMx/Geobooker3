@@ -22,6 +22,7 @@ import MarketingDashboard from '../../components/admin/MarketingDashboard';
 import WhatsAppQueueManager from '../../components/admin/WhatsAppQueueManager';
 import WhatsAppCRM from '../../components/admin/WhatsAppCRM';
 import WhatsAppService from '../../services/whatsappService';
+import KPIsPanel from '../../components/admin/KPIsPanel';
 
 const UnifiedCRM = () => {
     // Active Tab
@@ -874,6 +875,7 @@ const UnifiedCRM = () => {
                                             <th className="text-left p-3 text-xs font-semibold text-gray-600">Teléfono</th>
                                             <th className="text-left p-3 text-xs font-semibold text-gray-600">Email</th>
                                             <th className="text-left p-3 text-xs font-semibold text-gray-600">Tier</th>
+                                            <th className="text-left p-3 text-xs font-semibold text-gray-600">Estado</th>
                                             <th className="text-left p-3 text-xs font-semibold text-gray-600">Fuente</th>
                                         </tr>
                                     </thead>
@@ -922,6 +924,23 @@ const UnifiedCRM = () => {
                                                         <span className={`px-2 py-0.5 rounded text-xs font-bold ${getTierColor(contact.tier)}`}>
                                                             {contact.tier}
                                                         </span>
+                                                    </td>
+                                                    <td className="p-3 text-xs">
+                                                        <div className="flex gap-1">
+                                                            {contact.email_status === 'sent' ? (
+                                                                <span className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded" title="Email enviado">📧✅</span>
+                                                            ) : contact.email && (
+                                                                <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded" title="Email pendiente">📧⏳</span>
+                                                            )}
+                                                            {contact.whatsapp_status === 'sent' ? (
+                                                                <span className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded" title="WhatsApp enviado">📱✅</span>
+                                                            ) : contact.phone && (
+                                                                <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded" title="WhatsApp pendiente">📱⏳</span>
+                                                            )}
+                                                            {!contact.email && !contact.phone && (
+                                                                <span className="text-gray-400">-</span>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                     <td className="p-3 text-xs">
                                                         {contact.source === 'google_places' ? (
@@ -1047,56 +1066,7 @@ const UnifiedCRM = () => {
 
                 {/* ============ TAB: KPIS ============ */}
                 {activeTab === 'kpis' && (
-                    <div className="space-y-6">
-                        <div className="grid md:grid-cols-2 gap-6">
-                            {/* WhatsApp Stats */}
-                            <div className="bg-white rounded-xl p-6 border shadow-sm">
-                                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                    <MessageCircle className="w-5 h-5 text-green-600" />
-                                    WhatsApp - Hoy
-                                </h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                                        <p className="text-3xl font-bold text-green-600">--</p>
-                                        <p className="text-sm text-gray-600">Enviados</p>
-                                    </div>
-                                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                                        <p className="text-3xl font-bold text-blue-600">--</p>
-                                        <p className="text-sm text-gray-600">Respondidos</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Email Stats */}
-                            <div className="bg-white rounded-xl p-6 border shadow-sm">
-                                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                    <Mail className="w-5 h-5 text-blue-600" />
-                                    Email - Hoy
-                                </h3>
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                                        <p className="text-3xl font-bold text-blue-600">--</p>
-                                        <p className="text-sm text-gray-600">Enviados</p>
-                                    </div>
-                                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                                        <p className="text-3xl font-bold text-green-600">--</p>
-                                        <p className="text-sm text-gray-600">Abiertos</p>
-                                    </div>
-                                    <div className="text-center p-4 bg-purple-50 rounded-lg">
-                                        <p className="text-3xl font-bold text-purple-600">--</p>
-                                        <p className="text-sm text-gray-600">Clicks</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
-                            <p className="text-sm text-yellow-800">
-                                <strong>📊 Próximamente:</strong> Estadísticas detalladas por fuente (CSV vs Apify),
-                                tasas de conversión, y seguimiento de respuestas.
-                            </p>
-                        </div>
-                    </div>
+                    <KPIsPanel />
                 )}
 
                 {/* ============ TAB: LANZAR ============ */}
@@ -1139,6 +1109,90 @@ const UnifiedCRM = () => {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Quick Action: Generar Cola de 100 Emails */}
+                                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-white shadow-lg">
+                                    <div className="flex flex-wrap items-center justify-between gap-4">
+                                        <div>
+                                            <h3 className="text-xl font-bold flex items-center gap-2">
+                                                📧 Envío Rápido de Emails
+                                            </h3>
+                                            <p className="text-blue-100 text-sm mt-1">
+                                                Genera una cola de 100 contactos pendientes para enviar hoy.
+                                                Los contactos ya enviados no se repetirán.
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <select
+                                                value={emailSearchTier}
+                                                onChange={(e) => setEmailSearchTier(e.target.value)}
+                                                className="px-3 py-2 rounded-lg text-gray-800 bg-white border-0"
+                                            >
+                                                <option value="all">Todos los Tiers</option>
+                                                <option value="AAA">Solo AAA</option>
+                                                <option value="AA">Solo AA</option>
+                                                <option value="A">Solo A</option>
+                                            </select>
+                                            <button
+                                                onClick={async () => {
+                                                    const toastId = toast.loading('Generando cola de emails...');
+                                                    try {
+                                                        let query = supabase
+                                                            .from('marketing_contacts')
+                                                            .select('id, email, contact_name, company_name, tier')
+                                                            .not('email', 'is', null)
+                                                            .neq('email', '')
+                                                            .or('email_status.is.null,email_status.neq.sent')
+                                                            .order('tier', { ascending: true })
+                                                            .limit(100);
+
+                                                        if (emailSearchTier !== 'all') {
+                                                            query = query.eq('tier', emailSearchTier);
+                                                        }
+
+                                                        const { data, error } = await query;
+
+                                                        if (error) throw error;
+
+                                                        if (!data || data.length === 0) {
+                                                            toast.error('No hay contactos pendientes con email', { id: toastId });
+                                                            return;
+                                                        }
+
+                                                        setEmailQueue(data);
+                                                        toast.success(`✅ Cola generada: ${data.length} emails listos para enviar`, { id: toastId });
+                                                    } catch (err) {
+                                                        console.error('Error generating email queue:', err);
+                                                        toast.error('Error: ' + err.message, { id: toastId });
+                                                    }
+                                                }}
+                                                className="flex items-center gap-2 px-6 py-3 bg-white text-blue-600 rounded-lg font-bold hover:bg-blue-50 transition shadow-lg"
+                                            >
+                                                <Play className="w-5 h-5" />
+                                                Generar Cola de 100
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Email Queue Display */}
+                                    {emailQueue.length > 0 && (
+                                        <div className="mt-4 bg-white/10 rounded-lg p-4">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="font-medium">📋 Cola actual: {emailQueue.length} emails</span>
+                                                <button
+                                                    onClick={() => setEmailQueue([])}
+                                                    className="text-sm text-blue-200 hover:text-white"
+                                                >
+                                                    Limpiar cola
+                                                </button>
+                                            </div>
+                                            <p className="text-blue-200 text-xs">
+                                                Usa el dashboard de abajo para enviar los emails con la plantilla seleccionada.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+
                                 <MarketingDashboard />
                             </div>
                         ) : (

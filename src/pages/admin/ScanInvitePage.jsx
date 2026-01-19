@@ -205,7 +205,15 @@ const ScanInvitePage = () => {
                 .eq('status', 'contacted');
 
             // Invitaciones hoy - SOLO de scan_invite (nacionales)
-            const today = new Date().toISOString().split('T')[0];
+            // Usando hora de México (UTC-6) para sincronizar contadores
+            const getTodayMexico = () => {
+                const now = new Date();
+                const mexicoOffset = -6 * 60;
+                const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+                const mexicoTime = new Date(utcTime + (mexicoOffset * 60000));
+                return mexicoTime.toISOString().split('T')[0];
+            };
+            const today = getTodayMexico();
             const { count: todayCount } = await supabase
                 .from('unified_whatsapp_outreach')
                 .select('*', { count: 'exact', head: true })
@@ -832,7 +840,7 @@ const ScanInvitePage = () => {
                             ) : (
                                 <>
                                     <Play className="w-6 h-6" />
-                                    SCAN NOW ({scanRadius} km)
+                                    ESCANEAR ({scanRadius} km)
                                 </>
                             )}
                         </button>

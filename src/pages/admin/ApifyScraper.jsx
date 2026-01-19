@@ -756,11 +756,11 @@ const ApifyScraper = () => {
                                 </span>
                             )}
                             {hourlyCount > 0 && (
-                                <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${hourlyCount >= RATE_LIMIT.warningAt
+                                <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${hourlyCount >= rateLimitConfig.warningAt
                                     ? 'bg-red-100 text-red-700'
                                     : 'bg-blue-100 text-blue-700'
                                     }`}>
-                                    📊 {hourlyCount}/{RATE_LIMIT.maxPerHour} esta hora
+                                    📊 {hourlyCount}/{rateLimitConfig.maxPerHour} esta hora
                                 </span>
                             )}
                         </div>

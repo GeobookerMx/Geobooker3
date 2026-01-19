@@ -53,7 +53,15 @@ const WhatsAppQueueManager = () => {
 
     const loadStats = async () => {
         try {
-            const today = new Date().toISOString().split('T')[0];
+            // Función para obtener fecha en zona horaria de México (UTC-6)
+            const getTodayMexico = () => {
+                const now = new Date();
+                const mexicoOffset = -6 * 60;
+                const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+                const mexicoTime = new Date(utcTime + (mexicoOffset * 60000));
+                return mexicoTime.toISOString().split('T')[0];
+            };
+            const today = getTodayMexico();
             const { count } = await supabase
                 .from('campaign_history')
                 .select('*', { count: 'exact', head: true })

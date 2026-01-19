@@ -63,6 +63,12 @@
 # Redirects y Rewrites
 # ==========================================
 
+# Sitemap Dinámico (Function)
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/.netlify/functions/sitemap-generator"
+  status = 200
+
 # SPA: Redirigir todas las rutas al index.html
 [[redirects]]
   from = "/*"

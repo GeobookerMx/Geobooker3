@@ -54,14 +54,23 @@ const SEO = ({
         // Canonical URL y Hreflang
         updateLinkTag('canonical', canonicalUrl);
 
-        // Hreflang - Indicar versiones a buscadores
-        const supportedLangs = ['es', 'en', 'zh', 'ja', 'ko'];
-        const baseUrl = window.location.origin + window.location.pathname;
+        // Hreflang - Cross-Domain Strategy
+        const path = window.location.pathname;
+        const mxUrl = `https://geobooker.com.mx${path}`;
+        const globalUrl = `https://geobooker.com${path}`;
 
-        supportedLangs.forEach(lang => {
-            updateHreflangTag(lang, baseUrl);
+        // 1. México (Oficial en Español)
+        updateHreflangTag('es-MX', mxUrl);
+        updateHreflangTag('es', mxUrl);
+
+        // 2. Global (Oficial en Inglés)
+        updateHreflangTag('en', globalUrl);
+        updateHreflangTag('x-default', globalUrl);
+
+        // 3. Otros idiomas asiáticos (servidos por Global con params)
+        ['zh', 'ja', 'ko'].forEach(lang => {
+            updateHreflangTag(lang, `${globalUrl}?lang=${lang}`);
         });
-        updateHreflangTag('x-default', baseUrl);
 
         // Schema.org para negocios locales
         if (business) {

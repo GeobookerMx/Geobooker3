@@ -21,8 +21,21 @@ i18n
     .use(initReactI18next) // Pasa i18n a react-i18next
     .init({
         resources,
-        // Detección: 1) localStorage, 2) Idioma del navegador, 3) Español como fallback
-        lng: localStorage.getItem('language') || navigator.language?.split('-')[0] || 'es',
+        // Detección INTELIGENTE de idioma:
+        // 1. Preferencia guardada del usuario (localStorage)
+        // 2. Dominio (.com -> en, .mx -> es)
+        // 3. Idioma del navegador
+        // 4. Fallback a español
+        lng: (() => {
+            const saved = localStorage.getItem('language');
+            if (saved) return saved;
+
+            const hostname = window.location.hostname;
+            if (hostname.endsWith('geobooker.com')) return 'en';
+            if (hostname.endsWith('geobooker.com.mx')) return 'es';
+
+            return navigator.language?.split('-')[0] || 'es';
+        })(),
         fallbackLng: 'es',
         supportedLngs: ['es', 'en', 'zh', 'ja', 'ko'],
         interpolation: {

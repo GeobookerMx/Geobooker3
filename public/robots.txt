@@ -33,6 +33,7 @@ Allow: /assets/*.js
 Allow: /assets/*.css
 
 # Sitemaps
+# Sitemaps (Dinámico)
 Sitemap: https://geobooker.com.mx/sitemap.xml
 
 # Crawl-delay para ser amigable con el servidor

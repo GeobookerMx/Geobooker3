@@ -14,7 +14,9 @@ import {
     Clock,
     ChevronRight,
     Copy,
-    ExternalLink
+    ExternalLink,
+    ShoppingBag,
+    Rocket
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 

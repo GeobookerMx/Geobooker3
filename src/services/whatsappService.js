@@ -10,7 +10,12 @@ export class WhatsAppService {
     static config = {
         phone: '525526702368',
         displayNumber: '+52 55 2670 2368',
-        dailyLimit: 20
+        dailyLimit: 20,
+        // Límites separados por fuente
+        limits: {
+            scan_invite: 10,  // Nacional
+            apify: 10         // Global/Internacional
+        }
     };
 
     /**
@@ -28,7 +33,11 @@ export class WhatsAppService {
                 this.config = {
                     phone: data.setting_value.phone,
                     displayNumber: data.setting_value.display_number,
-                    dailyLimit: data.setting_value.daily_limit || 20
+                    dailyLimit: data.setting_value.daily_limit || 20,
+                    limits: {
+                        scan_invite: data.setting_value.limit_scan_invite || 10,
+                        apify: data.setting_value.limit_apify || 10
+                    }
                 };
             }
         } catch (err) {
@@ -37,26 +46,64 @@ export class WhatsAppService {
     }
 
     /**
-     * Verificar si se puede enviar hoy (límite diario)
+     * Verificar si se puede enviar hoy (límite por fuente)
+     * @param {string} source - 'scan_invite', 'apify', 'manual', etc.
      */
-    static async canSendToday() {
+    static async canSendToday(source = null) {
         try {
-            const { data, error } = await supabase.rpc('get_whatsapp_sent_today');
+            // Obtener conteo por fuente
+            const today = new Date().toISOString().split('T')[0];
+            const { data, error } = await supabase
+                .from('unified_whatsapp_outreach')
+                .select('source')
+                .gte('sent_at', today)
+                .neq('status', 'failed');
 
             if (error) throw error;
 
-            const sent = data || 0;
-            const remaining = this.config.dailyLimit - sent;
+            // Contar por fuente
+            const countBySource = {
+                scan_invite: 0,
+                apify: 0,
+                manual: 0,
+                crm_queue: 0,
+                total: data?.length || 0
+            };
+
+            (data || []).forEach(item => {
+                if (countBySource.hasOwnProperty(item.source)) {
+                    countBySource[item.source]++;
+                }
+            });
+
+            // Si se especifica una fuente, usar límite específico
+            if (source && this.config.limits[source] !== undefined) {
+                const sent = countBySource[source] || 0;
+                const limit = this.config.limits[source];
+                return {
+                    canSend: sent < limit,
+                    sent: sent,
+                    remaining: Math.max(0, limit - sent),
+                    dailyLimit: limit,
+                    source: source,
+                    bySource: countBySource
+                };
+            }
+
+            // Si no hay fuente específica, usar límite global
+            const totalSent = countBySource.total;
+            const remaining = this.config.dailyLimit - totalSent;
 
             return {
                 canSend: remaining > 0,
-                sent: sent,
+                sent: totalSent,
                 remaining: remaining,
-                dailyLimit: this.config.dailyLimit
+                dailyLimit: this.config.dailyLimit,
+                bySource: countBySource
             };
         } catch (error) {
             console.error('Error checking daily limit:', error);
-            return { canSend: false, sent: 0, remaining: 0, dailyLimit: 20 };
+            return { canSend: false, sent: 0, remaining: 0, dailyLimit: 10, bySource: {} };
         }
     }
 
@@ -127,41 +174,42 @@ export class WhatsAppService {
      */
     static generateMessage(contact) {
         const language = contact.language || this.detectLanguage(contact.phone);
-        const name = contact.name || contact.contact_name || 'Estimado/a';
-        const company = contact.company || contact.company_name || 'su empresa';
+        const company = contact.company || contact.company_name || contact.name || 'tu negocio';
 
         const templates = {
-            es: `Hola ${name},
+            es: `Hola *${company}* 👋
+Somos el equipo de ventas de *Geobooker*.
 
-Soy Juan Pablo de *Geobooker*. 
+Geobooker es una plataforma para que las personas encuentren negocios y servicios #cercadeti en minutos, con información clara y contacto directo.
 
-Vimos que *${company}* puede beneficiarse de nuestra plataforma de geolocalización para aumentar su visibilidad y atraer más clientes.
+Esto te ayuda a:
+• Aumentar visibilidad local (personas cerca de tu zona)
+• Recibir clientes por WhatsApp / llamada / cómo llegar
+• Mantener tu perfil actualizado (horarios, fotos, servicios, promociones)
+• Atraer clientes de paso o personas con necesidad urgente
 
-📍 *Conoce más*: geobooker.com.mx
-📱 *Descarga la app*: geobooker.com.mx#descargar-app
+📍 Puedes verlo aquí: geobooker.com.mx
 
-¿Te interesa una llamada rápida de 10 minutos?
+¿Te compartimos el link para subir tu negocio en pocos minutos?
 
-Saludos,
-Juan Pablo
-Geobooker
-${this.config.displayNumber}`,
+_(Si no te interesa, responde NO y no te volvemos a contactar.)_`,
 
-            en: `Hi ${name},
+            en: `Hi *${company}* 👋
+We're the sales team at *Geobooker*.
 
-I'm Juan Pablo from *Geobooker*. 
+Geobooker is a platform that helps people find businesses and services #nearyou in minutes, with clear information and direct contact.
 
-We noticed that *${company}* could benefit from our geolocation platform to increase visibility and attract more customers.
+This helps you:
+• Increase local visibility (people near your area)
+• Receive clients via WhatsApp / call / directions
+• Keep your profile updated (hours, photos, services, promotions)
+• Attract walk-in customers or people with urgent needs
 
-📍 *Learn more*: geobooker.com.mx
-📱 *Download app*: geobooker.com.mx#descargar-app
+📍 Check it out: geobooker.com.mx
 
-Interested in a quick 10-minute call?
+Would you like the link to register your business in just a few minutes?
 
-Best regards,
-Juan Pablo
-Geobooker
-${this.config.displayNumber}`
+_(If you're not interested, reply NO and we won't contact you again.)_`
         };
 
         return templates[language] || templates.es;
@@ -187,15 +235,44 @@ ${this.config.displayNumber}`
     }
 
     /**
+     * Validar formato de teléfono
+     */
+    static isValidPhone(phone) {
+        if (!phone) return false;
+
+        const clean = phone.replace(/\D/g, '');
+
+        // Mínimo 10 dígitos (número local mexicano)
+        // Máximo 15 dígitos (estándar E.164)
+        if (clean.length < 10 || clean.length > 15) {
+            return false;
+        }
+
+        // No puede ser solo ceros o números repetidos
+        if (/^0+$/.test(clean) || /^(\d)\1+$/.test(clean)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Enviar mensaje de WhatsApp (función principal)
      */
     static async sendMessage(contact, source = 'manual') {
         try {
-            // 1. Verificar límite diario
-            const limit = await this.canSendToday();
+            // 0. VALIDAR TELÉFONO PRIMERO (antes de contar)
+            if (!this.isValidPhone(contact.phone)) {
+                toast.error(`Número inválido: ${contact.phone}. No se contó como enviado.`);
+                return { success: false, error: 'invalid_phone', notCounted: true };
+            }
+
+            // 1. Verificar límite diario POR FUENTE
+            const limit = await this.canSendToday(source);
             if (!limit.canSend) {
-                toast.error(`Límite diario alcanzado (${limit.sent}/${limit.dailyLimit})`);
-                return { success: false, error: 'daily_limit' };
+                const sourceLabel = source === 'scan_invite' ? 'Nacional' : source === 'apify' ? 'Global' : source;
+                toast.error(`Límite ${sourceLabel} alcanzado (${limit.sent}/${limit.dailyLimit})`);
+                return { success: false, error: 'daily_limit', limit };
             }
 
             // 2. Verificar si ya fue contactado
@@ -208,7 +285,7 @@ ${this.config.displayNumber}`
             // 3. Generar mensaje
             const message = this.generateMessage(contact);
 
-            // 4. Registrar en base de datos
+            // 4. Registrar en base de datos (SOLO si el teléfono es válido)
             const { data, error } = await supabase.rpc('register_whatsapp_sent', {
                 p_phone: contact.phone,
                 p_contact_name: contact.name || contact.contact_name,

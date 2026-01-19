@@ -93,19 +93,36 @@ const AdsManagement = () => {
         }, {})
       );
 
-      // 4. Impresiones por día (últimos 7 días - simulado por ahora)
-      const last7Days = Array.from({ length: 7 }, (_, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() - (6 - i));
-        return {
-          date: date.toLocaleDateString('es-MX', { month: 'short', day: 'numeric' }),
-          impressions: Math.floor(Math.random() * 1000) + 500, // Simulado
-          clicks: Math.floor(Math.random() * 100) + 20, // Simulado
-        };
-      });
+      // 4. Impresiones por día (últimos 7 días - datos REALES)
+      let impressionsOverTime = [];
+      try {
+        const { data: trendData, error: trendError } = await supabase.rpc('get_global_ad_activity_trend', { p_days: 7 });
+        if (!trendError && trendData) {
+          impressionsOverTime = trendData.map(d => ({
+            date: new Date(d.date).toLocaleDateString('es-MX', { month: 'short', day: 'numeric' }),
+            impressions: parseInt(d.impressions) || 0,
+            clicks: parseInt(d.clicks) || 0,
+          }));
+        }
+      } catch (e) {
+        console.warn('Could not load trend data from RPC, using fallback');
+      }
+
+      // Fallback si no hay datos reales
+      if (impressionsOverTime.length === 0) {
+        impressionsOverTime = Array.from({ length: 7 }, (_, i) => {
+          const date = new Date();
+          date.setDate(date.getDate() - (6 - i));
+          return {
+            date: date.toLocaleDateString('es-MX', { month: 'short', day: 'numeric' }),
+            impressions: 0,
+            clicks: 0,
+          };
+        });
+      }
 
       setAnalyticsData({
-        impressionsOverTime: last7Days,
+        impressionsOverTime,
         spacePerformance,
         topCampaigns,
         revenueBySpace,
@@ -114,6 +131,7 @@ const AdsManagement = () => {
       console.error('Error loading analytics:', error);
     }
   };
+
 
   const loadData = async (status = 'active', filterBySpace = 'all') => {
     try {
@@ -370,15 +388,37 @@ const AdsManagement = () => {
                     <span className="font-semibold">Mobile:</span>{' '}
                     {space.size_mobile}
                   </p>
-                  <p>
-                    <span className="font-semibold">Precio:</span> $
-                    {space.price_monthly}/mes
-                  </p>
+
+                  {/* Precio con soporte para promoción */}
+                  {space.promo_price_monthly && space.promo_price_monthly < space.price_monthly ? (
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-3 rounded-lg border border-green-200">
+                      <p className="text-xs font-bold text-green-700 mb-1">
+                        {space.promo_label || '🔥 Oferta Especial'}
+                      </p>
+                      <p>
+                        <span className="font-semibold">Precio:</span>{' '}
+                        <span className="line-through text-gray-400 text-sm">${space.price_monthly}/mes</span>
+                        <span className="ml-2 text-lg font-bold text-green-600">${space.promo_price_monthly}/mes</span>
+                      </p>
+                      {space.promo_end_date && (
+                        <p className="text-xs text-green-600 mt-1">
+                          ⏰ Válido hasta: {new Date(space.promo_end_date).toLocaleDateString('es-MX')}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p>
+                      <span className="font-semibold">Precio:</span> $
+                      {space.price_monthly}/mes
+                    </p>
+                  )}
+
                   <p>
                     <span className="font-semibold">Slots:</span>{' '}
                     {space.max_slots}
                   </p>
                 </div>
+
 
                 <p className="text-xs text-gray-500 mt-3">
                   {space.description}

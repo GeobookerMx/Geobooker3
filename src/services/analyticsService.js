@@ -60,13 +60,29 @@ export function trackBusinessClick(businessId, businessName, action = 'click') {
 
 /**
  * Trackear click en botón de rutas/direcciones
+ * Guarda en GA4 y en Supabase para analytics internos
  */
-export function trackRouteClick(businessId, businessName) {
+export async function trackRouteClick(businessId, businessName, source = 'map') {
+    // GA4 tracking
     trackEvent('click_route', {
         business_id: businessId,
         business_name: businessName
     });
+
+    // Supabase tracking (para KPIs internos)
+    try {
+        await supabase.rpc('record_route_click', {
+            p_business_id: businessId,
+            p_business_name: businessName,
+            p_source: source
+        });
+        console.log(`🗺️ [Analytics] Route click tracked: ${businessName}`);
+    } catch (err) {
+        // Silently fail - analytics shouldn't break the app
+        console.warn('[Analytics] Failed to track route click:', err);
+    }
 }
+
 
 // Generar o recuperar session ID
 const getSessionId = () => {

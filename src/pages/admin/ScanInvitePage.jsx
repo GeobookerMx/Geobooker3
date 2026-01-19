@@ -31,17 +31,96 @@ const ScanInvitePage = () => {
     const [stats, setStats] = useState({ total: 0, new: 0, contacted: 0, today: 0 });
     const [userLocation, setUserLocation] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [dailyLimit, setDailyLimit] = useState(20);
+    const [dailyLimit, setDailyLimit] = useState(WhatsAppService.config.dailyLimit);
     const [dailyCount, setDailyCount] = useState(0);
     const [sessionLeadIds, setSessionLeadIds] = useState(new Set()); // Leads añadidos en esta sesión
     const [hiddenLeadIds, setHiddenLeadIds] = useState(new Set()); // Leads ocultados tras contactar
 
+    // Predefined Cities & High-Density Colonias
+    const predefinedCities = [
+        // Current Location
+        { id: 'auto', name: '📍 Mi ubicación actual', lat: null, lng: null, group: 'actual' },
+
+        // CDMX - Colonias de Alta Densidad
+        { id: 'cdmx_centro', name: 'CDMX - Centro Histórico', lat: 19.4326, lng: -99.1332, group: 'cdmx' },
+        { id: 'cdmx_roma', name: 'CDMX - Roma Norte (Alta densidad)', lat: 19.4195, lng: -99.1617, group: 'cdmx' },
+        { id: 'cdmx_condesa', name: 'CDMX - Condesa (Alta densidad)', lat: 19.4111, lng: -99.1747, group: 'cdmx' },
+        { id: 'cdmx_polanco', name: 'CDMX - Polanco', lat: 19.4335, lng: -99.1917, group: 'cdmx' },
+        { id: 'cdmx_del_valle', name: 'CDMX - Del Valle (Alta densidad)', lat: 19.3908, lng: -99.1614, group: 'cdmx' },
+        { id: 'cdmx_narvarte', name: 'CDMX - Narvarte (Alta densidad)', lat: 19.3989, lng: -99.1499, group: 'cdmx' },
+        { id: 'cdmx_coyoacan', name: 'CDMX - Coyoacán Centro', lat: 19.3467, lng: -99.1617, group: 'cdmx' },
+        { id: 'cdmx_santa_fe', name: 'CDMX - Santa Fe', lat: 19.3590, lng: -99.2594, group: 'cdmx' },
+        { id: 'cdmx_doctores', name: 'CDMX - Doctores (Alta densidad)', lat: 19.4167, lng: -99.1417, group: 'cdmx' },
+        { id: 'cdmx_napoles', name: 'CDMX - Nápoles (Alta densidad)', lat: 19.3944, lng: -99.1778, group: 'cdmx' },
+        { id: 'cdmx_insurgentes', name: 'CDMX - Insurgentes Sur', lat: 19.3800, lng: -99.1789, group: 'cdmx' },
+
+        // Otras Ciudades Grandes
+        { id: 'guadalajara', name: 'Guadalajara - Centro', lat: 20.6597, lng: -103.3496, group: 'grandes' },
+        { id: 'guadalajara_chapu', name: 'Guadalajara - Chapalita', lat: 20.6700, lng: -103.4025, group: 'grandes' },
+        { id: 'monterrey', name: 'Monterrey - Centro', lat: 25.6866, lng: -100.3161, group: 'grandes' },
+        { id: 'monterrey_sanpedro', name: 'Monterrey - San Pedro', lat: 25.6580, lng: -100.4029, group: 'grandes' },
+        { id: 'puebla', name: 'Puebla - Centro', lat: 19.0414, lng: -98.2063, group: 'grandes' },
+        { id: 'queretaro', name: 'Querétaro - Centro', lat: 20.5888, lng: -100.3899, group: 'grandes' },
+
+        // Ciudades Turísticas
+        { id: 'cancun', name: 'Cancún - Zona Hotelera', lat: 21.1619, lng: -86.8515, group: 'turisticas' },
+        { id: 'playa_carmen', name: 'Playa del Carmen - Quinta Av', lat: 20.6296, lng: -87.0739, group: 'turisticas' },
+        { id: 'merida', name: 'Mérida - Centro', lat: 20.9674, lng: -89.5926, group: 'turisticas' },
+        { id: 'vallarta', name: 'Puerto Vallarta - Centro', lat: 20.6534, lng: -105.2253, group: 'turisticas' },
+        { id: 'los_cabos', name: 'Los Cabos - San José', lat: 23.0548, lng: -109.6975, group: 'turisticas' },
+
+        // Norte de México
+        { id: 'tijuana', name: 'Tijuana - Centro', lat: 32.5149, lng: -117.0382, group: 'norte' },
+        { id: 'chihuahua', name: 'Chihuahua - Centro', lat: 28.6353, lng: -106.0889, group: 'norte' },
+        { id: 'hermosillo', name: 'Hermosillo - Centro', lat: 29.0729, lng: -110.9559, group: 'norte' },
+
+        // Bajío
+        { id: 'leon', name: 'León - Centro', lat: 21.1221, lng: -101.6860, group: 'bajio' },
+        { id: 'aguascalientes', name: 'Aguascalientes - Centro', lat: 21.8853, lng: -102.2916, group: 'bajio' },
+        { id: 'san_luis', name: 'San Luis Potosí - Centro', lat: 22.1565, lng: -100.9855, group: 'bajio' },
+        { id: 'morelia', name: 'Morelia - Centro', lat: 19.7059, lng: -101.1949, group: 'bajio' },
+
+        // Manual
+        { id: 'custom', name: '✏️ Ingresar coordenadas manualmente', lat: null, lng: null, group: 'manual' },
+    ];
+
+    const [selectedCity, setSelectedCity] = useState('auto');
+    const [manualLat, setManualLat] = useState('');
+    const [manualLng, setManualLng] = useState('');
+    const [scanRadius, setScanRadius] = useState(3); // km
+
+
+    // Business Categories (expanded list)
+    const allCategories = [
+        { id: 'restaurant', label: '🍽️ Restaurantes', checked: true },
+        { id: 'store', label: '🏪 Tiendas', checked: true },
+        { id: 'cafe', label: '☕ Cafeterías', checked: true },
+        { id: 'pharmacy', label: '💊 Farmacias', checked: true },
+        { id: 'hair_care', label: '💇 Salones de Belleza', checked: true },
+        { id: 'car_repair', label: '🔧 Talleres Mecánicos', checked: true },
+        { id: 'gym', label: '🏋️ Gimnasios', checked: false },
+        { id: 'dentist', label: '🦷 Dentistas', checked: false },
+        { id: 'doctor', label: '🏥 Clínicas/Doctores', checked: false },
+        { id: 'veterinary_care', label: '🐾 Veterinarias', checked: false },
+        { id: 'hotel', label: '🏨 Hoteles', checked: false },
+        { id: 'bar', label: '🍺 Bares', checked: false },
+        { id: 'bakery', label: '🥐 Panaderías', checked: false },
+        { id: 'laundry', label: '🧺 Lavanderías', checked: false },
+        { id: 'real_estate_agency', label: '🏠 Inmobiliarias', checked: false },
+        { id: 'insurance_agency', label: '📋 Aseguradoras', checked: false },
+    ];
+    const [selectedCategories, setSelectedCategories] = useState(
+        allCategories.filter(c => c.checked).map(c => c.id)
+    );
+
     // Filtros
     const [filters, setFilters] = useState({
         contactType: 'all', // all, phone, email
-        status: 'new', // all, new, contacted, etc. - Default to 'new' to hide contacted
+        status: 'all', // all, new, contacted, etc. - Changed to 'all' to show all leads by default
         category: 'all'
     });
+
+
 
     // Mensaje de WhatsApp precargado
     const whatsappMessage = `Hola 👋 Soy del equipo de *Geobooker*. Estamos sumando negocios para que la gente los encuentre cerca de ellos en minutos (WhatsApp, llamadas y rutas).
@@ -79,17 +158,23 @@ const ScanInvitePage = () => {
     // Cargar leads de la base de datos
     const loadLeads = async () => {
         try {
+            console.log('📥 loadLeads() called...');
             const { data, error } = await supabase
                 .from('scan_leads')
                 .select(`
           *,
-          scan_lead_contacts (*),
-          scan_outreach (*)
+          scan_lead_contacts (*)
         `)
                 .order('captured_at', { ascending: false })
                 .limit(100);
 
-            if (error) throw error;
+            if (error) {
+                console.error('❌ loadLeads error:', error);
+                throw error;
+            }
+
+            console.log('✅ loadLeads result:', data?.length || 0, 'leads');
+            console.log('📋 Sample lead:', data?.[0]);
             setLeads(data || []);
         } catch (error) {
             console.error('Error cargando leads:', error);
@@ -97,6 +182,7 @@ const ScanInvitePage = () => {
             setLoading(false);
         }
     };
+
 
     // Cargar estadísticas
     const loadStats = async () => {
@@ -118,12 +204,13 @@ const ScanInvitePage = () => {
                 .select('*', { count: 'exact', head: true })
                 .eq('status', 'contacted');
 
-            // Invitaciones hoy
+            // Invitaciones hoy - SOLO de scan_invite (nacionales)
             const today = new Date().toISOString().split('T')[0];
             const { count: todayCount } = await supabase
-                .from('scan_outreach')
+                .from('unified_whatsapp_outreach')
                 .select('*', { count: 'exact', head: true })
-                .gte('attempted_at', today);
+                .gte('sent_at', today)
+                .eq('source', 'scan_invite');  // Solo nacionales
 
             setStats({
                 total: total || 0,
@@ -132,6 +219,8 @@ const ScanInvitePage = () => {
                 today: todayCount || 0
             });
             setDailyCount(todayCount || 0);
+            // Usar límite específico para scan_invite (nacionales)
+            setDailyLimit(WhatsAppService.config.limits?.scan_invite || 10);
         } catch (error) {
             console.error('Error cargando stats:', error);
         }
@@ -139,14 +228,34 @@ const ScanInvitePage = () => {
 
     // Iniciar escaneo REAL con Google Places API
     const startScan = async () => {
-        console.log('🔍 startScan called');
-        console.log('🔍 userLocation:', userLocation);
-        console.log('🔍 window.google:', window.google);
-        console.log('🔍 googleMapsLoaded:', googleMapsLoaded);
+        // Determine location to use based on city selection
+        let scanLocation = null;
+        const cityConfig = predefinedCities.find(c => c.id === selectedCity);
 
-        if (!userLocation) {
-            console.log('❌ No userLocation');
-            toast.error('Primero necesito tu ubicación');
+        if (selectedCity === 'auto') {
+            scanLocation = userLocation;
+        } else if (selectedCity === 'custom') {
+            const lat = parseFloat(manualLat);
+            const lng = parseFloat(manualLng);
+            if (isNaN(lat) || isNaN(lng)) {
+                toast.error('Coordenadas manuales inválidas. Usa formato: 19.4326, -99.1332');
+                return;
+            }
+            scanLocation = { lat, lng };
+        } else if (cityConfig) {
+            scanLocation = { lat: cityConfig.lat, lng: cityConfig.lng };
+        }
+
+        const cityName = cityConfig?.name || 'Ubicación actual';
+        console.log('🔍 startScan called');
+        console.log('🔍 scanLocation:', scanLocation);
+        console.log('🔍 selectedCity:', selectedCity, cityName);
+        console.log('🔍 selectedCategories:', selectedCategories);
+        console.log('🔍 scanRadius:', scanRadius);
+
+        if (!scanLocation) {
+            console.log('❌ No location');
+            toast.error('Primero necesito tu ubicación o ingresa coordenadas manuales');
             getUserLocation();
             return;
         }
@@ -157,10 +266,15 @@ const ScanInvitePage = () => {
             return;
         }
 
+        if (selectedCategories.length === 0) {
+            toast.error('Selecciona al menos una categoría de negocio');
+            return;
+        }
+
         console.log('✅ Iniciando escaneo...');
         setScanning(true);
         setScanStatus('scanning');
-        toast.success('Escaneo iniciado en 3km de radio');
+        toast.success(`Escaneo iniciado: ${selectedCategories.length} categorías, ${scanRadius}km de radio`);
 
         try {
             const user = (await supabase.auth.getUser()).data.user;
@@ -171,10 +285,11 @@ const ScanInvitePage = () => {
                 .from('scan_runs')
                 .insert({
                     user_id: user.id,
-                    latitude: userLocation.lat,
-                    longitude: userLocation.lng,
-                    radius_km: 3,
-                    status: 'running'
+                    latitude: scanLocation.lat,
+                    longitude: scanLocation.lng,
+                    radius_km: scanRadius,
+                    status: 'running',
+                    filters: { categories: selectedCategories, manual: selectedCity === 'custom' }
                 })
                 .select()
                 .single();
@@ -186,19 +301,20 @@ const ScanInvitePage = () => {
                 document.createElement('div')
             );
 
-            // Buscar negocios cercanos (varios tipos)
-            const types = ['restaurant', 'store', 'cafe', 'pharmacy', 'hair_care', 'car_repair'];
+            // Buscar negocios cercanos (usando categorías seleccionadas)
+            const types = selectedCategories;
             let allPlaces = [];
             let scannedCount = 0;
             let newCount = 0;
             let duplicateCount = 0;
 
             for (const type of types) {
+
                 try {
                     const places = await new Promise((resolve, reject) => {
                         service.nearbySearch({
-                            location: new window.google.maps.LatLng(userLocation.lat, userLocation.lng),
-                            radius: 3000, // 3km
+                            location: new window.google.maps.LatLng(scanLocation.lat, scanLocation.lng),
+                            radius: scanRadius * 1000, // Convert km to meters
                             type: type,
                             language: 'es'
                         }, (results, status) => {
@@ -209,6 +325,7 @@ const ScanInvitePage = () => {
                             }
                         });
                     });
+
 
                     // Procesar cada negocio
                     for (const place of places.slice(0, 5)) { // Limitar a 5 por tipo
@@ -385,7 +502,53 @@ const ScanInvitePage = () => {
         }
     };
 
-    // Limpiar lista de leads visibles (solo oculta, no borra de DB)
+    // Opción A: Ocultar solo los contactados/blacklisted (deja visibles los nuevos)
+    const hideContactedLeads = () => {
+        const contactedIds = leads
+            .filter(l => l.status === 'contacted' || l.status === 'blacklisted')
+            .map(l => l.id);
+        setHiddenLeadIds(new Set([...hiddenLeadIds, ...contactedIds]));
+        toast.success(`${contactedIds.length} leads contactados/blacklisted ocultados. Solo quedan los nuevos.`);
+    };
+
+    // Opción B: Eliminar de la DB los contactados (⚠️ IRREVERSIBLE)
+    const deleteContactedLeads = async () => {
+        const contactedLeads = leads.filter(l => l.status === 'contacted' || l.status === 'blacklisted');
+        const count = contactedLeads.length;
+
+        if (count === 0) {
+            toast.error('No hay leads contactados para eliminar');
+            return;
+        }
+
+        const confirmed = window.confirm(
+            `⚠️ ATENCIÓN: Vas a ELIMINAR PERMANENTEMENTE ${count} leads de la base de datos.\n\n` +
+            `Esto incluye leads con status 'contacted' o 'blacklisted'.\n\n` +
+            `Esta acción NO se puede deshacer. ¿Estás seguro?`
+        );
+
+        if (!confirmed) return;
+
+        try {
+            const idsToDelete = contactedLeads.map(l => l.id);
+
+            const { error } = await supabase
+                .from('scan_leads')
+                .delete()
+                .in('id', idsToDelete);
+
+            if (error) throw error;
+
+            toast.success(`✅ ${count} leads eliminados permanentemente`);
+            loadLeads();
+            loadStats();
+        } catch (error) {
+            console.error('Error eliminando leads:', error);
+            toast.error('Error al eliminar: ' + error.message);
+        }
+    };
+
+    // Limpiar lista visual completa (oculta todos los visibles)
     const clearVisibleList = () => {
         const allVisibleIds = filteredLeads.map(l => l.id);
         setHiddenLeadIds(new Set(allVisibleIds));
@@ -397,6 +560,7 @@ const ScanInvitePage = () => {
         setHiddenLeadIds(new Set());
         toast('Vista restaurada', { icon: '🔄' });
     };
+
 
     // Agregar a blacklist
     const addToBlacklist = async (lead) => {
@@ -435,6 +599,15 @@ const ScanInvitePage = () => {
             return lead.scan_lead_contacts?.some(c => c.type === 'email');
         }
         return true;
+    });
+
+    // DEBUG: Log filter results
+    console.log('🔍 Filter debug:', {
+        totalLeads: leads.length,
+        hiddenCount: hiddenLeadIds.size,
+        filterStatus: filters.status,
+        filteredCount: filteredLeads.length,
+        sampleStatus: leads[0]?.status
     });
 
     return (
@@ -501,28 +674,131 @@ const ScanInvitePage = () => {
 
                 {/* Control Panel */}
                 <div className="bg-white rounded-2xl shadow-sm border p-6 mb-8">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                        {/* Location */}
-                        <div className="flex items-center gap-3">
+                    {/* Location Section */}
+                    <div className="mb-6">
+                        <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
                             <MapPin className="w-5 h-5 text-red-500" />
-                            <span className="text-gray-700">
-                                {userLocation
-                                    ? `📍 ${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)}`
-                                    : 'Obteniendo ubicación...'
-                                }
-                            </span>
-                            <button
-                                onClick={getUserLocation}
-                                className="text-blue-600 hover:text-blue-800 text-sm"
+                            Ubicación de Escaneo
+                        </h3>
+                        <div className="flex flex-wrap items-center gap-4">
+                            {/* City Selector */}
+                            <select
+                                value={selectedCity}
+                                onChange={(e) => setSelectedCity(e.target.value)}
+                                className="border rounded px-3 py-2 text-sm min-w-[280px]"
                             >
-                                <RefreshCw className="w-4 h-4" />
-                            </button>
-                        </div>
+                                <optgroup label="📍 Actual">
+                                    <option value="auto">Mi ubicación actual</option>
+                                </optgroup>
+                                <optgroup label="🏙️ CDMX - Colonias Alta Densidad">
+                                    {predefinedCities.filter(c => c.group === 'cdmx').map(city => (
+                                        <option key={city.id} value={city.id}>{city.name.replace('CDMX - ', '')}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="🏛️ Ciudades Grandes">
+                                    {predefinedCities.filter(c => c.group === 'grandes').map(city => (
+                                        <option key={city.id} value={city.id}>{city.name}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="🏖️ Turísticas">
+                                    {predefinedCities.filter(c => c.group === 'turisticas').map(city => (
+                                        <option key={city.id} value={city.id}>{city.name}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="🌵 Norte de México">
+                                    {predefinedCities.filter(c => c.group === 'norte').map(city => (
+                                        <option key={city.id} value={city.id}>{city.name}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="🌾 Bajío">
+                                    {predefinedCities.filter(c => c.group === 'bajio').map(city => (
+                                        <option key={city.id} value={city.id}>{city.name}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="✏️ Manual">
+                                    <option value="custom">Ingresar coordenadas</option>
+                                </optgroup>
+                            </select>
 
-                        {/* Scan Button */}
+                            {/* Manual Coordinates (only if custom selected) */}
+                            {selectedCity === 'custom' && (
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Latitud (ej: 19.4326)"
+                                        value={manualLat}
+                                        onChange={(e) => setManualLat(e.target.value)}
+                                        className="border rounded px-3 py-1 text-sm w-36"
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="Longitud (ej: -99.1332)"
+                                        value={manualLng}
+                                        onChange={(e) => setManualLng(e.target.value)}
+                                        className="border rounded px-3 py-1 text-sm w-36"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Show current location if auto */}
+                            {selectedCity === 'auto' && (
+                                <span className="text-sm text-gray-600">
+                                    {userLocation
+                                        ? `📍 ${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)}`
+                                        : 'Obteniendo ubicación...'
+                                    }
+                                </span>
+                            )}
+
+                            {/* Radius Selector */}
+                            <select
+                                value={scanRadius}
+                                onChange={(e) => setScanRadius(parseInt(e.target.value))}
+                                className="border rounded px-3 py-2 text-sm"
+                            >
+                                <option value={1}>1 km</option>
+                                <option value={2}>2 km</option>
+                                <option value={3}>3 km</option>
+                                <option value={5}>5 km</option>
+                                <option value={10}>10 km</option>
+                            </select>
+                        </div>
+                    </div>
+
+
+                    {/* Categories Section */}
+                    <div className="mb-6">
+                        <h3 className="font-bold text-gray-800 mb-3">📂 Categorías de Negocio</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {allCategories.map((cat) => (
+                                <label key={cat.id} className="flex items-center gap-2 cursor-pointer text-sm p-2 rounded hover:bg-gray-50">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedCategories.includes(cat.id)}
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                setSelectedCategories([...selectedCategories, cat.id]);
+                                            } else {
+                                                setSelectedCategories(selectedCategories.filter(c => c !== cat.id));
+                                            }
+                                        }}
+                                        className="w-4 h-4"
+                                    />
+                                    <span>{cat.label}</span>
+                                </label>
+                            ))}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                            {selectedCategories.length} categorías seleccionadas
+                        </p>
+                    </div>
+
+                    {/* Scan Button */}
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                         <button
                             onClick={scanning ? pauseScan : startScan}
-                            disabled={!userLocation}
+                            disabled={selectedCity === 'auto' && !userLocation}
+
                             className={`
                 flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-lg transition-all
                 ${scanning
@@ -540,7 +816,7 @@ const ScanInvitePage = () => {
                             ) : (
                                 <>
                                     <Play className="w-6 h-6" />
-                                    SCAN NOW (3 km)
+                                    SCAN NOW ({scanRadius} km)
                                 </>
                             )}
                         </button>
@@ -562,6 +838,7 @@ const ScanInvitePage = () => {
                         </div>
                     </div>
                 </div>
+
 
                 {/* Filters */}
                 <div className="bg-white rounded-xl shadow-sm border p-4 mb-6">
@@ -605,28 +882,40 @@ const ScanInvitePage = () => {
                         <button
                             onClick={clearVisibleList}
                             className="flex items-center gap-1 text-orange-600 hover:text-orange-800 text-sm"
-                            title="Limpiar lista visual (no borra de DB)"
+                            title="Ocultar todos los visibles (no borra de DB)"
                         >
                             <Trash2 className="w-4 h-4" />
-                            Limpiar Lista
+                            Ocultar Todo
                         </button>
+
+                        <button
+                            onClick={hideContactedLeads}
+                            className="flex items-center gap-1 text-purple-600 hover:text-purple-800 text-sm"
+                            title="Ocultar solo contactados/blacklisted (quedan nuevos)"
+                        >
+                            👁️ Ocultar Contactados
+                        </button>
+
 
                         {hiddenLeadIds.size > 0 && (
                             <button
                                 onClick={resetHiddenLeads}
                                 className="flex items-center gap-1 text-gray-500 hover:text-gray-700 text-sm"
                             >
-                                Mostrar {hiddenLeadIds.size} ocultos
+                                🔄 Mostrar {hiddenLeadIds.size} ocultos
                             </button>
                         )}
                     </div>
                 </div>
 
+
                 {/* Leads Table */}
                 <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
+                    {/* Scrollbar at top - uses CSS rotate trick */}
+                    <div className="overflow-x-auto" style={{ transform: 'rotateX(180deg)' }}>
+                        <table className="w-full min-w-[900px]" style={{ transform: 'rotateX(180deg)' }}>
                             <thead className="bg-gray-50 border-b">
+
                                 <tr>
                                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Negocio</th>
                                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Categoría</th>

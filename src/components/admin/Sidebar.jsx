@@ -66,6 +66,7 @@ const Sidebar = ({ onLogout }) => {
         { path: '/admin/ad-reports', icon: BarChart3, label: '🚩 Reportes Anuncios' },
         { path: '/admin/inventory', icon: BarChart3, label: '📦 Ad Inventory' },
         { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
+        { path: 'https://clarity.microsoft.com/projects', icon: BarChart3, label: '🔥 Clarity (Heatmaps)', external: true },
         { path: '/admin/scan-invite', icon: Users, label: '🇲🇽 Scan Local (Nacional)' },
         { path: '/admin/referrals', icon: Gift, label: '🎁 Referidos' },
         { path: '/admin/blog', icon: Newspaper, label: '📝 Blog Comunidad' },
@@ -77,6 +78,7 @@ const Sidebar = ({ onLogout }) => {
         { path: '/admin/revenue', icon: DollarSign, label: 'Ingresos' },
         { path: '/admin/settings', icon: Settings, label: 'Configuración' },
     ];
+
 
 
     const isActive = (path) => location.pathname === path;
@@ -97,16 +99,13 @@ const Sidebar = ({ onLogout }) => {
             <nav className="flex-1 overflow-y-auto py-4">
                 {menuItems.map((item) => {
                     const Icon = item.icon;
-                    return (
-                        <Link
-                            key={item.path}
-                            to={item.path}
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className={`flex items-center justify-between px-6 py-3 transition-colors ${isActive(item.path)
-                                ? 'bg-blue-600 text-white border-l-4 border-blue-400'
-                                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                                }`}
-                        >
+                    const linkClass = `flex items-center justify-between px-6 py-3 transition-colors ${isActive(item.path)
+                        ? 'bg-blue-600 text-white border-l-4 border-blue-400'
+                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                        }`;
+
+                    const content = (
+                        <>
                             <div className="flex items-center">
                                 <Icon className="w-5 h-5 mr-3" />
                                 <span className="font-medium">{item.label}</span>
@@ -119,10 +118,37 @@ const Sidebar = ({ onLogout }) => {
                                     {item.badge}
                                 </span>
                             )}
+                        </>
+                    );
+
+                    // External links open in new tab
+                    if (item.external) {
+                        return (
+                            <a
+                                key={item.path}
+                                href={item.path}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={linkClass}
+                            >
+                                {content}
+                            </a>
+                        );
+                    }
+
+                    return (
+                        <Link
+                            key={item.path}
+                            to={item.path}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className={linkClass}
+                        >
+                            {content}
                         </Link>
                     );
                 })}
             </nav>
+
 
             {/* Logout */}
             <div className="p-4 border-t border-gray-800 dark:border-gray-700">

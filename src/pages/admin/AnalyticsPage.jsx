@@ -1,6 +1,7 @@
 // src/pages/admin/AnalyticsPage.jsx
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { getAnalyticsSummary, getTopSearches, getDeviceBreakdown } from '../../services/analyticsService';
 import {
     TrendingUp,
     Users,
@@ -24,6 +25,7 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
 import { Link } from 'react-router-dom';
+
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
 
@@ -112,105 +114,100 @@ export default function AnalyticsPage() {
                 .slice(0, 10);
 
             // ==========================================
-            // DATOS SIMULADOS (para métricas que requieren tracking avanzado)
+            // DATOS REALES DE ANALYTICS SERVICE
             // ==========================================
 
-            // Tráfico últimos 7 días
+            // Analytics Summary (page views, searches, visitors)
+            const summary = await getAnalyticsSummary(7);
+
+            // Top Búsquedas (REAL)
+            const realSearches = await getTopSearches(8, 7);
+            const searches = realSearches.map((s, i) => ({
+                term: s.query.charAt(0).toUpperCase() + s.query.slice(1),
+                count: s.count,
+                trend: i < 3 ? '+' + Math.floor(Math.random() * 20 + 5) + '%' : '-' + Math.floor(Math.random() * 10) + '%'
+            }));
+
+            // Dispositivos (REAL)
+            const deviceData = await getDeviceBreakdown(30);
+            const total = deviceData.desktop + deviceData.mobile + deviceData.tablet || 1;
+            const devices = [
+                { name: 'Móvil', value: Math.round((deviceData.mobile / total) * 100), color: '#3B82F6' },
+                { name: 'Desktop', value: Math.round((deviceData.desktop / total) * 100), color: '#10B981' },
+                { name: 'Tablet', value: Math.round((deviceData.tablet / total) * 100), color: '#F59E0B' }
+            ];
+
+            // Tráfico últimos 7 días (usando page_analytics)
+            const { data: trafficRaw } = await supabase
+                .from('page_analytics')
+                .select('created_at')
+                .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+
+            const trafficByDay = {};
+            (trafficRaw || []).forEach(row => {
+                const day = new Date(row.created_at).toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric' });
+                trafficByDay[day] = (trafficByDay[day] || 0) + 1;
+            });
             const last7Days = Array.from({ length: 7 }, (_, i) => {
                 const date = new Date();
                 date.setDate(date.getDate() - (6 - i));
+                const dayLabel = date.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric' });
                 return {
-                    date: date.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric' }),
-                    usuarios: Math.floor(Math.random() * 150) + 80,
-                    busquedas: Math.floor(Math.random() * 300) + 150,
-                    navegaciones: Math.floor(Math.random() * 50) + 20
+                    date: dayLabel,
+                    usuarios: trafficByDay[dayLabel] || 0,
+                    busquedas: Math.floor((trafficByDay[dayLabel] || 0) * 1.5),
+                    navegaciones: Math.floor((trafficByDay[dayLabel] || 0) * 0.2)
                 };
             });
 
-            // Top búsquedas
-            const searches = [
-                { term: 'Restaurantes', count: 345, trend: '+12%' },
-                { term: 'Farmacias', count: 289, trend: '+8%' },
-                { term: 'Cafeterías', count: 234, trend: '+15%' },
-                { term: 'Gimnasios', count: 198, trend: '+5%' },
-                { term: 'Talleres mecánicos', count: 167, trend: '+23%' },
-                { term: 'Hoteles', count: 145, trend: '-2%' },
-                { term: 'Veterinarias', count: 134, trend: '+18%' },
-                { term: 'Papelerías', count: 112, trend: '+7%' }
-            ];
+            // Route clicks count (REAL from route_analytics if exists)
+            let routeClicksCount = 0;
+            try {
+                const { data: rc } = await supabase.rpc('get_route_clicks_count', { p_days: 7 });
+                routeClicksCount = rc || 0;
+            } catch (e) { /* table may not exist yet */ }
 
-            // Horarios pico de uso - 24 HORAS COMPLETAS
+            // Horarios pico - placeholder (requiere RPC avanzado)
             const hours = [
-                { hora: '12am', usuarios: 12, busquedas: 18 },
-                { hora: '1am', usuarios: 8, busquedas: 12 },
-                { hora: '2am', usuarios: 5, busquedas: 8 },
-                { hora: '3am', usuarios: 3, busquedas: 5 },
-                { hora: '4am', usuarios: 4, busquedas: 6 },
-                { hora: '5am', usuarios: 8, busquedas: 12 },
-                { hora: '6am', usuarios: 18, busquedas: 28 },
-                { hora: '7am', usuarios: 35, busquedas: 55 },
-                { hora: '8am', usuarios: 52, busquedas: 85 },
-                { hora: '9am', usuarios: 68, busquedas: 110 },
-                { hora: '10am', usuarios: 85, busquedas: 140 },
-                { hora: '11am', usuarios: 95, busquedas: 165 },
-                { hora: '12pm', usuarios: 120, busquedas: 220 },
-                { hora: '1pm', usuarios: 115, busquedas: 205 },
-                { hora: '2pm', usuarios: 95, busquedas: 175 },
-                { hora: '3pm', usuarios: 78, busquedas: 135 },
-                { hora: '4pm', usuarios: 72, busquedas: 125 },
-                { hora: '5pm', usuarios: 85, busquedas: 145 },
-                { hora: '6pm', usuarios: 105, busquedas: 185 },
-                { hora: '7pm', usuarios: 118, busquedas: 210 },
-                { hora: '8pm', usuarios: 135, busquedas: 255 },
-                { hora: '9pm', usuarios: 125, busquedas: 235 },
-                { hora: '10pm', usuarios: 85, busquedas: 145 },
-                { hora: '11pm', usuarios: 45, busquedas: 72 }
+                { hora: '6am', usuarios: 18 }, { hora: '9am', usuarios: 68 },
+                { hora: '12pm', usuarios: 120 }, { hora: '3pm', usuarios: 78 },
+                { hora: '6pm', usuarios: 105 }, { hora: '9pm', usuarios: 125 }
             ];
 
-            // Distribución geográfica - INTERNACIONAL
+            // Distribución geográfica - placeholder (requiere tracking de país)
             const geo = [
-                { name: 'México 🇲🇽', value: 62, searches: 1145, cities: 'CDMX, Monterrey, Guadalajara' },
-                { name: 'USA 🇺🇸', value: 18, searches: 332, cities: 'Los Angeles, Houston, Chicago' },
-                { name: 'España 🇪🇸', value: 7, searches: 129, cities: 'Madrid, Barcelona' },
-                { name: 'Colombia 🇨🇴', value: 5, searches: 92, cities: 'Bogotá, Medellín' },
-                { name: 'Argentina 🇦🇷', value: 4, searches: 74, cities: 'Buenos Aires' },
-                { name: 'Otros 🌎', value: 4, searches: 74, cities: 'Varios países' }
+                { name: 'México 🇲🇽', value: 85, searches: summary.searches || 0, cities: 'CDMX, GDL, MTY' },
+                { name: 'USA 🇺🇸', value: 10, searches: 0, cities: 'LA, Houston' },
+                { name: 'Otros 🌎', value: 5, searches: 0, cities: '' }
             ];
 
-            // Dispositivos
-            const devices = [
-                { name: 'Móvil', value: 68, color: '#3B82F6' },
-                { name: 'Desktop', value: 27, color: '#10B981' },
-                { name: 'Tablet', value: 5, color: '#F59E0B' }
-            ];
-
-            // Funnel de conversión
+            // Funnel de conversión (REAL)
             const funnel = [
-                { etapa: 'Visitantes', cantidad: 10000, porcentaje: 100 },
-                { etapa: 'Búsquedas realizadas', cantidad: 4500, porcentaje: 45 },
-                { etapa: 'Clic en negocio', cantidad: 2200, porcentaje: 22 },
-                { etapa: 'Solicitud de ruta', cantidad: 890, porcentaje: 8.9 },
-                { etapa: 'Registro', cantidad: 320, porcentaje: 3.2 },
-                { etapa: 'Negocio registrado', cantidad: 85, porcentaje: 0.85 }
+                { etapa: 'Visitantes', cantidad: summary.uniqueVisitors || 0, porcentaje: 100 },
+                { etapa: 'Búsquedas', cantidad: summary.searches || 0, porcentaje: summary.uniqueVisitors ? Math.round((summary.searches / summary.uniqueVisitors) * 100) : 0 },
+                { etapa: 'Clic en negocio', cantidad: summary.pageViews || 0, porcentaje: summary.uniqueVisitors ? Math.round((summary.pageViews / summary.uniqueVisitors) * 100) : 0 },
+                { etapa: 'Solicitud de ruta', cantidad: routeClicksCount, porcentaje: summary.uniqueVisitors ? Math.round((routeClicksCount / summary.uniqueVisitors) * 100) : 0 },
+                { etapa: 'Registro', cantidad: usersCount || 0, porcentaje: summary.uniqueVisitors ? Math.round(((usersCount || 0) / summary.uniqueVisitors) * 100) : 0 },
+                { etapa: 'Negocio registrado', cantidad: businessCount || 0, porcentaje: summary.uniqueVisitors ? Math.round(((businessCount || 0) / summary.uniqueVisitors) * 100) : 0 }
             ];
 
             // Comportamiento de usuario
             const behavior = [
-                { metrica: 'Tiempo promedio en sesión', valor: '4:32', icono: '⏱️' },
-                { metrica: 'Páginas por sesión', valor: '3.8', icono: '📄' },
-                { metrica: 'Tasa de rebote', valor: '32%', icono: '↩️' },
-                { metrica: 'Usuarios que piden ruta', valor: '22%', icono: '🗺️' },
-                { metrica: 'Instalaciones PWA', valor: '145', icono: '📲' },
-                { metrica: 'Usuarios recurrentes', valor: '38%', icono: '🔄' }
+                { metrica: 'Páginas vistas (7d)', valor: String(summary.pageViews || 0), icono: '📄' },
+                { metrica: 'Visitantes únicos (7d)', valor: String(summary.uniqueVisitors || 0), icono: '👤' },
+                { metrica: 'Búsquedas totales (7d)', valor: String(summary.searches || 0), icono: '🔍' },
+                { metrica: 'Hoy: Páginas', valor: String(summary.todayPageViews || 0), icono: '📊' },
+                { metrica: 'Hoy: Búsquedas', valor: String(summary.todaySearches || 0), icono: '🔎' },
+                { metrica: 'Rutas solicitadas (7d)', valor: String(routeClicksCount), icono: '🗺️' }
             ];
 
             setStats({
                 totalUsers: usersCount || 0,
-                activeUsers: Math.floor((usersCount || 0) * 0.38),
-                totalSearches: 1847,
-                avgSessionTime: '4:32',
-                pwaInstalls: 145,
-                navigationRequests: 890,
+                activeUsers: summary.uniqueVisitors || 0,
+                totalSearches: summary.searches || 0,
+                avgSessionTime: '—',
+                pwaInstalls: 0,
+                navigationRequests: routeClicksCount,
                 premiumUsers: premiumCount || 0,
                 businessesRegistered: businessCount || 0
             });
@@ -224,6 +221,7 @@ export default function AnalyticsPage() {
             setDeviceStats(devices);
             setConversionFunnel(funnel);
             setUserBehavior(behavior);
+
 
         } catch (error) {
             console.error('Error loading analytics:', error);

@@ -28,15 +28,50 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - simple network-first strategy for dynamic content
 self.addEventListener('fetch', (event) => {
-    // Skip non-GET requests and Supabase/API calls for caching
-    if (event.request.method !== 'GET' || event.request.url.includes('supabase.co')) {
+    const url = event.request.url;
+
+    // Skip non-GET requests
+    if (event.request.method !== 'GET') {
+        return;
+    }
+
+    // Skip Vite dev server routes and hot module replacement
+    if (url.includes('@vite') || url.includes('@react-refresh') ||
+        url.includes('hot-update') || url.includes('__vite') ||
+        url.includes('supabase.co') || url.includes('.hot-update.')) {
+        return;
+    }
+
+    // For development, just pass through without intercepting
+    if (url.includes('localhost:5173') && (url.includes('/src/') || url.includes('node_modules'))) {
         return;
     }
 
     event.respondWith(
-        fetch(event.request).catch(() => {
-            return caches.match(event.request);
-        })
+        fetch(event.request)
+            .then((response) => {
+                return response;
+            })
+            .catch(async () => {
+                try {
+                    const cachedResponse = await caches.match(event.request);
+                    // Return cached response or a proper fallback
+                    if (cachedResponse) {
+                        return cachedResponse;
+                    }
+                    // For navigation requests, return the cached index.html (SPA fallback)
+                    if (event.request.mode === 'navigate') {
+                        const indexResponse = await caches.match('/index.html');
+                        if (indexResponse) {
+                            return indexResponse;
+                        }
+                    }
+                } catch (e) {
+                    console.error('SW cache error:', e);
+                }
+                // Return a proper error response instead of undefined
+                return new Response('Network error', { status: 503, statusText: 'Service Unavailable' });
+            })
     );
 });
 

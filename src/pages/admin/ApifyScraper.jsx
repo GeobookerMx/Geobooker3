@@ -56,6 +56,9 @@ const ApifyScraper = () => {
         warningAt: 25
     });
 
+    // Language toggle for messages (ES = Spanish, EN = English)
+    const [messageLanguage, setMessageLanguage] = useState('es');
+
     useEffect(() => {
         loadSettings();
     }, []);
@@ -406,15 +409,12 @@ const ApifyScraper = () => {
             return;
         }
 
-        // Detectar idioma por ubicación
-        const language = location?.match(/US|UK|Canada|Australia/i) ? 'en' : 'es';
-
         try {
             const result = await WhatsAppService.sendMessage({
                 phone: lead.phone,
                 name: lead.name || lead.title,
                 company: lead.name || lead.title,
-                language: language
+                language: messageLanguage  // Usar idioma seleccionado
             }, 'apify');
 
             if (result.success) {
@@ -558,6 +558,34 @@ const ApifyScraper = () => {
                             <option value={100}>100 negocios</option>
                         </select>
                     </div>
+                </div>
+
+                {/* Language Toggle for Messages */}
+                <div className="mb-4 flex items-center gap-4">
+                    <span className="text-sm font-medium text-gray-700">🌐 Idioma del mensaje:</span>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setMessageLanguage('es')}
+                            className={`px-4 py-2 rounded-lg font-medium transition ${messageLanguage === 'es'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                        >
+                            🇲🇽 Español
+                        </button>
+                        <button
+                            onClick={() => setMessageLanguage('en')}
+                            className={`px-4 py-2 rounded-lg font-medium transition ${messageLanguage === 'en'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                        >
+                            🇺🇸 English
+                        </button>
+                    </div>
+                    <span className="text-xs text-gray-500">
+                        {messageLanguage === 'es' ? 'Mensajes en español para México/Latam' : 'Messages in English for US/UK/Canada'}
+                    </span>
                 </div>
 
                 {/* Category Suggestions */}

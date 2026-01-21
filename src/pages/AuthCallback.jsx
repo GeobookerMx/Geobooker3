@@ -37,6 +37,22 @@ const AuthCallback = () => {
 
                 if (session) {
                     setStatus('success');
+
+                    // Track OAuth login in internal analytics
+                    try {
+                        await supabase.from('page_analytics').insert({
+                            page_path: '/auth/callback',
+                            page_title: 'OAuth Login Success',
+                            user_id: session.user?.id,
+                            session_id: `oauth-${Date.now()}`,
+                            device_type: window.innerWidth < 768 ? 'mobile' : 'desktop',
+                            browser: navigator.userAgent.includes('Chrome') ? 'Chrome' : 'Other',
+                            os: navigator.platform
+                        });
+                    } catch (e) {
+                        console.warn('Error tracking OAuth login:', e);
+                    }
+
                     // Pequeño delay para mostrar mensaje de éxito
                     setTimeout(() => navigate('/'), 1000);
                 } else {

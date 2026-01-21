@@ -63,9 +63,8 @@ const WhatsAppQueueManager = () => {
             };
             const today = getTodayMexico();
             const { count } = await supabase
-                .from('campaign_history')
+                .from('unified_whatsapp_outreach')
                 .select('*', { count: 'exact', head: true })
-                .eq('campaign_type', 'whatsapp')
                 .gte('sent_at', `${today}T00:00:00`);
 
             setSentToday(count || 0);

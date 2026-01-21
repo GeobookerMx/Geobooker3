@@ -35,8 +35,25 @@ const LoginPage = () => {
 
       if (error) throw error;
 
+      // Track login in GA4
       toast.success(t('login.welcomeBack'));
       trackEvent('login', { method: 'password' });
+
+      // Track login in internal Supabase analytics
+      try {
+        await supabase.from('page_analytics').insert({
+          page_path: '/login',
+          page_title: 'Login Success',
+          user_id: data.user?.id,
+          session_id: `login-${Date.now()}`,
+          device_type: window.innerWidth < 768 ? 'mobile' : 'desktop',
+          browser: navigator.userAgent.includes('Chrome') ? 'Chrome' : 'Other',
+          os: navigator.platform
+        });
+      } catch (e) {
+        console.warn('Error tracking login:', e);
+      }
+
       navigate('/');
 
     } catch (error) {

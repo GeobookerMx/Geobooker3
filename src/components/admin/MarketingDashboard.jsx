@@ -65,9 +65,8 @@ const MarketingDashboard = () => {
             };
             const today = getTodayMexico();
             const { count: sentToday } = await supabase
-                .from('campaign_history')
+                .from('crm_email_logs')
                 .select('*', { count: 'exact', head: true })
-                .eq('campaign_type', 'email')
                 .gte('sent_at', `${today}T00:00:00`);
 
             // 5. Límite configurado

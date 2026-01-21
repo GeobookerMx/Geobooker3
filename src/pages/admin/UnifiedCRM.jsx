@@ -109,7 +109,13 @@ const UnifiedCRM = () => {
                     if (s.setting_value.length > 0) setSelectedSender(s.setting_value[0]);
                 }
                 if (s.setting_key === 'whatsapp_business') setWhatsappConfig(s.setting_value);
-                if (s.setting_key === 'campaign_limits') setCampaignLimits(s.setting_value);
+                if (s.setting_key === 'campaign_limits') {
+                    setCampaignLimits(s.setting_value);
+                    // Sincronizar el límite diario del input con lo que hay en DB
+                    if (s.setting_value.daily_email_limit) {
+                        setDailyLimit(s.setting_value.daily_email_limit);
+                    }
+                }
             });
         } catch (err) {
             console.error('Error cargando configuración:', err);
@@ -431,9 +437,9 @@ const UnifiedCRM = () => {
             if (campaignType === 'email') {
                 const { data, error } = await supabase
                     .rpc('generate_email_queue', {
-                        daily_limit: dailyLimit,
+                        p_limit: dailyLimit,
                         min_per_type: 5,
-                        target_tier: emailSearchTier === 'all' ? null : emailSearchTier
+                        p_tier_filter: emailSearchTier === 'all' ? null : emailSearchTier
                     });
 
                 if (error) throw error;
@@ -447,8 +453,8 @@ const UnifiedCRM = () => {
             } else {
                 const { data, error } = await supabase
                     .rpc('generate_whatsapp_queue', {
-                        daily_limit: dailyLimit,
-                        target_tier: waSearchTier === 'all' ? null : waSearchTier
+                        p_limit: dailyLimit,
+                        p_tier_filter: waSearchTier === 'all' ? null : waSearchTier
                     });
 
                 if (error) throw error;
@@ -590,7 +596,20 @@ const UnifiedCRM = () => {
                         })
                     });
 
-                    if (!response.ok) throw new Error('Failed to send');
+                    // Parse respuesta
+                    let result;
+                    try {
+                        result = await response.json();
+                    } catch (e) {
+                        console.error('Error parseando respuesta:', e);
+                        result = { error: 'Invalid JSON response' };
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(result.error || `Error ${response.status}: ${result.message || 'Unknown error'}`);
+                    }
+
+                    console.log(`✅ Email enviado a ${item.contact_email} (ID: ${result.emailId})`);
 
                     // Log to history
                     await supabase.from('crm_email_logs').insert({

@@ -1,6 +1,6 @@
-import React, { useMemo, memo, useCallback, useRef, useEffect } from 'react';
+import React, { useMemo, memo, useCallback, useRef, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, MarkerClusterer, CircleF } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, MarkerClusterer, CircleF, OverlayView } from '@react-google-maps/api';
 import LastUpdatedBadge from './common/LastUpdatedBadge';
 import { trackRouteClick, trackBusinessView } from '../services/analyticsService';
 // ⚡ IMPORTANTE: Constantes fuera del componente para evitar recargas
@@ -259,6 +259,7 @@ export const BusinessMap = memo(({
   const mapCenter = userLocation || defaultCenter;
   const mapRef = useRef(null);
   const userCircleRef = useRef(null);
+  const [hoveredBusiness, setHoveredBusiness] = useState(null);
 
   // ⚡ useJsApiLoader en lugar de LoadScript - evita cargas múltiples
   const { isLoaded, loadError } = useJsApiLoader({
@@ -474,6 +475,8 @@ export const BusinessMap = memo(({
               key={`geobooker-${business.id}`}
               position={{ lat: Number(business.latitude), lng: Number(business.longitude) }}
               onClick={() => onBusinessSelect(business)}
+              onMouseOver={() => setHoveredBusiness(business)}
+              onMouseOut={() => setHoveredBusiness(null)}
               icon={categoryIcon}
               title={isPremium ? `⭐ ${business.name} (Premium)` : business.name}
               zIndex={isPremium ? 1000 : 900}
@@ -481,6 +484,55 @@ export const BusinessMap = memo(({
             />
           );
         })}
+
+        {/* Hover InfoWindow (Mini Profile) */}
+        {hoveredBusiness && !selectedBusiness && (
+          <InfoWindowF
+            position={{ lat: Number(hoveredBusiness.latitude), lng: Number(hoveredBusiness.longitude) }}
+            onCloseClick={() => setHoveredBusiness(null)}
+            options={{ disableAutoPan: true, closeBoxURL: '' }} // No mover mapa, sin botón cerrar
+          >
+            <div className="p-2 max-w-[200px]">
+              <h4 className="font-bold text-sm text-gray-900 mb-1">{hoveredBusiness.name}</h4>
+
+              {/* Verified Badge */}
+              {(hoveredBusiness.owner_id || hoveredBusiness.is_verified) && (
+                <div className="flex items-center gap-1 mb-1">
+                  <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold border border-blue-200 flex items-center">
+                    ✓ Verificado
+                  </span>
+                </div>
+              )}
+
+              {/* Quality / Rating */}
+              <div className="flex items-center gap-1 mb-1">
+                <span className="text-yellow-500 text-xs">
+                  {'★'.repeat(Math.round(hoveredBusiness.rating || 0)) || '★'}
+                </span>
+                <span className="text-xs text-gray-500">
+                  ({hoveredBusiness.rating || 'N/A'})
+                </span>
+              </div>
+
+              {/* Metadatos */}
+              <div className="space-y-0.5 mt-2 pt-2 border-t border-gray-100">
+                {/* Last Update */}
+                {hoveredBusiness.updated_at && (
+                  <p className="text-[10px] text-gray-500 flex items-center gap-1">
+                    ↻ Act: {new Date(hoveredBusiness.updated_at).toLocaleDateString()}
+                  </p>
+                )}
+
+                {/* Last Review (Simulado si no existe en modelo aún) */}
+                {hoveredBusiness.last_review_date && (
+                  <p className="text-[10px] text-gray-500 flex items-center gap-1">
+                    💬 Reseña: {new Date(hoveredBusiness.last_review_date).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+            </div>
+          </InfoWindowF>
+        )}
 
         {/* InfoWindow del negocio seleccionado */}
         {selectedBusiness && (

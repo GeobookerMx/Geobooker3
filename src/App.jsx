@@ -15,9 +15,16 @@ import InstallPWAButton from "./components/common/InstallPWAButton";
 import DownloadAppModal from "./components/pwa/DownloadAppModal";
 import ScrollToTop from "./components/common/ScrollToTop";
 
-// Component to activate session timeout monitoring
+// Component to active session timeout monitoring
 function SessionTimeoutMonitor() {
   useSessionTimeout();
+  return null;
+}
+
+// Component to track page views
+import { usePageTracking } from "./hooks/usePageTracking";
+function PageTracker() {
+  usePageTracking();
   return null;
 }
 
@@ -41,6 +48,7 @@ function App() {
       <AuthProvider>
         <SessionTimeoutMonitor />
         <AppInitializer />
+        <PageTracker />
         <AppProvider>
           <LocationProvider>
             <AppRouter />

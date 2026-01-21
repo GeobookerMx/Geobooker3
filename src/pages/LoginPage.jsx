@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
+import { trackEvent } from '../services/analyticsService';
 
 const LoginPage = () => {
   const { t } = useTranslation();
@@ -35,6 +36,7 @@ const LoginPage = () => {
       if (error) throw error;
 
       toast.success(t('login.welcomeBack'));
+      trackEvent('login', { method: 'password' });
       navigate('/');
 
     } catch (error) {

@@ -175,12 +175,19 @@ export class WhatsAppService {
             return '+' + clean;
         }
 
-        // 2. Caso: UK - números que empiezan con 44 o tienen 10-11 dígitos con prefijo 0
-        if (clean.startsWith('44') && clean.length >= 12) {
+        // 2. Caso: UK - números que empiezan con 44
+        // UK numbers: 44 + 10 digits (excluding 0) or 44 + 11 digits (including 0?) 
+        // Normalmente 44 7xxx xxxxxx (12 digits total)
+        if (clean.startsWith('44') && clean.length >= 11) {
             return '+' + clean;
         }
 
-        // 3. Caso: El número tiene 10 dígitos (Sin código de país)
+        // 3. Caso: España (34), Francia (33), Alemania (49)
+        if ((clean.startsWith('34') || clean.startsWith('33') || clean.startsWith('49')) && clean.length >= 11) {
+            return '+' + clean;
+        }
+
+        // 4. Caso: El número tiene 10 dígitos (Sin código de país)
         if (clean.length === 10) {
             const areaCode = clean.substring(0, 3);
 
@@ -189,11 +196,12 @@ export class WhatsAppService {
                 return '+1' + clean;
             }
 
-            // Por defecto, si tiene 10 dígitos y no es USA/Canadá, asumimos México (+52)
+            // IMPORTANTE: Si NO es código USA conocido, asumimos México (+52)
+            // Esto cubre la mayoría de casos locales
             return '+52' + clean;
         }
 
-        // 4. Caso: Ya tiene código de país (52, 1, 44, 34, etc.)
+        // 5. Caso: Ya tiene código de país (52, 1, 44, 34, etc.)
         if (clean.length >= 11) {
             // México con formato completo
             if (clean.startsWith('52') && clean.length >= 12) return '+' + clean;
@@ -205,10 +213,16 @@ export class WhatsAppService {
             if (clean.startsWith('521') && clean.length === 13) return '+' + clean;
 
             // UK (44)
-            if (clean.startsWith('44') && clean.length >= 12) return '+' + clean;
+            if (clean.startsWith('44')) return '+' + clean;
 
-            // Australia (61)
-            if (clean.startsWith('61') && clean.length >= 11) return '+' + clean;
+            // España (34)
+            if (clean.startsWith('34')) return '+' + clean;
+
+            // Otros Internacionales Genéricos (Longitud suficiente)
+            // Si tiene más de 11 dígitos y no empieza con 52 ni 1, probablemente es intl
+            if (!clean.startsWith('52') && !clean.startsWith('1')) {
+                return '+' + clean;
+            }
 
             return '+' + clean;
         }

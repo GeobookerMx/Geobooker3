@@ -342,19 +342,20 @@ const ApifyScraper = () => {
             const leadsToImport = results
                 .filter((_, i) => selectedLeads.has(i))
                 .map(lead => ({
-                    name: lead.name,
+                    contact_name: lead.name,
                     email: lead.email || null,
-                    company: lead.name,
-                    position: null,
+                    company_name: lead.name, // Use name as company name fallback
+                    // position: null, // Removed as it's not in marketing_contacts schema
                     tier: determineTier(lead),
                     phone: lead.phone || null,
                     city: extractCity(lead.address),
-                    website: lead.website || null,
-                    source_file: `Apify: ${searchQuery} @ ${location}`
+                    // website: lead.website || null, // website not in marketing_contacts schema
+                    source: `Apify: ${searchQuery} @ ${location}`,
+                    notes: `Web: ${lead.website || 'N/A'} | Address: ${lead.address || 'N/A'}`
                 }));
 
             const { data, error } = await supabase
-                .from('crm_contacts')
+                .from('marketing_contacts')
                 .insert(leadsToImport)
                 .select();
 

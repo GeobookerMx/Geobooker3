@@ -23,22 +23,32 @@ CREATE POLICY "Public read access to CRM settings"
     FOR SELECT
     USING (true);
 
--- Policy: Escritura solo admin
+-- Policy: Escritura solo admin (separadas por operación debido a sintaxis RLS)
 DROP POLICY IF EXISTS "Admin write access to CRM settings" ON crm_settings;
-CREATE POLICY "Admin write access to CRM settings"
+DROP POLICY IF EXISTS "Admin insert access to CRM settings" ON crm_settings;
+DROP POLICY IF EXISTS "Admin update access to CRM settings" ON crm_settings;
+DROP POLICY IF EXISTS "Admin delete access to CRM settings" ON crm_settings;
+
+-- INSERT: solo acepta WITH CHECK
+CREATE POLICY "Admin insert access to CRM settings"
     ON crm_settings 
     FOR INSERT
-    USING (
+    WITH CHECK (
         EXISTS (SELECT 1 FROM admin_users WHERE id = auth.uid())
     );
 
+-- UPDATE: acepta USING y WITH CHECK
 CREATE POLICY "Admin update access to CRM settings"
     ON crm_settings 
     FOR UPDATE
     USING (
         EXISTS (SELECT 1 FROM admin_users WHERE id = auth.uid())
+    )
+    WITH CHECK (
+        EXISTS (SELECT 1 FROM admin_users WHERE id = auth.uid())
     );
 
+-- DELETE: solo acepta USING
 CREATE POLICY "Admin delete access to CRM settings"
     ON crm_settings 
     FOR DELETE

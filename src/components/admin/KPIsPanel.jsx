@@ -53,15 +53,17 @@ const KPIsPanel = () => {
                 .eq('source', 'apify')
                 .gte('sent_at', today);
 
-            // Email Stats - from crm_email_logs (where UnifiedCRM writes)
+            // Email Stats - from campaign_history (where process-email-queue writes)
             const { count: emailToday } = await supabase
-                .from('crm_email_logs')
+                .from('campaign_history')
                 .select('*', { count: 'exact', head: true })
+                .eq('campaign_type', 'email')
                 .gte('sent_at', `${today}T00:00:00`);
 
             const { count: emailTotal } = await supabase
-                .from('crm_email_logs')
-                .select('*', { count: 'exact', head: true });
+                .from('campaign_history')
+                .select('*', { count: 'exact', head: true })
+                .eq('campaign_type', 'email');
 
             // Pending emails (contacts with email but not sent)
             const { count: emailPending } = await supabase

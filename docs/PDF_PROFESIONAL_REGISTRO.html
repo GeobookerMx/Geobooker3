@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Por qué Registrar tu Negocio en Geobooker - Guía Comercial</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            line-height: 1.7;
+            color: #1F2937;
+            background: #F9FAFB;
+        }
+
+        .page {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1E40AF 0%, #7C3AED 100%);
+            color: white;
+            padding: 40px 50px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .logo {
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 15px 0;
+        }
+
+        .header .subtitle {
+            font-size: 18px;
+            opacity: 0.95;
+            font-weight: 400;
+        }
+
+        .content {
+            padding: 50px;
+        }
+
+        h2 {
+            color: #1E40AF;
+            font-size: 26px;
+            font-weight: 700;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #3B82F6;
+        }
+
+        h3 {
+            color: #1F2937;
+            font-size: 20px;
+            font-weight: 600;
+            margin: 25px 0 15px 0;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .comparison-table th {
+            background: linear-gradient(135deg, #1E40AF 0%, #7C3AED 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: #F9FAFB;
+        }
+
+        .feature-box {
+            background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+            border-left: 5px solid #3B82F6;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .feature-box h3 {
+            color: #1E40AF;
+            margin-top: 0;
+            font-size: 22px;
+        }
+
+        .feature-box.security {
+            background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+            border-left-color: #10B981;
+        }
+
+        .feature-box.security h3 {
+            color: #047857;
+        }
+
+        .feature-box.exclusive {
+            background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+            border-left-color: #F59E0B;
+        }
+
+        .feature-box.exclusive h3 {
+            color: #B45309;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 15px 0;
+        }
+
+        ul li {
+            padding: 8px 0 8px 30px;
+            position: relative;
+            line-height: 1.6;
+        }
+
+        ul li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #10B981;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .success-story {
+            background: #F0FDF4;
+            border-left: 5px solid #10B981;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 8px;
+        }
+
+        .success-story h4 {
+            color: #047857;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .success-story blockquote {
+            font-style: italic;
+            color: #059669;
+            margin: 15px 0;
+            padding-left: 20px;
+            border-left: 3px solid #34D399;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: white;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: 800;
+            color: #3B82F6;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .label {
+            font-size: 13px;
+            color: #6B7280;
+            font-weight: 500;
+        }
+
+        .cta-box {
+            background: linear-gradient(135deg, #1E40AF 0%, #7C3AED 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            border-radius: 16px;
+            margin: 40px 0;
+            box-shadow: 0 10px 25px rgba(30, 64, 175, 0.3);
+        }
+
+        .cta-box h2 {
+            color: white;
+            border: none;
+            margin: 0 0 15px 0;
+            padding: 0;
+        }
+
+        .cta-box p {
+            font-size: 18px;
+            margin: 15px 0;
+            opacity: 0.95;
+        }
+
+        .footer {
+            background: #1F2937;
+            color: #D1D5DB;
+            padding: 40px 50px;
+            margin-top: 50px;
+        }
+
+        .footer-logo {
+            font-size: 28px;
+            font-weight: 800;
+            color: white;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .contact-item strong {
+            display: block;
+            color: #60A5FA;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .contact-item a {
+            color: #D1D5DB;
+            text-decoration: none;
+        }
+
+        .contact-item a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 1px solid #374151;
+            font-size: 13px;
+            color: #9CA3AF;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #FEF3C7;
+            color: #92400E;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin: 0 5px;
+        }
+
+        .page-break {
+            page-break-after: always;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .page {
+                box-shadow: none;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="logo">GEOBOOKER</div>
+            <h1>¿Por qué registrar tu negocio en Geobooker?</h1>
+            <p class="subtitle">Lo que Google Maps NO te puede ofrecer</p>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="content">
+            <!-- COMPARISON TABLE -->
+            <h2>🆚 Geobooker vs Google Maps</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Característica</th>
+                        <th>Geobooker</th>
+                        <th>Google Maps</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Horario en Tiempo Real</strong></td>
+                        <td>✅ Abre/Cierra al instante</td>
+                        <td>❌ Horario fijo</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ubicación Flexible</strong></td>
+                        <td>✅ Mueve tu pin libremente</td>
+                        <td>❌ Te penaliza</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Identidad Verificada</strong></td>
+                        <td>✅ Sello de seguridad</td>
+                        <td>❌ Cualquiera aparece</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Food Trucks/Móviles</strong></td>
+                        <td>✅ Diseñado para ti</td>
+                        <td>❌ No compatible</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Soporte Mexicano</strong></td>
+                        <td>✅ Equipo local 24/7</td>
+                        <td>❌ Automatizado</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- EXCLUSIVE FEATURES -->
+            <h2>✅ Ventajas EXCLUSIVAS de Geobooker</h2>
+
+            <div class="feature-box exclusive">
+                <h3>🔄 "Abre/Cierra Digitalmente" <span class="badge">⭐ EXCLUSIVO</span></h3>
+                <p><strong>El Problema con Google Maps:</strong></p>
+                <ul>
+                    <li>Horarios fijos: "Lunes a Viernes 9-6"</li>
+                    <li>Si cierras temprano → Clientes van y te encuentran cerrado</li>
+                    <li>Se frustran, dejan mala reseña, no regresan</li>
+                </ul>
+
+                <p><strong>La Solución Geobooker:</strong></p>
+                <ul>
+                    <li><strong>Control en TIEMPO REAL</strong> desde cualquier dispositivo</li>
+                    <li>¿Cerraste temprano por emergencia? → Actualiza en 10 segundos</li>
+                    <li>¿Se acabó la mercancía? → Marca "Cerrado temporalmente"</li>
+                    <li>¿Abriste un domingo especial? → Actívalo al instante</li>
+                </ul>
+
+                <p><strong>Ideal para:</strong> Negocios familiares, food trucks, doctores independientes, tiendas
+                    pequeñas</p>
+                <p><strong>✅ Resultado:</strong> Eliminas la ansiedad "¿Estará abierto de verdad?"</p>
+            </div>
+
+            <div class="feature-box exclusive">
+                <h3>📍 Ubicación Móvil <span class="badge">Google te penaliza</span></h3>
+                <p><strong>El Problema con Google Maps:</strong></p>
+                <ul>
+                    <li>Cambias de ubicación → Te marca "Cerrado permanentemente"</li>
+                    <li>Pierdes todas tus reseñas y antigüedad</li>
+                    <li>No sirve para negocios móviles</li>
+                </ul>
+
+                <p><strong>La Solución Geobooker:</strong></p>
+                <ul>
+                    <li><strong>Mueve tu PIN</strong> cuantas veces quieras sin penalización</li>
+                    <li><strong>Conserva tus reseñas</strong> al cambiar de ubicación</li>
+                    <li><strong>Mantén tu antigüedad</strong> y reputación intacta</li>
+                    <li><strong>Geolocalización real</strong> verificada por nosotros</li>
+                </ul>
+
+                <p><strong>Ideal para:</strong> Food trucks, eventos y ferias, pop-up stores, negocios móviles</p>
+                <p><strong>✅ Resultado:</strong> Captamos la economía que Google IGNORA</p>
+            </div>
+
+            <div class="feature-box security">
+                <h3>🛡️ Identidad Verificada <span class="badge">Tu Escudo de Seguridad</span></h3>
+                <p><strong>El Problema con Google/Redes Sociales:</strong></p>
+                <ul>
+                    <li>Cualquiera crea un perfil falso</li>
+                    <li>Negocios fantasma y estafas</li>
+                    <li>Sin verificación real de identidad</li>
+                </ul>
+
+                <p><strong>La Solución Geobooker:</strong></p>
+                <ul>
+                    <li><strong>Sello "Negocio Verificado"</strong> visible en tu perfil</li>
+                    <li><strong>Validación humana</strong> de documentos y ubicación</li>
+                    <li><strong>Sistema anti-fraude</strong> que elimina negocios falsos</li>
+                    <li><strong>Consejos de seguridad anti-extorsión</strong> integrados</li>
+                    <li><strong>Confianza del usuario:</strong> "Este negocio SÍ existe"</li>
+                </ul>
+
+                <p><strong>✅ Mensaje clave:</strong> "En Google cualquiera aparece. En Geobooker, verificamos."</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 2 -->
+    <div class="page-break"></div>
+    <div class="page">
+        <div class="content" style="padding-top: 50px;">
+            <!-- CASOS DE ÉXITO -->
+            <h2>🚀 Casos de Éxito Reales</h2>
+
+            <div class="success-story">
+                <h4>🚚 Food Truck "Tacos Don Rafa" - CDMX</h4>
+                <p><strong>Problema:</strong> En Google Maps perdió 48 reseñas al cambiar de ubicación</p>
+                <p><strong>Solución Geobooker:</strong> Mueve su pin cada día, conserva sus 89 reseñas</p>
+                <blockquote>"Antes perdía clientes porque no sabían dónde estaba. Ahora actualizo mi ubicación cada
+                    mañana en 10 segundos y mis clientes me encuentran siempre."</blockquote>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="number">+320</span>
+                        <span class="label">Visitas/mes</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="number">+75</span>
+                        <span class="label">WhatsApps</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="number">4.9★</span>
+                        <span class="label">89 reseñas</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="success-story">
+                <h4>👩‍⚕️ Consultorio Dra. Ana López - Monterrey</h4>
+                <p><strong>Problema:</strong> Cierra inesperadamente por emergencias médicas</p>
+                <p><strong>Solución Geobooker:</strong> Botón "Abre/Cierra" desde su celular</p>
+                <blockquote>"Antes los pacientes llegaban y yo estaba en cirugía. Ahora en 5 segundos les aviso que
+                    estoy ocupada. Mis reseñas mejoraron porque ya no hay frustración."</blockquote>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="number">+95</span>
+                        <span class="label">Visitas/mes</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="number">+42</span>
+                        <span class="label">Citas agendadas</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="number">4.6★</span>
+                        <span class="label">De 3.8★</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA -->
+            <div class="cta-box">
+                <h2>📞 ¿Listo para empezar?</h2>
+                <p style="font-size: 22px; font-weight: 600;">Únete a +15,000 negocios en Geobooker</p>
+                <p><strong>La economía mexicana es dinámica. Google Maps no lo entiende. Nosotros sí.</strong></p>
+            </div>
+
+            <h2>💡 ¿Qué información necesitas?</h2>
+            <ul>
+                <li>Nombre del negocio</li>
+                <li>Dirección actual (la puedes cambiar después sin penalización)</li>
+                <li>Teléfono / WhatsApp Business</li>
+                <li>Categoría de negocio</li>
+                <li>3-5 fotos de calidad</li>
+                <li>Documentación para verificación (INE, Acta Constitutiva, Comprobante de Domicilio)</li>
+            </ul>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">
+            <div class="footer-logo">GEOBOOKER</div>
+
+            <div class="contact-grid">
+                <div class="contact-item">
+                    <strong>📱 WhatsApp Business</strong>
+                    <a href="https://wa.me/525526702368">+52 55 2670 2368</a>
+                </div>
+                <div class="contact-item">
+                    <strong>📧 Email Ventas</strong>
+                    <a href="mailto:ventasgeobooker@gmail.com">ventasgeobooker@gmail.com</a>
+                </div>
+                <div class="contact-item">
+                    <strong>🌐 Sitio Web</strong>
+                    <a href="https://geobooker.com.mx">geobooker.com.mx</a>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin: 25px 0; font-size: 14px;">
+                <strong style="color: #60A5FA;">Otros Contactos:</strong><br>
+                Soporte: soporte@geobooker.com.mx | Legal: legal@geobooker.com.mx
+            </div>
+
+            <div class="footer-bottom">
+                © 2026 Geobooker - El Buscador de Negocios #1 de México<br>
+                Todos los derechos reservados
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

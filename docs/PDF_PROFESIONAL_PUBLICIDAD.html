@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Por qué Anunciarte en Geobooker - Guía Comercial</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            line-height: 1.7;
+            color: #1F2937;
+            background: #F9FAFB;
+        }
+
+        .page {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%);
+            color: white;
+            padding: 40px 50px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .logo {
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 15px 0;
+        }
+
+        .header .subtitle {
+            font-size: 18px;
+            opacity: 0.95;
+            font-weight: 400;
+        }
+
+        .content {
+            padding: 50px;
+        }
+
+        h2 {
+            color: #7C3AED;
+            font-size: 26px;
+            font-weight: 700;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #A855F7;
+        }
+
+        h3 {
+            color: #1F2937;
+            font-size: 20px;
+            font-weight: 600;
+            margin: 25px 0 15px 0;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            font-size: 14px;
+        }
+
+        .comparison-table th {
+            background: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .comparison-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #E5E7EB;
+            font-size: 13px;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: #F9FAFB;
+        }
+
+        .price-box {
+            background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+            border-left: 5px solid #F59E0B;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .price-box h3 {
+            color: #B45309;
+            margin-top: 0;
+            font-size: 22px;
+        }
+
+        .price-box .price {
+            font-size: 32px;
+            font-weight: 800;
+            color: #92400E;
+            margin: 10px 0;
+        }
+
+        .price-box.professional {
+            background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+            border-left-color: #3B82F6;
+        }
+
+        .price-box.professional h3 {
+            color: #1E40AF;
+        }
+
+        .price-box.professional .price {
+            color: #1E3A8A;
+        }
+
+        .price-box.premium {
+            background: linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%);
+            border-left-color: #7C3AED;
+        }
+
+        .price-box.premium h3 {
+            color: #6B21A8;
+        }
+
+        .price-box.premium .price {
+            color: #581C87;
+        }
+
+        .use-case {
+            background: #F0FDF4;
+            border-left: 5px solid #10B981;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 8px;
+            page-break-inside: avoid;
+        }
+
+        .use-case h4 {
+            color: #047857;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .use-case .example {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            border: 1px solid #D1FAE5;
+        }
+
+        .use-case .results {
+            background: #ECFDF5;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 15px 0;
+        }
+
+        ul li {
+            padding: 6px 0 6px 25px;
+            position: relative;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        ul li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #10B981;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #FEE2E2;
+            color: #991B1B;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .badge.popular {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .cta-box {
+            background: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            border-radius: 16px;
+            margin: 40px 0;
+            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
+        }
+
+        .cta-box h2 {
+            color: white;
+            border: none;
+            margin: 0 0 15px 0;
+            padding: 0;
+        }
+
+        .footer {
+            background: #1F2937;
+            color: #D1D5DB;
+            padding: 40px 50px;
+            margin-top: 50px;
+        }
+
+        .footer-logo {
+            font-size: 28px;
+            font-weight: 800;
+            color: white;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .contact-item strong {
+            display: block;
+            color: #A78BFA;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .contact-item a {
+            color: #D1D5DB;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 1px solid #374151;
+            font-size: 13px;
+            color: #9CA3AF;
+        }
+
+        .page-break {
+            page-break-after: always;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .stat-mini {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #E5E7EB;
+        }
+
+        .stat-mini .number {
+            font-size: 18px;
+            font-weight: 700;
+            color: #10B981;
+        }
+
+        .stat-mini .label {
+            font-size: 11px;
+            color: #6B7280;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .page {
+                box-shadow: none;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="logo">GEOBOOKER ADS</div>
+            <h1>¿Por qué anunciarte en Geobooker?</h1>
+            <p class="subtitle">Publicidad Digital con Segmentación que SÍ Funciona</p>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="content">
+            <!-- INTRO -->
+            <h2>🎯 Segmentación Avanzada</h2>
+            <p style="font-size: 16px; margin-bottom: 20px;">Más allá de Google/Facebook, nuestro sistema permite:</p>
+
+            <ul>
+                <li><strong>Por Horario Específico:</strong> Rush hours, horario de comida, fin de semana, eventos
+                    nocturnos</li>
+                <li><strong>Por Tipo de Búsqueda:</strong> "Cerca de mí ahora", "Abierto en este momento", "Con envío"
+                </li>
+                <li><strong>Por Perfil de Usuario:</strong> Usuarios que visitaron tu categoría, guardaron negocios
+                    similares</li>
+                <li><strong>Por Radio Geográfico Preciso:</strong> 500m, 1km, 3km, 5km, colonias específicas</li>
+            </ul>
+
+            <!-- PLANES -->
+            <h2>💰 Planes y Precios</h2>
+
+            <div class="price-box">
+                <h3>🥉 BÁSICO</h3>
+                <div class="price">$1,500 MXN/mes</div>
+                <p><strong>Ideal para:</strong> Negocios locales pequeños</p>
+                <ul style="margin-top: 15px;">
+                    <li>Anuncio destacado en tu categoría</li>
+                    <li>5,000 impresiones/mes garantizadas</li>
+                    <li>Badge "Patrocinado"</li>
+                    <li>Analytics básicos</li>
+                </ul>
+                <div class="results">
+                    <strong>📊 Estimado:</strong> ~150 clicks, ~40 contactos, ROI 3-5x
+                </div>
+            </div>
+
+            <div class="price-box professional">
+                <h3>🥈 PROFESIONAL <span class="badge popular">⭐ MÁS POPULAR</span></h3>
+                <div class="price">$3,500 MXN/mes</div>
+                <p><strong>Ideal para:</strong> Negocios medianos y franquicias</p>
+                <ul style="margin-top: 15px;">
+                    <li>Banner rotativo en homepage</li>
+                    <li>15,000 impresiones/mes garantizadas</li>
+                    <li>Top 3 de categoría</li>
+                    <li>Analytics avanzados + A/B testing</li>
+                    <li>Soporte telefónico prioritario</li>
+                </ul>
+                <div class="results">
+                    <strong>📊 Estimado:</strong> ~500 clicks, ~120 contactos, ROI 5-8x
+                </div>
+            </div>
+
+            <div class="price-box premium">
+                <h3>🥇 PREMIUM</h3>
+                <div class="price">$7,500 MXN/mes</div>
+                <p><strong>Ideal para:</strong> Empresas y cadenas nacionales</p>
+                <ul style="margin-top: 15px;">
+                    <li>Exclusividad de categoría</li>
+                    <li>50,000 impresiones/mes garantizadas</li>
+                    <li>Banner fijo homepage</li>
+                    <li>Account Manager dedicado</li>
+                    <li>Campañas multi-ciudad</li>
+                    <li>Targeting avanzado por horario/perfil</li>
+                </ul>
+                <div class="results">
+                    <strong>📊 Estimado:</strong> ~1,500 clicks, ~350 contactos, ROI 8-12x
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 2: CASOS DE USO -->
+    <div class="page-break"></div>
+    <div class="page">
+        <div class="content" style="padding-top: 50px;">
+            <h2>🎪 Casos de Uso Especiales</h2>
+
+            <!-- CASO 1 -->
+            <div class="use-case">
+                <h4>🚀 1. Apertura de Nueva Tienda/Sucursal</h4>
+                <p><strong>El Problema:</strong> Google/Facebook cobran por impresiones a gente que no está cerca</p>
+                <p><strong>La Solución Geobooker:</strong></p>
+                <div class="example">
+                    Campaña: "Gran Apertura - Café Milano"
+                    Segmentación:
+                    • Radio: 2km alrededor de nueva sucursal
+                    • Horario: 7am-10am y 2pm-6pm
+                    • Duración: 15 días pre + 30 días post
+                    • Mensaje: "¡Inauguramos! 20% desc primera semana"
+                </div>
+                <div class="stats-row">
+                    <div class="stat-mini">
+                        <div class="number">3,500</div>
+                        <div class="label">Impresiones</div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="number">280</div>
+                        <div class="label">Visitas físicas</div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="number">ROI 6.2x</div>
+                        <div class="label">Primer mes</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CASO 2 -->
+            <div class="use-case">
+                <h4>🎉 2. Eventos Especiales y Activaciones</h4>
+                <p><strong>Ejemplo:</strong> Restaurant con "Noche de Jazz en Vivo"</p>
+                <div class="example">
+                    Campaña: "Jazz en Vivo - Viernes"
+                    Segmentación:
+                    • Ubicación: 5km del restaurant
+                    • Horario anuncio: Miér-Vie 4pm-8pm
+                    • Perfil: Usuarios de bares/restaurants
+                    • CTA: "Reserva tu mesa ahora"
+                </div>
+                <div class="stats-row">
+                    <div class="stat-mini">
+                        <div class="number">1,200</div>
+                        <div class="label">Impresiones</div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="number">85</div>
+                        <div class="label">Reservaciones</div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="number">$35</div>
+                        <div class="label">Costo/reserva</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CASO 3 -->
+            <div class="use-case">
+                <h4>🏬 3. Pop-Up Store Temporal</h4>
+                <p><strong>Ejemplo:</strong> Tienda de ropa en plaza (solo 2 meses)</p>
+                <div class="example">
+                    Campaña: "Venta Temporada - Solo hasta Febrero"
+                    Segmentación:
+                    • Ubicación: 3km de la plaza
+                    • Audiencia: Mujeres 25-45 (historial)
+                    • Horario: Fines de semana 11am-7pm
+                    • Badge: "Solo 15 días más"
+                </div>
+                <p><strong>✅ Ventaja vs Google:</strong> Google penaliza ubicaciones temporales. Geobooker permite
+                    campaña sin afectar perfil permanente.</p>
+            </div>
+
+            <!-- CASO 4 -->
+            <div class="use-case">
+                <h4>🚚 4. Food Truck con Ubicación Variable</h4>
+                <p><strong>Ejemplo:</strong> Tacos en diferentes puntos cada día</p>
+                <div class="example">
+                    Campaña: "Tacos El Rey - Hoy en Polanco"
+                    Segmentación:
+                    • Ubicación: Actualizada DIARIA automática
+                    • Radio: 1km de ubicación del día
+                    • Notificación: "El Rey está cerca HOY"
+                </div>
+                <p><strong>🎯 Magia de Geobooker:</strong> Cambias ubicación → El anuncio se mueve auto. Clientes
+                    reciben alerta. <strong>Google NO puede hacer esto.</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 3: MÁS CASOS + COMPARATIVA -->
+    <div class="page-break"></div>
+    <div class="page">
+        <div class="content" style="padding-top: 50px;">
+            <!-- CASO 5 -->
+            <div class="use-case">
+                <h4>🎓 5. Campaña Estacional (Regreso a Clases)</h4>
+                <p><strong>Ejemplo:</strong> Papelería con oferta temporal</p>
+                <div class="example">
+                    Campaña: "Regreso a Clases - Todo al 15%"
+                    Segmentación:
+                    • Ubicación: 2km de escuelas primarias
+                    • Horario: Lun-Vie 2pm-7pm (salida)
+                    • Duración: Agosto 1-31
+                    • Audiencia: Padres de familia
+                </div>
+            </div>
+
+            <!-- CASO 6 -->
+            <div class="use-case">
+                <h4>🏥 6. Consultorio con Horario Extendido</h4>
+                <p><strong>Ejemplo:</strong> Dentista que abre sábados</p>
+                <div class="example">
+                    Campaña: "Dentista Sábados - Sin cita"
+                    Segmentación:
+                    • Ubicación: 5km del consultorio
+                    • Horario anuncio: Solo Viernes 5pm-9pm
+                    • Mensaje: "Mañana abrimos sábado"
+                </div>
+                <p><strong>✅ Por qué funciona:</strong> Google muestra "Cerrado sábados" por default. Geobooker
+                    promociona cuando SÍ estás disponible.</p>
+            </div>
+
+            <!-- COMPARATIVA -->
+            <h2>📊 Comparativa de Segmentación</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Capacidad</th>
+                        <th>Geobooker Premium</th>
+                        <th>Google Ads</th>
+                        <th>Facebook Ads</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Radio personalizado</strong></td>
+                        <td>✅ 500m-50km</td>
+                        <td>✅ 1km+</td>
+                        <td>❌ Solo ciudad</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Horario de anuncio</strong></td>
+                        <td>✅ Por hora</td>
+                        <td>❌ Todo el día</td>
+                        <td>⚠️ Limitado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ubicación temporal</strong></td>
+                        <td>✅ Sí</td>
+                        <td>❌ No</td>
+                        <td>❌ No</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Food trucks</strong></td>
+                        <td>✅ Perfecto</td>
+                        <td>❌ Imposible</td>
+                        <td>❌ No sirve</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Eventos especiales</strong></td>
+                        <td>✅ Calendario</td>
+                        <td>⚠️ Manual</td>
+                        <td>⚠️ Complicado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tracking físico</strong></td>
+                        <td>✅ Rutas GPS</td>
+                        <td>⚠️ Estimado</td>
+                        <td>❌ No</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- PROMOCIONES Y BONIFICACIONES -->
+            <h2>🎁 Promociones y Bonificaciones</h2>
+
+            <div class="price-box professional">
+                <h3>📌 Descuentos por Contratación</h3>
+                <ul>
+                    <li><strong>3 meses:</strong> 10% descuento</li>
+                    <li><strong>6 meses:</strong> 20% descuento + 1 mes gratis</li>
+                    <li><strong>12 meses:</strong> 30% descuento + 2 meses gratis</li>
+                </ul>
+            </div>
+
+            <div class="price-box">
+                <h3>🚀 Bonos por Apertura de Negocio</h3>
+                <ul>
+                    <li>1 mes GRATIS de plan Profesional</li>
+                    <li>Diseño de anuncio sin costo ($1,500 valor)</li>
+                    <li>500 impresiones extra</li>
+                </ul>
+            </div>
+
+            <div class="price-box premium">
+                <h3>🎉 Bonos por Evento Especial</h3>
+                <ul>
+                    <li>Campaña flash de 7 días: $800 pesos</li>
+                    <li>Notificación push a usuarios cercanos</li>
+                    <li>Badge "Evento Hoy" destacado</li>
+                </ul>
+            </div>
+
+            <div class="use-case">
+                <h4>🏬 Pop-Up Store - Sin Permanencia</h4>
+                <ul>
+                    <li>Sin contrato mínimo (paga solo días activos)</li>
+                    <li>Ubicación temporal sin penalización</li>
+                    <li>Conserva reseñas al terminar</li>
+                </ul>
+            </div>
+
+            <!-- CTA -->
+            <div class="cta-box">
+                <h2>📞 ¿Listo para tu Campaña Segmentada?</h2>
+                <p style="font-size: 20px; margin: 15px 0;"><strong>La única publicidad que entiende tu caso de uso
+                        específico</strong></p>
+                <p>Consulta gratuita de 15 min + Setup express en 24 hrs</p>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">
+            <div class="footer-logo">GEOBOOKER ADS</div>
+
+            <div class="contact-grid">
+                <div class="contact-item">
+                    <strong>📱 WhatsApp Business</strong>
+                    <a href="https://wa.me/525526702368">+52 55 2670 2368</a>
+                </div>
+                <div class="contact-item">
+                    <strong>📧 Email Ventas</strong>
+                    <a href="mailto:ventasgeobooker@gmail.com">ventasgeobooker@gmail.com</a>
+                </div>
+                <div class="contact-item">
+                    <strong>🌐 Sitio Web</strong>
+                    <a href="https://geobooker.com.mx/advertise">geobooker.com.mx/advertise</a>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin: 25px 0; font-size: 14px;">
+                <strong style="color: #A78BFA;">Otros Contactos:</strong><br>
+                Soporte: soporte@geobooker.com.mx
+            </div>
+
+            <div class="footer-bottom">
+                © 2026 Geobooker Ads - Publicidad Local que SÍ Funciona<br>
+                Todos los derechos reservados
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

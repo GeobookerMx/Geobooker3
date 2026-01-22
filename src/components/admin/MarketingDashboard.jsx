@@ -55,19 +55,11 @@ const MarketingDashboard = () => {
                     return { data: distribution };
                 });
 
-            // 4. Enviados hoy (usando hora de México)
-            const getTodayMexico = () => {
-                const now = new Date();
-                const mexicoOffset = -6 * 60;
-                const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
-                const mexicoTime = new Date(utcTime + (mexicoOffset * 60000));
-                return mexicoTime.toISOString().split('T')[0];
-            };
-            const today = getTodayMexico();
-            const { count: sentToday } = await supabase
-                .from('crm_email_logs')
-                .select('*', { count: 'exact', head: true })
-                .gte('sent_at', `${today}T00:00:00`);
+            // 4. Enviados hoy - usar función RPC con timezone de México
+            const { data: sentTodayData } = await supabase
+                .rpc('count_emails_today_mexico');
+
+            const sentToday = sentTodayData?.count || 0;
 
             // 5. Límite configurado
             const { data: config } = await supabase

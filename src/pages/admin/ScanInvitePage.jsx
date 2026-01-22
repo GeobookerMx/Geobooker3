@@ -36,6 +36,9 @@ const ScanInvitePage = () => {
     const [sessionLeadIds, setSessionLeadIds] = useState(new Set()); // Leads añadidos en esta sesión
     const [hiddenLeadIds, setHiddenLeadIds] = useState(new Set()); // Leads ocultados tras contactar
 
+    // ✅ NUEVO: Estado para agregar teléfonos manualmente
+    const [manualPhoneInputs, setManualPhoneInputs] = useState({}); // { leadId: phoneValue }
+
     // Predefined Cities & High-Density Colonias
     const predefinedCities = [
         // Current Location
@@ -351,10 +354,11 @@ const ScanInvitePage = () => {
                             continue;
                         }
 
-                        // Obtener detalles (incluye teléfono)
+                        // 🔍 Obtener detalles (incluye teléfono, website, URL)
                         let phone = null;
                         let website = null;
                         let googleMapsUrl = null;
+                        let detailsStatus = 'success'; // Track API status
 
                         try {
                             const details = await new Promise((resolve, reject) => {
@@ -363,20 +367,48 @@ const ScanInvitePage = () => {
                                     fields: ['formatted_phone_number', 'international_phone_number', 'website', 'url']
                                 }, (result, status) => {
                                     if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-                                        resolve(result);
+                                        resolve({ result, status: 'OK' });
                                     } else {
-                                        resolve(null);
+                                        // ✅ MEJORADO: Log específico del error
+                                        console.warn(`⚠️ Google Places getDetails failed for "${place.name}":`, {
+                                            status,
+                                            placeId: place.place_id,
+                                            reason: status === 'OVER_QUERY_LIMIT' ? 'Cuota agotada' :
+                                                status === 'REQUEST_DENIED' ? 'API key sin permisos' :
+                                                    status === 'INVALID_REQUEST' ? 'Request inválido' :
+                                                        'Error desconocido'
+                                        });
+
+                                        // Mostrar toast UNA VEZ por sesión
+                                        if (status === 'OVER_QUERY_LIMIT' && !sessionStorage.getItem('places-quota-warning')) {
+                                            sessionStorage.setItem('places-quota-warning', 'true');
+                                            toast.error('⚠️ Cuota de Google Places agotada. Algunos teléfonos no estarán disponibles.', {
+                                                duration: 6000,
+                                                icon: '📱'
+                                            });
+                                        }
+
+                                        resolve({ result: null, status });
                                     }
                                 });
                             });
 
-                            if (details) {
-                                phone = details.international_phone_number || details.formatted_phone_number;
-                                website = details.website;
-                                googleMapsUrl = details.url;
+                            if (details.result) {
+                                phone = details.result.international_phone_number || details.result.formatted_phone_number;
+                                website = details.result.website;
+                                googleMapsUrl = details.result.url;
+                                detailsStatus = 'success';
+                            } else {
+                                // ✅ FALLBACK: Aunque no tengamos detalles, construimos el link de Google Maps
+                                detailsStatus = details.status || 'failed';
+                                googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&query_place_id=${place.place_id}`;
+                                console.log(`📍 Lead sin teléfono: ${place.name} - Link: ${googleMapsUrl}`);
                             }
                         } catch (e) {
-                            console.log('No se pudo obtener detalles de:', place.name);
+                            console.error('❌ Error obteniendo detalles de:', place.name, e);
+                            detailsStatus = 'error';
+                            // Construir link de emergencia
+                            googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&query_place_id=${place.place_id}`;
                         }
 
                         // Calcular distancia
@@ -385,7 +417,7 @@ const ScanInvitePage = () => {
                             place.geometry.location.lat(), place.geometry.location.lng()
                         );
 
-                        // Guardar lead
+                        // ✅ GUARDAR LEAD (SIEMPRE, incluso sin teléfono)
                         const { data: newLead, error: leadError } = await supabase
                             .from('scan_leads')
                             .insert({
@@ -399,7 +431,9 @@ const ScanInvitePage = () => {
                                 distance_km: distance.toFixed(2),
                                 website: website,
                                 google_maps_url: googleMapsUrl,
-                                status: 'new'
+                                status: 'new',
+                                // ✅ NUEVO: Agregar notas si falta teléfono
+                                notes: !phone ? `⚠️ Teléfono no disponible (Google Places: ${detailsStatus}). Agregar manualmente desde Google Maps.` : null
                             })
                             .select()
                             .single();
@@ -409,7 +443,7 @@ const ScanInvitePage = () => {
                             continue;
                         }
 
-                        // Guardar contacto si hay teléfono
+                        // ✅ Guardar contacto si hay teléfono
                         if (phone && newLead) {
                             await supabase.from('scan_lead_contacts').insert({
                                 lead_id: newLead.id,
@@ -569,6 +603,44 @@ const ScanInvitePage = () => {
         toast('Vista restaurada', { icon: '🔄' });
     };
 
+
+    // ✅ NUEVO: Agregar teléfono manualmente a un lead
+    const addPhoneManually = async (leadId, phoneValue) => {
+        if (!phoneValue || phoneValue.trim() === '') {
+            toast.error('Ingresa un teléfono válido');
+            return;
+        }
+
+        try {
+            const normalized = normalizePhone(phoneValue.trim());
+
+            // Guardar en scan_lead_contacts
+            const { error } = await supabase.from('scan_lead_contacts').insert({
+                lead_id: leadId,
+                type: 'phone',
+                value: phoneValue.trim(),
+                normalized_value: normalized,
+                source: 'manual_input'
+            });
+
+            if (error) throw error;
+
+            toast.success('✅ Teléfono agregado');
+
+            // Limpiar input
+            setManualPhoneInputs(prev => {
+                const newInputs = { ...prev };
+                delete newInputs[leadId];
+                return newInputs;
+            });
+
+            // Recargar leads
+            loadLeads();
+        } catch (error) {
+            console.error('Error agregando teléfono:', error);
+            toast.error('Error: ' + error.message);
+        }
+    };
 
     // Agregar a blacklist
     const addToBlacklist = async (lead) => {
@@ -980,14 +1052,49 @@ const ScanInvitePage = () => {
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <div className="flex flex-col gap-1">
-                                                        {phoneContact && (
+                                                        {phoneContact ? (
                                                             <span className="flex items-center gap-1 text-sm">
-                                                                <Phone className="w-3 h-3" /> {phoneContact.value}
+                                                                <Phone className="w-3 h-3 text-green-600" /> {phoneContact.value}
+                                                                {phoneContact.source === 'manual_input' && (
+                                                                    <span className="text-xs bg-blue-100 text-blue-600 px-1 rounded" title="Agregado manualmente">✏️</span>
+                                                                )}
                                                             </span>
+                                                        ) : (
+                                                            /* ✅ NUEVO: Input inline para agregar teléfono manualmente */
+                                                            <div className="flex items-center gap-1">
+                                                                <Phone className="w-3 h-3 text-orange-400" />
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="Agregar teléfono..."
+                                                                    value={manualPhoneInputs[lead.id] || ''}
+                                                                    onChange={(e) => setManualPhoneInputs(prev => ({
+                                                                        ...prev,
+                                                                        [lead.id]: e.target.value
+                                                                    }))}
+                                                                    onKeyPress={(e) => {
+                                                                        if (e.key === 'Enter') {
+                                                                            addPhoneManually(lead.id, manualPhoneInputs[lead.id]);
+                                                                        }
+                                                                    }}
+                                                                    className="text-xs border border-orange-200 rounded px-2 py-1 w-32 focus:ring-1 focus:ring-orange-400 focus:border-orange-400"
+                                                                />
+                                                                <button
+                                                                    onClick={() => addPhoneManually(lead.id, manualPhoneInputs[lead.id])}
+                                                                    className="text-xs bg-orange-500 hover:bg-orange-600 text-white px-2 py-1 rounded"
+                                                                    title="Guardar teléfono"
+                                                                >
+                                                                    ✓
+                                                                </button>
+                                                            </div>
                                                         )}
                                                         {emailContact && (
                                                             <span className="flex items-center gap-1 text-sm text-gray-500">
                                                                 <Mail className="w-3 h-3" /> {emailContact.value}
+                                                            </span>
+                                                        )}
+                                                        {!phoneContact && lead.notes && (
+                                                            <span className="text-xs text-orange-600 flex items-center gap-1" title={lead.notes}>
+                                                                ⚠️ Sin teléfono
                                                             </span>
                                                         )}
                                                     </div>
@@ -1018,10 +1125,23 @@ const ScanInvitePage = () => {
                                                                 title="Invitar por WhatsApp"
                                                             >
                                                                 <MessageCircle className="w-4 h-4" />
-                                                                WhatsApp
+                                                                WA
                                                             </button>
                                                         )}
-                                                        {lead.google_maps_url && (
+                                                        {!phoneContact && lead.google_maps_url && (
+                                                            /* ✅ Botón destacado para abrir Google Maps y copiar teléfono */
+                                                            <a
+                                                                href={lead.google_maps_url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 hover:bg-orange-200 rounded text-xs font-medium transition"
+                                                                title="Abrir en Maps para copiar teléfono"
+                                                            >
+                                                                <ExternalLink className="w-3 h-3" />
+                                                                Ver Maps
+                                                            </a>
+                                                        )}
+                                                        {phoneContact && lead.google_maps_url && (
                                                             <a
                                                                 href={lead.google_maps_url}
                                                                 target="_blank"

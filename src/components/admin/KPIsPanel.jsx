@@ -8,11 +8,16 @@ import toast from 'react-hot-toast';
 
 // Helper para obtener fecha en zona horaria de México (UTC-6)
 const getTodayMexico = () => {
-    const now = new Date();
-    const mexicoOffset = -6 * 60;
-    const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
-    const mexicoTime = new Date(utcTime + (mexicoOffset * 60000));
-    return mexicoTime.toISOString().split('T')[0];
+    // Usar toLocaleString con timezone de México
+    const mexicoDate = new Date().toLocaleString('en-US', {
+        timeZone: 'America/Mexico_City',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+    // Convertir de MM/DD/YYYY a YYYY-MM-DD
+    const [month, day, year] = mexicoDate.split('/');
+    return `${year}-${month}-${day}`;
 };
 
 const KPIsPanel = () => {

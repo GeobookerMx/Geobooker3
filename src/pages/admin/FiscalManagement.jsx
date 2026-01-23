@@ -76,8 +76,7 @@ const FiscalManagement = () => {
             .from('invoices')
             .select(`
                 *,
-                fiscal_clients (rfc, razon_social, email),
-                ad_campaigns (name, advertiser_name)
+                fiscal_clients (rfc, razon_social, email)
             `, { count: 'exact' });
 
         if (statusFilter !== 'all') {
@@ -259,6 +258,13 @@ const FiscalManagement = () => {
                 </div>
                 <div className="flex items-center gap-2">
                     <button
+                        onClick={() => { setSelectedInvoice(null); setShowInvoiceModal(true); }}
+                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Nueva Factura
+                    </button>
+                    <button
                         onClick={() => { setSelectedClient(null); setShowClientModal(true); }}
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
                     >
@@ -419,7 +425,7 @@ const FiscalManagement = () => {
                                             )}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <p className="font-medium text-gray-900 text-sm">{inv.fiscal_clients?.razon_social || inv.ad_campaigns?.advertiser_name || 'N/A'}</p>
+                                            <p className="font-medium text-gray-900 text-sm">{inv.fiscal_clients?.razon_social || 'N/A'}</p>
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-600">{inv.fiscal_clients?.rfc || '-'}</td>
                                         <td className="px-4 py-3 text-right">

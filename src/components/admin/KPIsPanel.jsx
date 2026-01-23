@@ -31,27 +31,19 @@ const KPIsPanel = () => {
         const today = getTodayMexico();
 
         try {
-            // WhatsApp Stats - from unified_whatsapp_outreach
-            const { count: whatsappToday } = await supabase
-                .from('unified_whatsapp_outreach')
-                .select('*', { count: 'exact', head: true })
-                .gte('sent_at', today);
+            // WhatsApp Stats - using RPC functions with Mexico timezone
+            const { data: whatsappTodayData } = await supabase
+                .rpc('count_whatsapp_today_mexico');
 
             const { count: whatsappTotal } = await supabase
                 .from('unified_whatsapp_outreach')
                 .select('*', { count: 'exact', head: true });
 
-            const { count: whatsappNational } = await supabase
-                .from('unified_whatsapp_outreach')
-                .select('*', { count: 'exact', head: true })
-                .eq('source', 'scan_invite')
-                .gte('sent_at', today);
+            const { data: whatsappNationalData } = await supabase
+                .rpc('count_whatsapp_national_today_mexico');
 
-            const { count: whatsappGlobal } = await supabase
-                .from('unified_whatsapp_outreach')
-                .select('*', { count: 'exact', head: true })
-                .eq('source', 'apify')
-                .gte('sent_at', today);
+            const { data: whatsappGlobalData } = await supabase
+                .rpc('count_whatsapp_global_today_mexico');
 
             // Get Mexico City timezone date (UTC-6)
             const mexicoDate = new Date().toLocaleString('en-US', {
@@ -79,10 +71,10 @@ const KPIsPanel = () => {
 
             setStats({
                 whatsapp: {
-                    today: whatsappToday || 0,
+                    today: whatsappTodayData?.count || 0,
                     total: whatsappTotal || 0,
-                    national: whatsappNational || 0,
-                    global: whatsappGlobal || 0
+                    national: whatsappNationalData?.count || 0,
+                    global: whatsappGlobalData?.count || 0
                 },
                 email: {
                     today: emailTodayData?.count || 0,

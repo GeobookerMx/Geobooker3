@@ -199,6 +199,11 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
               VERIFICADO
             </span>
           )}
+          {business.has_job_openings && (
+            <span className="bg-green-100 text-green-800 text-[10px] px-1.5 py-0.5 rounded border border-green-200 font-bold flex items-center gap-0.5">
+              🟢 Vacantes
+            </span>
+          )}
         </div>
         <p className="text-gray-600 text-sm mb-1">
           <span className="font-semibold">{t('business.category')}:</span> {business.category}
@@ -500,6 +505,15 @@ export const BusinessMap = memo(({
                 <div className="flex items-center gap-1 mb-1">
                   <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold border border-blue-200 flex items-center">
                     ✓ Verificado
+                  </span>
+                </div>
+              )}
+
+              {/* Job Openings Badge */}
+              {hoveredBusiness.has_job_openings && (
+                <div className="flex items-center gap-1 mb-1">
+                  <span className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold border border-green-200 flex items-center gap-0.5">
+                    🟢 Vacantes
                   </span>
                 </div>
               )}

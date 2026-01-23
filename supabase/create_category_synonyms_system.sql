@@ -18,7 +18,13 @@ CREATE TABLE IF NOT EXISTS category_synonyms (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- 2. Índices para búsqueda rápida
+-- 2. Índices para búsqueda rápida (drop first if exist)
+DROP INDEX IF EXISTS idx_category_synonyms_term_norm;
+DROP INDEX IF EXISTS idx_category_synonyms_category;
+DROP INDEX IF EXISTS idx_category_synonyms_locale;
+DROP INDEX IF EXISTS idx_category_synonyms_country;
+DROP INDEX IF EXISTS idx_category_synonyms_weight;
+
 CREATE INDEX idx_category_synonyms_term_norm ON category_synonyms(term_normalized);
 CREATE INDEX idx_category_synonyms_category ON category_synonyms(category_id);
 CREATE INDEX idx_category_synonyms_locale ON category_synonyms(locale);
@@ -39,7 +45,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
 
--- 4. Cargar datos iniciales de sinónimos
+-- 4. Limpiar datos previos y cargar sinónimos iniciales
+TRUNCATE TABLE category_synonyms;
+
 INSERT INTO category_synonyms (category_id, term, term_normalized, locale, country, weight, notes) VALUES
 
 -- A) LLANTAS / NEUMÁTICOS

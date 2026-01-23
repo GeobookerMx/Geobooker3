@@ -193,10 +193,16 @@ const BusinessEditPage = () => {
                     .from('business images')
                     .getPublicUrl(fileName);
 
-                setFormData(prev => ({
-                    ...prev,
-                    images: [...prev.images, publicUrl]
-                }));
+                console.log('📸 Imagen subida exitosamente:', publicUrl);
+
+                setFormData(prev => {
+                    const newImages = [...prev.images, publicUrl];
+                    console.log('📦 Total de imágenes después de subir:', newImages.length);
+                    return {
+                        ...prev,
+                        images: newImages
+                    };
+                });
 
                 toast.success('Foto agregada');
             } catch (error) {
@@ -376,11 +382,19 @@ const BusinessEditPage = () => {
                                 required
                             >
                                 <option value="">Selecciona una categoría</option>
-                                <option value="restaurant">Restaurante / Comida</option>
-                                <option value="shop">Tienda / Comercio</option>
-                                <option value="service">Servicios</option>
-                                <option value="health">Salud / Farmacia</option>
-                                <option value="entertainment">Entretenimiento</option>
+                                <option value="restaurantes">Restaurantes & Comida</option>
+                                <option value="bares">Bares y Cafeterías</option>
+                                <option value="tiendas">Tiendas & Comercios</option>
+                                <option value="servicios">Servicios Profesionales</option>
+                                <option value="hogar_autos">Hogar, Reparaciones & Autos</option>
+                                <option value="salud">Salud y Belleza</option>
+                                <option value="entretenimiento">Entretenimiento</option>
+                                <option value="educacion">Educación</option>
+                                <option value="alojamiento">Alojamiento & Turismo</option>
+                                <option value="inmobiliarias">Inmobiliarias</option>
+                                <option value="finanzas">Finanzas & Seguros</option>
+                                <option value="tecnologia">Tecnología</option>
+                                <option value="eventos">Eventos & Fiestas</option>
                             </select>
                         </div>
                         <div className="md:col-span-2">

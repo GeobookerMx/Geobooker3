@@ -11,6 +11,8 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import WelcomePage from "./pages/WelcomePage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage.jsx";
+import ResetPasswordPage from "./pages/ResetPasswordPage.jsx";
 import AuthCallback from "./pages/AuthCallback.jsx";
 
 // Admin
@@ -98,6 +100,8 @@ export default function AppRouter() {
         <Route path="/welcome" element={<WelcomePage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/unsubscribe" element={<UnsubscribePage />} />
         <Route path="/terms" element={<TermsOfServicePage />} />

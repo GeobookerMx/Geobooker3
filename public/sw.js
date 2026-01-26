@@ -1,107 +1,114 @@
 // public/sw.js
 /**
- * Geobooker Service Worker
- * Handlers for PWA and Push Notifications
+ * Service Worker para Geobooker PWA
+ * Proporciona funcionalidad offline y caché de assets
  */
 
-const CACHE_NAME = 'geobooker-v1';
+const CACHE_NAME = 'geobooker-v1.0.0';
+const RUNTIME_CACHE = 'geobooker-runtime';
 
-// Install event - cache core assets
+// Assets críticos para cachear durante instalación
+const PRECACHE_ASSETS = [
+    '/',
+    '/index.html',
+    '/manifest.json',
+    '/images/geobooker-logo.svg',
+    '/images/geobooker-logo.png',
+    '/images/geobooker-favicon.png'
+];
+
+// Instalación - Cachear assets críticos
 self.addEventListener('install', (event) => {
+    console.log('[SW] Installing Service Worker...');
+
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll([
-                '/',
-                '/index.html',
-                '/manifest.json',
-                '/images/geobooker-logo.svg',
-                '/images/geobooker-favicon.png'
-            ]);
+            console.log('[SW] Caching app shell');
+            return cache.addAll(PRECACHE_ASSETS);
+        }).then(() => {
+            // Activar inmediatamente sin esperar
+            return self.skipWaiting();
         })
     );
 });
 
-// Activate event
+// Activación - Limpiar cachés viejos
 self.addEventListener('activate', (event) => {
-    event.waitUntil(self.clients.claim());
+    console.log('[SW] Activating Service Worker...');
+
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    // Eliminar cachés antiguos
+                    if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
+                        console.log('[SW] Deleting old cache:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        }).then(() => {
+            // Tomar control inmediato de todas las páginas
+            return self.clients.claim();
+        })
+    );
 });
 
-// Fetch event - simple network-first strategy for dynamic content
+// Estrategia de caché: Network First, falling back to Cache
 self.addEventListener('fetch', (event) => {
-    const url = event.request.url;
+    const { request } = event;
+    const url = new URL(request.url);
 
-    // Skip non-GET requests
-    if (event.request.method !== 'GET') {
+    // Solo cachear requests GET
+    if (request.method !== 'GET') {
         return;
     }
 
-    // Skip Vite dev server routes and hot module replacement
-    if (url.includes('@vite') || url.includes('@react-refresh') ||
-        url.includes('hot-update') || url.includes('__vite') ||
-        url.includes('supabase.co') || url.includes('.hot-update.')) {
+    // No cachear llamadas a APIs externas
+    if (!url.origin.includes(self.location.origin)) {
         return;
     }
 
-    // For development, just pass through without intercepting
-    if (url.includes('localhost:5173') && (url.includes('/src/') || url.includes('node_modules'))) {
+    // No cachear llamadas a Supabase o Stripe
+    if (url.hostname.includes('supabase') || url.hostname.includes('stripe')) {
         return;
     }
 
+    // ESTRATEGIA: Network First con Cache Fallback
     event.respondWith(
-        fetch(event.request)
+        fetch(request)
             .then((response) => {
+                // Si la respuesta es válida, clonarla y guardarla en caché
+                if (response && response.status === 200) {
+                    const responseClone = response.clone();
+
+                    caches.open(RUNTIME_CACHE).then((cache) => {
+                        cache.put(request, responseClone);
+                    });
+                }
+
                 return response;
             })
-            .catch(async () => {
-                try {
-                    const cachedResponse = await caches.match(event.request);
-                    // Return cached response or a proper fallback
+            .catch(() => {
+                // Si falla el network, intentar servir desde caché
+                return caches.match(request).then((cachedResponse) => {
                     if (cachedResponse) {
+                        console.log('[SW] Serving from cache:', request.url);
                         return cachedResponse;
                     }
-                    // For navigation requests, return the cached index.html (SPA fallback)
-                    if (event.request.mode === 'navigate') {
-                        const indexResponse = await caches.match('/index.html');
-                        if (indexResponse) {
-                            return indexResponse;
-                        }
+
+                    // Si no hay caché y es una navegación, servir página offline
+                    if (request.destination === 'document') {
+                        return caches.match('/');
                     }
-                } catch (e) {
-                    console.error('SW cache error:', e);
-                }
-                // Return a proper error response instead of undefined
-                return new Response('Network error', { status: 503, statusText: 'Service Unavailable' });
+                });
             })
     );
 });
 
-// Push notification event
-self.addEventListener('push', (event) => {
-    const data = event.data ? event.data.json() : {
-        title: 'Geobooker',
-        body: 'Tienes una nueva actualización en tu cuenta.',
-        icon: '/images/geobooker-favicon.png'
-    };
-
-    const options = {
-        body: data.body,
-        icon: data.icon || '/images/geobooker-favicon.png',
-        badge: '/images/geobooker-favicon.png',
-        vibrate: [100, 50, 100],
-        data: {
-            url: data.url || '/'
-        }
-    };
-
-    event.waitUntil(
-        self.registration.showNotification(data.title, options)
-    );
-});
-
-// Notification click event
-self.addEventListener('notificationclick', (event) => {
-    event.notification.close();
-    event.waitUntil(
-        clients.openWindow(event.notification.data.url)
-    );
+// Mensajes del cliente
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });

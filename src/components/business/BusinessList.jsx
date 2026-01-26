@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import { Eye, EyeOff, MapPin, Info, Crown, Lock } from 'lucide-react';
 import LocationEditModal from './LocationEditModal';
+import { invalidateBusinessCache } from '../../services/businessCacheService';
 
 const FREE_BUSINESS_LIMIT = 2;
 
@@ -71,6 +72,14 @@ const BusinessList = () => {
             setBusinesses(prev => prev.map(b =>
                 b.id === businessId ? { ...b, is_visible: newVisibility } : b
             ));
+
+            // ✅ FIX: Invalidar caché para que HomePage recargue
+            await invalidateBusinessCache();
+
+            // ✅ FIX: Emitir evento para que HomePage se actualice inmediatamente
+            window.dispatchEvent(new CustomEvent('business-visibility-changed', {
+                detail: { businessId, newVisibility }
+            }));
 
             toast.success(
                 newVisibility

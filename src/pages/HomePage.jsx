@@ -215,6 +215,40 @@ const HomePage = () => {
     fetchGeobookerBusinesses();
   }, [categoryFilter, subcategoryFilter, userLocation]);
 
+  // ✅ FIX: Escuchar cambios de visibilidad de negocios (toggle on/off)
+  // Cuando un usuario cambia is_visible en el dashboard, actualizar el mapa inmediatamente
+  useEffect(() => {
+    const handleVisibilityChange = (event) => {
+      const { businessId, newVisibility } = event.detail;
+
+      console.log(`🔄 [HomePage] Business ${businessId} visibility changed to ${newVisibility}`);
+
+      setGeobookerBusinesses(prev => {
+        if (newVisibility === false) {
+          // Quitar del mapa si se ocultó
+          const filtered = prev.filter(b => b.id !== businessId);
+          console.log(`✅ [HomePage] Negocio removido del mapa. Antes: ${prev.length}, Después: ${filtered.length}`);
+          return filtered;
+        } else {
+          // Si se activó de nuevo, verificar si ya está en el mapa
+          const exists = prev.find(b => b.id === businessId);
+          if (!exists) {
+            // Recargar todos los negocios para incluir el que se activó
+            console.log('🔄 [HomePage] Recargando negocios para incluir el activado');
+            fetchGeobookerBusinesses();
+          }
+          return prev;
+        }
+      });
+    };
+
+    window.addEventListener('business-visibility-changed', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('business-visibility-changed', handleVisibilityChange);
+    };
+  }, []); // Sin dependencias porque fetchGeobookerBusinesses ya está definido arriba
+
   // ⚡ NUEVO: Buscar en Google Places automáticamente cuando hay filtro de categoría
   useEffect(() => {
     const searchGooglePlacesWithCategory = async () => {
@@ -353,6 +387,12 @@ const HomePage = () => {
         onClose={() => setShowLocationModal(false)}
         onRequestPermission={requestLocationPermission}
         permissionDenied={!permissionGranted && !locationLoading}
+      />
+
+      {/* Modal de login para invitados (después de 1 búsqueda gratis) */}
+      <GuestLoginPromptModal
+        isOpen={showLoginPrompt}
+        onClose={closeLoginPrompt}
       />
 
       {/* Hero Section con búsqueda */}
@@ -533,11 +573,11 @@ const HomePage = () => {
             {/* Author */}
             <div className="flex items-center justify-center gap-4">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-                JP
+                GB
               </div>
               <div className="text-left">
-                <p className="text-white font-semibold text-lg">Lic. Juan Pablo Peña García</p>
-                <p className="text-purple-300 text-sm">CEO & Founder, Geobooker Inc.</p>
+                <p className="text-white font-semibold text-lg">EQUIPO GEOBOOKER</p>
+                <p className="text-purple-300 text-sm">Geobooker Inc.</p>
               </div>
             </div>
 

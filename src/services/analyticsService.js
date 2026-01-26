@@ -5,6 +5,7 @@
  * También incluye funciones de compatibilidad con GA4
  */
 import { supabase } from '../lib/supabase';
+import { logger } from '../utils/logger';
 
 // ============================================
 // FUNCIONES DE COMPATIBILIDAD CON GA4
@@ -14,14 +15,14 @@ import { supabase } from '../lib/supabase';
  * Inicializar Google Analytics 4 (stub - GA4 se carga via gtag en index.html)
  */
 export function initializeGA4() {
-    console.log('📊 [Analytics] GA4 initialized via gtag');
+    logger.info('📊 GA4 initialized via gtag');
 }
 
 /**
  * Registrar inicio de sesión
  */
 export function trackSessionStart(isReturning = false) {
-    console.log(`📊 [Analytics] Session start (returning: ${isReturning})`);
+    logger.dev(`📊 Session start (returning: ${isReturning})`);
     // Page views are tracked automatically by usePageTracking hook
 }
 
@@ -29,7 +30,7 @@ export function trackSessionStart(isReturning = false) {
  * Trackear evento genérico (compatible con GA4)
  */
 export function trackEvent(eventName, params = {}) {
-    console.log(`📊 [Analytics] Event: ${eventName}`, params);
+    logger.dev(`📊 Event: ${eventName}`, params);
     // Si gtag está disponible, enviar a GA4 también
     if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', eventName, params);
@@ -76,10 +77,10 @@ export async function trackRouteClick(businessId, businessName, source = 'map') 
             p_business_name: businessName,
             p_source: source
         });
-        console.log(`🗺️ [Analytics] Route click tracked: ${businessName}`);
+        logger.success(`🗺️ Route click tracked: ${businessName}`);
     } catch (err) {
         // Silently fail - analytics shouldn't break the app
-        console.warn('[Analytics] Failed to track route click:', err);
+        logger.warn('[Analytics] Failed to track route click:', err);
     }
 }
 
@@ -144,9 +145,9 @@ export async function trackPageView(pagePath, pageTitle = document.title) {
         });
 
         if (error) {
-            console.error('[Analytics] Error tracking page view:', error);
+            logger.error('[Analytics] Error tracking page view:', error);
         } else {
-            console.log(`📊 [Analytics] Page view tracked: ${pagePath}`);
+            logger.dev(`📊 Page view tracked: ${pagePath}`);
         }
     } catch (err) {
         // Silently fail - analytics shouldn't break the app
@@ -179,9 +180,9 @@ export async function trackSearch(query, options = {}) {
         });
 
         if (error) {
-            console.error('[Analytics] Error tracking search:', error);
+            logger.error('[Analytics] Error tracking search:', error);
         } else {
-            console.log(`🔍 [Analytics] Search tracked: "${query}" (${resultsCount} results)`);
+            logger.dev(`🔍 Search tracked: "${query}" (${resultsCount} results)`);
         }
     } catch (err) {
         console.warn('[Analytics] Failed to track search:', err);
@@ -358,5 +359,56 @@ export async function getDeviceBreakdown(days = 30) {
     } catch (err) {
         console.error('[Analytics] Error getting device breakdown:', err);
         return [];
+    }
+}
+
+/**
+ * Trackear signup de usuario
+ * CRÍTICO: Registra cuando un usuario se registra (email, Google, Apple)
+ */
+export async function trackUserSignup(userId, method = 'email', metadata = {}) {
+    // GA4 tracking
+    trackEvent('sign_up', {
+        method: method,
+        user_id: userId
+    });
+
+    // Supabase tracking (para dashboard admin)
+    try {
+        await supabase.from('user_sessions').insert({
+            user_id: userId,
+            session_type: `signup_${method}`,
+            referral_source: metadata.referralCode || null,
+            country: localStorage.getItem('userCountry'),
+            city: localStorage.getItem('userCity')
+        });
+        logger.success(`✅ User signup tracked: ${userId} (${method})`);
+    } catch (err) {
+        logger.warn('[Analytics] Failed to track signup:', err);
+    }
+}
+
+/**
+ * Trackear login de usuario
+ * CRÍTICO: Registra cuando un usuario inicia sesión
+ */
+export async function trackUserLogin(userId, method = 'email') {
+    // GA4 tracking
+    trackEvent('login', {
+        method: method,
+        user_id: userId
+    });
+
+    // Supabase tracking
+    try {
+        await supabase.from('user_sessions').insert({
+            user_id: userId,
+            session_type: `login_${method}`,
+            country: localStorage.getItem('userCountry'),
+            city: localStorage.getItem('userCity')
+        });
+        logger.success(`✅ User login tracked: ${userId} (${method})`);
+    } catch (err) {
+        logger.warn('[Analytics] Failed to track login:', err);
     }
 }

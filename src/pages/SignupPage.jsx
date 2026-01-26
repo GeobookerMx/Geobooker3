@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { sendWelcomeEmail, sendReferralBonusEmail } from '../services/notificationService';
+import { trackUserSignup } from '../services/analyticsService';
 
 const SignupPage = () => {
     const { t } = useTranslation();
@@ -67,6 +68,11 @@ const SignupPage = () => {
             });
 
             if (error) throw error;
+
+            // ✅ TRACKEAR SIGNUP (NUEVO)
+            if (data?.user?.id) {
+                trackUserSignup(data.user.id, 'email', { referralCode });
+            }
 
             // Enviar correo de bienvenida
             if (data?.user?.email) {

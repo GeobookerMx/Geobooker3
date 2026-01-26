@@ -50,7 +50,7 @@ const initDB = () => {
 
         request.onsuccess = () => {
             db = request.result;
-            console.debug('📦 IndexedDB inicializada');
+            logger.dev('📦 IndexedDB inicializada');
             resolve(db);
         };
 
@@ -116,7 +116,7 @@ export const cacheBusinesses = async (businesses, location) => {
             count: businesses.length
         });
 
-        console.log(`📦 ${businesses.length} negocios guardados en caché`);
+        logger.dev(`📦 ${businesses.length} negocios guardados en caché`);
     } catch (error) {
         console.error('Error guardando en caché:', error);
     }
@@ -203,7 +203,7 @@ export const getCachedBusinesses = async (categoryFilter = null) => {
 
             request.onsuccess = () => {
                 const businesses = request.result || [];
-                console.log(`📦 ${businesses.length} negocios cargados del caché${categoryFilter ? ` (${categoryFilter})` : ''}`);
+                logger.dev(`📦 ${businesses.length} negocios cargados del caché${categoryFilter ? ` (${categoryFilter})` : ''}`);
                 resolve(businesses);
             };
 
@@ -275,6 +275,30 @@ export const getCacheStats = async () => {
     }
 };
 
+/**
+ * Invalida el caché de negocios para forzar recarga
+ * ÚTIL: Cuando un usuario cambia is_visible de su negocio
+ */
+export const invalidateBusinessCache = async () => {
+    try {
+        const database = await initDB();
+        const transaction = database.transaction(STORES.BUSINESSES, 'readwrite');
+        const store = transaction.objectStore(STORES.BUSINESSES);
+
+        await new Promise((resolve, reject) => {
+            const request = store.clear();
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+
+        logger.success('✅ [Cache] Negocios invalidados - HomePage recargará');
+        return true;
+    } catch (error) {
+        console.warn('[Cache] Error invalidando:', error);
+        return false;
+    }
+};
+
 // Inicializar DB al importar
 initDB().catch(console.error);
 
@@ -283,5 +307,6 @@ export default {
     getCachedBusinesses,
     isCacheValid,
     clearCache,
-    getCacheStats
+    getCacheStats,
+    invalidateBusinessCache
 };

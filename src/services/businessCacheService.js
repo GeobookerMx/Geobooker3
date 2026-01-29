@@ -50,7 +50,7 @@ const initDB = () => {
 
         request.onsuccess = () => {
             db = request.result;
-            logger.dev('📦 IndexedDB inicializada');
+            console.log('📦 IndexedDB inicializada');
             resolve(db);
         };
 
@@ -116,7 +116,7 @@ export const cacheBusinesses = async (businesses, location) => {
             count: businesses.length
         });
 
-        logger.dev(`📦 ${businesses.length} negocios guardados en caché`);
+        console.log(`📦 ${businesses.length} negocios guardados en caché`);
     } catch (error) {
         console.error('Error guardando en caché:', error);
     }
@@ -203,7 +203,7 @@ export const getCachedBusinesses = async (categoryFilter = null) => {
 
             request.onsuccess = () => {
                 const businesses = request.result || [];
-                logger.dev(`📦 ${businesses.length} negocios cargados del caché${categoryFilter ? ` (${categoryFilter})` : ''}`);
+                console.log(`📦 ${businesses.length} negocios cargados del caché${categoryFilter ? ` (${categoryFilter})` : ''}`);
                 resolve(businesses);
             };
 
@@ -291,7 +291,7 @@ export const invalidateBusinessCache = async () => {
             request.onerror = () => reject(request.error);
         });
 
-        logger.success('✅ [Cache] Negocios invalidados - HomePage recargará');
+        console.log('✅ [Cache] Negocios invalidados - HomePage recargará');
         return true;
     } catch (error) {
         console.warn('[Cache] Error invalidando:', error);

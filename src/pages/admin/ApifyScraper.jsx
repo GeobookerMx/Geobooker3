@@ -151,10 +151,47 @@ const ApifyScraper = () => {
             ]
         },
         {
-            continent: '🌏 Asia y Oceanía', cities: [
-                'Tokyo, Japan', 'Singapore', 'Sydney, Australia', 'Dubai, UAE',
-                'Hong Kong', 'Bangkok, Thailand', 'Seoul, South Korea',
-                'Melbourne, Australia', 'Auckland, New Zealand', 'Mumbai, India'
+            continent: '🌏 Asia - Pacífico', cities: [
+                // Japón (mercados desarrollados)
+                'Tokyo, Japan', 'Osaka, Japan', 'Kyoto, Japan', 'Yokohama, Japan',
+                'Nagoya, Japan', 'Fukuoka, Japan', 'Sapporo, Japan',
+                // China (mercados emergentes)
+                'Shanghai, China', 'Beijing, China', 'Shenzhen, China', 'Guangzhou, China',
+                'Hong Kong', 'Chengdu, China', 'Hangzhou, China', 'Nanjing, China',
+                // Other Asia-Pacific
+                'Singapore', 'Seoul, South Korea', 'Bangkok, Thailand',
+                'Taipei, Taiwan', 'Kuala Lumpur, Malaysia', 'Manila, Philippines',
+                'Jakarta, Indonesia', 'Mumbai, India', 'Delhi, India', 'Bangalore, India'
+            ]
+        },
+        {
+            continent: '🕌 Medio Oriente y Liga Árabe', cities: [
+                // Emiratos Árabes Unidos (Hub de inversión)
+                'Dubai, UAE', 'Abu Dhabi, UAE', 'Sharjah, UAE',
+                // Arabia Saudita
+                'Riyadh, Saudi Arabia', 'Jeddah, Saudi Arabia', 'Mecca, Saudi Arabia',
+                // Qatar
+                'Doha, Qatar',
+                // Kuwait
+                'Kuwait City, Kuwait',
+                // Bahrain
+                'Manama, Bahrain',
+                // Omán
+                'Muscat, Oman',
+                // Jordania
+                'Amman, Jordan',
+                // Líbano
+                'Beirut, Lebanon',
+                // Egipto
+                'Cairo, Egypt', 'Alexandria, Egypt',
+                // Marruecos
+                'Casablanca, Morocco', 'Marrakech, Morocco'
+            ]
+        },
+        {
+            continent: '🌊 Oceanía', cities: [
+                'Sydney, Australia', 'Melbourne, Australia', 'Brisbane, Australia',
+                'Perth, Australia', 'Auckland, New Zealand', 'Wellington, New Zealand'
             ]
         },
         {

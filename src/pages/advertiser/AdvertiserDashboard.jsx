@@ -15,6 +15,9 @@ import {
 import toast from 'react-hot-toast';
 import CampaignReport from '../../components/enterprise/CampaignReport';
 import CampaignReportButton from '../../components/ads/CampaignReportButton';
+import InsightsPanel from '../../components/enterprise/InsightsPanel';
+import ShareOfVoiceWidget from '../../components/enterprise/ShareOfVoiceWidget';
+
 
 export default function AdvertiserDashboard() {
     const { user } = useAuth();
@@ -180,6 +183,18 @@ export default function AdvertiserDashboard() {
                         <div className="text-3xl font-bold text-green-400">{stats.activeCampaigns}</div>
                     </div>
                 </div>
+
+                {/* Insights Panel - NEW */}
+                <div className="mb-8">
+                    <InsightsPanel campaigns={campaigns} stats={stats} />
+                </div>
+
+                {/* Share of Voice - NEW (show for first active campaign) */}
+                {campaigns.filter(c => c.status === 'active').length > 0 && (
+                    <div className="mb-8">
+                        <ShareOfVoiceWidget campaignId={campaigns.find(c => c.status === 'active')?.id} />
+                    </div>
+                )}
 
                 {/* Campaigns List */}
                 <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">

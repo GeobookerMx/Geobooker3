@@ -8,6 +8,29 @@ const { createClient } = require('@supabase/supabase-js');
 // - SUPABASE_URL
 // - SUPABASE_SERVICE_ROLE_KEY (¡No la anon key!)
 
+// Helper: Generate secure temporary password
+function generateRandomPassword(length = 16) {
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    let password = '';
+    const array = new Uint8Array(length);
+
+    // Use crypto for better randomness
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+        crypto.getRandomValues(array);
+        for (let i = 0; i < length; i++) {
+            password += charset[array[i] % charset.length];
+        }
+    } else {
+        // Fallback for older environments
+        for (let i = 0; i < length; i++) {
+            password += charset[Math.floor(Math.random() * charset.length)];
+        }
+    }
+
+    return password;
+}
+
+
 exports.handler = async (event) => {
     const headers = { 'Access-Control-Allow-Origin': '*' };
 
@@ -58,15 +81,55 @@ exports.handler = async (event) => {
                 // CASO 1B: Campaña Enterprise (auto-activación para clientes verificados)
                 else if (metadata.type === 'enterprise_campaign') {
                     const campaignId = metadata.campaign_id;
-                    if (campaignId) {
-                        // Enterprise campaigns go directly to pending_review
-                        // Admin can manually activate or we auto-activate after 24hrs
+                    const advertiserEmail = metadata.advertiser_email || session.customer_details?.email;
+
+                    if (campaignId && advertiserEmail) {
+                        // 🆕 PASO 1: Crear cuenta de usuario si no existe
+                        let userId = null;
+                        let temporaryPassword = null;
+                        let isNewUser = false;
+
+                        try {
+                            // Verificar si el usuario ya existe
+                            const { data: existingUser } = await supabase.auth.admin.getUserByEmail(advertiserEmail);
+
+                            if (!existingUser || !existingUser.user) {
+                                // Usuario NO existe, crearlo
+                                temporaryPassword = generateRandomPassword();
+
+                                const { data: newUser, error: signUpError } = await supabase.auth.admin.createUser({
+                                    email: advertiserEmail,
+                                    password: temporaryPassword,
+                                    email_confirm: true, // Auto-confirm email
+                                    user_metadata: {
+                                        role: 'advertiser',
+                                        company_name: metadata.company || metadata.advertiser_name,
+                                        created_via: 'enterprise_checkout'
+                                    }
+                                });
+
+                                if (signUpError) {
+                                    console.error('Error creating user:', signUpError);
+                                } else {
+                                    userId = newUser.user.id;
+                                    isNewUser = true;
+                                    console.log(`✅ New advertiser account created: ${advertiserEmail}`);
+                                }
+                            } else {
+                                userId = existingUser.user.id;
+                                console.log(`ℹ️ Advertiser account already exists: ${advertiserEmail}`);
+                            }
+                        } catch (authError) {
+                            console.error('Auth error:', authError);
+                        }
+
+                        // 🆕 PASO 2: Actualizar campaña con fechas y payment
                         const startDate = new Date();
                         const durationMonths = parseInt(metadata.duration_months) || 1;
                         const endDate = new Date(startDate);
                         endDate.setMonth(endDate.getMonth() + durationMonths);
 
-                        await supabase
+                        const { data: updatedCampaign } = await supabase
                             .from('ad_campaigns')
                             .update({
                                 status: 'pending_review',
@@ -75,11 +138,38 @@ exports.handler = async (event) => {
                                 start_date: startDate.toISOString().split('T')[0],
                                 end_date: endDate.toISOString().split('T')[0],
                                 currency: 'USD',
-                                tax_status: metadata.billing_country === 'MX' ? 'domestic_mx' : 'export_0_iva'
+                                tax_status: metadata.billing_country === 'MX' ? 'domestic_mx' : 'export_0_iva',
+                                advertiser_email: advertiserEmail,
+                                // Set user_id if we created the account
+                                ...(userId && { user_id: userId })
                             })
-                            .eq('id', campaignId);
+                            .eq('id', campaignId)
+                            .select()
+                            .single();
 
-                        console.log(`Enterprise campaign ${campaignId} paid. Plan: ${metadata.plan}, Company: ${metadata.company}`);
+                        // 🆕 PASO 3:  Enviar email de bienvenida (solo si es nuevo usuario)
+                        if (isNewUser && temporaryPassword) {
+                            try {
+                                // Llamar función de email (debes crear send-welcome-email.js)
+                                await fetch(`${process.env.URL}/.netlify/functions/send-welcome-email`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        email: advertiserEmail,
+                                        password: temporaryPassword,
+                                        campaignName: updatedCampaign?.advertiser_name || 'Tu Campaña',
+                                        companyName: metadata.company || metadata.advertiser_name,
+                                        dashboardUrl: `${process.env.URL}/advertiser/dashboard`
+                                    })
+                                });
+                                console.log(`📧 Welcome email sent to ${advertiserEmail}`);
+                            } catch (emailError) {
+                                console.error('Error sending welcome email:', emailError);
+                                // Don't fail the webhook if email fails
+                            }
+                        }
+
+                        console.log(`✅ Enterprise campaign ${campaignId} paid. Plan: ${metadata.plan}, Company: ${metadata.company}, IsNew: ${isNewUser}`);
                     }
                 }
                 // CASO 2: Suscripción Premium (Usuario)

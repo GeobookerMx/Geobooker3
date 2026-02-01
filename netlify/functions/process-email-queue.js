@@ -10,6 +10,19 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+// ✅ NUEVO: Función para obtener fecha en hora de Ciudad de México
+const getMexicoDate = () => {
+    const now = new Date();
+    // Retorna formato YYYY-MM-DD en timezone de México
+    return now.toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
+};
+
+const getMexicoDateTime = () => {
+    const now = new Date();
+    // Retorna ISO string ajustado a México para timestamps
+    return new Date(now.toLocaleString('en-US', { timeZone: 'America/Mexico_City' })).toISOString();
+};
+
 exports.handler = async (event, context) => {
     try {
         console.log('🚀 Iniciando procesamiento de cola de emails...');
@@ -23,14 +36,15 @@ exports.handler = async (event, context) => {
 
         const dailyLimit = config?.daily_limit || 100;
 
-        // 2. Verificar cuántos emails se han enviado hoy
-        const today = new Date().toISOString().split('T')[0];
+        // 2. Verificar cuántos emails se han enviado hoy (HORA MÉXICO)
+        const today = getMexicoDate();
+        console.log(`📅 Fecha México: ${today}`);
         const { count: sentToday } = await supabase
             .from('campaign_history')
             .select('*', { count: 'exact', head: true })
             .eq('campaign_type', 'email')
-            .gte('sent_at', `${today}T00:00:00`)
-            .lte('sent_at', `${today}T23:59:59`);
+            .gte('sent_at', `${today}T00:00:00-06:00`)
+            .lte('sent_at', `${today}T23:59:59-06:00`);
 
         const remaining = dailyLimit - (sentToday || 0);
 

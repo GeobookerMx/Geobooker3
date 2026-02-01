@@ -75,6 +75,8 @@ const PlaceProfilePage = lazy(() => import("./pages/PlaceProfilePage.jsx"));
 
 // Referral System - Lazy Loaded
 const ReferralLanding = lazy(() => import("./pages/ReferralLanding.jsx"));
+const DownloadPage = lazy(() => import("./pages/DownloadPage.jsx"));
+const DeleteAccountPage = lazy(() => import("./pages/DeleteAccountPage.jsx"));
 
 // Community Pages - Lazy Loaded
 const AboutPage = lazy(() => import("./pages/AboutPage.jsx"));
@@ -121,6 +123,12 @@ export default function AppRouter() {
 
           {/* Referral Landing Page */}
           <Route path="/r/:code" element={<ReferralLanding />} />
+
+          {/* Download App Page - Para QR codes y campañas */}
+          <Route path="/download" element={<DownloadPage />} />
+
+          {/* Delete Account Page - Requerido por Google Play */}
+          <Route path="/delete-account" element={<DeleteAccountPage />} />
 
           {/* Políticas de anuncios (página legal pública) */}
           <Route path="/legal/ads-policy" element={<AdsPolicyPage />} />

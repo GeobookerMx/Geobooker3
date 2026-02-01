@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { sendWelcomeEmail, sendReferralBonusEmail } from '../services/notificationService';
 import { trackUserSignup } from '../services/analyticsService';
+import { isPremiumPromoActive, getDaysRemaining, getPromoMessage } from '../config/promotions';
 
 const SignupPage = () => {
     const { t } = useTranslation();
@@ -149,6 +150,23 @@ const SignupPage = () => {
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('signup.title')}</h1>
                     <p className="text-gray-600">{t('signup.subtitle')}</p>
                 </div>
+
+                {/* 🎉 Banner de Promoción Premium */}
+                {isPremiumPromoActive() && (
+                    <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-4 mb-6 text-white shadow-lg">
+                        <div className="flex items-center gap-3">
+                            <span className="text-3xl">🚀</span>
+                            <div>
+                                <p className="font-bold text-lg">{getPromoMessage()}</p>
+                                <p className="text-sm text-purple-100">Registra tu negocio y obtén todas las funciones Premium hasta el 1 de Mayo 2026</p>
+                            </div>
+                        </div>
+                        <div className="mt-3 flex gap-4 text-sm">
+                            <span className="bg-white/20 px-3 py-1 rounded-full">✓ Sin costo</span>
+                            <span className="bg-white/20 px-3 py-1 rounded-full">✓ Cancela cuando quieras</span>
+                        </div>
+                    </div>
+                )}
 
                 {/* Formulario */}
                 <div className="bg-white rounded-2xl shadow-xl p-8">

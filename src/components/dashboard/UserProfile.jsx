@@ -164,6 +164,20 @@ const UserProfile = () => {
                         Cancelar
                     </button>
                 </div>
+
+                {/* Sección de Eliminar Cuenta */}
+                <div className="pt-6 mt-6 border-t border-red-100">
+                    <h3 className="text-lg font-semibold text-red-600 mb-2">Zona de Peligro</h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                        Una vez eliminada, tu cuenta y todos tus datos serán borrados permanentemente.
+                    </p>
+                    <a
+                        href="/delete-account"
+                        className="inline-flex items-center gap-2 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition"
+                    >
+                        🗑️ Eliminar mi cuenta
+                    </a>
+                </div>
             </form>
         </div>
     );

@@ -50,14 +50,25 @@ export async function handler(event) {
                 return { statusCode: 400, headers, body: JSON.stringify({ error: 'searchQuery y location requeridos' }) };
             }
 
+            // Construir búsqueda más precisa
+            // Formato: "restaurants in Manchester, UK" es más específico que "restaurants Manchester"
+            const searchString = `${searchQuery} in ${location}`;
+
+            // Detectar idioma basado en la ubicación
+            const isEnglishLocation = /USA|UK|Canada|Australia|London|New York|Chicago|Los Angeles|Toronto|Sydney|Ireland|Singapore/i.test(location);
+            const searchLanguage = isEnglishLocation ? 'en' : 'es';
+
             const input = {
-                searchStringsArray: [`${searchQuery} ${location}`],
+                searchStringsArray: [searchString],
                 maxCrawledPlacesPerSearch: Math.min(maxResults, 50),
-                language: 'es',
+                language: searchLanguage,
                 deeperCityScrape: false,
                 maxReviews: 0,
                 maxImages: 0,
-                skipClosedPlaces: true
+                skipClosedPlaces: true,
+                // Añadir coordenadas aproximadas para ubicaciones comunes que causan ambigüedad
+                ...(location.toLowerCase().includes('manchester') && !location.toLowerCase().includes('usa') && !location.toLowerCase().includes('new hampshire')
+                    ? { searchMatching: 'google' } : {})
             };
 
             console.log(`🚀 Starting: "${searchQuery}" in ${location}`);

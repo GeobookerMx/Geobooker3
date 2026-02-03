@@ -137,7 +137,9 @@ const ApifyScraper = () => {
         },
         {
             continent: '🇪🇺 Europa', cities: [
-                'Madrid, España', 'Barcelona, España', 'London, UK', 'Paris, France',
+                'Madrid, España', 'Barcelona, España', 'London, UK', 'Manchester, UK',
+                'Birmingham, UK', 'Leeds, UK', 'Edinburgh, UK', 'Glasgow, UK',
+                'Bristol, UK', 'Liverpool, UK', 'Paris, France',
                 'Berlin, Germany', 'Rome, Italy', 'Amsterdam, Netherlands', 'Lisbon, Portugal',
                 'Vienna, Austria', 'Prague, Czech Republic', 'Dublin, Ireland'
             ]

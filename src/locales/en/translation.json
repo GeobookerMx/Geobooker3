@@ -277,5 +277,48 @@
         "needApp": "Need your own App?",
         "appDevDesc": "We develop custom web and mobile apps.",
         "requestQuote": "Request a quote"
+    },
+    "ads": {
+        "sponsored": "Sponsored",
+        "adBy": "Ad by",
+        "viewMore": "View more",
+        "reportAd": "Report ad",
+        "discoverBusinesses": "Discover Local Businesses",
+        "specialOffer": "Special Offer",
+        "learnMore": "Learn more",
+        "shopNow": "Shop now",
+        "getStarted": "Get Started"
+    },
+    "internationalCategories": {
+        "usa": {
+            "barbershop": "Barbershop",
+            "pharmacy": "Pharmacy",
+            "grocery": "Grocery Store",
+            "gas_station": "Gas Station",
+            "auto_repair": "Auto Repair",
+            "laundromat": "Laundromat",
+            "nail_salon": "Nail Salon",
+            "dentist": "Dentist",
+            "urgent_care": "Urgent Care",
+            "pizza": "Pizza",
+            "taco_shop": "Taco Shop",
+            "coffee_shop": "Coffee Shop"
+        },
+        "uk": {
+            "chemist": "Chemist",
+            "takeaway": "Takeaway",
+            "off_licence": "Off-Licence",
+            "chippy": "Fish and Chips",
+            "newsagent": "Newsagent",
+            "estate_agent": "Estate Agent",
+            "surgery": "GP Surgery"
+        },
+        "canada": {
+            "depanneur": "Dépanneur",
+            "lcbo": "Liquor Store",
+            "tim_hortons": "Coffee Shop",
+            "poutine": "Poutine",
+            "dispensary": "Cannabis Dispensary"
+        }
     }
 }

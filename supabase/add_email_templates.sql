@@ -35,7 +35,7 @@ VALUES (
             </ul>
           </div>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://geobooker.com.mx/enterprise" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-weight: bold; font-size: 16px;">
+            <a href="mailto:ventasgeobooker@gmail.com?subject=Reunión%20Ejecutiva%20-%20{company_name}&body=Hola%20equipo%20Geobooker%2C%0A%0AMe%20interesa%20agendar%20una%20reunión%20ejecutiva%20para%20conocer%20más%20sobre%20Geobooker%20Premium.%0A%0ASaludos" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-weight: bold; font-size: 16px;">
               Agendar Reunión Ejecutiva
             </a>
           </div>

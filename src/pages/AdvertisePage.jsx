@@ -113,11 +113,12 @@ const PROMO_CONFIG = {
  * Helper para formatear el precio visible al usuario
  * - Para Resultados Patrocinados usamos la descripción PPC
  * - Para el resto usamos price_monthly con descuento de lanzamiento
+ * - Todos los precios muestran +IVA
  */
 function getPricingLabel(space) {
   const meta = AD_SPACE_META[space.name];
   if (meta?.pricingLabel) {
-    return { display: meta.pricingLabel, original: null, hasDiscount: false };
+    return { display: meta.pricingLabel + " +IVA", original: null, hasDiscount: false };
   }
 
   const price = Number(space.price_monthly || 0);
@@ -126,14 +127,14 @@ function getPricingLabel(space) {
   if (PROMO_CONFIG.isActive()) {
     const discountedPrice = Math.round(price * (1 - PROMO_CONFIG.discountPercent / 100));
     return {
-      display: `$${discountedPrice.toLocaleString("es-MX")} MXN / mes`,
+      display: `$${discountedPrice.toLocaleString("es-MX")} MXN / mes +IVA`,
       original: `$${price.toLocaleString("es-MX")} MXN`,
       hasDiscount: true,
       discountPercent: PROMO_CONFIG.discountPercent
     };
   }
 
-  return { display: `$${price.toLocaleString("es-MX")} MXN / mes`, original: null, hasDiscount: false };
+  return { display: `$${price.toLocaleString("es-MX")} MXN / mes +IVA`, original: null, hasDiscount: false };
 }
 
 /**

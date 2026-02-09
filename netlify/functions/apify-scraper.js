@@ -83,7 +83,39 @@ export async function handler(event) {
             if (!startRes.ok) {
                 const err = await startRes.text();
                 console.error('Apify start error:', err);
-                return { statusCode: 500, headers, body: JSON.stringify({ error: 'Error iniciando actor', details: err }) };
+                console.error('Apify status code:', startRes.status);
+                console.error('Apify actor:', ACTOR_ID);
+
+                // Parsear error para dar mensaje más útil
+                let errorMessage = 'Error iniciando actor';
+                let errorDetails = err;
+
+                try {
+                    const errorJson = JSON.parse(err);
+                    if (errorJson.error?.message) {
+                        errorMessage = errorJson.error.message;
+                    }
+                    if (startRes.status === 401) {
+                        errorMessage = 'API Token inválido o expirado';
+                    } else if (startRes.status === 404) {
+                        errorMessage = 'Actor no encontrado. Verifica que compass~crawler-google-places existe.';
+                    } else if (startRes.status === 402) {
+                        errorMessage = 'Sin créditos en Apify. Recarga tu cuenta.';
+                    }
+                } catch (parseErr) {
+                    // Keep original error
+                }
+
+                return {
+                    statusCode: 500,
+                    headers,
+                    body: JSON.stringify({
+                        error: errorMessage,
+                        details: errorDetails,
+                        statusCode: startRes.status,
+                        actor: ACTOR_ID
+                    })
+                };
             }
 
             const runData = await startRes.json();

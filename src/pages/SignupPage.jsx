@@ -73,6 +73,19 @@ const SignupPage = () => {
             // ✅ TRACKEAR SIGNUP (NUEVO)
             if (data?.user?.id) {
                 trackUserSignup(data.user.id, 'email', { referralCode });
+
+                // 🌍 Guardar datos de registro internacional
+                const registrationDomain = window.location.hostname;
+                const preferredLanguage = registrationDomain.includes('.mx') ? 'es' : 'en';
+
+                await supabase.from('user_profiles').upsert({
+                    id: data.user.id,
+                    email: formData.email,
+                    full_name: formData.fullName,
+                    preferred_language: preferredLanguage,
+                    registration_domain: registrationDomain,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'id' });
             }
 
             // Enviar correo de bienvenida

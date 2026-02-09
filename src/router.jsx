@@ -92,6 +92,9 @@ const EnterpriseEdit = lazy(() => import("./pages/enterprise/EnterpriseEdit.jsx"
 const AdvertiserDashboard = lazy(() => import("./pages/advertiser/AdvertiserDashboard.jsx"));
 const OxxoPendingPage = lazy(() => import("./pages/OxxoPendingPage.jsx"));
 
+// International City Landing Pages
+const CityLandingPage = lazy(() => import("./pages/cities/CityLandingPage.jsx"));
+
 export default function AppRouter() {
   return (
     <Suspense fallback={<PageLoader />}>
@@ -117,6 +120,9 @@ export default function AppRouter() {
           <Route path="/c/:category/:subcategory" element={<HomePage />} />
           <Route path="/ciudad/:city" element={<HomePage />} />
           <Route path="/categories" element={<CategoriesPage />} />
+
+          {/* 🌍 International City Landing Pages (SEO USA/UK/CA) */}
+          <Route path="/cities/:citySlug" element={<CityLandingPage />} />
 
           {/* Página comercial de publicidad (SIN login) */}
           <Route path="/advertise" element={<AdvertisePage />} />

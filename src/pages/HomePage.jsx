@@ -37,6 +37,7 @@ import SEO from '../components/SEO';
 import ReferralFloatingWidget from '../components/referral/ReferralFloatingWidget';
 import ChristmasPromoModal from '../components/referral/ChristmasPromoModal';
 import AIRecommendations from '../components/recommendations/AIRecommendations';
+import { RecommendButton } from '../components/recommendations';
 // Guest search limit
 import { useGuestSearchLimit } from '../hooks/useGuestSearchLimit';
 import GuestLoginPromptModal from '../components/modals/GuestLoginPromptModal';
@@ -913,6 +914,9 @@ const HomePage = () => {
 
       {/* Floating Referral Widget - Gamified */}
       <ReferralFloatingWidget />
+
+      {/* Botón flotante para recomendar negocios */}
+      <RecommendButton userLocation={userLocation} />
 
       {/* Christmas Promo Modal - Seasonal */}
       <ChristmasPromoModal />

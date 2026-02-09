@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 
 <head>
   <meta charset="UTF-8" />
@@ -204,7 +204,18 @@
     })(window, document, "clarity", "script", "v1j8dut5lg");
   </script>
 
-  <title>Geobooker - El mejor buscador de negocios en el mundo, cerca de ti</title>
+  <title>Geobooker - Find Local Businesses Near You</title>
+
+  <!-- Dynamic language detection script -->
+  <script>
+    (function () {
+      var isEnglish = window.location.hostname.endsWith('geobooker.com') && !window.location.hostname.includes('.mx');
+      document.documentElement.lang = isEnglish ? 'en' : 'es';
+      document.title = isEnglish
+        ? 'Geobooker - Find Local Businesses Near You'
+        : 'Geobooker - Encuentra Negocios Cerca de Ti';
+    })();
+  </script>
 </head>
 
 <body>
@@ -214,7 +225,13 @@
       <div
         style="width: 40px; height: 40px; border: 3px solid #f3f4f6; border-top: 3px solid #5558c4; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;">
       </div>
-      <p style="color: #64748b; font-size: 0.9rem;">Cargando Geobooker...</p>
+      <p id="loading-text" style="color: #64748b; font-size: 0.9rem;">Loading Geobooker...</p>
+      <script>
+        (function () {
+          var isEnglish = window.location.hostname.endsWith('geobooker.com') && !window.location.hostname.includes('.mx');
+          document.getElementById('loading-text').textContent = isEnglish ? 'Loading Geobooker...' : 'Cargando Geobooker...';
+        })();
+      </script>
     </div>
   </div>
 

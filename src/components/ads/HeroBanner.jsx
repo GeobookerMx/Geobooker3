@@ -1,5 +1,6 @@
 // src/components/ads/HeroBanner.jsx
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import useActiveCampaigns from '../../hooks/useActiveCampaigns';
 import useAdTracking from '../../hooks/useAdTracking';
 import { loadEnterpriseCampaigns } from '../../services/adService';
@@ -13,6 +14,7 @@ import ReportAdButton from './ReportAdButton';
  * Si no hay campañas, muestra placeholder de Geobooker
  */
 export default function HeroBanner() {
+    const { t } = useTranslation();
     const [enterpriseCampaigns, setEnterpriseCampaigns] = useState([]);
     const [enterpriseIndex, setEnterpriseIndex] = useState(0);
 
@@ -121,15 +123,15 @@ export default function HeroBanner() {
                                     )}
                                 </div>
                                 <button className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors">
-                                    {creative.cta_text || 'Ver más'}
+                                    {creative.cta_text || t('ads.viewMore')}
                                 </button>
                             </div>
                         </div>
                     )}
 
-                    {/* Badge "Publicidad" */}
+                    {/* Badge "Publicidad" / "Sponsored" */}
                     <span className="absolute top-2 right-2 bg-gray-900/80 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full">
-                        Publicidad
+                        {t('ads.sponsored')}
                     </span>
 
                     {/* Indicadores de rotación (si hay múltiples campañas) */}
@@ -156,7 +158,7 @@ export default function HeroBanner() {
                 {/* Información del anunciante (solo en hover en desktop) */}
                 <div className="hidden md:flex mt-2 items-center justify-center gap-4">
                     <p className="text-xs text-gray-500">
-                        Anuncio de {currentCampaign.advertiser_name}
+                        {t('ads.adBy')} {currentCampaign.advertiser_name}
                     </p>
                     <ReportAdButton
                         campaignId={currentCampaign.id}

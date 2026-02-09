@@ -277,5 +277,48 @@
         "needApp": "¿Necesitas tu propia App?",
         "appDevDesc": "Desarrollamos apps web y móviles personalizadas.",
         "requestQuote": "Solicitar cotización"
+    },
+    "ads": {
+        "sponsored": "Publicidad",
+        "adBy": "Anuncio de",
+        "viewMore": "Ver más",
+        "reportAd": "Reportar anuncio",
+        "discoverBusinesses": "Descubre Negocios Locales",
+        "specialOffer": "Oferta Especial",
+        "learnMore": "Más información",
+        "shopNow": "Comprar ahora",
+        "getStarted": "Comenzar"
+    },
+    "internationalCategories": {
+        "usa": {
+            "barbershop": "Barbería",
+            "pharmacy": "Farmacia",
+            "grocery": "Tienda de abarrotes",
+            "gas_station": "Gasolinera",
+            "auto_repair": "Taller mecánico",
+            "laundromat": "Lavandería autoservicio",
+            "nail_salon": "Salón de uñas",
+            "dentist": "Dentista",
+            "urgent_care": "Clínica de urgencias",
+            "pizza": "Pizzería",
+            "taco_shop": "Taquería",
+            "coffee_shop": "Cafetería"
+        },
+        "uk": {
+            "chemist": "Farmacia (UK)",
+            "takeaway": "Comida para llevar",
+            "off_licence": "Licorería",
+            "chippy": "Fish and chips",
+            "newsagent": "Tienda de periódicos",
+            "estate_agent": "Agencia inmobiliaria",
+            "surgery": "Consultorio médico"
+        },
+        "canada": {
+            "depanneur": "Tienda de conveniencia (Quebec)",
+            "lcbo": "Tienda de licores",
+            "tim_hortons": "Cafetería",
+            "poutine": "Poutine",
+            "dispensary": "Dispensario cannabis"
+        }
     }
 }

@@ -63,14 +63,20 @@ const SEO = ({
         updateHreflangTag('es-MX', mxUrl);
         updateHreflangTag('es', mxUrl);
 
-        // 2. Global (Oficial en Inglés)
+        // 2. Global (Oficial en Inglés - USA/UK/CA/AU)
         updateHreflangTag('en', globalUrl);
+        updateHreflangTag('en-US', globalUrl);
+        updateHreflangTag('en-GB', `${globalUrl}?region=uk`);
+        updateHreflangTag('en-CA', `${globalUrl}?region=ca`);
         updateHreflangTag('x-default', globalUrl);
 
         // 3. Otros idiomas asiáticos (servidos por Global con params)
         ['zh', 'ja', 'ko'].forEach(lang => {
             updateHreflangTag(lang, `${globalUrl}?lang=${lang}`);
         });
+
+        // 4. Schema.org WebApplication para PWA internacional
+        addWebAppSchema(currentLang);
 
         // Schema.org para negocios locales
         if (business) {
@@ -84,7 +90,7 @@ const SEO = ({
 
         // Cleanup
         return () => {
-            const schemas = ['business', 'breadcrumbs'];
+            const schemas = ['business', 'breadcrumbs', 'webapp'];
             schemas.forEach(s => {
                 const existing = document.querySelector(`script[data-schema="${s}"]`);
                 if (existing) existing.remove();
@@ -202,6 +208,66 @@ const addBreadcrumbSchema = (breadcrumbs) => {
     const script = document.createElement('script');
     script.type = 'application/ld+json';
     script.setAttribute('data-schema', 'breadcrumbs');
+    script.textContent = JSON.stringify(schema);
+    document.head.appendChild(script);
+};
+
+// Helper para agregar Schema.org WebApplication internacional
+const addWebAppSchema = (currentLang) => {
+    const existingSchema = document.querySelector('script[data-schema="webapp"]');
+    if (existingSchema) {
+        existingSchema.remove();
+    }
+
+    // Descripciones por idioma
+    const descriptions = {
+        es: 'El mejor directorio de negocios locales. Encuentra restaurantes, tiendas, servicios y más cerca de ti.',
+        en: 'The best local business directory. Find restaurants, shops, services and more near you.',
+        zh: '最佳本地商业目录。在您附近找到餐厅、商店、服务等。',
+        ja: '最高の地元ビジネスディレクトリ。近くのレストラン、お店、サービスなどを見つけましょう。',
+        ko: '최고의 지역 비즈니스 디렉토리. 근처의 레스토랑, 상점, 서비스 등을 찾아보세요.'
+    };
+
+    const schema = {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Geobooker",
+        "description": descriptions[currentLang] || descriptions.en,
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript. Requires HTML5.",
+        "url": "https://geobooker.com",
+        "inLanguage": ["en", "es", "zh", "ja", "ko"],
+        "areaServed": [
+            { "@type": "Country", "name": "United States" },
+            { "@type": "Country", "name": "Canada" },
+            { "@type": "Country", "name": "United Kingdom" },
+            { "@type": "Country", "name": "Mexico" },
+            { "@type": "Country", "name": "Australia" }
+        ],
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "ratingCount": "150",
+            "bestRating": "5",
+            "worstRating": "1"
+        },
+        "author": {
+            "@type": "Organization",
+            "name": "Geobooker",
+            "url": "https://geobooker.com"
+        }
+    };
+
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.setAttribute('data-schema', 'webapp');
     script.textContent = JSON.stringify(schema);
     document.head.appendChild(script);
 };

@@ -39,8 +39,29 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  const signUp = async (email, password) => {
+  const signUp = async (email, password, fullName = '') => {
     const { data, error } = await supabase.auth.signUp({ email, password });
+
+    // Si el registro fue exitoso, guardar datos de ubicación
+    if (data?.user && !error) {
+      try {
+        const registrationDomain = window.location.hostname;
+        const preferredLanguage = registrationDomain.includes('.mx') ? 'es' : 'en';
+
+        // Actualizar user_profiles con datos de registro
+        await supabase.from('user_profiles').upsert({
+          id: data.user.id,
+          email: email,
+          full_name: fullName,
+          preferred_language: preferredLanguage,
+          registration_domain: registrationDomain,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+      } catch (profileError) {
+        console.error('Error saving profile data:', profileError);
+      }
+    }
+
     return { data, error };
   };
 

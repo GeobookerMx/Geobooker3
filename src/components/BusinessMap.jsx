@@ -56,6 +56,17 @@ const PREMIUM_ICON = {
   anchor: { x: 12, y: 12 }
 };
 
+// ✅ Icono RECOMENDADO POR USUARIOS - Paloma verde con checkmark
+const RECOMMENDED_ICON = {
+  path: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z', // Checkmark
+  fillColor: '#22C55E', // Verde esmeralda
+  fillOpacity: 1,
+  strokeColor: '#16A34A', // Verde más oscuro
+  strokeWeight: 2,
+  scale: 2.2,
+  anchor: { x: 12, y: 12 }
+};
+
 // 🎨 ICONOS POR CATEGORÍA (Para negocios nativos de Geobooker)
 // Cada categoría tiene un color y símbolo distintivo
 const CATEGORY_ICONS = {

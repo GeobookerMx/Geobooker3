@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { trackUserLogin } from '../services/analyticsService';
 
 const AuthCallback = () => {
     const navigate = useNavigate();
@@ -37,6 +38,27 @@ const AuthCallback = () => {
 
                 if (session) {
                     setStatus('success');
+
+                    // ✅ TRACKEAR OAuth LOGIN - Registrar en user_sessions
+                    const provider = session.user?.app_metadata?.provider || 'oauth';
+                    trackUserLogin(session.user.id, provider);
+
+                    // 🌍 Guardar datos de registro internacional para usuarios OAuth
+                    try {
+                        const registrationDomain = window.location.hostname;
+                        const preferredLanguage = registrationDomain.includes('.mx') ? 'es' : 'en';
+
+                        await supabase.from('user_profiles').upsert({
+                            id: session.user.id,
+                            email: session.user.email,
+                            full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
+                            preferred_language: preferredLanguage,
+                            registration_domain: registrationDomain,
+                            updated_at: new Date().toISOString()
+                        }, { onConflict: 'id', ignoreDuplicates: false });
+                    } catch (profileErr) {
+                        console.warn('Error saving profile for OAuth user:', profileErr);
+                    }
 
                     // Track OAuth login in internal analytics
                     try {

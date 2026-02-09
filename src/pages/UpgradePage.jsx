@@ -5,6 +5,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import OxxoVoucher from '../components/payment/OxxoVoucher';
+import { formatPrice, getCurrencyConfig } from '../utils/currencyUtils';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -18,7 +19,7 @@ const UpgradePage = () => {
 
     // Configuración de lanzamiento
     const LAUNCH_CONFIG = {
-        regularPrice: 299,
+        regularPrice: getCurrencyConfig().code === 'MXN' ? 299 : 14.99,
         launchPrice: 0, // GRATIS por 3 meses
         monthsFree: 3,
         spotsLeft: 4847, // De 5,000 totales
@@ -258,7 +259,7 @@ const UpgradePage = () => {
                             {LAUNCH_CONFIG.isLaunchActive ? (
                                 <>
                                     <div className="flex items-center justify-center gap-3">
-                                        <span className="text-2xl text-white/60 line-through">${LAUNCH_CONFIG.regularPrice}/mes</span>
+                                        <span className="text-2xl text-white/60 line-through">{formatPrice(299)}/mes</span>
                                         <span className="text-5xl font-bold">¡GRATIS!</span>
                                     </div>
                                     <p className="text-pink-200">por {LAUNCH_CONFIG.monthsFree} meses</p>
@@ -266,7 +267,7 @@ const UpgradePage = () => {
                                         🎉 OFERTA DE LANZAMIENTO
                                     </div>
                                     <p className="text-xs text-pink-200 mt-2">
-                                        Después solo ${LAUNCH_CONFIG.regularPrice} MXN/mes • Quedan {LAUNCH_CONFIG.spotsLeft.toLocaleString()} lugares
+                                        Después solo {formatPrice(299)} • Quedan {LAUNCH_CONFIG.spotsLeft.toLocaleString()} lugares
                                     </p>
                                 </>
                             ) : (
@@ -396,7 +397,7 @@ const UpgradePage = () => {
                     <div className="space-y-4">
                         <details className="bg-white rounded-lg shadow-md p-6">
                             <summary className="font-bold text-lg cursor-pointer">¿Realmente son 3 meses GRATIS?</summary>
-                            <p className="text-gray-600 mt-2">¡Sí! Los primeros {LAUNCH_CONFIG.totalSpots.toLocaleString()} negocios que se registren obtienen Premium gratis por 3 meses. Después de ese periodo, puedes continuar por ${LAUNCH_CONFIG.regularPrice}/mes o cancelar sin costo.</p>
+                            <p className="text-gray-600 mt-2">¡Sí! Los primeros {LAUNCH_CONFIG.totalSpots.toLocaleString()} negocios que se registren obtienen Premium gratis por 3 meses. Después de ese periodo, puedes continuar por {formatPrice(299)} o cancelar sin costo.</p>
                         </details>
                         <details className="bg-white rounded-lg shadow-md p-6">
                             <summary className="font-bold text-lg cursor-pointer">¿Cuántos negocios puedo registrar?</summary>

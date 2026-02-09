@@ -28,7 +28,9 @@ function PageTracker() {
   return null;
 }
 
-// Component to initialize app (cache clearing, analytics)
+// Component to initialize app (cache clearing, analytics, geo)
+import { detectUserCountry } from "./services/geoLocationService";
+
 function AppInitializer() {
   useEffect(() => {
     // 1. Verificar versión y limpiar caché si es necesario
@@ -37,6 +39,17 @@ function AppInitializer() {
     // 2. Inicializar GA4
     initializeGA4();
     trackSessionStart(false);
+
+    // 3. Detectar país por IP para moneda y SEO (Background)
+    const initGeo = async () => {
+      const geoData = await detectUserCountry();
+      if (geoData) {
+        localStorage.setItem('userCountryCode', geoData.country);
+        localStorage.setItem('userCountryName', geoData.countryName);
+        localStorage.setItem('userCity', geoData.city);
+      }
+    };
+    initGeo();
   }, []);
   return null;
 }

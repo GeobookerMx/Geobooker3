@@ -47,6 +47,11 @@ export default function DashboardHome() {
   const [topSearches, setTopSearches] = useState([]);
   const [deviceBreakdown, setDeviceBreakdown] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
+  const [intlStats, setIntlStats] = useState({
+    byCountry: [],
+    intlCount: 0,
+    byDomain: []
+  });
 
   useEffect(() => {
     loadDashboardData();
@@ -110,6 +115,22 @@ export default function DashboardHome() {
       });
 
       setRecentActivity(recentCampaigns || []);
+
+      // Cargar estadísticas internacionales
+      try {
+        const { data: countryStats } = await supabase.rpc('get_users_by_country');
+        const { data: domainStats } = await supabase.from('v_users_by_domain').select('*');
+
+        const intlCount = countryStats?.filter(c => c.country_code !== 'MX').reduce((sum, c) => sum + parseInt(c.user_count), 0) || 0;
+
+        setIntlStats({
+          byCountry: countryStats || [],
+          intlCount: intlCount,
+          byDomain: domainStats || []
+        });
+      } catch (intlError) {
+        console.warn('Error loading international stats:', intlError);
+      }
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       setStats(prev => ({ ...prev, loading: false }));
@@ -182,6 +203,13 @@ export default function DashboardHome() {
           color="orange"
           link="/admin/revenue"
         />
+        <KPICard
+          title="Usuarios Internacionales"
+          value={intlStats.intlCount.toLocaleString()}
+          icon={Globe}
+          color="indigo"
+          link="/admin/users"
+        />
       </div>
 
       {/* Analytics KPIs - Tráfico en tiempo real */}
@@ -216,37 +244,44 @@ export default function DashboardHome() {
 
       {/* Dispositivos y Búsquedas Populares */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Dispositivos */}
+        {/* Registros por País */}
         <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Smartphone className="w-5 h-5 text-purple-600" />
-            Dispositivos
+            <Globe className="w-5 h-5 text-indigo-600" />
+            Registros por País
           </h3>
           <div className="space-y-3">
-            {deviceBreakdown.length === 0 ? (
+            {intlStats.byCountry.length === 0 ? (
               <p className="text-gray-500 text-sm">Sin datos aún</p>
             ) : (
-              deviceBreakdown.map(item => (
-                <div key={item.device} className="flex items-center justify-between">
+              intlStats.byCountry.map(item => (
+                <div key={item.country_code} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    {item.device === 'mobile' && <Smartphone className="w-4 h-4 text-blue-500" />}
-                    {item.device === 'desktop' && <Monitor className="w-4 h-4 text-green-500" />}
-                    {item.device === 'tablet' && <Smartphone className="w-4 h-4 text-orange-500" />}
-                    <span className="capitalize text-gray-700">{item.device}</span>
+                    <span className="text-xl">{item.country_code === 'MX' ? '🇲🇽' : item.country_code === 'US' ? '🇺🇸' : item.country_code === 'CA' ? '🇨🇦' : item.country_code === 'GB' ? '🇬🇧' : '🌍'}</span>
+                    <span className="text-gray-700 font-medium">{item.country_name}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded-full"
-                        style={{ width: `${item.percentage}%` }}
-                      />
-                    </div>
-                    <span className="text-sm text-gray-600 w-12 text-right">{item.percentage}%</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-gray-900">{item.user_count}</span>
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{item.percentage}%</span>
                   </div>
                 </div>
               ))
             )}
           </div>
+
+          {intlStats.byDomain.length > 0 && (
+            <div className="mt-6 pt-4 border-t border-gray-100">
+              <p className="text-xs font-semibold text-gray-400 uppercase mb-3 text-center">Registros por Dominio</p>
+              <div className="flex justify-around">
+                {intlStats.byDomain.map(d => (
+                  <div key={d.registration_domain} className="text-center">
+                    <p className="text-sm font-bold text-gray-800">{d.total_users}</p>
+                    <p className="text-[10px] text-gray-500">{d.registration_domain}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Búsquedas Populares */}

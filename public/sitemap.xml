@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  
+  <!-- Homepage -->
+  <url>
+    <loc>https://geobooker.com/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geobooker.com/"/>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <url>
+    <loc>https://geobooker.com.mx/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geobooker.com/"/>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Categories -->
+  <url>
+    <loc>https://geobooker.com/categories</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/categories"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/categories"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Enterprise -->
+  <url>
+    <loc>https://geobooker.com/enterprise</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/enterprise"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/enterprise"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Advertise -->
+  <url>
+    <loc>https://geobooker.com/advertise</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/advertise"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/advertise"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Business Registration -->
+  <url>
+    <loc>https://geobooker.com/business/register</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/business/register"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/business/register"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- About -->
+  <url>
+    <loc>https://geobooker.com/about</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/about"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/about"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Community -->
+  <url>
+    <loc>https://geobooker.com/community</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/community"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/comunidad"/>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- City Landing Pages (USA) -->
+  <url>
+    <loc>https://geobooker.com/cities/los-angeles</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geobooker.com/cities/new-york</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geobooker.com/cities/houston</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geobooker.com/cities/miami</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- City Landing Pages (UK) -->
+  <url>
+    <loc>https://geobooker.com/cities/london</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geobooker.com/cities/manchester</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- City Landing Pages (Canada) -->
+  <url>
+    <loc>https://geobooker.com/cities/toronto</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geobooker.com/cities/vancouver</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Legal Pages -->
+  <url>
+    <loc>https://geobooker.com/privacy</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://geobooker.com/terms</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://geobooker.com/faq</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- Download App -->
+  <url>
+    <loc>https://geobooker.com/download</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/download"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/download"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+</urlset>

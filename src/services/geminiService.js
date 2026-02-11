@@ -98,16 +98,21 @@ export async function sendMessageToGemini(userMessage, conversationHistory = [])
     }
 
     try {
+        // Detectar contexto actual
+        const hostname = typeof window !== 'undefined' ? window.location.hostname : 'geobooker.com.mx';
+        const isGlobal = hostname.endsWith('geobooker.com');
+        const currentLang = localStorage.getItem('language') || (isGlobal ? 'en' : 'es');
+
         // Construir el contenido de la conversación
         const contents = [
             // Sistema (contexto inicial)
             {
                 role: 'user',
-                parts: [{ text: SYSTEM_CONTEXT }]
+                parts: [{ text: `${SYSTEM_CONTEXT}\n\n[CONTEXTO ACTUAL]: El usuario está navegando en ${hostname}. Su idioma preferido es ${currentLang}. ${isGlobal ? 'Prioriza respuestas en INGLÉS.' : 'Prioriza respuestas en ESPAÑOL.'}` }]
             },
             {
                 role: 'model',
-                parts: [{ text: '¡Hola! Soy el asistente de Geobooker. ¿En qué puedo ayudarte hoy? 🌟' }]
+                parts: [{ text: isGlobal ? 'Hello! I am the Geobooker assistant. How can I help you today? 🌟' : '¡Hola! Soy el asistente de Geobooker. ¿En qué puedo ayudarte hoy? 🌟' }]
             },
             // Historial de conversación
             ...conversationHistory.map(msg => ({
@@ -178,22 +183,10 @@ export async function sendMessageToGemini(userMessage, conversationHistory = [])
     }
 }
 
-/**
- * Respuestas rápidas sugeridas basadas en el contexto
+/** 
+ * Las respuestas rápidas ahora se manejan desde ChatWidget.jsx para soportar i18n dinámico
  */
 export const QUICK_REPLIES = {
-    business: [
-        '¿Cómo registro mi negocio?',
-        '¿Cuánto cuesta Premium? ¿Hay promoción?',
-        '¿Cómo puedo publicitar mi negocio?',
-        '¿Dan factura?',
-        '¿Puedo pagar en OXXO?'
-    ],
-    customer: [
-        '¿Cómo busco negocios cercanos?',
-        '¿Cómo funciona Geobooker?',
-        '¿Qué es la promoción 70% OFF?',
-        '¿Cómo contacto un negocio?',
-        'Tengo un problema con la app'
-    ]
+    business: [],
+    customer: []
 };

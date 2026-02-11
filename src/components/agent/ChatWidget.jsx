@@ -6,8 +6,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Loader2, Bot, User, Sparkles } from 'lucide-react';
 import { sendMessageToGemini, QUICK_REPLIES } from '../../services/geminiService';
+import { useTranslation } from 'react-i18next';
 
 export default function ChatWidget() {
+    const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState('');
@@ -16,13 +18,31 @@ export default function ChatWidget() {
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
 
+    // Respuestas rápidas dinámicas
+    const TRANSLATED_QUICK_REPLIES = {
+        business: [
+            t('chat.qr.register'),
+            t('chat.qr.premium'),
+            t('chat.qr.advertise'),
+            t('chat.qr.invoicing'),
+            t('chat.qr.oxxo')
+        ],
+        customer: [
+            t('chat.qr.search'),
+            t('chat.qr.howItWorks'),
+            t('chat.qr.promo'),
+            t('chat.qr.contact'),
+            t('chat.qr.problem')
+        ]
+    };
+
     // Mensaje inicial de bienvenida
     useEffect(() => {
         if (isOpen && messages.length === 0) {
             setMessages([{
                 id: 'welcome',
                 role: 'assistant',
-                content: '¡Hola! 👋 Soy el asistente virtual de Geobooker. ¿En qué puedo ayudarte hoy?',
+                content: t('chat.welcome'),
                 timestamp: new Date()
             }]);
         }
@@ -71,7 +91,7 @@ export default function ChatWidget() {
                 role: 'assistant',
                 content: result.success
                     ? result.response
-                    : result.error || 'Lo siento, hubo un error. Intenta de nuevo.',
+                    : result.error || t('chat.error'),
                 timestamp: new Date(),
                 isError: !result.success
             };
@@ -82,7 +102,7 @@ export default function ChatWidget() {
             setMessages(prev => [...prev, {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
-                content: 'Lo siento, hubo un problema de conexión. Intenta de nuevo.',
+                content: t('chat.connError'),
                 timestamp: new Date(),
                 isError: true
             }]);
@@ -109,7 +129,7 @@ export default function ChatWidget() {
                 <button
                     onClick={() => setIsOpen(true)}
                     className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-2xl hover:shadow-blue-500/30 hover:scale-110 transition-all duration-300 flex items-center justify-center group"
-                    aria-label="Abrir asistente"
+                    aria-label={t('chat.openAssistant')}
                 >
                     <MessageCircle className="w-7 h-7 group-hover:hidden" />
                     <Sparkles className="w-7 h-7 hidden group-hover:block animate-pulse" />
@@ -130,17 +150,17 @@ export default function ChatWidget() {
                                 <Bot className="w-6 h-6" />
                             </div>
                             <div>
-                                <h3 className="font-bold text-sm">Asistente Geobooker</h3>
+                                <h3 className="font-bold text-sm">{t('chat.title')}</h3>
                                 <p className="text-xs text-blue-100 flex items-center">
                                     <span className="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></span>
-                                    En línea
+                                    {t('chat.online')}
                                 </p>
                             </div>
                         </div>
                         <button
                             onClick={() => setIsOpen(false)}
                             className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                            aria-label="Cerrar chat"
+                            aria-label={t('common.close')}
                         >
                             <X className="w-5 h-5" />
                         </button>
@@ -156,18 +176,18 @@ export default function ChatWidget() {
                                 <div className={`flex items-start space-x-2 max-w-[85%] ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
                                     {/* Avatar */}
                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${message.role === 'user'
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
                                         }`}>
                                         {message.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                                     </div>
 
                                     {/* Bubble */}
                                     <div className={`rounded-2xl px-4 py-2 ${message.role === 'user'
-                                            ? 'bg-blue-600 text-white rounded-br-sm'
-                                            : message.isError
-                                                ? 'bg-red-50 text-red-700 border border-red-200 rounded-bl-sm'
-                                                : 'bg-white text-gray-800 shadow-sm border border-gray-100 rounded-bl-sm'
+                                        ? 'bg-blue-600 text-white rounded-br-sm'
+                                        : message.isError
+                                            ? 'bg-red-50 text-red-700 border border-red-200 rounded-bl-sm'
+                                            : 'bg-white text-gray-800 shadow-sm border border-gray-100 rounded-bl-sm'
                                         }`}>
                                         <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                                     </div>
@@ -196,9 +216,9 @@ export default function ChatWidget() {
                         {/* Quick replies */}
                         {showQuickReplies && messages.length <= 1 && (
                             <div className="space-y-2">
-                                <p className="text-xs text-gray-500 text-center">Preguntas frecuentes:</p>
+                                <p className="text-xs text-gray-500 text-center">{t('common.frequentQuestions') || 'FAQ:'}</p>
                                 <div className="flex flex-wrap gap-2 justify-center">
-                                    {[...QUICK_REPLIES.business.slice(0, 2), ...QUICK_REPLIES.customer.slice(0, 2)].map((reply, index) => (
+                                    {[...TRANSLATED_QUICK_REPLIES.business.slice(0, 2), ...TRANSLATED_QUICK_REPLIES.customer.slice(0, 2)].map((reply, index) => (
                                         <button
                                             key={index}
                                             onClick={() => handleQuickReply(reply)}
@@ -223,7 +243,7 @@ export default function ChatWidget() {
                                 value={inputValue}
                                 onChange={(e) => setInputValue(e.target.value)}
                                 onKeyPress={handleKeyPress}
-                                placeholder="Escribe tu mensaje..."
+                                placeholder={t('chat.placeholder')}
                                 className="flex-1 px-4 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 disabled={isLoading}
                             />
@@ -240,7 +260,7 @@ export default function ChatWidget() {
                             </button>
                         </div>
                         <p className="text-center text-xs text-gray-400 mt-2">
-                            Potenciado por AI 🤖
+                            {t('chat.poweredBy')}
                         </p>
                     </div>
                 </div>

@@ -320,5 +320,36 @@
             "poutine": "Poutine",
             "dispensary": "Cannabis Dispensary"
         }
+    },
+    "chat": {
+        "welcome": "Hello! 👋 I am the Geobooker virtual assistant. How can I help you today?",
+        "placeholder": "Type your message...",
+        "title": "Geobooker Assistant",
+        "online": "Online",
+        "poweredBy": "AI Powered 🤖",
+        "error": "Sorry, there was an error. Please try again.",
+        "connError": "Sorry, there was a connection problem. Please try again.",
+        "openAssistant": "Open assistant",
+        "qr": {
+            "register": "How do I register my business?",
+            "premium": "How much does Premium cost?",
+            "advertise": "How can I advertise my brand?",
+            "invoicing": "Do you provide invoices?",
+            "oxxo": "Can I pay with cash?",
+            "search": "How do I search for businesses?",
+            "howItWorks": "How does Geobooker work?",
+            "promo": "What is the 70% OFF promo?",
+            "contact": "How do I contact a business?",
+            "problem": "I have a problem"
+        }
+    },
+    "recommendations": {
+        "title": "Geobookers recommend",
+        "prompt": "Would you like to recommend a business?",
+        "subtitle": "Share your favorite places with the community",
+        "cta": "Recommend now",
+        "tooltip": "Recommend a business you visited",
+        "success": "Thank you for your recommendation! It will be reviewed soon.",
+        "limitReached": "You have reached your recommendation limit for today."
     }
 }

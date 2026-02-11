@@ -11,33 +11,35 @@ import {
     Filter, RefreshCw, Eye, MapPin, Phone, Calendar,
     MessageSquare, ChevronDown, ExternalLink
 } from 'lucide-react';
-
-// Razones de reporte traducidas
-const REASON_LABELS = {
-    closed: '🚪 Cerrado permanentemente',
-    wrong_phone: '📞 Teléfono incorrecto',
-    wrong_address: '📍 Dirección incorrecta',
-    wrong_hours: '🕒 Horarios incorrectos',
-    wrong_name: '🏷️ Nombre incorrecto',
-    spam: '⚠️ Spam / Fraude',
-    other: '❓ Otro problema'
-};
-
-// Estados de reportes
-const STATUS_CONFIG = {
-    pending: { label: 'Pendiente', color: 'yellow', icon: Clock },
-    reviewed: { label: 'En revisión', color: 'blue', icon: Eye },
-    fixed: { label: 'Resuelto', color: 'green', icon: CheckCircle },
-    rejected: { label: 'Rechazado', color: 'red', icon: XCircle }
-};
+import { useTranslation } from 'react-i18next';
 
 export default function ReportsModeration() {
+    const { t } = useTranslation();
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('pending');
     const [selectedReport, setSelectedReport] = useState(null);
     const [resolutionNotes, setResolutionNotes] = useState('');
     const [processing, setProcessing] = useState(false);
+
+    // Razones de reporte traducidas
+    const REASON_LABELS = {
+        closed: '🚪 ' + t('report.reasons.closed', { defaultValue: 'Cerrado permanentemente' }),
+        wrong_phone: '📞 ' + t('report.reasons.wrong_phone', { defaultValue: 'Teléfono incorrecto' }),
+        wrong_address: '📍 ' + t('report.reasons.wrong_address', { defaultValue: 'Dirección incorrecta' }),
+        wrong_hours: '🕒 ' + t('report.reasons.wrong_hours', { defaultValue: 'Horarios incorrectos' }),
+        wrong_name: '🏷️ ' + t('report.reasons.wrong_name', { defaultValue: 'Nombre incorrecto' }),
+        spam: '⚠️ ' + t('report.reasons.spam'),
+        other: '❓ ' + t('report.reasons.other')
+    };
+
+    // Estados de reportes
+    const STATUS_CONFIG = {
+        pending: { label: t('admin.reports.stats.pending'), color: 'yellow', icon: Clock },
+        reviewed: { label: t('admin.reports.stats.reviewed'), color: 'blue', icon: Eye },
+        fixed: { label: t('admin.reports.stats.resolved'), color: 'green', icon: CheckCircle },
+        rejected: { label: t('admin.reports.stats.rejected'), color: 'red', icon: XCircle }
+    };
 
     useEffect(() => {
         fetchReports();
@@ -63,7 +65,7 @@ export default function ReportsModeration() {
             setReports(data || []);
         } catch (error) {
             console.error('Error fetching reports:', error);
-            toast.error('Error cargando reportes');
+            toast.error(t('report.error'));
         } finally {
             setLoading(false);
         }
@@ -88,13 +90,13 @@ export default function ReportsModeration() {
 
             if (error) throw error;
 
-            toast.success(`Reporte marcado como ${STATUS_CONFIG[newStatus].label}`);
+            toast.success(`${t('report.success')} (${STATUS_CONFIG[newStatus].label})`);
             setSelectedReport(null);
             setResolutionNotes('');
             fetchReports();
         } catch (error) {
             console.error('Error updating report:', error);
-            toast.error('Error actualizando reporte');
+            toast.error(t('report.error'));
         } finally {
             setProcessing(false);
         }
@@ -107,10 +109,10 @@ export default function ReportsModeration() {
         const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-        if (diffHours < 1) return 'Hace minutos';
-        if (diffHours < 24) return `Hace ${diffHours}h`;
-        if (diffDays === 1) return 'Ayer';
-        return `Hace ${diffDays} días`;
+        if (diffHours < 1) return t('common.now');
+        if (diffHours < 24) return `${diffHours}h`;
+        if (diffDays === 1) return t('common.yesterday', { defaultValue: 'Ayer' });
+        return `${diffDays}d`;
     };
 
     return (
@@ -120,10 +122,10 @@ export default function ReportsModeration() {
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <AlertTriangle className="w-8 h-8 text-orange-500" />
-                        Moderación de Reportes
+                        {t('admin.reports.title')}
                     </h1>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
-                        Revisa y resuelve reportes de información incorrecta
+                        {t('admin.reports.description')}
                     </p>
                 </div>
                 <button
@@ -131,7 +133,7 @@ export default function ReportsModeration() {
                     className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
                 >
                     <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                    Actualizar
+                    {t('admin.reports.actions.update')}
                 </button>
             </div>
 
@@ -145,8 +147,8 @@ export default function ReportsModeration() {
                             key={status}
                             onClick={() => setFilter(status)}
                             className={`p-4 rounded-xl border-2 transition-all ${filter === status
-                                    ? `border-${config.color}-500 bg-${config.color}-50`
-                                    : 'border-gray-200 hover:border-gray-300'
+                                ? `border-${config.color}-500 bg-${config.color}-50`
+                                : 'border-gray-200 hover:border-gray-300'
                                 }`}
                         >
                             <div className="flex items-center gap-2">
@@ -165,19 +167,19 @@ export default function ReportsModeration() {
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                     <h2 className="font-bold text-lg text-gray-800 dark:text-white">
-                        {filter === 'all' ? 'Todos los reportes' : `Reportes ${STATUS_CONFIG[filter]?.label}`} ({reports.length})
+                        {filter === 'all' ? t('admin.reports.stats.all') : `${t('admin.reports.title')} ${STATUS_CONFIG[filter]?.label}`} ({reports.length})
                     </h2>
                 </div>
 
                 {loading ? (
                     <div className="p-8 text-center text-gray-500">
                         <RefreshCw className="w-8 h-8 mx-auto animate-spin mb-2" />
-                        Cargando reportes...
+                        {t('common.loading')}
                     </div>
                 ) : reports.length === 0 ? (
                     <div className="p-8 text-center text-gray-500">
                         <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
-                        <p className="font-medium">¡No hay reportes pendientes!</p>
+                        <p className="font-medium">{t('common.noReviews', { defaultValue: 'No hay reportes pendientes' })}</p>
                     </div>
                 ) : (
                     <div className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -194,7 +196,7 @@ export default function ReportsModeration() {
                                             <div className="flex items-center gap-2 mb-1">
                                                 <StatusIcon className={`w-4 h-4 text-${STATUS_CONFIG[report.status]?.color}-600`} />
                                                 <span className="font-semibold text-gray-800 dark:text-white">
-                                                    {report.businesses?.name || 'Negocio eliminado'}
+                                                    {report.businesses?.name || t('common.deleted', { defaultValue: 'Eliminado' })}
                                                 </span>
                                                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium bg-${STATUS_CONFIG[report.status]?.color}-100 text-${STATUS_CONFIG[report.status]?.color}-700`}>
                                                     {STATUS_CONFIG[report.status]?.label}
@@ -226,7 +228,7 @@ export default function ReportsModeration() {
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-xl font-bold text-gray-800 dark:text-white">
-                                Detalle del Reporte
+                                {t('admin.reports.detail')}
                             </h3>
                             <button
                                 onClick={() => setSelectedReport(null)}
@@ -252,32 +254,32 @@ export default function ReportsModeration() {
                         {/* Report Details */}
                         <div className="space-y-3 mb-6">
                             <div>
-                                <span className="font-semibold text-gray-700 dark:text-gray-300">Motivo:</span>
+                                <span className="font-semibold text-gray-700 dark:text-gray-300">{t('report.reason')}:</span>
                                 <span className="ml-2">{REASON_LABELS[selectedReport.reason]}</span>
                             </div>
                             {selectedReport.details && (
                                 <div>
-                                    <span className="font-semibold text-gray-700 dark:text-gray-300">Detalles:</span>
+                                    <span className="font-semibold text-gray-700 dark:text-gray-300">{t('report.details')}:</span>
                                     <p className="mt-1 p-3 bg-gray-50 rounded-lg text-gray-700">
                                         {selectedReport.details}
                                     </p>
                                 </div>
                             )}
                             <div>
-                                <span className="font-semibold text-gray-700 dark:text-gray-300">Reportado:</span>
-                                <span className="ml-2">{new Date(selectedReport.created_at).toLocaleString('es-MX')}</span>
+                                <span className="font-semibold text-gray-700 dark:text-gray-300">{t('common.date', { defaultValue: 'Fecha' })}:</span>
+                                <span className="ml-2">{new Date(selectedReport.created_at).toLocaleString()}</span>
                             </div>
                         </div>
 
                         {/* Resolution Notes */}
                         <div className="mb-6">
                             <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                Notas de resolución:
+                                {t('admin.reports.notes')}:
                             </label>
                             <textarea
                                 value={resolutionNotes}
                                 onChange={(e) => setResolutionNotes(e.target.value)}
-                                placeholder="Describe qué acción tomaste..."
+                                placeholder={t('admin.reports.notesPlaceholder')}
                                 rows={3}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                             />
@@ -291,7 +293,7 @@ export default function ReportsModeration() {
                                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
                             >
                                 <CheckCircle className="w-4 h-4" />
-                                Marcar Resuelto
+                                {t('admin.reports.actions.resolve')}
                             </button>
                             <button
                                 onClick={() => updateReportStatus(selectedReport.id, 'rejected')}
@@ -299,13 +301,13 @@ export default function ReportsModeration() {
                                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
                             >
                                 <XCircle className="w-4 h-4" />
-                                Rechazar
+                                {t('admin.reports.actions.reject')}
                             </button>
                             <button
                                 onClick={() => setSelectedReport(null)}
                                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                             >
-                                Cancelar
+                                {t('common.cancel')}
                             </button>
                         </div>
                     </div>

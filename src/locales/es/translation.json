@@ -13,7 +13,22 @@
         "next": "Siguiente",
         "previous": "Anterior",
         "submit": "Enviar",
-        "confirm": "Confirmar"
+        "confirm": "Confirmar",
+        "title": "Título",
+        "titlePlaceholder": "Ingresa un título...",
+        "commentPlaceholder": "Escribe un comentario...",
+        "verified": "Verificado",
+        "notVerified": "No verificado",
+        "allRatings": "Todas las calificaciones",
+        "stars": "estrellas",
+        "star": "estrella",
+        "mostRecent": "Más recientes",
+        "mostHelpful": "Más útiles",
+        "bestRated": "Mejor calificadas",
+        "loadingReviews": "Cargando reseñas...",
+        "now": "Ahora",
+        "viewComments": "Ver comentarios",
+        "hideComments": "Ocultar comentarios"
     },
     "nav": {
         "home": "Inicio",
@@ -28,7 +43,11 @@
         "about": "Nosotros",
         "community": "Comunidad",
         "moreSales": "¿Más ventas?",
-        "user": "Usuario"
+        "user": "Usuario",
+        "logoutSuccess": "Sesión cerrada correctamente",
+        "logoutError": "Error al cerrar sesión",
+        "openMenu": "Abrir menú",
+        "viewDashboard": "Conoce tu tablero"
     },
     "home": {
         "title": "Encuentra Negocios Cerca de Ti",
@@ -45,7 +64,113 @@
         "businessMap": "Mapa de Negocios",
         "noBusinessesFound": "No se encontraron negocios con esos criterios",
         "foundBusinesses": "Encontramos {{count}} negocios cerca de ti",
-        "businessList": "Lista de Negocios"
+        "businessList": "Lista de Negocios",
+        "promo": {
+            "launch": "¡LANZAMIENTO! 70% OFF en todos los espacios publicitarios",
+            "validUntil": "Válido hasta:",
+            "seeOffers": "Ver ofertas →",
+            "march1": "1 de Marzo 2026"
+        },
+        "loadingMap": "Cargando mapa...",
+        "locatingBusinesses": "Ubicando negocios cercanos",
+        "filterActive": "Filtrando:",
+        "removeFilter": "Quitar filtro",
+        "updateLocation": "Actualizar mi ubicación",
+        "ceo": {
+            "quote": "Hoy millones buscan negocios 'cerca de mí' pero muchas búsquedas fallan por información desactualizada. Geobooker resuelve eso con fichas verificables, actualización simple, y geolocalización real.",
+            "author": "EQUIPO GEOBOOKER",
+            "footer": "Para anunciantes: publicidad por territorio con slots limitados y métricas claras."
+        },
+        "howItWorks": {
+            "title": "¿Cómo Funciona?",
+            "subtitle": "Encuentra negocios cerca de ti en 3 simples pasos",
+            "step1": {
+                "title": "1. Busca",
+                "desc": "Escribe lo que necesitas: farmacias, restaurantes, talleres, y más"
+            },
+            "step2": {
+                "title": "2. Encuentra",
+                "desc": "Ve los negocios más cercanos a tu ubicación en tiempo real"
+            },
+            "step3": {
+                "title": "3. Llega",
+                "desc": "Obtén direcciones y llega rápidamente a tu destino"
+            }
+        },
+        "video": {
+            "title": "Mira cómo funciona",
+            "subtitle": "Descubre cómo encontrar negocios cerca de ti",
+            "subscribe": "Suscríbete al canal"
+        },
+        "stats": {
+            "registered": "Negocios Registrados",
+            "activeUsers": "Usuarios Activos",
+            "searches": "Búsquedas Realizadas",
+            "rating": "Calificación Promedio"
+        },
+        "businessSection": {
+            "title": "¿Tienes un Negocio?",
+            "subtitle": "Registra tu negocio en Geobooker y llega a miles de clientes potenciales cerca de ti",
+            "benefit1": {
+                "title": "Visibilidad Inmediata:",
+                "desc": "Aparece en búsquedas locales al instante"
+            },
+            "benefit2": {
+                "title": "Gratis hasta 2 negocios:",
+                "desc": "Sin costo para empezar"
+            },
+            "benefit3": {
+                "title": "Estadísticas en Tiempo Real:",
+                "desc": "Ve cuántas personas te buscan"
+            },
+            "benefit4": {
+                "title": "Publicidad Dirigida:",
+                "desc": "Llega a tu audiencia ideal"
+            },
+            "cta": "Registrar Mi Negocio →",
+            "nearby": "A {{distance}} de ti"
+        },
+        "verifiedBusinesses": "Negocios Verificados",
+        "trust": {
+            "title": "Ellos ya confían en Geobooker 💼",
+            "subtitle": "Únete a cientos de negocios que ya encontraron más clientes"
+        },
+        "testimonials": {
+            "vet": {
+                "name": "Veterinario",
+                "desc": "Cuidado profesional"
+            },
+            "rest": {
+                "name": "Restaurante",
+                "desc": "Cocina mexicana"
+            }
+        },
+        "finalCta": {
+            "title": "¿Listo para Descubrir Negocios Cerca de Ti?",
+            "subtitle": "Únete a miles de usuarios que ya encuentran lo que necesitan en segundos",
+            "button": "Comenzar Ahora →"
+        },
+        "searchCleared": "Búsqueda limpiada"
+    },
+    "globalPromo": {
+        "badge": "Publicidad Global",
+        "homeTitle": "¿Quieres que tu marca aparezca al otro lado del mundo?",
+        "homeSubtitle": "Lanza o expande tu marca en una ciudad específica con Geobooker Global. Segmentación por país, idioma y categoría.",
+        "local": {
+            "title": "Geobooker Local",
+            "desc": "Perfecto para negocios locales y PyMEs que quieren aparecer en su ciudad. Desde $900 MXN/mes."
+        },
+        "global": {
+            "title": "Geobooker Global",
+            "desc": "Para marcas internacionales: FIFA 2026, Super Bowl, Olimpiadas. Piloto 30 días gratis."
+        },
+        "ctaLearnMore": "Aprende cómo hacerlo"
+    },
+    "seo": {
+        "cityCategoryTitle": "Los mejores {{category}} en {{city}}",
+        "categoryTitle": "{{category}} cerca de mí",
+        "cityTitle": "Negocios y servicios en {{city}}",
+        "cityDescription": "Explora el mapa interactivo de {{city}}. Encuentra restaurantes, farmacias, tiendas y más en Geobooker."
     },
     "search": {
         "placeholder": "¿Qué negocio o servicio buscas?",
@@ -342,6 +467,7 @@
         "needApp": "¿Necesitas tu propia App?",
         "needAppDesc": "También desarrollamos aplicaciones web y móviles personalizadas para tu negocio. PWA, sitios web, sistemas y más.",
         "requestQuote": "Solicitar cotización",
+        "orWriteUs": "o escríbenos:",
         "payments": "Métodos de pago",
         "share": "¡Comparte Geobooker!",
         "shareDesc": "Escanea el QR con tu celular para abrir la app",
@@ -445,5 +571,102 @@
         "tooltip": "Recomienda un negocio que visitaste",
         "success": "¡Gracias por tu recomendación! Será revisada pronto.",
         "limitReached": "Has alcanzado el límite de recomendaciones por hoy."
+    },
+    "deleteAccount": {
+        "title": "Eliminar Cuenta",
+        "description": "Solicita la eliminación de tu cuenta de Geobooker",
+        "mustLogin": "Debes iniciar sesión para eliminar tu cuenta.",
+        "permanentAction": "Esta acción no se puede deshacer",
+        "whatWillHappen": "¿Qué sucederá?",
+        "gracePeriodTitle": "Periodo de gracia",
+        "gracePeriodDesc": "Tu cuenta será eliminada en 30 días. Durante este periodo puedes contactarnos para cancelar la solicitud.",
+        "confirmKeyword": "ELIMINAR",
+        "confirmToastError": "Por favor escribe ELIMINAR para confirmar",
+        "successToast": "Solicitud de eliminación enviada. Tu cuenta será eliminada en 30 días.",
+        "errorToast": "Error al procesar la solicitud. Intenta nuevamente.",
+        "reasonLabel": "¿Por qué nos dejas? (opcional)",
+        "reasonPlaceholder": "Selecciona una razón",
+        "reasons": {
+            "no_use": "Ya no uso el servicio",
+            "other_platform": "Uso otra plataforma",
+            "privacy": "Preocupaciones de privacidad",
+            "bad_service": "Mal servicio",
+            "other": "Otro"
+        },
+        "confirmLabel": "Escribe ELIMINAR para confirmar",
+        "deleteButton": "🗑️ Eliminar mi cuenta permanentemente",
+        "processing": "Procesando...",
+        "bullet1": "Tus negocios registrados serán eliminados",
+        "bullet2": "Tus reseñas y comentarios serán anonimizados",
+        "bullet3": "Perderás tu historial de referidos",
+        "bullet4": "Esta acción es permanente",
+        "back": "Volver",
+        "cancelToDashboard": "Cancelar y volver al Dashboard",
+        "continue": "Continuar con la eliminación"
+    },
+    "reviews": {
+        "title": "Reseñas",
+        "writeReview": "Escribir Reseña",
+        "noReviews": "No hay reseñas aún. ¡Sé el primero en dejar una!",
+        "helpful": "Útil",
+        "report": "Reportar",
+        "service": "Servicio",
+        "quality": "Calidad",
+        "price": "Precio",
+        "ownerResponse": "Respuesta del negocio",
+        "submit": "Publicar Reseña",
+        "cancel": "Cancelar",
+        "rating": "Calificación",
+        "optional": "opcional",
+        "reviewText": "Tu experiencia",
+        "reviewPlaceholder": "Cuéntanos qué te pareció este negocio...",
+        "success": "Reseña publicada correctamente",
+        "helpfulSuccess": "Marcado como útil",
+        "alreadyHelpful": "Ya marcaste esta reseña como útil"
+    },
+    "report": {
+        "title": "Reportar Contenido",
+        "reason": "Motivo del reporte",
+        "details": "Detalles adicionales",
+        "placeholder": "Explica brevemente por qué reportas este contenido...",
+        "submit": "Enviar Reporte",
+        "cancel": "Cancelar",
+        "success": "Gracias. El reporte ha sido enviado y será revisado.",
+        "error": "Error al enviar el reporte. Intenta de nuevo.",
+        "reasons": {
+            "spam": "Spam / Publicidad",
+            "offensive": "Contenido ofensivo / Odio",
+            "inappropriate": "Contenido inapropiado",
+            "misleading": "Información engañosa",
+            "other": "Otro"
+        }
+    },
+    "admin": {
+        "reports": {
+            "title": "Moderación de Reportes",
+            "adTitle": "Reportes de Anuncios",
+            "description": "Revisa y resuelve los reportes de contenido o información incorrecta",
+            "adDescription": "Revisa y modera reportes de anuncios inapropiados",
+            "stats": {
+                "pending": "Pendientes",
+                "reviewed": "En revisión",
+                "resolved": "Resueltos",
+                "rejected": "Rechazados",
+                "all": "Todos"
+            },
+            "detail": "Detalle del Reporte",
+            "actions": {
+                "resolve": "Resolver",
+                "reject": "Rechazar",
+                "update": "Actualizar",
+                "noAction": "Sin acción",
+                "warning": "Advertencia enviada",
+                "pauseAd": "Anuncio pausado",
+                "rejectAd": "Anuncio rechazado",
+                "banUser": "Usuario baneado"
+            },
+            "notes": "Notas de resolución",
+            "notesPlaceholder": "Describe qué acción tomaste..."
+        }
     }
 }

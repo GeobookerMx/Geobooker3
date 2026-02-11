@@ -11,37 +11,10 @@ import {
     RefreshCw, Eye, AlertTriangle, Pause, Ban,
     Mail, ExternalLink, ChevronRight
 } from 'lucide-react';
-
-// Razones de reporte traducidas
-const REASON_LABELS = {
-    inappropriate_content: '🚫 Contenido inapropiado',
-    misleading: '⚠️ Publicidad engañosa',
-    offensive: '😤 Contenido ofensivo',
-    spam: '📧 Spam / Repetitivo',
-    illegal_product: '🚨 Producto ilegal',
-    wrong_targeting: '📍 Ubicación incorrecta',
-    competitor_attack: '🎯 Ataque de competidor',
-    other: '❓ Otro problema'
-};
-
-// Estados de reportes
-const STATUS_CONFIG = {
-    pending: { label: 'Pendiente', color: 'yellow', icon: Clock },
-    reviewed: { label: 'En revisión', color: 'blue', icon: Eye },
-    resolved: { label: 'Resuelto', color: 'green', icon: CheckCircle },
-    rejected: { label: 'Rechazado', color: 'gray', icon: XCircle }
-};
-
-// Acciones disponibles
-const ACTION_OPTIONS = [
-    { value: 'no_action', label: 'Sin acción', desc: 'Reporte inválido o infundado', icon: XCircle },
-    { value: 'warning_sent', label: 'Advertencia enviada', desc: 'Se notificó al anunciante', icon: Mail },
-    { value: 'ad_paused', label: 'Anuncio pausado', desc: 'La campaña fue pausada temporalmente', icon: Pause },
-    { value: 'ad_rejected', label: 'Anuncio rechazado', desc: 'La campaña fue cancelada', icon: Ban },
-    { value: 'advertiser_banned', label: 'Anunciante baneado', desc: 'Se prohibió al anunciante', icon: Ban },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function AdReportsModeration() {
+    const { t } = useTranslation();
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('pending');
@@ -49,6 +22,35 @@ export default function AdReportsModeration() {
     const [resolutionNotes, setResolutionNotes] = useState('');
     const [actionTaken, setActionTaken] = useState('');
     const [processing, setProcessing] = useState(false);
+
+    // Razones de reporte traducidas
+    const REASON_LABELS = {
+        inappropriate_content: '🚫 ' + t('report.reasons.inappropriate'),
+        misleading: '⚠️ ' + t('report.reasons.misleading'),
+        offensive: '😤 ' + t('report.reasons.offensive'),
+        spam: '📧 ' + t('report.reasons.spam'),
+        illegal_product: '🚨 ' + t('report.reasons.illegal', { defaultValue: 'Producto ilegal' }),
+        wrong_targeting: '📍 ' + t('report.reasons.targeting', { defaultValue: 'Ubicación incorrecta' }),
+        competitor_attack: '🎯 ' + t('report.reasons.attack', { defaultValue: 'Ataque de competidor' }),
+        other: '❓ ' + t('report.reasons.other')
+    };
+
+    // Estados de reportes
+    const STATUS_CONFIG = {
+        pending: { label: t('admin.reports.stats.pending'), color: 'yellow', icon: Clock },
+        reviewed: { label: t('admin.reports.stats.reviewed'), color: 'blue', icon: Eye },
+        resolved: { label: t('admin.reports.stats.resolved'), color: 'green', icon: CheckCircle },
+        rejected: { label: t('admin.reports.stats.rejected'), color: 'gray', icon: XCircle }
+    };
+
+    // Acciones disponibles
+    const ACTION_OPTIONS = [
+        { value: 'no_action', label: t('admin.reports.actions.noAction'), desc: t('admin.reports.actions.noActionDesc', { defaultValue: 'Reporte inválido o infundado' }), icon: XCircle },
+        { value: 'warning_sent', label: t('admin.reports.actions.warning'), desc: t('admin.reports.actions.warningDesc', { defaultValue: 'Se notificó al anunciante' }), icon: Mail },
+        { value: 'ad_paused', label: t('admin.reports.actions.pauseAd'), desc: t('admin.reports.actions.pauseAdDesc', { defaultValue: 'La campaña fue pausada temporalmente' }), icon: Pause },
+        { value: 'ad_rejected', label: t('admin.reports.actions.rejectAd'), desc: t('admin.reports.actions.rejectAdDesc', { defaultValue: 'La campaña fue cancelada' }), icon: Ban },
+        { value: 'advertiser_banned', label: t('admin.reports.actions.banUser'), desc: t('admin.reports.actions.banUserDesc', { defaultValue: 'Se prohibió al anunciante' }), icon: Ban },
+    ];
 
     useEffect(() => {
         fetchReports();
@@ -83,7 +85,7 @@ export default function AdReportsModeration() {
             setReports(data || []);
         } catch (error) {
             console.error('Error fetching ad reports:', error);
-            toast.error('Error cargando reportes de anuncios');
+            toast.error(t('report.error'));
         } finally {
             setLoading(false);
         }
@@ -135,7 +137,7 @@ export default function AdReportsModeration() {
             fetchReports();
         } catch (error) {
             console.error('Error updating report:', error);
-            toast.error('Error actualizando reporte');
+            toast.error(t('report.error'));
         } finally {
             setProcessing(false);
         }
@@ -148,10 +150,10 @@ export default function AdReportsModeration() {
         const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-        if (diffHours < 1) return 'Hace minutos';
-        if (diffHours < 24) return `Hace ${diffHours}h`;
-        if (diffDays === 1) return 'Ayer';
-        return `Hace ${diffDays} días`;
+        if (diffHours < 1) return t('common.now');
+        if (diffHours < 24) return `${diffHours}h`;
+        if (diffDays === 1) return t('common.yesterday', { defaultValue: 'Ayer' });
+        return `${diffDays}d`;
     };
 
     const getPriorityBadge = (priority) => {
@@ -171,10 +173,10 @@ export default function AdReportsModeration() {
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
                         <Flag className="w-8 h-8 text-red-500" />
-                        Reportes de Anuncios
+                        {t('admin.reports.adTitle')}
                     </h1>
                     <p className="text-gray-600 mt-1">
-                        Revisa y modera reportes de anuncios inapropiados
+                        {t('admin.reports.adDescription')}
                     </p>
                 </div>
                 <button
@@ -182,7 +184,7 @@ export default function AdReportsModeration() {
                     className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
                 >
                     <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                    Actualizar
+                    {t('admin.reports.actions.update')}
                 </button>
             </div>
 
@@ -216,27 +218,26 @@ export default function AdReportsModeration() {
             <div className="bg-white rounded-xl shadow-md border border-gray-200">
                 <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                     <h2 className="font-bold text-lg text-gray-800">
-                        {filter === 'all' ? 'Todos los reportes' : `Reportes ${STATUS_CONFIG[filter]?.label}`}
+                        {filter === 'all' ? t('admin.reports.stats.all') : `${t('admin.reports.adTitle')} ${STATUS_CONFIG[filter]?.label}`}
                         <span className="text-gray-400 ml-2">({reports.length})</span>
                     </h2>
                     <button
                         onClick={() => setFilter('all')}
                         className="text-sm text-blue-600 hover:text-blue-800"
                     >
-                        Ver todos
+                        {t('common.viewAll', { defaultValue: 'Ver todos' })}
                     </button>
                 </div>
 
                 {loading ? (
                     <div className="p-8 text-center text-gray-500">
                         <RefreshCw className="w-8 h-8 mx-auto animate-spin mb-2" />
-                        Cargando reportes...
+                        {t('common.loading')}
                     </div>
                 ) : reports.length === 0 ? (
                     <div className="p-8 text-center text-gray-500">
                         <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
-                        <p className="font-medium">¡No hay reportes pendientes!</p>
-                        <p className="text-sm mt-1">Los anuncios están en orden 👍</p>
+                        <p className="font-medium">{t('common.noReviews', { defaultValue: '¡No hay reportes pendientes!' })}</p>
                     </div>
                 ) : (
                     <div className="divide-y divide-gray-200">
@@ -256,11 +257,11 @@ export default function AdReportsModeration() {
                                                     {report.priority?.toUpperCase()}
                                                 </span>
                                                 <span className="font-semibold text-gray-800">
-                                                    {campaign?.advertiser_name || 'Anunciante desconocido'}
+                                                    {campaign?.advertiser_name || t('common.unknown', { defaultValue: 'Anunciante desconocido' })}
                                                 </span>
                                                 <span className="text-gray-400">•</span>
                                                 <span className="text-sm text-gray-500">
-                                                    {campaign?.ad_spaces?.display_name || 'Espacio no especificado'}
+                                                    {campaign?.ad_spaces?.display_name || t('common.none', { defaultValue: 'Espacio no especificado' })}
                                                 </span>
                                             </div>
                                             <div className="text-sm text-gray-600 font-medium">
@@ -294,7 +295,7 @@ export default function AdReportsModeration() {
                         <div className="bg-gradient-to-r from-red-600 to-orange-500 text-white p-6 rounded-t-xl">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h3 className="text-xl font-bold">Detalle del Reporte</h3>
+                                    <h3 className="text-xl font-bold">{t('admin.reports.detail')}</h3>
                                     <p className="text-red-100 text-sm mt-1">
                                         {REASON_LABELS[selectedReport.reason]}
                                     </p>
@@ -348,15 +349,15 @@ export default function AdReportsModeration() {
                             <div className="space-y-3">
                                 <div className="flex items-center gap-4">
                                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${getPriorityBadge(selectedReport.priority)}`}>
-                                        Prioridad: {selectedReport.priority?.toUpperCase()}
+                                        {t('report.priority', { defaultValue: 'Prioridad' })}: {selectedReport.priority?.toUpperCase()}
                                     </span>
                                     <span className="text-sm text-gray-500">
-                                        Reportado el {new Date(selectedReport.created_at).toLocaleString('es-MX')}
+                                        {t('common.date', { defaultValue: 'Fecha' })}: {new Date(selectedReport.created_at).toLocaleString()}
                                     </span>
                                 </div>
                                 {selectedReport.details && (
                                     <div className="bg-gray-50 rounded-lg p-4">
-                                        <span className="font-semibold text-gray-700">Detalles del reporte:</span>
+                                        <span className="font-semibold text-gray-700">{t('report.details')}:</span>
                                         <p className="mt-1 text-gray-700">{selectedReport.details}</p>
                                     </div>
                                 )}
@@ -380,8 +381,8 @@ export default function AdReportsModeration() {
                                                     key={action.value}
                                                     onClick={() => setActionTaken(action.value)}
                                                     className={`p-3 rounded-lg border-2 text-left transition-all ${actionTaken === action.value
-                                                            ? 'border-red-500 bg-red-50'
-                                                            : 'border-gray-200 hover:border-gray-300'
+                                                        ? 'border-red-500 bg-red-50'
+                                                        : 'border-gray-200 hover:border-gray-300'
                                                         }`}
                                                 >
                                                     <div className="flex items-center gap-2">
@@ -396,12 +397,12 @@ export default function AdReportsModeration() {
 
                                     <div>
                                         <label className="block font-semibold text-gray-700 mb-2">
-                                            Notas de resolución:
+                                            {t('admin.reports.notes')}:
                                         </label>
                                         <textarea
                                             value={resolutionNotes}
                                             onChange={(e) => setResolutionNotes(e.target.value)}
-                                            placeholder="Describe qué acción tomaste..."
+                                            placeholder={t('admin.reports.notesPlaceholder')}
                                             rows={3}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
                                         />
@@ -432,7 +433,7 @@ export default function AdReportsModeration() {
                                             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-semibold"
                                         >
                                             <CheckCircle className="w-5 h-5" />
-                                            Resolver Reporte
+                                            {t('admin.reports.actions.resolve')}
                                         </button>
                                         <button
                                             onClick={() => updateReportStatus(selectedReport.id, 'rejected')}
@@ -440,7 +441,7 @@ export default function AdReportsModeration() {
                                             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 font-semibold"
                                         >
                                             <XCircle className="w-5 h-5" />
-                                            Rechazar (Inválido)
+                                            {t('admin.reports.actions.reject')}
                                         </button>
                                     </>
                                 )}
@@ -448,7 +449,7 @@ export default function AdReportsModeration() {
                                     onClick={() => setSelectedReport(null)}
                                     className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
                                 >
-                                    Cerrar
+                                    {t('common.close')}
                                 </button>
                             </div>
                         </div>

@@ -18,8 +18,8 @@ const MapLoadingFallback = () => (
     <div className="animate-spin mb-4">
       <MapPin className="w-12 h-12 text-blue-500" />
     </div>
-    <p className="text-gray-600 font-medium">Cargando mapa...</p>
-    <p className="text-gray-400 text-sm mt-1">Ubicando negocios cercanos</p>
+    <p className="text-gray-600 font-medium">{t('home.loadingMap')}</p>
+    <p className="text-gray-400 text-sm mt-1">{t('home.locatingBusinesses')}</p>
   </div>
 );
 // Componentes de Publicidad
@@ -66,15 +66,15 @@ const HomePage = () => {
 
   // SEO dinámico basado en filtros
   const getSEOTitle = () => {
-    if (cityFilter && categoryFilter) return `Los mejores ${categoryFilter} en ${cityFilter}`;
-    if (categoryFilter) return `${categoryFilter} cerca de mí`;
-    if (cityFilter) return `Negocios y servicios en ${cityFilter}`;
-    return 'Geobooker - Encuentra Negocios Cerca de Ti';
+    if (cityFilter && categoryFilter) return t('seo.cityCategoryTitle', { category: categoryFilter, city: cityFilter, defaultValue: `Los mejores ${categoryFilter} en ${cityFilter}` });
+    if (categoryFilter) return t('seo.categoryTitle', { category: categoryFilter, defaultValue: `${categoryFilter} cerca de mí` });
+    if (cityFilter) return t('seo.cityTitle', { city: cityFilter, defaultValue: `Negocios y servicios en ${cityFilter}` });
+    return t('home.title');
   };
 
   const getSEODescription = () => {
-    if (cityFilter) return `Explora el mapa interactivo de ${cityFilter}. Encuentra restaurantes, farmacias, tiendas y más en Geobooker.`;
-    return 'Encuentra negocios locales cerca de tu ubicación. Mapa interactivo con restaurantes, tiendas y servicios.';
+    if (cityFilter) return t('seo.cityDescription', { city: cityFilter, defaultValue: `Explora el mapa interactivo de ${cityFilter}. Encuentra restaurantes, farmacias, tiendas y más en Geobooker.` });
+    return t('home.subtitle');
   };
 
   // Sistema de Interstitial Ads
@@ -133,7 +133,7 @@ const HomePage = () => {
     sessionStorage.removeItem('geobooker_search_state');
     // Limpiar URL params de búsqueda pero mantener ubicación
     setSearchParams({});
-    toast.success('Búsqueda limpiada');
+    toast.success(t('home.searchCleared', { defaultValue: 'Búsqueda limpiada' }));
   };
 
   // Cargar negocios nativos de Geobooker (CON CACHÉ IndexedDB)
@@ -337,7 +337,7 @@ const HomePage = () => {
   // Handler para ver perfil de negocio - DISTINGUE entre Places y Nativos
   const handleViewBusinessProfile = (business) => {
     if (!business) {
-      toast.error('Este negocio no tiene perfil disponible');
+      toast.error(t('common.noProfile', { defaultValue: 'Este negocio no tiene perfil disponible' }));
       return;
     }
 
@@ -368,15 +368,15 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🚀</span>
-            <span className="font-bold">¡LANZAMIENTO! 70% OFF en todos los espacios publicitarios</span>
+            <span className="font-bold">{t('home.promo.launch')}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <span className="opacity-90">Válido hasta:</span>
+            <span className="opacity-90">{t('home.promo.validUntil')}</span>
             <span className="bg-white/20 backdrop-blur px-3 py-1 rounded font-bold">
-              1 de Marzo 2026
+              {t('home.promo.march1')}
             </span>
             <a href="/advertise" className="ml-2 bg-white text-red-600 px-3 py-1 rounded font-bold hover:bg-gray-100 transition">
-              Ver ofertas →
+              {t('home.promo.seeOffers')}
             </a>
           </div>
         </div>
@@ -419,14 +419,14 @@ const HomePage = () => {
             {categoryFilter && (
               <div className="flex justify-center mt-4">
                 <div className="inline-flex items-center bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full">
-                  <span className="mr-2">🔍 Filtrando:</span>
+                  <span className="mr-2">🔍 {t('home.filterActive')}</span>
                   <span className="font-bold capitalize">{categoryFilter.replace('_', ' ')}</span>
                   {subcategoryFilter && <span className="mx-1">→</span>}
                   {subcategoryFilter && <span className="font-bold">{subcategoryFilter}</span>}
                   <button
                     onClick={() => setSearchParams({})}
                     className="ml-3 bg-white/30 hover:bg-white/50 rounded-full w-6 h-6 flex items-center justify-center transition"
-                    title="Quitar filtro"
+                    title={t('home.removeFilter')}
                   >
                     ✕
                   </button>
@@ -474,7 +474,7 @@ const HomePage = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  Actualizar mi ubicación
+                  {t('home.updateLocation')}
                 </button>
               </div>
             )}
@@ -501,20 +501,22 @@ const HomePage = () => {
       </div>
 
       {/* Resultados Patrocinados - Solo si hay búsqueda activa */}
-      {businesses.length > 0 && (
-        <div className="container mx-auto px-4 py-6">
-          <div className="max-w-4xl mx-auto space-y-4">
-            {/* Primer resultado patrocinado */}
-            <SponsoredResultCard context={{ search: true, location: userLocation }} />
+      {
+        businesses.length > 0 && (
+          <div className="container mx-auto px-4 py-6">
+            <div className="max-w-4xl mx-auto space-y-4">
+              {/* Primer resultado patrocinado */}
+              <SponsoredResultCard context={{ search: true, location: userLocation }} />
 
-            {/* Anuncio fullwidth después del 3er resultado */}
-            <SponsoredFullwidth context={{ search: true, location: userLocation }} />
+              {/* Anuncio fullwidth después del 3er resultado */}
+              <SponsoredFullwidth context={{ search: true, location: userLocation }} />
 
-            {/* Segundo resultado patrocinado */}
-            <SponsoredResultCard context={{ search: true, location: userLocation }} />
+              {/* Segundo resultado patrocinado */}
+              <SponsoredResultCard context={{ search: true, location: userLocation }} />
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Mapa - Siempre visible */}
       <div className="container mx-auto px-4 py-8">
@@ -565,9 +567,8 @@ const HomePage = () => {
             {/* Quote text */}
             <blockquote className="mb-8">
               <p className="text-2xl md:text-3xl lg:text-4xl font-light text-white leading-relaxed" style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}>
-                "Hoy millones buscan negocios <span className="text-purple-300 font-medium">'cerca de mí'</span> pero muchas búsquedas fallan por información desactualizada.
-                <span className="block mt-4 text-purple-200">Geobooker resuelve eso con fichas verificables, actualización simple, y geolocalización real.</span>
-                <span className="block mt-4 text-xl md:text-2xl text-gray-300">Para anunciantes: publicidad por territorio con slots limitados y métricas claras."</span>
+                {t('home.ceo.quote')}
+                <span className="block mt-4 text-xl md:text-2xl text-gray-300">{t('home.ceo.footer')}</span>
               </p>
             </blockquote>
 
@@ -577,7 +578,7 @@ const HomePage = () => {
                 GB
               </div>
               <div className="text-left">
-                <p className="text-white font-semibold text-lg">EQUIPO GEOBOOKER</p>
+                <p className="text-white font-semibold text-lg">{t('home.ceo.author')}</p>
                 <p className="text-purple-300 text-sm">Geobooker Inc.</p>
               </div>
             </div>
@@ -605,9 +606,9 @@ const HomePage = () => {
       {/* Sección: Cómo Funciona */}
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">¿Cómo Funciona?</h2>
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">{t('home.howItWorks.title')}</h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Encuentra negocios cerca de ti en 3 simples pasos
+            {t('home.howItWorks.subtitle')}
           </p>
         </div>
 
@@ -619,9 +620,9 @@ const HomePage = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">1. Busca</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">{t('home.howItWorks.step1.title')}</h3>
             <p className="text-gray-600">
-              Escribe lo que necesitas: farmacias, restaurantes, talleres, y más
+              {t('home.howItWorks.step1.desc')}
             </p>
           </div>
 
@@ -633,9 +634,9 @@ const HomePage = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">2. Encuentra</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">{t('home.howItWorks.step2.title')}</h3>
             <p className="text-gray-600">
-              Ve los negocios más cercanos a tu ubicación en tiempo real
+              {t('home.howItWorks.step2.desc')}
             </p>
           </div>
 
@@ -646,9 +647,9 @@ const HomePage = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">3. Llega</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">{t('home.howItWorks.step3.title')}</h3>
             <p className="text-gray-600">
-              Obtén direcciones y llega rápidamente a tu destino
+              {t('home.howItWorks.step3.desc')}
             </p>
           </div>
         </div>
@@ -656,8 +657,8 @@ const HomePage = () => {
         {/* Video Demo Section - YouTube Short */}
         <div className="mt-16 max-w-md mx-auto">
           <div className="text-center mb-8">
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">📹 Mira cómo funciona</h3>
-            <p className="text-gray-600">Descubre cómo encontrar negocios cerca de ti</p>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">📹 {t('home.video.title')}</h3>
+            <p className="text-gray-600">{t('home.video.subtitle')}</p>
           </div>
 
           {/* YouTube Short Embed - Vertical Format */}
@@ -683,7 +684,7 @@ const HomePage = () => {
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
               </svg>
-              Suscríbete al canal
+              {t('home.video.subscribe')}
             </a>
           </div>
         </div>
@@ -695,19 +696,19 @@ const HomePage = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
               <div className="text-5xl font-bold mb-2">10K+</div>
-              <div className="text-blue-200">Negocios Registrados</div>
+              <div className="text-blue-200">{t('home.stats.registered')}</div>
             </div>
             <div>
               <div className="text-5xl font-bold mb-2">50K+</div>
-              <div className="text-blue-200">Usuarios Activos</div>
+              <div className="text-blue-200">{t('home.stats.activeUsers')}</div>
             </div>
             <div>
               <div className="text-5xl font-bold mb-2">100K+</div>
-              <div className="text-blue-200">Búsquedas Realizadas</div>
+              <div className="text-blue-200">{t('home.stats.searches')}</div>
             </div>
             <div>
               <div className="text-5xl font-bold mb-2">4.8★</div>
-              <div className="text-blue-200">Calificación Promedio</div>
+              <div className="text-blue-200">{t('home.stats.rating')}</div>
             </div>
           </div>
         </div>
@@ -718,42 +719,42 @@ const HomePage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div>
             <h2 className="text-4xl font-bold text-gray-900 mb-6">
-              ¿Tienes un Negocio?
+              {t('home.businessSection.title')}
             </h2>
             <p className="text-xl text-gray-600 mb-8">
-              Registra tu negocio en Geobooker y llega a miles de clientes potenciales cerca de ti
+              {t('home.businessSection.subtitle')}
             </p>
             <ul className="space-y-4 mb-8">
               <li className="flex items-start">
                 <svg className="w-6 h-6 text-green-500 mr-3 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span className="text-gray-700"><strong>Visibilidad Inmediata:</strong> Aparece en búsquedas locales al instante</span>
+                <span className="text-gray-700"><strong>{t('home.businessSection.benefit1.title')}</strong> {t('home.businessSection.benefit1.desc')}</span>
               </li>
               <li className="flex items-start">
                 <svg className="w-6 h-6 text-green-500 mr-3 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span className="text-gray-700"><strong>Gratis hasta 2 negocios:</strong> Sin costo para empezar</span>
+                <span className="text-gray-700"><strong>{t('home.businessSection.benefit2.title')}</strong> {t('home.businessSection.benefit2.desc')}</span>
               </li>
               <li className="flex items-start">
                 <svg className="w-6 h-6 text-green-500 mr-3 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span className="text-gray-700"><strong>Estadísticas en Tiempo Real:</strong> Ve cuántas personas te buscan</span>
+                <span className="text-gray-700"><strong>{t('home.businessSection.benefit3.title')}</strong> {t('home.businessSection.benefit3.desc')}</span>
               </li>
               <li className="flex items-start">
                 <svg className="w-6 h-6 text-green-500 mr-3 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span className="text-gray-700"><strong>Publicidad Dirigida:</strong> Llega a tu audiencia ideal</span>
+                <span className="text-gray-700"><strong>{t('home.businessSection.benefit4.title')}</strong> {t('home.businessSection.benefit4.desc')}</span>
               </li>
             </ul>
             <Link
               to="/business/register"
               className="inline-block bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition duration-300 shadow-lg hover:shadow-xl"
             >
-              Registrar Mi Negocio →
+              {t('home.businessSection.cta')}
             </Link>
           </div>
 
@@ -766,7 +767,7 @@ const HomePage = () => {
                   </div>
                   <div>
                     <h4 className="font-bold text-gray-900">Farmacia San José</h4>
-                    <p className="text-sm text-gray-600">📍 A 500m de ti</p>
+                    <p className="text-sm text-gray-600">📍 {t('home.businessSection.nearby', { distance: '500m' })}</p>
                   </div>
                 </div>
                 <div className="flex items-center text-yellow-500">
@@ -781,7 +782,7 @@ const HomePage = () => {
                   </div>
                   <div>
                     <h4 className="font-bold text-gray-900">Restaurante El Buen Sabor</h4>
-                    <p className="text-sm text-gray-600">📍 A 1.2km de ti</p>
+                    <p className="text-sm text-gray-600">📍 {t('home.businessSection.nearby', { distance: '1.2km' })}</p>
                   </div>
                 </div>
                 <div className="flex items-center text-yellow-500">
@@ -798,12 +799,12 @@ const HomePage = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
             <span className="bg-purple-100 text-purple-700 px-4 py-1 rounded-full text-sm font-semibold">
-              ⭐ Negocios Verificados
+              ⭐ {t('home.verifiedBusinesses')}
             </span>
             <h3 className="text-3xl font-bold text-gray-900 mt-4 mb-2">
-              Ellos ya confían en Geobooker 💼
+              {t('home.trust.title')}
             </h3>
-            <p className="text-gray-600">Únete a cientos de negocios que ya encontraron más clientes</p>
+            <p className="text-gray-600">{t('home.trust.subtitle')}</p>
           </div>
 
           <div className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory scrollbar-hide justify-center flex-wrap md:flex-nowrap">
@@ -817,8 +818,8 @@ const HomePage = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-4 left-4 text-white">
-                  <p className="font-bold text-lg">🐕 Veterinario</p>
-                  <p className="text-sm text-white/80">Cuidado profesional</p>
+                  <p className="font-bold text-lg">🐕 {t('home.testimonials.vet.name')}</p>
+                  <p className="text-sm text-white/80">{t('home.testimonials.vet.desc')}</p>
                 </div>
               </div>
             </div>
@@ -833,8 +834,8 @@ const HomePage = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-4 left-4 text-white">
-                  <p className="font-bold text-lg">🍽️ Restaurante</p>
-                  <p className="text-sm text-white/80">Cocina mexicana</p>
+                  <p className="font-bold text-lg">🍽️ {t('home.testimonials.rest.name')}</p>
+                  <p className="text-sm text-white/80">{t('home.testimonials.rest.desc')}</p>
                 </div>
               </div>
             </div>
@@ -860,18 +861,18 @@ const HomePage = () => {
           <div className="grid md:grid-cols-2 gap-6 mb-10 text-left max-w-3xl mx-auto">
             <div className="bg-white/10 backdrop-blur rounded-xl p-5 border border-white/20">
               <div className="text-3xl mb-3">🏪</div>
-              <h4 className="font-bold text-white mb-2">Geobooker Local</h4>
-              <p className="text-gray-400 text-sm">Perfecto para negocios locales y PyMEs que quieren aparecer en su ciudad. Desde $900 MXN/mes.</p>
+              <h4 className="font-bold text-white mb-2">{t('globalPromo.local.title')}</h4>
+              <p className="text-gray-400 text-sm">{t('globalPromo.local.desc')}</p>
               <Link to="/advertise" className="text-blue-400 hover:text-blue-300 text-sm font-medium mt-3 inline-block">
-                Ver espacios →
+                {t('home.promo.seeOffers')}
               </Link>
             </div>
             <div className="bg-white/10 backdrop-blur rounded-xl p-5 border border-white/20">
               <div className="text-3xl mb-3">🌍</div>
-              <h4 className="font-bold text-white mb-2">Geobooker Global</h4>
-              <p className="text-gray-400 text-sm">Para marcas internacionales: FIFA 2026, Super Bowl, Olimpiadas. Piloto 30 días gratis.</p>
+              <h4 className="font-bold text-white mb-2">{t('globalPromo.global.title')}</h4>
+              <p className="text-gray-400 text-sm">{t('globalPromo.global.desc')}</p>
               <Link to="/enterprise" className="text-amber-400 hover:text-amber-300 text-sm font-medium mt-3 inline-block">
-                Ver planes Enterprise →
+                {t('enterprise.ctaViewPricing', 'Ver planes Enterprise →')}
               </Link>
             </div>
           </div>
@@ -890,16 +891,16 @@ const HomePage = () => {
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            ¿Listo para Descubrir Negocios Cerca de Ti?
+            {t('home.finalCta.title')}
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Únete a miles de usuarios que ya encuentran lo que necesitan en segundos
+            {t('home.finalCta.subtitle')}
           </p>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="bg-white text-blue-700 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-50 transition duration-300 shadow-lg hover:shadow-xl"
           >
-            Comenzar Ahora →
+            {t('home.finalCta.button')}
           </button>
         </div>
       </div>
@@ -908,9 +909,11 @@ const HomePage = () => {
       <StickyBanner />
 
       {/* Interstitial Ad (Pantalla Completa) - Aparece después de 5 búsquedas */}
-      {showInterstitial && (
-        <InterstitialAd onClose={closeInterstitial} />
-      )}
+      {
+        showInterstitial && (
+          <InterstitialAd onClose={closeInterstitial} />
+        )
+      }
 
       {/* Floating Referral Widget - Gamified */}
       <ReferralFloatingWidget />
@@ -926,7 +929,7 @@ const HomePage = () => {
         isOpen={showLoginPrompt}
         onClose={closeLoginPrompt}
       />
-    </div>
+    </div >
   );
 };
 

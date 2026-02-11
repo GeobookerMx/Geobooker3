@@ -68,11 +68,11 @@ export default function Header() {
       setUser(null);
       setUserProfile(null);
       setShowUserMenu(false);
-      toast.success('Sesión cerrada correctamente');
+      toast.success(t('nav.logoutSuccess'));
       navigate('/welcome');
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
-      toast.error('Error al cerrar sesión');
+      toast.error(t('nav.logoutError'));
     }
   };
 
@@ -98,7 +98,7 @@ export default function Header() {
         <button
           className="md:hidden flex flex-col items-center justify-center space-y-1"
           onClick={() => setIsOpen(!isOpen)}
-          aria-label="Abrir menú"
+          aria-label={t('nav.openMenu')}
         >
           <span className={`block w-6 h-[3px] bg-geoPurple transition-transform ${isOpen ? "rotate-45 translate-y-2" : ""}`} />
           <span className={`block w-6 h-[3px] bg-geoPurple transition-opacity ${isOpen ? "opacity-0" : "opacity-100"}`} />
@@ -123,7 +123,7 @@ export default function Header() {
               <Link
                 to="/dashboard"
                 className="relative p-2 text-geoPurple hover:text-geoPink transition-colors"
-                title="Conoce tu tablero"
+                title={t('nav.viewDashboard')}
               >
                 <span className="text-xl">🔔</span>
                 <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>

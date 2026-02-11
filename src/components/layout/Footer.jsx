@@ -135,7 +135,7 @@ const Footer = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     <span>ventasgeobooker@gmail.com</span>
-                    <span className="ml-2 text-xs text-gray-500">({t('enterprise.heroTitle2')} & {t('nav.moreSales')})</span>
+                    <span className="ml-2 text-xs text-gray-500">({t('nav.moreSales')})</span>
                   </a>
                 </div>
               </div>
@@ -143,7 +143,7 @@ const Footer = () => {
 
             {/* Columna 2 - Enlaces rápidos */}
             <div>
-              <h3 className="font-semibold mb-4 text-blue-400">Enlaces rápidos</h3>
+              <h3 className="font-semibold mb-4 text-blue-400">{t('footer.quickLinks')}</h3>
               <ul className="space-y-3">
                 <li>
                   <Link to="/" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
@@ -244,7 +244,7 @@ const Footer = () => {
                   href="mailto:geobookerr@gmail.com?subject=Cotización desarrollo de app"
                   className="text-gray-400 hover:text-white text-sm text-center transition-colors"
                 >
-                  o escríbenos: geobookerr@gmail.com
+                  {t('footer.orWriteUs')} geobookerr@gmail.com
                 </a>
               </div>
             </div>

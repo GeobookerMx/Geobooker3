@@ -2,17 +2,26 @@
 // src/components/business/ReviewsSection.jsx
 
 import React, { useState, useEffect } from 'react';
-import { Star, ThumbsUp, Flag, Camera, CheckCircle, AlertCircle } from 'lucide-react';
+import { Star, ThumbsUp, Flag, Camera, CheckCircle, AlertCircle, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
+import { reportService } from '../../services/reportService';
 import toast from 'react-hot-toast';
 
 const ReviewsSection = ({ businessId, ownerId }) => {
+    const { t } = useTranslation();
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showWriteReview, setShowWriteReview] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
     const [filterRating, setFilterRating] = useState('all');
     const [sortBy, setSortBy] = useState('recent');
+
+    // UI states for reporting
+    const [reportingItem, setReportingItem] = useState(null); // {id, type}
+    const [reportReason, setReportReason] = useState('spam');
+    const [reportDetails, setReportDetails] = useState('');
+    const [isReporting, setIsReporting] = useState(false);
 
     // Nuevo review state
     const [newReview, setNewReview] = useState({
@@ -76,12 +85,12 @@ const ReviewsSection = ({ businessId, ownerId }) => {
 
     const submitReview = async () => {
         if (!currentUser) {
-            toast.error('Debes iniciar sesión para dejar una reseña');
+            toast.error(t('deleteAccount.mustLogin'));
             return;
         }
 
         if (!newReview.review_text.trim()) {
-            toast.error('Escribe tu reseña');
+            toast.error(t('reviews.reviewPlaceholder'));
             return;
         }
 
@@ -96,7 +105,7 @@ const ReviewsSection = ({ businessId, ownerId }) => {
 
             if (error) throw error;
 
-            toast.success('¡Reseña publicada!');
+            toast.success(t('reviews.success'));
             setShowWriteReview(false);
             setNewReview({
                 rating: 5,
@@ -110,16 +119,16 @@ const ReviewsSection = ({ businessId, ownerId }) => {
             loadReviews();
         } catch (error) {
             if (error.code === '23505') { // Unique violation
-                toast.error('Ya dejaste una reseña para este negocio');
+                toast.error(t('reviews.alreadyReviewed', { defaultValue: 'Ya dejaste una reseña para este negocio' }));
             } else {
-                toast.error('Error al publicar reseña');
+                toast.error(t('reviews.error', { defaultValue: 'Error al publicar reseña' }));
             }
         }
     };
 
     const markAsHelpful = async (reviewId) => {
         if (!currentUser) {
-            toast.error('Inicia sesión para votar');
+            toast.error(t('deleteAccount.mustLogin'));
             return;
         }
 
@@ -137,12 +146,41 @@ const ReviewsSection = ({ businessId, ownerId }) => {
             // Increment helpful_count
             await supabase.rpc('increment_helpful_count', { review_id: reviewId });
 
-            toast.success('Gracias por tu voto');
+            toast.success(t('reviews.helpfulSuccess'));
             loadReviews();
         } catch (error) {
             if (error.code === '23505') {
-                toast('Ya votaste en esta reseña');
+                toast(t('reviews.alreadyHelpful'));
             }
+        }
+    };
+
+    const handleReport = async () => {
+        if (!currentUser) {
+            toast.error(t('deleteAccount.mustLogin'));
+            return;
+        }
+
+        setIsReporting(true);
+        try {
+            const { success, error } = await reportService.reportContent({
+                content_type: reportingItem.type,
+                content_id: reportingItem.id,
+                reason: reportReason,
+                details: reportDetails
+            });
+
+            if (success) {
+                toast.success(t('report.success'));
+                setReportingItem(null);
+                setReportDetails('');
+            } else {
+                throw error;
+            }
+        } catch (error) {
+            toast.error(t('report.error'));
+        } finally {
+            setIsReporting(false);
         }
     };
 
@@ -164,19 +202,19 @@ const ReviewsSection = ({ businessId, ownerId }) => {
     };
 
     if (loading) {
-        return <div className="text-center py-8">Cargando reseñas...</div>;
+        return <div className="text-center py-8">{t('common.loadingReviews', { defaultValue: 'Cargando reseñas...' })}</div>;
     }
 
     return (
         <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Reseñas de Clientes</h2>
+                <h2 className="text-2xl font-bold">{t('reviews.title')}</h2>
                 <button
                     onClick={() => setShowWriteReview(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                    Escribir Reseña
+                    {t('reviews.writeReview')}
                 </button>
             </div>
 
@@ -185,24 +223,24 @@ const ReviewsSection = ({ businessId, ownerId }) => {
                 <select
                     value={filterRating}
                     onChange={(e) => setFilterRating(e.target.value)}
-                    className="px-4 py-2 border rounded-lg"
+                    className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 >
-                    <option value="all">Todas las calificaciones</option>
-                    <option value="5">5 estrellas</option>
-                    <option value="4">4 estrellas</option>
-                    <option value="3">3 estrellas</option>
-                    <option value="2">2 estrellas</option>
-                    <option value="1">1 estrella</option>
+                    <option value="all">{t('common.allRatings', { defaultValue: 'Todas las calificaciones' })}</option>
+                    <option value="5">5 {t('common.stars', { defaultValue: 'estrellas' })}</option>
+                    <option value="4">4 {t('common.stars', { defaultValue: 'estrellas' })}</option>
+                    <option value="3">3 {t('common.stars', { defaultValue: 'estrellas' })}</option>
+                    <option value="2">2 {t('common.stars', { defaultValue: 'estrellas' })}</option>
+                    <option value="1">1 {t('common.star', { defaultValue: 'estrella' })}</option>
                 </select>
 
                 <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="px-4 py-2 border rounded-lg"
+                    className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 >
-                    <option value="recent">Más recientes</option>
-                    <option value="helpful">Más útiles</option>
-                    <option value="rating_high">Mejor calificadas</option>
+                    <option value="recent">{t('common.mostRecent', { defaultValue: 'Más recientes' })}</option>
+                    <option value="helpful">{t('common.mostHelpful', { defaultValue: 'Más útiles' })}</option>
+                    <option value="rating_high">{t('common.bestRated', { defaultValue: 'Mejor calificadas' })}</option>
                 </select>
             </div>
 
@@ -210,7 +248,7 @@ const ReviewsSection = ({ businessId, ownerId }) => {
             <div className="space-y-6">
                 {reviews.length === 0 ? (
                     <div className="text-center py-12 bg-gray-50 rounded-xl">
-                        <p className="text-gray-500">Sé el primero en dejar una reseña</p>
+                        <p className="text-gray-500 font-medium">{t('reviews.noReviews')}</p>
                     </div>
                 ) : (
                     reviews.map((review) => (
@@ -233,9 +271,9 @@ const ReviewsSection = ({ businessId, ownerId }) => {
                                     </div>
                                 </div>
                                 {review.is_verified && (
-                                    <div className="flex items-center gap-1 text-green-600 text-sm">
+                                    <div className="flex items-center gap-1 text-green-600 text-sm font-medium">
                                         <CheckCircle className="w-4 h-4" />
-                                        Verificada
+                                        {t('common.verified', { defaultValue: 'Verificada' })}
                                     </div>
                                 )}
                             </div>
@@ -256,19 +294,19 @@ const ReviewsSection = ({ businessId, ownerId }) => {
                                 <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t">
                                     {review.service_rating && (
                                         <div>
-                                            <p className="text-sm text-gray-600">Servicio</p>
+                                            <p className="text-sm text-gray-600 font-medium">{t('reviews.service')}</p>
                                             <StarRating rating={review.service_rating} size="sm" />
                                         </div>
                                     )}
                                     {review.quality_rating && (
                                         <div>
-                                            <p className="text-sm text-gray-600">Calidad</p>
+                                            <p className="text-sm text-gray-600 font-medium">{t('reviews.quality')}</p>
                                             <StarRating rating={review.quality_rating} size="sm" />
                                         </div>
                                     )}
                                     {review.price_rating && (
                                         <div>
-                                            <p className="text-sm text-gray-600">Precio</p>
+                                            <p className="text-sm text-gray-600 font-medium">{t('reviews.price')}</p>
                                             <StarRating rating={review.price_rating} size="sm" />
                                         </div>
                                     )}
@@ -291,9 +329,9 @@ const ReviewsSection = ({ businessId, ownerId }) => {
 
                             {/* Owner Response */}
                             {review.owner_response && (
-                                <div className="mt-4 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                                <div className="mt-4 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500 shadow-sm">
                                     <p className="font-semibold text-sm text-blue-900 mb-1">
-                                        Respuesta del negocio
+                                        {t('reviews.ownerResponse')}
                                     </p>
                                     <p className="text-sm text-blue-800">{review.owner_response}</p>
                                 </div>
@@ -303,14 +341,17 @@ const ReviewsSection = ({ businessId, ownerId }) => {
                             <div className="flex gap-4 mt-4 pt-4 border-t">
                                 <button
                                     onClick={() => markAsHelpful(review.id)}
-                                    className="flex items-center gap-2 text-gray-600 hover:text-blue-600 text-sm"
+                                    className="flex items-center gap-2 text-gray-600 hover:text-blue-600 text-sm transition-colors group"
                                 >
-                                    <ThumbsUp className="w-4 h-4" />
-                                    Útil ({review.helpful_count})
+                                    <ThumbsUp className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                    {t('reviews.helpful')} ({review.helpful_count})
                                 </button>
-                                <button className="flex items-center gap-2 text-gray-600 hover:text-red-600 text-sm">
-                                    <Flag className="w-4 h-4" />
-                                    Reportar
+                                <button
+                                    onClick={() => setReportingItem({ id: review.id, type: 'review' })}
+                                    className="flex items-center gap-2 text-gray-400 hover:text-red-600 text-sm transition-colors group"
+                                >
+                                    <Flag className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                    {t('reviews.report')}
                                 </button>
                             </div>
                         </div>
@@ -320,13 +361,18 @@ const ReviewsSection = ({ businessId, ownerId }) => {
 
             {/* Modal Escribir Reseña */}
             {showWriteReview && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-                        <h3 className="text-2xl font-bold mb-4">Escribe tu Reseña</h3>
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl max-w-2xl w-full p-8 shadow-2xl overflow-y-auto max-h-[95vh]">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-2xl font-bold text-gray-900">{t('reviews.writeReview')}</h3>
+                            <button onClick={() => setShowWriteReview(false)} className="text-gray-400 hover:text-gray-600">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
 
                         {/* Rating principal */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium mb-2">Calificación General</label>
+                        <div className="mb-6 bg-gray-50 p-4 rounded-xl">
+                            <label className="block text-sm font-semibold text-gray-700 mb-3">{t('reviews.rating')}</label>
                             <StarRating
                                 rating={newReview.rating}
                                 size="lg"
@@ -335,73 +381,142 @@ const ReviewsSection = ({ businessId, ownerId }) => {
                         </div>
 
                         {/* Título */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium mb-2">Título (opcional)</label>
+                        <div className="mb-6">
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                {t('common.title', { defaultValue: 'Título' })} ({t('reviews.optional')})
+                            </label>
                             <input
                                 type="text"
                                 value={newReview.title}
                                 onChange={(e) => setNewReview({ ...newReview, title: e.target.value })}
-                                placeholder="Resumen de tu experiencia"
-                                className="w-full p-3 border rounded-lg"
+                                placeholder={t('common.titlePlaceholder', { defaultValue: 'Resumen de tu experiencia' })}
+                                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                                 maxLength={100}
                             />
                         </div>
 
                         {/* Reseña */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium mb-2">Tu Reseña *</label>
+                        <div className="mb-6">
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t('reviews.reviewText')} *</label>
                             <textarea
                                 value={newReview.review_text}
                                 onChange={(e) => setNewReview({ ...newReview, review_text: e.target.value })}
-                                placeholder="Cuéntanos sobre tu experiencia..."
-                                className="w-full p-3 border rounded-lg"
-                                rows={5}
+                                placeholder={t('reviews.reviewPlaceholder')}
+                                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none min-h-[120px]"
+                                rows={4}
                                 maxLength={1000}
                             />
-                            <p className="text-sm text-gray-500 mt-1">
-                                {newReview.review_text.length}/1000 caracteres
-                            </p>
+                            <div className="flex justify-end mt-1">
+                                <span className={`text-xs ${newReview.review_text.length > 900 ? 'text-red-500' : 'text-gray-400'}`}>
+                                    {newReview.review_text.length}/1000
+                                </span>
+                            </div>
                         </div>
 
                         {/* Criterios específicos */}
-                        <div className="grid grid-cols-3 gap-4 mb-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Servicio</label>
-                                <StarRating
-                                    rating={newReview.service_rating}
-                                    onChange={(rating) => setNewReview({ ...newReview, service_rating: rating })}
-                                />
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div className="bg-gray-50 p-3 rounded-xl text-center">
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t('reviews.service')}</label>
+                                <div className="flex justify-center">
+                                    <StarRating
+                                        rating={newReview.service_rating}
+                                        onChange={(rating) => setNewReview({ ...newReview, service_rating: rating })}
+                                    />
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Calidad</label>
-                                <StarRating
-                                    rating={newReview.quality_rating}
-                                    onChange={(rating) => setNewReview({ ...newReview, quality_rating: rating })}
-                                />
+                            <div className="bg-gray-50 p-3 rounded-xl text-center">
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t('reviews.quality')}</label>
+                                <div className="flex justify-center">
+                                    <StarRating
+                                        rating={newReview.quality_rating}
+                                        onChange={(rating) => setNewReview({ ...newReview, quality_rating: rating })}
+                                    />
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Precio</label>
-                                <StarRating
-                                    rating={newReview.price_rating}
-                                    onChange={(rating) => setNewReview({ ...newReview, price_rating: rating })}
-                                />
+                            <div className="bg-gray-50 p-3 rounded-xl text-center">
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t('reviews.price')}</label>
+                                <div className="flex justify-center">
+                                    <StarRating
+                                        rating={newReview.price_rating}
+                                        onChange={(rating) => setNewReview({ ...newReview, price_rating: rating })}
+                                    />
+                                </div>
                             </div>
                         </div>
 
                         {/* Botones */}
-                        <div className="flex gap-3">
+                        <div className="flex gap-4">
                             <button
                                 onClick={() => setShowWriteReview(false)}
-                                className="flex-1 px-4 py-3 border rounded-lg hover:bg-gray-50"
+                                className="flex-1 px-4 py-3 border border-gray-300 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
                             >
-                                Cancelar
+                                {t('reviews.cancel')}
                             </button>
                             <button
                                 onClick={submitReview}
-                                className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
                             >
-                                Publicar Reseña
+                                {t('reviews.submit')}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Reportar */}
+            {reportingItem && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[70] p-4 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-gray-900 border-l-4 border-red-500 pl-3">{t('report.title')}</h3>
+                            <button onClick={() => setReportingItem(null)} className="text-gray-400 hover:text-gray-600">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">{t('report.reason')}</label>
+                                <select
+                                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none"
+                                    value={reportReason}
+                                    onChange={(e) => setReportReason(e.target.value)}
+                                >
+                                    <option value="spam">{t('report.reasons.spam')}</option>
+                                    <option value="offensive">{t('report.reasons.offensive')}</option>
+                                    <option value="inappropriate">{t('report.reasons.inappropriate')}</option>
+                                    <option value="misleading">{t('report.reasons.misleading')}</option>
+                                    <option value="other">{t('report.reasons.other')}</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">{t('report.details')}</label>
+                                <textarea
+                                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none min-h-[100px]"
+                                    placeholder={t('report.placeholder')}
+                                    value={reportDetails}
+                                    onChange={(e) => setReportDetails(e.target.value)}
+                                    maxLength={500}
+                                />
+                            </div>
+
+                            <div className="flex gap-4 pt-2">
+                                <button
+                                    onClick={() => setReportingItem(null)}
+                                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl font-semibold text-gray-700 hover:bg-gray-50"
+                                    disabled={isReporting}
+                                >
+                                    {t('report.cancel')}
+                                </button>
+                                <button
+                                    onClick={handleReport}
+                                    className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 shadow-lg shadow-red-200 disabled:opacity-50"
+                                    disabled={isReporting || !reportDetails.trim()}
+                                >
+                                    {isReporting ? t('deleteAccount.processing') : t('report.submit')}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

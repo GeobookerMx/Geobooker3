@@ -13,7 +13,22 @@
         "next": "Next",
         "previous": "Previous",
         "submit": "Submit",
-        "confirm": "Confirm"
+        "confirm": "Confirm",
+        "title": "Title",
+        "titlePlaceholder": "Enter a title...",
+        "commentPlaceholder": "Write a comment...",
+        "verified": "Verified",
+        "notVerified": "Not verified",
+        "allRatings": "All ratings",
+        "stars": "stars",
+        "star": "star",
+        "mostRecent": "Most recent",
+        "mostHelpful": "Most helpful",
+        "bestRated": "Best rated",
+        "loadingReviews": "Loading reviews...",
+        "now": "Now",
+        "viewComments": "View comments",
+        "hideComments": "Hide comments"
     },
     "nav": {
         "home": "Home",
@@ -28,7 +43,11 @@
         "about": "About Us",
         "community": "Community",
         "moreSales": "More sales?",
-        "user": "User"
+        "user": "User",
+        "logoutSuccess": "Logged out successfully",
+        "logoutError": "Error logging out",
+        "openMenu": "Open menu",
+        "viewDashboard": "View your dashboard"
     },
     "home": {
         "title": "Find Businesses Near You",
@@ -45,7 +64,113 @@
         "businessMap": "Business Map",
         "noBusinessesFound": "No businesses found with those criteria",
         "foundBusinesses": "We found {{count}} businesses near you",
-        "businessList": "Business List"
+        "businessList": "Business List",
+        "promo": {
+            "launch": "LAUNCH! 70% OFF on all advertising spaces",
+            "validUntil": "Valid until:",
+            "seeOffers": "See offers →",
+            "march1": "March 1st, 2026"
+        },
+        "loadingMap": "Loading map...",
+        "locatingBusinesses": "Locating nearby businesses",
+        "filterActive": "Filtering:",
+        "removeFilter": "Remove filter",
+        "updateLocation": "Update my location",
+        "ceo": {
+            "quote": "Today millions search for businesses 'near me' but many searches fail due to outdated information. Geobooker solves that with verifiable profiles, simple updates, and real geolocation.",
+            "author": "GEOBOOKER TEAM",
+            "footer": "For advertisers: location-based advertising with limited slots and clear metrics."
+        },
+        "howItWorks": {
+            "title": "How It Works?",
+            "subtitle": "Find businesses near you in 3 simple steps",
+            "step1": {
+                "title": "1. Search",
+                "desc": "Type what you need: pharmacies, restaurants, workshops, and more"
+            },
+            "step2": {
+                "title": "2. Find",
+                "desc": "See the closest businesses to your location in real time"
+            },
+            "step3": {
+                "title": "3. Arrive",
+                "desc": "Get directions and arrive quickly at your destination"
+            }
+        },
+        "video": {
+            "title": "Watch how it works",
+            "subtitle": "Discover how to find businesses near you",
+            "subscribe": "Subscribe to our channel"
+        },
+        "stats": {
+            "registered": "Registered Businesses",
+            "activeUsers": "Active Users",
+            "searches": "Searches Performed",
+            "rating": "Average Rating"
+        },
+        "businessSection": {
+            "title": "Do You Have a Business?",
+            "subtitle": "Register your business on Geobooker and reach thousands of potential customers near you",
+            "benefit1": {
+                "title": "Immediate Visibility:",
+                "desc": "Appear in local searches instantly"
+            },
+            "benefit2": {
+                "title": "Free up to 2 businesses:",
+                "desc": "No cost to start"
+            },
+            "benefit3": {
+                "title": "Real-Time Statistics:",
+                "desc": "See how many people are looking for you"
+            },
+            "benefit4": {
+                "title": "Targeted Advertising:",
+                "desc": "Reach your ideal audience"
+            },
+            "cta": "Register My Business →",
+            "nearby": "{{distance}} from you"
+        },
+        "verifiedBusinesses": "Verified Businesses",
+        "trust": {
+            "title": "They already trust Geobooker 💼",
+            "subtitle": "Join hundreds of businesses that have already found more customers"
+        },
+        "testimonials": {
+            "vet": {
+                "name": "Veterinarian",
+                "desc": "Professional care"
+            },
+            "rest": {
+                "name": "Restaurant",
+                "desc": "Mexican cuisine"
+            }
+        },
+        "finalCta": {
+            "title": "Ready to Discover Businesses Near You?",
+            "subtitle": "Join thousands of users who already find what they need in seconds",
+            "button": "Start Now →"
+        },
+        "searchCleared": "Search cleared"
+    },
+    "globalPromo": {
+        "badge": "Global Advertising",
+        "homeTitle": "Want your brand to appear on the other side of the world?",
+        "homeSubtitle": "Launch or expand your brand in a specific city with Geobooker Global. Targeting by country, language and category.",
+        "local": {
+            "title": "Geobooker Local",
+            "desc": "Perfect for local businesses and SMEs who want to appear in their city. Starting from $900 MXN/month."
+        },
+        "global": {
+            "title": "Geobooker Global",
+            "desc": "For international brands: FIFA 2026, Super Bowl, Olympics. 30-day free pilot."
+        },
+        "ctaLearnMore": "Learn how to do it"
+    },
+    "seo": {
+        "cityCategoryTitle": "Best {{category}} in {{city}}",
+        "categoryTitle": "{{category}} near me",
+        "cityTitle": "Businesses and services in {{city}}",
+        "cityDescription": "Explore the interactive map of {{city}}. Find restaurants, pharmacies, stores and more on Geobooker."
     },
     "search": {
         "placeholder": "What business or service are you looking for?",
@@ -342,6 +467,7 @@
         "needApp": "Need your own App?",
         "needAppDesc": "We also develop custom web and mobile applications for your business. PWA, websites, systems, and more.",
         "requestQuote": "Request a quote",
+        "orWriteUs": "or write us:",
         "payments": "Payment methods",
         "share": "Share Geobooker!",
         "shareDesc": "Scan the QR with your phone to open the app",
@@ -444,6 +570,103 @@
         "cta": "Recommend now",
         "tooltip": "Recommend a business you visited",
         "success": "Thank you for your recommendation! It will be reviewed soon.",
-        "limitReached": "You have reached your recommendation limit for today."
+        "limitReached": "You have reached the limit of recommendations for today."
+    },
+    "deleteAccount": {
+        "title": "Delete Account",
+        "description": "Request deletion of your Geobooker account",
+        "mustLogin": "You must log in to delete your account.",
+        "permanentAction": "This action cannot be undone",
+        "whatWillHappen": "What will happen?",
+        "gracePeriodTitle": "Grace period",
+        "gracePeriodDesc": "Your account will be deleted in 30 days. During this period you can contact us to cancel the request.",
+        "confirmKeyword": "DELETE",
+        "confirmToastError": "Please type DELETE to confirm",
+        "successToast": "Deletion request sent. Your account will be deleted in 30 days.",
+        "errorToast": "Error processing request. Please try again.",
+        "reasonLabel": "Why are you leaving us? (optional)",
+        "reasonPlaceholder": "Select a reason",
+        "reasons": {
+            "no_use": "I no longer use the service",
+            "other_platform": "I use another platform",
+            "privacy": "Privacy concerns",
+            "bad_service": "Poor service",
+            "other": "Other"
+        },
+        "confirmLabel": "Type DELETE to confirm",
+        "deleteButton": "🗑️ Delete my account permanently",
+        "processing": "Processing...",
+        "bullet1": "Your registered businesses will be deleted",
+        "bullet2": "Your reviews and comments will be anonymized",
+        "bullet3": "You will lose your referral history",
+        "bullet4": "This action is permanent",
+        "back": "Back",
+        "cancelToDashboard": "Cancel and return to Dashboard",
+        "continue": "Continue with deletion"
+    },
+    "reviews": {
+        "title": "Reviews",
+        "writeReview": "Write a Review",
+        "noReviews": "No reviews yet. Be the first to leave one!",
+        "helpful": "Helpful",
+        "report": "Report",
+        "service": "Service",
+        "quality": "Quality",
+        "price": "Price",
+        "ownerResponse": "Business Response",
+        "submit": "Submit Review",
+        "cancel": "Cancel",
+        "rating": "Rating",
+        "optional": "optional",
+        "reviewText": "Your experience",
+        "reviewPlaceholder": "Tell us what you thought about this business...",
+        "success": "Review published successfully",
+        "helpfulSuccess": "Marked as helpful",
+        "alreadyHelpful": "You already marked this review as helpful"
+    },
+    "report": {
+        "title": "Report Content",
+        "reason": "Reason for reporting",
+        "details": "Additional details",
+        "placeholder": "Briefly explain why you are reporting this content...",
+        "submit": "Send Report",
+        "cancel": "Cancel",
+        "success": "Thank you. The report has been sent and will be reviewed.",
+        "error": "Error sending the report. Please try again.",
+        "reasons": {
+            "spam": "Spam / Advertising",
+            "offensive": "Offensive content / Hate speech",
+            "inappropriate": "Inappropriate content",
+            "misleading": "Misleading information",
+            "other": "Other"
+        }
+    },
+    "admin": {
+        "reports": {
+            "title": "Reports Moderation",
+            "adTitle": "Ad Reports",
+            "description": "Review and resolve reports of incorrect content or information",
+            "adDescription": "Review and moderate reports of inappropriate ads",
+            "stats": {
+                "pending": "Pending",
+                "reviewed": "Under review",
+                "resolved": "Resolved",
+                "rejected": "Rejected",
+                "all": "All"
+            },
+            "detail": "Report Detail",
+            "actions": {
+                "resolve": "Resolve",
+                "reject": "Reject",
+                "update": "Update",
+                "noAction": "No action",
+                "warning": "Warning sent",
+                "pauseAd": "Ad paused",
+                "rejectAd": "Ad rejected",
+                "banUser": "User banned"
+            },
+            "notes": "Resolution notes",
+            "notesPlaceholder": "Describe what action you took..."
+        }
     }
 }

@@ -9,8 +9,10 @@
 import React, { useState, useEffect } from 'react';
 import {
     Newspaper, Calendar, User, ChevronDown, ChevronUp,
-    Sparkles, ArrowRight, MessageCircle, Send, ExternalLink
+    Sparkles, ArrowRight, MessageCircle, Send, ExternalLink,
+    Flag, X
 } from 'lucide-react';
+import { reportService } from '../services/reportService';
 import { supabase } from '../lib/supabase';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -80,12 +82,19 @@ function formatBold(text) {
 }
 
 // Comment Component
-function CommentSection({ postId, isSpanish }) {
+function CommentSection({ postId }) {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState('');
     const [loading, setLoading] = useState(false);
     const [showComments, setShowComments] = useState(false);
+
+    // Reporting state
+    const [reportingItem, setReportingItem] = useState(null);
+    const [reportReason, setReportReason] = useState('spam');
+    const [reportDetails, setReportDetails] = useState('');
+    const [isReporting, setIsReporting] = useState(false);
 
     useEffect(() => {
         if (showComments) {
@@ -116,7 +125,7 @@ function CommentSection({ postId, isSpanish }) {
     const handleSubmit = async () => {
         if (!newComment.trim()) return;
         if (!user) {
-            toast.error(isSpanish ? 'Inicia sesión para comentar' : 'Login to comment');
+            toast.error(t('deleteAccount.mustLogin'));
             return;
         }
 
@@ -136,42 +145,51 @@ function CommentSection({ postId, isSpanish }) {
                 throw error;
             }
 
-            // Handle different response types
-            if (data === null || data === undefined) {
-                // Function returned nothing - might be old version returning UUID
-                toast.success(isSpanish ? '¡Comentario publicado!' : 'Comment posted!');
+            // Handle different response types based on RPC data
+            if (data?.blocked) {
+                toast.error(data.error || t('report.error'));
+            } else if (data?.pending_review) {
+                toast.success(t('report.pendingReview', { defaultValue: 'Tu comentario será revisado antes de publicarse' }));
                 setNewComment('');
-                loadComments();
-            } else if (typeof data === 'object') {
-                // New JSONB response format
-                if (data.blocked) {
-                    toast.error(data.error || (isSpanish ? 'Comentario bloqueado' : 'Comment blocked'));
-                } else if (data.pending_review) {
-                    toast.success(isSpanish ? 'Tu comentario será revisado antes de publicarse' : 'Your comment will be reviewed');
-                    setNewComment('');
-                } else if (data.success) {
-                    toast.success(data.message || (isSpanish ? '¡Comentario publicado!' : 'Comment posted!'));
-                    setNewComment('');
-                    loadComments();
-                } else if (data.error) {
-                    toast.error(data.error);
-                } else {
-                    // Unknown response, assume success
-                    toast.success(isSpanish ? '¡Comentario publicado!' : 'Comment posted!');
-                    setNewComment('');
-                    loadComments();
-                }
             } else {
-                // UUID returned (old function)
-                toast.success(isSpanish ? '¡Comentario publicado!' : 'Comment posted!');
+                toast.success(t('reviews.success'));
                 setNewComment('');
                 loadComments();
             }
         } catch (err) {
             console.error('Error posting comment:', err);
-            toast.error((isSpanish ? 'Error: ' : 'Error: ') + (err.message || err.toString()));
+            toast.error(t('common.error') + ': ' + (err.message || err.toString()));
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleReport = async () => {
+        if (!user) {
+            toast.error(t('deleteAccount.mustLogin'));
+            return;
+        }
+
+        setIsReporting(true);
+        try {
+            const { success, error } = await reportService.reportContent({
+                content_type: 'comment',
+                content_id: reportingItem.id,
+                reason: reportReason,
+                details: reportDetails
+            });
+
+            if (success) {
+                toast.success(t('report.success'));
+                setReportingItem(null);
+                setReportDetails('');
+            } else {
+                throw error;
+            }
+        } catch (error) {
+            toast.error(t('report.error'));
+        } finally {
+            setIsReporting(false);
         }
     };
 
@@ -183,7 +201,7 @@ function CommentSection({ postId, isSpanish }) {
         const diffHours = Math.floor(diffMins / 60);
         const diffDays = Math.floor(diffHours / 24);
 
-        if (diffMins < 1) return isSpanish ? 'Ahora' : 'Now';
+        if (diffMins < 1) return t('common.now', { defaultValue: 'Ahora' });
         if (diffMins < 60) return `${diffMins}m`;
         if (diffHours < 24) return `${diffHours}h`;
         if (diffDays < 7) return `${diffDays}d`;
@@ -197,8 +215,8 @@ function CommentSection({ postId, isSpanish }) {
                 className="flex items-center gap-2 text-purple-600 font-medium hover:text-purple-700"
             >
                 <MessageCircle className="w-5 h-5" />
-                {showComments ? (isSpanish ? 'Ocultar comentarios' : 'Hide comments') : (isSpanish ? 'Ver comentarios' : 'View comments')}
-                {comments.length > 0 && <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-sm">{comments.length}</span>}
+                {showComments ? t('common.hideComments', { defaultValue: 'Ocultar comentarios' }) : t('common.viewComments', { defaultValue: 'Ver comentarios' })}
+                {comments.length > 0 && <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-sm font-bold">{comments.length}</span>}
             </button>
 
             {showComments && (
@@ -209,14 +227,14 @@ function CommentSection({ postId, isSpanish }) {
                             type="text"
                             value={newComment}
                             onChange={(e) => setNewComment(e.target.value)}
-                            placeholder={isSpanish ? 'Escribe tu opinión...' : 'Write your opinion...'}
-                            className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            placeholder={t('common.commentPlaceholder', { defaultValue: 'Escribe tu opinión...' })}
+                            className="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                             onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
                         />
                         <button
                             onClick={handleSubmit}
                             disabled={loading || !newComment.trim()}
-                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition flex items-center gap-2"
+                            className="px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:opacity-50 transition-all flex items-center gap-2 shadow-sm"
                         >
                             <Send className="w-4 h-4" />
                         </button>
@@ -224,20 +242,93 @@ function CommentSection({ postId, isSpanish }) {
 
                     {/* Comments List */}
                     {comments.length === 0 ? (
-                        <p className="text-gray-500 text-sm text-center py-4">
-                            {isSpanish ? 'Sé el primero en comentar' : 'Be the first to comment'}
+                        <p className="text-gray-500 text-sm text-center py-4 italic">
+                            {t('reviews.noReviews')}
                         </p>
                     ) : (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {comments.map(comment => (
-                                <div key={comment.id} className="bg-gray-50 rounded-lg p-3">
+                                <div key={comment.id} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="font-medium text-gray-900">{comment.user_name}</span>
-                                        <span className="text-gray-400 text-sm">{formatCommentDate(comment.created_at)}</span>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-700 font-bold text-xs uppercase">
+                                                {comment.user_name?.charAt(0) || 'U'}
+                                            </div>
+                                            <span className="font-bold text-gray-900 text-sm">{comment.user_name}</span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-gray-400 text-xs">{formatCommentDate(comment.created_at)}</span>
+                                            <button
+                                                onClick={() => setReportingItem({ id: comment.id, type: 'comment' })}
+                                                className="text-gray-300 hover:text-red-500 transition-colors"
+                                                title={t('reviews.report')}
+                                            >
+                                                <Flag className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <p className="text-gray-700">{comment.content}</p>
+                                    <p className="text-gray-700 text-sm leading-relaxed">{comment.content}</p>
                                 </div>
                             ))}
+                        </div>
+                    )}
+
+                    {/* Report Modal (Community Comments) */}
+                    {reportingItem && (
+                        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
+                            <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-xl font-bold text-gray-900 border-l-4 border-red-500 pl-3">{t('report.title')}</h3>
+                                    <button onClick={() => setReportingItem(null)} className="text-gray-400 hover:text-gray-600">
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">{t('report.reason')}</label>
+                                        <select
+                                            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none"
+                                            value={reportReason}
+                                            onChange={(e) => setReportReason(e.target.value)}
+                                        >
+                                            <option value="spam">{t('report.reasons.spam')}</option>
+                                            <option value="offensive">{t('report.reasons.offensive')}</option>
+                                            <option value="inappropriate">{t('report.reasons.inappropriate')}</option>
+                                            <option value="misleading">{t('report.reasons.misleading')}</option>
+                                            <option value="other">{t('report.reasons.other')}</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">{t('report.details')}</label>
+                                        <textarea
+                                            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none min-h-[100px]"
+                                            placeholder={t('report.placeholder')}
+                                            value={reportDetails}
+                                            onChange={(e) => setReportDetails(e.target.value)}
+                                            maxLength={500}
+                                        />
+                                    </div>
+
+                                    <div className="flex gap-4 pt-2">
+                                        <button
+                                            onClick={() => setReportingItem(null)}
+                                            className="flex-1 px-4 py-3 border border-gray-300 rounded-xl font-semibold text-gray-700 hover:bg-gray-50"
+                                            disabled={isReporting}
+                                        >
+                                            {t('report.cancel')}
+                                        </button>
+                                        <button
+                                            onClick={handleReport}
+                                            className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 shadow-lg shadow-red-200 disabled:opacity-50"
+                                            disabled={isReporting || !reportDetails.trim()}
+                                        >
+                                            {isReporting ? t('deleteAccount.processing') : t('report.submit')}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -546,7 +637,7 @@ export default function CommunityPage() {
                                                     )}
 
                                                     {/* Comments Section */}
-                                                    <CommentSection postId={post.id} isSpanish={isSpanish} />
+                                                    <CommentSection postId={post.id} />
                                                 </div>
                                             ) : (
                                                 <p className="text-gray-600 line-clamp-2">

@@ -33,7 +33,15 @@ export default function DashboardHome() {
     totalBusinesses: 0,
     activeCampaigns: 0,
     monthlyRevenue: 0,
+    pendingRecommendations: 0,
     loading: true
+  });
+
+  // Real metrics from ad_campaign_metrics (month totals)
+  const [adMetrics, setAdMetrics] = useState({
+    totalImpressions: 0,
+    totalClicks: 0,
+    ctr: '0.00'
   });
 
   const [analyticsStats, setAnalyticsStats] = useState({
@@ -115,6 +123,34 @@ export default function DashboardHome() {
       });
 
       setRecentActivity(recentCampaigns || []);
+
+      // Cargar métricas reales del mes actual desde ad_campaign_metrics
+      try {
+        const now = new Date();
+        const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+        const { data: metricsData } = await supabase
+          .from('ad_campaign_metrics')
+          .select('impressions, clicks')
+          .gte('date', firstOfMonth);
+
+        const totalImpressions = (metricsData || []).reduce((sum, m) => sum + (m.impressions || 0), 0);
+        const totalClicks = (metricsData || []).reduce((sum, m) => sum + (m.clicks || 0), 0);
+        const ctr = totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(2) : '0.00';
+        setAdMetrics({ totalImpressions, totalClicks, ctr });
+      } catch (metricsErr) {
+        console.warn('Error loading ad metrics:', metricsErr);
+      }
+
+      // Recomendaciones pendientes
+      try {
+        const { count: pendingRecsCount } = await supabase
+          .from('user_recommendations')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'pending');
+        setStats(prev => ({ ...prev, pendingRecommendations: pendingRecsCount || 0 }));
+      } catch (recsErr) {
+        console.warn('Error loading pending recommendations:', recsErr);
+      }
 
       // Cargar estadísticas internacionales
       try {
@@ -210,6 +246,15 @@ export default function DashboardHome() {
           color="indigo"
           link="/admin/users"
         />
+        {stats.pendingRecommendations > 0 && (
+          <KPICard
+            title="⭐ Recomendaciones Pendientes"
+            value={stats.pendingRecommendations.toLocaleString()}
+            icon={CheckCircle}
+            color="yellow"
+            link="/admin/recommendations"
+          />
+        )}
       </div>
 
       {/* Analytics KPIs - Tráfico en tiempo real */}
@@ -431,30 +476,26 @@ export default function DashboardHome() {
         </div>
       </div>
 
-      {/* Stats Summary */}
+      {/* Stats Summary - métricas REALES del mes */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg p-6 text-white">
-        <h3 className="text-xl font-bold mb-4">📊 Resumen Rápido</h3>
+        <h3 className="text-xl font-bold mb-4">📊 Resumen del Mes (métricas reales)</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <p className="text-blue-100 text-sm">Impresiones Totales</p>
             <p className="text-2xl font-bold mt-1">
-              {recentActivity.reduce((sum, c) => sum + (c.impressions || 0), 0).toLocaleString()}
+              {adMetrics.totalImpressions.toLocaleString()}
             </p>
           </div>
           <div>
             <p className="text-blue-100 text-sm">Clics Totales</p>
             <p className="text-2xl font-bold mt-1">
-              {recentActivity.reduce((sum, c) => sum + (c.clicks || 0), 0).toLocaleString()}
+              {adMetrics.totalClicks.toLocaleString()}
             </p>
           </div>
           <div>
             <p className="text-blue-100 text-sm">CTR Promedio</p>
             <p className="text-2xl font-bold mt-1">
-              {(() => {
-                const totalImpressions = recentActivity.reduce((sum, c) => sum + (c.impressions || 0), 0);
-                const totalClicks = recentActivity.reduce((sum, c) => sum + (c.clicks || 0), 0);
-                return totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(2) : 0;
-              })()}%
+              {adMetrics.ctr}%
             </p>
           </div>
           <div>
@@ -476,6 +517,8 @@ function KPICard({ title, value, icon: Icon, color, link }) {
     green: 'bg-green-50 text-green-600',
     purple: 'bg-purple-50 text-purple-600',
     orange: 'bg-orange-50 text-orange-600',
+    yellow: 'bg-yellow-50 text-yellow-600',
+    indigo: 'bg-indigo-50 text-indigo-600',
   };
 
   return (

@@ -24,7 +24,11 @@
         "profile": "Profile",
         "dashboard": "Dashboard",
         "logout": "Logout",
-        "addBusiness": "Add Business"
+        "addBusiness": "Add Business",
+        "about": "About Us",
+        "community": "Community",
+        "moreSales": "More sales?",
+        "user": "User"
     },
     "home": {
         "title": "Find Businesses Near You",
@@ -239,7 +243,63 @@
         "useCaseF1Result": "3M+ estimated impressions",
         "ctaFinalTitle": "Ready to scale your brand globally?",
         "ctaFinalSubtitle": "Our enterprise sales team will contact you within 24 hours to design a personalized strategy.",
-        "ctaTalkToSales": "Talk to Sales"
+        "ctaTalkToSales": "Talk to Sales",
+        "featureHours": "Digital Opening/Closing",
+        "featureHoursDesc": "Control your business hours from any device. Your customers will always know if you're available.",
+        "featureAlwaysMap": "Always on the Map",
+        "featureAlwaysMapDesc": "Your business visible 24/7 on Geobooker's interactive map. Never miss a potential customer.",
+        "featureMultiLocation": "Multi-Location",
+        "featureMultiLocationDesc": "Manage multiple branches from a single dashboard. Unified reports and centralized control.",
+        "featureReferralProg": "Referral Program",
+        "featureReferralProgDesc": "Integrated referral system: your customers invite, you win. Automatic rewards and real-time tracking.",
+        "useCasePharmacy": "Pharmacy chain announces opening of 10 new branches in Monterrey with geolocated campaign.",
+        "useCasePharmacyResult": "1.5M+ local impressions",
+        "useCaseBeverage": "Energy drink brand activates exclusive promotions during music festival in Guadalajara.",
+        "useCaseBeverageResult": "800K+ interactions",
+        "useCaseBank": "Digital bank launches credit card for millennials with ads in university areas of CDMX.",
+        "useCaseBankResult": "2M+ youth reach",
+        "kpisTitle": "Live Data & KPIs",
+        "kpisSubtitle": "Data Included in your Enterprise Contract",
+        "kpisDesc": "Total transparency. You will receive access to real-time metrics and personalized reports to optimize your campaigns.",
+        "kpiRealTime": "Real-Time Data",
+        "kpiRealTimeItems": [
+            "Dashboard with live metrics",
+            "Updates every 24 hours",
+            "Performance alerts"
+        ],
+        "kpiMeasured": "KPIs We Measure",
+        "kpiMeasuredItems": [
+            "Total impressions",
+            "Unique clicks (CTR)",
+            "Reach by region/city",
+            "Engagement rate"
+        ],
+        "kpiOptimization": "Campaign Optimization",
+        "kpiOptimizationItems": [
+            "AI suggestions for creatives",
+            "Best posting times",
+            "Automated A/B testing"
+        ],
+        "kpiReports": "Weekly Reports",
+        "kpiReportsItems": [
+            "PDF report every Monday",
+            "Comparisons vs previous week",
+            "Top cities and audiences"
+        ],
+        "kpiSegmentation": "Global Segmentation",
+        "kpiSegmentationItems": [
+            "Data by country and city",
+            "Audience language",
+            "Device (mobile/desktop)"
+        ],
+        "kpiSupport": "Dedicated Account Manager",
+        "kpiSupportItems": [
+            "Assigned executive 24/7",
+            "Follow-up calls",
+            "Priority support"
+        ],
+        "guaranteeTitle": "Transparency Guarantee",
+        "guaranteeDesc": "If at any point you don't have access to your metrics or reports, we'll extend your campaign <1>+15 days for free</1>."
     },
     "map": {
         "loadingMap": "Loading map...",
@@ -274,9 +334,43 @@
         "submit": "Submit Quote Request"
     },
     "footer": {
+        "description": "The best local business directory. Find and discover businesses near you quickly and easily.",
+        "followUs": "Follow Us",
+        "contact": "Contact",
+        "quickLinks": "Quick Links",
+        "legalSupport": "Legal & Support",
         "needApp": "Need your own App?",
-        "appDevDesc": "We develop custom web and mobile apps.",
-        "requestQuote": "Request a quote"
+        "needAppDesc": "We also develop custom web and mobile applications for your business. PWA, websites, systems, and more.",
+        "requestQuote": "Request a quote",
+        "payments": "Payment methods",
+        "share": "Share Geobooker!",
+        "shareDesc": "Scan the QR with your phone to open the app",
+        "copyright": "© {{year}} Geobooker. All rights reserved.",
+        "madeIn": "Made with ❤️ in Mexico 🇲🇽",
+        "about": "About Us",
+        "privacy": "Privacy Policy",
+        "terms": "Terms of Service",
+        "faq": "FAQ",
+        "security": "Security & Emergencies",
+        "fiscal": "Fiscal Information",
+        "support": "Technical Support",
+        "adsPolicy": "Ad Policies",
+        "guiaResico": "SAT Registration Guide (RESICO)"
+    },
+    "ads_placeholder": {
+        "badge": "Space Available",
+        "msg1_title": "🚀 Boost Your Business",
+        "msg1_subtitle": "More than 10,000 users search for businesses like yours every day",
+        "msg1_cta": "Advertise Here!",
+        "msg2_title": "📍 Is your business digital?",
+        "msg2_subtitle": "Put your business on the map and attract customers",
+        "msg2_cta": "Register Business",
+        "msg3_title": "🔥 Want more sales?",
+        "msg3_subtitle": "This space can be yours. Create your campaign now",
+        "msg3_cta": "Create Campaign",
+        "msg4_title": "💡 Space Available",
+        "msg4_subtitle": "Advertise your business here and reach thousands",
+        "msg4_cta": "View Options"
     },
     "ads": {
         "sponsored": "Sponsored",

@@ -24,6 +24,7 @@ const Sidebar = ({ onLogout }) => {
     const location = useLocation();
     const [pendingBusinesses, setPendingBusinesses] = useState(0);
     const [pendingCampaigns, setPendingCampaigns] = useState(0);
+    const [pendingRecommendations, setPendingRecommendations] = useState(0);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Cerrar menú al cambiar de ruta
@@ -51,32 +52,70 @@ const Sidebar = ({ onLogout }) => {
                 .select('*', { count: 'exact', head: true })
                 .eq('status', 'pending_review');
             setPendingCampaigns(campaignCount || 0);
+
+            const { count: recsCount } = await supabase
+                .from('user_recommendations')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'pending');
+            setPendingRecommendations(recsCount || 0);
         } catch (error) {
             console.error('Error loading pending counts:', error);
         }
     };
 
-    const menuItems = [
-        { path: '/admin/dashboard', icon: Home, label: 'Vista General' },
-        { path: '/admin/businesses', icon: Store, label: 'Negocios', badge: pendingBusinesses, badgeColor: 'yellow' },
-        { path: '/admin/users', icon: Users, label: 'Usuarios' },
-        { path: '/admin/ads', icon: TrendingUp, label: '🚀 Geobooker Ads', badge: pendingCampaigns, badgeColor: 'red' },
-        { path: '/admin/ads-qa', icon: BarChart3, label: '🧪 Ads QA Tool' },
-        { path: '/admin/reports', icon: BarChart3, label: '⚠️ Reportes Negocios' },
-        { path: '/admin/ad-reports', icon: BarChart3, label: '🚩 Reportes Anuncios' },
-        { path: '/admin/inventory', icon: BarChart3, label: '📦 Ad Inventory' },
-        { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
-        { path: 'https://clarity.microsoft.com/projects', icon: BarChart3, label: '🔥 Clarity (Heatmaps)', external: true },
-        { path: '/admin/scan-invite', icon: Users, label: '🇲🇽 Scan Local (Nacional)' },
-        { path: '/admin/referrals', icon: Gift, label: '🎁 Referidos' },
-        { path: '/admin/blog', icon: Newspaper, label: '📝 Blog Comunidad' },
-        { path: '/admin/import', icon: Database, label: '📥 Importar Datos' },
-        { path: '/admin/marketing', icon: Mail, label: '🎯 CRM & Marketing' },
-        { path: '/admin/scraper', icon: Globe, label: '🌍 Apify Scraper ($)' }, // Apify con costos
-        { path: '/admin/scraper-history', icon: Database, label: '📂 Leads x Scrapping' },
-        { path: '/admin/fiscal', icon: Database, label: '🧾 Control Fiscal' },
-        { path: '/admin/revenue', icon: DollarSign, label: 'Ingresos' },
-        { path: '/admin/settings', icon: Settings, label: 'Configuración' },
+    // Sidebar organizado en secciones
+    const menuSections = [
+        {
+            title: '📊 General',
+            items: [
+                { path: '/admin/dashboard', icon: Home, label: 'Vista General' },
+                { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
+                { path: '/admin/revenue', icon: DollarSign, label: 'Ingresos' },
+                { path: 'https://clarity.microsoft.com/projects', icon: BarChart3, label: '🔥 Clarity (Heatmaps)', external: true },
+            ]
+        },
+        {
+            title: '🏪 Negocios & Usuarios',
+            items: [
+                { path: '/admin/businesses', icon: Store, label: 'Negocios', badge: pendingBusinesses, badgeColor: 'yellow' },
+                { path: '/admin/users', icon: Users, label: 'Usuarios' },
+                { path: '/admin/reports', icon: BarChart3, label: '⚠️ Reportes Negocios' },
+            ]
+        },
+        {
+            title: '📢 Publicidad',
+            items: [
+                { path: '/admin/ads', icon: TrendingUp, label: '🚀 Geobooker Ads', badge: pendingCampaigns, badgeColor: 'red' },
+                { path: '/admin/ads-qa', icon: BarChart3, label: '🧪 Ads QA Tool' },
+                { path: '/admin/inventory', icon: BarChart3, label: '📦 Ad Inventory' },
+                { path: '/admin/ad-reports', icon: BarChart3, label: '🚩 Reportes Anuncios' },
+            ]
+        },
+        {
+            title: '⭐ Comunidad',
+            items: [
+                { path: '/admin/recommendations', icon: Store, label: '⭐ Recomendaciones', badge: pendingRecommendations, badgeColor: 'yellow' },
+                { path: '/admin/referrals', icon: Gift, label: '🎁 Referidos' },
+                { path: '/admin/blog', icon: Newspaper, label: '📝 Blog' },
+            ]
+        },
+        {
+            title: '🎯 Marketing & CRM',
+            items: [
+                { path: '/admin/marketing', icon: Mail, label: '🎯 CRM & Marketing' },
+                { path: '/admin/scan-invite', icon: Users, label: '🇲🇽 Scan Local' },
+                { path: '/admin/scraper', icon: Globe, label: '🌍 Apify Scraper ($)' },
+                { path: '/admin/scraper-history', icon: Database, label: '📂 Leads x Scrapping' },
+            ]
+        },
+        {
+            title: '⚙️ Sistema',
+            items: [
+                { path: '/admin/import', icon: Database, label: '📥 Importar Datos' },
+                { path: '/admin/fiscal', icon: Database, label: '🧾 Control Fiscal' },
+                { path: '/admin/settings', icon: Settings, label: 'Configuración' },
+            ]
+        },
     ];
 
 
@@ -95,58 +134,66 @@ const Sidebar = ({ onLogout }) => {
                 <p className="text-xs text-gray-400">Panel de Administración</p>
             </div>
 
-            {/* Navegación */}
-            <nav className="flex-1 overflow-y-auto py-4">
-                {menuItems.map((item) => {
-                    const Icon = item.icon;
-                    const linkClass = `flex items-center justify-between px-6 py-3 transition-colors ${isActive(item.path)
-                        ? 'bg-blue-600 text-white border-l-4 border-blue-400'
-                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                        }`;
+            {/* Navegación por secciones */}
+            <nav className="flex-1 overflow-y-auto py-2">
+                {menuSections.map((section, sIdx) => (
+                    <div key={section.title}>
+                        {/* Section Header */}
+                        {sIdx > 0 && <div className="border-t border-gray-700/50 mx-4 my-2" />}
+                        <p className="px-6 pt-3 pb-1 text-[10px] uppercase tracking-wider text-gray-500 font-bold">
+                            {section.title}
+                        </p>
+                        {section.items.map((item) => {
+                            const Icon = item.icon;
+                            const linkClass = `flex items-center justify-between px-6 py-2.5 transition-colors text-sm ${isActive(item.path)
+                                ? 'bg-blue-600 text-white border-l-4 border-blue-400'
+                                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                                }`;
 
-                    const content = (
-                        <>
-                            <div className="flex items-center">
-                                <Icon className="w-5 h-5 mr-3" />
-                                <span className="font-medium">{item.label}</span>
-                            </div>
-                            {item.badge > 0 && (
-                                <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${item.badgeColor === 'red'
-                                    ? 'bg-red-500 text-white animate-pulse'
-                                    : 'bg-yellow-400 text-gray-900'
-                                    }`}>
-                                    {item.badge}
-                                </span>
-                            )}
-                        </>
-                    );
+                            const content = (
+                                <>
+                                    <div className="flex items-center">
+                                        <Icon className="w-4 h-4 mr-3" />
+                                        <span className="font-medium">{item.label}</span>
+                                    </div>
+                                    {item.badge > 0 && (
+                                        <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${item.badgeColor === 'red'
+                                            ? 'bg-red-500 text-white animate-pulse'
+                                            : 'bg-yellow-400 text-gray-900'
+                                            }`}>
+                                            {item.badge}
+                                        </span>
+                                    )}
+                                </>
+                            );
 
-                    // External links open in new tab
-                    if (item.external) {
-                        return (
-                            <a
-                                key={item.path}
-                                href={item.path}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={linkClass}
-                            >
-                                {content}
-                            </a>
-                        );
-                    }
+                            if (item.external) {
+                                return (
+                                    <a
+                                        key={item.path}
+                                        href={item.path}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={linkClass}
+                                    >
+                                        {content}
+                                    </a>
+                                );
+                            }
 
-                    return (
-                        <Link
-                            key={item.path}
-                            to={item.path}
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className={linkClass}
-                        >
-                            {content}
-                        </Link>
-                    );
-                })}
+                            return (
+                                <Link
+                                    key={item.path}
+                                    to={item.path}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className={linkClass}
+                                >
+                                    {content}
+                                </Link>
+                            );
+                        })}
+                    </div>
+                ))}
             </nav>
 
 

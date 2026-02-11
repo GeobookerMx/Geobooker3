@@ -26,12 +26,12 @@ const Footer = () => {
                 />
               </div>
               <p className="text-gray-300 mb-6 max-w-md">
-                El mejor directorio de negocios locales. Encuentra y descubre negocios cerca de ti de forma rápida y sencilla.
+                {t('footer.description')}
               </p>
 
               {/* Redes Sociales */}
               <div className="mb-6">
-                <h4 className="font-semibold mb-3 text-blue-400">Síguenos</h4>
+                <h4 className="font-semibold mb-3 text-blue-400">{t('footer.followUs')}</h4>
                 <div className="flex space-x-4">
                   <a
                     href="https://www.tiktok.com/@geobookermx"
@@ -104,7 +104,7 @@ const Footer = () => {
 
               {/* Contacto */}
               <div>
-                <h4 className="font-semibold mb-3 text-blue-400">Contacto</h4>
+                <h4 className="font-semibold mb-3 text-blue-400">{t('footer.contact')}</h4>
                 <div className="space-y-2">
                   <a
                     href="https://wa.me/5255267023368"
@@ -125,7 +125,7 @@ const Footer = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     <span>geobookerr@gmail.com</span>
-                    <span className="ml-2 text-xs text-gray-500">(Soporte)</span>
+                    <span className="ml-2 text-xs text-gray-500">({t('footer.support')})</span>
                   </a>
                   <a
                     href="mailto:ventasgeobooker@gmail.com"
@@ -135,7 +135,7 @@ const Footer = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     <span>ventasgeobooker@gmail.com</span>
-                    <span className="ml-2 text-xs text-gray-500">(Ventas y Publicidad)</span>
+                    <span className="ml-2 text-xs text-gray-500">({t('enterprise.heroTitle2')} & {t('nav.moreSales')})</span>
                   </a>
                 </div>
               </div>
@@ -147,32 +147,32 @@ const Footer = () => {
               <ul className="space-y-3">
                 <li>
                   <Link to="/" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → Inicio
+                    → {t('nav.home')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/categories" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → Categorías
+                    → {t('nav.categories')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/business/register" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → Agregar negocio
+                    → {t('nav.addBusiness')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/login" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → Iniciar sesión
+                    → {t('nav.login')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/advertise" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → Publicidad para negocios
+                    → {t('footer.adsPolicy')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/guia-resico" className="text-gray-300 hover:text-green-400 hover:pl-2 transition-all duration-200 inline-block">
-                    📋 Guía Alta SAT (RESICO)
+                    📋 {t('footer.guiaResico')}
                   </Link>
                 </li>
               </ul>
@@ -180,41 +180,41 @@ const Footer = () => {
 
             {/* Columna 3 - Legal y Soporte */}
             <div>
-              <h3 className="font-semibold mb-4 text-blue-400">Legal y Soporte</h3>
+              <h3 className="font-semibold mb-4 text-blue-400">{t('footer.legalSupport')}</h3>
               <ul className="space-y-3">
                 <li>
                   <Link to="/privacy" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → Política de privacidad
+                    → {t('footer.privacy')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/legal/ads-policy" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → Políticas de publicidad
+                    → {t('footer.adsPolicy')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/terms" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → Términos de servicio
+                    → {t('footer.terms')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/faq" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → Preguntas frecuentes
+                    → {t('footer.faq')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/seguridad" className="text-gray-300 hover:text-yellow-400 hover:pl-2 transition-all duration-200 inline-block">
-                    🛡️ Seguridad y Emergencias
+                    🛡️ {t('footer.security')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/legal/fiscal" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    💼 Información Fiscal
+                    💼 {t('footer.fiscal')}
                   </Link>
                 </li>
                 <li>
                   <a href="mailto:soporte@geobooker.com.mx" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → Soporte técnico
+                    → {t('footer.support')}
                   </a>
                 </li>
               </ul>
@@ -227,11 +227,10 @@ const Footer = () => {
               <div className="text-center md:text-left">
                 <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
                   <span className="text-3xl">📱</span>
-                  <h3 className="text-xl font-bold text-white">¿Necesitas tu propia App?</h3>
+                  <h3 className="text-xl font-bold text-white">{t('footer.needApp')}</h3>
                 </div>
                 <p className="text-gray-300 text-sm max-w-lg">
-                  También desarrollamos <strong className="text-purple-300">aplicaciones web y móviles personalizadas</strong> para tu negocio.
-                  PWA, sitios web, sistemas, landing pages y más.
+                  {t('footer.needAppDesc')}
                 </p>
               </div>
               <div className="flex flex-col gap-2">
@@ -239,7 +238,7 @@ const Footer = () => {
                   to="/desarrollo-apps"
                   className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-semibold text-center transition-all transform hover:scale-105 shadow-lg"
                 >
-                  📝 Solicitar cotización
+                  📝 {t('footer.requestQuote')}
                 </Link>
                 <a
                   href="mailto:geobookerr@gmail.com?subject=Cotización desarrollo de app"
@@ -254,7 +253,7 @@ const Footer = () => {
           {/* Métodos de pago aceptados */}
           <div className="flex justify-center mb-8">
             <div className="bg-gray-800/50 rounded-xl px-6 py-4 flex flex-col md:flex-row items-center gap-4">
-              <span className="text-gray-400 text-sm font-medium">Métodos de pago:</span>
+              <span className="text-gray-400 text-sm font-medium">{t('footer.payments')}:</span>
               <div className="flex items-center gap-4">
                 {/* OXXO Pay */}
                 <div className="flex items-center gap-2 bg-yellow-500/20 px-3 py-1.5 rounded-lg">
@@ -277,8 +276,8 @@ const Footer = () => {
             <div className="bg-gray-800 rounded-2xl px-8 py-6 flex flex-col md:flex-row items-center gap-6">
               <AppQRCode size={100} darkMode={true} />
               <div className="text-center md:text-left">
-                <h4 className="text-white font-bold text-lg mb-1">¡Comparte Geobooker!</h4>
-                <p className="text-gray-400 text-sm">Escanea el QR con tu celular para abrir la app</p>
+                <h4 className="text-white font-bold text-lg mb-1">{t('footer.share')}</h4>
+                <p className="text-gray-400 text-sm">{t('footer.shareDesc')}</p>
                 <p className="text-blue-400 text-xs mt-1">geobooker.com.mx</p>
               </div>
             </div>
@@ -288,10 +287,10 @@ const Footer = () => {
           <div className="border-t border-gray-700 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center text-gray-400 text-sm">
               <p className="mb-4 md:mb-0">
-                © {new Date().getFullYear()} Geobooker. Todos los derechos reservados.
+                {t('footer.copyright', { year: new Date().getFullYear() })}
               </p>
               <p className="text-xs">
-                Hecho con ❤️ en México 🇲🇽
+                {t('footer.madeIn')}
               </p>
             </div>
           </div>

@@ -38,8 +38,9 @@ const RecommendationForm = ({ isOpen, onClose, userLocation, onSuccess }) => {
     });
 
     const [location, setLocation] = useState({
-        lat: userLocation?.lat || 19.4326,
-        lng: userLocation?.lng || -99.1332
+        lat: userLocation?.lat || null,
+        lng: userLocation?.lng || null,
+        verified: !!(userLocation?.lat)
     });
 
     const [photoPreview, setPhotoPreview] = useState(null);
@@ -76,9 +77,10 @@ const RecommendationForm = ({ isOpen, onClose, userLocation, onSuccess }) => {
                 (position) => {
                     setLocation({
                         lat: position.coords.latitude,
-                        lng: position.coords.longitude
+                        lng: position.coords.longitude,
+                        verified: true
                     });
-                    toast.success('Ubicación actualizada');
+                    toast.success('¡Ubicación verificada! Tu recomendación tendrá el badge 📍 Verificado');
                 },
                 (error) => {
                     console.error('Error getting location:', error);
@@ -156,8 +158,8 @@ const RecommendationForm = ({ isOpen, onClose, userLocation, onSuccess }) => {
                     name: formData.name.trim(),
                     category: formData.category,
                     address: formData.address.trim() || null,
-                    latitude: location.lat,
-                    longitude: location.lng,
+                    latitude: location.lat || null,
+                    longitude: location.lng || null,
                     rating: formData.rating,
                     pros: formData.pros.trim() || null,
                     cons: formData.cons.trim() || null,
@@ -299,8 +301,8 @@ const RecommendationForm = ({ isOpen, onClose, userLocation, onSuccess }) => {
                                         type="button"
                                         onClick={() => setFormData(prev => ({ ...prev, rating: star }))}
                                         className={`p-2 rounded-full transition ${formData.rating >= star
-                                                ? 'text-yellow-400 hover:text-yellow-500'
-                                                : 'text-gray-300 hover:text-gray-400'
+                                            ? 'text-yellow-400 hover:text-yellow-500'
+                                            : 'text-gray-300 hover:text-gray-400'
                                             }`}
                                     >
                                         <Star className="w-8 h-8" fill={formData.rating >= star ? 'currentColor' : 'none'} />
@@ -332,7 +334,15 @@ const RecommendationForm = ({ isOpen, onClose, userLocation, onSuccess }) => {
                                 </button>
                             </div>
                             <p className="text-xs text-gray-500 mt-1">
-                                📍 Lat: {location.lat.toFixed(4)}, Lng: {location.lng.toFixed(4)}
+                                {location.verified ? (
+                                    <span className="text-green-600 font-medium">
+                                        ✅ Ubicación verificada • Lat: {location.lat?.toFixed(4)}, Lng: {location.lng?.toFixed(4)}
+                                    </span>
+                                ) : (
+                                    <span className="text-amber-600">
+                                        ⚠️ Sin ubicación verificada. Toca el botón 📍 para verificar tu zona y dar más credibilidad.
+                                    </span>
+                                )}
                             </p>
                         </div>
 

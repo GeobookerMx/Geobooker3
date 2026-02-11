@@ -7,7 +7,7 @@ import {
   Calendar, CheckCircle2, AlertCircle, Clock,
   ChevronRight, Filter, Search, Plus, Eye,
   Settings, Trash2, Edit2, Play, Pause, X,
-  TrendingUp, DollarSign, Info
+  TrendingUp, DollarSign, Info, RefreshCw
 } from 'lucide-react';
 import { sendCampaignApprovedEmail } from '../../services/notificationService';
 import CampaignDetailsModal from '../../components/admin/CampaignDetailsModal';
@@ -28,6 +28,12 @@ const AdsManagement = () => {
   const [previewCampaign, setPreviewCampaign] = useState(null); // Para el modal de vista previa
   const [editingSpace, setEditingSpace] = useState(null); // Para el modal de editar espacio
   const [spaceFilter, setSpaceFilter] = useState('all'); // Filtro por espacio
+  // Rejection modal state
+  const [rejectModal, setRejectModal] = useState({ open: false, campaignId: null });
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectCustom, setRejectCustom] = useState('');
+  // Metrics viewer state
+  const [metricsModal, setMetricsModal] = useState({ open: false, campaign: null, metrics: null, loading: false });
   const [analyticsData, setAnalyticsData] = useState({ // Datos para gráficas
     impressionsOverTime: [],
     spacePerformance: [],
@@ -209,26 +215,66 @@ const AdsManagement = () => {
     }
   };
 
-  const handleReject = async (campaignId) => {
-    if (!window.confirm('¿Confirmar rechazo?')) return;
-
+  const handleReject = async (campaignId, reason) => {
     setActionLoading(campaignId);
     try {
-      // Podríamos agregar un campo de razón de rechazo en el futuro
+      const finalReason = reason || rejectReason === 'otra' ? rejectCustom : rejectReason;
       const { error } = await supabase
         .from('ad_campaigns')
-        .update({ status: 'rejected' })
+        .update({ status: 'rejected', rejection_reason: finalReason || null })
         .eq('id', campaignId);
 
       if (error) throw error;
 
       toast.success('Campaña rechazada');
+      setRejectModal({ open: false, campaignId: null });
+      setRejectReason('');
+      setRejectCustom('');
       await loadData('pending_review');
     } catch (error) {
       console.error('Error rechazando:', error);
       toast.error('Error al rechazar: ' + error.message);
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  // Abrir modal de rechazo
+  const openRejectModal = (campaignId) => {
+    setRejectModal({ open: true, campaignId });
+    setRejectReason('');
+    setRejectCustom('');
+  };
+
+  // Cargar métricas de una campaña (para admin metrics viewer)
+  const openMetricsModal = async (campaign) => {
+    setMetricsModal({ open: true, campaign, metrics: null, loading: true });
+    try {
+      const { data: metrics } = await supabase
+        .from('ad_campaign_metrics')
+        .select('*')
+        .eq('campaign_id', campaign.id)
+        .order('date', { ascending: false });
+
+      const totalImpressions = (metrics || []).reduce((sum, m) => sum + (m.impressions || 0), 0);
+      const totalClicks = (metrics || []).reduce((sum, m) => sum + (m.clicks || 0), 0);
+      const ctr = totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(2) : '0.00';
+
+      // Also load the creative
+      const { data: creatives } = await supabase
+        .from('ad_creatives')
+        .select('*')
+        .eq('campaign_id', campaign.id);
+
+      setMetricsModal({
+        open: true,
+        campaign: { ...campaign, ad_creatives: creatives || [] },
+        metrics: { totalImpressions, totalClicks, ctr, daily: metrics || [] },
+        loading: false
+      });
+    } catch (err) {
+      console.error('Error loading metrics:', err);
+      setMetricsModal(prev => ({ ...prev, loading: false }));
     }
   };
 
@@ -665,7 +711,7 @@ const AdsManagement = () => {
                               </button>
                               <button
                                 disabled={actionLoading === campaign.id}
-                                onClick={() => handleReject(campaign.id)}
+                                onClick={() => openRejectModal(campaign.id)}
                                 className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded hover:bg-red-100 transition disabled:opacity-60"
                               >
                                 Rechazar
@@ -686,9 +732,16 @@ const AdsManagement = () => {
                             <Eye className="w-4 h-4" />
                             Preview
                           </button>
+                          {/* Botón Métricas (NUEVO) */}
+                          <button
+                            onClick={() => openMetricsModal(campaign)}
+                            className="text-green-600 hover:text-green-900 bg-green-50 px-3 py-1 rounded hover:bg-green-100 transition flex items-center gap-1"
+                          >
+                            <BarChart3 className="w-4 h-4" />
+                            Métricas
+                          </button>
                           <button
                             onClick={async () => {
-                              // Cargar creativos de la campaña
                               const { data: creatives, error } = await supabase
                                 .from('ad_creatives')
                                 .select('*')
@@ -1045,6 +1098,200 @@ const AdsManagement = () => {
           </div>
         </div>
       )}
+
+      {/* Modal de Rechazo con Razón */}
+      {rejectModal.open && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setRejectModal({ open: false, campaignId: null })}>
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-5 rounded-t-2xl">
+              <h3 className="text-lg font-bold">❌ Rechazar Campaña</h3>
+              <p className="text-red-100 text-sm mt-1">Selecciona la razón del rechazo</p>
+            </div>
+            <div className="p-6 space-y-4">
+              {[
+                { value: 'imagen_inapropiada', label: '🖼️ Imagen inapropiada o de baja calidad' },
+                { value: 'url_no_funciona', label: '🔗 URL de destino no funciona' },
+                { value: 'contenido_engañoso', label: '⚠️ Contenido engañoso o falso' },
+                { value: 'politica_contenido', label: '📋 No cumple políticas de contenido' },
+                { value: 'otra', label: '✍️ Otra razón...' }
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setRejectReason(opt.value)}
+                  className={`w-full text-left p-3 rounded-xl border-2 transition ${rejectReason === opt.value
+                    ? 'border-red-500 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+
+              {rejectReason === 'otra' && (
+                <textarea
+                  value={rejectCustom}
+                  onChange={(e) => setRejectCustom(e.target.value)}
+                  placeholder="Describe la razón del rechazo..."
+                  rows={3}
+                  className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-red-500"
+                />
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setRejectModal({ open: false, campaignId: null })}
+                  className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  disabled={!rejectReason || (rejectReason === 'otra' && !rejectCustom.trim())}
+                  onClick={() => handleReject(rejectModal.campaignId)}
+                  className="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700 transition disabled:opacity-50"
+                >
+                  Confirmar Rechazo
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+      }
+
+      {/* Modal: Métricas del Anunciante (Admin ve lo que ve el cliente) */}
+      {
+        metricsModal.open && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setMetricsModal({ open: false, campaign: null, metrics: null, loading: false })}>
+            <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-2xl">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-xl font-bold">📊 Métricas del Anunciante</h3>
+                    <p className="text-blue-100 text-sm mt-1">
+                      Así ve el cliente {metricsModal.campaign?.advertiser_name || ''} su dashboard
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setMetricsModal({ open: false, campaign: null, metrics: null, loading: false })}
+                    className="text-white/80 hover:text-white text-2xl font-bold"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6">
+                {metricsModal.loading ? (
+                  <div className="text-center py-12">
+                    <RefreshCw className="w-8 h-8 text-blue-500 animate-spin mx-auto" />
+                    <p className="mt-4 text-gray-600">Cargando métricas...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* KPIs Grid */}
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="bg-blue-50 rounded-xl p-4 text-center">
+                        <div className="flex items-center justify-center gap-1 text-blue-600 text-sm mb-1">
+                          <Eye className="w-4 h-4" /> Impressions
+                        </div>
+                        <div className="text-3xl font-bold text-blue-700">
+                          {metricsModal.metrics?.totalImpressions?.toLocaleString() || 0}
+                        </div>
+                      </div>
+                      <div className="bg-green-50 rounded-xl p-4 text-center">
+                        <div className="flex items-center justify-center gap-1 text-green-600 text-sm mb-1">
+                          <MousePointer className="w-4 h-4" /> Clicks
+                        </div>
+                        <div className="text-3xl font-bold text-green-700">
+                          {metricsModal.metrics?.totalClicks?.toLocaleString() || 0}
+                        </div>
+                      </div>
+                      <div className="bg-purple-50 rounded-xl p-4 text-center">
+                        <div className="flex items-center justify-center gap-1 text-purple-600 text-sm mb-1">
+                          <TrendingUp className="w-4 h-4" /> CTR
+                        </div>
+                        <div className="text-3xl font-bold text-purple-700">
+                          {metricsModal.metrics?.ctr || '0.00'}%
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Info de la Campaña */}
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <h4 className="font-semibold text-gray-800 mb-3">Detalles de la Campaña</h4>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <span className="text-gray-500">Anunciante:</span>
+                          <p className="font-medium">{metricsModal.campaign?.advertiser_name}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Email:</span>
+                          <p className="font-medium">{metricsModal.campaign?.advertiser_email}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Segmentación:</span>
+                          <p className="font-medium">
+                            {metricsModal.campaign?.geographic_scope === 'global' ? '🌍 Global' : `📍 ${metricsModal.campaign?.target_location || 'Local'}`}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Budget:</span>
+                          <p className="font-medium text-green-600">${metricsModal.campaign?.budget?.toLocaleString() || 0} MXN</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Inicio:</span>
+                          <p className="font-medium">{metricsModal.campaign?.start_date ? new Date(metricsModal.campaign.start_date).toLocaleDateString('es-MX') : 'TBD'}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Fin:</span>
+                          <p className="font-medium">{metricsModal.campaign?.end_date ? new Date(metricsModal.campaign.end_date).toLocaleDateString('es-MX') : 'en curso'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Creative Preview */}
+                    {metricsModal.campaign?.ad_creatives?.[0] && (
+                      <div className="border border-gray-200 rounded-xl overflow-hidden">
+                        <div className="bg-gray-100 px-4 py-2 text-xs font-semibold text-gray-600">Creativo Activo</div>
+                        {metricsModal.campaign.ad_creatives[0].image_url && (
+                          <img
+                            src={metricsModal.campaign.ad_creatives[0].image_url}
+                            alt="Ad creative"
+                            className="w-full max-h-48 object-contain bg-white"
+                          />
+                        )}
+                        <div className="p-4 bg-white">
+                          <h5 className="font-bold text-gray-900">{metricsModal.campaign.ad_creatives[0].title}</h5>
+                          <p className="text-sm text-gray-600 mt-1">{metricsModal.campaign.ad_creatives[0].description}</p>
+                          <p className="text-xs text-blue-500 mt-2">🔗 {metricsModal.campaign.ad_creatives[0].cta_url}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Últimas métricas diarias */}
+                    {metricsModal.metrics?.daily?.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-3">Últimos 7 días</h4>
+                        <div className="space-y-2">
+                          {metricsModal.metrics.daily.slice(0, 7).map((day, i) => (
+                            <div key={i} className="flex justify-between items-center bg-gray-50 rounded-lg px-4 py-2 text-sm">
+                              <span className="text-gray-600">{new Date(day.date).toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                              <div className="flex gap-4">
+                                <span className="text-blue-600">👁 {day.impressions || 0}</span>
+                                <span className="text-green-600">👆 {day.clicks || 0}</span>
+                                <span className="text-purple-600">{day.impressions > 0 ? ((day.clicks / day.impressions) * 100).toFixed(1) : '0.0'}%</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 };

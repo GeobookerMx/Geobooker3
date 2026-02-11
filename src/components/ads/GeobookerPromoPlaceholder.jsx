@@ -1,58 +1,7 @@
-// src/components/ads/GeobookerPromoPlaceholder.jsx
-/**
- * Placeholder component for empty ad spaces
- * Shows Geobooker branding with motivational messages
- * Variants: banner, card, inline
- */
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Megaphone, TrendingUp, Users, Sparkles, MapPin, Zap, ArrowRight } from 'lucide-react';
-
-// Mensajes motivacionales rotativos
-const PROMO_MESSAGES = [
-    {
-        title: '🚀 Impulsa tu Negocio',
-        subtitle: 'Más de 10,000 usuarios buscan negocios como el tuyo cada día',
-        cta: '¡Anúnciate Aquí!',
-        icon: Megaphone,
-        gradient: 'from-blue-600 to-purple-600'
-    },
-    {
-        title: '📍 ¿Ya abriste digitalmente?',
-        subtitle: 'Prende tu negocio en el mapa y atrae nuevos clientes',
-        cta: 'Registra tu Negocio',
-        icon: MapPin,
-        gradient: 'from-green-500 to-teal-600'
-    },
-    {
-        title: '🔥 ¿Quieres más ventas?',
-        subtitle: 'Este espacio puede ser tuyo. Crea tu campaña ahora',
-        cta: 'Crear Campaña',
-        icon: TrendingUp,
-        gradient: 'from-orange-500 to-red-600'
-    },
-    {
-        title: '💡 Espacio Disponible',
-        subtitle: 'Anuncia tu negocio aquí y llega a miles de clientes',
-        cta: 'Ver Opciones',
-        icon: Sparkles,
-        gradient: 'from-yellow-500 to-orange-500'
-    },
-    {
-        title: '👥 Nuevos Clientes te Esperan',
-        subtitle: 'Aparece primero cuando busquen negocios cerca de ti',
-        cta: 'Destacar Negocio',
-        icon: Users,
-        gradient: 'from-pink-500 to-rose-600'
-    },
-    {
-        title: '⚡ Llena este espacio',
-        subtitle: 'Tu publicidad aquí puede generar ventas reales',
-        cta: 'Anunciarme',
-        icon: Zap,
-        gradient: 'from-indigo-500 to-blue-600'
-    }
-];
 
 /**
  * @param {Object} props
@@ -60,17 +9,33 @@ const PROMO_MESSAGES = [
  * @param {boolean} props.rotate - Whether to rotate through messages
  */
 export default function GeobookerPromoPlaceholder({ variant = 'banner', rotate = true }) {
-    const [messageIndex, setMessageIndex] = useState(Math.floor(Math.random() * PROMO_MESSAGES.length));
+    const { t } = useTranslation();
+    const [messageIndex, setMessageIndex] = useState(1); // Start from 1-4
+
+    // Dynamic message construction using translations
+    const getMessage = (idx) => ({
+        title: t(`ads_placeholder.msg${idx}_title`),
+        subtitle: t(`ads_placeholder.msg${idx}_subtitle`),
+        cta: t(`ads_placeholder.msg${idx}_cta`),
+        gradient: idx === 1 ? 'from-blue-600 to-purple-600' :
+            idx === 2 ? 'from-green-500 to-teal-600' :
+                idx === 3 ? 'from-orange-500 to-red-600' :
+                    'from-yellow-500 to-orange-500',
+        icon: idx === 1 ? Megaphone :
+            idx === 2 ? MapPin :
+                idx === 3 ? TrendingUp :
+                    Sparkles
+    });
 
     useEffect(() => {
         if (!rotate) return;
         const interval = setInterval(() => {
-            setMessageIndex(prev => (prev + 1) % PROMO_MESSAGES.length);
+            setMessageIndex(prev => (prev % 4) + 1); // Cycle through 1, 2, 3, 4
         }, 8000);
         return () => clearInterval(interval);
     }, [rotate]);
 
-    const message = PROMO_MESSAGES[messageIndex];
+    const message = getMessage(messageIndex);
     const Icon = message.icon;
 
     // Banner variant - Full width hero style
@@ -82,7 +47,6 @@ export default function GeobookerPromoPlaceholder({ variant = 'banner', rotate =
                         to="/advertise"
                         className={`relative block bg-gradient-to-r ${message.gradient} rounded-2xl p-6 md:p-8 text-white shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group`}
                     >
-                        {/* Background pattern */}
                         <div className="absolute inset-0 opacity-10">
                             <div className="absolute transform rotate-12 -right-8 -top-8 w-32 h-32 bg-white rounded-full" />
                             <div className="absolute transform -rotate-12 -left-4 -bottom-4 w-24 h-24 bg-white rounded-full" />
@@ -90,7 +54,6 @@ export default function GeobookerPromoPlaceholder({ variant = 'banner', rotate =
 
                         <div className="relative flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                {/* Logo */}
                                 <div className="hidden md:flex w-16 h-16 bg-white/20 backdrop-blur rounded-xl items-center justify-center">
                                     <img
                                         src="/images/geobooker-favicon.png"
@@ -98,7 +61,6 @@ export default function GeobookerPromoPlaceholder({ variant = 'banner', rotate =
                                         className="w-10 h-10 object-contain"
                                     />
                                 </div>
-
                                 <div>
                                     <h3 className="text-xl md:text-2xl font-black mb-1">
                                         {message.title}
@@ -108,22 +70,19 @@ export default function GeobookerPromoPlaceholder({ variant = 'banner', rotate =
                                     </p>
                                 </div>
                             </div>
-
                             <button className="hidden md:flex items-center gap-2 bg-white text-gray-900 px-6 py-3 rounded-xl font-bold hover:bg-gray-100 transition-colors shadow-lg group-hover:scale-105 transition-transform">
                                 {message.cta}
                                 <ArrowRight className="w-5 h-5" />
                             </button>
                         </div>
 
-                        {/* Mobile CTA */}
                         <button className="md:hidden w-full mt-4 flex items-center justify-center gap-2 bg-white/20 backdrop-blur text-white px-4 py-3 rounded-xl font-bold border border-white/30">
                             {message.cta}
                             <ArrowRight className="w-4 h-4" />
                         </button>
 
-                        {/* Badge */}
                         <span className="absolute top-2 right-2 bg-white/20 backdrop-blur text-white text-xs px-3 py-1 rounded-full">
-                            Espacio Disponible
+                            {t('ads_placeholder.badge')}
                         </span>
                     </Link>
                 </div>
@@ -143,21 +102,21 @@ export default function GeobookerPromoPlaceholder({ variant = 'banner', rotate =
                         <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-2">
                             <Megaphone className="w-6 h-6 text-white" />
                         </div>
-                        <p className="text-blue-900 font-bold">Tu Negocio Aquí</p>
+                        <p className="text-blue-900 font-bold">{t('ads_placeholder.msg1_cta')}</p>
                     </div>
                     <span className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
-                        DISPONIBLE
+                        {t('ads_placeholder.badge')}
                     </span>
                 </div>
                 <div className="p-4">
                     <h3 className="font-bold text-lg text-gray-900 mb-1">
-                        🎯 Espacio Publicitario
+                        🎯 {t('ads_placeholder.msg1_title')}
                     </h3>
                     <p className="text-sm text-gray-600 mb-3">
-                        Destaca tu negocio aquí y atrae nuevos clientes
+                        {t('ads_placeholder.msg1_subtitle')}
                     </p>
                     <button className="flex items-center text-blue-600 hover:text-blue-700 font-semibold text-sm group-hover:underline">
-                        Anunciarme <ArrowRight className="w-4 h-4 ml-1" />
+                        {t('ads_placeholder.msg1_cta')} <ArrowRight className="w-4 h-4 ml-1" />
                     </button>
                 </div>
             </Link>
@@ -178,7 +137,7 @@ export default function GeobookerPromoPlaceholder({ variant = 'banner', rotate =
                     <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                             <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded">
-                                📢 ESPACIO DISPONIBLE
+                                📢 {t('ads_placeholder.badge')}
                             </span>
                         </div>
                         <h3 className="font-bold text-gray-900">{message.title}</h3>
@@ -206,7 +165,7 @@ export default function GeobookerPromoPlaceholder({ variant = 'banner', rotate =
                         className="w-6 h-6 object-contain"
                     />
                     <span className="text-sm text-blue-600 font-semibold">
-                        ¿Quieres más clientes? Anúnciate aquí →
+                        {t('ads_placeholder.msg4_subtitle')} →
                     </span>
                 </div>
             </Link>

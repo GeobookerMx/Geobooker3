@@ -24,7 +24,11 @@
         "profile": "Perfil",
         "dashboard": "Panel de Control",
         "logout": "Cerrar Sesión",
-        "addBusiness": "Agregar Negocio"
+        "addBusiness": "Agregar Negocio",
+        "about": "Nosotros",
+        "community": "Comunidad",
+        "moreSales": "¿Más ventas?",
+        "user": "Usuario"
     },
     "home": {
         "title": "Encuentra Negocios Cerca de Ti",
@@ -239,7 +243,63 @@
         "useCaseF1Result": "3M+ impresiones estimadas",
         "ctaFinalTitle": "¿Listo para escalar tu marca globalmente?",
         "ctaFinalSubtitle": "Nuestro equipo de ventas enterprise te contactará en menos de 24 horas para diseñar una estrategia personalizada.",
-        "ctaTalkToSales": "Hablar con Ventas"
+        "ctaTalkToSales": "Hablar con Ventas",
+        "featureHours": "Abre y Cierra Digitalmente",
+        "featureHoursDesc": "Controla el horario de tu negocio desde cualquier dispositivo. Tus clientes siempre sabrán si estás disponible.",
+        "featureAlwaysMap": "Siempre en el Mapa",
+        "featureAlwaysMapDesc": "Tu negocio visible 24/7 en el mapa interactivo de Geobooker. Nunca pierdas un cliente potencial.",
+        "featureMultiLocation": "Multi-Ubicación",
+        "featureMultiLocationDesc": "Gestiona múltiples sucursales desde un solo dashboard. Reportes unificados y control centralizado.",
+        "featureReferralProg": "Programa de Referidos",
+        "featureReferralProgDesc": "Sistema de referidos integrado: tus clientes invitan, tú ganas. Recompensas automáticas y tracking en tiempo real.",
+        "useCasePharmacy": "Cadena de farmacias anuncia apertura de 10 nuevas sucursales en Monterrey con campaña geolocalizada.",
+        "useCasePharmacyResult": "1.5M+ impresiones locales",
+        "useCaseBeverage": "Marca de bebidas energéticas activa promociones exclusivas durante festival de música en Guadalajara.",
+        "useCaseBeverageResult": "800K+ interacciones",
+        "useCaseBank": "Banco digital lanza tarjeta de crédito para millennials con anuncios en zonas universitarias de CDMX.",
+        "useCaseBankResult": "2M+ alcance joven",
+        "kpisTitle": "Datos en Vivo & KPIs",
+        "kpisSubtitle": "Datos Incluidos en tu Contrato Enterprise",
+        "kpisDesc": "Transparencia total. Recibirás acceso a métricas en tiempo real y reportes personalizados para optimizar tus campañas.",
+        "kpiRealTime": "Datos en Tiempo Real",
+        "kpiRealTimeItems": [
+            "Dashboard con métricas en vivo",
+            "Actualizaciones cada 24 horas",
+            "Alertas de rendimiento"
+        ],
+        "kpiMeasured": "KPIs que Medimos",
+        "kpiMeasuredItems": [
+            "Impresiones totales",
+            "Clics únicos (CTR)",
+            "Alcance por región/ciudad",
+            "Tasa de engagement"
+        ],
+        "kpiOptimization": "Optimización de Campañas",
+        "kpiOptimizationItems": [
+            "Sugerencias AI para creativos",
+            "Mejores horarios de publicación",
+            "A/B testing automático"
+        ],
+        "kpiReports": "Reportes Semanales",
+        "kpiReportsItems": [
+            "Informe PDF cada lunes",
+            "Comparativas vs semana anterior",
+            "Top ciudades y audiencias"
+        ],
+        "kpiSegmentation": "Segmentación Global",
+        "kpiSegmentationItems": [
+            "Datos por país y ciudad",
+            "Idioma de la audiencia",
+            "Dispositivo (mobile/desktop)"
+        ],
+        "kpiSupport": "Account Manager Dedicado",
+        "kpiSupportItems": [
+            "Ejecutivo asignado 24/7",
+            "Llamadas de seguimiento",
+            "Prioridad en soporte"
+        ],
+        "guaranteeTitle": "Garantía de Transparencia",
+        "guaranteeDesc": "Si en cualquier momento no tienes acceso a tus métricas o reportes, te extendemos tu campaña <1>+15 días gratis</1>."
     },
     "map": {
         "loadingMap": "Cargando mapa...",
@@ -274,9 +334,43 @@
         "submit": "Enviar Solicitud"
     },
     "footer": {
+        "description": "El mejor directorio de negocios locales. Encuentra y descubre negocios cerca de ti de forma rápida y sencilla.",
+        "followUs": "Síguenos",
+        "contact": "Contacto",
+        "quickLinks": "Enlaces rápidos",
+        "legalSupport": "Legal y Soporte",
         "needApp": "¿Necesitas tu propia App?",
-        "appDevDesc": "Desarrollamos apps web y móviles personalizadas.",
-        "requestQuote": "Solicitar cotización"
+        "needAppDesc": "También desarrollamos aplicaciones web y móviles personalizadas para tu negocio. PWA, sitios web, sistemas y más.",
+        "requestQuote": "Solicitar cotización",
+        "payments": "Métodos de pago",
+        "share": "¡Comparte Geobooker!",
+        "shareDesc": "Escanea el QR con tu celular para abrir la app",
+        "copyright": "© {{year}} Geobooker. Todos los derechos reservados.",
+        "madeIn": "Hecho con ❤️ en México 🇲🇽",
+        "about": "Nosotros",
+        "privacy": "Política de privacidad",
+        "terms": "Términos de servicio",
+        "faq": "Preguntas frecuentes",
+        "security": "Seguridad y Emergencias",
+        "fiscal": "Información Fiscal",
+        "support": "Soporte técnico",
+        "adsPolicy": "Políticas de publicidad",
+        "guiaResico": "Guía Alta SAT (RESICO)"
+    },
+    "ads_placeholder": {
+        "badge": "Espacio Disponible",
+        "msg1_title": "🚀 Impulsa tu Negocio",
+        "msg1_subtitle": "Más de 10,000 usuarios buscan negocios como el tuyo cada día",
+        "msg1_cta": "¡Anúnciate Aquí!",
+        "msg2_title": "📍 ¿Ya abriste digitalmente?",
+        "msg2_subtitle": "Prende tu negocio en el mapa y atrae nuevos clientes",
+        "msg2_cta": "Registra tu Negocio",
+        "msg3_title": "🔥 ¿Quieres más ventas?",
+        "msg3_subtitle": "Este espacio puede ser tuyo. Crea tu campaña ahora",
+        "msg3_cta": "Crear Campaña",
+        "msg4_title": "💡 Espacio Disponible",
+        "msg4_subtitle": "Anuncia tu negocio aquí y llega a miles de clientes",
+        "msg4_cta": "Ver Opciones"
     },
     "ads": {
         "sponsored": "Publicidad",

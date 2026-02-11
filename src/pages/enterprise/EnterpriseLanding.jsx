@@ -1,7 +1,7 @@
 // src/pages/enterprise/EnterpriseLanding.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 import {
     Globe, TrendingUp, Users, MapPin, Star, ArrowRight,
     CheckCircle, Clock, Zap, Shield, BarChart3, Target,
@@ -201,11 +201,11 @@ export default function EnterpriseLanding() {
                             { icon: BarChart3, title: t('enterprise.featureAnalytics'), desc: t('enterprise.featureAnalyticsDesc'), color: 'text-amber-400 bg-amber-400/10' },
                             { icon: Shield, title: t('enterprise.featureSafety'), desc: t('enterprise.featureSafetyDesc'), color: 'text-red-400 bg-red-400/10' },
                             { icon: Users, title: t('enterprise.featureManager'), desc: t('enterprise.featureManagerDesc'), color: 'text-cyan-400 bg-cyan-400/10' },
-                            // 4 nuevos beneficios
-                            { icon: Clock, title: '⏰ Abre y Cierra Digitalmente', desc: 'Controla el horario de tu negocio desde cualquier dispositivo. Tus clientes siempre sabrán si estás disponible.', color: 'text-teal-400 bg-teal-400/10' },
-                            { icon: MapPin, title: '📍 Siempre en el Mapa', desc: 'Tu negocio visible 24/7 en el mapa interactivo de Geobooker. Nunca pierdas un cliente potencial.', color: 'text-pink-400 bg-pink-400/10' },
-                            { icon: Building2, title: '🏢 Multi-Ubicación', desc: 'Gestiona múltiples sucursales desde un solo dashboard. Reportes unificados y control centralizado.', color: 'text-orange-400 bg-orange-400/10' },
-                            { icon: Sparkles, title: '🎁 Programa de Referidos', desc: 'Sistema de referidos integrado: tus clientes invitan, tú ganas. Recompensas automáticas y tracking en tiempo real.', color: 'text-indigo-400 bg-indigo-400/10' }
+                            // Nuevos beneficios internacionalizados
+                            { icon: Clock, title: t('enterprise.featureHours'), desc: t('enterprise.featureHoursDesc'), color: 'text-teal-400 bg-teal-400/10' },
+                            { icon: MapPin, title: t('enterprise.featureAlwaysMap'), desc: t('enterprise.featureAlwaysMapDesc'), color: 'text-pink-400 bg-pink-400/10' },
+                            { icon: Building2, title: t('enterprise.featureMultiLocation'), desc: t('enterprise.featureMultiLocationDesc'), color: 'text-orange-400 bg-orange-400/10' },
+                            { icon: Sparkles, title: t('enterprise.featureReferralProg'), desc: t('enterprise.featureReferralProgDesc'), color: 'text-indigo-400 bg-indigo-400/10' }
                         ].map((feature, i) => (
                             <div key={i} className="bg-gray-800/50 backdrop-blur border border-gray-700/50 rounded-2xl p-6 hover:border-gray-600 transition-colors">
                                 <div className={`w-12 h-12 rounded-xl ${feature.color} flex items-center justify-center mb-4`}>
@@ -322,9 +322,9 @@ export default function EnterpriseLanding() {
                             { title: 'FIFA World Cup 2026', emoji: '⚽', desc: t('enterprise.useCaseFifa'), results: t('enterprise.useCaseFifaResult') },
                             { title: 'Super Bowl LXII', emoji: '🏈', desc: t('enterprise.useCaseSuperbowl'), results: t('enterprise.useCaseSuperbowlResult') },
                             { title: 'F1 Las Vegas GP', emoji: '🏎️', desc: t('enterprise.useCaseF1'), results: t('enterprise.useCaseF1Result') },
-                            { title: 'Lanzamiento de Sucursal', emoji: '🏬', desc: 'Cadena de farmacias anuncia apertura de 10 nuevas sucursales en Monterrey con campaña geolocalizada.', results: '1.5M+ impresiones locales' },
-                            { title: 'Conciertos y Festivales', emoji: '🎤', desc: 'Marca de bebidas energéticas activa promociones exclusivas durante festival de música en Guadalajara.', results: '800K+ interacciones' },
-                            { title: 'Campaña Segmentada', emoji: '🎯', desc: 'Banco digital lanza tarjeta de crédito para millennials con anuncios en zonas universitarias de CDMX.', results: '2M+ alcance joven' }
+                            { title: t('enterprise.useCasePharmacyTitle', 'Lanzamiento de Sucursal'), emoji: '🏬', desc: t('enterprise.useCasePharmacy'), results: t('enterprise.useCasePharmacyResult') },
+                            { title: t('enterprise.useCaseBeverageTitle', 'Conciertos y Festivales'), emoji: '🎤', desc: t('enterprise.useCaseBeverage'), results: t('enterprise.useCaseBeverageResult') },
+                            { title: t('enterprise.useCaseBankTitle', 'Campaña Segmentada'), emoji: '🎯', desc: t('enterprise.useCaseBank'), results: t('enterprise.useCaseBankResult') }
                         ].map((useCase, i) => (
                             <div key={i} className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-2xl p-8 text-center hover:border-gray-600 transition">
                                 <div className="text-5xl mb-4">{useCase.emoji}</div>
@@ -345,13 +345,13 @@ export default function EnterpriseLanding() {
                     <div className="text-center mb-12">
                         <div className="inline-flex items-center gap-2 bg-green-500/20 backdrop-blur-sm text-green-400 px-4 py-2 rounded-full mb-4">
                             <BarChart3 className="w-4 h-4" />
-                            <span className="font-bold">📊 Datos en Vivo & KPIs</span>
+                            <span className="font-bold">📊 {t('enterprise.kpisTitle')}</span>
                         </div>
                         <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                            Datos Incluidos en tu Contrato Enterprise
+                            {t('enterprise.kpisSubtitle')}
                         </h2>
                         <p className="text-gray-400 max-w-2xl mx-auto">
-                            Transparencia total. Recibirás acceso a métricas en tiempo real y reportes personalizados para optimizar tus campañas.
+                            {t('enterprise.kpisDesc')}
                         </p>
                     </div>
 
@@ -381,12 +381,12 @@ export default function EnterpriseLanding() {
                                 <div className="w-10 h-10 bg-green-500/20 text-green-400 rounded-lg flex items-center justify-center">
                                     <Zap className="w-5 h-5" />
                                 </div>
-                                <h3 className="text-lg font-bold text-white">📡 Datos en Tiempo Real</h3>
+                                <h3 className="text-lg font-bold text-white">{t('enterprise.kpiRealTime')}</h3>
                             </div>
                             <ul className="space-y-2 text-gray-300 text-sm">
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Dashboard con métricas en vivo</li>
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Actualizaciones cada 24 horas</li>
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Alertas de rendimiento</li>
+                                {(t('enterprise.kpiRealTimeItems', { returnObjects: true }) || []).map((item, idx) => (
+                                    <li key={idx} className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> {item}</li>
+                                ))}
                             </ul>
                         </div>
 
@@ -396,13 +396,12 @@ export default function EnterpriseLanding() {
                                 <div className="w-10 h-10 bg-blue-500/20 text-blue-400 rounded-lg flex items-center justify-center">
                                     <BarChart3 className="w-5 h-5" />
                                 </div>
-                                <h3 className="text-lg font-bold text-white">📈 KPIs que Medimos</h3>
+                                <h3 className="text-lg font-bold text-white">{t('enterprise.kpiMeasured')}</h3>
                             </div>
                             <ul className="space-y-2 text-gray-300 text-sm">
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Impresiones totales</li>
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Clics únicos (CTR)</li>
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Alcance por región/ciudad</li>
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Tasa de engagement</li>
+                                {(t('enterprise.kpiMeasuredItems', { returnObjects: true }) || []).map((item, idx) => (
+                                    <li key={idx} className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> {item}</li>
+                                ))}
                             </ul>
                         </div>
 
@@ -412,12 +411,12 @@ export default function EnterpriseLanding() {
                                 <div className="w-10 h-10 bg-purple-500/20 text-purple-400 rounded-lg flex items-center justify-center">
                                     <Target className="w-5 h-5" />
                                 </div>
-                                <h3 className="text-lg font-bold text-white">🎯 Optimización de Campañas</h3>
+                                <h3 className="text-lg font-bold text-white">{t('enterprise.kpiOptimization')}</h3>
                             </div>
                             <ul className="space-y-2 text-gray-300 text-sm">
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Sugerencias AI para creativos</li>
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Mejores horarios de publicación</li>
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> A/B testing automático</li>
+                                {(t('enterprise.kpiOptimizationItems', { returnObjects: true }) || []).map((item, idx) => (
+                                    <li key={idx} className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> {item}</li>
+                                ))}
                             </ul>
                         </div>
 
@@ -427,12 +426,12 @@ export default function EnterpriseLanding() {
                                 <div className="w-10 h-10 bg-amber-500/20 text-amber-400 rounded-lg flex items-center justify-center">
                                     <Calendar className="w-5 h-5" />
                                 </div>
-                                <h3 className="text-lg font-bold text-white">📅 Reportes Semanales</h3>
+                                <h3 className="text-lg font-bold text-white">{t('enterprise.kpiReports')}</h3>
                             </div>
                             <ul className="space-y-2 text-gray-300 text-sm">
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Informe PDF cada lunes</li>
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Comparativas vs semana anterior</li>
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Top ciudades y audiencias</li>
+                                {(t('enterprise.kpiReportsItems', { returnObjects: true }) || []).map((item, idx) => (
+                                    <li key={idx} className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> {item}</li>
+                                ))}
                             </ul>
                         </div>
 
@@ -442,12 +441,12 @@ export default function EnterpriseLanding() {
                                 <div className="w-10 h-10 bg-cyan-500/20 text-cyan-400 rounded-lg flex items-center justify-center">
                                     <Globe className="w-5 h-5" />
                                 </div>
-                                <h3 className="text-lg font-bold text-white">🌍 Segmentación Global</h3>
+                                <h3 className="text-lg font-bold text-white">{t('enterprise.kpiSegmentation')}</h3>
                             </div>
                             <ul className="space-y-2 text-gray-300 text-sm">
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Datos por país y ciudad</li>
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Idioma de la audiencia</li>
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Dispositivo (mobile/desktop)</li>
+                                {(t('enterprise.kpiSegmentationItems', { returnObjects: true }) || []).map((item, idx) => (
+                                    <li key={idx} className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> {item}</li>
+                                ))}
                             </ul>
                         </div>
 
@@ -457,12 +456,12 @@ export default function EnterpriseLanding() {
                                 <div className="w-10 h-10 bg-red-500/20 text-red-400 rounded-lg flex items-center justify-center">
                                     <Users className="w-5 h-5" />
                                 </div>
-                                <h3 className="text-lg font-bold text-white">👤 Account Manager Dedicado</h3>
+                                <h3 className="text-lg font-bold text-white">{t('enterprise.kpiSupport')}</h3>
                             </div>
                             <ul className="space-y-2 text-gray-300 text-sm">
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Ejecutivo asignado 24/7</li>
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Llamadas de seguimiento</li>
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Prioridad en soporte</li>
+                                {(t('enterprise.kpiSupportItems', { returnObjects: true }) || []).map((item, idx) => (
+                                    <li key={idx} className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> {item}</li>
+                                ))}
                             </ul>
                         </div>
                     </div>
@@ -471,10 +470,12 @@ export default function EnterpriseLanding() {
                     <div className="mt-12 bg-gradient-to-r from-green-600/20 to-emerald-600/20 border border-green-500/30 rounded-2xl p-6 text-center">
                         <div className="flex items-center justify-center gap-2 mb-2">
                             <Shield className="w-6 h-6 text-green-400" />
-                            <h3 className="text-xl font-bold text-white">Garantía de Transparencia</h3>
+                            <h3 className="text-xl font-bold text-white">{t('enterprise.guaranteeTitle')}</h3>
                         </div>
                         <p className="text-gray-300 max-w-2xl mx-auto">
-                            Si en cualquier momento no tienes acceso a tus métricas o reportes, te extendemos tu campaña <strong className="text-green-400">+15 días gratis</strong>.
+                            <Trans i18nKey="enterprise.guaranteeDesc">
+                                Si en cualquier momento no tienes acceso a tus métricas o reportes, te extendemos tu campaña <strong className="text-green-400">+15 días gratis</strong>.
+                            </Trans>
                         </p>
                     </div>
                 </div>

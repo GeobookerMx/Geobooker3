@@ -165,6 +165,45 @@ const CampaignCreateWizard = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    // Validación por paso
+    const validateStep = (currentStep) => {
+        if (currentStep === 1) {
+            if (!formData.advertiser_name || formData.advertiser_name.trim().length < 2) {
+                toast.error('Ingresa el nombre de tu empresa (mínimo 2 caracteres)');
+                return false;
+            }
+            if (!formData.title || formData.title.trim().length < 3) {
+                toast.error('Ingresa un título para tu anuncio (mínimo 3 caracteres)');
+                return false;
+            }
+            if (!formData.image_url) {
+                toast.error('Sube una imagen para tu anuncio');
+                return false;
+            }
+            if (!formData.cta_url || !formData.cta_url.startsWith('https://') || formData.cta_url === 'https://') {
+                toast.error('Ingresa una URL de destino válida (debe empezar con https://)');
+                return false;
+            }
+            return true;
+        }
+        if (currentStep === 2) {
+            if (formData.geographic_scope !== 'global' && !formData.target_country) {
+                toast.error('Selecciona un país de destino');
+                return false;
+            }
+            if (formData.geographic_scope === 'region' && !formData.target_region) {
+                toast.error('Selecciona una región');
+                return false;
+            }
+            if (formData.geographic_scope === 'city' && !formData.target_city) {
+                toast.error('Selecciona una ciudad');
+                return false;
+            }
+            return true;
+        }
+        return true;
+    };
+
     const handleImageUpload = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -397,6 +436,11 @@ const CampaignCreateWizard = () => {
                                                 <input type="file" accept="image/*,.gif" onChange={handleImageUpload} className="hidden" />
                                             </label>
                                             <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP o GIF • Max 5MB</p>
+                                            {adSpace?.size_desktop && (
+                                                <p className="text-xs text-blue-500 mt-1 font-medium">
+                                                    📐 Tamaño recomendado: {adSpace.size_desktop} (desktop) / {adSpace.size_mobile || 'responsive'} (mobile)
+                                                </p>
+                                            )}
                                         </>
                                     )}
                                 </div>
@@ -617,7 +661,9 @@ const CampaignCreateWizard = () => {
                         ) : <div />}
 
                         {step < 3 ? (
-                            <button onClick={() => setStep(s => s + 1)}
+                            <button onClick={() => {
+                                if (validateStep(step)) setStep(s => s + 1);
+                            }}
                                 className="bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center hover:bg-blue-700">
                                 Continuar <ArrowRight size={18} className="ml-1" />
                             </button>

@@ -108,10 +108,10 @@ export default function Header() {
         <nav className="hidden md:flex items-center space-x-6 font-brand">
           <Link to="/" className="text-geoPurple hover:text-geoPink transition-colors">{t('nav.home')}</Link>
           <Link to="/categories" className="text-geoPurple hover:text-geoPink transition-colors">{t('nav.categories')}</Link>
-          <Link to="/quienes-somos" className="text-geoPurple hover:text-geoPink transition-colors">Nosotros</Link>
-          <Link to="/comunidad" className="text-geoPurple hover:text-geoPink transition-colors">Comunidad</Link>
+          <Link to="/quienes-somos" className="text-geoPurple hover:text-geoPink transition-colors">{t('nav.about')}</Link>
+          <Link to="/comunidad" className="text-geoPurple hover:text-geoPink transition-colors">{t('nav.community')}</Link>
           <Link to="/advertise" className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 py-1.5 rounded-lg font-bold hover:from-red-600 hover:to-orange-600 transition-all flex items-center gap-1 shadow-lg hover:scale-105">
-            🚀 ¿Más ventas?
+            🚀 {t('nav.moreSales')}
           </Link>
           <Link to="/business/register" className="bg-geoPink text-white px-4 py-2 rounded-full hover:bg-geoPurple transition-colors">+ {t('nav.addBusiness')}</Link>
           <LanguageSelector />
@@ -144,7 +144,7 @@ export default function Header() {
                     {getUserInitials()}
                   </div>
                 )}
-                <span className="hidden lg:block">{userProfile?.full_name || 'Usuario'}</span>
+                <span className="hidden lg:block">{userProfile?.full_name || t('nav.user')}</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
@@ -154,7 +154,7 @@ export default function Header() {
               {showUserMenu && (
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
                   <div className="px-4 py-2 border-b border-gray-200">
-                    <p className="text-sm font-semibold text-gray-900">{userProfile?.full_name || 'Usuario'}</p>
+                    <p className="text-sm font-semibold text-gray-900">{userProfile?.full_name || t('nav.user')}</p>
                     <p className="text-xs text-gray-500 truncate">{user.email}</p>
                   </div>
                   <Link
@@ -162,20 +162,20 @@ export default function Header() {
                     onClick={() => setShowUserMenu(false)}
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    📊 Mi Dashboard
+                    📊 {t('nav.dashboard')}
                   </Link>
                   <Link
                     to="/business/register"
                     onClick={() => setShowUserMenu(false)}
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    🏪 Registrar Negocio
+                    🏪 {t('nav.addBusiness')}
                   </Link>
                   <button
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                   >
-                    🚪 Cerrar Sesión
+                    🚪 {t('nav.logout')}
                   </button>
                 </div>
               )}
@@ -185,7 +185,7 @@ export default function Header() {
               to="/login"
               className="bg-geoPurple text-white px-4 py-2 rounded-full hover:bg-geoPink transition-colors"
             >
-              Iniciar Sesión
+              {t('nav.login')}
             </Link>
           )}
         </nav>
@@ -196,10 +196,10 @@ export default function Header() {
         <div className="md:hidden bg-geoYellow shadow-inner border-t border-geoPurple/10 px-4 py-4 space-y-4 font-brand">
           <Link to="/" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">{t('nav.home')}</Link>
           <Link to="/categories" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">{t('nav.categories')}</Link>
-          <Link to="/quienes-somos" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">Nosotros</Link>
-          <Link to="/comunidad" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">Comunidad</Link>
+          <Link to="/quienes-somos" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">{t('nav.about')}</Link>
+          <Link to="/comunidad" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">{t('nav.community')}</Link>
           <Link to="/advertise" onClick={() => setIsOpen(false)} className="block text-red-600 font-bold bg-red-50 p-2 rounded">
-            🚀 ¿Más ventas?
+            🚀 {t('nav.moreSales')}
           </Link>
           <Link to="/business/register" onClick={() => setIsOpen(false)} className="block bg-geoPink text-white px-4 py-2 rounded-full w-max hover:bg-geoPurple transition">+ {t('nav.addBusiness')}</Link>
 
@@ -211,7 +211,7 @@ export default function Header() {
                     {getUserInitials()}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-geoPurple">{userProfile?.full_name || 'Usuario'}</p>
+                    <p className="text-sm font-semibold text-geoPurple">{userProfile?.full_name || t('nav.user')}</p>
                     <p className="text-xs text-gray-600">{user.email}</p>
                   </div>
                 </div>
@@ -220,7 +220,7 @@ export default function Header() {
                   onClick={() => setIsOpen(false)}
                   className="block text-geoPurple hover:text-geoPink mb-2"
                 >
-                  📊 Mi Dashboard
+                  📊 {t('nav.dashboard')}
                 </Link>
                 <button
                   onClick={() => {
@@ -229,7 +229,7 @@ export default function Header() {
                   }}
                   className="block text-red-600 hover:text-red-700"
                 >
-                  🚪 Cerrar Sesión
+                  🚪 {t('nav.logout')}
                 </button>
               </div>
             </>
@@ -239,7 +239,7 @@ export default function Header() {
               onClick={() => setIsOpen(false)}
               className="block bg-geoPurple text-white px-4 py-2 rounded-full w-max hover:bg-geoPink transition"
             >
-              Iniciar Sesión
+              {t('nav.login')}
             </Link>
           )}
 

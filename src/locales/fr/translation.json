@@ -1,0 +1,65 @@
+{
+    "common": {
+        "loading": "Chargement...",
+        "error": "Erreur",
+        "success": "Succès",
+        "cancel": "Annuler",
+        "save": "Enregistrer",
+        "delete": "Supprimer",
+        "edit": "Modifier",
+        "search": "Rechercher",
+        "close": "Fermer",
+        "back": "Retour",
+        "next": "Suivant",
+        "previous": "Précédent",
+        "submit": "Envoyer",
+        "confirm": "Confirmer"
+    },
+    "nav": {
+        "home": "Accueil",
+        "businesses": "Entreprises",
+        "categories": "Catégories",
+        "login": "Connexion",
+        "register": "S'inscrire",
+        "profile": "Profil",
+        "dashboard": "Tableau de Bord",
+        "logout": "Déconnexion",
+        "addBusiness": "Ajouter une Entreprise"
+    },
+    "home": {
+        "title": "Trouvez des Entreprises Proches de Vous",
+        "subtitle": "Découvrez les meilleurs établissements dans votre région",
+        "searchPlaceholder": "Quelle entreprise ou quel service cherchez-vous ?",
+        "locationActive": "Localisation active",
+        "locationDefault": "Utilisation de la localisation par défaut",
+        "enableLocation": "Activez la localisation pour trouver des entreprises près de chez vous",
+        "needLocation": "Nous avons besoin de votre localisation pour vous montrer les entreprises à proximité",
+        "allowLocation": "Autoriser la Localisation",
+        "gettingLocation": "Obtention de votre localisation...",
+        "locationObtained": "Localisation obtenue avec succès",
+        "businessesFound": "Entreprises Trouvées",
+        "businessMap": "Carte des Entreprises",
+        "noBusinessesFound": "Aucune entreprise trouvée avec ces critères",
+        "foundBusinesses": "Nous avons trouvé {{count}} entreprises près de chez vous",
+        "businessList": "Liste des Entreprises"
+    },
+    "chat": {
+        "welcome": "Bonjour ! 👋 Je suis l'assistant virtuel de Geobooker. Comment puis-je vous aider aujourd'hui ?",
+        "placeholder": "Écrivez votre message...",
+        "title": "Assistant Geobooker",
+        "online": "En ligne",
+        "poweredBy": "Propulsé par l'IA 🤖",
+        "error": "Désolé, une erreur s'est produite. Réessayez.",
+        "connError": "Désolé, il y a un problème de connexion. Réessayez.",
+        "openAssistant": "Ouvrir l'assistant"
+    },
+    "recommendations": {
+        "title": "Les Geobookers recommandent",
+        "prompt": "Souhaitez-vous recommander une entreprise ?",
+        "subtitle": "Partagez vos lieux favoris avec la communauté",
+        "cta": "Recommander maintenant",
+        "tooltip": "Recommandez une entreprise que vous avez visitée",
+        "success": "Merci pour votre recommandation ! Elle sera bientôt examinée.",
+        "limitReached": "Vous avez atteint la limite de recommandations pour aujourd'hui."
+    }
+}

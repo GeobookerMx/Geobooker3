@@ -4,6 +4,7 @@ import { initReactI18next } from 'react-i18next';
 // Importar traducciones
 import translationES from './locales/es/translation.json';
 import translationEN from './locales/en/translation.json';
+import translationFR from './locales/fr/translation.json';
 import translationZH from './locales/zh/translation.json';
 import translationJA from './locales/ja/translation.json';
 import translationKO from './locales/ko/translation.json';
@@ -12,6 +13,7 @@ import translationKO from './locales/ko/translation.json';
 const resources = {
     es: { translation: translationES },
     en: { translation: translationEN },
+    fr: { translation: translationFR },
     zh: { translation: translationZH },
     ja: { translation: translationJA },
     ko: { translation: translationKO }
@@ -34,10 +36,26 @@ i18n
             if (hostname.endsWith('geobooker.com')) return 'en';
             if (hostname.endsWith('geobooker.com.mx')) return 'es';
 
+            // 3. Fallback inteligente por país detectado (IP cache)
+            const geoCache = localStorage.getItem('geo_country_cache');
+            if (geoCache) {
+                try {
+                    const { data } = JSON.parse(geoCache);
+                    const country = data.country;
+                    if (country === 'FR') return 'fr';
+                    if (['CN', 'HK', 'TW'].includes(country)) return 'zh';
+                    if (['ES', 'MX', 'CO', 'AR', 'CL', 'PE'].includes(country)) return 'es';
+                    // Países angloparlantes o resto de Europa -> Inglés
+                    if (['US', 'GB', 'CA', 'AU', 'NZ', 'IE', 'DE', 'IT', 'NL', 'BE'].includes(country)) return 'en';
+                } catch (e) {
+                    console.error('Error parsing geo cache:', e);
+                }
+            }
+
             return navigator.language?.split('-')[0] || 'es';
         })(),
         fallbackLng: 'es',
-        supportedLngs: ['es', 'en', 'zh', 'ja', 'ko'],
+        supportedLngs: ['es', 'en', 'fr', 'zh', 'ja', 'ko'],
         interpolation: {
             escapeValue: false
         },

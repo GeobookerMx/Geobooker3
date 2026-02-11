@@ -30,6 +30,7 @@ function PageTracker() {
 
 // Component to initialize app (cache clearing, analytics, geo)
 import { detectUserCountry } from "./services/geoLocationService";
+import i18n from "./i18n";
 
 function AppInitializer() {
   useEffect(() => {
@@ -47,6 +48,23 @@ function AppInitializer() {
         localStorage.setItem('userCountryCode', geoData.country);
         localStorage.setItem('userCountryName', geoData.countryName);
         localStorage.setItem('userCity', geoData.city);
+
+        // 4. Cambiar idioma automáticamente si NO hay preferencia guardada ya
+        const savedLang = localStorage.getItem('language');
+        if (!savedLang) {
+          const country = geoData.country;
+          let newLang = null;
+
+          if (country === 'FR') newLang = 'fr';
+          else if (['CN', 'HK', 'TW'].includes(country)) newLang = 'zh';
+          else if (['ES', 'MX', 'CO', 'AR', 'CL', 'PE', 'EC', 'GT', 'PR'].includes(country)) newLang = 'es';
+          else if (['US', 'GB', 'CA', 'AU', 'NZ', 'IE', 'DE', 'IT', 'NL', 'BE', 'SE', 'NO', 'FI', 'DK'].includes(country)) newLang = 'en';
+
+          if (newLang && i18n.language !== newLang) {
+            console.log(`🌐 Cambiando idioma automáticamente a ${newLang} para el país ${country}`);
+            i18n.changeLanguage(newLang);
+          }
+        }
       }
     };
     initGeo();

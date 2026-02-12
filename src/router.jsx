@@ -96,6 +96,11 @@ const OxxoPendingPage = lazy(() => import("./pages/OxxoPendingPage.jsx"));
 // International City Landing Pages
 const CityLandingPage = lazy(() => import("./pages/cities/CityLandingPage.jsx"));
 
+// English B2B Pages (International SEO)
+const AdvertiseInMexicoPage = lazy(() => import("./pages/en/AdvertiseInMexicoPage.jsx"));
+const EnPricingPage = lazy(() => import("./pages/en/PricingPage.jsx"));
+const IndustriesPage = lazy(() => import("./pages/en/IndustriesPage.jsx"));
+
 export default function AppRouter() {
   return (
     <Suspense fallback={<PageLoader />}>
@@ -124,6 +129,11 @@ export default function AppRouter() {
 
           {/* 🌍 International City Landing Pages (SEO USA/UK/CA) */}
           <Route path="/cities/:citySlug" element={<CityLandingPage />} />
+
+          {/* 🇬🇧 English B2B Landing Pages (International SEO) */}
+          <Route path="/en/advertise-in-mexico" element={<AdvertiseInMexicoPage />} />
+          <Route path="/en/pricing" element={<EnPricingPage />} />
+          <Route path="/en/industries" element={<IndustriesPage />} />
 
           {/* Página comercial de publicidad (SIN login) */}
           <Route path="/advertise" element={<AdvertisePage />} />

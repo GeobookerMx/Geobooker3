@@ -182,11 +182,37 @@
     }
   </style>
 
-  <!-- Google Analytics 4 - Geobooker -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-M1DRMN5LDG"></script>
+  <!-- GA4 Consent Mode v2 — Default to denied for GDPR/ePrivacy compliance -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
+
+    // Set default consent state (denied until user accepts)
+    gtag('consent', 'default', {
+      analytics_storage: 'denied',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      wait_for_update: 500
+    });
+
+    // If user has previously consented, restore that consent
+    try {
+      var savedConsent = JSON.parse(localStorage.getItem('gb_cookie_consent'));
+      if (savedConsent && savedConsent.analytics) {
+        gtag('consent', 'update', {
+          analytics_storage: 'granted',
+          ad_storage: savedConsent.marketing ? 'granted' : 'denied',
+          ad_user_data: savedConsent.marketing ? 'granted' : 'denied',
+          ad_personalization: savedConsent.marketing ? 'granted' : 'denied'
+        });
+      }
+    } catch (e) { }
+  </script>
+
+  <!-- Google Analytics 4 - Geobooker -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-M1DRMN5LDG"></script>
+  <script>
     gtag('js', new Date());
     gtag('config', 'G-M1DRMN5LDG', {
       page_title: document.title,

@@ -668,5 +668,75 @@
             "notes": "Notas de resolución",
             "notesPlaceholder": "Describe qué acción tomaste..."
         }
+    },
+    "faq": {
+        "title": "Preguntas Frecuentes",
+        "subtitle": "Encuentra respuestas a las preguntas más comunes sobre Geobooker",
+        "description": "Resuelve tus dudas sobre cómo registrar tu negocio, anunciarte, precios, facturación y más en Geobooker.",
+        "stillHaveQuestions": "¿Aún tienes dudas?",
+        "contactUs": "Nuestro equipo de soporte puede ayudarte.",
+        "emailSupport": "✉️ Escribir a soporte",
+        "items": {
+            "register": {
+                "q": "¿Cómo registro mi negocio en Geobooker?",
+                "a": "Crea una cuenta gratuita, haz clic en 'Agregar Negocio' en el menú principal y completa el formulario con nombre, dirección, categoría y datos de contacto. Tu negocio aparecerá en el mapa después de una breve revisión."
+            },
+            "cost": {
+                "q": "¿Es gratuito usar Geobooker?",
+                "a": "Sí, registrar hasta 2 negocios es completamente gratuito. Ofrecemos espacios publicitarios premium para negocios que quieran mayor visibilidad, con precios desde $900 MXN/mes."
+            },
+            "support": {
+                "q": "¿Cómo contacto con soporte?",
+                "a": "Puedes escribirnos a soporte@geobooker.com, usar nuestro chatbot de asistencia virtual, o contactarnos por WhatsApp. Respondemos en menos de 24 horas."
+            },
+            "howSearch": {
+                "q": "¿Cómo busco negocios cerca de mí?",
+                "a": "Desde la página principal, permite el acceso a tu ubicación y escribe lo que buscas (farmacia, restaurante, taller, etc.). Geobooker te mostrará los negocios más cercanos en un mapa interactivo."
+            },
+            "location": {
+                "q": "¿Necesito activar mi ubicación?",
+                "a": "Para los mejores resultados, sí. Sin embargo, también puedes buscar negocios por ciudad o código postal si prefieres no compartir tu ubicación exacta."
+            },
+            "advertise": {
+                "q": "¿Cómo puedo anunciar mi marca en Geobooker?",
+                "a": "Visita nuestra página de publicidad o el apartado Enterprise. Ofrecemos banners, carruseles, resultados patrocinados e intersticiales. Actualmente tenemos un 70% de descuento de lanzamiento en todos los espacios."
+            },
+            "premium": {
+                "q": "¿Qué incluye la publicidad premium?",
+                "a": "Incluye tu anuncio en el mapa interactivo, dashboard con métricas en tiempo real (impresiones, clics, CTR), segmentación por zona geográfica y soporte dedicado."
+            },
+            "invoice": {
+                "q": "¿Emiten factura?",
+                "a": "Sí, todos los pagos de publicidad incluyen factura fiscal (CFDI). Para facturación necesitamos tu RFC y datos fiscales. No aceptamos efectivo para garantizar facturación correcta."
+            },
+            "deleteAccount": {
+                "q": "¿Puedo eliminar mi cuenta?",
+                "a": "Sí. Ve a tu perfil y selecciona 'Eliminar cuenta'. Hay un periodo de gracia de 30 días durante el cual puedes cancelar la eliminación contactando a soporte."
+            },
+            "security": {
+                "q": "¿Es seguro usar Geobooker?",
+                "a": "Absolutamente. Usamos cifrado SSL, almacenamiento seguro con Supabase y autenticación OAuth. Nunca compartimos tu información personal con terceros sin tu consentimiento."
+            },
+            "international": {
+                "q": "¿Geobooker funciona fuera de México?",
+                "a": "Sí. Geobooker está disponible en múltiples idiomas (español, inglés, francés, chino, japonés y coreano) y tenemos páginas de ciudades internacionales en EUA, Reino Unido y Canadá."
+            },
+            "reviews": {
+                "q": "¿Cómo funcionan las reseñas?",
+                "a": "Los usuarios autenticados pueden dejar reseñas con calificación de 1 a 5 estrellas en las dimensiones de servicio, calidad y precio. Los dueños de negocios pueden responder a las reseñas."
+            },
+            "oxxo": {
+                "q": "¿Puedo pagar en OXXO?",
+                "a": "Sí, aceptamos pagos en OXXO a través de nuestro procesador de pagos. También aceptamos tarjetas de crédito/débito y transferencia bancaria."
+            },
+            "referral": {
+                "q": "¿Tienen programa de referidos?",
+                "a": "¡Sí! Comparte tu link de referido y obtén beneficios cuando alguien se registre o compre publicidad a través de tu enlace. Encuentra tu código en tu perfil de usuario."
+            },
+            "languages": {
+                "q": "¿En qué idiomas está disponible Geobooker?",
+                "a": "Geobooker está disponible en español, inglés, francés, chino mandarín, japonés y coreano. El idioma se detecta automáticamente según tu ubicación, pero puedes cambiarlo manualmente."
+            }
+        }
     }
 }

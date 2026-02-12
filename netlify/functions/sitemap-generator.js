@@ -28,10 +28,20 @@ exports.handler = async (event, context) => {
 
         if (businessError) throw businessError;
 
-        // 2. Definir rutas estáticas
+        // 2. Definir rutas estáticas (incluye páginas públicas y B2B)
         const staticRoutes = [
             '', '/categories', '/community', '/advertise', '/global',
-            '/seguridad', '/login', '/signup', '/about'
+            '/seguridad', '/login', '/signup', '/about', '/faq',
+            '/enterprise', '/privacy', '/terms', '/quienes-somos',
+            '/download', '/legal/ads-policy',
+            '/en/advertise-in-mexico', '/en/pricing', '/en/industries'
+        ];
+
+        // Ciudades internacionales para SEO
+        const cityRoutes = [
+            '/cities/los-angeles', '/cities/new-york', '/cities/houston',
+            '/cities/london', '/cities/manchester',
+            '/cities/toronto', '/cities/vancouver'
         ];
 
         // 3. Generar XML
@@ -73,6 +83,9 @@ exports.handler = async (event, context) => {
 
         // Agregar estáticas
         staticRoutes.forEach(route => addUrl(route));
+
+        // Agregar ciudades internacionales (prioridad más alta para SEO)
+        cityRoutes.forEach(route => addUrl(route));
 
         // Agregar Negocios
         businesses.forEach(biz => {

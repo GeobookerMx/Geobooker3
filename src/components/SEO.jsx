@@ -78,6 +78,9 @@ const SEO = ({
         // 4. Schema.org WebApplication para PWA internacional
         addWebAppSchema(currentLang);
 
+        // 5. Schema.org Organization (marca)
+        addOrganizationSchema();
+
         // Schema.org para negocios locales
         if (business) {
             addBusinessSchema(business);
@@ -90,7 +93,7 @@ const SEO = ({
 
         // Cleanup
         return () => {
-            const schemas = ['business', 'breadcrumbs', 'webapp'];
+            const schemas = ['business', 'breadcrumbs', 'webapp', 'organization'];
             schemas.forEach(s => {
                 const existing = document.querySelector(`script[data-schema="${s}"]`);
                 if (existing) existing.remove();
@@ -268,6 +271,47 @@ const addWebAppSchema = (currentLang) => {
     const script = document.createElement('script');
     script.type = 'application/ld+json';
     script.setAttribute('data-schema', 'webapp');
+    script.textContent = JSON.stringify(schema);
+    document.head.appendChild(script);
+};
+
+// Helper para agregar Schema.org Organization (marca Geobooker)
+const addOrganizationSchema = () => {
+    const existingSchema = document.querySelector('script[data-schema="organization"]');
+    if (existingSchema) {
+        existingSchema.remove();
+    }
+
+    const schema = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Geobooker",
+        "alternateName": "Geobooker México",
+        "url": "https://geobooker.com.mx",
+        "logo": "https://geobooker.com.mx/images/logo-main.png",
+        "description": "Mexico's leading local business directory. Find restaurants, shops, services and more near you.",
+        "foundingDate": "2025",
+        "sameAs": [
+            "https://geobooker.com"
+        ],
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "email": "soporte@geobooker.com",
+            "contactType": "customer support",
+            "availableLanguage": ["Spanish", "English"]
+        },
+        "areaServed": [
+            { "@type": "Country", "name": "Mexico" },
+            { "@type": "Country", "name": "United States" },
+            { "@type": "Country", "name": "United Kingdom" },
+            { "@type": "Country", "name": "Canada" }
+        ],
+        "knowsLanguage": ["es", "en", "fr", "zh", "ja", "ko"]
+    };
+
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.setAttribute('data-schema', 'organization');
     script.textContent = JSON.stringify(schema);
     document.head.appendChild(script);
 };

@@ -15,6 +15,7 @@ import { checkAppVersion } from "./services/cacheVersionService";
 import InstallPWAButton from "./components/common/InstallPWAButton";
 import DownloadAppModal from "./components/pwa/DownloadAppModal";
 import ScrollToTop from "./components/common/ScrollToTop";
+import CookieConsent from "./components/CookieConsent";
 
 // Component to active session timeout monitoring
 function SessionTimeoutMonitor() {
@@ -97,6 +98,8 @@ function App() {
             <InstallPWAButton variant="banner" />
             {/* Modal de descarga de app */}
             <DownloadAppModal />
+            {/* GDPR Cookie Consent Banner */}
+            <CookieConsent />
           </LocationProvider>
         </AppProvider>
       </AuthProvider>

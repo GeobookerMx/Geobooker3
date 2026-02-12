@@ -668,5 +668,75 @@
             "notes": "Resolution notes",
             "notesPlaceholder": "Describe what action you took..."
         }
+    },
+    "faq": {
+        "title": "Frequently Asked Questions",
+        "subtitle": "Find answers to the most common questions about Geobooker",
+        "description": "Get answers about registering your business, advertising, pricing, invoicing and more on Geobooker.",
+        "stillHaveQuestions": "Still have questions?",
+        "contactUs": "Our support team is happy to help.",
+        "emailSupport": "✉️ Email Support",
+        "items": {
+            "register": {
+                "q": "How do I register my business on Geobooker?",
+                "a": "Create a free account, click 'Add Business' in the main menu, and fill out the form with your business name, address, category, and contact details. Your business will appear on the map after a brief review."
+            },
+            "cost": {
+                "q": "Is Geobooker free to use?",
+                "a": "Yes, registering up to 2 businesses is completely free. We offer premium advertising spaces for businesses that want more visibility, starting from $900 MXN/month (~$50 USD)."
+            },
+            "support": {
+                "q": "How do I contact support?",
+                "a": "You can email us at soporte@geobooker.com, use our virtual assistant chatbot, or reach us via WhatsApp. We respond within 24 hours."
+            },
+            "howSearch": {
+                "q": "How do I search for businesses near me?",
+                "a": "From the main page, allow location access and type what you're looking for (pharmacy, restaurant, auto repair, etc.). Geobooker will show you the closest businesses on an interactive map."
+            },
+            "location": {
+                "q": "Do I need to enable my location?",
+                "a": "For the best results, yes. However, you can also search for businesses by city or postal code if you prefer not to share your exact location."
+            },
+            "advertise": {
+                "q": "How can I advertise my brand on Geobooker?",
+                "a": "Visit our advertising page or the Enterprise section. We offer banners, carousels, sponsored results, and interstitials. We currently have a 70% launch discount on all ad spaces."
+            },
+            "premium": {
+                "q": "What does premium advertising include?",
+                "a": "It includes your ad on the interactive map, a dashboard with real-time metrics (impressions, clicks, CTR), geographic zone targeting, and dedicated support."
+            },
+            "invoice": {
+                "q": "Do you provide invoices?",
+                "a": "Yes, all advertising payments include a fiscal invoice (CFDI). For invoicing we need your tax ID and fiscal information. We don't accept cash to ensure proper invoicing."
+            },
+            "deleteAccount": {
+                "q": "Can I delete my account?",
+                "a": "Yes. Go to your profile and select 'Delete Account'. There's a 30-day grace period during which you can cancel the deletion by contacting support."
+            },
+            "security": {
+                "q": "Is Geobooker secure?",
+                "a": "Absolutely. We use SSL encryption, secure storage with Supabase, and OAuth authentication. We never share your personal information with third parties without your consent."
+            },
+            "international": {
+                "q": "Does Geobooker work outside of Mexico?",
+                "a": "Yes. Geobooker is available in multiple languages (Spanish, English, French, Chinese, Japanese, and Korean) and we have international city pages for the USA, UK, and Canada."
+            },
+            "reviews": {
+                "q": "How do reviews work?",
+                "a": "Authenticated users can leave reviews with ratings from 1 to 5 stars across service, quality, and price dimensions. Business owners can respond to reviews."
+            },
+            "oxxo": {
+                "q": "Can I pay at OXXO?",
+                "a": "Yes, we accept OXXO payments through our payment processor. We also accept credit/debit cards and bank transfers."
+            },
+            "referral": {
+                "q": "Do you have a referral program?",
+                "a": "Yes! Share your referral link and earn benefits when someone registers or purchases advertising through your link. Find your referral code in your user profile."
+            },
+            "languages": {
+                "q": "What languages is Geobooker available in?",
+                "a": "Geobooker is available in Spanish, English, French, Mandarin Chinese, Japanese, and Korean. The language is automatically detected based on your location, but you can change it manually."
+            }
+        }
     }
 }

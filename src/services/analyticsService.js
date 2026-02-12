@@ -3,6 +3,11 @@
  * Servicio de Analytics Interno para Geobooker
  * Registra eventos de usuario en Supabase para KPIs en tiempo real
  * También incluye funciones de compatibilidad con GA4
+ * 
+ * Incluye:
+ * - Page views y búsquedas (page_analytics, search_analytics)
+ * - Eventos de intención de negocio (business_intent_logs)
+ * - Device ID persistente + cola offline
  */
 import { supabase } from '../lib/supabase';
 import { logger } from '../utils/logger';
@@ -84,6 +89,24 @@ export async function trackRouteClick(businessId, businessName, source = 'map') 
     }
 }
 
+
+// ============================================
+// DEVICE ID PERSISTENTE + SESSION ID
+// ============================================
+
+/**
+ * Device ID persistente (sobrevive reinicios del navegador)
+ * Permite calcular usuarios únicos reales y retención
+ */
+const getOrCreateDeviceId = () => {
+    const DEVICE_KEY = 'gb_device_id';
+    let id = localStorage.getItem(DEVICE_KEY);
+    if (!id) {
+        id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem(DEVICE_KEY, id);
+    }
+    return id;
+};
 
 // Generar o recuperar session ID
 const getSessionId = () => {
@@ -412,3 +435,149 @@ export async function trackUserLogin(userId, method = 'email') {
         logger.warn('[Analytics] Failed to track login:', err);
     }
 }
+
+// ============================================
+// COLA OFFLINE PARA EVENTOS
+// ============================================
+
+const QUEUE_KEY = 'gb_event_queue';
+
+/**
+ * Encola un evento para enviar después (cuando no hay internet)
+ */
+function queueIntentEvent(eventData) {
+    try {
+        const q = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
+        q.push({ ...eventData, queued_at: new Date().toISOString() });
+        localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
+        logger.dev(`📦 Event queued offline: ${eventData.event_name}`);
+    } catch (err) {
+        console.warn('[Analytics] Failed to queue event:', err);
+    }
+}
+
+/**
+ * Envía todos los eventos encolados (llamar cuando vuelva el internet)
+ */
+export async function flushEventQueue() {
+    const q = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
+    if (!q.length || !navigator.onLine) return;
+
+    const remaining = [];
+    for (const ev of q) {
+        try {
+            const { queued_at, ...data } = ev;
+            const { error } = await supabase.from('business_intent_logs').insert(data);
+            if (error) {
+                remaining.push(ev);
+            } else {
+                logger.dev(`✅ Flushed queued event: ${data.event_name}`);
+            }
+        } catch {
+            remaining.push(ev);
+        }
+    }
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(remaining));
+    if (remaining.length === 0) {
+        logger.success(`📤 All ${q.length} queued events flushed successfully`);
+    } else {
+        logger.warn(`📤 Flushed ${q.length - remaining.length}/${q.length} events, ${remaining.length} remaining`);
+    }
+}
+
+// ============================================
+// TRACKING DE INTENCIÓN DE NEGOCIO (vendible)
+// ============================================
+
+/**
+ * Inserta un evento de intención en business_intent_logs
+ * Con cola offline automática si no hay red
+ */
+async function trackIntentEvent(eventName, businessId, businessName, extra = {}) {
+    const eventData = {
+        event_name: eventName,
+        business_id: businessId,
+        business_name: businessName || null,
+        business_category: extra.category || null,
+        device_id: getOrCreateDeviceId(),
+        session_id: getSessionId(),
+        user_id: (await supabase.auth.getUser())?.data?.user?.id || null,
+        source: extra.source || 'business_profile',
+        platform: extra.platform || 'web',
+        country: localStorage.getItem('userCountry') || null,
+        country_code: localStorage.getItem('userCountryCode') || null,
+        city: localStorage.getItem('userCity') || null,
+        device_type: getDeviceType(),
+        browser: getBrowser(),
+        os: getOS(),
+        metadata: extra.metadata || {}
+    };
+
+    // GA4 tracking (dual)
+    trackEvent(eventName, {
+        business_id: businessId,
+        business_name: businessName,
+        source: extra.source || 'business_profile'
+    });
+
+    // Si estamos offline, encolar
+    if (!navigator.onLine) {
+        queueIntentEvent(eventData);
+        return;
+    }
+
+    try {
+        const { error } = await supabase.from('business_intent_logs').insert(eventData);
+        if (error) {
+            logger.warn(`[Analytics] Error inserting ${eventName}:`, error);
+            queueIntentEvent(eventData);
+        } else {
+            logger.dev(`📊 Intent tracked: ${eventName} → ${businessName}`);
+        }
+    } catch (err) {
+        queueIntentEvent(eventData);
+    }
+}
+
+/**
+ * Trackear click en WhatsApp
+ */
+export async function trackWhatsAppClick(businessId, businessName, source = 'business_profile') {
+    return trackIntentEvent('tap_whatsapp', businessId, businessName, { source });
+}
+
+/**
+ * Trackear click en Llamar
+ */
+export async function trackCallClick(businessId, businessName, source = 'business_profile') {
+    return trackIntentEvent('tap_call', businessId, businessName, { source });
+}
+
+/**
+ * Trackear click en Direcciones / Cómo llegar
+ */
+export async function trackDirectionsClick(businessId, businessName, source = 'business_profile') {
+    return trackIntentEvent('open_directions', businessId, businessName, { source });
+}
+
+/**
+ * Trackear Compartir negocio
+ */
+export async function trackShareBusiness(businessId, businessName, platform = 'native') {
+    return trackIntentEvent('share_business', businessId, businessName, {
+        source: 'business_profile',
+        metadata: { share_platform: platform }
+    });
+}
+
+/**
+ * Trackear Guardar en favoritos
+ */
+export async function trackSaveFavorite(businessId, businessName) {
+    return trackIntentEvent('save_favorite', businessId, businessName);
+}
+
+/**
+ * Obtener Device ID actual (para componentes que lo necesiten)
+ */
+export { getOrCreateDeviceId };

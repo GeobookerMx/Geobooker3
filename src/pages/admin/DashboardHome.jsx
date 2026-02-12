@@ -18,7 +18,12 @@ import {
   Globe,
   ExternalLink,
   Flame,
-  Video
+  Video,
+  MessageCircle,
+  Phone,
+  Navigation,
+  Share2,
+  Heart
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -59,6 +64,16 @@ export default function DashboardHome() {
     byCountry: [],
     intlCount: 0,
     byDomain: []
+  });
+  const [intentMetrics, setIntentMetrics] = useState({
+    whatsapp: 0,
+    calls: 0,
+    directions: 0,
+    shares: 0,
+    favorites: 0,
+    total: 0,
+    uniqueUsers: 0,
+    topBusinesses: []
   });
 
   useEffect(() => {
@@ -166,6 +181,45 @@ export default function DashboardHome() {
         });
       } catch (intlError) {
         console.warn('Error loading international stats:', intlError);
+      }
+
+      // Cargar métricas de intención de negocio
+      try {
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        const { data: intentData } = await supabase
+          .from('business_intent_logs')
+          .select('event_name, device_id')
+          .gte('created_at', thirtyDaysAgo);
+
+        if (intentData && intentData.length > 0) {
+          const whatsapp = intentData.filter(e => e.event_name === 'tap_whatsapp').length;
+          const calls = intentData.filter(e => e.event_name === 'tap_call').length;
+          const directions = intentData.filter(e => e.event_name === 'open_directions').length;
+          const shares = intentData.filter(e => e.event_name === 'share_business').length;
+          const favorites = intentData.filter(e => e.event_name === 'save_favorite').length;
+          const uniqueDevices = new Set(intentData.map(e => e.device_id)).size;
+
+          setIntentMetrics({
+            whatsapp, calls, directions, shares, favorites,
+            total: intentData.length,
+            uniqueUsers: uniqueDevices,
+            topBusinesses: []
+          });
+        }
+
+        // Top negocios por intención
+        try {
+          const { data: topBiz } = await supabase.rpc('get_top_businesses_by_intent', {
+            p_days: 30, p_limit: 5
+          });
+          if (topBiz) {
+            setIntentMetrics(prev => ({ ...prev, topBusinesses: topBiz }));
+          }
+        } catch (topErr) {
+          console.warn('RPC get_top_businesses_by_intent no available yet:', topErr);
+        }
+      } catch (intentErr) {
+        console.warn('Error loading intent metrics:', intentErr);
       }
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -285,6 +339,70 @@ export default function DashboardHome() {
             <p className="text-2xl font-bold mt-1">{analyticsStats.todaySearches.toLocaleString()}</p>
           </div>
         </div>
+      </div>
+
+      {/* Intent Metrics - Intención de Negocio */}
+      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl shadow-lg p-6 text-white">
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+          🎯 Intención de Negocio (últimos 30 días)
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+          <div className="bg-white/10 rounded-lg p-3 text-center">
+            <MessageCircle className="w-5 h-5 mx-auto mb-1 opacity-80" />
+            <p className="text-2xl font-bold">{intentMetrics.whatsapp}</p>
+            <p className="text-emerald-100 text-xs">WhatsApp</p>
+          </div>
+          <div className="bg-white/10 rounded-lg p-3 text-center">
+            <Phone className="w-5 h-5 mx-auto mb-1 opacity-80" />
+            <p className="text-2xl font-bold">{intentMetrics.calls}</p>
+            <p className="text-emerald-100 text-xs">Llamadas</p>
+          </div>
+          <div className="bg-white/10 rounded-lg p-3 text-center">
+            <Navigation className="w-5 h-5 mx-auto mb-1 opacity-80" />
+            <p className="text-2xl font-bold">{intentMetrics.directions}</p>
+            <p className="text-emerald-100 text-xs">Direcciones</p>
+          </div>
+          <div className="bg-white/10 rounded-lg p-3 text-center">
+            <Share2 className="w-5 h-5 mx-auto mb-1 opacity-80" />
+            <p className="text-2xl font-bold">{intentMetrics.shares}</p>
+            <p className="text-emerald-100 text-xs">Compartidos</p>
+          </div>
+          <div className="bg-white/10 rounded-lg p-3 text-center">
+            <Heart className="w-5 h-5 mx-auto mb-1 opacity-80" />
+            <p className="text-2xl font-bold">{intentMetrics.favorites}</p>
+            <p className="text-emerald-100 text-xs">Favoritos</p>
+          </div>
+          <div className="bg-white/10 rounded-lg p-3 text-center">
+            <TrendingUp className="w-5 h-5 mx-auto mb-1 opacity-80" />
+            <p className="text-2xl font-bold">{intentMetrics.total}</p>
+            <p className="text-emerald-100 text-xs">Total</p>
+          </div>
+          <div className="bg-white/10 rounded-lg p-3 text-center">
+            <Users className="w-5 h-5 mx-auto mb-1 opacity-80" />
+            <p className="text-2xl font-bold">{intentMetrics.uniqueUsers}</p>
+            <p className="text-emerald-100 text-xs">Usuarios</p>
+          </div>
+        </div>
+
+        {/* Top negocios con más intención */}
+        {intentMetrics.topBusinesses.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-white/20">
+            <p className="text-sm font-semibold text-emerald-100 mb-2">🏆 Top Negocios con Más Interacción</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+              {intentMetrics.topBusinesses.slice(0, 6).map((biz, idx) => (
+                <div key={biz.business_id} className="bg-white/10 rounded-lg p-2 flex items-center gap-2">
+                  <span className="text-lg font-bold text-emerald-200">#{idx + 1}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{biz.business_name || 'Sin nombre'}</p>
+                    <p className="text-xs text-emerald-200">
+                      {biz.total_intents} acciones · {biz.unique_users} usuarios
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Dispositivos y Búsquedas Populares */}

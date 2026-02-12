@@ -15,6 +15,13 @@ import BadgeDisplay from '../components/business/BadgeDisplay';
 import PhotoGallery from '../components/business/PhotoGallery';
 import ReviewsSection from '../components/business/ReviewsSection';
 import TrustScoreWidget from '../components/business/TrustScoreWidget';
+import {
+    trackDirectionsClick,
+    trackCallClick,
+    trackWhatsAppClick,
+    trackShareBusiness,
+    trackSaveFavorite
+} from '../services/analyticsService';
 
 // Mapeo de tags a iconos y nombres
 const TAG_CONFIG = {
@@ -66,6 +73,9 @@ const BusinessProfilePage = () => {
             url: window.location.href
         };
 
+        // Track share intent
+        trackShareBusiness(id, business?.name, navigator.share ? 'native' : 'clipboard');
+
         try {
             if (navigator.share) {
                 await navigator.share(shareData);
@@ -80,6 +90,7 @@ const BusinessProfilePage = () => {
 
     const handleDirections = () => {
         if (business?.latitude && business?.longitude) {
+            trackDirectionsClick(id, business.name);
             const url = `https://www.google.com/maps/dir/?api=1&destination=${business.latitude},${business.longitude}`;
             window.open(url, '_blank');
         }
@@ -87,13 +98,21 @@ const BusinessProfilePage = () => {
 
     const handleCall = () => {
         if (business?.phone) {
+            trackCallClick(id, business.name);
             window.location.href = `tel:${business.phone}`;
         }
     };
 
     const toggleFavorite = () => {
         setIsFavorite(!isFavorite);
+        if (!isFavorite) {
+            trackSaveFavorite(id, business?.name);
+        }
         toast.success(isFavorite ? 'Eliminado de favoritos' : 'Agregado a favoritos');
+    };
+
+    const handleWhatsAppClick = () => {
+        trackWhatsAppClick(id, business?.name);
     };
 
     if (loading) {
@@ -274,6 +293,7 @@ const BusinessProfilePage = () => {
                                 href={`https://wa.me/${(business.whatsapp || business.phone).replace(/\D/g, '')}?text=${encodeURIComponent(`Hola! Vi tu negocio ${business.name} en Geobooker y me gustaría más información.`)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                onClick={handleWhatsAppClick}
                                 className="flex flex-col items-center justify-center gap-1 bg-[#25D366] text-white py-3 px-2 rounded-xl font-semibold hover:bg-[#128C7E] transition"
                             >
                                 <MessageCircle className="w-5 h-5" />

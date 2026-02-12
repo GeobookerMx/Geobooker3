@@ -7,6 +7,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { LocationProvider } from "./contexts/LocationContext";
 import { useSessionTimeout } from "./hooks/useSessionTimeout";
 import { initializeGA4, trackSessionStart } from "./services/analyticsService";
+import { flushEventQueue } from "./services/analyticsService";
 
 import AppRouter from "./router";
 import ChatWidget from "./components/agent/ChatWidget";
@@ -41,6 +42,11 @@ function AppInitializer() {
     initializeGA4();
     trackSessionStart(false);
 
+    // 2b. Flush offline event queue (enviar eventos encolados)
+    flushEventQueue();
+    const handleOnline = () => flushEventQueue();
+    window.addEventListener('online', handleOnline);
+
     // 3. Detectar país por IP para moneda y SEO (Background)
     const initGeo = async () => {
       const geoData = await detectUserCountry();
@@ -68,6 +74,8 @@ function AppInitializer() {
       }
     };
     initGeo();
+
+    return () => window.removeEventListener('online', handleOnline);
   }, []);
   return null;
 }

@@ -22,13 +22,7 @@ const RecommendationsManagement = () => {
         try {
             let query = supabase
                 .from('user_recommendations')
-                .select(`
-          *,
-          user:user_id (
-            email,
-            raw_user_meta_data
-          )
-        `)
+                .select('*')
                 .order('created_at', { ascending: false });
 
             if (filter !== 'all') {
@@ -129,8 +123,8 @@ const RecommendationsManagement = () => {
                             key={status}
                             onClick={() => setFilter(status)}
                             className={`px-4 py-2 rounded-lg font-medium transition ${filter === status
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                                 }`}
                         >
                             {status === 'pending' && '⏳ Pendientes'}
@@ -170,8 +164,8 @@ const RecommendationsManagement = () => {
                             <div
                                 key={rec.id}
                                 className={`bg-white rounded-xl border shadow-sm overflow-hidden ${rec.status === 'approved' ? 'border-green-200' :
-                                        rec.status === 'rejected' ? 'border-red-200' :
-                                            'border-gray-200'
+                                    rec.status === 'rejected' ? 'border-red-200' :
+                                        'border-gray-200'
                                     }`}
                             >
                                 <div className="p-6">
@@ -187,15 +181,15 @@ const RecommendationsManagement = () => {
                                                 </span>
                                                 <span className="flex items-center gap-1">
                                                     <MapPin className="w-4 h-4" />
-                                                    {rec.address || `${rec.latitude.toFixed(4)}, ${rec.longitude.toFixed(4)}`}
+                                                    {rec.address || (rec.latitude && rec.longitude ? `${rec.latitude.toFixed(4)}, ${rec.longitude.toFixed(4)}` : 'Sin ubicación')}
                                                 </span>
                                             </div>
                                         </div>
 
                                         {/* Status badge */}
                                         <div className={`px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1 ${rec.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                                rec.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                                    'bg-amber-100 text-amber-700'
+                                            rec.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                'bg-amber-100 text-amber-700'
                                             }`}>
                                             {rec.status === 'approved' && <CheckCircle className="w-4 h-4" />}
                                             {rec.status === 'rejected' && <XCircle className="w-4 h-4" />}
@@ -248,7 +242,7 @@ const RecommendationsManagement = () => {
                                     <div className="flex items-center gap-4 text-sm text-gray-500 mb-4 pt-4 border-t border-gray-100">
                                         <span className="flex items-center gap-1">
                                             <User className="w-4 h-4" />
-                                            {rec.user?.email || rec.user_id.slice(0, 8)}
+                                            {rec.user_id?.slice(0, 8) || 'Anónimo'}
                                         </span>
                                         <span className="flex items-center gap-1">
                                             <Calendar className="w-4 h-4" />

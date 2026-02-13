@@ -13,6 +13,7 @@ const AdminSidebar = () => {
     { path: '/admin/unified-crm', label: 'CRM WhatsApp', icon: '📱' },
     { path: '/admin/advertising', label: 'Publicidad', icon: '📢' },
     { path: '/admin/analytics', label: 'Analíticas', icon: '📈' },
+    { path: '/admin/recommendations', label: 'Recomendaciones', icon: '⭐' },
   ];
 
   const isActive = (path) => {

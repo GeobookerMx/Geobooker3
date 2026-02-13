@@ -17,13 +17,33 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true); // cargando sesión inicial
 
   useEffect(() => {
+    let timeoutId;
+
     const getSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setLoading(false);
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error obteniendo sesión:', error.message);
+        }
+        setUser(session?.user ?? null);
+      } catch (err) {
+        console.error('Error crítico en auth getSession:', err.message);
+        setUser(null);
+      } finally {
+        setLoading(false);
+        clearTimeout(timeoutId);
+      }
     };
+
+    // Timeout de seguridad: si auth no responde en 8s, renderizar la app sin sesión
+    timeoutId = setTimeout(() => {
+      console.warn('⚠️ Auth timeout: renderizando app sin sesión');
+      setUser(null);
+      setLoading(false);
+    }, 8000);
 
     getSession();
 
@@ -36,6 +56,7 @@ export const AuthProvider = ({ children }) => {
 
     return () => {
       subscription.unsubscribe();
+      clearTimeout(timeoutId);
     };
   }, []);
 
@@ -89,8 +110,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {/* opcional: podríamos mostrar un loader aquí */}
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };

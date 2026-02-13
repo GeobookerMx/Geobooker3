@@ -13,15 +13,18 @@ import { cacheBusinesses, getCachedBusinesses, isCacheValid } from '../services/
 import { MapPin, Loader2 } from 'lucide-react';
 
 // Map loading fallback component
-const MapLoadingFallback = () => (
-  <div className="w-full h-[500px] bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl flex flex-col items-center justify-center">
-    <div className="animate-spin mb-4">
-      <MapPin className="w-12 h-12 text-blue-500" />
+const MapLoadingFallback = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="w-full h-[500px] bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl flex flex-col items-center justify-center">
+      <div className="animate-spin mb-4">
+        <MapPin className="w-12 h-12 text-blue-500" />
+      </div>
+      <p className="text-gray-600 font-medium">{t('home.loadingMap')}</p>
+      <p className="text-gray-400 text-sm mt-1">{t('home.locatingBusinesses')}</p>
     </div>
-    <p className="text-gray-600 font-medium">{t('home.loadingMap')}</p>
-    <p className="text-gray-400 text-sm mt-1">{t('home.locatingBusinesses')}</p>
-  </div>
-);
+  );
+};
 // Componentes de Publicidad
 import {
   HeroBanner,

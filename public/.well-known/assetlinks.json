@@ -1,14 +1,12 @@
 [
-    {
-        "relation": [
-            "delegate_permission/common.handle_all_urls"
-        ],
-        "target": {
-            "namespace": "android_app",
-            "package_name": "com.geobooker.app",
-            "sha256_cert_fingerprints": [
-                "TU_SHA256_FINGERPRINT_AQUÍ"
-            ]
-        }
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.geobooker.app",
+      "sha256_cert_fingerprints": [
+        "9E:11:4D:51:6C:F0:93:57:F0:24:BC:FC:B3:0A:A7:1D:CE:F2:0B:12:D0:6B:E3:72:AD:55:0D:79:74:C7:D3:B9"
+      ]
     }
+  }
 ]

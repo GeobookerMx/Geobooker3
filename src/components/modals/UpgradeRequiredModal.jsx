@@ -1,10 +1,51 @@
 // src/components/modals/UpgradeRequiredModal.jsx
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Crown, X, Store, Check, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Crown, X, Store, Check, ArrowRight, Gift } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { toast } from 'react-hot-toast';
+import { isPremiumPromoActive, getDaysRemaining, PROMOTIONS } from '../../config/promotions';
 
 const UpgradeRequiredModal = ({ isOpen, onClose, currentBusinessCount = 1 }) => {
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const promoActive = isPremiumPromoActive();
+    const promoDaysLeft = promoActive ? getDaysRemaining() : 0;
+
     if (!isOpen) return null;
+
+    // 🎉 Activar Premium gratis durante promoción
+    const handleFreeUpgrade = async () => {
+        setLoading(true);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                toast.error('Debes iniciar sesión');
+                return;
+            }
+
+            const { error } = await supabase
+                .from('user_profiles')
+                .upsert({
+                    id: session.user.id,
+                    is_premium_owner: true,
+                    premium_until: PROMOTIONS.PREMIUM_FREE_UNTIL,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'id' });
+
+            if (error) throw error;
+
+            toast.success('🎉 ¡Premium activado GRATIS! Ya puedes registrar más negocios.', { duration: 5000 });
+            onClose();
+            // Recargar para que el check de límite se actualice
+            window.location.reload();
+        } catch (error) {
+            console.error('Error:', error);
+            toast.error(`Error: ${error.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -75,14 +116,30 @@ const UpgradeRequiredModal = ({ isOpen, onClose, currentBusinessCount = 1 }) => 
 
                     {/* CTA */}
                     <div className="space-y-3">
-                        <Link
-                            to="/dashboard/upgrade"
-                            className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white py-3 px-6 rounded-lg font-bold hover:from-yellow-500 hover:to-orange-600 transition flex items-center justify-center gap-2"
-                        >
-                            <Crown className="w-5 h-5" />
-                            Actualizar a Premium
-                            <ArrowRight className="w-5 h-5" />
-                        </Link>
+                        {promoActive ? (
+                            <>
+                                <button
+                                    onClick={handleFreeUpgrade}
+                                    disabled={loading}
+                                    className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-3 px-6 rounded-lg font-bold hover:from-emerald-600 hover:to-green-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                                >
+                                    <Gift className="w-5 h-5" />
+                                    {loading ? 'Activando...' : '✨ Activar Premium GRATIS'}
+                                </button>
+                                <p className="text-center text-sm text-emerald-600 font-medium">
+                                    🎉 Promoción activa — {promoDaysLeft} días restantes
+                                </p>
+                            </>
+                        ) : (
+                            <Link
+                                to="/dashboard/upgrade"
+                                className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white py-3 px-6 rounded-lg font-bold hover:from-yellow-500 hover:to-orange-600 transition flex items-center justify-center gap-2"
+                            >
+                                <Crown className="w-5 h-5" />
+                                Actualizar a Premium
+                                <ArrowRight className="w-5 h-5" />
+                            </Link>
+                        )}
                         <button
                             onClick={onClose}
                             className="w-full bg-gray-100 text-gray-600 py-3 px-6 rounded-lg font-medium hover:bg-gray-200 transition"
@@ -95,7 +152,10 @@ const UpgradeRequiredModal = ({ isOpen, onClose, currentBusinessCount = 1 }) => 
                 {/* Footer Note */}
                 <div className="bg-gray-50 px-6 py-3 text-center border-t">
                     <p className="text-xs text-gray-500">
-                        💰 Precio especial de lanzamiento: <span className="font-bold text-green-600">$119/mes</span>
+                        {promoActive
+                            ? <>🎉 <span className="font-bold text-green-600">¡Premium GRATIS por tiempo limitado!</span></>
+                            : <>💰 Precio especial de lanzamiento: <span className="font-bold text-green-600">$119/mes</span></>
+                        }
                     </p>
                 </div>
             </div>

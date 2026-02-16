@@ -56,6 +56,7 @@ const HomePage = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [businesses, setBusinesses] = useState([]); // Google Places
   const [geobookerBusinesses, setGeobookerBusinesses] = useState([]); // Native Businesses
+  const [recommendedBusinesses, setRecommendedBusinesses] = useState([]); // User Recommended
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [openNowFilter, setOpenNowFilter] = useState(false); // Filtro abierto ahora
@@ -140,84 +141,91 @@ const HomePage = () => {
   };
 
   // Cargar negocios nativos de Geobooker (CON CACHÉ IndexedDB)
-  useEffect(() => {
-    const fetchGeobookerBusinesses = async () => {
-      try {
-        // ⚡ PASO 1: Intentar cargar desde caché primero (instantáneo)
-        const cacheStatus = await isCacheValid(userLocation);
-        if (cacheStatus.isValid && !categoryFilter) {
-          const cachedBusinesses = await getCachedBusinesses();
-          if (cachedBusinesses.length > 0) {
-            setGeobookerBusinesses(cachedBusinesses);
-            return; // Usar caché, no llamar a Supabase
-          }
+  const fetchGeobookerBusinesses = async () => {
+    try {
+      // ⚡ PASO 1: Intentar cargar desde caché primero (instantáneo)
+      const cacheStatus = await isCacheValid(userLocation);
+      if (cacheStatus.isValid && !categoryFilter) {
+        const cachedBusinesses = await getCachedBusinesses();
+        if (cachedBusinesses.length > 0) {
+          setGeobookerBusinesses(cachedBusinesses);
+          return; // Usar caché, no llamar a Supabase
         }
-
-        // ⚡ PASO 2: Si caché no es válido o está vacío, cargar desde Supabase
-
-        let query = supabase
-          .from('businesses')
-          .select('*')
-          .eq('status', 'approved')
-          .eq('is_visible', true); // Only show businesses that owners have set as visible
-
-        // Aplicar filtros de categoría si vienen de CategoriesPage
-        if (categoryFilter) {
-          query = query.eq('category', categoryFilter);
-        }
-        if (subcategoryFilter) {
-          query = query.eq('subcategory', subcategoryFilter);
-        }
-
-        const { data, error } = await query;
-
-        if (error) throw error;
-        if (data) {
-          // ⭐ Obtener estado Premium de los owners usando función RPC segura
-          const ownerIds = [...new Set(data.map(b => b.owner_id).filter(Boolean))];
-          let premiumOwners = {};
-
-          // Usar la función RPC para cada owner (evita error 406 de RLS)
-          for (const ownerId of ownerIds) {
-            try {
-              const { data: isPremium } = await supabase.rpc('get_user_premium_status', { user_id: ownerId });
-              premiumOwners[ownerId] = isPremium || false;
-            } catch (e) {
-              premiumOwners[ownerId] = false;
-            }
-          }
-
-          // Agregar flag is_premium_owner a cada negocio
-          const businessesWithPremium = data.map(business => ({
-            ...business,
-            is_premium_owner: premiumOwners[business.owner_id] || false
-          }));
-
-          setGeobookerBusinesses(businessesWithPremium);
-
-          // ⚡ PASO 3: Guardar en caché para futuras cargas (solo sin filtro)
-          if (!categoryFilter && userLocation && businessesWithPremium.length > 0) {
-            cacheBusinesses(businessesWithPremium, userLocation);
-          }
-
-          if (categoryFilter) {
-            if (businessesWithPremium.length > 0) {
-              toast.success(`📍 ${businessesWithPremium.length} negocios encontrados en ${categoryFilter}`, { duration: 3000 });
-            } else {
-              toast(`Aún no hay negocios registrados en "${categoryFilter}". ¡Sé el primero en registrarte!`, {
-                duration: 5000,
-                icon: '📭'
-              });
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching Geobooker businesses:', error);
       }
-    };
 
+      // ⚡ PASO 2: Si caché no es válido o está vacío, cargar desde Supabase
+      let query = supabase
+        .from('businesses')
+        .select('*')
+        .eq('status', 'approved')
+        .eq('is_visible', true);
+
+      if (categoryFilter) query = query.eq('category', categoryFilter);
+      if (subcategoryFilter) query = query.eq('subcategory', subcategoryFilter);
+
+      const { data, error } = await query;
+      if (error) throw error;
+      if (data) {
+        // Obtener estado Premium
+        const ownerIds = [...new Set(data.map(b => b.owner_id).filter(Boolean))];
+        let premiumOwners = {};
+        for (const ownerId of ownerIds) {
+          try {
+            const { data: isPremium } = await supabase.rpc('get_user_premium_status', { user_id: ownerId });
+            premiumOwners[ownerId] = isPremium || false;
+          } catch (e) {
+            premiumOwners[ownerId] = false;
+          }
+        }
+
+        const businessesWithPremium = data.map(business => ({
+          ...business,
+          is_premium_owner: premiumOwners[business.owner_id] || false
+        }));
+
+        setGeobookerBusinesses(businessesWithPremium);
+        if (!categoryFilter && userLocation && businessesWithPremium.length > 0) {
+          cacheBusinesses(businessesWithPremium, userLocation);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching Geobooker businesses:', error);
+    }
+  };
+
+  // 💚 Cargar recomendaciones aprobadas por usuarios (con ubicación)
+  const fetchRecommendations = async () => {
+    try {
+      console.log('📡 [HomePage] Iniciando carga de recomendaciones...');
+      const { data: allApproved, error: allError } = await supabase
+        .from('user_recommendations')
+        .select('id, name, status, latitude, longitude, category')
+        .eq('status', 'approved');
+
+      if (allError) {
+        console.error('❌ [HomePage] Error al consultar recomendaciones:', allError.message);
+        throw allError;
+      }
+
+      console.log(`💚 [HomePage] Recuperadas ${allApproved?.length || 0} recomendaciones aprobadas`);
+
+      if (allApproved?.length > 0) {
+        const conCoords = allApproved.filter(r => r.latitude != null && r.longitude != null);
+        setRecommendedBusinesses(conCoords);
+        console.log(`📍 [HomePage] Válidas para mapa: ${conCoords.length}`);
+      }
+    } catch (error) {
+      console.error('❌ [HomePage] Error fatal cargando recomendaciones:', error);
+    }
+  };
+
+  useEffect(() => {
     fetchGeobookerBusinesses();
   }, [categoryFilter, subcategoryFilter, userLocation]);
+
+  useEffect(() => {
+    fetchRecommendations();
+  }, []);
 
   // ✅ FIX: Escuchar cambios de visibilidad de negocios (toggle on/off)
   // Cuando un usuario cambia is_visible en el dashboard, actualizar el mapa inmediatamente
@@ -366,24 +374,35 @@ const HomePage = () => {
         description={getSEODescription()}
       />
 
-      {/* PROMO BANNER - 70% OFF LANZAMIENTO */}
-      <div className="bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 text-white py-3 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🚀</span>
-            <span className="font-bold">{t('home.promo.launch')}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <span className="opacity-90">{t('home.promo.validUntil')}</span>
-            <span className="bg-white/20 backdrop-blur px-3 py-1 rounded font-bold">
-              {t('home.promo.march1')}
-            </span>
-            <a href="/advertise" className="ml-2 bg-white text-red-600 px-3 py-1 rounded font-bold hover:bg-gray-100 transition">
-              {t('home.promo.seeOffers')}
-            </a>
+      {/* 🎉 BANNER DE LANZAMIENTO GRATUITO - Visible hasta 1 de marzo 2026 */}
+      {new Date() < new Date('2026-03-01T00:00:00-06:00') && (
+        <div className="bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 text-white py-4 px-4 shadow-lg">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl animate-bounce">🎉</span>
+              <div>
+                <span className="font-extrabold text-lg block">
+                  ¡Geobooker es GRATIS!
+                </span>
+                <span className="text-emerald-100 text-sm">
+                  Usa todas las funciones sin costo por lanzamiento
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="opacity-90">Válido hasta</span>
+                <span className="bg-white/25 backdrop-blur px-3 py-1.5 rounded-lg font-bold text-base">
+                  1 de marzo del 2026
+                </span>
+              </div>
+              <a href="/categories" className="bg-white text-emerald-700 px-4 py-2 rounded-lg font-bold hover:bg-emerald-50 transition shadow-md">
+                🗺️ Explorar ahora
+              </a>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Modal de permiso de ubicación */}
       <LocationPermissionModal
@@ -547,6 +566,7 @@ const HomePage = () => {
                   })
                   : geobookerBusinesses
               }
+              recommendedBusinesses={recommendedBusinesses}
               selectedBusiness={selectedBusiness}
               onBusinessSelect={setSelectedBusiness}
               onViewBusinessProfile={handleViewBusinessProfile}

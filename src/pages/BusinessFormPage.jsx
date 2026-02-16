@@ -12,6 +12,7 @@ import {
 import PhoneInput from '../components/PhoneInput';
 import { supabase } from '../lib/supabase';
 import UpgradeRequiredModal from '../components/modals/UpgradeRequiredModal';
+import { isPremiumPromoActive } from '../config/promotions';
 
 const mapContainerStyle = {
   width: "100%",
@@ -164,6 +165,13 @@ export default function BusinessFormPage() {
 
       // Si ya tiene 1+ negocio, verificar si es premium
       if (count >= 1) {
+        // 🎉 Si la promo está activa, dejar registrar sin bloquear
+        if (isPremiumPromoActive()) {
+          console.log('🎉 Promo activa: permitiendo registro de negocio adicional sin Premium');
+          setCheckingLimit(false);
+          return;
+        }
+
         const { data: isPremium, error: rpcError } = await supabase.rpc('get_user_premium_status', { user_id: user.id });
 
         if (rpcError) throw rpcError;

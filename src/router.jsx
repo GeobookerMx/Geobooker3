@@ -228,6 +228,7 @@ export default function AppRouter() {
         {/* 🛠️ Rutas de administrador */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminDashboardLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<DashboardHome />} />
           <Route path="businesses" element={<BusinessApprovals />} />
 

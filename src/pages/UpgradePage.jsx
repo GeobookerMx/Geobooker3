@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Check, X, Star, Zap, TrendingUp, Camera, MapPin, BarChart, Clock, Instagram, Facebook, Globe, CreditCard, Store } from 'lucide-react';
+import { Check, X, Star, Zap, TrendingUp, Camera, MapPin, BarChart, Clock, Instagram, Facebook, Globe, CreditCard, Store, Gift } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import OxxoVoucher from '../components/payment/OxxoVoucher';
 import { formatPrice, getCurrencyConfig } from '../utils/currencyUtils';
+import { isPremiumPromoActive, getDaysRemaining, PROMOTIONS } from '../config/promotions';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -17,14 +18,18 @@ const UpgradePage = () => {
     const [paymentMethod, setPaymentMethod] = useState('card');
     const [oxxoVoucher, setOxxoVoucher] = useState(null);
 
+    // 🎉 Verificar si la promo está activa
+    const promoActive = isPremiumPromoActive();
+    const promoDaysLeft = promoActive ? getDaysRemaining() : 0;
+
     // Configuración de lanzamiento
     const LAUNCH_CONFIG = {
         regularPrice: getCurrencyConfig().code === 'MXN' ? 299 : 14.99,
-        launchPrice: 0, // GRATIS por 3 meses
+        launchPrice: 0, // GRATIS durante promo
         monthsFree: 3,
         spotsLeft: 4847, // De 5,000 totales
         totalSpots: 5000,
-        deadline: '31 de Marzo 2025',
+        deadline: new Date(PROMOTIONS.PREMIUM_FREE_UNTIL).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }),
         isLaunchActive: true
     };
 
@@ -44,7 +49,41 @@ const UpgradePage = () => {
         fetchPlanConfig();
     }, []);
 
-    // Abrir modal de selección de pago
+    // 🎉 Activar Premium GRATIS durante promoción (sin Stripe)
+    const handleFreeUpgrade = async () => {
+        setLoading(true);
+        const toastId = toast.loading('Activando Premium gratis...');
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                toast.error('Debes iniciar sesión para activar Premium', { id: toastId });
+                navigate('/login');
+                return;
+            }
+
+            // Actualizar directamente en user_profiles
+            const { error } = await supabase
+                .from('user_profiles')
+                .upsert({
+                    id: session.user.id,
+                    is_premium_owner: true,
+                    premium_until: PROMOTIONS.PREMIUM_FREE_UNTIL,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'id' });
+
+            if (error) throw error;
+
+            toast.success('🎉 ¡Premium activado GRATIS! Disfruta todas las funciones.', { id: toastId, duration: 5000 });
+            setTimeout(() => navigate('/dashboard'), 1500);
+        } catch (error) {
+            console.error('Error activando Premium gratis:', error);
+            toast.error(`Error: ${error.message}`, { id: toastId });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Abrir modal de selección de pago (solo cuando NO hay promo)
     const handleStartUpgrade = async () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
@@ -52,6 +91,13 @@ const UpgradePage = () => {
             navigate('/login');
             return;
         }
+
+        // Si hay promo activa, activar gratis directamente
+        if (promoActive) {
+            handleFreeUpgrade();
+            return;
+        }
+
         setShowPaymentModal(true);
     };
 
@@ -173,18 +219,53 @@ const UpgradePage = () => {
                     ← Volver al Dashboard
                 </button>
 
+                {/* 🎉 Banner de Promoción GRATIS */}
+                {promoActive && (
+                    <div className="bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl p-6 mb-8 text-white shadow-xl">
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                                <div className="bg-white/20 p-3 rounded-full">
+                                    <Gift className="w-10 h-10" />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold">🎉 ¡Premium GRATIS!</h2>
+                                    <p className="text-emerald-100">
+                                        Promoción válida hasta el {LAUNCH_CONFIG.deadline} — Quedan {promoDaysLeft} días
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleFreeUpgrade}
+                                disabled={loading}
+                                className="bg-white text-emerald-600 px-8 py-3 rounded-xl font-bold text-lg hover:bg-emerald-50 transition shadow-lg whitespace-nowrap disabled:opacity-50"
+                            >
+                                {loading ? 'Activando...' : '✨ Activar Premium Gratis'}
+                            </button>
+                        </div>
+                        <div className="mt-4 flex flex-wrap gap-3">
+                            <span className="bg-white/20 px-3 py-1 rounded-full text-sm">✓ Sin tarjeta</span>
+                            <span className="bg-white/20 px-3 py-1 rounded-full text-sm">✓ Sin pagos</span>
+                            <span className="bg-white/20 px-3 py-1 rounded-full text-sm">✓ Acceso completo</span>
+                            <span className="bg-white/20 px-3 py-1 rounded-full text-sm">✓ Cancela cuando quieras</span>
+                        </div>
+                    </div>
+                )}
+
                 {/* Hero */}
                 <div className="text-center mb-12">
-                    {LAUNCH_CONFIG.isLaunchActive && (
+                    {LAUNCH_CONFIG.isLaunchActive && !promoActive && (
                         <div className="inline-flex items-center bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-2 rounded-full text-sm font-bold mb-4 animate-pulse">
                             🎁 LANZAMIENTO: ¡{LAUNCH_CONFIG.monthsFree} MESES GRATIS para los primeros {LAUNCH_CONFIG.totalSpots.toLocaleString()} negocios!
                         </div>
                     )}
                     <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                        Haz Crecer tu Negocio
+                        {promoActive ? '¡Premium sin costo!' : 'Haz Crecer tu Negocio'}
                     </h1>
                     <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                        Destaca entre miles de negocios con Geobooker Premium
+                        {promoActive
+                            ? 'Activa Premium gratis y disfruta todas las funciones para tu negocio'
+                            : 'Destaca entre miles de negocios con Geobooker Premium'
+                        }
                     </p>
                 </div>
 
@@ -256,7 +337,18 @@ const UpgradePage = () => {
                         <div className="text-center mb-6">
                             <h3 className="text-2xl font-bold mb-2">Plan Premium</h3>
 
-                            {LAUNCH_CONFIG.isLaunchActive ? (
+                            {promoActive ? (
+                                <>
+                                    <div className="flex items-center justify-center gap-3">
+                                        <span className="text-2xl text-white/60 line-through">{formatPrice(299)}/mes</span>
+                                        <span className="text-5xl font-bold">¡GRATIS!</span>
+                                    </div>
+                                    <p className="text-pink-200">hasta el {LAUNCH_CONFIG.deadline}</p>
+                                    <div className="inline-block bg-green-400 text-green-900 px-4 py-1 rounded-full text-sm font-bold mt-2">
+                                        🎉 PROMOCIÓN ACTIVA — Sin pago requerido
+                                    </div>
+                                </>
+                            ) : LAUNCH_CONFIG.isLaunchActive ? (
                                 <>
                                     <div className="flex items-center justify-center gap-3">
                                         <span className="text-2xl text-white/60 line-through">{formatPrice(299)}/mes</span>
@@ -322,11 +414,16 @@ const UpgradePage = () => {
                         </ul>
 
                         <button
-                            onClick={handleStartUpgrade}
+                            onClick={promoActive ? handleFreeUpgrade : handleStartUpgrade}
                             disabled={loading}
-                            className={`w-full bg-yellow-400 text-gray-900 py-4 rounded-xl font-bold text-lg hover:bg-yellow-300 transition transform hover:scale-[1.02] shadow-lg ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
+                            className={`w-full ${promoActive ? 'bg-green-400 hover:bg-green-300' : 'bg-yellow-400 hover:bg-yellow-300'} text-gray-900 py-4 rounded-xl font-bold text-lg transition transform hover:scale-[1.02] shadow-lg ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
                         >
-                            {loading ? 'Procesando...' : (
+                            {loading ? 'Activando...' : promoActive ? (
+                                <>
+                                    ✨ Activar Premium GRATIS →
+                                    <span className="block text-xs font-normal mt-1">Sin tarjeta ni pago • Acceso inmediato</span>
+                                </>
+                            ) : (
                                 <>
                                     🎁 ¡Obtener {LAUNCH_CONFIG.monthsFree} Meses GRATIS! →
                                     {LAUNCH_CONFIG.isLaunchActive && (
@@ -415,8 +512,8 @@ const UpgradePage = () => {
                 </div>
             </div>
 
-            {/* Modal de Selección de Método de Pago */}
-            {showPaymentModal && (
+            {/* Modal de Selección de Método de Pago (solo cuando NO hay promo activa) */}
+            {showPaymentModal && !promoActive && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-fade-in">
                         <div className="flex justify-between items-center mb-6">

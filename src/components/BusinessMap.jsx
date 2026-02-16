@@ -56,14 +56,14 @@ const PREMIUM_ICON = {
   anchor: { x: 12, y: 12 }
 };
 
-// ✅ Icono RECOMENDADO POR USUARIOS - Paloma verde con checkmark
+// ✅ Icono RECOMENDADO POR USUARIOS - Corazón verde esmeralda con check
 const RECOMMENDED_ICON = {
-  path: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z', // Checkmark
-  fillColor: '#22C55E', // Verde esmeralda
+  path: 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z',
+  fillColor: '#10B981', // Verde esmeralda brillante
   fillOpacity: 1,
-  strokeColor: '#16A34A', // Verde más oscuro
-  strokeWeight: 2,
-  scale: 2.2,
+  strokeColor: '#059669', // Verde más oscuro
+  strokeWeight: 2.5,
+  scale: 2.0,
   anchor: { x: 12, y: 12 }
 };
 
@@ -265,6 +265,7 @@ export const BusinessMap = memo(({
   userLocation,
   businesses = [],
   geobookerBusinesses = [],
+  recommendedBusinesses = [], // Negocios recomendados por usuarios
   selectedBusiness,
   onBusinessSelect,
   onViewBusinessProfile,
@@ -353,6 +354,55 @@ export const BusinessMap = memo(({
       type: 'geobooker'
     }));
   }, [geobookerBusinesses, userLocation]);
+
+  // 💚 Marcadores de negocios recomendados por usuarios
+  const recommendedMarkers = useMemo(() => {
+    const validMarkers = recommendedBusinesses.filter(b => b && !isNaN(Number(b.latitude)) && !isNaN(Number(b.longitude)));
+    if (recommendedBusinesses.length > 0) {
+      console.log(`💚 BusinessMap: Procesando ${recommendedBusinesses.length} recomendaciones (${validMarkers.length} válidas)`);
+    }
+    return validMarkers.map((rec) => ({
+      ...rec,
+      distance: userLocation ? calculateDistance(
+        userLocation.lat, userLocation.lng,
+        Number(rec.latitude), Number(rec.longitude)
+      ) : null,
+      type: 'recommended'
+    }));
+  }, [recommendedBusinesses, userLocation]);
+
+  // 🔎 EFECTO: Ajustar mapa para mostrar todas las recomendaciones al cargar
+  useEffect(() => {
+    if (mapLoaded && mapRef.current && recommendedMarkers.length > 0) {
+      console.log('🔎 [BusinessMap] Ajustando vista para incluir recomendaciones...');
+      const google = window.google;
+      if (!google) return;
+
+      const bounds = new google.maps.LatLngBounds();
+
+      // Incluir ubicación del usuario si existe
+      if (userLocation?.lat && userLocation?.lng) {
+        bounds.extend({ lat: Number(userLocation.lat), lng: Number(userLocation.lng) });
+      }
+
+      // Incluir todas las recomendaciones
+      recommendedMarkers.forEach(rec => {
+        bounds.extend({ lat: Number(rec.latitude), lng: Number(rec.longitude) });
+      });
+
+      // Solo ajustar si las recomendaciones están lejos o son las primeras en cargar
+      try {
+        mapRef.current.fitBounds(bounds, 50); // padding de 50px
+
+        // Evitar que el zoom sea demasiado alto (muy cerca)
+        const listener = google.maps.event.addListenerOnce(mapRef.current, 'bounds_changed', () => {
+          if (mapRef.current.getZoom() > 15) mapRef.current.setZoom(15);
+        });
+      } catch (err) {
+        console.error('❌ [BusinessMap] Error ajustando bounds:', err);
+      }
+    }
+  }, [recommendedMarkers.length, mapLoaded]);
 
   // Estado de carga
   if (loadError) {
@@ -501,6 +551,24 @@ export const BusinessMap = memo(({
           );
         })}
 
+        {/* 💚 Marcadores de Negocios Recomendados por Usuarios (Corazón verde) */}
+        {recommendedMarkers.map((rec) => {
+          console.log(`🎨 [BusinessMap] Renderizando marcador recomendado: ${rec.name} en ${rec.latitude}, ${rec.longitude}`);
+          return (
+            <MarkerF
+              key={`recommended-${rec.id}`}
+              position={{ lat: Number(rec.latitude), lng: Number(rec.longitude) }}
+              onClick={() => onBusinessSelect({ ...rec, type: 'recommended' })}
+              onMouseOver={() => setHoveredBusiness({ ...rec, type: 'recommended' })}
+              onMouseOut={() => setHoveredBusiness(null)}
+              icon={RECOMMENDED_ICON}
+              title={`💚 ${rec.name} (Recomendado por la comunidad)`}
+              zIndex={5000} // Prioridad máxima
+              animation={window.google?.maps?.Animation?.DROP} // Efecto al aparecer
+            />
+          );
+        })}
+
         {/* Hover InfoWindow (Mini Profile) */}
         {hoveredBusiness && !selectedBusiness && (
           <InfoWindowF
@@ -560,7 +628,7 @@ export const BusinessMap = memo(({
         )}
 
         {/* InfoWindow del negocio seleccionado */}
-        {selectedBusiness && (
+        {selectedBusiness && selectedBusiness.type !== 'recommended' && (
           <BusinessInfoWindow
             business={selectedBusiness}
             userLocation={userLocation}
@@ -568,6 +636,69 @@ export const BusinessMap = memo(({
             onViewProfile={onViewBusinessProfile}
             t={t}
           />
+        )}
+
+        {/* InfoWindow para negocio RECOMENDADO seleccionado */}
+        {selectedBusiness && selectedBusiness.type === 'recommended' && (
+          <InfoWindowF
+            position={{ lat: Number(selectedBusiness.latitude), lng: Number(selectedBusiness.longitude) }}
+            onCloseClick={() => onBusinessSelect(null)}
+          >
+            <div className="p-3 max-w-xs">
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="font-bold text-lg text-gray-800">{selectedBusiness.name}</h3>
+              </div>
+              <div className="flex items-center gap-1 mb-2">
+                <span className="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded-full font-bold border border-emerald-200 flex items-center gap-1">
+                  💚 Recomendado por la comunidad
+                </span>
+              </div>
+              {selectedBusiness.category && (
+                <p className="text-gray-600 text-sm mb-1">
+                  <span className="font-semibold">{t('business.category')}:</span> {selectedBusiness.category}
+                </p>
+              )}
+              {selectedBusiness.rating && (
+                <div className="flex items-center gap-1 mb-2">
+                  <span className="text-yellow-500 text-sm">
+                    {'★'.repeat(selectedBusiness.rating)}{'☆'.repeat(5 - selectedBusiness.rating)}
+                  </span>
+                  <span className="text-gray-500 text-xs">({selectedBusiness.rating}/5)</span>
+                </div>
+              )}
+              {selectedBusiness.pros && (
+                <p className="text-sm text-gray-600 mb-1">
+                  <span className="font-semibold text-green-600">👍</span> {selectedBusiness.pros}
+                </p>
+              )}
+              {selectedBusiness.cons && (
+                <p className="text-sm text-gray-600 mb-1">
+                  <span className="font-semibold text-red-500">👎</span> {selectedBusiness.cons}
+                </p>
+              )}
+              {selectedBusiness.address && (
+                <p className="text-gray-500 text-xs mb-2">
+                  📍 {selectedBusiness.address}
+                </p>
+              )}
+              {selectedBusiness.distance && (
+                <p className="text-gray-500 text-xs">
+                  {t('business.distance', { distance: selectedBusiness.distance.toFixed(1) })}
+                </p>
+              )}
+              {/* Botón para abrir en Google Maps */}
+              <div className="mt-2">
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation?.lat},${userLocation?.lng}&destination=${selectedBusiness.latitude},${selectedBusiness.longitude}&travelmode=driving`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full bg-emerald-600 text-white text-center py-2 rounded text-sm hover:bg-emerald-700 transition duration-200 font-semibold"
+                >
+                  Cómo llegar 🚗
+                </a>
+              </div>
+            </div>
+          </InfoWindowF>
         )}
       </GoogleMap>
     </div>

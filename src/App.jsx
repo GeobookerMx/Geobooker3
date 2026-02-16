@@ -8,6 +8,9 @@ import { LocationProvider } from "./contexts/LocationContext";
 import { useSessionTimeout } from "./hooks/useSessionTimeout";
 import { initializeGA4, trackSessionStart } from "./services/analyticsService";
 import { flushEventQueue } from "./services/analyticsService";
+import { detectUserCountry } from "./services/geoLocationService";
+import { usePageTracking } from "./hooks/usePageTracking";
+import i18n from "./i18n";
 
 import AppRouter from "./router";
 import ChatWidget from "./components/agent/ChatWidget";
@@ -16,6 +19,7 @@ import InstallPWAButton from "./components/common/InstallPWAButton";
 import DownloadAppModal from "./components/pwa/DownloadAppModal";
 import ScrollToTop from "./components/common/ScrollToTop";
 import CookieConsent from "./components/CookieConsent";
+import { Toaster } from "react-hot-toast";
 
 // Component to active session timeout monitoring
 function SessionTimeoutMonitor() {
@@ -24,15 +28,10 @@ function SessionTimeoutMonitor() {
 }
 
 // Component to track page views
-import { usePageTracking } from "./hooks/usePageTracking";
 function PageTracker() {
   usePageTracking();
   return null;
 }
-
-// Component to initialize app (cache clearing, analytics, geo)
-import { detectUserCountry } from "./services/geoLocationService";
-import i18n from "./i18n";
 
 function AppInitializer() {
   useEffect(() => {
@@ -86,6 +85,7 @@ function App() {
     <BrowserRouter>
       <ScrollToTop />
       <AuthProvider>
+        <Toaster position="top-right" />
         <SessionTimeoutMonitor />
         <AppInitializer />
         <PageTracker />

@@ -56,8 +56,12 @@ function AppInitializer() {
         localStorage.setItem('userCity', geoData.city);
 
         // 4. Cambiar idioma automáticamente si NO hay preferencia guardada ya
+        // ⚠️ NO auto-cambiar idioma si estamos en .com.mx o en Capacitor nativo
+        // porque el dominio ya define el idioma correcto (es) en i18n.js
+        const isComMx = window.location.hostname.endsWith('geobooker.com.mx');
+        const isCapacitor = window.Capacitor?.isNativePlatform?.();
         const savedLang = localStorage.getItem('language');
-        if (!savedLang) {
+        if (!savedLang && !isComMx && !isCapacitor) {
           const country = geoData.country;
           let newLang = null;
 

@@ -36,14 +36,18 @@ i18n
                 return forceLang;
             }
 
-            // 2. Preferencia guardada del usuario (localStorage)
+            // 2. Dominio (.com -> en, .mx -> es, Capacitor -> es)
+            // ⚠️ El dominio tiene PRIORIDAD sobre localStorage para evitar
+            // que una auto-detección previa (ej: geo IP → EN) persista incorrectamente
+            const hostname = window.location.hostname;
+            const isCapacitor = window.Capacitor?.isNativePlatform?.();
+            if (hostname.endsWith('geobooker.com.mx') || isCapacitor) return 'es';
+            if (hostname.endsWith('geobooker.com')) return 'en';
+
+            // 3. Preferencia guardada del usuario (localStorage) — solo para otros dominios
             const saved = localStorage.getItem('language');
             if (saved) return saved;
 
-            // 3. Dominio (.com -> en, .mx -> es)
-            const hostname = window.location.hostname;
-            if (hostname.endsWith('geobooker.com')) return 'en';
-            if (hostname.endsWith('geobooker.com.mx')) return 'es';
             if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
                 // Para desarrollo, podemos usar un parámetro o dejar el default
             }

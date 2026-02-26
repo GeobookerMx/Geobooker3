@@ -282,7 +282,6 @@ export const BusinessMap = memo(({
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     libraries: GOOGLE_MAPS_LIBRARIES,
-    language: i18n.language
   });
 
   // Estado para saber si el mapa ya cargó

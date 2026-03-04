@@ -144,7 +144,7 @@ export default function AppRouter() {
           {/* Download App Page - Para QR codes y campañas */}
           <Route path="/download" element={<DownloadPage />} />
 
-          {/* Delete Account Page - Requerido por Google Play */}
+          {/* Delete Account Page - Required for app stores */}
           <Route path="/delete-account" element={<DeleteAccountPage />} />
 
           {/* Políticas de anuncios (página legal pública) */}

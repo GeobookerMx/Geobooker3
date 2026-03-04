@@ -64,7 +64,7 @@
     "logo": "https://geobooker.com.mx/images/geobooker-logo.svg",
     "description": "Encuentra negocios cerca de ti. Restaurantes, farmacias, tiendas, servicios y más. Directorio de negocios locales con mapa interactivo.",
     "applicationCategory": "BusinessApplication",
-    "operatingSystem": "Web, iOS, Android",
+    "operatingSystem": "iOS, Web",
     "browserRequirements": "Requires JavaScript",
     "softwareVersion": "1.0",
     "offers": {
@@ -182,53 +182,11 @@
     }
   </style>
 
-  <!-- GA4 Consent Mode v2 — Default to denied for GDPR/ePrivacy compliance -->
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-
-    // Set default consent state (denied until user accepts)
-    gtag('consent', 'default', {
-      analytics_storage: 'denied',
-      ad_storage: 'denied',
-      ad_user_data: 'denied',
-      ad_personalization: 'denied',
-      wait_for_update: 500
-    });
-
-    // If user has previously consented, restore that consent
-    try {
-      var savedConsent = JSON.parse(localStorage.getItem('gb_cookie_consent'));
-      if (savedConsent && savedConsent.analytics) {
-        gtag('consent', 'update', {
-          analytics_storage: 'granted',
-          ad_storage: savedConsent.marketing ? 'granted' : 'denied',
-          ad_user_data: savedConsent.marketing ? 'granted' : 'denied',
-          ad_personalization: savedConsent.marketing ? 'granted' : 'denied'
-        });
-      }
-    } catch (e) { }
-  </script>
-
-  <!-- Google Analytics 4 - Geobooker -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-M1DRMN5LDG"></script>
-  <script>
-    gtag('js', new Date());
-    gtag('config', 'G-M1DRMN5LDG', {
-      page_title: document.title,
-      page_location: window.location.href,
-      send_page_view: true
-    });
-  </script>
-
-  <!-- Microsoft Clarity - Heatmaps & Session Recordings -->
-  <script type="text/javascript">
-    (function (c, l, a, r, i, t, y) {
-      c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments) };
-      t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
-      y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
-    })(window, document, "clarity", "script", "v1j8dut5lg");
-  </script>
+  <!-- 
+    TRACKING NOTE: GA4 and Clarity are loaded dynamically by trackingService.js
+    ONLY after user consent (cookie banner or ATT on iOS).
+    Apple Guideline 5.1.2(i) compliance: no tracking before permission.
+  -->
 
   <title>Geobooker - Find Local Businesses Near You</title>
 

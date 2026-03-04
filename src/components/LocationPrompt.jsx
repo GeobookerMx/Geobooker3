@@ -1,6 +1,7 @@
 // src/components/LocationPrompt.jsx
+// Apple Guideline 5.1.1(iv) compliant — neutral button wording
 import React, { useState, useEffect } from 'react';
-import { MapPin, Navigation, X, AlertCircle } from 'lucide-react';
+import { MapPin, Navigation, AlertCircle } from 'lucide-react';
 import { useLocation } from '../contexts/LocationContext';
 
 const LocationPrompt = () => {
@@ -11,27 +12,17 @@ const LocationPrompt = () => {
     const [dismissed, setDismissed] = useState(false);
 
     useEffect(() => {
-        // Solo mostrar si no hay ubicación y no se ha descartado
+        // Only show if no location and not dismissed
         const wasDismissed = localStorage.getItem('locationPromptDismissed');
-        const remindLaterTime = localStorage.getItem('locationRemindLater');
-
-        // Si eligió "recordar después", esperar 1 hora antes de mostrar de nuevo
-        if (remindLaterTime) {
-            const oneHour = 60 * 60 * 1000;
-            const timePassed = Date.now() - parseInt(remindLaterTime);
-            if (timePassed < oneHour) {
-                return; // No mostrar aún
-            }
-        }
 
         if (!userLocation && !permissionGranted && !wasDismissed) {
-            // Esperar un poco antes de mostrar para no ser intrusivo
+            // Wait before showing to avoid being intrusive
             const timer = setTimeout(() => setIsVisible(true), 3000);
             return () => clearTimeout(timer);
         }
     }, [userLocation, permissionGranted]);
 
-    const handleEnableLocation = async () => {
+    const handleContinue = async () => {
         setIsLoading(true);
         setError(null);
 
@@ -40,7 +31,6 @@ const LocationPrompt = () => {
             setIsVisible(false);
         } catch (err) {
             setError(err.message);
-            // Si es error de permisos, mostrar instrucciones específicas
             if (err.message.includes('denegado')) {
                 setError('Para habilitar la ubicación, ve a Configuración de tu navegador → Permisos → Ubicación');
             }
@@ -49,16 +39,10 @@ const LocationPrompt = () => {
         }
     };
 
-    const handleDismiss = () => {
+    const handleSkip = () => {
         setIsVisible(false);
         setDismissed(true);
         localStorage.setItem('locationPromptDismissed', 'true');
-    };
-
-    const handleRemindLater = () => {
-        setIsVisible(false);
-        // Guardar en localStorage que el usuario eligió recordar después
-        localStorage.setItem('locationRemindLater', Date.now().toString());
     };
 
     if (!isVisible || dismissed || permissionGranted) return null;
@@ -113,10 +97,10 @@ const LocationPrompt = () => {
                         </li>
                     </ul>
 
-                    {/* Buttons */}
+                    {/* Buttons — Apple 5.1.1(iv) compliant */}
                     <div className="space-y-3">
                         <button
-                            onClick={handleEnableLocation}
+                            onClick={handleContinue}
                             disabled={isLoading}
                             className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-xl font-semibold flex items-center justify-center gap-2 hover:from-blue-700 hover:to-indigo-700 transition disabled:opacity-50"
                         >
@@ -128,25 +112,17 @@ const LocationPrompt = () => {
                             ) : (
                                 <>
                                     <Navigation className="w-5 h-5" />
-                                    Habilitar ubicación
+                                    Continuar
                                 </>
                             )}
                         </button>
 
-                        <div className="flex gap-2">
-                            <button
-                                onClick={handleRemindLater}
-                                className="flex-1 py-2 px-4 text-gray-600 hover:bg-gray-100 rounded-lg transition text-sm"
-                            >
-                                Recordar después
-                            </button>
-                            <button
-                                onClick={handleDismiss}
-                                className="flex-1 py-2 px-4 text-gray-400 hover:bg-gray-100 rounded-lg transition text-sm"
-                            >
-                                No, gracias
-                            </button>
-                        </div>
+                        <button
+                            onClick={handleSkip}
+                            className="w-full py-2 px-4 text-gray-400 hover:bg-gray-100 rounded-lg transition text-sm"
+                        >
+                            Omitir
+                        </button>
                     </div>
 
                     <p className="text-xs text-gray-400 text-center mt-4">

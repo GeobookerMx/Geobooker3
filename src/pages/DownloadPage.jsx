@@ -96,7 +96,7 @@ const DownloadPage = () => {
                 </ol>
             )}
             <p className="text-sm text-gray-400 mt-4">
-                💡 Pronto estaremos en Google Play Store
+                💡 Descarga Geobooker y lleva el directorio en tu bolsillo
             </p>
         </div>
     );

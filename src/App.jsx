@@ -6,8 +6,9 @@ import { AppProvider } from "./contexts/AppContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { LocationProvider } from "./contexts/LocationContext";
 import { useSessionTimeout } from "./hooks/useSessionTimeout";
-import { initializeGA4, trackSessionStart } from "./services/analyticsService";
+import { trackSessionStart } from "./services/analyticsService";
 import { flushEventQueue } from "./services/analyticsService";
+import { initTrackingFromConsent } from "./services/trackingService";
 import { detectUserCountry } from "./services/geoLocationService";
 import { usePageTracking } from "./hooks/usePageTracking";
 import i18n from "./i18n";
@@ -38,8 +39,9 @@ function AppInitializer() {
     // 1. Verificar versión y limpiar caché si es necesario
     checkAppVersion();
 
-    // 2. Inicializar GA4
-    initializeGA4();
+    // 2. Initialize tracking (only loads if user previously consented)
+    // Apple 5.1.2(i): NO tracking before consent/ATT
+    initTrackingFromConsent();
     trackSessionStart(false);
 
     // 2b. Flush offline event queue (enviar eventos encolados)

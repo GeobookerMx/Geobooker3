@@ -1,17 +1,29 @@
 // src/components/CookieConsent.jsx
 import React, { useState, useEffect } from 'react';
 import { Shield, X } from 'lucide-react';
+import { enableTracking, disableTracking } from '../services/trackingService';
+import { isIOSApp } from '../utils/platformDetection';
 
 /**
  * GDPR/ePrivacy Cookie Consent Banner
  * Implements GA4 Consent Mode v2 for EU compliance
  * Required for: EEA visitors, GA4 tracking, remarketing
+ * 
+ * APPLE COMPLIANCE NOTE:
+ * On iOS native app (Capacitor), this banner is NOT shown.
+ * ATT (AppTrackingTransparency) is used instead for tracking consent.
+ * Apple rejects apps that show cookie banners for tracking — ATT is required.
  */
 const CookieConsent = () => {
     const [visible, setVisible] = useState(false);
     const [showDetails, setShowDetails] = useState(false);
 
     useEffect(() => {
+        // APPLE: Don't show cookie banner on iOS native app — ATT handles consent
+        if (isIOSApp()) {
+            return;
+        }
+
         // Only show if no consent decision has been made
         const consent = localStorage.getItem('gb_cookie_consent');
         if (!consent) {
@@ -21,24 +33,14 @@ const CookieConsent = () => {
         }
     }, []);
 
-    const updateGtagConsent = (granted) => {
-        if (typeof window.gtag === 'function') {
-            window.gtag('consent', 'update', {
-                analytics_storage: granted ? 'granted' : 'denied',
-                ad_storage: granted ? 'granted' : 'denied',
-                ad_user_data: granted ? 'granted' : 'denied',
-                ad_personalization: granted ? 'granted' : 'denied',
-            });
-        }
-    };
-
     const handleAcceptAll = () => {
         localStorage.setItem('gb_cookie_consent', JSON.stringify({
             analytics: true,
             marketing: true,
             timestamp: new Date().toISOString()
         }));
-        updateGtagConsent(true);
+        // Load tracking scripts dynamically
+        enableTracking({ analytics: true, marketing: true });
         setVisible(false);
     };
 
@@ -48,7 +50,7 @@ const CookieConsent = () => {
             marketing: false,
             timestamp: new Date().toISOString()
         }));
-        updateGtagConsent(false);
+        disableTracking();
         setVisible(false);
     };
 
@@ -58,7 +60,7 @@ const CookieConsent = () => {
             marketing: false,
             timestamp: new Date().toISOString()
         }));
-        updateGtagConsent(false);
+        disableTracking();
         setVisible(false);
     };
 

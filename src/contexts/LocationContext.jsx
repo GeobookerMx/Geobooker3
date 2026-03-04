@@ -1,11 +1,12 @@
 // src/contexts/LocationContext.jsx
-import React, { createContext, useContext, useState, useEffect } from "react";
+// Apple Guideline 2.1(a) fix: prevent location permission loop
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 
 const LocationContext = createContext(null);
 
 const LOCATION_STORAGE_KEY = 'geobooker_last_location';
 
-// Función para guardar ubicación en localStorage
+// Save location to localStorage
 const saveLocationToStorage = (location) => {
   try {
     const locationData = {
@@ -18,14 +19,14 @@ const saveLocationToStorage = (location) => {
   }
 };
 
-// Función para obtener última ubicación guardada
+// Get last stored location
 const getStoredLocation = () => {
   try {
     const stored = localStorage.getItem(LOCATION_STORAGE_KEY);
     if (stored) {
       const locationData = JSON.parse(stored);
-      // Verificar si la ubicación no tiene más de 24 horas
-      const maxAge = 24 * 60 * 60 * 1000; // 24 horas
+      // Check if location is less than 24 hours old
+      const maxAge = 24 * 60 * 60 * 1000;
       if (Date.now() - locationData.timestamp < maxAge) {
         return {
           lat: locationData.lat,
@@ -50,11 +51,15 @@ export const useLocation = () => {
 };
 
 export const LocationProvider = ({ children }) => {
-  // Intentar cargar última ubicación guardada inmediatamente
+  // Try to load last stored location immediately
   const storedLocation = getStoredLocation();
   const [userLocation, setUserLocation] = useState(storedLocation);
-  const [loading, setLoading] = useState(!storedLocation); // No loading si tenemos caché
-  const [permissionGranted, setPermissionGranted] = useState(!!storedLocation); // Si hay caché, asumimos "permiso otorgado" para desbloquear UI
+  const [loading, setLoading] = useState(!storedLocation);
+  const [permissionGranted, setPermissionGranted] = useState(!!storedLocation);
+
+  // FIX: Prevent multiple permission requests (Apple 2.1(a) bug)
+  const hasRequestedRef = useRef(false);
+  const permissionCheckDoneRef = useRef(false);
 
   const requestLocationPermission = () => {
     return new Promise((resolve, reject) => {
@@ -62,7 +67,7 @@ export const LocationProvider = ({ children }) => {
         // Use cached if available
         const cached = getStoredLocation();
         if (cached) {
-          console.log('📍 Usando ubicación cacheada (sin geolocalización)');
+          console.log('📍 Using cached location (no geolocation API)');
           setUserLocation(cached);
           setLoading(false);
           resolve(cached);
@@ -72,7 +77,10 @@ export const LocationProvider = ({ children }) => {
         return;
       }
 
-      // Primero intentar con baja precisión (más rápido, usa WiFi/IP)
+      // Mark that we've requested
+      hasRequestedRef.current = true;
+
+      // First try low accuracy (faster, uses WiFi/IP)
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const location = {
@@ -80,16 +88,16 @@ export const LocationProvider = ({ children }) => {
             lng: position.coords.longitude,
             accuracy: position.coords.accuracy,
           };
-          console.log('📍 Ubicación obtenida:', location);
+          console.log('📍 Location obtained:', location);
           setUserLocation(location);
-          saveLocationToStorage(location); // Guardar en localStorage
+          saveLocationToStorage(location);
           setPermissionGranted(true);
           setLoading(false);
           resolve(location);
         },
         (error) => {
-          // Si falla con baja precisión, intentar con alta precisión y más tiempo
-          console.log('⚠️ Reintentando con alta precisión...');
+          // If low accuracy fails, try high accuracy
+          console.log('⚠️ Retrying with high accuracy...');
           navigator.geolocation.getCurrentPosition(
             (position) => {
               const location = {
@@ -97,18 +105,18 @@ export const LocationProvider = ({ children }) => {
                 lng: position.coords.longitude,
                 accuracy: position.coords.accuracy,
               };
-              console.log('📍 Ubicación obtenida (alta precisión):', location);
+              console.log('📍 Location obtained (high accuracy):', location);
               setUserLocation(location);
-              saveLocationToStorage(location); // Guardar en localStorage
+              saveLocationToStorage(location);
               setPermissionGranted(true);
               setLoading(false);
               resolve(location);
             },
             (err) => {
-              // FALLBACK: Usar ubicación cacheada si existe
+              // FALLBACK: Use cached location
               const cachedLocation = getStoredLocation();
               if (cachedLocation) {
-                console.log('📍 Usando ubicación cacheada por timeout:', cachedLocation);
+                console.log('📍 Using cached location (timeout):', cachedLocation);
                 setUserLocation(cachedLocation);
                 setPermissionGranted(true);
                 setLoading(false);
@@ -116,8 +124,8 @@ export const LocationProvider = ({ children }) => {
                 return;
               }
 
-              // FALLBACK 2: Usar ubicación por defecto (CDMX)
-              console.log('📍 Usando ubicación por defecto (CDMX)');
+              // FALLBACK 2: Default location (CDMX)
+              console.log('📍 Using default location (CDMX)');
               const defaultLocation = {
                 lat: 19.4326,
                 lng: -99.1332,
@@ -125,27 +133,27 @@ export const LocationProvider = ({ children }) => {
                 isDefault: true
               };
               setUserLocation(defaultLocation);
-              setPermissionGranted(true); // Permitir ver el mapa incluso con default
+              setPermissionGranted(true);
               setLoading(false);
               resolve(defaultLocation);
             },
             {
               enableHighAccuracy: true,
-              timeout: 10000, // 10 segundos (un poco menos para no desesperar)
-              maximumAge: 300000, // Usar caché de hasta 5 minutos
+              timeout: 10000,
+              maximumAge: 300000,
             }
           );
         },
         {
-          enableHighAccuracy: false, // Baja precisión primero (más rápido)
-          timeout: 5000, // 5 segundos rápido
-          maximumAge: 600000, // Usar caché de hasta 10 minutos
+          enableHighAccuracy: false,
+          timeout: 5000,
+          maximumAge: 600000,
         }
       );
     });
   };
 
-  // Función para refrescar ubicación manualmente (útil en móviles)
+  // Refresh location manually
   const refreshLocation = () => {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
@@ -162,7 +170,7 @@ export const LocationProvider = ({ children }) => {
             accuracy: position.coords.accuracy,
           };
           setUserLocation(location);
-          saveLocationToStorage(location); // Guardar en localStorage
+          saveLocationToStorage(location);
           setLoading(false);
           resolve(location);
         },
@@ -173,7 +181,7 @@ export const LocationProvider = ({ children }) => {
         {
           enableHighAccuracy: true,
           timeout: 15000,
-          maximumAge: 0, // Forzar ubicación fresca, sin caché
+          maximumAge: 0,
         }
       );
     });
@@ -184,35 +192,46 @@ export const LocationProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    // Verificar si ya tenemos permisos y obtener ubicación automáticamente
+    // FIX: Only check permissions ONCE to prevent loop (Apple 2.1(a))
+    if (permissionCheckDoneRef.current) return;
+    permissionCheckDoneRef.current = true;
+
     const checkPermissionAndGetLocation = async () => {
       try {
-        // Verificar si el navegador soporta Permissions API
+        // Check if browser supports Permissions API
         if (navigator.permissions && navigator.permissions.query) {
           const result = await navigator.permissions.query({ name: 'geolocation' });
 
           if (result.state === 'granted') {
-            // Ya tenemos permisos, obtener ubicación automáticamente
-            console.log('📍 Permisos de ubicación ya otorgados, obteniendo ubicación...');
-            await requestLocationPermission();
+            // Already have permissions, get location silently
+            console.log('📍 Location permissions already granted, getting location...');
+            if (!hasRequestedRef.current) {
+              await requestLocationPermission();
+            }
           } else if (result.state === 'prompt') {
-            // El usuario aún no ha decidido, no mostrar nada automáticamente
+            // User hasn't decided yet — DON'T auto-prompt
+            // Let the UI show a modal/prompt component instead
             setLoading(false);
-          } else {
-            // Permisos denegados
+          } else if (result.state === 'denied') {
+            // Permissions denied — DON'T ask again (causes loop!)
+            console.log('📍 Location permissions denied — not re-requesting');
             setLoading(false);
             setPermissionGranted(false);
+            // Still use cached location if available
+            const cached = getStoredLocation();
+            if (cached) {
+              setUserLocation(cached);
+            }
           }
 
-          // Escuchar cambios en permisos
+          // Listen for permission changes (e.g., user enables in Settings)
           result.addEventListener('change', () => {
-            if (result.state === 'granted') {
+            if (result.state === 'granted' && !hasRequestedRef.current) {
               requestLocationPermission();
             }
           });
         } else {
-          // Navegador no soporta Permissions API (Safari antiguo, etc.)
-          // Intentar obtener ubicación directamente
+          // Browser doesn't support Permissions API (old Safari, etc.)
           setLoading(false);
         }
       } catch (error) {

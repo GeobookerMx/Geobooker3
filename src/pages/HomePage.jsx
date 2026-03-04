@@ -304,12 +304,17 @@ const HomePage = () => {
     searchGooglePlacesWithCategory();
   }, [categoryFilter, subcategoryFilter, userLocation]);
 
-  // Mostrar modal de ubicación si no hay permiso
+  // Show location modal only if no location at all (not even cached)
+  // FIX: Don't show if we already have ANY location (Apple 2.1(a) loop fix)
   useEffect(() => {
-    if (!locationLoading && !permissionGranted) {
-      // Mostrar modal después de 1 segundo para mejor UX
+    if (!locationLoading && !permissionGranted && !userLocation) {
+      // Only show once per session
+      const shownThisSession = sessionStorage.getItem('locationModalShown');
+      if (shownThisSession) return;
+
       const timer = setTimeout(() => {
         setShowLocationModal(true);
+        sessionStorage.setItem('locationModalShown', 'true');
       }, 1000);
       return () => clearTimeout(timer);
     }

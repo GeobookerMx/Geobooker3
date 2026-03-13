@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { useLocation } from '../contexts/LocationContext';
@@ -8,8 +8,9 @@ const BusinessMap = lazy(() => import('../components/BusinessMap'));
 import LocationPermissionModal from '../components/LocationPermissionModal';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
+import { getCachedBusinesses, isCacheValid, cacheBusinesses } from '../services/businessCacheService';
+import { getBusinessesInBounds } from '../services/denueMapService';
 import { searchNearbyPlaces } from '../services/googlePlacesService';
-import { cacheBusinesses, getCachedBusinesses, isCacheValid } from '../services/businessCacheService';
 import { MapPin, Loader2 } from 'lucide-react';
 
 // Map loading fallback component
@@ -57,10 +58,12 @@ const HomePage = () => {
   const [businesses, setBusinesses] = useState([]); // Google Places
   const [geobookerBusinesses, setGeobookerBusinesses] = useState([]); // Native Businesses
   const [recommendedBusinesses, setRecommendedBusinesses] = useState([]); // User Recommended
+  const [denueBusinesses, setDenueBusinesses] = useState([]); // DENUE Candidates (Seed data)
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [openNowFilter, setOpenNowFilter] = useState(false); // Filtro abierto ahora
   const [lastSearchQuery, setLastSearchQuery] = useState(''); // Para persistencia
+  const mapIdleTimerRef = useRef(null);
   const navigate = useNavigate();
 
   // Filtros de categoría desde URL (parámetros de consulta o ruta)
@@ -341,6 +344,51 @@ const HomePage = () => {
     }
   };
 
+  // 📍 NUEVO: Handler para consultar DENUE en background cuando el mapa se mueve
+  const handleMapIdle = useCallback(({ bounds, zoom }) => {
+    // Si el zoom es muy lejano, no saturar la base de datos (nivel ciudad o más lejos)
+    if (zoom < 12) {
+      setDenueBusinesses([]);
+      return;
+    }
+
+    // Debounce de 1 segundo para no saturar al mover el mapa rápido
+    if (mapIdleTimerRef.current) clearTimeout(mapIdleTimerRef.current);
+
+    mapIdleTimerRef.current = setTimeout(async () => {
+      try {
+        console.log('🗺️ [HomePage] Consultando DENUE candidates en viewport...', bounds);
+        const candidates = await getBusinessesInBounds(
+          bounds.south,
+          bounds.west,
+          bounds.north,
+          bounds.east,
+          500 // Increased limit for better density
+        );
+        
+        if (candidates && candidates.length > 0) {
+          // ✅ FIX: Filtrar para quedarnos SOLO con candidatos DENUE/seed
+          // Los negocios nativos ya están cargados vía fetchGeobookerBusinesses()
+          const geobookerIds = new Set(geobookerBusinesses.map(b => b.id));
+          const onlyDenueCandidates = candidates.filter(c => {
+            // Excluir si ya está en geobookerBusinesses (evitar duplicados)
+            if (geobookerIds.has(c.id)) return false;
+            // Solo incluir candidatos con source_type de semilla/DENUE
+            const src = (c.source_type || '').toLowerCase();
+            return src.includes('seed') || src.includes('denue');
+          });
+          
+          console.log(`✅ [HomePage] ${candidates.length} resultados RPC → ${onlyDenueCandidates.length} candidatos DENUE únicos.`);
+          setDenueBusinesses(onlyDenueCandidates);
+        } else {
+          setDenueBusinesses([]);
+        }
+      } catch (error) {
+        console.error('Error fetching DENUE businesses:', error);
+      }
+    }, 1000); // 1 segundo de debounce
+  }, [geobookerBusinesses]);
+
   const handleRetryLocation = async () => {
     try {
       await requestLocationPermission();
@@ -566,15 +614,21 @@ const HomePage = () => {
                 // Aplicar filtro "Abierto ahora" si está activo
                 openNowFilter
                   ? geobookerBusinesses.filter(b => {
-                    const result = isBusinessOpen(b.opening_hours);
-                    return result.isOpen === true;
-                  })
+                      const result = isBusinessOpen(b.opening_hours);
+                      return result.isOpen === true;
+                    })
                   : geobookerBusinesses
+              }
+              denueBusinesses={
+                openNowFilter
+                  ? denueBusinesses // Asumimos DENUE sin horario como abierto o ignoramos el filtro
+                  : denueBusinesses
               }
               recommendedBusinesses={recommendedBusinesses}
               selectedBusiness={selectedBusiness}
               onBusinessSelect={setSelectedBusiness}
               onViewBusinessProfile={handleViewBusinessProfile}
+              onMapIdle={handleMapIdle}
               zoom={businesses.length > 0 ? 13 : 12}
             />
           </Suspense>

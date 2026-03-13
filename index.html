@@ -273,17 +273,37 @@
       checkFontsLoaded();
     }
 
-    // Register Service Worker for PWA
+    // Register Service Worker for PWA — ONLY in production
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(registration => {
-            console.debug('SW registered:', registration.scope);
-          })
-          .catch(error => {
-            console.error('SW registration failed:', error);
+      const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      
+      if (isDev) {
+        // DEV MODE: Unregister any existing Service Worker to avoid caching issues
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(reg => {
+            reg.unregister();
+            console.log('[DEV] Service Worker unregistered to avoid cache issues');
           });
-      });
+        });
+        // Also clear all caches
+        if (window.caches) {
+          caches.keys().then(names => {
+            names.forEach(name => caches.delete(name));
+            if (names.length > 0) console.log('[DEV] Cleared', names.length, 'caches');
+          });
+        }
+      } else {
+        // PRODUCTION: Register Service Worker normally
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.debug('SW registered:', registration.scope);
+            })
+            .catch(error => {
+              console.error('SW registration failed:', error);
+            });
+        });
+      }
     }
 
     // Animación de spin para el loading

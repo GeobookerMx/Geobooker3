@@ -15,6 +15,7 @@ import BadgeDisplay from '../components/business/BadgeDisplay';
 import PhotoGallery from '../components/business/PhotoGallery';
 import ReviewsSection from '../components/business/ReviewsSection';
 import TrustScoreWidget from '../components/business/TrustScoreWidget';
+import ClaimBusinessForm from '../components/business/ClaimBusinessForm';
 import {
     trackDirectionsClick,
     trackCallClick,
@@ -38,6 +39,7 @@ const BusinessProfilePage = () => {
     const [business, setBusiness] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isFavorite, setIsFavorite] = useState(false);
+    const [showClaimForm, setShowClaimForm] = useState(false);
 
     // Si no hay ID, redirigir al inicio
     if (!id) {
@@ -418,7 +420,7 @@ const BusinessProfilePage = () => {
                             subir fotos y responder a tus clientes.
                         </p>
                         <button
-                            onClick={() => toast.success('¡Genial! Hemos recibido tu solicitud. Un asesor se pondrá en contacto contigo para verificar la propiedad.')}
+                            onClick={() => setShowClaimForm(true)}
                             className="bg-amber-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-amber-700 transition-all shadow-md active:scale-95"
                         >
                             Reclamar mi Negocio
@@ -461,6 +463,17 @@ const BusinessProfilePage = () => {
                     <TrustScoreWidget trustScore={business.trust_score || 0} />
                 </div>
             </div>
+
+            {/* Modal de Reclamar Negocio */}
+            <ClaimBusinessForm
+                isOpen={showClaimForm}
+                onClose={() => setShowClaimForm(false)}
+                business={business}
+                onSuccess={() => {
+                    // Recargar el negocio para actualizar el estado
+                    window.location.reload();
+                }}
+            />
         </div>
     );
 };

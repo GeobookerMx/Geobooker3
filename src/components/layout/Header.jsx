@@ -5,6 +5,7 @@ import { supabase } from "../../lib/supabase";
 import { toast } from "react-hot-toast";
 import BrandLogo from "../common/BrandLogo.jsx";
 import LanguageSelector from "../LanguageSelector.jsx";
+import { RecommendationForm } from "../recommendations";
 
 export default function Header() {
   const { t } = useTranslation();
@@ -14,6 +15,7 @@ export default function Header() {
   const [userProfile, setUserProfile] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [businessLogo, setBusinessLogo] = useState(null);
+  const [showRecommendForm, setShowRecommendForm] = useState(false);
 
   useEffect(() => {
     // Obtener usuario actual
@@ -110,6 +112,14 @@ export default function Header() {
           <Link to="/categories" className="text-geoPurple hover:text-geoPink transition-colors">{t('nav.categories')}</Link>
           <Link to="/quienes-somos" className="text-geoPurple hover:text-geoPink transition-colors">{t('nav.about')}</Link>
           <Link to="/comunidad" className="text-geoPurple hover:text-geoPink transition-colors">{t('nav.community')}</Link>
+          {user && (
+            <button
+              onClick={() => setShowRecommendForm(true)}
+              className="border-2 border-geoPurple text-geoPurple px-4 py-1.5 rounded-full font-bold hover:bg-geoPurple hover:text-white transition-all flex items-center gap-1 shadow-sm hover:-translate-y-0.5"
+            >
+              ⭐ {t('nav.recommend', 'Recomendar Negocio')}
+            </button>
+          )}
           <Link to="/advertise" className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 py-1.5 rounded-lg font-bold hover:from-red-600 hover:to-orange-600 transition-all flex items-center gap-1 shadow-lg hover:scale-105">
             🚀 {t('nav.moreSales')}
           </Link>
@@ -198,6 +208,14 @@ export default function Header() {
           <Link to="/categories" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">{t('nav.categories')}</Link>
           <Link to="/quienes-somos" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">{t('nav.about')}</Link>
           <Link to="/comunidad" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">{t('nav.community')}</Link>
+          {user && (
+            <button
+              onClick={() => { setIsOpen(false); setShowRecommendForm(true); }}
+              className="block text-center border-2 border-geoPurple text-geoPurple hover:bg-geoPurple hover:text-white px-4 py-2 rounded-full w-full font-bold transition-all"
+            >
+              ⭐ {t('nav.recommend', 'Recomendar Negocio')}
+            </button>
+          )}
           <Link to="/advertise" onClick={() => setIsOpen(false)} className="block text-red-600 font-bold bg-red-50 p-2 rounded">
             🚀 {t('nav.moreSales')}
           </Link>
@@ -248,6 +266,11 @@ export default function Header() {
           </div>
         </div>
       )}
+      {/* Modal de Recomendar Negocio */}
+      <RecommendationForm
+        isOpen={showRecommendForm}
+        onClose={() => setShowRecommendForm(false)}
+      />
     </header>
   );
 }

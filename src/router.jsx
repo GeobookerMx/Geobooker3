@@ -42,6 +42,7 @@ const ApifyScraper = lazy(() => import("./pages/admin/ApifyScraper.jsx"));
 const LeadsHistory = lazy(() => import("./pages/admin/LeadsHistory.jsx"));
 const FiscalManagement = lazy(() => import("./pages/admin/FiscalManagement.jsx"));
 const RecommendationsManagement = lazy(() => import("./pages/admin/RecommendationsManagement.jsx"));
+const ClaimsManagement = lazy(() => import("./pages/admin/ClaimsManagement.jsx"));
 const UnsubscribePage = lazy(() => import("./pages/UnsubscribePage.jsx"));
 
 // User Pages - Lazy Loaded (except HomePage for LCP)
@@ -263,6 +264,7 @@ export default function AppRouter() {
           <Route path="scraper-history" element={<LeadsHistory />} />
           <Route path="fiscal" element={<FiscalManagement />} />
           <Route path="recommendations" element={<RecommendationsManagement />} />
+          <Route path="claims" element={<ClaimsManagement />} />
         </Route>
       </Routes>
     </Suspense>

@@ -4,7 +4,7 @@
  * Proporciona funcionalidad offline y caché de assets
  */
 
-const CACHE_NAME = 'geobooker-v1.0.0';
+const CACHE_NAME = 'geobooker-v2.0.0';
 const RUNTIME_CACHE = 'geobooker-runtime';
 
 // Assets críticos para cachear durante instalación
@@ -64,6 +64,11 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // Solo manejar peticiones HTTP/HTTPS (ignorar ws:// o chrome-extension://)
+    if (!request.url.startsWith('http')) {
+        return;
+    }
+
     // No cachear llamadas a APIs externas
     if (!url.origin.includes(self.location.origin)) {
         return;
@@ -71,6 +76,11 @@ self.addEventListener('fetch', (event) => {
 
     // No cachear llamadas a Supabase o Stripe
     if (url.hostname.includes('supabase') || url.hostname.includes('stripe')) {
+        return;
+    }
+
+    // Evitar interceptar assets de desarrollo de Vite (HMR)
+    if (url.pathname.startsWith('/@vite') || url.pathname.startsWith('/@react-refresh') || url.pathname.startsWith('/src/')) {
         return;
     }
 
@@ -101,6 +111,9 @@ self.addEventListener('fetch', (event) => {
                     if (request.destination === 'document') {
                         return caches.match('/');
                     }
+
+                    // Fallback para evitar TypeError: Failed to convert value to 'Response'
+                    return new Response('', { status: 404, statusText: 'Not Found' });
                 });
             })
     );

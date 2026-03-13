@@ -66,3 +66,5 @@ Thumbs.db
 # -----------------------------
 .cache/
 vite.config.timestamp.*
+
+denue_datos.csv

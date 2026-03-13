@@ -16,7 +16,8 @@ import {
     Gift,
     Database,
     Mail,
-    Globe
+    Globe,
+    Shield
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -25,6 +26,7 @@ const Sidebar = ({ onLogout }) => {
     const [pendingBusinesses, setPendingBusinesses] = useState(0);
     const [pendingCampaigns, setPendingCampaigns] = useState(0);
     const [pendingRecommendations, setPendingRecommendations] = useState(0);
+    const [pendingClaims, setPendingClaims] = useState(0);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Cerrar menú al cambiar de ruta
@@ -58,6 +60,12 @@ const Sidebar = ({ onLogout }) => {
                 .select('*', { count: 'exact', head: true })
                 .eq('status', 'pending');
             setPendingRecommendations(recsCount || 0);
+
+            const { count: claimsCount } = await supabase
+                .from('business_claims')
+                .select('*', { count: 'exact', head: true })
+                .in('status', ['submitted', 'under_review']);
+            setPendingClaims(claimsCount || 0);
         } catch (error) {
             console.error('Error loading pending counts:', error);
         }
@@ -95,6 +103,7 @@ const Sidebar = ({ onLogout }) => {
             title: '⭐ Comunidad',
             items: [
                 { path: '/admin/recommendations', icon: Store, label: '⭐ Recomendaciones', badge: pendingRecommendations, badgeColor: 'yellow' },
+                { path: '/admin/claims', icon: Shield, label: '🛡️ Reclamos', badge: pendingClaims, badgeColor: 'yellow' },
                 { path: '/admin/referrals', icon: Gift, label: '🎁 Referidos' },
                 { path: '/admin/blog', icon: Newspaper, label: '📝 Blog' },
             ]

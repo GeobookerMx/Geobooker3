@@ -210,8 +210,13 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
               VERIFICADO
             </span>
           )}
+          {business.source_type === 'seed_denue' && (
+            <span className="bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0.5 rounded border border-blue-200 font-bold ml-1">
+              🏛️ INEGI
+            </span>
+          )}
           {business.has_job_openings && (
-            <span className="bg-green-100 text-green-800 text-[10px] px-1.5 py-0.5 rounded border border-green-200 font-bold flex items-center gap-0.5">
+            <span className="bg-green-100 text-green-800 text-[10px] px-1.5 py-0.5 rounded border border-green-200 font-bold flex items-center gap-0.5 ml-1">
               🟢 Vacantes
             </span>
           )}
@@ -265,6 +270,7 @@ export const BusinessMap = memo(({
   userLocation,
   businesses = [],
   geobookerBusinesses = [],
+  denueBusinesses = [], // Added DENUE candidates explicitly
   recommendedBusinesses = [], // Negocios recomendados por usuarios
   selectedBusiness,
   onBusinessSelect,
@@ -340,19 +346,32 @@ export const BusinessMap = memo(({
   }, [businesses, userLocation]);
 
   const geobookerMarkers = useMemo(() => {
-    const validMarkers = geobookerBusinesses.filter(b => b && !isNaN(Number(b.latitude)) && !isNaN(Number(b.longitude)));
-    if (geobookerBusinesses.length > 0) {
-      console.log(`📍 BusinessMap: Procesando ${geobookerBusinesses.length} negocios de Geobooker (${validMarkers.length} válidos)`);
+    // Merge Geobooker native businesses with DENUE candidates, deduplicating by ID
+    const geobookerIds = new Set(geobookerBusinesses.map(b => b.id));
+    // Collect recommended IDs to exclude them from this group (they render separately)
+    const recommendedIds = new Set(recommendedBusinesses.map(r => r.id));
+    // Only add DENUE businesses whose ID is NOT already in geobookerBusinesses or recommendedBusinesses
+    const uniqueDenue = denueBusinesses.filter(b => b && !geobookerIds.has(b.id) && !recommendedIds.has(b.id));
+    const combinedBusinesses = [
+      ...geobookerBusinesses.filter(b => !recommendedIds.has(b.id)),
+      ...uniqueDenue
+    ];
+    
+    const validMarkers = combinedBusinesses.filter(b => b && !isNaN(Number(b.latitude ?? b.lat)) && !isNaN(Number(b.longitude ?? b.lng)));
+    if (combinedBusinesses.length > 0) {
+      console.log(`📍 BusinessMap: Procesando ${combinedBusinesses.length} negocios de Geobooker/DENUE (${validMarkers.length} válidos)`);
     }
     return validMarkers.map((business) => ({
       ...business,
+      latitude: business.latitude ?? business.lat, // Normalize lat/lng from DENUE candidates
+      longitude: business.longitude ?? business.lng,
       distance: userLocation ? calculateDistance(
         userLocation.lat, userLocation.lng,
-        Number(business.latitude), Number(business.longitude)
+        Number(business.latitude ?? business.lat), Number(business.longitude ?? business.lng)
       ) : null,
       type: 'geobooker'
     }));
-  }, [geobookerBusinesses, userLocation]);
+  }, [geobookerBusinesses, denueBusinesses, recommendedBusinesses, userLocation]);
 
   // 💚 Marcadores de negocios recomendados por usuarios
   const recommendedMarkers = useMemo(() => {
@@ -551,9 +570,7 @@ export const BusinessMap = memo(({
         })}
 
         {/* 💚 Marcadores de Negocios Recomendados por Usuarios (Corazón verde) */}
-        {recommendedMarkers.map((rec) => {
-          console.log(`🎨 [BusinessMap] Renderizando marcador recomendado: ${rec.name} en ${rec.latitude}, ${rec.longitude}`);
-          return (
+        {recommendedMarkers.map((rec) => (
             <MarkerF
               key={`recommended-${rec.id}`}
               position={{ lat: Number(rec.latitude), lng: Number(rec.longitude) }}
@@ -565,8 +582,7 @@ export const BusinessMap = memo(({
               zIndex={5000} // Prioridad máxima
               animation={window.google?.maps?.Animation?.DROP} // Efecto al aparecer
             />
-          );
-        })}
+        ))}
 
         {/* Hover InfoWindow (Mini Profile) */}
         {hoveredBusiness && !selectedBusiness && (
@@ -583,6 +599,15 @@ export const BusinessMap = memo(({
                 <div className="flex items-center gap-1 mb-1">
                   <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold border border-blue-200 flex items-center">
                     ✓ Verificado
+                  </span>
+                </div>
+              )}
+
+              {/* INEGI Badge */}
+              {hoveredBusiness.source_type === 'seed_denue' && (
+                <div className="flex items-center gap-1 mb-1">
+                  <span className="bg-indigo-100 text-indigo-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold border border-indigo-200 flex items-center">
+                    🏛️ Fuente: INEGI
                   </span>
                 </div>
               )}

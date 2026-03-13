@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Building2, User, Crown, LogOut, Map, Menu, X } from 'lucide-react';
+import { Home, Building2, User, Crown, LogOut, Map, Menu, X, Star } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
+import { RecommendationForm } from '../recommendations';
 
 const UserSidebar = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { user } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [showRecommendForm, setShowRecommendForm] = useState(false);
 
     const handleLogout = async () => {
         try {
@@ -44,6 +46,12 @@ const UserSidebar = () => {
             path: '/dashboard',
             icon: User,
             badge: 'Tab'
+        },
+        {
+            name: 'Recomendar Negocio',
+            path: '#recommend',
+            icon: Star,
+            isAction: true
         },
         {
             name: 'Actualizar a Premium',
@@ -100,15 +108,24 @@ const UserSidebar = () => {
                     return (
                         <button
                             key={item.name}
-                            onClick={() => handleNavigate(item.path)}
+                            onClick={() => {
+                                if (item.isAction) {
+                                    setIsMobileMenuOpen(false);
+                                    setShowRecommendForm(true);
+                                } else {
+                                    handleNavigate(item.path);
+                                }
+                            }}
                             className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors text-left ${active
                                 ? 'bg-blue-50 text-blue-600'
-                                : item.highlight
-                                    ? 'bg-gradient-to-r from-yellow-50 to-orange-50 text-orange-600 hover:from-yellow-100 hover:to-orange-100'
-                                    : 'text-gray-700 hover:bg-gray-100'
+                                : item.isAction
+                                    ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 hover:from-green-100 hover:to-emerald-100'
+                                    : item.highlight
+                                        ? 'bg-gradient-to-r from-yellow-50 to-orange-50 text-orange-600 hover:from-yellow-100 hover:to-orange-100'
+                                        : 'text-gray-700 hover:bg-gray-100'
                                 }`}
                         >
-                            <Icon className={`w-5 h-5 mr-3 ${item.highlight ? 'fill-yellow-500' : ''}`} />
+                            <Icon className={`w-5 h-5 mr-3 ${item.highlight ? 'fill-yellow-500' : item.isAction ? 'fill-yellow-400 text-yellow-500' : ''}`} />
                             <span className="font-medium">{item.name}</span>
                             {item.badge && (
                                 <span className="ml-auto text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">
@@ -182,6 +199,12 @@ const UserSidebar = () => {
 
             {/* Spacer for mobile top bar */}
             <div className="md:hidden h-14" />
+
+            {/* Modal de Recomendar Negocio */}
+            <RecommendationForm
+                isOpen={showRecommendForm}
+                onClose={() => setShowRecommendForm(false)}
+            />
         </>
     );
 };

@@ -372,11 +372,11 @@ export default function EnterpriseCheckout() {
                 // With 50% launch discount applied
                 setPricing([
                     {
-                        code: 'city_pack',
-                        name: 'City Pack',
-                        current_price_usd: 1250,      // Total for 1 month
-                        regular_price_usd: 2500,
-                        discount_percent: 50,
+                        code: 'city_launch',
+                        name: 'City Launch',
+                        current_price_usd: 290,
+                        regular_price_usd: 390,
+                        discount_percent: 25,
                         cities_included: 1,
                         countries_included: 1,
                         duration_months: 1,
@@ -385,35 +385,46 @@ export default function EnterpriseCheckout() {
                     {
                         code: 'regional',
                         name: 'Regional Pack',
-                        current_price_usd: 5000,      // Total for 3 months (~$1,666/mo)
-                        regular_price_usd: 10000,
-                        discount_percent: 50,
+                        current_price_usd: 1990,
+                        regular_price_usd: 2490,
+                        discount_percent: 20,
                         cities_included: 5,
                         countries_included: 2,
                         duration_months: 3,
                         description: 'Up to 5 cities in 2 countries, 3 months'
                     },
                     {
-                        code: 'national',
-                        name: 'National Coverage',
-                        current_price_usd: 10000,     // Total for 3 months (~$3,333/mo)
-                        regular_price_usd: 20000,
-                        discount_percent: 50,
-                        cities_included: 999,         // All cities
-                        countries_included: 1,        // But only 1 country
+                        code: 'country',
+                        name: 'Country Select',
+                        current_price_usd: 3900,
+                        regular_price_usd: 4900,
+                        discount_percent: 20,
+                        cities_included: 12,
+                        countries_included: 1,
                         duration_months: 3,
-                        description: 'All cities in 1 country, 3 months'
+                        description: 'Up to 12 cities in 1 country, 3 months'
                     },
                     {
-                        code: 'global_event',
-                        name: 'Global Event',
-                        current_price_usd: 25000,     // Total for 3 months (~$8,333/mo)
-                        regular_price_usd: 50000,
-                        discount_percent: 50,
+                        code: 'crossborder',
+                        name: 'Cross-Border Event',
+                        current_price_usd: 6900,
+                        regular_price_usd: 8900,
+                        discount_percent: 22,
+                        cities_included: 30,
+                        countries_included: 3,
+                        duration_months: 3,
+                        description: '2-3 countries, event/seasonal campaigns'
+                    },
+                    {
+                        code: 'global_custom',
+                        name: 'Global Custom',
+                        current_price_usd: 9900,
+                        regular_price_usd: 9900,
+                        discount_percent: 0,
                         cities_included: 999,
                         countries_included: 999,
                         duration_months: 3,
-                        description: 'Unlimited - All countries, all cities, 3 months'
+                        description: 'Multi-country or continental, custom proposal'
                     }
                 ]);
             }

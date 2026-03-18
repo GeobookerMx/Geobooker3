@@ -64,10 +64,16 @@ export default function EnterpriseLanding() {
         } catch (error) {
             console.error('Error fetching pricing:', error);
             setPricing([
-                { code: 'city_pack', name: 'City Pack', regular_price_usd: 2500, current_price_usd: 1250, discount_percent: 50, cities_included: 1, duration_months: 1, is_promo_active: true },
-                { code: 'regional', name: 'Regional Pack', regular_price_usd: 15000, current_price_usd: 7500, discount_percent: 50, cities_included: 5, duration_months: 3, is_promo_active: true },
-                { code: 'national', name: 'National Coverage', regular_price_usd: 35000, current_price_usd: 17500, discount_percent: 50, cities_included: 999, duration_months: 3, is_promo_active: true },
-                { code: 'global_event', name: 'Global Event', regular_price_usd: 50000, current_price_usd: 25000, discount_percent: 50, cities_included: 999, duration_months: 3, is_promo_active: true }
+                { code: 'city_launch', name: 'City Launch', regular_price_usd: 390, current_price_usd: 290, discount_percent: 25, cities_included: 1, countries_included: 1, duration_months: 1, is_promo_active: true,
+                  features: ['1 ciudad activa', 'Búsqueda patrocinada', '1 placement destacado', 'Pin patrocinado', 'Dashboard básico'] },
+                { code: 'regional', name: 'Regional Pack', regular_price_usd: 2490, current_price_usd: 1990, discount_percent: 20, cities_included: 5, countries_included: 2, duration_months: 3, is_promo_active: true,
+                  features: ['Hasta 5 ciudades', 'Rotación de inventario', 'Dashboard por ciudad', '2 optimizaciones incluidas', 'Soporte prioritario'] },
+                { code: 'country', name: 'Country Select', regular_price_usd: 4900, current_price_usd: 3900, discount_percent: 20, cities_included: 12, countries_included: 1, duration_months: 3, is_promo_active: true,
+                  features: ['Hasta 12 ciudades', 'Placements premium', 'Dashboard ciudad/dispositivo/horario', 'Revisión mensual', 'Soporte prioritario'] },
+                { code: 'crossborder', name: 'Cross-Border Event', regular_price_usd: 8900, current_price_usd: 6900, discount_percent: 22, cities_included: 30, countries_included: 3, duration_months: 3, is_promo_active: true,
+                  features: ['2-3 países', 'Segmentación por idioma', 'Flight por evento/temporada', 'Reporte ejecutivo final', 'Soporte consultivo'] },
+                { code: 'global_custom', name: 'Global Custom', regular_price_usd: 0, current_price_usd: 0, discount_percent: 0, cities_included: 999, countries_included: 999, duration_months: 0, is_promo_active: false, is_custom: true,
+                  features: ['Multi-país o continental', 'Setup de campaña a medida', 'Inventario premium asignado', 'Reporting ejecutivo', 'Propuesta comercial personalizada'] }
             ]);
             setTimeLeft({ days: 90, hours: 0, minutes: 0 });
         } finally {
@@ -169,10 +175,10 @@ export default function EnterpriseLanding() {
             <section className="py-16 px-4 border-y border-gray-700/50">
                 <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
                     {[
-                        { value: '10M+', label: t('enterprise.statsImpressions'), icon: TrendingUp },
+                        { value: '500K+', label: t('enterprise.statsImpressions'), icon: TrendingUp },
                         { value: '50+', label: t('enterprise.statsCities'), icon: MapPin },
-                        { value: '4.8★', label: t('enterprise.statsSatisfaction'), icon: Star },
-                        { value: '150%', label: t('enterprise.statsRoi'), icon: BarChart3 }
+                        { value: '✓', label: 'Métricas transparentes', icon: Star },
+                        { value: '🎯', label: 'Precisión geográfica', icon: BarChart3 }
                     ].map((stat, i) => (
                         <div key={i} className="text-center">
                             <stat.icon className="w-8 h-8 text-blue-400 mx-auto mb-2" />
@@ -235,14 +241,17 @@ export default function EnterpriseLanding() {
                         </p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
                         {pricing.map((plan) => (
                             <div
                                 key={plan.code}
-                                className={`relative bg-gray-800/80 backdrop-blur border rounded-2xl p-6 ${plan.code === 'regional'
-                                    ? 'border-amber-500 shadow-lg shadow-amber-500/20'
-                                    : 'border-gray-700'
-                                    }`}
+                                className={`relative bg-gray-800/80 backdrop-blur border rounded-2xl p-6 ${
+                                    plan.code === 'regional'
+                                        ? 'border-amber-500 shadow-lg shadow-amber-500/20'
+                                        : plan.is_custom
+                                            ? 'border-purple-500/50 bg-gradient-to-b from-purple-900/30 to-gray-800/80'
+                                            : 'border-gray-700'
+                                }`}
                             >
                                 {plan.code === 'regional' && (
                                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-4 py-1 rounded-full">
@@ -250,37 +259,48 @@ export default function EnterpriseLanding() {
                                     </div>
                                 )}
 
-                                <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
+                                <h3 className="text-lg font-bold text-white mb-2">{plan.name}</h3>
                                 <p className="text-gray-400 text-sm mb-4">
-                                    {plan.cities_included === 999
-                                        ? t('enterprise.fullCoverage')
-                                        : `${plan.cities_included} ${plan.cities_included > 1 ? t('enterprise.cities') : t('enterprise.city')}`}
-                                    {' • '}{plan.duration_months} {plan.duration_months > 1 ? t('enterprise.months') : t('enterprise.month')}
+                                    {plan.is_custom
+                                        ? 'Multi-país · Cotización'
+                                        : `${plan.cities_included > 12 ? 'Hasta 30' : plan.cities_included > 1 ? `Hasta ${plan.cities_included}` : plan.cities_included} ${plan.cities_included > 1 ? t('enterprise.cities') : t('enterprise.city')}
+                                         • ${plan.duration_months} ${plan.duration_months > 1 ? t('enterprise.months') : t('enterprise.month')}`}
                                 </p>
 
                                 <div className="mb-6">
-                                    {plan.is_promo_active && (
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-gray-500 line-through text-lg">
-                                                {formatPrice(plan.regular_price_usd)}
-                                            </span>
-                                            <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">
-                                                -{plan.discount_percent}%
-                                            </span>
+                                    {plan.is_custom ? (
+                                        <div>
+                                            <div className="text-2xl font-bold text-purple-400">
+                                                Desde $9,900
+                                            </div>
+                                            <div className="text-gray-500 text-sm">Bajo propuesta</div>
                                         </div>
+                                    ) : (
+                                        <>
+                                            {plan.is_promo_active && (
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-gray-500 line-through text-lg">
+                                                        {formatPrice(plan.regular_price_usd)}
+                                                    </span>
+                                                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">
+                                                        -{plan.discount_percent}%
+                                                    </span>
+                                                </div>
+                                            )}
+                                            <div className="text-3xl font-bold text-white">
+                                                {formatPrice(plan.current_price_usd)}
+                                                <span className="text-lg text-gray-400 font-normal"> USD</span>
+                                            </div>
+                                        </>
                                     )}
-                                    <div className="text-4xl font-bold text-white">
-                                        {formatPrice(plan.current_price_usd)}
-                                        <span className="text-lg text-gray-400 font-normal"> USD</span>
-                                    </div>
                                 </div>
 
                                 <ul className="space-y-2 mb-6">
-                                    {[
+                                    {(plan.features || [
                                         t('enterprise.featureAllSpaces'),
                                         t('enterprise.featureAnalyticsIncluded'),
                                         t('enterprise.featurePrioritySupport')
-                                    ].map((feature, j) => (
+                                    ]).map((feature, j) => (
                                         <li key={j} className="flex items-center gap-2 text-sm text-gray-300">
                                             <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
                                             <span>{feature}</span>
@@ -288,24 +308,36 @@ export default function EnterpriseLanding() {
                                     ))}
                                 </ul>
 
-                                <Link
-                                    to={`/enterprise/checkout?plan=${plan.code}`}
-                                    className={`block text-center py-3 px-4 rounded-xl font-semibold transition-all ${plan.code === 'regional'
-                                        ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:shadow-lg hover:shadow-amber-500/30'
-                                        : 'bg-gray-700 text-white hover:bg-gray-600'
+                                {plan.is_custom ? (
+                                    <Link
+                                        to="/enterprise/contact"
+                                        className="block text-center py-3 px-4 rounded-xl font-semibold bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg hover:shadow-purple-500/30 transition-all"
+                                    >
+                                        Solicitar Propuesta
+                                    </Link>
+                                ) : (
+                                    <Link
+                                        to={`/enterprise/checkout?plan=${plan.code}`}
+                                        className={`block text-center py-3 px-4 rounded-xl font-semibold transition-all ${plan.code === 'regional'
+                                            ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:shadow-lg hover:shadow-amber-500/30'
+                                            : 'bg-gray-700 text-white hover:bg-gray-600'
                                         }`}
-                                >
-                                    {t('enterprise.getStarted')}
-                                </Link>
+                                    >
+                                        {t('enterprise.getStarted')}
+                                    </Link>
+                                )}
                             </div>
                         ))}
                     </div>
 
-                    <div className="text-center mt-8 text-gray-400 text-sm">
-                        <Shield className="w-4 h-4 inline-block mr-1" />
-                        {t('enterprise.securePayments')}
-                        <br />
-                        <span className="text-xs">{t('enterprise.noCashNote')}</span>
+                    <div className="text-center mt-8 space-y-2">
+                        <p className="text-gray-400 text-sm">
+                            <Shield className="w-4 h-4 inline-block mr-1" />
+                            Precios antes de impuestos. IVA aplicable según país de facturación y territorio de campaña.
+                        </p>
+                        <p className="text-gray-500 text-xs">
+                            Pagos seguros vía tarjeta o transferencia. No se acepta efectivo para mantener trazabilidad fiscal.
+                        </p>
                     </div>
                 </div>
             </section>
@@ -358,10 +390,10 @@ export default function EnterpriseLanding() {
                     {/* Stats Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
                         {[
-                            { value: '10M+', label: 'Impresiones/mes', icon: TrendingUp, color: 'from-blue-500 to-cyan-500' },
-                            { value: '50+', label: 'Ciudades', icon: MapPin, color: 'from-green-500 to-emerald-500' },
-                            { value: '4.8★', label: 'Satisfacción', icon: Star, color: 'from-yellow-500 to-orange-500' },
-                            { value: '150%', label: 'ROI Promedio', icon: BarChart3, color: 'from-purple-500 to-pink-500' }
+                            { value: '500K+', label: 'Vistas disponibles/mes', icon: TrendingUp, color: 'from-blue-500 to-cyan-500' },
+                            { value: '50+', label: 'Ciudades elegibles', icon: MapPin, color: 'from-green-500 to-emerald-500' },
+                            { value: '✓', label: 'Métricas transparentes', icon: Star, color: 'from-yellow-500 to-orange-500' },
+                            { value: '🎯', label: 'Segmentación territorial', icon: BarChart3, color: 'from-purple-500 to-pink-500' }
                         ].map((stat, i) => (
                             <div key={i} className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur border border-gray-700/50 rounded-2xl p-6 text-center hover:border-gray-600 transition">
                                 <div className={`w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-r ${stat.color} flex items-center justify-center`}>

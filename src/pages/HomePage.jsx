@@ -347,30 +347,43 @@ const HomePage = () => {
   // 📍 NUEVO: Handler para consultar DENUE en background cuando el mapa se mueve
   const handleMapIdle = useCallback(({ bounds, zoom }) => {
     // Si el zoom es muy lejano, no saturar la base de datos
-    if (zoom < 13) {
+    // Pero si hay filtro de categoría, permitir desde zoom 12 (resultados filtrados = menos saturación)
+    const minZoom = categoryFilter ? 12 : 13;
+    if (zoom < minZoom) {
       setDenueBusinesses([]);
       return;
     }
 
     // 🎯 Límite dinámico según zoom para evitar saturación visual
+    // Cuando hay categoría, permitir más resultados (están filtrados)
     let dynamicLimit;
-    if (zoom <= 13)      dynamicLimit = 50;   // Vista ciudad: pocos markers
-    else if (zoom <= 14) dynamicLimit = 100;  // Vista zona: moderado
-    else if (zoom <= 15) dynamicLimit = 200;  // Vista colonia: detallado
-    else                 dynamicLimit = 300;  // Vista calle: máximo detalle
+    if (categoryFilter) {
+      // Con categoría: más resultados porque ya están filtrados
+      if (zoom <= 13)      dynamicLimit = 100;
+      else if (zoom <= 14) dynamicLimit = 200;
+      else                 dynamicLimit = 400;
+    } else {
+      // Sin categoría: límites conservadores
+      if (zoom <= 13)      dynamicLimit = 50;
+      else if (zoom <= 14) dynamicLimit = 100;
+      else if (zoom <= 15) dynamicLimit = 200;
+      else                 dynamicLimit = 300;
+    }
 
     // Debounce de 1 segundo para no saturar al mover el mapa rápido
     if (mapIdleTimerRef.current) clearTimeout(mapIdleTimerRef.current);
 
     mapIdleTimerRef.current = setTimeout(async () => {
       try {
-        console.log(`🗺️ [HomePage] Consultando DENUE en viewport (zoom=${zoom}, limit=${dynamicLimit})...`, bounds);
+        const catLabel = categoryFilter ? `, cat=${categoryFilter}` : '';
+        console.log(`🗺️ [HomePage] Consultando DENUE en viewport (zoom=${zoom}, limit=${dynamicLimit}${catLabel})...`, bounds);
         const candidates = await getBusinessesInBounds(
           bounds.south,
           bounds.west,
           bounds.north,
           bounds.east,
-          dynamicLimit
+          dynamicLimit,
+          categoryFilter || null  // 🎯 Filtro de categoría al RPC
         );
         
         if (candidates && candidates.length > 0) {
@@ -391,7 +404,7 @@ const HomePage = () => {
         console.error('Error fetching DENUE businesses:', error);
       }
     }, 1000); // 1 segundo de debounce
-  }, [geobookerBusinesses]);
+  }, [geobookerBusinesses, categoryFilter]);
 
   const handleRetryLocation = async () => {
     try {

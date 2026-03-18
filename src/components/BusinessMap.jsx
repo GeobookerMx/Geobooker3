@@ -283,6 +283,8 @@ export const BusinessMap = memo(({
   const mapRef = useRef(null);
   const userCircleRef = useRef(null);
   const [hoveredBusiness, setHoveredBusiness] = useState(null);
+  const [hoveredMarkerId, setHoveredMarkerId] = useState(null); // For bounce animation
+  const bounceTimerRef = useRef(null);
 
   // ⚡ useJsApiLoader en lugar de LoadScript - evita cargas múltiples
   const { isLoaded, loadError } = useJsApiLoader({
@@ -297,6 +299,23 @@ export const BusinessMap = memo(({
   const onMapLoad = useCallback((map) => {
     mapRef.current = map;
     setMapLoaded(true);
+  }, []);
+
+  // 🎮 Hover handler: bounce animation + tooltip
+  const handleMarkerHover = useCallback((business, markerId) => {
+    setHoveredBusiness(business);
+    setHoveredMarkerId(markerId);
+    // Auto-stop bounce after 1.5 seconds
+    if (bounceTimerRef.current) clearTimeout(bounceTimerRef.current);
+    bounceTimerRef.current = setTimeout(() => {
+      setHoveredMarkerId(null);
+    }, 1500);
+  }, []);
+
+  const handleMarkerHoverEnd = useCallback(() => {
+    setHoveredBusiness(null);
+    setHoveredMarkerId(null);
+    if (bounceTimerRef.current) clearTimeout(bounceTimerRef.current);
   }, []);
 
 
@@ -565,18 +584,23 @@ export const BusinessMap = memo(({
         {geobookerMarkers.map((business) => {
           const isPremium = business.is_premium_owner || business.is_premium || false;
           const categoryIcon = getCategoryIcon(business.category, isPremium);
+          const markerId = `geobooker-${business.id}`;
+          const isHovered = hoveredMarkerId === markerId;
 
           return (
             <MarkerF
-              key={`geobooker-${business.id}`}
+              key={markerId}
               position={{ lat: Number(business.latitude), lng: Number(business.longitude) }}
               onClick={() => onBusinessSelect(business)}
-              onMouseOver={() => setHoveredBusiness(business)}
-              onMouseOut={() => setHoveredBusiness(null)}
-              icon={categoryIcon}
+              onMouseOver={() => handleMarkerHover(business, markerId)}
+              onMouseOut={handleMarkerHoverEnd}
+              icon={{
+                ...categoryIcon,
+                scale: isHovered ? (categoryIcon.scale || 1.8) * 1.4 : (categoryIcon.scale || 1.8)
+              }}
               title={isPremium ? `⭐ ${business.name} (Premium)` : business.name}
-              zIndex={isPremium ? 5000 : 2000}
-              animation={isPremium ? window.google?.maps?.Animation?.DROP : undefined}
+              zIndex={isHovered ? 10000 : (isPremium ? 5000 : 2000)}
+              animation={isHovered ? window.google?.maps?.Animation?.BOUNCE : (isPremium ? window.google?.maps?.Animation?.DROP : undefined)}
             />
           );
         })}
@@ -600,20 +624,24 @@ export const BusinessMap = memo(({
             {(clusterer) =>
               denueMarkers.map((business) => {
                 const categoryIcon = getCategoryIcon(business.category, false);
+                const markerId = `denue-${business.id}`;
+                const isHovered = hoveredMarkerId === markerId;
                 return (
                   <MarkerF
-                    key={`denue-${business.id}`}
+                    key={markerId}
                     position={{ lat: Number(business.latitude), lng: Number(business.longitude) }}
                     onClick={() => onBusinessSelect(business)}
-                    onMouseOver={() => setHoveredBusiness(business)}
-                    onMouseOut={() => setHoveredBusiness(null)}
+                    onMouseOver={() => handleMarkerHover(business, markerId)}
+                    onMouseOut={handleMarkerHoverEnd}
                     icon={{
                       ...categoryIcon,
-                      scale: (categoryIcon.scale || 1.8) * 0.7 // DENUE markers 30% smaller than native
+                      scale: isHovered ? (categoryIcon.scale || 1.8) * 1.3 : (categoryIcon.scale || 1.8) * 0.7,
+                      fillOpacity: isHovered ? 1 : 0.85
                     }}
-                    title={`🏢 ${business.name}`}
-                    zIndex={500}
+                    title={`🏢 ${business.name} (${business.category || 'DENUE'})`}
+                    zIndex={isHovered ? 10000 : 500}
                     clusterer={clusterer}
+                    animation={isHovered ? window.google?.maps?.Animation?.BOUNCE : undefined}
                   />
                 );
               })

@@ -49,7 +49,7 @@ const PricingPage = () => {
                 { text: 'Email support', included: true },
                 { text: 'Account manager', included: false }
             ],
-            cta: 'Start With 70% Off',
+            cta: 'Start With 50% Off',
             ctaLink: '/advertise',
             popular: true,
             gradient: 'from-blue-50 to-indigo-50'
@@ -99,7 +99,7 @@ const PricingPage = () => {
         <>
             <SEO
                 title="Pricing — Geobooker Advertising Plans"
-                description="See Geobooker advertising plans and pricing. Free business listing, sponsored results from $25/mo, and enterprise packages for brands. 70% launch discount available."
+                description="See Geobooker advertising plans and pricing. Free business listing, sponsored results from $25/mo, and enterprise packages for brands. 50% launch discount available."
             />
 
             <div className="min-h-screen bg-white">
@@ -107,7 +107,7 @@ const PricingPage = () => {
                 <section className="bg-gradient-to-br from-slate-50 to-blue-50 py-16 px-4">
                     <div className="max-w-4xl mx-auto text-center">
                         <span className="inline-block px-4 py-1.5 bg-green-100 text-green-700 rounded-full text-sm font-medium mb-4">
-                            🎉 70% Launch Discount on All Plans
+                            🎉 50% Launch Discount on All Plans
                         </span>
                         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
                             Simple, Transparent Pricing

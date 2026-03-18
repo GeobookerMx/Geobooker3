@@ -670,7 +670,7 @@ const AdvertisePage = () => {
               <div className="flex items-start mb-3">
                 <span className="text-2xl mr-2">🎉</span>
                 <h3 className="text-lg font-bold text-gray-900">
-                  Términos y Condiciones - Promoción de Lanzamiento 70% OFF
+                  Términos y Condiciones - Promoción de Lanzamiento 50% OFF
                 </h3>
               </div>
               <ul className="text-sm text-gray-700 space-y-2">
@@ -764,7 +764,7 @@ const AdvertisePage = () => {
       {/* CTA FINAL */}
       <div className="bg-white py-10 px-4 text-center border-t border-gray-200">
         <p className="text-gray-500 text-sm">
-          ¿Dudas? Escríbenos a <a href="mailto:ads@geobooker.com.mx" className="text-blue-600 hover:underline">ads@geobooker.com.mx</a>
+          ¿Dudas? Escríbenos a <a href="mailto:ventasgeobooker@gmail.com" className="text-blue-600 hover:underline">ventasgeobooker@gmail.com</a>
         </p>
       </div>
     </div>

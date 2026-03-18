@@ -55,7 +55,7 @@ Geobooker es el directorio de negocios más inteligente del mundo. Conectamos cl
 - 1 negocio, 3 fotos, visibilidad básica.
 
 **Plan Premium (Recomendado):**
-- **México**: $89.70 MXN/mes (Promo 70% OFF hasta Marzo). Precio regular: $299.
+- **México**: $495 MXN/mes (Promo 50% OFF hasta Agosto 2026). Precio regular: $990.
 - **Global**: $4.99 USD/mo (Promo Launch). Regular: $14.99.
 - Beneficios: ⭐ Estrella Dorada en mapa, 10 fotos, Redes Sociales activas, Prioridad en búsquedas.
 

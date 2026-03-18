@@ -66,7 +66,7 @@
         "foundBusinesses": "We found {{count}} businesses near you",
         "businessList": "Business List",
         "promo": {
-            "launch": "LAUNCH! 70% OFF on all advertising spaces",
+            "launch": "LAUNCH! 50% OFF on all advertising spaces",
             "validUntil": "Valid until:",
             "seeOffers": "See offers →",
             "march1": "March 1st, 2026"
@@ -558,7 +558,7 @@
             "oxxo": "Can I pay with cash?",
             "search": "How do I search for businesses?",
             "howItWorks": "How does Geobooker work?",
-            "promo": "What is the 70% OFF promo?",
+            "promo": "What is the 50% OFF promo?",
             "contact": "How do I contact a business?",
             "problem": "I have a problem"
         }
@@ -699,7 +699,7 @@
             },
             "advertise": {
                 "q": "How can I advertise my brand on Geobooker?",
-                "a": "Visit our advertising page or the Enterprise section. We offer banners, carousels, sponsored results, and interstitials. We currently have a 70% launch discount on all ad spaces."
+                "a": "Visit our advertising page or the Enterprise section. We offer banners, carousels, sponsored results, and interstitials. We currently have a 50% launch discount on all ad spaces."
             },
             "premium": {
                 "q": "What does premium advertising include?",

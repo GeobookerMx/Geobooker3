@@ -105,7 +105,7 @@ const AdvertiseInMexicoPage = () => {
                     <div className="relative max-w-6xl mx-auto px-4 py-20 md:py-28">
                         <div className="text-center">
                             <span className="inline-block px-4 py-1.5 bg-blue-500/20 border border-blue-400/30 rounded-full text-blue-300 text-sm font-medium mb-6">
-                                🚀 70% Launch Discount — Limited Time
+                                🚀 50% Launch Discount — Limited Time
                             </span>
                             <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
                                 Advertise in <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Mexico</span>

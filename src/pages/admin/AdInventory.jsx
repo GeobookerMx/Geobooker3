@@ -302,10 +302,10 @@ export default function AdInventory() {
                 {(() => {
                     const PROMO_CONFIG = {
                         active: true,
-                        discount: 70,
-                        endDate: '2026-03-01',
+                        discount: 50,
+                        endDate: '2026-08-01',
                         label: '🚀 LANZAMIENTO',
-                        message: '¡Promoción activa! Todos los espacios con 70% OFF'
+                        message: '¡Promoción activa! Todos los espacios con 50% OFF'
                     };
 
                     const promoEndDate = new Date(PROMO_CONFIG.endDate);

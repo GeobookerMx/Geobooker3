@@ -56,7 +56,7 @@ const AdsPolicyPage = () => {
                     <section>
                         <h2 className="text-xl font-bold text-gray-900 border-b pb-2 mb-4">4. Garantía de Servicio (Fase de Lanzamiento)</h2>
                         <p>
-                            Durante nuestra fase de lanzamiento (promoción 70% OFF hasta marzo 2026), Geobooker <strong>no garantiza métricas específicas</strong> de impresiones, clics o conversiones.
+                            Durante nuestra fase de lanzamiento (promoción 50% OFF hasta agosto 2026), Geobooker <strong>no garantiza métricas específicas</strong> de impresiones, clics o conversiones.
                         </p>
                         <p className="mt-3">
                             <strong>Extensión por fallas técnicas:</strong> Si tu campaña experimenta fallas técnicas atribuibles a nuestra plataforma

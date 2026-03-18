@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import UserProfile from '../components/dashboard/UserProfile';
 import BusinessList from '../components/business/BusinessList';
+import BusinessMetricsCard from '../components/business/BusinessMetricsCard';
 import InviteButton from '../components/referral/InviteButton';
 import UserLevelCard from '../components/gamification/UserLevelCard';
 import ReferralDashboard from '../components/referral/ReferralDashboard';
@@ -16,6 +17,7 @@ const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState('businesses');
   const [isPremium, setIsPremium] = useState(false);
   const [businessCount, setBusinessCount] = useState(0);
+  const [myBusinesses, setMyBusinesses] = useState([]);
   const [referralCode, setReferralCode] = useState(null);
   const [showRecommendForm, setShowRecommendForm] = useState(false);
   const [myRecommendations, setMyRecommendations] = useState([]);
@@ -44,10 +46,11 @@ const DashboardPage = () => {
     try {
       const { data } = await supabase
         .from('businesses')
-        .select('id')
+        .select('id, name')
         .eq('owner_id', user.id);
 
       setBusinessCount(data?.length || 0);
+      setMyBusinesses(data || []);
     } catch (error) {
       console.error('Error counting businesses:', error);
     }
@@ -219,7 +222,26 @@ const DashboardPage = () => {
       {/* Contenido */}
       <div className="min-h-[400px]">
         {activeTab === 'businesses' ? (
-          <BusinessList />
+          <div>
+            {/* Métricas de tus negocios */}
+            {myBusinesses.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                  📊 Rendimiento de tus Negocios
+                </h2>
+                <div className="grid gap-4">
+                  {myBusinesses.map(biz => (
+                    <BusinessMetricsCard
+                      key={biz.id}
+                      businessId={biz.id}
+                      businessName={biz.name}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+            <BusinessList />
+          </div>
         ) : activeTab === 'referrals' ? (
           <ReferralDashboard />
         ) : activeTab === 'recommendations' ? (

@@ -218,7 +218,7 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
-                  <a href="mailto:soporte@geobooker.com.mx" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
+                  <a href="mailto:ventasgeobooker@gmail.com" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
                     → {t('footer.support')}
                   </a>
                 </li>

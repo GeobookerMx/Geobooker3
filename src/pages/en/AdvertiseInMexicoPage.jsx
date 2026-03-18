@@ -244,7 +244,7 @@ const AdvertiseInMexicoPage = () => {
                                 <DollarSign className="mr-2 w-5 h-5" /> View Pricing
                             </Link>
                             <a
-                                href="mailto:ventas@geobooker.com"
+                                href="mailto:ventasgeobooker@gmail.com"
                                 className="inline-flex items-center px-8 py-4 border-2 border-white/50 text-white rounded-xl font-bold text-lg hover:bg-white/10 transition"
                             >
                                 Contact Sales

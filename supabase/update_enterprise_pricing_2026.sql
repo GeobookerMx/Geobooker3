@@ -93,6 +93,8 @@ UPDATE enterprise_pricing SET discount_percent = 0, countries_included = 999 WHE
 
 
 -- 6. RECREAR RPC CON DESCUENTOS VARIABLES (ya no hardcodea 50%)
+-- DROP primero porque cambiamos el return type (agregamos countries_included)
+DROP FUNCTION IF EXISTS get_enterprise_pricing();
 CREATE OR REPLACE FUNCTION get_enterprise_pricing()
 RETURNS TABLE (
   code TEXT,

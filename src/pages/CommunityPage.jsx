@@ -666,7 +666,7 @@ export default function CommunityPage() {
                             : 'If your business has a success story you want to share, contact us'}
                     </p>
                     <a
-                        href="mailto:geobookerr@gmail.com"
+                        href="mailto:ventasgeobooker@gmail.com"
                         className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition"
                     >
                         {isSpanish ? 'Escríbenos' : 'Write to Us'}

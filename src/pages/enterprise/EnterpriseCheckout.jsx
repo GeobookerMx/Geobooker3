@@ -509,8 +509,22 @@ export default function EnterpriseCheckout() {
         // Size limits: 5MB for images, 30MB for videos (15s max = less size needed)
         const maxSize = isVideo ? 30 * 1024 * 1024 : 5 * 1024 * 1024;
         if (file.size > maxSize) {
-            toast.error(`File must be under ${isVideo ? '30MB' : '5MB'}`);
+            toast.error(`File must be under ${isVideo ? '30MB' : '5MB'}. Recommended: 1200×628px for images.`);
             return;
+        }
+
+        // For images: check minimum dimensions (600x400)
+        if (isImage) {
+            const dims = await new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve({ w: img.width, h: img.height });
+                img.onerror = () => resolve({ w: 0, h: 0 });
+                img.src = URL.createObjectURL(file);
+            });
+            if (dims.w < 600 || dims.h < 400) {
+                toast.error(`Image too small (${dims.w}×${dims.h}). Minimum: 600×400px. Recommended: 1200×628px.`);
+                return;
+            }
         }
 
         // For video: check duration (max 15 seconds)

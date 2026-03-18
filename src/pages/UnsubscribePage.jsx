@@ -89,7 +89,7 @@ const UnsubscribePage = () => {
                             No pudimos procesar tu solicitud automáticamente. Es posible que el enlace haya expirado.
                         </p>
                         <p className="text-sm text-gray-400 mt-4">
-                            Por favor envía un correo a <a href="mailto:soporte@geobooker.com.mx" className="text-blue-600 underline">soporte@geobooker.com.mx</a> para que te demos de baja manualmente.
+                            Por favor envía un correo a <a href="mailto:ventasgeobooker@gmail.com" className="text-blue-600 underline">ventasgeobooker@gmail.com</a> para que te demos de baja manualmente.
                         </p>
                     </div>
                 )}

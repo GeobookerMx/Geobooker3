@@ -209,7 +209,19 @@ const CampaignCreateWizard = () => {
         if (!file) return;
 
         if (file.size > 5 * 1024 * 1024) {
-            toast.error('La imagen no debe superar 5MB');
+            toast.error('La imagen no debe superar 5MB. Recomendado: 1200×628px.');
+            return;
+        }
+
+        // Check minimum dimensions (600x400)
+        const dims = await new Promise((resolve) => {
+            const img = new window.Image();
+            img.onload = () => resolve({ w: img.width, h: img.height });
+            img.onerror = () => resolve({ w: 0, h: 0 });
+            img.src = URL.createObjectURL(file);
+        });
+        if (dims.w < 600 || dims.h < 400) {
+            toast.error(`Imagen muy pequeña (${dims.w}×${dims.h}). Mínimo: 600×400px. Recomendado: 1200×628px.`);
             return;
         }
 

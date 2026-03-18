@@ -385,7 +385,7 @@ export default function EnterpriseEdit() {
                             </div>
                         </div>
                         <p className="text-xs text-gray-500 mt-4">
-                            To change targeting or budget, please contact enterprise@geobooker.com.mx
+                            To change targeting or budget, please contact ventasgeobooker@gmail.com
                         </p>
                     </div>
                 </div>

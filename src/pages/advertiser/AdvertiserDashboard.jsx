@@ -405,7 +405,7 @@ export default function AdvertiserDashboard() {
                         Contact our Enterprise support team for campaign optimization, creative assistance, or any questions.
                     </p>
                     <a
-                        href="mailto:enterprise@geobooker.com.mx"
+                        href="mailto:ventasgeobooker@gmail.com"
                         className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300"
                     >
                         enterprise@geobooker.com.mx

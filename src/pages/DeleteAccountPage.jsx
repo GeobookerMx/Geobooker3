@@ -184,7 +184,7 @@ const DeleteAccountPage = () => {
                     )}
 
                     <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
-                        <p>{t('deleteAccount.supportText', { defaultValue: '¿Tienes dudas? Contáctanos en' })} <a href="mailto:contacto@geobooker.com.mx" className="text-blue-600 hover:underline">contacto@geobooker.com.mx</a></p>
+                        <p>{t('deleteAccount.supportText', { defaultValue: '¿Tienes dudas? Contáctanos en' })} <a href="mailto:ventasgeobooker@gmail.com" className="text-blue-600 hover:underline">ventasgeobooker@gmail.com</a></p>
                     </div>
                 </div>
             </div>

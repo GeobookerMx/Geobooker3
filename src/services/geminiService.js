@@ -64,7 +64,7 @@ Geobooker es el directorio de negocios más inteligente del mundo. Conectamos cl
 - **Banner Principal**: Desde $999 MXN / $50 USD por semana.
 - **Anuncios Geolocalizados**: Tu negocio aparece primero a usuarios a 5km a la redonda.
 - **Enterprise**: Para marcas globales (Coca-Cola, Nike, Eventos). Campañas masivas desde $1,250 USD.
-  - Contacto directo para Enterprise: enterprise@geobooker.com
+  - Contacto directo para Enterprise: ventasgeobooker@gmail.com
 
 ## FACTURACIÓN
 - Emitimos factura fiscal válida.

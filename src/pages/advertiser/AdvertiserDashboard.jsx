@@ -29,7 +29,11 @@ export default function AdvertiserDashboard() {
         totalImpressions: 0,
         totalClicks: 0,
         avgCtr: 0,
-        activeCampaigns: 0
+        activeCampaigns: 0,
+        totalWhatsappTaps: 0,
+        avgCpc: 0,
+        estimatedConversions: 0,
+        totalBudget: 0
     });
 
     useEffect(() => {
@@ -53,25 +57,39 @@ export default function AdvertiserDashboard() {
             const active = (data || []).filter(c => c.status === 'active').length;
             let totalImpressions = 0;
             let totalClicks = 0;
+            let totalWhatsappTaps = 0;
+            let totalBudget = 0;
 
             // Load metrics for each campaign
             for (const campaign of data || []) {
+                totalBudget += (campaign.total_budget || 0);
+
                 const { data: metrics } = await supabase
                     .from('ad_campaign_metrics')
-                    .select('impressions, clicks')
+                    .select('impressions, clicks, whatsapp_taps')
                     .eq('campaign_id', campaign.id);
 
                 if (metrics) {
                     totalImpressions += metrics.reduce((sum, m) => sum + (m.impressions || 0), 0);
                     totalClicks += metrics.reduce((sum, m) => sum + (m.clicks || 0), 0);
+                    totalWhatsappTaps += metrics.reduce((sum, m) => sum + (m.whatsapp_taps || 0), 0);
                 }
             }
+
+            const avgCtr = totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(2) : 0;
+            const avgCpc = totalClicks > 0 && totalBudget > 0 ? (totalBudget / totalClicks).toFixed(2) : 0;
+            // Estimación: 3-5% de los clics se convierten
+            const estimatedConversions = Math.round(totalClicks * 0.04);
 
             setStats({
                 totalImpressions,
                 totalClicks,
-                avgCtr: totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(2) : 0,
-                activeCampaigns: active
+                avgCtr,
+                activeCampaigns: active,
+                totalWhatsappTaps,
+                avgCpc,
+                estimatedConversions,
+                totalBudget
             });
 
         } catch (error) {
@@ -152,8 +170,8 @@ export default function AdvertiserDashboard() {
             </div>
 
             <div className="container mx-auto px-4 py-8">
-                {/* Stats Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                {/* Stats Cards - Row 1: Core Metrics */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
                         <div className="flex items-center gap-2 text-gray-400 text-sm mb-2">
                             <Eye className="w-4 h-4" />
@@ -181,6 +199,42 @@ export default function AdvertiserDashboard() {
                             Active Campaigns
                         </div>
                         <div className="text-3xl font-bold text-green-400">{stats.activeCampaigns}</div>
+                    </div>
+                </div>
+
+                {/* Stats Cards - Row 2: Additional KPIs */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div className="bg-gradient-to-br from-green-900/50 to-green-800/30 border border-green-700/50 rounded-xl p-5">
+                        <div className="flex items-center gap-2 text-green-300 text-sm mb-2">
+                            <span className="text-base">📱</span>
+                            WhatsApp Taps
+                        </div>
+                        <div className="text-3xl font-bold text-green-400">{formatNumber(stats.totalWhatsappTaps)}</div>
+                        <p className="text-xs text-green-400/60 mt-1">Taps a botón de WhatsApp</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-blue-900/50 to-blue-800/30 border border-blue-700/50 rounded-xl p-5">
+                        <div className="flex items-center gap-2 text-blue-300 text-sm mb-2">
+                            <span className="text-base">💰</span>
+                            Avg. CPC
+                        </div>
+                        <div className="text-3xl font-bold text-blue-400">${stats.avgCpc}</div>
+                        <p className="text-xs text-blue-400/60 mt-1">Cost Per Click (USD)</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-purple-900/50 to-purple-800/30 border border-purple-700/50 rounded-xl p-5">
+                        <div className="flex items-center gap-2 text-purple-300 text-sm mb-2">
+                            <span className="text-base">🎯</span>
+                            Est. Conversions
+                        </div>
+                        <div className="text-3xl font-bold text-purple-400">{formatNumber(stats.estimatedConversions)}</div>
+                        <p className="text-xs text-purple-400/60 mt-1">~4% conversion rate</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-amber-900/50 to-amber-800/30 border border-amber-700/50 rounded-xl p-5">
+                        <div className="flex items-center gap-2 text-amber-300 text-sm mb-2">
+                            <span className="text-base">💳</span>
+                            Total Budget
+                        </div>
+                        <div className="text-3xl font-bold text-amber-400">${formatNumber(stats.totalBudget)}</div>
+                        <p className="text-xs text-amber-400/60 mt-1">Total invested</p>
                     </div>
                 </div>
 
@@ -225,10 +279,11 @@ export default function AdvertiserDashboard() {
                                     <tr className="text-left text-gray-400 text-sm border-b border-gray-700">
                                         <th className="p-4 font-medium">Campaign</th>
                                         <th className="p-4 font-medium">Status</th>
+                                        <th className="p-4 font-medium">Plan</th>
                                         <th className="p-4 font-medium">Target</th>
                                         <th className="p-4 font-medium">Duration</th>
                                         <th className="p-4 font-medium">Budget</th>
-                                        <th className="p-4 font-medium">Preview</th>
+                                        <th className="p-4 font-medium">Payment</th>
                                         <th className="p-4 font-medium text-right">Actions</th>
                                     </tr>
                                 </thead>
@@ -250,6 +305,15 @@ export default function AdvertiserDashboard() {
                                                 <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(campaign.status)}`}>
                                                     {getStatusLabel(campaign.status)}
                                                 </span>
+                                            </td>
+
+                                            {/* Plan Type */}
+                                            <td className="p-4">
+                                                <div className="text-white text-sm">
+                                                    {campaign.ad_level === 'global' ? '🌍 Enterprise' :
+                                                     campaign.ad_level === 'regional' ? '🏢 Regional' :
+                                                     campaign.campaign_type === 'local' ? '📍 Local' : '📍 ' + (campaign.campaign_type || 'Standard')}
+                                                </div>
                                             </td>
 
                                             {/* Target */}
@@ -277,30 +341,19 @@ export default function AdvertiserDashboard() {
                                                 <div className="text-green-400 font-bold whitespace-nowrap">
                                                     ${campaign.total_budget?.toLocaleString() || 0}
                                                 </div>
-                                                <div className="text-gray-500 text-xs">USD</div>
+                                                <div className="text-gray-500 text-xs">{campaign.currency || 'USD'}</div>
                                             </td>
 
-                                            {/* Preview */}
+                                            {/* Payment Method */}
                                             <td className="p-4">
-                                                {campaign.creative_url ? (
-                                                    campaign.creative_url.match(/\.(mp4|webm)$/i) ? (
-                                                        <video
-                                                            src={campaign.creative_url}
-                                                            className="w-16 h-10 object-cover rounded"
-                                                            muted
-                                                        />
-                                                    ) : (
-                                                        <img
-                                                            src={campaign.creative_url}
-                                                            alt="Preview"
-                                                            className="w-16 h-10 object-cover rounded"
-                                                        />
-                                                    )
-                                                ) : (
-                                                    <div className="w-16 h-10 bg-gray-700 rounded flex items-center justify-center">
-                                                        <FileText className="w-4 h-4 text-gray-500" />
-                                                    </div>
-                                                )}
+                                                <div className="text-white text-sm">
+                                                    {campaign.payment_method === 'oxxo' ? '🏧 OXXO' :
+                                                     campaign.payment_status === 'paid' ? '💳 Card' :
+                                                     campaign.payment_status === 'pending' ? '⏳ Pending' : '—'}
+                                                </div>
+                                                <div className={`text-xs mt-0.5 ${campaign.payment_status === 'paid' ? 'text-green-400' : 'text-yellow-400'}`}>
+                                                    {campaign.payment_status === 'paid' ? '✅ Paid' : campaign.payment_status || ''}
+                                                </div>
                                             </td>
 
                                             {/* Actions */}

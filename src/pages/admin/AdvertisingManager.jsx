@@ -6,38 +6,40 @@ const AdvertisingManager = () => {
   const [adSpaces, setAdSpaces] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Espacios publicitarios configurables
-  const initialAdSpaces = [
-    { id: 1, name: 'Primera Plana', price: 299, active: true, position: 'header' },
-    { id: 2, name: 'Segunda Plana', price: 199, active: true, position: 'sidebar' },
-    { id: 3, name: 'Banner Home', price: 149, active: true, position: 'home' },
-    { id: 4, name: 'Banner Búsqueda', price: 129, active: true, position: 'search' }
+  // Espacios publicitarios — sincronizados con AdvertisePage.jsx
+  const fallbackAdSpaces = [
+    { id: 1, name: 'impulso_local', display_name: 'Impulso Local', price_monthly: 990, is_active: true, type: 'local', max_slots: 20 },
+    { id: 2, name: 'sponsor_ciudad', display_name: 'Sponsor de Ciudad', price_monthly: 2990, is_active: true, type: 'premium', max_slots: 3 },
+    { id: 3, name: 'enterprise', display_name: 'Enterprise / Multi-Ciudad', price_monthly: 9900, is_active: true, type: 'enterprise', max_slots: 5 }
   ];
 
   useEffect(() => {
-    initializeAdSpaces();
+    loadAdSpaces();
   }, []);
 
-  const initializeAdSpaces = async () => {
+  const loadAdSpaces = async () => {
     try {
-      // Verificar si ya existen espacios en la base de datos
-      const { data: existingSpaces } = await supabase
-        .from('advertising_spaces')
-        .select('*');
+      const { data: existingSpaces, error } = await supabase
+        .from('ad_spaces')
+        .select('*')
+        .order('price_monthly', { ascending: true });
+
+      if (error) throw error;
 
       if (!existingSpaces || existingSpaces.length === 0) {
-        // Insertar espacios iniciales
-        const { error } = await supabase
-          .from('advertising_spaces')
-          .insert(initialAdSpaces);
-        
-        if (error) throw error;
-        setAdSpaces(initialAdSpaces);
+        setAdSpaces(fallbackAdSpaces);
       } else {
-        setAdSpaces(existingSpaces);
+        // Normalize field names for display
+        setAdSpaces(existingSpaces.map(s => ({
+          ...s,
+          active: s.is_active,
+          price: s.price_monthly,
+          position: s.type
+        })));
       }
     } catch (error) {
-      console.error('Error initializing ad spaces:', error);
+      console.error('Error loading ad spaces:', error);
+      setAdSpaces(fallbackAdSpaces.map(s => ({ ...s, active: s.is_active, price: s.price_monthly, position: s.type })));
     } finally {
       setLoading(false);
     }

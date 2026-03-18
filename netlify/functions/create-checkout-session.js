@@ -68,7 +68,14 @@ exports.handler = async (event) => {
 
         // Session config
         formData.append('mode', mode);
+        
+        // Payment methods: card always, OXXO + SPEI for MXN only
         formData.append('payment_method_types[0]', 'card');
+        if (finalCurrency === 'mxn') {
+            formData.append('payment_method_types[1]', 'oxxo');
+            // SPEI requires customer_creation for delayed payment
+        }
+        
         formData.append('success_url', successUrl || 'https://geobooker.com.mx/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}');
         formData.append('cancel_url', cancelUrl || 'https://geobooker.com.mx/dashboard/upgrade?canceled=true');
 

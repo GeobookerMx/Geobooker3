@@ -17,49 +17,50 @@ import {
  * Se combinan con lo que viene de la BD (ad_spaces).
  */
 const AD_SPACE_META = {
-  hero_banner: {
-    prioridad: "1ra plana",
-    tipoLabel: "Banner superior principal",
+  impulso_local: {
+    prioridad: "Local",
+    tipoLabel: "Tarjeta patrocinada en ciudad y categoría",
+    badge: "Más popular",
+    idealPara:
+      "Negocios locales que quieren aparecer primero en búsquedas de su ciudad y categoría.",
+    features: [
+      "Tarjeta patrocinada en resultados de búsqueda",
+      "Presencia en página de ciudad y categoría",
+      "CTA directo: WhatsApp, llamar, ruta",
+      "Badge de 'Patrocinado' visible",
+      "Métricas: impresiones, clics, CTR, taps WhatsApp",
+      "Duración: 30 días"
+    ]
+  },
+  sponsor_ciudad: {
+    prioridad: "Premium",
+    tipoLabel: "Hero principal + tarjeta + pin en mapa",
     badge: "Máxima visibilidad",
     idealPara:
-      "Lanzamientos, promociones fuertes y marcas que quieren impactar desde la Home.",
+      "Negocios que quieren dominar su ciudad o categoría con presencia premium.",
+    features: [
+      "Hero banner principal en página de ciudad",
+      "Tarjeta patrocinada incluida",
+      "Pin destacado en el mapa interactivo",
+      "Presencia en carrusel de destacados",
+      "Métricas avanzadas + reporte PDF mensual",
+      "Duración: 30 días"
+    ]
   },
-  featured_carousel: {
-    prioridad: "1ra plana",
-    tipoLabel: "Carrusel de negocios destacados",
-    badge: "Muy visible",
+  enterprise: {
+    prioridad: "Enterprise",
+    tipoLabel: "Multi-ciudad, multi-sucursal, campañas regionales/globales",
+    badge: "Máximo alcance",
     idealPara:
-      "Negocios que quieren aparecer en una sección de destacados constantemente.",
-  },
-  sponsored_results: {
-    prioridad: "1ra plana",
-    tipoLabel: "Resultados patrocinados (PPC)",
-    badge: "Paga solo por clic",
-    idealPara:
-      "Negocios que buscan rendimiento directo: clics, llamadas o visitas al perfil.",
-    pricingLabel:
-      "Desde $1.50 MXN por clic (modelo PPC, puede requerir consumo mínimo mensual)",
-  },
-  recommended: {
-    prioridad: "2da plana",
-    tipoLabel: "Bloque de recomendados",
-    badge: "Costo accesible",
-    idealPara:
-      "Negocios con presupuesto limitado que buscan presencia constante.",
-  },
-  bottom_banner: {
-    prioridad: "2da plana",
-    tipoLabel: "Banner inferior sticky",
-    badge: "Siempre visible",
-    idealPara:
-      "Campañas con fuerte llamada a la acción (descuentos, temporadas, urgencia).",
-  },
-  interstitial: {
-    prioridad: "Especial / Interstitial",
-    tipoLabel: "Pantalla completa",
-    badge: "Impacto máximo",
-    idealPara:
-      "Cadenas o marcas grandes que buscan impacto total y recordación de marca.",
+      "Cadenas, franquicias y marcas que necesitan presencia en múltiples ciudades o países.",
+    features: [
+      "Cobertura multi-ciudad y multi-país",
+      "Dashboard corporativo con KPIs por sucursal",
+      "Campañas segmentadas por zona y categoría",
+      "Reportes semanales personalizados",
+      "Account manager dedicado",
+      "Soporte IVA 0% para clientes internacionales"
+    ]
   },
 };
 
@@ -67,36 +68,39 @@ const AD_SPACE_META = {
 const MOCK_SPACES = [
   {
     id: "1",
-    name: "hero_banner",
-    display_name: "Banner Principal (Demo)",
-    type: "1ra_plana",
-    price_monthly: 1500,
-    size_desktop: "728x90",
-    size_mobile: "320x100",
-    description: "Vista previa de prueba.",
-    max_slots: 3,
+    name: "impulso_local",
+    display_name: "Impulso Local",
+    type: "local",
+    price_monthly: 990,
+    size_desktop: "Responsive",
+    size_mobile: "Responsive",
+    description: "Aparece en los primeros resultados de tu ciudad y categoría. Incluye CTA directo a WhatsApp, llamada o ruta.",
+    max_slots: 20,
+    duration_label: "30 días",
   },
   {
     id: "2",
-    name: "featured_carousel",
-    display_name: "Carrusel (Demo)",
-    type: "1ra_plana",
-    price_monthly: 800,
-    size_desktop: "280x200",
-    size_mobile: "280x200",
-    description: "Vista previa de prueba.",
-    max_slots: 10,
+    name: "sponsor_ciudad",
+    display_name: "Sponsor de Ciudad",
+    type: "premium",
+    price_monthly: 2990,
+    size_desktop: "970x250",
+    size_mobile: "320x100",
+    description: "Domina tu ciudad con hero banner principal, tarjeta patrocinada y pin destacado en el mapa.",
+    max_slots: 3,
+    duration_label: "30 días",
   },
   {
     id: "3",
-    name: "interstitial",
-    display_name: "Pantalla Completa (Demo)",
-    type: "interstitial",
-    price_monthly: 5000,
-    size_desktop: "800x600",
-    size_mobile: "100%",
-    description: "Vista previa de prueba.",
-    max_slots: 1,
+    name: "enterprise",
+    display_name: "Enterprise / Multi-Ciudad",
+    type: "enterprise",
+    price_monthly: 9900,
+    size_desktop: "Personalizado",
+    size_mobile: "Personalizado",
+    description: "Cobertura multi-ciudad y multi-país. Dashboard corporativo con KPIs por sucursal. Cotización personalizada.",
+    max_slots: 5,
+    duration_label: "Cotización",
   },
 ];
 
@@ -104,10 +108,12 @@ const MOCK_SPACES = [
  * Configuración de promoción de lanzamiento
  */
 const PROMO_CONFIG = {
-  discountPercent: 70,
-  endDate: new Date('2026-03-01T23:59:59'),
+  discountPercent: 50,
+  endDate: new Date('2026-08-01T23:59:59'),
   isActive: () => new Date() < PROMO_CONFIG.endDate
 };
+
+const IVA_RATE = 0.16;
 
 /**
  * Helper para formatear el precio visible al usuario
@@ -117,8 +123,16 @@ const PROMO_CONFIG = {
  */
 function getPricingLabel(space) {
   const meta = AD_SPACE_META[space.name];
-  if (meta?.pricingLabel) {
-    return { display: meta.pricingLabel + " +IVA", original: null, hasDiscount: false };
+
+  // Enterprise es por cotización
+  if (space.name === 'enterprise') {
+    return {
+      display: 'Desde $9,900 MXN / mes',
+      original: null,
+      hasDiscount: false,
+      ivaDisplay: 'Cotización personalizada',
+      isEnterprise: true
+    };
   }
 
   const price = Number(space.price_monthly || 0);
@@ -126,15 +140,27 @@ function getPricingLabel(space) {
 
   if (PROMO_CONFIG.isActive()) {
     const discountedPrice = Math.round(price * (1 - PROMO_CONFIG.discountPercent / 100));
+    const ivaAmount = Math.round(discountedPrice * IVA_RATE);
+    const totalWithIva = discountedPrice + ivaAmount;
     return {
-      display: `$${discountedPrice.toLocaleString("es-MX")} MXN / mes +IVA`,
+      display: `$${discountedPrice.toLocaleString("es-MX")} MXN / mes`,
       original: `$${price.toLocaleString("es-MX")} MXN`,
       hasDiscount: true,
-      discountPercent: PROMO_CONFIG.discountPercent
+      discountPercent: PROMO_CONFIG.discountPercent,
+      ivaDisplay: `+ $${ivaAmount.toLocaleString("es-MX")} IVA = $${totalWithIva.toLocaleString("es-MX")} total`,
+      totalWithIva
     };
   }
 
-  return { display: `$${price.toLocaleString("es-MX")} MXN / mes +IVA`, original: null, hasDiscount: false };
+  const ivaAmount = Math.round(price * IVA_RATE);
+  const totalWithIva = price + ivaAmount;
+  return {
+    display: `$${price.toLocaleString("es-MX")} MXN / mes`,
+    original: null,
+    hasDiscount: false,
+    ivaDisplay: `+ $${ivaAmount.toLocaleString("es-MX")} IVA = $${totalWithIva.toLocaleString("es-MX")} total`,
+    totalWithIva
+  };
 }
 
 /**
@@ -206,12 +232,12 @@ const AdvertisePage = () => {
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="text-2xl">🚀</span>
-              <span className="font-bold">¡LANZAMIENTO! 70% OFF en todos los espacios</span>
+              <span className="font-bold">¡PROMO ESPECIAL! 50% OFF en todos los espacios</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <span className="opacity-90">Válido hasta:</span>
               <span className="bg-white/20 backdrop-blur px-3 py-1 rounded font-bold">
-                1 de Marzo 2026
+                1 de Agosto 2026
               </span>
             </div>
           </div>
@@ -294,7 +320,7 @@ const AdvertisePage = () => {
                 className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow flex flex-col relative group"
               >
                 {/* Badge popular */}
-                {space.name === "hero_banner" && (
+                {space.name === "impulso_local" && (
                   <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-bl-lg z-10">
                     MÁS POPULAR
                   </div>
@@ -303,17 +329,19 @@ const AdvertisePage = () => {
                 <div className="p-7 flex-grow flex flex-col">
                   <div className="flex items-center justify-between mb-4">
                     <div
-                      className={`p-3 rounded-xl ${space.type === "interstitial"
+                      className={`p-3 rounded-xl ${space.type === "enterprise"
                         ? "bg-purple-100 text-purple-600"
-                        : space.type === "1ra_plana"
+                        : space.type === "premium"
                           ? "bg-blue-100 text-blue-600"
-                          : "bg-gray-100 text-gray-600"
+                          : "bg-green-100 text-green-600"
                         }`}
                     >
-                      {space.type === "interstitial" ? (
-                        <Smartphone className="w-6 h-6" />
-                      ) : (
+                      {space.type === "enterprise" ? (
+                        <Globe className="w-6 h-6" />
+                      ) : space.type === "premium" ? (
                         <Monitor className="w-6 h-6" />
+                      ) : (
+                        <TrendingUp className="w-6 h-6" />
                       )}
                     </div>
                     <span className="text-[11px] font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-600 uppercase tracking-wide">
@@ -339,15 +367,15 @@ const AdvertisePage = () => {
                       "Espacio premium de alta visibilidad para maximizar tu alcance."}
                   </p>
 
-                  {/* Precio visible con descuento */}
+                  {/* Precio visible con descuento + IVA */}
                   <div className="mb-4">
                     <p className="text-[11px] uppercase text-gray-500 font-semibold">
-                      Inversión de referencia
+                      Inversión mensual
                     </p>
                     {space.pricingLabel.hasDiscount && (
                       <div className="flex items-center gap-2 mb-1">
                         <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">
-                          -{space.pricingLabel.discountPercent}% LANZAMIENTO
+                          -{space.pricingLabel.discountPercent}% PROMO
                         </span>
                       </div>
                     )}
@@ -361,45 +389,55 @@ const AdvertisePage = () => {
                         {space.pricingLabel.display}
                       </p>
                     </div>
-                    {space.name === "sponsored_results" && (
+                    {space.pricingLabel.ivaDisplay && (
                       <p className="text-[11px] text-gray-500 mt-1">
-                        Modelo de pago por clic (PPC). El monto mensual final
-                        dependerá del paquete contratado y del volumen de clics.
+                        {space.pricingLabel.isEnterprise
+                          ? space.pricingLabel.ivaDisplay
+                          : `🇲🇽 México: ${space.pricingLabel.ivaDisplay}`}
+                      </p>
+                    )}
+                    {!space.pricingLabel.isEnterprise && (
+                      <p className="text-[10px] text-blue-500 mt-0.5">
+                        🌍 Internacional: IVA 0% (exportación de servicios)
                       </p>
                     )}
                   </div>
 
-                  {/* Características tipo tabla */}
+                  {/* Características - Features list */}
                   <ul className="space-y-2 mb-4 text-xs text-gray-600 flex-1">
-                    <li className="flex items-center">
-                      <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                      Resolución Desktop: {space.size_desktop}
-                    </li>
-                    <li className="flex items-center">
-                      <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                      Resolución Mobile: {space.size_mobile}
-                    </li>
+                    {(AD_SPACE_META[space.name]?.features || []).map((feature, idx) => (
+                      <li key={idx} className="flex items-center">
+                        <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                        {feature}
+                      </li>
+                    ))}
                     {typeof space.max_slots !== "undefined" && (
                       <li className="flex items-center">
                         <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
                         Cupo: {space.max_slots} espacios disponibles
                       </li>
                     )}
-                    <li className="flex items-center">
-                      <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                      Ideal para: {space.idealPara}
-                    </li>
                   </ul>
                 </div>
 
                 <div className="p-6 bg-gray-50 mt-auto border-t border-gray-100">
-                  <button
-                    onClick={() => handleSelectSpace(space.id)}
-                    className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition flex items-center justify-center group-hover:scale-[1.02] transform text-sm"
-                  >
-                    Crear campaña en este espacio
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </button>
+                  {space.name === 'enterprise' ? (
+                    <a
+                      href="/enterprise"
+                      className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition flex items-center justify-center group-hover:scale-[1.02] transform text-sm"
+                    >
+                      Solicitar cotización
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </a>
+                  ) : (
+                    <button
+                      onClick={() => handleSelectSpace(space.id)}
+                      className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition flex items-center justify-center group-hover:scale-[1.02] transform text-sm"
+                    >
+                      Crear campaña
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -637,13 +675,13 @@ const AdvertisePage = () => {
               </div>
               <ul className="text-sm text-gray-700 space-y-2">
                 <li>
-                  • <strong>Descuento del 70%</strong> aplicable a todos los espacios publicitarios durante los primeros 3 meses de contrato.
+                  • <strong>Descuento del 50%</strong> aplicable a Impulso Local y Sponsor de Ciudad durante los primeros 3 meses de contrato.
                 </li>
                 <li>
                   • El periodo de 3 meses comienza a partir de la <strong>fecha de pago confirmado</strong>.
                 </li>
                 <li>
-                  • Esta promoción es válida para contratos iniciados <strong>hasta el 1 de Marzo de 2026</strong>.
+                  • Esta promoción es válida para contratos iniciados <strong>hasta el 1 de Agosto de 2026</strong>.
                 </li>
                 <li>
                   • Al finalizar los 3 meses promocionales, el precio regresa a la tarifa regular vigente.

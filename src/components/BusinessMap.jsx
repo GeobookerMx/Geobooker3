@@ -346,24 +346,16 @@ export const BusinessMap = memo(({
   }, [businesses, userLocation]);
 
   const geobookerMarkers = useMemo(() => {
-    // Merge Geobooker native businesses with DENUE candidates, deduplicating by ID
-    const geobookerIds = new Set(geobookerBusinesses.map(b => b.id));
-    // Collect recommended IDs to exclude them from this group (they render separately)
+    // Collect recommended IDs to exclude them from this group
     const recommendedIds = new Set(recommendedBusinesses.map(r => r.id));
-    // Only add DENUE businesses whose ID is NOT already in geobookerBusinesses or recommendedBusinesses
-    const uniqueDenue = denueBusinesses.filter(b => b && !geobookerIds.has(b.id) && !recommendedIds.has(b.id));
-    const combinedBusinesses = [
-      ...geobookerBusinesses.filter(b => !recommendedIds.has(b.id)),
-      ...uniqueDenue
-    ];
     
-    const validMarkers = combinedBusinesses.filter(b => b && !isNaN(Number(b.latitude ?? b.lat)) && !isNaN(Number(b.longitude ?? b.lng)));
-    if (combinedBusinesses.length > 0) {
-      console.log(`📍 BusinessMap: Procesando ${combinedBusinesses.length} negocios de Geobooker/DENUE (${validMarkers.length} válidos)`);
-    }
+    // Only native Geobooker businesses (NOT DENUE)
+    const nativeOnly = geobookerBusinesses.filter(b => !recommendedIds.has(b.id));
+    
+    const validMarkers = nativeOnly.filter(b => b && !isNaN(Number(b.latitude ?? b.lat)) && !isNaN(Number(b.longitude ?? b.lng)));
     return validMarkers.map((business) => ({
       ...business,
-      latitude: business.latitude ?? business.lat, // Normalize lat/lng from DENUE candidates
+      latitude: business.latitude ?? business.lat,
       longitude: business.longitude ?? business.lng,
       distance: userLocation ? calculateDistance(
         userLocation.lat, userLocation.lng,
@@ -371,7 +363,29 @@ export const BusinessMap = memo(({
       ) : null,
       type: 'geobooker'
     }));
-  }, [geobookerBusinesses, denueBusinesses, recommendedBusinesses, userLocation]);
+  }, [geobookerBusinesses, recommendedBusinesses, userLocation]);
+
+  // 🗺️ Marcadores DENUE separados para clustering independiente
+  const denueMarkers = useMemo(() => {
+    const geobookerIds = new Set(geobookerBusinesses.map(b => b.id));
+    const recommendedIds = new Set(recommendedBusinesses.map(r => r.id));
+    const uniqueDenue = denueBusinesses.filter(b => b && !geobookerIds.has(b.id) && !recommendedIds.has(b.id));
+    
+    const validMarkers = uniqueDenue.filter(b => b && !isNaN(Number(b.lat)) && !isNaN(Number(b.lng)));
+    if (uniqueDenue.length > 0) {
+      console.log(`📍 BusinessMap: ${uniqueDenue.length} DENUE candidates (${validMarkers.length} válidos)`);
+    }
+    return validMarkers.map((business) => ({
+      ...business,
+      latitude: business.lat,
+      longitude: business.lng,
+      distance: userLocation ? calculateDistance(
+        userLocation.lat, userLocation.lng,
+        Number(business.lat), Number(business.lng)
+      ) : null,
+      type: 'geobooker'
+    }));
+  }, [denueBusinesses, geobookerBusinesses, recommendedBusinesses, userLocation]);
 
   // 💚 Marcadores de negocios recomendados por usuarios
   const recommendedMarkers = useMemo(() => {
@@ -547,11 +561,9 @@ export const BusinessMap = memo(({
           </MarkerClusterer>
         )}
 
-        {/* Marcadores de Geobooker (Íconos por categoría, Premium con estrella dorada) */}
+        {/* Marcadores nativos de Geobooker (Íconos por categoría, Premium con estrella dorada) */}
         {geobookerMarkers.map((business) => {
-          // Detectar si es negocio Premium (verificar flag is_premium_owner o is_premium)
           const isPremium = business.is_premium_owner || business.is_premium || false;
-          // Obtener icono según categoría (o premium si aplica)
           const categoryIcon = getCategoryIcon(business.category, isPremium);
 
           return (
@@ -563,11 +575,51 @@ export const BusinessMap = memo(({
               onMouseOut={() => setHoveredBusiness(null)}
               icon={categoryIcon}
               title={isPremium ? `⭐ ${business.name} (Premium)` : business.name}
-              zIndex={isPremium ? 1000 : 900}
+              zIndex={isPremium ? 5000 : 2000}
               animation={isPremium ? window.google?.maps?.Animation?.DROP : undefined}
             />
           );
         })}
+
+        {/* 🏭 Marcadores DENUE con Clustering (evita saturación visual) */}
+        {denueMarkers.length > 0 && (
+          <MarkerClusterer
+            options={{
+              imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m',
+              gridSize: 80,
+              minimumClusterSize: 3,
+              maxZoom: 16,
+              averageCenter: true,
+              styles: [
+                { textColor: 'white', textSize: 12, url: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m1.png', height: 53, width: 53 },
+                { textColor: 'white', textSize: 13, url: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m2.png', height: 56, width: 56 },
+                { textColor: 'white', textSize: 14, url: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m3.png', height: 66, width: 66 }
+              ]
+            }}
+          >
+            {(clusterer) =>
+              denueMarkers.map((business) => {
+                const categoryIcon = getCategoryIcon(business.category, false);
+                return (
+                  <MarkerF
+                    key={`denue-${business.id}`}
+                    position={{ lat: Number(business.latitude), lng: Number(business.longitude) }}
+                    onClick={() => onBusinessSelect(business)}
+                    onMouseOver={() => setHoveredBusiness(business)}
+                    onMouseOut={() => setHoveredBusiness(null)}
+                    icon={{
+                      ...categoryIcon,
+                      scale: (categoryIcon.scale || 1.8) * 0.7 // DENUE markers 30% smaller than native
+                    }}
+                    title={`🏢 ${business.name}`}
+                    zIndex={500}
+                    clusterer={clusterer}
+                  />
+                );
+              })
+            }
+          </MarkerClusterer>
+        )}
 
         {/* 💚 Marcadores de Negocios Recomendados por Usuarios (Corazón verde) */}
         {recommendedMarkers.map((rec) => (

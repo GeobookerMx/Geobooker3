@@ -346,34 +346,38 @@ const HomePage = () => {
 
   // 📍 NUEVO: Handler para consultar DENUE en background cuando el mapa se mueve
   const handleMapIdle = useCallback(({ bounds, zoom }) => {
-    // Si el zoom es muy lejano, no saturar la base de datos (nivel ciudad o más lejos)
-    if (zoom < 12) {
+    // Si el zoom es muy lejano, no saturar la base de datos
+    if (zoom < 13) {
       setDenueBusinesses([]);
       return;
     }
+
+    // 🎯 Límite dinámico según zoom para evitar saturación visual
+    let dynamicLimit;
+    if (zoom <= 13)      dynamicLimit = 50;   // Vista ciudad: pocos markers
+    else if (zoom <= 14) dynamicLimit = 100;  // Vista zona: moderado
+    else if (zoom <= 15) dynamicLimit = 200;  // Vista colonia: detallado
+    else                 dynamicLimit = 300;  // Vista calle: máximo detalle
 
     // Debounce de 1 segundo para no saturar al mover el mapa rápido
     if (mapIdleTimerRef.current) clearTimeout(mapIdleTimerRef.current);
 
     mapIdleTimerRef.current = setTimeout(async () => {
       try {
-        console.log('🗺️ [HomePage] Consultando DENUE candidates en viewport...', bounds);
+        console.log(`🗺️ [HomePage] Consultando DENUE en viewport (zoom=${zoom}, limit=${dynamicLimit})...`, bounds);
         const candidates = await getBusinessesInBounds(
           bounds.south,
           bounds.west,
           bounds.north,
           bounds.east,
-          500 // Increased limit for better density
+          dynamicLimit
         );
         
         if (candidates && candidates.length > 0) {
           // ✅ FIX: Filtrar para quedarnos SOLO con candidatos DENUE/seed
-          // Los negocios nativos ya están cargados vía fetchGeobookerBusinesses()
           const geobookerIds = new Set(geobookerBusinesses.map(b => b.id));
           const onlyDenueCandidates = candidates.filter(c => {
-            // Excluir si ya está en geobookerBusinesses (evitar duplicados)
             if (geobookerIds.has(c.id)) return false;
-            // Solo incluir candidatos con source_type de semilla/DENUE
             const src = (c.source_type || '').toLowerCase();
             return src.includes('seed') || src.includes('denue');
           });

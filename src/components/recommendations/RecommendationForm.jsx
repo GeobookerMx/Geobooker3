@@ -1,11 +1,12 @@
 // src/components/recommendations/RecommendationForm.jsx
 // Modal/Formulario para que usuarios recomienden negocios
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { X, Star, MapPin, Camera, Send, AlertCircle, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { X, Star, MapPin, Camera, Send, AlertCircle, CheckCircle, Navigation } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
+import { GoogleMap, MarkerF, useJsApiLoader } from '@react-google-maps/api';
 
 // Categorías disponibles para negocios
 const CATEGORIES = [
@@ -44,6 +45,53 @@ const RecommendationForm = ({ isOpen, onClose, userLocation, onSuccess }) => {
     });
 
     const [photoPreview, setPhotoPreview] = useState(null);
+    const [showMap, setShowMap] = useState(false);
+    const mapRef = useRef(null);
+
+    const { isLoaded } = useJsApiLoader({
+        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+        libraries: ['places'],
+    });
+
+    const mapCenter = {
+        lat: location.lat || userLocation?.lat || 19.4326,
+        lng: location.lng || userLocation?.lng || -99.1332
+    };
+
+    // Click/tap en el mapa para colocar pin del negocio
+    const onMapClick = useCallback((e) => {
+        const lat = e.latLng.lat();
+        const lng = e.latLng.lng();
+        setLocation({ lat, lng, verified: true });
+
+        // Intentar reverse geocode para auto-llenar dirección
+        if (window.google?.maps?.Geocoder) {
+            const geocoder = new window.google.maps.Geocoder();
+            geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+                if (status === 'OK' && results?.[0]) {
+                    setFormData(prev => ({
+                        ...prev,
+                        address: prev.address || results[0].formatted_address
+                    }));
+                }
+            });
+        }
+    }, []);
+
+    // Obtener ubicación del usuario para centrar mapa
+    const centerOnMyLocation = useCallback(() => {
+        if (!navigator.geolocation) return;
+        toast.loading('Obteniendo ubicación...', { id: 'geo' });
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                mapRef.current?.panTo(loc);
+                mapRef.current?.setZoom(16);
+                toast.success('Mapa centrado en tu ubicación', { id: 'geo' });
+            },
+            () => toast.error('No se pudo obtener tu ubicación', { id: 'geo' })
+        );
+    }, []);
 
     // Verificar límite del usuario
     useEffect(() => {
@@ -69,26 +117,6 @@ const RecommendationForm = ({ isOpen, onClose, userLocation, onSuccess }) => {
             checkLimit();
         }
     }, [user?.id, isOpen]);
-
-    // Obtener ubicación actual
-    const getCurrentLocation = useCallback(() => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    setLocation({
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude,
-                        verified: true
-                    });
-                    toast.success('¡Ubicación verificada! Tu recomendación tendrá el badge 📍 Verificado');
-                },
-                (error) => {
-                    console.error('Error getting location:', error);
-                    toast.error('No se pudo obtener tu ubicación');
-                }
-            );
-        }
-    }, []);
 
     // Manejar cambio de foto
     const handlePhotoChange = (e) => {
@@ -311,39 +339,103 @@ const RecommendationForm = ({ isOpen, onClose, userLocation, onSuccess }) => {
                             </div>
                         </div>
 
-                        {/* Ubicación */}
+                        {/* Ubicación — Inline Map Picker */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Ubicación
+                                📍 Ubicación del negocio
                             </label>
                             <div className="flex gap-2">
                                 <input
                                     type="text"
                                     value={formData.address}
                                     onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                                    placeholder="Dirección o referencia (opcional)"
+                                    placeholder="Dirección o referencia"
                                     className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500"
                                 />
                                 <button
                                     type="button"
-                                    onClick={getCurrentLocation}
-                                    className="px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition"
-                                    title="Usar mi ubicación"
+                                    onClick={() => setShowMap(!showMap)}
+                                    className={`px-4 py-3 rounded-xl transition font-medium text-sm flex items-center gap-1 ${
+                                        showMap
+                                            ? 'bg-green-600 text-white hover:bg-green-700'
+                                            : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                    }`}
+                                    title="Abrir mapa para colocar pin"
                                 >
-                                    <MapPin className="w-5 h-5 text-gray-600" />
+                                    <MapPin className="w-4 h-4" />
+                                    {showMap ? 'Cerrar' : 'Mapa'}
                                 </button>
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                                {location.verified ? (
-                                    <span className="text-green-600 font-medium">
-                                        ✅ Ubicación verificada • Lat: {location.lat?.toFixed(4)}, Lng: {location.lng?.toFixed(4)}
-                                    </span>
-                                ) : (
-                                    <span className="text-amber-600">
-                                        ⚠️ Sin ubicación verificada. Toca el botón 📍 para verificar tu zona y dar más credibilidad.
-                                    </span>
-                                )}
-                            </p>
+
+                            {/* Inline Google Map */}
+                            {showMap && (
+                                <div className="mt-3 rounded-xl overflow-hidden border-2 border-green-200 shadow-sm">
+                                    {isLoaded ? (
+                                        <>
+                                            <GoogleMap
+                                                mapContainerStyle={{ width: '100%', height: '250px' }}
+                                                center={mapCenter}
+                                                zoom={location.verified ? 16 : 13}
+                                                onClick={onMapClick}
+                                                onLoad={(map) => { mapRef.current = map; }}
+                                                options={{
+                                                    streetViewControl: false,
+                                                    mapTypeControl: false,
+                                                    fullscreenControl: false,
+                                                    zoomControl: true,
+                                                }}
+                                            >
+                                                {location.verified && (
+                                                    <MarkerF
+                                                        position={{ lat: location.lat, lng: location.lng }}
+                                                        draggable
+                                                        onDragEnd={(e) => {
+                                                            const lat = e.latLng.lat();
+                                                            const lng = e.latLng.lng();
+                                                            setLocation({ lat, lng, verified: true });
+                                                        }}
+                                                        animation={window.google?.maps?.Animation?.DROP}
+                                                    />
+                                                )}
+                                            </GoogleMap>
+                                            <div className="flex items-center gap-2 p-2 bg-gray-50">
+                                                <button
+                                                    type="button"
+                                                    onClick={centerOnMyLocation}
+                                                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-200 transition"
+                                                >
+                                                    <Navigation className="w-3 h-3" />
+                                                    Mi ubicación
+                                                </button>
+                                                <span className="text-xs text-gray-500">
+                                                    {location.verified
+                                                        ? `📍 ${location.lat?.toFixed(4)}, ${location.lng?.toFixed(4)}`
+                                                        : 'Toca el mapa para colocar el pin del negocio'
+                                                    }
+                                                </span>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="h-[250px] bg-gray-100 flex items-center justify-center">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-green-500 border-t-transparent" />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {!showMap && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                    {location.verified ? (
+                                        <span className="text-green-600 font-medium">
+                                            ✅ Ubicación marcada • Lat: {location.lat?.toFixed(4)}, Lng: {location.lng?.toFixed(4)}
+                                        </span>
+                                    ) : (
+                                        <span className="text-amber-600">
+                                            Toca "Mapa" para marcar la ubicación exacta del negocio 🗺️
+                                        </span>
+                                    )}
+                                </p>
+                            )}
                         </div>
 
                         {/* Pros */}

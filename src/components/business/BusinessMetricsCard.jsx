@@ -5,7 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import {
-    MessageCircle, Phone, Navigation, Share2, Heart,
+    Eye, MessageCircle, Phone, Navigation, Share2, Heart,
     TrendingUp, TrendingDown, Minus, BarChart3, Calendar
 } from 'lucide-react';
 
@@ -42,6 +42,7 @@ export default function BusinessMetricsCard({ businessId, businessName }) {
             const count = (data, event) => (data || []).filter(e => e.event_name === event).length;
 
             const current = {
+                views: count(currentData, 'view_business_profile'),
                 whatsapp: count(currentData, 'tap_whatsapp'),
                 calls: count(currentData, 'tap_call'),
                 directions: count(currentData, 'open_directions'),
@@ -51,6 +52,7 @@ export default function BusinessMetricsCard({ businessId, businessName }) {
             };
 
             const previous = {
+                views: count(prevData, 'view_business_profile'),
                 whatsapp: count(prevData, 'tap_whatsapp'),
                 calls: count(prevData, 'tap_call'),
                 directions: count(prevData, 'open_directions'),
@@ -102,6 +104,7 @@ export default function BusinessMetricsCard({ businessId, businessName }) {
     }
 
     const items = [
+        { label: 'Vistas', icon: Eye, current: metrics.current.views, prev: metrics.previous.views, color: 'text-indigo-600', bg: 'bg-indigo-100' },
         { label: 'WhatsApp', icon: MessageCircle, current: metrics.current.whatsapp, prev: metrics.previous.whatsapp, color: 'text-green-600', bg: 'bg-green-100' },
         { label: 'Llamadas', icon: Phone, current: metrics.current.calls, prev: metrics.previous.calls, color: 'text-blue-600', bg: 'bg-blue-100' },
         { label: 'Rutas', icon: Navigation, current: metrics.current.directions, prev: metrics.previous.directions, color: 'text-orange-600', bg: 'bg-orange-100' },
@@ -144,7 +147,7 @@ export default function BusinessMetricsCard({ businessId, businessName }) {
             </div>
 
             {/* Métricas Grid */}
-            <div className="grid grid-cols-3 md:grid-cols-5 gap-0 divide-x divide-gray-100">
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-0 divide-x divide-gray-100">
                 {items.map((item) => {
                     const trend = getTrend(item.current, item.prev);
                     return (

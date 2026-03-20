@@ -21,7 +21,8 @@ import {
     trackCallClick,
     trackWhatsAppClick,
     trackShareBusiness,
-    trackSaveFavorite
+    trackSaveFavorite,
+    trackBusinessProfileView
 } from '../services/analyticsService';
 
 // Mapeo de tags a iconos y nombres
@@ -57,6 +58,8 @@ const BusinessProfilePage = () => {
 
                 if (error) throw error;
                 setBusiness(data);
+                // Track profile view (sellable KPI)
+                if (data) trackBusinessProfileView(id, data.name, 'direct');
             } catch (error) {
                 console.error('Error loading business:', error);
                 toast.error('No se pudo cargar el negocio');

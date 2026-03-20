@@ -118,7 +118,7 @@ const WhatsAppCRM = () => {
 
     const openWhatsApp = async (item) => {
         const contact = item.marketing_contacts;
-        const phone = contact.phone.replace(/\D/g, '');
+        const phone = WhatsAppService.normalizePhone(contact.phone).replace(/^\+/, '');
         const tier = contact.tier;
         const source = item.source || contact.source;
         const isInternational = source === 'apify';

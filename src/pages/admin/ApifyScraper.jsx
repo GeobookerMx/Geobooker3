@@ -433,7 +433,7 @@ const ApifyScraper = () => {
 
     // Start cooldown timer
     const startCooldown = () => {
-        const seconds = Math.ceil(RATE_LIMIT.cooldownMs / 1000);
+        const seconds = Math.ceil(rateLimitConfig.cooldownMs / 1000);
         setCooldownSeconds(seconds);
 
         const interval = setInterval(() => {

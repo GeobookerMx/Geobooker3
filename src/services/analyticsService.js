@@ -571,6 +571,14 @@ export async function trackShareBusiness(businessId, businessName, platform = 'n
 }
 
 /**
+ * Trackear vista de perfil de negocio (KPI vendible)
+ * Registra cada vez que un usuario abre el perfil de un negocio
+ */
+export async function trackBusinessProfileView(businessId, businessName, source = 'direct') {
+    return trackIntentEvent('view_business_profile', businessId, businessName, { source });
+}
+
+/**
  * Trackear Guardar en favoritos
  */
 export async function trackSaveFavorite(businessId, businessName) {

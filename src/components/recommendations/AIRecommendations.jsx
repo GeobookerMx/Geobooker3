@@ -8,12 +8,15 @@
  * - Negocios Premium
  */
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useLocation } from '../../contexts/LocationContext';
 import { Phone, MessageCircle, MapPin, Star, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { trackWhatsAppClick, trackCallClick, trackDirectionsClick } from '../../services/analyticsService';
 
 const AIRecommendations = () => {
     const { userLocation } = useLocation();
+    const navigate = useNavigate();
     const [recommendations, setRecommendations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -127,18 +130,21 @@ const AIRecommendations = () => {
         );
     };
 
-    const openWhatsApp = (phone, businessName) => {
+    const openWhatsApp = (businessId, businessName, phone) => {
+        trackWhatsAppClick(businessId, businessName, 'ai_recommendations');
         const cleanPhone = phone?.replace(/\D/g, '');
         const message = `Hola, encontré tu negocio ${businessName} en Geobooker y me gustaría más información.`;
         window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank');
     };
 
-    const openPhone = (phone) => {
+    const openPhone = (businessId, businessName, phone) => {
+        trackCallClick(businessId, businessName, 'ai_recommendations');
         window.open(`tel:${phone}`, '_self');
     };
 
-    const openMaps = (lat, lng, name) => {
-        window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&destination_place_id=${encodeURIComponent(name)}`, '_blank');
+    const openMaps = (businessId, businessName, lat, lng) => {
+        trackDirectionsClick(businessId, businessName, 'ai_recommendations');
+        window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
     };
 
     if (loading) {
@@ -216,8 +222,11 @@ const AIRecommendations = () => {
                             </div>
                         )}
 
-                        {/* Business Info */}
-                        <div className="flex items-start gap-3 mb-3">
+                        {/* Business Info — click goes to profile */}
+                        <div
+                            className="flex items-start gap-3 mb-3 cursor-pointer"
+                            onClick={() => navigate(`/business/${business.id}`)}
+                        >
                             {business.logo_url ? (
                                 <img
                                     src={business.logo_url}
@@ -230,7 +239,7 @@ const AIRecommendations = () => {
                                 </div>
                             )}
                             <div className="flex-1 min-w-0">
-                                <h4 className="font-bold text-gray-900 truncate">{business.name}</h4>
+                                <h4 className="font-bold text-gray-900 truncate hover:text-blue-600 transition-colors">{business.name}</h4>
                                 <p className="text-sm text-gray-500 truncate">{business.category}</p>
                                 <div className="flex items-center gap-2 mt-1">
                                     {business.rating && (
@@ -253,14 +262,14 @@ const AIRecommendations = () => {
                             {business.phone && (
                                 <>
                                     <button
-                                        onClick={() => openWhatsApp(business.phone, business.name)}
+                                        onClick={() => openWhatsApp(business.id, business.name, business.phone)}
                                         className="flex-1 flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg text-sm font-medium transition"
                                     >
                                         <MessageCircle className="w-4 h-4" />
                                         WhatsApp
                                     </button>
                                     <button
-                                        onClick={() => openPhone(business.phone)}
+                                        onClick={() => openPhone(business.id, business.name, business.phone)}
                                         className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition"
                                     >
                                         <Phone className="w-4 h-4" />
@@ -268,7 +277,7 @@ const AIRecommendations = () => {
                                 </>
                             )}
                             <button
-                                onClick={() => openMaps(business.latitude, business.longitude, business.name)}
+                                onClick={() => openMaps(business.id, business.name, business.latitude, business.longitude)}
                                 className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition"
                             >
                                 <MapPin className="w-4 h-4" />

@@ -16,10 +16,10 @@ export default function AboutPage() {
     const isSpanish = i18n.language?.startsWith('es');
 
     const stats = [
-        { value: '1,000+', label: isSpanish ? 'Negocios Registrados' : 'Registered Businesses', icon: Building2 },
-        { value: '50+', label: isSpanish ? 'Ciudades' : 'Cities', icon: MapPin },
-        { value: '10K+', label: isSpanish ? 'Usuarios Activos' : 'Active Users', icon: Users },
-        { value: '4.8★', label: isSpanish ? 'Calificación' : 'Rating', icon: Star },
+        { value: '500K+', label: isSpanish ? 'Negocios en el mapa' : 'Businesses on the map', icon: Building2 },
+        { value: '200+', label: isSpanish ? 'Ciudades cubiertas' : 'Cities covered', icon: MapPin },
+        { value: '25+', label: isSpanish ? 'Países alcanzados' : 'Countries reached', icon: Globe },
+        { value: '100%', label: isSpanish ? 'Gratis para usuarios' : 'Free for users', icon: Heart },
     ];
 
     const values = [

@@ -10,6 +10,7 @@ import {
     User, Calendar, Globe, Phone, Mail, Image,
     RefreshCw, ExternalLink, Building2, AlertCircle
 } from 'lucide-react';
+import { sendEmail } from '../../services/emailService';
 
 const ClaimsManagement = () => {
     const [claims, setClaims] = useState([]);
@@ -91,6 +92,40 @@ const ClaimsManagement = () => {
                 .in('status', ['submitted', 'under_review']);
 
             toast.success('✅ Reclamo aprobado — negocio asignado al usuario');
+
+            // Enviar email de notificación al reclamante
+            try {
+                const bizName = claim.businesses?.name || 'tu negocio';
+                await sendEmail({
+                    to: claim.email,
+                    subject: `✅ ¡Tu reclamo de "${bizName}" fue aprobado! — Geobooker`,
+                    html: `
+                        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
+                            <div style="background:linear-gradient(135deg,#059669,#10b981);padding:30px;text-align:center;border-radius:12px 12px 0 0">
+                                <h1 style="color:#fff;margin:0;font-size:24px">🎉 ¡Reclamo Aprobado!</h1>
+                            </div>
+                            <div style="background:#fff;padding:30px;border:1px solid #e5e7eb;border-radius:0 0 12px 12px">
+                                <p style="color:#333;font-size:16px">Hola <strong>${claim.claimer_name}</strong>,</p>
+                                <p style="color:#555;line-height:1.6">Tu solicitud de reclamo para <strong>${bizName}</strong> ha sido <span style="color:#059669;font-weight:bold">aprobada</span>.</p>
+                                <p style="color:#555;line-height:1.6">Ahora puedes:</p>
+                                <ul style="color:#555;line-height:1.8">
+                                    <li>✏️ Editar la información de tu negocio</li>
+                                    <li>📸 Subir fotos</li>
+                                    <li>⭐ Recibir y responder reseñas</li>
+                                    <li>📊 Ver métricas de visitas</li>
+                                </ul>
+                                <div style="text-align:center;margin:25px 0">
+                                    <a href="https://geobooker.com.mx/dashboard" style="display:inline-block;background:#059669;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold">Ir a mi Dashboard</a>
+                                </div>
+                                <p style="color:#888;font-size:12px;text-align:center">— Equipo Geobooker</p>
+                            </div>
+                        </div>
+                    `
+                });
+            } catch (emailErr) {
+                console.warn('Error enviando email de aprobación:', emailErr);
+            }
+
             loadClaims();
         } catch (err) {
             console.error('Error approving claim:', err);
@@ -118,6 +153,38 @@ const ClaimsManagement = () => {
 
             if (error) throw error;
             toast.success('❌ Reclamo rechazado');
+
+            // Enviar email de notificación al reclamante
+            try {
+                const claim = claims.find(c => c.id === claimId);
+                if (claim?.email) {
+                    const bizName = claim.businesses?.name || 'el negocio solicitado';
+                    await sendEmail({
+                        to: claim.email,
+                        subject: `Actualización sobre tu reclamo de "${bizName}" — Geobooker`,
+                        html: `
+                            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
+                                <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:30px;text-align:center;border-radius:12px 12px 0 0">
+                                    <h1 style="color:#fff;margin:0;font-size:24px">Actualización de Reclamo</h1>
+                                </div>
+                                <div style="background:#fff;padding:30px;border:1px solid #e5e7eb;border-radius:0 0 12px 12px">
+                                    <p style="color:#333;font-size:16px">Hola <strong>${claim.claimer_name}</strong>,</p>
+                                    <p style="color:#555;line-height:1.6">Lamentablemente, tu solicitud de reclamo para <strong>${bizName}</strong> no pudo ser verificada en este momento.</p>
+                                    ${rejectReason ? `<div style="background:#fef2f2;border-left:4px solid #dc2626;padding:15px;margin:15px 0;border-radius:4px"><strong style="color:#dc2626">Motivo:</strong> <span style="color:#555">${rejectReason}</span></div>` : ''}
+                                    <p style="color:#555;line-height:1.6">Si crees que esto es un error, puedes intentar nuevamente enviando documentación adicional que compruebe tu relación con el negocio.</p>
+                                    <div style="text-align:center;margin:25px 0">
+                                        <a href="https://geobooker.com.mx/claim" style="display:inline-block;background:#6366f1;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold">Intentar de nuevo</a>
+                                    </div>
+                                    <p style="color:#888;font-size:12px;text-align:center">— Equipo Geobooker</p>
+                                </div>
+                            </div>
+                        `
+                    });
+                }
+            } catch (emailErr) {
+                console.warn('Error enviando email de rechazo:', emailErr);
+            }
+
             setShowRejectModal(null);
             setRejectReason('');
             loadClaims();

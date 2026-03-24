@@ -197,9 +197,15 @@ const BusinessProfilePage = () => {
                     </button>
                 </div>
 
-                {/* Badge Premium */}
+                {/* Badge Premium / Verificado */}
                 {business.is_premium && (
                     <div className="absolute bottom-4 right-4 bg-gradient-to-r from-yellow-400 to-amber-500 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
+                        <CheckCircle className="w-4 h-4" />
+                        VERIFICADO
+                    </div>
+                )}
+                {!business.is_premium && business.is_claimed && (
+                    <div className="absolute bottom-4 right-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
                         <CheckCircle className="w-4 h-4" />
                         VERIFICADO
                     </div>

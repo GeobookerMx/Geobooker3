@@ -794,22 +794,25 @@ const HomePage = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
-              <div className="text-5xl font-bold mb-2">10K+</div>
-              <div className="text-blue-200">{t('home.stats.registered')}</div>
+              <div className="text-5xl font-bold mb-2">500K+</div>
+              <div className="text-blue-200">{t('home.stats.registered', 'Negocios en el mapa')}</div>
             </div>
             <div>
-              <div className="text-5xl font-bold mb-2">50K+</div>
-              <div className="text-blue-200">{t('home.stats.activeUsers')}</div>
+              <div className="text-5xl font-bold mb-2">25+</div>
+              <div className="text-blue-200">{t('home.stats.countries', 'Países alcanzados')}</div>
             </div>
             <div>
-              <div className="text-5xl font-bold mb-2">100K+</div>
-              <div className="text-blue-200">{t('home.stats.searches')}</div>
+              <div className="text-5xl font-bold mb-2">200+</div>
+              <div className="text-blue-200">{t('home.stats.cities', 'Ciudades cubiertas')}</div>
             </div>
             <div>
-              <div className="text-5xl font-bold mb-2">4.8★</div>
-              <div className="text-blue-200">{t('home.stats.rating')}</div>
+              <div className="text-5xl font-bold mb-2">100%</div>
+              <div className="text-blue-200">{t('home.stats.free', 'Gratis para usuarios')}</div>
             </div>
           </div>
+          <p className="text-center text-blue-300 text-xs mt-6 opacity-70">
+            * Datos del directorio DENUE/INEGI + negocios registrados por usuarios. Actualizado 2026.
+          </p>
         </div>
       </div>
 
@@ -889,6 +892,32 @@ const HomePage = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 🏪 CTA: Reclamar Negocio */}
+      <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 py-12 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-3">
+            ¿Tu negocio ya está en Geobooker?
+          </h2>
+          <p className="text-lg text-orange-100 mb-8 max-w-2xl mx-auto">
+            Miles de negocios del DENUE ya aparecen en nuestro mapa. Búscalo, reclámalo gratis y toma control de tu perfil digital.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              to="/claim"
+              className="bg-white text-amber-700 px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2"
+            >
+              🏪 Reclamar mi Negocio
+            </Link>
+            <Link
+              to="/business/register"
+              className="text-white border-2 border-white/60 px-6 py-3.5 rounded-xl font-bold hover:bg-white/20 transition-all"
+            >
+              + Registrar nuevo negocio
+            </Link>
           </div>
         </div>
       </div>

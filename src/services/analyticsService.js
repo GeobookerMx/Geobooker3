@@ -586,6 +586,27 @@ export async function trackSaveFavorite(businessId, businessName) {
 }
 
 /**
+ * Trackear inicio de reclamo de negocio
+ * KPI: Mide cuántos usuarios inician el proceso de reclamar un negocio
+ */
+export async function trackClaimBusinessStart(businessId, businessName, sourceType = 'native') {
+    return trackIntentEvent('claim_business_start', businessId, businessName, {
+        source: 'claim_page',
+        metadata: { source_type: sourceType }
+    });
+}
+
+/**
+ * Trackear reclamo de negocio completado
+ * KPI: Mide cuántos reclamos se envían exitosamente
+ */
+export async function trackClaimBusinessComplete(businessId, businessName) {
+    return trackIntentEvent('claim_business_complete', businessId, businessName, {
+        source: 'claim_page'
+    });
+}
+
+/**
  * Obtener Device ID actual (para componentes que lo necesiten)
  */
 export { getOrCreateDeviceId };

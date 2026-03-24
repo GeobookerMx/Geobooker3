@@ -112,6 +112,9 @@ export default function Header() {
           <Link to="/categories" className="text-geoPurple hover:text-geoPink transition-colors">{t('nav.categories')}</Link>
           <Link to="/quienes-somos" className="text-geoPurple hover:text-geoPink transition-colors">{t('nav.about')}</Link>
           <Link to="/comunidad" className="text-geoPurple hover:text-geoPink transition-colors">{t('nav.community')}</Link>
+          <Link to="/claim" className="border-2 border-amber-600 text-amber-700 px-4 py-1.5 rounded-full font-bold hover:bg-amber-600 hover:text-white transition-all flex items-center gap-1 shadow-sm hover:-translate-y-0.5">
+            🏪 {t('nav.claimBusiness', 'Reclamar Negocio')}
+          </Link>
           {user && (
             <button
               onClick={() => setShowRecommendForm(true)}
@@ -208,6 +211,9 @@ export default function Header() {
           <Link to="/categories" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">{t('nav.categories')}</Link>
           <Link to="/quienes-somos" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">{t('nav.about')}</Link>
           <Link to="/comunidad" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">{t('nav.community')}</Link>
+          <Link to="/claim" onClick={() => setIsOpen(false)} className="block text-center border-2 border-amber-600 text-amber-700 hover:bg-amber-600 hover:text-white px-4 py-2 rounded-full w-full font-bold transition-all mb-2">
+            🏪 {t('nav.claimBusiness', 'Reclamar Negocio')}
+          </Link>
           {user && (
             <button
               onClick={() => { setIsOpen(false); setShowRecommendForm(true); }}

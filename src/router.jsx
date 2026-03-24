@@ -78,6 +78,7 @@ const PlaceProfilePage = lazy(() => import("./pages/PlaceProfilePage.jsx"));
 // Referral System - Lazy Loaded
 const ReferralLanding = lazy(() => import("./pages/ReferralLanding.jsx"));
 const DownloadPage = lazy(() => import("./pages/DownloadPage.jsx"));
+const ClaimBusinessPage = lazy(() => import("./pages/ClaimBusinessPage.jsx"));
 const DeleteAccountPage = lazy(() => import("./pages/DeleteAccountPage.jsx"));
 
 // Community Pages - Lazy Loaded
@@ -144,6 +145,9 @@ export default function AppRouter() {
 
           {/* Download App Page - Para QR codes y campañas */}
           <Route path="/download" element={<DownloadPage />} />
+
+          {/* Claim Business Page - Search & claim DENUE businesses */}
+          <Route path="/claim" element={<ClaimBusinessPage />} />
 
           {/* Delete Account Page - Required for app stores */}
           <Route path="/delete-account" element={<DeleteAccountPage />} />

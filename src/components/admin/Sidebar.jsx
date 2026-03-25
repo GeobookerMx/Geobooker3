@@ -113,8 +113,6 @@ const Sidebar = ({ onLogout }) => {
             items: [
                 { path: '/admin/marketing', icon: Mail, label: '🎯 CRM & Marketing' },
                 { path: '/admin/scan-invite', icon: Users, label: '🇲🇽 Scan Local' },
-                { path: '/admin/scraper', icon: Globe, label: '🌍 Apify Scraper ($)' },
-                { path: '/admin/scraper-history', icon: Database, label: '📂 Leads x Scrapping' },
             ]
         },
         {

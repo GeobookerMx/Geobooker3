@@ -39,6 +39,7 @@ export default function DashboardHome() {
     activeCampaigns: 0,
     monthlyRevenue: 0,
     pendingRecommendations: 0,
+    pendingClaims: 0,
     loading: true
   });
 
@@ -165,6 +166,17 @@ export default function DashboardHome() {
         setStats(prev => ({ ...prev, pendingRecommendations: pendingRecsCount || 0 }));
       } catch (recsErr) {
         console.warn('Error loading pending recommendations:', recsErr);
+      }
+
+      // Reclamos pendientes
+      try {
+        const { count: claimsCount } = await supabase
+          .from('business_claims')
+          .select('*', { count: 'exact', head: true })
+          .in('status', ['submitted', 'under_review']);
+        setStats(prev => ({ ...prev, pendingClaims: claimsCount || 0 }));
+      } catch (claimsErr) {
+        console.warn('Error loading pending claims:', claimsErr);
       }
 
       // Cargar estadísticas internacionales
@@ -309,6 +321,13 @@ export default function DashboardHome() {
             link="/admin/recommendations"
           />
         )}
+        <KPICard
+          title="🛡️ Reclamos Pendientes"
+          value={stats.pendingClaims.toLocaleString()}
+          icon={CheckCircle}
+          color={stats.pendingClaims > 0 ? "red" : "blue"}
+          link="/admin/claims"
+        />
       </div>
 
       {/* Analytics KPIs - Tráfico en tiempo real */}

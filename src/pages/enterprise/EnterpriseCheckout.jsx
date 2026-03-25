@@ -761,12 +761,12 @@ export default function EnterpriseCheckout() {
                                             <div className="flex flex-col">
                                                 <div>
                                                     <span className="text-2xl font-bold text-white">
-                                                        {formatPrice(plan.current_price_usd)}
+                                                        {formatPrice(plan.current_price_usd)} <span className="text-sm font-normal text-gray-400">USD</span>
                                                     </span>
                                                     <span className="text-gray-400 text-sm"> total</span>
                                                 </div>
                                                 <span className="text-emerald-400 text-sm">
-                                                    ≈ {formatPrice(Math.round(plan.current_price_usd / plan.duration_months))}/month
+                                                    ≈ {formatPrice(Math.round(plan.current_price_usd / plan.duration_months))} USD/month
                                                 </span>
                                             </div>
                                         </div>

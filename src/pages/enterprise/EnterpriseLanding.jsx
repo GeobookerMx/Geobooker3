@@ -271,7 +271,7 @@ export default function EnterpriseLanding() {
                                     {plan.is_custom ? (
                                         <div>
                                             <div className="text-2xl font-bold text-purple-400">
-                                                Desde $9,900
+                                                Desde $9,900 USD
                                             </div>
                                             <div className="text-gray-500 text-sm">Bajo propuesta</div>
                                         </div>

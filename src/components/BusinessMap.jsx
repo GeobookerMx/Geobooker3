@@ -161,34 +161,51 @@ const getCategoryIcon = (category, isPremium = false) => {
 
   // Mapear categorías a sus iconos
   const categoryKey = category?.toLowerCase() || '';
+  
+  // Utilidad para checar múltiples palabras clave (IGNORA acentos usando un normalize simple si hiciera falta, pero buscaremos las raíces)
+  const matchAny = (keywords) => keywords.some(kw => categoryKey.includes(kw));
 
-  // Buscar coincidencias parciales
-  if (categoryKey.includes('restaurant') || categoryKey.includes('comida') || categoryKey.includes('taco') || categoryKey.includes('cocina')) {
+  // Prioridad 1: Restaurantes y Comida
+  if (matchAny(['restaurant', 'comida', 'taco', 'cocina', 'alimento', 'preparación', 'preparacion', 'pizza', 'hamburgues', 'marisco', 'sushi', 'loncher', 'taquer', 'antojito', 'torta', 'panader', 'tortiller', 'dulce', 'postre', 'pastel', 'carnita', 'marisquer', 'jugos', 'licuados'])) {
     return CATEGORY_ICONS.restaurantes;
   }
-  if (categoryKey.includes('bar') || categoryKey.includes('cafe') || categoryKey.includes('cervez')) {
+  
+  // Prioridad 2: Bares y Cafeterías
+  if (matchAny(['bar', 'cafe', 'cervez', 'cantina', 'antro', 'licor', 'pulquer', 'bebida', 'vino'])) {
     return CATEGORY_ICONS.bares;
   }
-  if (categoryKey.includes('tienda') || categoryKey.includes('shop') || categoryKey.includes('comercio') || categoryKey.includes('abarrote')) {
-    return CATEGORY_ICONS.tiendas;
-  }
-  if (categoryKey.includes('servicio') || categoryKey.includes('abogado') || categoryKey.includes('contador') || categoryKey.includes('consul')) {
-    return CATEGORY_ICONS.servicios;
-  }
-  if (categoryKey.includes('taller') || categoryKey.includes('mecan') || categoryKey.includes('plom') || categoryKey.includes('auto') || categoryKey.includes('hogar')) {
-    return CATEGORY_ICONS.hogar_autos;
-  }
-  if (categoryKey.includes('salud') || categoryKey.includes('farm') || categoryKey.includes('medic') || categoryKey.includes('dentist') || categoryKey.includes('belleza') || categoryKey.includes('gym') || categoryKey.includes('barber')) {
+
+  // Prioridad 3: Salud y Belleza
+  if (matchAny(['salud', 'medic', 'dentist', 'belleza', 'gym', 'barber', 'clinic', 'hospital', 'laboratorio', 'optica', 'spa', 'estetic', 'peluquer', 'gimnasio', 'veterinar', 'consultorio', 'terapia', 'psicolog', 'enfermer', 'farmac', 'masaje'])) {
     return CATEGORY_ICONS.salud;
   }
-  if (categoryKey.includes('entret') || categoryKey.includes('cine') || categoryKey.includes('teatro') || categoryKey.includes('deport')) {
-    return CATEGORY_ICONS.entretenimiento;
+
+  // Prioridad 4: Hogar, Reparaciones y Autos
+  if (matchAny(['taller', 'mecan', 'plom', 'auto', 'hogar', 'repar', 'construc', 'carpinter', 'electric', 'pintur', 'herrer', 'gasoliner', 'refaccion', 'llanter', 'lavado', 'vulca', 'mantenimiento', 'limpieza', 'vidri', 'cerrajer'])) {
+    return CATEGORY_ICONS.hogar_autos;
   }
-  if (categoryKey.includes('educa') || categoryKey.includes('escuela') || categoryKey.includes('curso') || categoryKey.includes('idioma')) {
+
+  // Prioridad 5: Educación
+  if (matchAny(['educa', 'escuela', 'curso', 'idioma', 'colegio', 'universidad', 'instituto', 'capacita', 'guarder', 'preescolar', 'primari', 'secundari', 'preparatori', 'academia'])) {
     return CATEGORY_ICONS.educacion;
   }
 
-  // Por defecto, usar el icono de Geobooker estándar
+  // Prioridad 6: Entretenimiento y Turismo
+  if (matchAny(['entret', 'cine', 'teatro', 'deport', 'hotel', 'motel', 'turism', 'viaje', 'parque', 'museo', 'galeria', 'evento', 'salon', 'fiesta', 'juego', 'recreativ', 'alojamiento', 'cancha', 'club'])) {
+    return CATEGORY_ICONS.entretenimiento;
+  }
+
+  // Prioridad 7: Tiendas y Comercio General (El clasificador más amplio en DENUE)
+  if (matchAny(['tienda', 'shop', 'comercio', 'abarrote', 'supermercado', 'mercado', 'convenien', 'ropa', 'zapater', 'boutique', 'papeler', 'ferreter', 'tlapaler', 'carnicer', 'fruter', 'verduler', 'minisuper', 'regalo', 'muebler', 'materia', 'perfumer', 'joyer', 'mascota'])) {
+    return CATEGORY_ICONS.tiendas;
+  }
+
+  // Prioridad 8: Servicios Profesionales e Inmobiliarios
+  if (matchAny(['servicio', 'abogad', 'contador', 'consul', 'asesor', 'legal', 'financier', 'seguro', 'banco', 'notar', 'arquitect', 'inmobiliar', 'bienes raices', 'agencia', 'disen', 'diseñ', 'bufete', 'despacho', 'prestamo', 'credito', 'caja popular'])) {
+    return CATEGORY_ICONS.servicios;
+  }
+
+  // Por defecto, usar el icono de Geobooker estándar (color amarillo/naranja por defecto)
   return GEOBOOKER_ICON;
 };
 

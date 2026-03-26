@@ -22,7 +22,7 @@ const AdsManagement = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null); // ID de la campaña siendo procesada
-  const [activeTab, setActiveTab] = useState('spaces');
+  const [activeTab, setActiveTab] = useState('campaigns');
   const [statusFilter, setStatusFilter] = useState('active'); // filtro controlado
   const [selectedCampaign, setSelectedCampaign] = useState(null); // Para el modal de detalles
   const [previewCampaign, setPreviewCampaign] = useState(null); // Para el modal de vista previa
@@ -351,15 +351,6 @@ const AdsManagement = () => {
       <div className="border-b border-gray-200">
         <nav className="flex space-x-8">
           <button
-            onClick={() => setActiveTab('spaces')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'spaces'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-          >
-            Espacios Publicitarios
-          </button>
-          <button
             onClick={() => setActiveTab('campaigns')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'campaigns'
               ? 'border-blue-500 text-blue-600'
@@ -377,124 +368,10 @@ const AdsManagement = () => {
           >
             📊 Analytics
           </button>
-          <button
-            onClick={() => setActiveTab('byType')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'byType'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-          >
-            🎯 Por Tipo
-          </button>
         </nav>
       </div>
 
       {/* Contenido según tab */}
-      {activeTab === 'spaces' && (
-        <div>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-gray-900">
-              Espacios Disponibles
-            </h2>
-            <button className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-              <Plus className="w-4 h-4 mr-2" />
-              Nuevo Espacio
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {adSpaces.map((space) => (
-              <div
-                key={space.id}
-                className="bg-white rounded-xl shadow-md p-6 border border-gray-200"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-gray-900">
-                    {space.display_name}
-                  </h3>
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-semibold ${space.is_active
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
-                      }`}
-                  >
-                    {space.is_active ? 'Activo' : 'Inactivo'}
-                  </span>
-                </div>
-
-                <div className="space-y-2 text-sm text-gray-600">
-                  <p>
-                    <span className="font-semibold">Tipo:</span> {space.type}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Desktop:</span>{' '}
-                    {space.size_desktop}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Mobile:</span>{' '}
-                    {space.size_mobile}
-                  </p>
-
-                  {/* Precio con soporte para promoción */}
-                  {space.promo_price_monthly && space.promo_price_monthly < space.price_monthly ? (
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-3 rounded-lg border border-green-200">
-                      <p className="text-xs font-bold text-green-700 mb-1">
-                        {space.promo_label || '🔥 Oferta Especial'}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Precio:</span>{' '}
-                        <span className="line-through text-gray-400 text-sm">${space.price_monthly}/mes</span>
-                        <span className="ml-2 text-lg font-bold text-green-600">${space.promo_price_monthly}/mes</span>
-                      </p>
-                      {space.promo_end_date && (
-                        <p className="text-xs text-green-600 mt-1">
-                          ⏰ Válido hasta: {new Date(space.promo_end_date).toLocaleDateString('es-MX')}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <p>
-                      <span className="font-semibold">Precio:</span> $
-                      {space.price_monthly}/mes
-                    </p>
-                  )}
-
-                  <p>
-                    <span className="font-semibold">Slots:</span>{' '}
-                    {space.max_slots}
-                  </p>
-                </div>
-
-
-                <p className="text-xs text-gray-500 mt-3">
-                  {space.description}
-                </p>
-
-                <div className="mt-4 flex space-x-2">
-                  <button
-                    onClick={() => setEditingSpace(space)}
-                    className="flex-1 bg-blue-50 text-blue-600 px-3 py-2 rounded text-sm hover:bg-blue-100 transition"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveTab('campaigns');
-                      setSpaceFilter(space.id);
-                      loadData(statusFilter, space.id);
-                      toast.success(`Mostrando campañas de: ${space.display_name}`);
-                    }}
-                    className="flex-1 bg-gray-50 text-gray-600 px-3 py-2 rounded text-sm hover:bg-gray-100 transition"
-                  >
-                    Ver Campañas
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {activeTab === 'campaigns' && (
         <div>
           <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
@@ -537,11 +414,6 @@ const AdsManagement = () => {
                   </option>
                 ))}
               </select>
-
-              <button className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition whitespace-nowrap">
-                <Plus className="w-4 h-4 mr-2" />
-                Nueva Campaña
-              </button>
             </div>
           </div>
 
@@ -792,113 +664,7 @@ const AdsManagement = () => {
         </div>
       )}
 
-      {/* Tab: Por Tipo */}
-      {activeTab === 'byType' && (
-        <div className="space-y-6">
-          <h2 className="text-xl font-bold text-gray-900">
-            🎯 Campañas por Tipo de Espacio
-          </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {adSpaces.map((space) => {
-              // Filtrar campañas de este espacio
-              const spaceCampaigns = campaigns.filter(c => c.ad_space_id === space.id);
-              const activeCampaigns = spaceCampaigns.filter(c => c.status === 'active');
-              const pendingCampaigns = spaceCampaigns.filter(c => c.status === 'pending_review');
-              const totalRevenue = spaceCampaigns.reduce((sum, c) => sum + parseFloat(c.budget || 0), 0);
-              const totalImpressions = spaceCampaigns.reduce((sum, c) => sum + (c.impressions || 0), 0);
-              const totalClicks = spaceCampaigns.reduce((sum, c) => sum + (c.clicks || 0), 0);
-              const ctr = totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(2) : 0;
-
-              return (
-                <div key={space.id} className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
-                  <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
-                    <h3 className="text-lg font-bold text-white">{space.display_name}</h3>
-                    <p className="text-blue-100 text-sm">{space.type}</p>
-                  </div>
-
-                  <div className="p-6 space-y-4">
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">{activeCampaigns.length}</div>
-                        <div className="text-xs text-gray-500">Activas</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-yellow-600">{pendingCampaigns.length}</div>
-                        <div className="text-xs text-gray-500">Pendientes</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">${totalRevenue.toLocaleString()}</div>
-                        <div className="text-xs text-gray-500">Ingresos</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-purple-600">{ctr}%</div>
-                        <div className="text-xs text-gray-500">CTR</div>
-                      </div>
-                    </div>
-
-                    {/* Metrics Bar */}
-                    <div className="pt-4 border-t border-gray-200">
-                      <div className="flex justify-between text-sm text-gray-600">
-                        <span>👁 {totalImpressions.toLocaleString()} imp</span>
-                        <span>👆 {totalClicks.toLocaleString()} clicks</span>
-                      </div>
-                    </div>
-
-                    {/* Especificaciones del Espacio */}
-                    <div className="pt-4 border-t border-gray-200">
-                      <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 mb-2">
-                        <Info className="w-3 h-3" />
-                        Especificaciones para Publicitantes
-                      </div>
-                      <div className="bg-gray-50 rounded-lg p-3 text-xs space-y-1">
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">📐 Desktop:</span>
-                          <span className="font-medium text-gray-700">{space.size_desktop || 'Flexible'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">📱 Mobile:</span>
-                          <span className="font-medium text-gray-700">{space.size_mobile || 'Responsive'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">🖼️ Formatos:</span>
-                          <span className="font-medium text-gray-700">JPG, PNG, WebP</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">📦 Máximo:</span>
-                          <span className="font-medium text-gray-700">5 MB</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">💰 Precio:</span>
-                          <span className="font-medium text-green-600">${space.price_monthly?.toLocaleString()}/mes</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Action Button */}
-                    <button
-                      onClick={() => {
-                        setSpaceFilter(space.id);
-                        setActiveTab('campaigns');
-                      }}
-                      className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition text-sm font-medium"
-                    >
-                      Ver Campañas →
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {adSpaces.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
-              No hay espacios publicitarios configurados
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Modal de Detalles */}
       {selectedCampaign && (

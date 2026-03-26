@@ -130,13 +130,14 @@ export default function DashboardHome() {
         .order('created_at', { ascending: false })
         .limit(10);
 
-      setStats({
+      setStats(prev => ({
+        ...prev,
         totalUsers: usersCount || 0,
         totalBusinesses: businessesCount || 0,
         activeCampaigns: activeCampaignsCount || 0,
         monthlyRevenue: monthlyRevenue,
         loading: false
-      });
+      }));
 
       setRecentActivity(recentCampaigns || []);
 

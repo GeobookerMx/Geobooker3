@@ -234,6 +234,28 @@ export default function ChatWidget() {
                         <div ref={messagesEndRef} />
                     </div>
 
+                    {/* ⚡ Botones de Acción Directa */}
+                    <div className="px-3 pt-2 pb-1 bg-white border-t border-gray-100 flex gap-2 overflow-x-auto flex-shrink-0">
+                        <a
+                            href="/businesses"
+                            className="flex-shrink-0 flex items-center gap-1.5 text-xs bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-full hover:bg-blue-100 transition-colors font-medium whitespace-nowrap"
+                        >
+                            📍 Buscar negocios
+                        </a>
+                        <a
+                            href="/claim"
+                            className="flex-shrink-0 flex items-center gap-1.5 text-xs bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-full hover:bg-amber-100 transition-colors font-medium whitespace-nowrap"
+                        >
+                            🏪 Reclamar negocio
+                        </a>
+                        <a
+                            href="/advertise"
+                            className="flex-shrink-0 flex items-center gap-1.5 text-xs bg-purple-50 text-purple-700 border border-purple-200 px-3 py-1.5 rounded-full hover:bg-purple-100 transition-colors font-medium whitespace-nowrap"
+                        >
+                            📣 Publicitar
+                        </a>
+                    </div>
+
                     {/* Input */}
                     <div className="p-3 bg-white border-t border-gray-200 flex-shrink-0">
                         <div className="flex items-center space-x-2">

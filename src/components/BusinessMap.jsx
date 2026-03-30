@@ -303,6 +303,20 @@ export const BusinessMap = memo(({
   const [hoveredMarkerId, setHoveredMarkerId] = useState(null); // For bounce animation
   const bounceTimerRef = useRef(null);
 
+  // 🗂️ Filtros de categoría para negocios DENUE
+  const DENUE_CATEGORIES = [
+    { id: 'all',           emoji: '🗺️', label: 'Todos' },
+    { id: 'restaurante',   emoji: '🍽️', label: 'Restaurantes' },
+    { id: 'tienda',        emoji: '🏪', label: 'Tiendas' },
+    { id: 'salud',         emoji: '🏥', label: 'Salud' },
+    { id: 'servicio',      emoji: '🔧', label: 'Servicios' },
+    { id: 'educacion',     emoji: '📚', label: 'Educación' },
+    { id: 'entretenimiento', emoji: '🎭', label: 'Entretenimiento' },
+    { id: 'industria',     emoji: '🏭', label: 'Industria' },
+    { id: 'otro',          emoji: '📌', label: 'Otros' },
+  ];
+  const [activeCategory, setActiveCategory] = useState('all');
+
   // ⚡ useJsApiLoader en lugar de LoadScript - evita cargas múltiples
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -408,10 +422,25 @@ export const BusinessMap = memo(({
     const uniqueDenue = denueBusinesses.filter(b => b && !geobookerIds.has(b.id) && !recommendedIds.has(b.id));
     
     const validMarkers = uniqueDenue.filter(b => b && !isNaN(Number(b.lat)) && !isNaN(Number(b.lng)));
+
+    // 🗂️ Filtrar por categoría activa
+    const filtered = activeCategory === 'all' ? validMarkers : validMarkers.filter(b => {
+      const desc = (b.name || b.nombre_actividad || '').toLowerCase();
+      const cat = activeCategory;
+      if (cat === 'restaurante') return /restaurante|taqueria|carnicerias|tortilleria|antojitos|panaderia|comida|cocina|cafet[eé]ria|cantina|bar|cerveceria/.test(desc);
+      if (cat === 'tienda') return /tienda|abarrotes|farmacia|ferretera|papeleria|ropa|calzado|muebles|electrodomestic|comercio al por/.test(desc);
+      if (cat === 'salud') return /clínica|clinica|médico|medico|hospital|dentista|optometrista|laboratorio|farmacia|veterinaria|salud/.test(desc);
+      if (cat === 'servicio') return /taller|mecanico|plomero|electricista|carpintero|lavander|asesor|gestor|servicio|reparacion|belleza|peluquer|salon|estética/.test(desc);
+      if (cat === 'educacion') return /escuela|colegio|universidad|preparatoria|kinder|academia|instituto|capacitacion|educacion/.test(desc);
+      if (cat === 'entretenimiento') return /gym|gimnasio|cancha|salon de eventos|boliche|cine|teatro|hotel|motel|caseta|discotec|bar/.test(desc);
+      if (cat === 'industria') return /fabrica|industria|manufactura|maquila|almacen|bodega|construccion|materiales/.test(desc);
+      return true; // 'otro'
+    });
+
     if (uniqueDenue.length > 0) {
-      console.log(`📍 BusinessMap: ${uniqueDenue.length} DENUE candidates (${validMarkers.length} válidos)`);
+      console.log(`📍 BusinessMap: ${uniqueDenue.length} DENUE candidates → ${filtered.length} visibles (filtro: ${activeCategory})`);
     }
-    return validMarkers.map((business) => ({
+    return filtered.map((business) => ({
       ...business,
       latitude: business.lat,
       longitude: business.lng,
@@ -421,7 +450,7 @@ export const BusinessMap = memo(({
       ) : null,
       type: 'geobooker'
     }));
-  }, [denueBusinesses, geobookerBusinesses, recommendedBusinesses, userLocation]);
+  }, [denueBusinesses, geobookerBusinesses, recommendedBusinesses, userLocation, activeCategory]);
 
   // 💚 Marcadores de negocios recomendados por usuarios
   const recommendedMarkers = useMemo(() => {
@@ -496,6 +525,31 @@ export const BusinessMap = memo(({
       <div className="absolute top-2 left-2 z-10 bg-white px-3 py-1 rounded-lg shadow-md text-sm text-gray-600">
         {userLocation ? `📍 ${t('home.locationActive')}` : `📍 ${t('home.locationDefault')}`}
       </div>
+
+      {/* 🗂️ Filtros de categoría DENUE */}
+      {denueBusinesses.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-2 scrollbar-hide">
+          {DENUE_CATEGORIES.map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.id)}
+              className={`flex-shrink-0 flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
+                activeCategory === cat.id
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                  : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400 hover:text-blue-600'
+              }`}
+            >
+              <span>{cat.emoji}</span>
+              <span>{cat.label}</span>
+              {cat.id === 'all' && (
+                <span className="ml-1 bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                  {denueMarkers.length}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
 
       <GoogleMap
         mapContainerStyle={mapContainerStyle}

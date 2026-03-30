@@ -40,6 +40,8 @@ export default function DashboardHome() {
     monthlyRevenue: 0,
     pendingRecommendations: 0,
     pendingClaims: 0,
+    denueCount: 0,
+    claimedCount: 0,
     loading: true
   });
 
@@ -178,6 +180,29 @@ export default function DashboardHome() {
         setStats(prev => ({ ...prev, pendingClaims: claimsCount || 0 }));
       } catch (claimsErr) {
         console.warn('Error loading pending claims:', claimsErr);
+      }
+
+      // Negocios DENUE descargados
+      try {
+        const { count: denueCount } = await supabase
+          .from('businesses')
+          .select('*', { count: 'exact', head: true })
+          .eq('source', 'denue');
+        setStats(prev => ({ ...prev, denueCount: denueCount || 0 }));
+      } catch (denueErr) {
+        console.warn('Error loading DENUE count:', denueErr);
+      }
+
+      // Negocios DENUE ya reclamados (conversión)
+      try {
+        const { count: claimedCount } = await supabase
+          .from('businesses')
+          .select('*', { count: 'exact', head: true })
+          .eq('source', 'denue')
+          .eq('claimed', true);
+        setStats(prev => ({ ...prev, claimedCount: claimedCount || 0 }));
+      } catch (convErr) {
+        console.warn('Error loading claimed DENUE count:', convErr);
       }
 
       // Cargar estadísticas internacionales
@@ -329,6 +354,22 @@ export default function DashboardHome() {
           color={stats.pendingClaims > 0 ? "red" : "blue"}
           link="/admin/claims"
         />
+        <KPICard
+          title="🗺️ Negocios DENUE"
+          value={stats.denueCount.toLocaleString()}
+          icon={Globe}
+          color="teal"
+          link="/admin/businesses"
+        />
+        {stats.denueCount > 0 && (
+          <KPICard
+            title="🌱 Conversión DENUE"
+            value={`${((stats.claimedCount / stats.denueCount) * 100).toFixed(1)}%`}
+            icon={TrendingUp}
+            color="emerald"
+            link="/admin/claims"
+          />
+        )}
       </div>
 
       {/* Analytics KPIs - Tráfico en tiempo real */}

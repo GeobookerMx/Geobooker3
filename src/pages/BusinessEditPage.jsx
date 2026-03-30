@@ -2,7 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { GoogleMap, LoadScript, MarkerF } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, MarkerF } from '@react-google-maps/api';
+
+const MAPS_LIBRARIES = ['places'];
 import { toast } from 'react-hot-toast';
 import { Upload, X, MapPin, Clock, Phone, Globe, Mail, Image as ImageIcon, Briefcase, FileText, Share2 } from 'lucide-react';
 
@@ -22,6 +24,11 @@ const BusinessEditPage = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const mapRef = useRef(null);
+
+    const { isLoaded } = useJsApiLoader({
+        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+        libraries: MAPS_LIBRARIES,
+    });
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -425,7 +432,7 @@ const BusinessEditPage = () => {
                     </p>
 
                     <div className="rounded-xl overflow-hidden border border-gray-300 shadow-sm mb-4">
-                        <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+                        {isLoaded ? (
                             <GoogleMap
                                 mapContainerStyle={mapContainerStyle}
                                 center={mapCenter}
@@ -445,7 +452,11 @@ const BusinessEditPage = () => {
                                     />
                                 )}
                             </GoogleMap>
-                        </LoadScript>
+                        ) : (
+                            <div className="flex items-center justify-center h-64 bg-gray-50">
+                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+                            </div>
+                        )}
                     </div>
 
                     <div>

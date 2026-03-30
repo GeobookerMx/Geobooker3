@@ -3,7 +3,9 @@ import { useAuth } from "../contexts/AuthContext";
 import { createBusiness } from "../services/businessService";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { GoogleMap, LoadScript, MarkerF } from "@react-google-maps/api";
+import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
+
+const MAPS_LIBRARIES = ['places'];
 import {
   Utensils, Coffee, ShoppingBag, Briefcase, Wrench, HeartPulse, Film, GraduationCap,
   MapPin, Clock, Dog, CreditCard, Truck, Wifi, Accessibility, Star,
@@ -115,6 +117,11 @@ export default function BusinessFormPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const mapRef = useRef(null);
+
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries: MAPS_LIBRARIES,
+  });
 
   // Estado para el modal de upgrade
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -408,7 +415,7 @@ export default function BusinessFormPage() {
               </p>
 
               <div className="rounded-xl overflow-hidden border border-gray-300 shadow-sm mb-4">
-                <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+                {isLoaded ? (
                   <GoogleMap
                     mapContainerStyle={mapContainerStyle}
                     center={mapCenter}
@@ -426,7 +433,11 @@ export default function BusinessFormPage() {
                       onDragEnd={onMarkerDragEnd}
                     />
                   </GoogleMap>
-                </LoadScript>
+                ) : (
+                  <div className="flex items-center justify-center h-64 bg-gray-50">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+                  </div>
+                )}
               </div>
 
               <div>

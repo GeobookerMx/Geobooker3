@@ -212,6 +212,14 @@ const BusinessList = () => {
                                 <div className="absolute top-2 right-2">
                                     {getStatusBadge(business.status)}
                                 </div>
+                                {business.is_verified && (
+                                    <div className="absolute top-2 left-2 bg-white/95 backdrop-blur-sm text-blue-700 text-xs px-2.5 py-1 rounded-full font-bold border border-blue-100 shadow-sm flex items-center gap-1.5">
+                                        <div className="bg-blue-600 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center text-[9px]">
+                                            ✓
+                                        </div>
+                                        Verificado
+                                    </div>
+                                )}
                             </div>
 
                             <div className="p-4">

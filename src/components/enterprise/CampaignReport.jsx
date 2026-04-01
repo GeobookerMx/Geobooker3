@@ -13,6 +13,8 @@ import {
     FileText, Sparkles, Lightbulb, Target, CheckCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import TerritoriesTab from './TerritoriesTab';
+import AudienceTab from './AudienceTab';
 
 // Función para generar sugerencias de IA basadas en métricas
 const generateAISuggestions = (report, dailyMetrics) => {
@@ -90,6 +92,7 @@ export default function CampaignReport({ campaignId, onClose }) {
     const [loading, setLoading] = useState(true);
     const [report, setReport] = useState(null);
     const [dailyMetrics, setDailyMetrics] = useState([]);
+    const [activeTab, setActiveTab] = useState('overview');
     const reportRef = useRef(null);
 
     useEffect(() => {
@@ -313,8 +316,23 @@ export default function CampaignReport({ campaignId, onClose }) {
                     </div>
                 </div>
 
-                {/* Main Metrics */}
+                {/* Tabs */}
+                <div className="flex overflow-x-auto border-b border-gray-700 bg-gray-800 sticky top-0 md:top-[88px] z-10 px-6">
+                    <button onClick={() => setActiveTab('overview')} className={`py-4 px-6 font-medium text-sm whitespace-nowrap transition-colors border-b-2 ${activeTab === 'overview' ? 'text-blue-400 border-blue-400 bg-blue-400/10' : 'text-gray-400 border-transparent hover:text-gray-300 hover:bg-gray-700/30'}`}>
+                        Resumen General
+                    </button>
+                    <button onClick={() => setActiveTab('territories')} className={`py-4 px-6 font-medium text-sm whitespace-nowrap transition-colors border-b-2 ${activeTab === 'territories' ? 'text-blue-400 border-blue-400 bg-blue-400/10' : 'text-gray-400 border-transparent hover:text-gray-300 hover:bg-gray-700/30'}`}>
+                        Territorios
+                    </button>
+                    <button onClick={() => setActiveTab('audience')} className={`py-4 px-6 font-medium text-sm whitespace-nowrap transition-colors border-b-2 ${activeTab === 'audience' ? 'text-blue-400 border-blue-400 bg-blue-400/10' : 'text-gray-400 border-transparent hover:text-gray-300 hover:bg-gray-700/30'}`}>
+                        Audiencia
+                    </button>
+                </div>
+
+                {/* Main Content */}
                 <div className="p-6">
+                    {activeTab === 'overview' && (
+                        <>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                         <div className="bg-gray-900 rounded-xl p-4 text-center">
                             <Eye className="w-6 h-6 text-blue-400 mx-auto mb-2" />
@@ -492,6 +510,22 @@ export default function CampaignReport({ campaignId, onClose }) {
                             ))}
                         </div>
                     </div>
+                        </>
+                    )}
+
+                    {activeTab === 'territories' && (
+                        <TerritoriesTab 
+                            dailyMetrics={dailyMetrics} 
+                            targetRegions={report.campaign?.target_regions} 
+                            targetCountries={report.campaign?.target_countries} 
+                        />
+                    )}
+
+                    {activeTab === 'audience' && (
+                        <AudienceTab 
+                            dailyMetrics={dailyMetrics} 
+                        />
+                    )}
                 </div>
 
                 {/* Footer */}

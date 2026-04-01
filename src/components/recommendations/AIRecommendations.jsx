@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useLocation } from '../../contexts/LocationContext';
 import { Phone, MessageCircle, MapPin, Star, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
-import { trackWhatsAppClick, trackCallClick, trackDirectionsClick } from '../../services/analyticsService';
+import { trackWhatsAppClick, trackCallClick, trackDirectionsClick, trackAIRecommendationShown, trackAIRecommendationClick } from '../../services/analyticsService';
 
 const AIRecommendations = () => {
     const { userLocation } = useLocation();
@@ -94,9 +94,13 @@ const AIRecommendations = () => {
                     return a.distance - b.distance;
                 });
 
-                setRecommendations(withDistance.slice(0, 6));
+                const finalRecs = withDistance.slice(0, 6);
+                setRecommendations(finalRecs);
+                if (finalRecs.length > 0) trackAIRecommendationShown(finalRecs.length);
             } else {
-                setRecommendations(data || []);
+                const finalRecs = data || [];
+                setRecommendations(finalRecs);
+                if (finalRecs.length > 0) trackAIRecommendationShown(finalRecs.length);
             }
         } catch (error) {
             console.error('Error loading recommendations:', error);
@@ -225,7 +229,10 @@ const AIRecommendations = () => {
                         {/* Business Info — click goes to profile */}
                         <div
                             className="flex items-start gap-3 mb-3 cursor-pointer"
-                            onClick={() => navigate(`/business/${business.id}`)}
+                            onClick={() => {
+                                trackAIRecommendationClick(business.id, business.name);
+                                navigate(`/business/${business.id}`);
+                            }}
                         >
                             {business.logo_url ? (
                                 <img
@@ -239,7 +246,14 @@ const AIRecommendations = () => {
                                 </div>
                             )}
                             <div className="flex-1 min-w-0">
-                                <h4 className="font-bold text-gray-900 truncate hover:text-blue-600 transition-colors">{business.name}</h4>
+                                <div className="flex items-center gap-1">
+                                    <h4 className="font-bold text-gray-900 truncate hover:text-blue-600 transition-colors">{business.name}</h4>
+                                    {business.is_verified && (
+                                        <span title="Negocio Verificado" className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold border border-blue-200">
+                                            ✓
+                                        </span>
+                                    )}
+                                </div>
                                 <p className="text-sm text-gray-500 truncate">{business.category}</p>
                                 <div className="flex items-center gap-2 mt-1">
                                     {business.rating && (

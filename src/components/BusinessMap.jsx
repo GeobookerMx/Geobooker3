@@ -222,11 +222,15 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
       <div className="p-3 max-w-xs">
         <div className="flex items-center gap-2 mb-2">
           <h3 className="font-bold text-lg text-gray-800">{business.name}</h3>
-          {isGeobooker && (
-            <span className="bg-yellow-100 text-yellow-800 text-[10px] px-1.5 py-0.5 rounded border border-yellow-200 font-bold">
-              VERIFICADO
+          {business.is_verified ? (
+            <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold border border-blue-200">
+              ✓ VERIFICADO
             </span>
-          )}
+          ) : isGeobooker ? (
+            <span className="bg-yellow-100 text-yellow-800 text-[10px] px-1.5 py-0.5 rounded border border-yellow-200 font-bold">
+              RECLAMADO
+            </span>
+          ) : null}
           {business.source_type === 'seed_denue' && (
             <span className="bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0.5 rounded border border-blue-200 font-bold ml-1">
               🏛️ INEGI
@@ -746,13 +750,19 @@ export const BusinessMap = memo(({
               <h4 className="font-bold text-sm text-gray-900 mb-1">{hoveredBusiness.name}</h4>
 
               {/* Verified Badge */}
-              {(hoveredBusiness.owner_id || hoveredBusiness.is_verified) && (
+              {hoveredBusiness.is_verified ? (
                 <div className="flex items-center gap-1 mb-1">
                   <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold border border-blue-200 flex items-center">
                     ✓ Verificado
                   </span>
                 </div>
-              )}
+              ) : hoveredBusiness.owner_id ? (
+                <div className="flex items-center gap-1 mb-1">
+                  <span className="bg-yellow-100 text-yellow-800 text-[10px] px-1.5 py-0.5 rounded font-bold border border-yellow-200 flex items-center">
+                    Reclamado
+                  </span>
+                </div>
+              ) : null}
 
               {/* INEGI Badge */}
               {hoveredBusiness.source_type === 'seed_denue' && (

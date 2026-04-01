@@ -607,6 +607,27 @@ export async function trackClaimBusinessComplete(businessId, businessName) {
 }
 
 /**
+ * Trackear impresión de recomendaciones de IA
+ * KPI: Mide cuántas veces se carga el módulo de IA
+ */
+export async function trackAIRecommendationShown(businessCount) {
+    return trackIntentEvent('ai_recommendation_shown', 'system', 'AI Module', {
+        source: 'home_page',
+        metadata: { business_count: businessCount }
+    });
+}
+
+/**
+ * Trackear click en recomendación de IA
+ * KPI: Mide engagement de las recomendaciones
+ */
+export async function trackAIRecommendationClick(businessId, businessName) {
+    return trackIntentEvent('ai_recommendation_click', businessId, businessName, {
+        source: 'ai_recommendations'
+    });
+}
+
+/**
  * Obtener Device ID actual (para componentes que lo necesiten)
  */
 export { getOrCreateDeviceId };

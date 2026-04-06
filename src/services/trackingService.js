@@ -267,3 +267,75 @@ export function initTrackingFromConsent() {
         console.warn('⚠️ Error initializing tracking from consent:', error);
     }
 }
+
+// ============================================
+// MICROSOFT CLARITY — CUSTOM TAGS & SEGMENTATION
+// ============================================
+
+/**
+ * Helper: call clarity() safely (only when loaded)
+ */
+function clarityTag(method, ...args) {
+    if (typeof window !== 'undefined' && typeof window.clarity === 'function') {
+        window.clarity(method, ...args);
+    }
+}
+
+/**
+ * Identify the authenticated user in Clarity
+ * Enables filtering recordings by specific users
+ * Call this on login / session restore
+ */
+export function clarityIdentifyUser(userId, email = null, userType = 'consumer') {
+    clarityTag('identify', userId, null, email ? email.split('@')[0] : userId);
+    clarityTag('set', 'user_type', userType); // 'consumer' | 'business_owner' | 'admin'
+    if (email) {
+        clarityTag('set', 'user_email_domain', email.split('@')[1] || 'unknown');
+    }
+}
+
+/**
+ * Tag session by business owner status
+ * Usage: when user has businesses registered
+ */
+export function claritySetBusinessOwner(businessCount = 0, isPremium = false) {
+    clarityTag('set', 'is_business_owner', businessCount > 0 ? 'yes' : 'no');
+    clarityTag('set', 'business_count', String(businessCount));
+    clarityTag('set', 'plan', isPremium ? 'premium' : 'free');
+}
+
+/**
+ * Tag critical CRM/funnel events
+ * Usage: at key conversion points
+ */
+export function clarityEvent(eventName) {
+    // Clarity doesn't have a direct "event" API, but we can use upgrade tags
+    clarityTag('upgrade', eventName);
+}
+
+/**
+ * Tag the current page/funnel step for Clarity segmentation
+ * Useful for: knowing which page has most confusion (rage clicks, etc.)
+ */
+export function claritySetPage(pageName) {
+    clarityTag('set', 'page_name', pageName);
+}
+
+/**
+ * Tag ad campaign interaction
+ * Usage: when user sees/clicks a sponsored result
+ */
+export function claritySetAdInteraction(adType, campaignId = null) {
+    clarityTag('set', 'ad_interaction', adType); // 'view' | 'click'
+    if (campaignId) clarityTag('set', 'ad_campaign_id', String(campaignId));
+}
+
+/**
+ * Mark a session as a conversion (premium upgrade, ad purchase, etc.)
+ * Clarity will highlight these recordings in the dashboard
+ */
+export function clarityMarkConversion(type = 'premium_upgrade') {
+    clarityTag('upgrade', `conversion_${type}`);
+    clarityTag('set', 'converted', 'yes');
+    clarityTag('set', 'conversion_type', type);
+}

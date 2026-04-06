@@ -288,6 +288,54 @@ const Footer = () => {
             </div>
           </div>
 
+          {/* ✅ Banner INEGI DENUE - Agradecimiento por datos abiertos */}
+          <div className="border-t border-gray-700/50 py-6 mb-4">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 bg-gradient-to-r from-green-900/20 via-emerald-900/20 to-green-900/20 border border-green-700/30 rounded-xl px-6 py-4">
+              {/* Escudo INEGI */}
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="w-10 h-10 bg-green-700/30 rounded-full flex items-center justify-center border border-green-600/40">
+                  <svg className="w-6 h-6 text-green-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400 font-bold text-sm tracking-wide">INEGI · DENUE</span>
+                    <span className="bg-green-700/40 text-green-300 text-xs px-2 py-0.5 rounded-full border border-green-600/30">Datos Abiertos</span>
+                  </div>
+                  <p className="text-xs text-gray-500">Directorio Estadístico Nacional de Unidades Económicas</p>
+                </div>
+              </div>
+
+              {/* Texto de agradecimiento */}
+              <div className="text-center md:text-left max-w-xl">
+                <p className="text-gray-400 text-xs leading-relaxed">
+                  La información comercial de negocios en esta plataforma proviene parcialmente del{' '}
+                  <a
+                    href="https://www.inegi.org.mx/app/mapa/denue/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-green-400 hover:text-green-300 underline underline-offset-2 transition-colors"
+                  >
+                    DENUE del INEGI
+                  </a>
+                  , como fuente de referencia para la activación y visibilidad comercial de negocios locales en México.
+                  Agradecemos al Instituto Nacional de Estadística y Geografía por la apertura de sus datos estadísticos.
+                </p>
+              </div>
+
+              {/* Link oficial */}
+              <a
+                href="https://www.inegi.org.mx"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 text-xs text-green-500/70 hover:text-green-400 transition-colors border border-green-700/30 hover:border-green-600/50 px-3 py-1.5 rounded-lg"
+              >
+                inegi.org.mx →
+              </a>
+            </div>
+          </div>
+
           {/* Línea divisoria y copyright */}
           <div className="border-t border-gray-700 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center text-gray-400 text-sm">

@@ -1,6 +1,7 @@
 // src/contexts/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { clarityIdentifyUser } from "../services/trackingService";
 
 const AuthContext = createContext(null);
 
@@ -50,8 +51,18 @@ export const AuthProvider = ({ children }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const user = session?.user ?? null;
+      setUser(user);
       setLoading(false);
+      // 🔍 Microsoft Clarity: identify user on login/logout
+      if (user?.id) {
+        const isAdmin = user.email?.includes('geobookerr@') || user.email?.includes('ventasgeobooker@');
+        clarityIdentifyUser(
+          user.id,
+          user.email,
+          isAdmin ? 'admin' : 'user'
+        );
+      }
     });
 
     return () => {

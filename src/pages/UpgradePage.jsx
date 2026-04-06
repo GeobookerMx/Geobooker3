@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast';
 import OxxoVoucher from '../components/payment/OxxoVoucher';
 import { formatPrice, getCurrencyConfig } from '../utils/currencyUtils';
 import { isPremiumPromoActive, getDaysRemaining, PROMOTIONS } from '../config/promotions';
+import { clarityMarkConversion } from '../services/trackingService';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -72,6 +73,9 @@ const UpgradePage = () => {
                 }, { onConflict: 'id' });
 
             if (error) throw error;
+
+            // 🔍 Clarity: Marcar conversión de Premium (promocional)
+            clarityMarkConversion('premium_upgrade_free');
 
             toast.success('🎉 ¡Premium activado GRATIS! Disfruta todas las funciones.', { id: toastId, duration: 5000 });
             setTimeout(() => navigate('/dashboard'), 1500);
@@ -150,6 +154,9 @@ const UpgradePage = () => {
                 throw new Error('No se recibió URL de pago');
             }
 
+            // 🔍 Clarity: Marcar inicio de checkout
+            clarityMarkConversion('checkout_started_card');
+
             toast.success('Redirigiendo a Stripe...', { id: toastId });
             window.location.href = sessionData.url;
         } catch (error) {
@@ -186,6 +193,9 @@ const UpgradePage = () => {
             if (!response.ok || !data.success) {
                 throw new Error(data.error || 'Error al generar voucher');
             }
+
+            // 🔍 Clarity: Marcar inicio de checkout OXXO
+            clarityMarkConversion('checkout_started_oxxo');
 
             toast.success('¡Voucher generado!', { id: toastId });
             setOxxoVoucher({

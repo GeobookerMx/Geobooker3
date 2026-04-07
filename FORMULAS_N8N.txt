@@ -1,0 +1,13 @@
+-------------------------------------------------------
+FORMULAS PARA N8N - COPIA Y PEGA DESDE AQUÍ
+-------------------------------------------------------
+
+Fórmula 1 (Para la condición del Nivel AAA):
+{{ $json.body.record.tier }}
+
+
+
+Fórmula 2 (Para la condición del Email que no esté vacío):
+{{ $json.body.record.email }}
+
+-------------------------------------------------------

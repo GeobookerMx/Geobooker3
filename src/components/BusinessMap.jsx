@@ -165,48 +165,69 @@ const getCategoryIcon = (category, isPremium = false) => {
   // Utilidad para checar múltiples palabras clave (IGNORA acentos usando un normalize simple si hiciera falta, pero buscaremos las raíces)
   const matchAny = (keywords) => keywords.some(kw => categoryKey.includes(kw));
 
-  // Prioridad 1: Restaurantes y Comida
-  if (matchAny(['restaurant', 'comida', 'taco', 'cocina', 'alimento', 'preparación', 'preparacion', 'pizza', 'hamburgues', 'marisco', 'sushi', 'loncher', 'taquer', 'antojito', 'torta', 'panader', 'tortiller', 'dulce', 'postre', 'pastel', 'carnita', 'marisquer', 'jugos', 'licuados'])) {
+  // Prioridad 1: Restaurantes y Comida (DENUE: Sector 72 parcialmente, Sector 31-32_alimentos)
+  if (matchAny(['restaurant', 'comida', 'taco', 'cocina', 'alimento', 'preparaci', 'pizza', 'hamburgues', 'marisco', 'sushi', 'loncher', 'taquer', 'antojito', 'torta', 'panader', 'tortiller', 'dulce', 'postre', 'pastel', 'carnita', 'marisquer', 'jugos', 'licuado', 'neverias', 'niver', 'helad', 'fondas', 'fonda', 'cocina econ', 'alimentos prep', 'servicio de alimentos', 'servicio de preparaci'])) {
     return CATEGORY_ICONS.restaurantes;
   }
   
-  // Prioridad 2: Bares y Cafeterías
-  if (matchAny(['bar', 'cafe', 'cervez', 'cantina', 'antro', 'licor', 'pulquer', 'bebida', 'vino'])) {
+  // Prioridad 2: Bares y Cafeterías (DENUE: Sector 72)
+  if (matchAny(['bar ', 'bares', 'cafe', 'caf\u00e9', 'cervez', 'cantina', 'antro', 'licor', 'pulquer', 'bebida', 'vino', 'cantinas', 'merendero'])) {
     return CATEGORY_ICONS.bares;
   }
 
-  // Prioridad 3: Salud y Belleza
-  if (matchAny(['salud', 'medic', 'dentist', 'belleza', 'gym', 'barber', 'clinic', 'hospital', 'laboratorio', 'optica', 'spa', 'estetic', 'peluquer', 'gimnasio', 'veterinar', 'consultorio', 'terapia', 'psicolog', 'enfermer', 'farmac', 'masaje'])) {
+  // Prioridad 3: Salud y Belleza (DENUE: Sector 62, 81 parcial)
+  if (matchAny(['salud', 'm\u00e9dic', 'medic', 'dentist', 'odontol', 'belleza', 'gimnasio', 'gym ', 'barber', 'cl\u00ednic', 'clinic', 'hospital', 'laboratori', '\u00f3ptic', 'optic', 'spa ', 'est\u00e9tic', 'estetic', 'peluquer', 'veterinar', 'consultorio', 'terapia', 'psicol', 'enfermer', 'farmac', 'masaje', 'quiropr', 'nutrici', 'guarder'])) {
     return CATEGORY_ICONS.salud;
   }
 
-  // Prioridad 4: Hogar, Reparaciones y Autos
-  if (matchAny(['taller', 'mecan', 'plom', 'auto', 'hogar', 'repar', 'construc', 'carpinter', 'electric', 'pintur', 'herrer', 'gasoliner', 'refaccion', 'llanter', 'lavado', 'vulca', 'mantenimiento', 'limpieza', 'vidri', 'cerrajer'])) {
+  // Prioridad 4: Hogar, Reparaciones y Autos (DENUE: Sector 81, 53, 23)
+  if (matchAny(['taller', 'mec\u00e1nic', 'mecanico', 'plomer', 'autom\u00f3vil', 'automovil', 'hogar', 'reparaci', 'carpinter', 'el\u00e9ctric', 'electric', 'pintura', 'herreria', 'gasoliner', 'refacci', 'llanter', 'lavado de', 'vulcan', 'mantenimiento', 'limpieza', 'vidrier', 'cerrajer', 'herrament', 'fumigaci', 'mudanza', 'estacion de servicio', 'servicio automotriz', 'partes y accesorios', 'lubricantes', 'autop'])) {
     return CATEGORY_ICONS.hogar_autos;
   }
 
-  // Prioridad 5: Educación
-  if (matchAny(['educa', 'escuela', 'curso', 'idioma', 'colegio', 'universidad', 'instituto', 'capacita', 'guarder', 'preescolar', 'primari', 'secundari', 'preparatori', 'academia'])) {
+  // Prioridad 5: Educación (DENUE: Sector 61)
+  if (matchAny(['educa', 'escuela', 'curso', 'idioma', 'colegio', 'universidad', 'instituto', 'capacita', 'preescolar', 'primari', 'secundari', 'preparatori', 'academia', 'bachillerato', 'kinder', 'jard\u00edn de ni', 'jardín de ni', 'ense\u00f1anza', 'ensenanza', 'instruccion', 'instrucci\u00f3n'])) {
     return CATEGORY_ICONS.educacion;
   }
 
-  // Prioridad 6: Entretenimiento y Turismo
-  if (matchAny(['entret', 'cine', 'teatro', 'deport', 'hotel', 'motel', 'turism', 'viaje', 'parque', 'museo', 'galeria', 'evento', 'salon', 'fiesta', 'juego', 'recreativ', 'alojamiento', 'cancha', 'club'])) {
+  // Prioridad 6: Entretenimiento y Turismo (DENUE: Sector 71, 72 hoteles)
+  if (matchAny(['entretenimiento', 'cine', 'teatro', 'deport', 'hotel', 'motel', 'turism', 'viaje', 'parque de', 'museo', 'galeria', 'eventos', 'sal\u00f3n de', 'salon de', 'fiesta', 'juego', 'recreativ', 'alojamiento', 'cancha', 'club deport', 'boliche', 'cancha', 'billar', 'discoteca'])) {
     return CATEGORY_ICONS.entretenimiento;
   }
 
-  // Prioridad 7: Tiendas y Comercio General (El clasificador más amplio en DENUE)
-  if (matchAny(['tienda', 'shop', 'comercio', 'abarrote', 'supermercado', 'mercado', 'convenien', 'ropa', 'zapater', 'boutique', 'papeler', 'ferreter', 'tlapaler', 'carnicer', 'fruter', 'verduler', 'minisuper', 'regalo', 'muebler', 'materia', 'perfumer', 'joyer', 'mascota'])) {
+  // Prioridad 7: Tiendas y Comercio General (DENUE: Sector 43, 46 - el m\u00e1s grande)
+  if (matchAny(['tienda', 'comercio al ', 'abarrote', 'supermercado', 'mercado p', 'tiendas de', 'conveniencia', 'ropa', 'calzado', 'boutique', 'papeler', 'ferreter', 'tlapaler', 'carn\u00edcer', 'carnicit', 'frutas y', 'verduras', 'minisuper', 'regalos', 'muebler', 'perfumer', 'joyeria', 'joyería', 'mascotas', 'electrodomesticos', 'electr\u00f3nica', 'electronica', 'lim\u00f3', 'limon', 'mayoreo', 'menudeo', 'autoservicio'])) {
     return CATEGORY_ICONS.tiendas;
   }
 
-  // Prioridad 8: Servicios Profesionales e Inmobiliarios
-  if (matchAny(['servicio', 'abogad', 'contador', 'consul', 'asesor', 'legal', 'financier', 'seguro', 'banco', 'notar', 'arquitect', 'inmobiliar', 'bienes raices', 'agencia', 'disen', 'diseñ', 'bufete', 'despacho', 'prestamo', 'credito', 'caja popular'])) {
+  // Prioridad 8: Servicios Profesionales e Inmobiliarios (DENUE: Sector 52, 53, 54, 55, 56)
+  if (matchAny(['servicios profesional', 'abogad', 'contador', 'contable', 'consul', 'asesor', 'legal', 'financier', 'seguro', 'banco', 'notar', 'arquitect', 'inmobiliar', 'bienes ra', 'agencia de', 'dise\u00f1', 'bufete', 'despacho', 'pr\u00e9stamo', 'prestamo', 'cr\u00e9dito', 'credito', 'caja popular', 'cooperativa', 'recursos humanos', 'publicidad', 'contabilidad'])) {
     return CATEGORY_ICONS.servicios;
   }
 
-  // Por defecto, usar el icono de Geobooker estándar (color amarillo/naranja por defecto)
-  return GEOBOOKER_ICON;
+  // Prioridad 9: Industria y manufactura
+  if (matchAny(['fabric', 'industri', 'manufactur', 'maquil', 'almacen', 'bodega', 'construc', 'material', 'producc', 'elaborac', 'procesam'])) {
+    return {
+      path: 'M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1M12 7C13.4 7 14.8 8.1 14.8 9.5V11C15.4 11 16 11.6 16 12.2V15.7C16 16.4 15.4 17 14.7 17H9.2C8.6 17 8 16.4 8 15.8V12.3C8 11.6 8.6 11 9.2 11V9.5C9.2 8.1 10.6 7 12 7M12 8.2C11.2 8.2 10.5 8.7 10.5 9.5V11H13.5V9.5C13.5 8.7 12.8 8.2 12 8.2Z',
+      fillColor: '#607D8B',
+      fillOpacity: 1,
+      strokeColor: '#37474F',
+      strokeWeight: 2,
+      scale: 1.8,
+      anchor: { x: 12, y: 12 }
+    };
+  }
+
+  // Por defecto: icono de pin simple naranja (nunca un maletín negro)
+  return {
+    path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
+    fillColor: '#FF7043',
+    fillOpacity: 1,
+    strokeColor: '#E64A19',
+    strokeWeight: 2,
+    scale: 1.8,
+    anchor: { x: 12, y: 24 }
+  };
 };
 
 // Componente para la ventana de información del negocio
@@ -698,7 +719,9 @@ export const BusinessMap = memo(({
           >
             {(clusterer) =>
               denueMarkers.map((business) => {
-                const categoryIcon = getCategoryIcon(business.category, false);
+                // DENUE negocios usan nombre_actividad en lugar de category
+                const denueCategory = business.nombre_actividad || business.nombre || business.category || '';
+                const categoryIcon = getCategoryIcon(denueCategory, false);
                 const markerId = `denue-${business.id}`;
                 const isHovered = hoveredMarkerId === markerId;
                 return (

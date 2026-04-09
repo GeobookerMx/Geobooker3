@@ -249,15 +249,15 @@ const UnifiedCRM = () => {
         const toastId = toast.loading('Importando contactos...');
         try {
             const contacts = data.map(row => ({
-                contact_name: row.Nombre || row.name || row.Name || '',
-                email: (row.Email || row.email || row['Email corporativo'] || '').trim().toLowerCase(),
-                company_name: row.Empresa || row.company || row.Company || row.Compañía || '',
-                phone: row.Telefono || row.phone || row.Phone || row['Teléfono'] || row['Telefono 1'] || '',
-                tier: normalizeTier(row.Tier || row.tier || row.Tamaño || 'A'),
-                industry: row['Tipo de empresa'] || row.industry || row.Tipo || '',
+                contact_name: row.Nombre || row.name || row.Name || row.Contacto || '',
+                email: (row.Email || row.email || row['Email corporativo'] || row['Email corp'] || '').trim().toLowerCase(),
+                company_name: row.Empresa || row.company || row.Company || row['Compañía'] || row['Compania'] || row['Compa\u00f1ia'] || '',
+                phone: row.Telefono || row['Telefono 1'] || row['Telefono 2'] || row['Telefono 3'] || row.phone || row.Phone || row['Teléfono'] || '',
+                tier: normalizeTier(row.Tier || row.tier || row['Tama\u00f1o'] || row.Tamano || 'A'),
+                industry: row['Tipo de empresa'] || row.industry || row.Tipo || row.Giro || '',
                 city: row.Ciudad || row.city || row.City || '',
                 state: row.Estado || row.state || '',
-                country: 'México'
+                country: 'M\u00e9xico'
             })).filter(c => c.email && c.email.includes('@')); // Only contacts with valid email
 
             if (contacts.length === 0) {
@@ -536,6 +536,41 @@ const UnifiedCRM = () => {
         } finally {
             setIsResetting(false);
         }
+    };
+
+    // ============ N8N TRIGGER ============
+    const triggerN8NForContacts = async (contactIds) => {
+        const selected = contacts.filter(c => contactIds.has(c.id));
+        if (selected.length === 0) { toast.error('Selecciona al menos un contacto'); return; }
+
+        const toastId = toast.loading(`Enviando ${selected.length} contacto(s) a N8N...`);
+        const N8N_WEBHOOK = 'https://n8n.geobooker.com.mx/webhook/nuevo-lead-crm';
+        let ok = 0, fail = 0;
+
+        for (const c of selected) {
+            try {
+                const res = await fetch(N8N_WEBHOOK, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'INSERT',
+                        table: 'marketing_contacts',
+                        schema: 'public',
+                        record: {
+                            tier: c.tier,
+                            email: c.email,
+                            company_name: c.company_name,
+                            contact_name: c.contact_name,
+                            city: c.city,
+                            state: c.state
+                        }
+                    })
+                });
+                if (res.ok) ok++; else fail++;
+            } catch { fail++; }
+            await new Promise(r => setTimeout(r, 300));
+        }
+        toast.success(`N8N: ${ok} enviados${fail > 0 ? `, ${fail} fallidos` : ''}`, { id: toastId });
     };
 
     // ============ SEND CAMPAIGN ============
@@ -859,10 +894,16 @@ const UnifiedCRM = () => {
 
                             {/* Selection Actions */}
                             {selectedContacts.size > 0 && (
-                                <div className="flex items-center gap-3 mt-3 pt-3 border-t">
+                                <div className="flex items-center gap-3 mt-3 pt-3 border-t flex-wrap">
                                     <span className="text-sm text-gray-600">
                                         {selectedContacts.size} seleccionados
                                     </span>
+                                    <button
+                                        onClick={() => triggerN8NForContacts(selectedContacts)}
+                                        className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
+                                    >
+                                        🤖 Enviar Secuencia N8N
+                                    </button>
                                     <button
                                         onClick={deleteSelected}
                                         className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-lg text-sm"

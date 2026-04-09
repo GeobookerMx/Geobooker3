@@ -50,6 +50,9 @@ const UnifiedCRM = () => {
     const [tierStats, setTierStats] = useState([]);
     const [statsLoading, setStatsLoading] = useState(false);
 
+    // Email Status Metrics
+    const [emailMetrics, setEmailMetrics] = useState({ enviados: 0, pendientes: 0, abiertos: 0, todayCount: 0 });
+
     // Campaign State
     const [campaignType, setCampaignType] = useState('email'); // 'email' or 'whatsapp'
     const [dailyLimit, setDailyLimit] = useState(100);
@@ -148,22 +151,30 @@ const UnifiedCRM = () => {
                 .from('marketing_contacts')
                 .select('*', { count: 'exact', head: true });
 
-            // Get tier distribution
-            const { data: tierCountsRaw } = await supabase
+            // Get tier distribution + email status metrics
+            const { data: allContacts } = await supabase
                 .from('marketing_contacts')
-                .select('tier');
+                .select('tier, email_status, email_sent_at');
 
-            const tierCounts = (tierCountsRaw || []).reduce((acc, curr) => {
+            const rows = allContacts || [];
+
+            // Tier stats
+            const tierCounts = rows.reduce((acc, curr) => {
                 acc[curr.tier] = (acc[curr.tier] || 0) + 1;
                 return acc;
             }, {});
-
             setTierStats(Object.entries(tierCounts).map(([tier, count]) => ({
-                tier,
-                total_contacts: count,
-                with_email: count,
-                with_phone: 0
+                tier, total_contacts: count, with_email: count, with_phone: 0
             })));
+
+            // Email metrics
+            const todayStr = new Date().toISOString().slice(0, 10);
+            setEmailMetrics({
+                enviados: rows.filter(r => r.email_status === 'sent').length,
+                pendientes: rows.filter(r => !r.email_status || r.email_status === 'pending').length,
+                abiertos: rows.filter(r => r.email_status === 'opened').length,
+                todayCount: rows.filter(r => r.email_sent_at && r.email_sent_at.startsWith(todayStr)).length
+            });
 
             // Get sample for display
             const { data, error } = await supabase
@@ -175,11 +186,8 @@ const UnifiedCRM = () => {
             if (error) throw error;
             setContacts(data || []);
             setTotalContacts(totalCount || 0);
-
-            // Update header to show total
             console.log(`📊 Total contactos en DB: ${totalCount}`);
 
-            // Get unique company types
             const types = [...new Set(data?.map(c => c.company_type).filter(Boolean))];
             setCompanyTypes(types);
         } catch (err) {
@@ -771,13 +779,13 @@ const UnifiedCRM = () => {
 
     // ============ TABS CONFIG ============
     const tabs = [
-        { id: 'contactos', label: '📥 Contactos', icon: Users },
-        { id: 'plantillas', label: '📝 Plantillas', icon: Mail },
-        { id: 'whatsapp', label: '📱 WhatsApp', icon: MessageCircle },
-        { id: 'email', label: '📧 Email', icon: Mail },
-        { id: 'kpis', label: '📊 KPIs', icon: BarChart3 },
-        { id: 'historial', label: '📋 Historial', icon: Clock },
-        { id: 'config', label: '⚙️ Config', icon: Settings }
+        { id: 'contactos', label: '👥 Base de Datos', icon: Users },
+        { id: 'email', label: '🚀 Campaña Email', icon: Mail },
+        { id: 'whatsapp', label: '💬 WhatsApp', icon: MessageCircle },
+        { id: 'plantillas', label: '✉️ Templates', icon: Edit2 },
+        { id: 'kpis', label: '📈 Métricas', icon: BarChart3 },
+        { id: 'historial', label: '🕐 Historial', icon: Clock },
+        { id: 'config', label: '⚙️ Ajustes', icon: Settings }
     ];
 
     const getTierColor = (tier) => {
@@ -793,36 +801,41 @@ const UnifiedCRM = () => {
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
             <div className="bg-white border-b sticky top-0 z-20">
-                <div className="px-4 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="px-4 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3">
                     <div>
                         <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                            🎯 CRM & Marketing
+                            🎯 CRM & Marketing Geobooker
                         </h1>
                         <p className="text-sm text-gray-500">
-                            {totalContacts.toLocaleString()} contactos totales • {templates.length} plantillas
+                            {totalContacts.toLocaleString()} contactos • {templates.length} plantillas activas
                         </p>
                     </div>
 
-                    {/* Tier Quick Stats */}
+                    {/* Email Status KPIs */}
                     <div className="flex flex-wrap gap-2">
-                        {tierStats.map(tier => (
-                            <div
-                                key={tier.tier}
-                                className={`px-3 py-1.5 rounded-lg border flex items-center gap-2 bg-white shadow-sm ${tier.tier === 'AAA' ? 'border-yellow-200 bg-yellow-50/30' :
-                                    tier.tier === 'AA' ? 'border-purple-200 bg-purple-50/30' :
-                                        'border-blue-200 bg-blue-50/30'
-                                    }`}
-                            >
-                                <span className={`w-2 h-2 rounded-full ${tier.tier === 'AAA' ? 'bg-yellow-400' :
-                                    tier.tier === 'AA' ? 'bg-purple-400' :
-                                        'bg-blue-400'
-                                    }`}></span>
-                                <span className="text-xs font-bold text-gray-700">{tier.tier}:</span>
-                                <span className="text-xs font-medium text-gray-600">{tier.total_contacts.toLocaleString()}</span>
-                            </div>
-                        ))}
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
+                            <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                            <span className="text-xs font-semibold text-green-700">Enviados: {emailMetrics.enviados}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg">
+                            <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                            <span className="text-xs font-semibold text-amber-700">Pendientes: {emailMetrics.pendientes}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
+                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                            <span className="text-xs font-semibold text-blue-700">Abiertos: {emailMetrics.abiertos}</span>
+                        </div>
+                        <div className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg ${
+                            emailMetrics.todayCount >= 90 ? 'bg-red-50 border-red-200' :
+                            emailMetrics.todayCount >= 60 ? 'bg-orange-50 border-orange-200' :
+                            'bg-gray-50 border-gray-200'
+                        }`}>
+                            <span className="text-xs font-semibold text-gray-600">📬 Hoy: {emailMetrics.todayCount}/100</span>
+                        </div>
                     </div>
                 </div>
+
+
 
                 {/* Tabs - Scrollable on mobile */}
                 <div className="overflow-x-auto scrollbar-hide">

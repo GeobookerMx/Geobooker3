@@ -186,7 +186,7 @@ exports.handler = async (event, context) => {
 
                 // Enviar email con Resend
                 const emailResult = await resend.emails.send({
-                    from: 'Geobooker <ventas@geobooker.com>',
+                    from: 'Geobooker <juanpablopg@geobooker.com.mx>',
                     to: contact.email,
                     subject: finalSubject,
                     html: finalHtml

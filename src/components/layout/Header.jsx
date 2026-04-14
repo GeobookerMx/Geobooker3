@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "../../lib/supabase";
@@ -16,46 +16,73 @@ export default function Header() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [businessLogo, setBusinessLogo] = useState(null);
   const [showRecommendForm, setShowRecommendForm] = useState(false);
+  const mobileMenuRef = useRef(null);
+  const userMenuRef = useRef(null);
+
+  // Cerrar menús al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (isOpen && mobileMenuRef.current && !mobileMenuRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+      if (showUserMenu && userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setShowUserMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isOpen, showUserMenu]);
 
   useEffect(() => {
-    // Obtener usuario actual
+    // Función reutilizable para cargar datos del usuario
+    const fetchUserData = async (sessionUser) => {
+      if (!sessionUser) return;
+
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', sessionUser.id)
+        .maybeSingle();
+
+      setUserProfile(profile);
+
+      try {
+        const { data: businesses, error: bizError } = await supabase
+          .from('businesses')
+          .select('logo_url')
+          .eq('owner_id', sessionUser.id)
+          .limit(1);
+
+        if (!bizError && businesses && businesses.length > 0 && businesses[0].logo_url) {
+          setBusinessLogo(businesses[0].logo_url);
+        }
+      } catch (e) {
+        if (import.meta.env.DEV) console.log('No logo available:', e);
+      }
+    };
+
+    // Cargar sesión actual al montar
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setUser(session.user);
-
-        // Obtener perfil del usuario (maybeSingle evita error 406 si no existe)
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .maybeSingle();
-
-        setUserProfile(profile);
-
-        // Obtener logo del primer negocio del usuario (si tiene)
-        try {
-          const { data: businesses, error: bizError } = await supabase
-            .from('businesses')
-            .select('*')
-            .eq('owner_id', session.user.id)
-            .limit(1);
-
-          if (!bizError && businesses && businesses.length > 0 && businesses[0].logo_url) {
-            setBusinessLogo(businesses[0].logo_url);
-          }
-        } catch (e) {
-          console.log('No logo available:', e);
-        }
+        await fetchUserData(session.user);
       }
     };
 
     getUser();
 
     // Escuchar cambios en autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
-      if (!session?.user) {
+      if (session?.user) {
+        // Recargar perfil y logo al hacer login (fix: antes no se recargaba)
+        await fetchUserData(session.user);
+      } else {
         setUserProfile(null);
         setBusinessLogo(null);
       }
@@ -91,7 +118,7 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-geoYellow shadow-lg sticky top-0 z-50">
+    <header className="bg-geoYellow shadow-lg sticky top-0 z-50" ref={mobileMenuRef}>
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
         <Link to="/" className="flex items-center space-x-3">
           <BrandLogo size={48} className="hover:scale-105 transition-transform duration-200" />
@@ -131,7 +158,7 @@ export default function Header() {
 
           {/* User Menu */}
           {user ? (
-            <div className="relative flex items-center gap-2">
+            <div className="relative flex items-center gap-2" ref={userMenuRef}>
               {/* Dashboard notification bell */}
               <Link
                 to="/dashboard"

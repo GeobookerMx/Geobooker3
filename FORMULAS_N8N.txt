@@ -1,13 +1,11 @@
 -------------------------------------------------------
-FORMULAS PARA N8N - COPIA Y PEGA DESDE AQUÍ
+GUÍA: CÓMO PEGAR LA CLAVE SECRETA EXACTA
 -------------------------------------------------------
 
-Fórmula 1 (Para la condición del Nivel AAA):
-{{ $json.body.record.tier }}
+Adentro de tu credencial de N8N (donde pusiste el Header Auth):
 
+El Name debe ser exactamente:
+Authorization
 
-
-Fórmula 2 (Para la condición del Email que no esté vacío):
-{{ $json.body.record.email }}
-
--------------------------------------------------------
+El Value debe verse exactamente ASÍ (Reemplaza los números por los tuyos, respeta la B mayúscula y el espacio):
+Bearer re_3ynvwGcR_6b7ArULv9e45RiLe6KN3bpdh

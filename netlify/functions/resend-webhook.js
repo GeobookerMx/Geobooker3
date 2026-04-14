@@ -138,11 +138,18 @@ async function handleEmailOpened(data) {
         .single();
 
     if (contact) {
+        // Primero obtener el score actual
+        const { data: currentContact } = await supabase
+            .from('marketing_contacts')
+            .select('email_engagement_score')
+            .eq('id', contact.id)
+            .single();
+
         await supabase
             .from('marketing_contacts')
             .update({
                 last_email_opened: new Date().toISOString(),
-                email_engagement_score: supabase.rpc('increment', { row_id: contact.id, amount: 5 })
+                email_engagement_score: (currentContact?.email_engagement_score || 0) + 5
             })
             .eq('id', contact.id);
     }
@@ -173,11 +180,18 @@ async function handleEmailClicked(data) {
         .single();
 
     if (contact) {
+        // Primero obtener el score actual
+        const { data: currentContact } = await supabase
+            .from('marketing_contacts')
+            .select('email_engagement_score')
+            .eq('id', contact.id)
+            .single();
+
         await supabase
             .from('marketing_contacts')
             .update({
                 last_email_clicked: new Date().toISOString(),
-                email_engagement_score: supabase.rpc('increment', { row_id: contact.id, amount: 10 })
+                email_engagement_score: (currentContact?.email_engagement_score || 0) + 10
             })
             .eq('id', contact.id);
     }

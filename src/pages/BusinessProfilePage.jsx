@@ -50,11 +50,32 @@ const BusinessProfilePage = () => {
     useEffect(() => {
         const loadBusiness = async () => {
             try {
-                const { data, error } = await supabase
+                let { data, error } = await supabase
                     .from('businesses')
                     .select('*')
                     .eq('id', id)
                     .single();
+
+                // Si no existe en validos/activos, buscar en las tablas de DENUE (candidatos)
+                if (error || !data) {
+                    const { data: candidateData, error: candidateError } = await supabase
+                        .from('business_candidates')
+                        .select('*')
+                        .eq('id', id)
+                        .single();
+
+                    if (!candidateError && candidateData) {
+                        data = {
+                            ...candidateData,
+                            is_claimed: false, // Forzar la aparición del banner de "Reclamar mi Negocio"
+                            latitude: candidateData.lat, // Maps usa latitude pero candidateData trae lat
+                            longitude: candidateData.lng,
+                            category: candidateData.category_normalized || candidateData.category_raw,
+                            address: candidateData.address_line
+                        };
+                        error = null; // Suppress initial error
+                    }
+                }
 
                 if (error) throw error;
                 setBusiness(data);

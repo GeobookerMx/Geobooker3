@@ -443,15 +443,33 @@ const UnifiedCRM = () => {
 
         try {
             if (campaignType === 'email') {
-                const { data, error } = await supabase
-                    .rpc('generate_email_queue', {
-                        p_limit: dailyLimit,
-                        min_per_type: 5,
-                        p_tier_filter: emailSearchTier === 'all' ? null : emailSearchTier
-                    });
+                let query = supabase
+                    .from('marketing_contacts')
+                    .select('id, contact_name, company_name, email, tier')
+                    .is('email_sent_at', null)
+                    .neq('email', null)
+                    .neq('email', '')
+                    .order('tier', { ascending: true }) // Prioridad a AAA, AA
+                    .limit(dailyLimit);
+
+                if (emailSearchTier !== 'all') {
+                    query = query.eq('tier', emailSearchTier);
+                }
+
+                const { data, error } = await query;
 
                 if (error) throw error;
-                setEmailQueue(data || []);
+                
+                // Mapear al formato que usa la cola
+                const mappedQueue = (data || []).map(row => ({
+                    contact_id: row.id,
+                    contact_name: row.contact_name,
+                    company_name: row.company_name,
+                    contact_email: row.email,
+                    contact_tier: row.tier
+                }));
+                
+                setEmailQueue(mappedQueue);
 
                 if (data && data.length > 0) {
                     toast.success(`✅ Cola generada: ${data.length} emails listos para enviar`, { id: toastId });
@@ -610,7 +628,7 @@ const UnifiedCRM = () => {
                 // Process template with contact data
                 let processedBody = selectedTemplate.html_content;
                 const variables = {
-                    empresa: item.contact_name || 'Negocio',
+                    empresa: item.company_name || 'Negocio',
                     nombre: item.contact_name || 'Amigo',
                     tier: item.contact_tier
                 };
@@ -654,14 +672,21 @@ const UnifiedCRM = () => {
 
                     console.log(`✅ Email enviado a ${item.contact_email} (ID: ${result.emailId})`);
 
-                    // Log to history
+                    // 1. Mark as sent in marketing_contacts (so it's not selected again)
+                    await supabase.from('marketing_contacts').update({
+                        email_sent_at: new Date().toISOString(),
+                        status: 'contactado'
+                    }).eq('id', item.contact_id);
+
+                    // 2. Log to history
                     await supabase.from('crm_email_logs').insert({
                         recipient_email: item.contact_email,
                         subject: selectedTemplate.subject,
                         html_content: finalHtml,
                         status: 'sent',
                         tier: item.contact_tier,
-                        template_id: selectedTemplate.id
+                        template_id: selectedTemplate.id,
+                        contact_id: item.contact_id
                     });
 
                     successCount++;

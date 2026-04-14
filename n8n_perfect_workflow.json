@@ -1,0 +1,104 @@
+{
+  "name": "CRM Lead → Email Automatico",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nuevo-lead-crm",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-224, 80],
+      "id": "c0e0722f-613a-4c3e-b4d1-77ce8bf1800d",
+      "name": "Webhook CRM"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ffe27064-2c1e-4c05-9b26-84807a1428a4",
+              "leftValue": "={{ $json.body.record.tier }}",
+              "rightValue": "AAA",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "9bf0ca18-17ed-416d-b220-f8136ebd11fb",
+              "leftValue": "={{ $json.body.record.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [0, 80],
+      "id": "87667bc0-2054-4239-975a-6978220f1e28",
+      "name": "Es Tier AAA?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"Geobooker <ventas@geobooker.com>\",\n  \"to\": [\"{{ $json.body.record.email }}\"],\n  \"subject\": \"{{ $json.body.record.company_name }} - Solucion Premium de Geolocalizacion\",\n  \"html\": \"<p>Hola,</p><p>Vimos que tienes un negocio destacado. Te hemos creado un perfil VIP en el nuevo mapa interactivo de Geobooker.</p><p><a href='https://geobooker.com.mx'>Haz clic aqui para reclamarlo y editarlo gratis hoy mismo</a>.</p><p><br>El Equipo de Geobooker</p>\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [240, 60],
+      "id": "3975ff13-0465-46b3-8a16-25d1e7e71695",
+      "name": "Enviar Email",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "oAAfOszziWegICxD",
+          "name": "Header Auth account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook CRM": {
+      "main": [
+        [
+          {
+            "node": "Es Tier AAA?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es Tier AAA?": {
+      "main": [
+        [
+          {
+            "node": "Enviar Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

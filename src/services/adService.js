@@ -34,7 +34,6 @@ export async function loadActiveCampaigns(spaceName, context = {}) {
         });
 
         if (!rpcError && smartData) {
-            console.log(`🎯 [Ads] Loaded ${smartData.length} smart-targeted ads for ${spaceName}`);
             // Formatear respuesta para que coincida con la estructura esperada por los componentes
             // RPC devuelve estructura plana, componentes esperan: { ...campaign, ad_creatives: [{...}] }
             return smartData.map(item => ({
@@ -50,12 +49,11 @@ export async function loadActiveCampaigns(spaceName, context = {}) {
             }));
         }
 
-        if (rpcError) {
-            console.warn(`⚠️ [Ads] RPC 'get_targeted_ads' error for ${spaceName}. Using fallback.`, rpcError);
+        if (rpcError && import.meta.env.DEV) {
+            console.warn(`⚠️ [Ads] RPC 'get_targeted_ads' fallback for ${spaceName}:`, rpcError.message);
         }
 
         // FALLBACK: Si falla la RPC o no existe, usar consulta simple
-        console.log(`🔄 [Ads] Fetching basic ads for ${spaceName}...`);
         const today = new Date().toISOString().split('T')[0];
         const { data, error } = await supabase
             .from('ad_campaigns')
@@ -74,7 +72,7 @@ export async function loadActiveCampaigns(spaceName, context = {}) {
             throw error;
         }
 
-        console.log(`✅ [Ads] Loaded ${data?.length || 0} basic ads for ${spaceName}`);
+
         return data || [];
 
     } catch (error) {
@@ -93,7 +91,7 @@ export async function loadEnterpriseCampaigns(context = {}) {
         const { country = null, city = null } = context;
         const today = new Date().toISOString().split('T')[0];
 
-        console.log(`🔍 [Enterprise Ads] Loading campaigns for: country=${country}, city=${city}, date=${today}`);
+
 
         // Query active Enterprise campaigns with their creatives
         const { data, error } = await supabase
@@ -108,51 +106,29 @@ export async function loadEnterpriseCampaigns(context = {}) {
             throw error;
         }
 
-        console.log(`📦 [Enterprise Ads] Found ${data?.length || 0} active campaigns in DB`);
-        // DEBUG: Show first campaign raw data to verify creative_url column
-        if (data?.[0]) {
-            console.log('🔍 [DEBUG] First campaign raw data:', {
-                advertiser_name: data[0].advertiser_name,
-                creative_url: data[0].creative_url,
-                headline: data[0].headline,
-                columns: Object.keys(data[0])
-            });
-        }
+
 
         // Filter by user location
         const filtered = (data || []).filter(campaign => {
             // DEMO campaigns always show (regardless of location)
-            if (campaign.is_demo === true) {
-                console.log(`  ✅ Campaign "${campaign.advertiser_name}" - DEMO (always shown)`);
-                return true;
-            }
+            if (campaign.is_demo === true) return true;
 
             // Global ads show everywhere (ALWAYS pass)
-            if (!campaign.ad_level || campaign.ad_level === 'global') {
-                console.log(`  ✅ Campaign "${campaign.advertiser_name}" - GLOBAL (always shown)`);
-                return true;
-            }
+            if (!campaign.ad_level || campaign.ad_level === 'global') return true;
 
             // Country-level ads
-            if (country && campaign.target_countries?.includes(country)) {
-                console.log(`  ✅ Campaign "${campaign.advertiser_name}" - country match`);
-                return true;
-            }
+            if (country && campaign.target_countries?.includes(country)) return true;
 
             // City-level ads (fuzzy match)
             if (city && campaign.target_cities?.some(targetCity =>
                 targetCity.toLowerCase().includes(city.toLowerCase()) ||
                 city.toLowerCase().includes(targetCity.toLowerCase())
-            )) {
-                console.log(`  ✅ Campaign "${campaign.advertiser_name}" - city match`);
-                return true;
-            }
+            )) return true;
 
-            console.log(`  ❌ Campaign "${campaign.advertiser_name}" filtered out (ad_level=${campaign.ad_level}, targets=${JSON.stringify(campaign.target_cities || campaign.target_countries)})`);
             return false;
         });
 
-        console.log(`🎯 [Enterprise Ads] ${filtered.length} campaigns passed geo-filter`);
+
 
         // Sort by priority: 
         // 1. Paid campaigns first (is_demo=false), then demos
@@ -167,7 +143,6 @@ export async function loadEnterpriseCampaigns(context = {}) {
             return (priority[a.ad_level] || 5) - (priority[b.ad_level] || 5);
         });
 
-        console.log(`📊 [Enterprise Ads] Final order: ${sorted.map(c => `${c.advertiser_name}${c.is_demo ? ' (DEMO)' : ''}`).join(', ')}`);
 
         // Transform to ad component format
         // Priorizar ad_creatives del join (anunciantes reales) sobre campos directos (campañas demo)

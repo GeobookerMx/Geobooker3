@@ -347,8 +347,8 @@ const HomePage = () => {
   // 📍 NUEVO: Handler para consultar DENUE en background cuando el mapa se mueve
   const handleMapIdle = useCallback(({ bounds, zoom }) => {
     // Si el zoom es muy lejano, no saturar la base de datos
-    // Pero si hay filtro de categoría, permitir desde zoom 12 (resultados filtrados = menos saturación)
-    const minZoom = categoryFilter ? 12 : 13;
+    // Permite DENUE desde nivel de ciudad (10) para arriba. Si hay filtro, mostramos siempre (1).
+    const minZoom = categoryFilter ? 1 : 10;
     if (zoom < minZoom) {
       setDenueBusinesses([]);
       return;

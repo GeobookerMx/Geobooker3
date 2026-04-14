@@ -51,8 +51,6 @@ export default function useEnterprisePriorityCampaigns(localSpaceName, options =
                         }
                     }
 
-                    // DEBUG: Log campaign image info
-                    console.log(`🖼️ [Campaign] ${campaign.advertiser_name}: image_url=${imageUrl?.substring(0, 50)}`);
 
                     return {
                         ...campaign,

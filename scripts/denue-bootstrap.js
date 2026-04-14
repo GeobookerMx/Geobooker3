@@ -35,9 +35,10 @@ La tabla "import_batches" está protegida para que solo administradores escriban
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Archivo a procesar
-const CSV_FILE = path.resolve(__dirname, '../denue_datos.csv'); // <-- Ajusta el nombre de tu archivo extraído
+// Configuración Básica
 const BATCH_SIZE = 500;
+const CSV_FILE = path.resolve(__dirname, '../denue_datos.csv'); // <-- Ajusta el nombre de tu archivo extraído
+const SKIP_ROWS = 0; // Cambiar a mayor que 0 solo si se interrumpió el proceso a la mitad
 
 // Estado del proceso
 let importBatchId = null;
@@ -103,9 +104,9 @@ async function run() {
         process.exit(1);
     }
 
-    // 2. Procesamiento por lotes (Stream) - INEGI usa latin1 (ISO-8859-1)
-    const fileStream = fs.createReadStream(CSV_FILE, { encoding: 'latin1' });
-    const rl = readline.createInterface({ input: fileStream, crlfDelay: Infinity });
+    // 2. Procesamiento (Lectura síncrona en memoria para evitar bugs de streams) - INEGI usa latin1 (ISO-8859-1)
+    const fileData = fs.readFileSync(CSV_FILE, { encoding: 'latin1' });
+    const lines = fileData.split(/\r?\n/);
 
     // Si el archivo no tiene encabezados, usamos los estándar de INEGI
     const headers = [
@@ -126,6 +127,7 @@ async function run() {
     await supabase.from('import_batches').update({ status: 'staging' }).eq('id', importBatchId);
 
     let lineBuffer = '';
+    let readingLineCount = 0;
 
     // Conteo básico de comillas para saber si la línea está cortada por un salto de línea interno
     const countQuotes = (str) => {
@@ -142,11 +144,12 @@ async function run() {
         return count;
     };
 
-    for await (const line of rl) {
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
         if (!lineBuffer && !line.trim()) continue;
 
         lineBuffer += (lineBuffer ? '\n' : '') + line;
-        
+
         // Si el número de comillas es impar, significa que hay un salto de línea dentro de un campo
         const quotes = countQuotes(lineBuffer);
         if (quotes % 2 !== 0) {
@@ -155,6 +158,20 @@ async function run() {
 
         const completeLine = lineBuffer;
         lineBuffer = ''; // Reset buffer
+
+        readingLineCount++;
+
+        if (readingLineCount === 1) continue; // Headers ya resueltos
+        
+        if (readingLineCount <= SKIP_ROWS + 1) { 
+            // Skip rows (header es la línea 1, SKIP_ROWS líneas de datos = SKIP_ROWS + 1)
+            continue; 
+        }
+
+        if (readingLineCount === SKIP_ROWS + 2) {
+            console.log("--> Passed skip logic at line " + readingLineCount);
+            console.log("length completeLine:", completeLine.length);
+        }
 
         const values = parseCsvLine(completeLine);
         if (values.length < 10) continue; // Línea incompleta ignorada
@@ -173,9 +190,6 @@ async function run() {
         if (!clee || !nombre) {
             if (stats.errors < 5) {
                 console.log(`⚠️ Fila ignorada (faltan datos clave). clee: ${clee}, nombre: ${nombre}`);
-                console.log(`   IDX clee: ${headers.findIndex(h => h === 'clee')}, IDX nombre: ${headers.findIndex(h => h === 'nom_estab')}`);
-                console.log(`   Headers length: ${headers.length}, Values length: ${values.length}`);
-                console.log(`   Valores detectados:`, values.slice(0, 5));
             }
             stats.errors++;
             continue;
@@ -273,6 +287,7 @@ async function run() {
     console.log(`   Staged: ${stats.staged}`);
     console.log(`   Candidatos: ${stats.candidates}`);
     console.log(`   Errores (Filas inválidas): ${stats.errors}`);
+    console.log(`   Líneas leídas: ${readingLineCount}`);
 
     // Update final batch status
     await supabase.from('import_batches').update({

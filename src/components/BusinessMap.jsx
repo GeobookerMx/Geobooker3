@@ -462,7 +462,7 @@ export const BusinessMap = memo(({
       return true; // 'otro'
     });
 
-    if (uniqueDenue.length > 0) {
+    if (import.meta.env.DEV && uniqueDenue.length > 0) {
       console.log(`📍 BusinessMap: ${uniqueDenue.length} DENUE candidates → ${filtered.length} visibles (filtro: ${activeCategory})`);
     }
     return filtered.map((business) => ({
@@ -473,14 +473,14 @@ export const BusinessMap = memo(({
         userLocation.lat, userLocation.lng,
         Number(business.lat), Number(business.lng)
       ) : null,
-      type: 'geobooker'
+      type: 'denue'
     }));
   }, [denueBusinesses, geobookerBusinesses, recommendedBusinesses, userLocation, activeCategory]);
 
   // 💚 Marcadores de negocios recomendados por usuarios
   const recommendedMarkers = useMemo(() => {
     const validMarkers = recommendedBusinesses.filter(b => b && !isNaN(Number(b.latitude)) && !isNaN(Number(b.longitude)));
-    if (recommendedBusinesses.length > 0) {
+    if (import.meta.env.DEV && recommendedBusinesses.length > 0) {
       console.log(`💚 BusinessMap: Procesando ${recommendedBusinesses.length} recomendaciones (${validMarkers.length} válidas)`);
     }
     return validMarkers.map((rec) => ({
@@ -496,7 +496,7 @@ export const BusinessMap = memo(({
   // 🔎 EFECTO: Ajustar mapa para mostrar todas las recomendaciones al cargar
   useEffect(() => {
     if (mapLoaded && mapRef.current && recommendedMarkers.length > 0) {
-      console.log('🔎 [BusinessMap] Ajustando vista para incluir recomendaciones...');
+      if (import.meta.env.DEV) console.log('🔎 [BusinessMap] Ajustando vista para incluir recomendaciones...');
       const google = window.google;
       if (!google) return;
 
@@ -517,11 +517,11 @@ export const BusinessMap = memo(({
         mapRef.current.fitBounds(bounds, 50); // padding de 50px
 
         // Evitar que el zoom sea demasiado alto (muy cerca)
-        const listener = google.maps.event.addListenerOnce(mapRef.current, 'bounds_changed', () => {
+        google.maps.event.addListenerOnce(mapRef.current, 'bounds_changed', () => {
           if (mapRef.current.getZoom() > 15) mapRef.current.setZoom(15);
         });
       } catch (err) {
-        console.error('❌ [BusinessMap] Error ajustando bounds:', err);
+        if (import.meta.env.DEV) console.error('❌ [BusinessMap] Error ajustando bounds:', err);
       }
     }
   }, [recommendedMarkers.length, mapLoaded]);
@@ -667,7 +667,7 @@ export const BusinessMap = memo(({
                   key={`google-${business.id}`}
                   position={{ lat: Number(business.latitude), lng: Number(business.longitude) }}
                   onClick={() => onBusinessSelect(business)}
-                  icon={BUSINESS_ICON}
+                  icon={getCategoryIcon(business.category || (business.types && business.types[0]) || '', false)}
                   title={business.name}
                   clusterer={clusterer}
                 />
@@ -719,8 +719,13 @@ export const BusinessMap = memo(({
           >
             {(clusterer) =>
               denueMarkers.map((business) => {
-                // DENUE negocios usan nombre_actividad en lugar de category
-                const denueCategory = business.nombre_actividad || business.nombre || business.category || '';
+                // La RPC retorna: category = category_normalized (mapeado del SCIAN)
+                // category_raw = nombre actividad INEGI original (más descriptivo para matching)
+                const denueCategory = business.category_normalized    // si vino fuera del RPC
+                  || business.category                               // campo que devuelve el RPC (= category_normalized)
+                  || business.category_raw                           // fallback al nombre INEGI crudo
+                  || business.nombre_actividad                       // legado
+                  || '';
                 const categoryIcon = getCategoryIcon(denueCategory, false);
                 const markerId = `denue-${business.id}`;
                 const isHovered = hoveredMarkerId === markerId;

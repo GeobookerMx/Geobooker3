@@ -36,11 +36,14 @@ export async function handler(event) {
         }
 
         // Determine sender (for CRM campaigns, use dynamic sender)
+        // Acepta camelCase (fromEmail) y snake_case (from_email) para compatibilidad
         let fromEmail = DEFAULT_FROM_EMAIL;
-        if (type === 'crm_campaign' && data.fromEmail && data.fromName) {
-            fromEmail = `${data.fromName} <${data.fromEmail}>`;
-        } else if (data.fromEmail) {
-            fromEmail = data.fromEmail;
+        const senderEmail = data.fromEmail || data.from_email;
+        const senderName = data.fromName || data.from_name;
+        if ((type === 'crm_campaign' || type === 'custom') && senderEmail && senderName) {
+            fromEmail = `${senderName} <${senderEmail}>`;
+        } else if (senderEmail) {
+            fromEmail = senderEmail;
         }
 
         // Send via Resend

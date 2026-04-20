@@ -279,8 +279,7 @@ const UnifiedCRM = () => {
             const { error } = await supabase
                 .from('marketing_contacts')
                 .upsert(contacts, {
-                    onConflict: 'email',
-                    ignoreDuplicates: true
+                    onConflict: 'email'
                 });
 
             if (error) {
@@ -354,9 +353,9 @@ const UnifiedCRM = () => {
 
     const filteredContacts = contacts.filter(c => {
         const matchSearch = !searchTerm ||
-            c.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            c.contact_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.company?.toLowerCase().includes(searchTerm.toLowerCase());
+            c.company_name?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchTier = tierFilter === 'all' || c.tier === tierFilter;
         const matchType = typeFilter === 'all' || c.company_type === typeFilter;
         return matchSearch && matchTier && matchType;
@@ -570,7 +569,7 @@ const UnifiedCRM = () => {
         if (selected.length === 0) { toast.error('Selecciona al menos un contacto'); return; }
 
         const toastId = toast.loading(`Enviando ${selected.length} contacto(s) a N8N...`);
-        const N8N_WEBHOOK = 'https://n8n.geobooker.com.mx/webhook/nuevo-lead-crm';
+        const N8N_WEBHOOK = import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://n8n.geobooker.com.mx/webhook/nuevo-lead-crm';
         let ok = 0, fail = 0;
 
         for (const c of selected) {
@@ -675,6 +674,7 @@ const UnifiedCRM = () => {
                     // 1. Mark as sent in marketing_contacts (so it's not selected again)
                     await supabase.from('marketing_contacts').update({
                         email_sent_at: new Date().toISOString(),
+                        email_status: 'sent',
                         status: 'contactado'
                     }).eq('id', item.contact_id);
 

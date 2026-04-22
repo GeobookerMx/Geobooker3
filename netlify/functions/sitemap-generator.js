@@ -17,14 +17,21 @@ exports.handler = async (event, context) => {
             .select('id, updated_at, name')
             .eq('status', 'approved') // Solo negocios aprobados
             .order('updated_at', { ascending: false })
-            .limit(20000);
+            .limit(10000);
+
+        // Novedad: Traer candidatos del DENUE para asegurar presencia masiva
+        const { data: candidates, error: candidateError } = await supabase
+            .from('business_candidates')
+            .select('id, updated_at')
+            .order('updated_at', { ascending: false })
+            .limit(30000);
 
         // Posts de Comunidad
         const { data: posts, error: postsError } = await supabase
-            .from('community_posts') // Asegurar nombre correcto de tabla
+            .from('community_posts') 
             .select('id, created_at')
             .order('created_at', { ascending: false })
-            .limit(5000);
+            .limit(2000);
 
         if (businessError) throw businessError;
 
@@ -87,10 +94,17 @@ exports.handler = async (event, context) => {
         // Agregar ciudades internacionales (prioridad más alta para SEO)
         cityRoutes.forEach(route => addUrl(route));
 
-        // Agregar Negocios
+        // Agregar Negocios Verificados
         businesses.forEach(biz => {
             addUrl(`/business/${biz.id}`, biz.updated_at);
         });
+
+        // Agregar Negocios del DENUE (Candidatos)
+        if (candidates) {
+            candidates.forEach(cand => {
+                addUrl(`/business/${cand.id}`, cand.updated_at);
+            });
+        }
 
         // Agregar Posts (si existen)
         if (posts) {

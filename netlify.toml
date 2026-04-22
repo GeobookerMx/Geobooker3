@@ -122,3 +122,9 @@
 
 # Nota: El cron ejecuta la función en netlify/functions/check-outdated-businesses.js
 # que verifica negocios desactualizados y envía emails automáticamente
+
+
+# Edge Functions
+[[edge_functions]]
+  function = "seo-business"
+  path = "/business/*"

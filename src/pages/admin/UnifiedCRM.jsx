@@ -70,6 +70,10 @@ const UnifiedCRM = () => {
     const [followUpDays, setFollowUpDays] = useState(15);
     const [isResetting, setIsResetting] = useState(false);
 
+    // N8N State
+    const [showN8nModal, setShowN8nModal] = useState(false);
+    const [n8nMessage, setN8nMessage] = useState('');
+
     // Settings State
     const [senders, setSenders] = useState([]);
     const [whatsappConfig, setWhatsappConfig] = useState({ phone: '', display_number: '', default_message: '' });
@@ -355,7 +359,9 @@ const UnifiedCRM = () => {
         const matchSearch = !searchTerm ||
             c.contact_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.company_name?.toLowerCase().includes(searchTerm.toLowerCase());
+            c.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            c.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            c.industry?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchTier = tierFilter === 'all' || c.tier === tierFilter;
         const matchType = typeFilter === 'all' || c.company_type === typeFilter;
         return matchSearch && matchTier && matchType;
@@ -564,7 +570,7 @@ const UnifiedCRM = () => {
     };
 
     // ============ N8N TRIGGER ============
-    const triggerN8NForContacts = async (contactIds) => {
+    const triggerN8NForContacts = async (contactIds, customMessage = '') => {
         const selected = contacts.filter(c => contactIds.has(c.id));
         if (selected.length === 0) { toast.error('Selecciona al menos un contacto'); return; }
 
@@ -587,7 +593,8 @@ const UnifiedCRM = () => {
                             company_name: c.company_name,
                             contact_name: c.contact_name,
                             city: c.city,
-                            state: c.state
+                            state: c.state,
+                            custom_message: customMessage
                         }
                     })
                 });
@@ -937,7 +944,10 @@ const UnifiedCRM = () => {
                                         {selectedContacts.size} seleccionados
                                     </span>
                                     <button
-                                        onClick={() => triggerN8NForContacts(selectedContacts)}
+                                        onClick={() => {
+                                            setN8nMessage('');
+                                            setShowN8nModal(true);
+                                        }}
                                         className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
                                     >
                                         🤖 Enviar Secuencia N8N
@@ -1682,6 +1692,48 @@ const UnifiedCRM = () => {
                     </div>
                 )
             }
+
+            {/* N8N Modal */}
+            {showN8nModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+                        <div className="p-6 border-b flex justify-between items-center bg-purple-50">
+                            <h2 className="text-xl font-bold flex items-center gap-2 text-purple-900">
+                                🤖 Enviar {selectedContacts.size} contactos a N8N
+                            </h2>
+                            <button onClick={() => setShowN8nModal(false)} className="p-2 hover:bg-purple-100 rounded-lg text-purple-700">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="bg-purple-100 p-3 rounded-lg text-sm text-purple-800">
+                                Escribe un correo, solicitud o mensaje especial para <strong>estas {selectedContacts.size} empresas seleccionadas</strong>. Este texto se enviará a tu flujo de N8N en la variable `custom_message`.
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Mensaje Personalizado (Opcional)</label>
+                                <textarea
+                                    value={n8nMessage}
+                                    onChange={(e) => setN8nMessage(e.target.value)}
+                                    className="w-full p-4 border-2 border-purple-100 rounded-xl focus:border-purple-500 focus:ring-0 text-sm h-40"
+                                    placeholder="Ej: Hola {{contact_name}}, vimos su empresa {{company_name}} en {{city}} y nos interesó..."
+                                />
+                            </div>
+                        </div>
+                        <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
+                            <button onClick={() => setShowN8nModal(false)} className="px-4 py-2 font-medium text-gray-600 hover:text-gray-900">Cancelar</button>
+                            <button
+                                onClick={() => {
+                                    triggerN8NForContacts(selectedContacts, n8nMessage);
+                                    setShowN8nModal(false);
+                                }}
+                                className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold shadow-lg transition-transform active:scale-95 flex items-center gap-2"
+                            >
+                                <Play className="w-4 h-4 fill-current" /> Enviar a N8N
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Mobile-friendly scrollbar styles */}
             <style>{`

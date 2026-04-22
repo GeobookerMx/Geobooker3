@@ -37,6 +37,8 @@ const UnifiedCRM = () => {
     const [tierFilter, setTierFilter] = useState('all');
     const [typeFilter, setTypeFilter] = useState('all');
     const [industryFilter, setIndustryFilter] = useState('all');
+    const [cityFilter, setCityFilter] = useState('all');
+    const [stateFilter, setStateFilter] = useState('all');
 
     // Templates State
     const [templates, setTemplates] = useState([]);
@@ -181,12 +183,12 @@ const UnifiedCRM = () => {
                 todayCount: rows.filter(r => r.email_sent_at && r.email_sent_at.startsWith(todayStr)).length
             });
 
-            // Get sample for display
+            // Get all contacts for robust local search
             const { data, error } = await supabase
                 .from('marketing_contacts')
                 .select('*')
                 .order('created_at', { ascending: false })
-                .limit(500);
+                .limit(25000);
 
             if (error) throw error;
             setContacts(data || []);
@@ -366,10 +368,14 @@ const UnifiedCRM = () => {
         const matchTier = tierFilter === 'all' || c.tier === tierFilter;
         const matchIndustry = industryFilter === 'all' || c.industry === industryFilter;
         const matchType = typeFilter === 'all' || c.company_type === typeFilter;
-        return matchSearch && matchTier && matchIndustry && matchType;
+        const matchCity = cityFilter === 'all' || c.city === cityFilter;
+        const matchState = stateFilter === 'all' || c.state === stateFilter;
+        return matchSearch && matchTier && matchIndustry && matchType && matchCity && matchState;
     });
 
     const uniqueIndustries = Array.from(new Set(contacts.map(c => c.industry).filter(Boolean))).sort();
+    const uniqueStates = Array.from(new Set(contacts.map(c => c.state).filter(Boolean))).sort();
+    const uniqueCities = Array.from(new Set(contacts.map(c => c.city).filter(Boolean))).sort();
 
     // ============ TEMPLATES FUNCTIONS ============
     const loadTemplates = async () => {
@@ -950,13 +956,39 @@ const UnifiedCRM = () => {
                                 <select
                                     value={industryFilter}
                                     onChange={(e) => setIndustryFilter(e.target.value)}
-                                    className="px-3 py-2 border rounded-lg bg-white max-w-[200px]"
+                                    className="px-3 py-2 border rounded-lg bg-white max-w-[160px]"
                                 >
-                                    <option value="all">Todos los Giros</option>
+                                    <option value="all">Giros (Todos)</option>
                                     {uniqueIndustries.map(ind => (
                                         <option key={ind} value={ind}>{ind}</option>
                                     ))}
                                 </select>
+                                <select
+                                    value={stateFilter}
+                                    onChange={(e) => setStateFilter(e.target.value)}
+                                    className="px-3 py-2 border rounded-lg bg-white max-w-[150px]"
+                                >
+                                    <option value="all">Estados (Todos)</option>
+                                    {uniqueStates.map(st => (
+                                        <option key={st} value={st}>{st}</option>
+                                    ))}
+                                </select>
+                                <select
+                                    value={cityFilter}
+                                    onChange={(e) => setCityFilter(e.target.value)}
+                                    className="px-3 py-2 border rounded-lg bg-white max-w-[150px]"
+                                >
+                                    <option value="all">Ciudades (Todas)</option>
+                                    {uniqueCities.map(ci => (
+                                        <option key={ci} value={ci}>{ci}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Badge for Search result counts */}
+                            <div className="mt-3 mb-1 inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-sm font-semibold shadow-sm w-full sm:w-auto">
+                                <Search className="w-4 h-4 text-blue-500" />
+                                Búsqueda lista: Encontramos {filteredContacts.length.toLocaleString()} resultados de tu DB
                             </div>
 
                             {/* Selection Actions */}

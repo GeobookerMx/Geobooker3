@@ -176,9 +176,54 @@ exports.handler = async (event, context) => {
                 const greeting = contact.contact_name || 'Estimado/a';
                 const companyName = contact.company_name || 'su empresa';
 
-                let finalHtml = template.html_content
+                let baseHtmlContent = template.html_content
                     .replace(/{contact_name}/g, greeting)
                     .replace(/{company_name}/g, companyName);
+
+                // Premium Email Wrapper (Mobile Responsive & Deliverability Optimized)
+                let finalHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #374151; margin: 0; padding: 0; background-color: #f3f4f6; }
+        .email-wrapper { padding: 40px 20px; background-color: #f3f4f6; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); }
+        .header { background-color: #ffffff; padding: 30px; text-align: center; border-bottom: 1px solid #f3f4f6; }
+        .content { padding: 40px 30px; font-size: 16px; color: #1f2937; }
+        .footer { background-color: #fafafa; padding: 30px; text-align: center; font-size: 12px; color: #6b7280; border-top: 1px solid #e5e7eb; }
+        .logo { width: 140px; height: auto; }
+        .social-links { margin-top: 15px; margin-bottom: 20px; }
+        .social-links a { color: #2563eb; text-decoration: none; margin: 0 10px; font-weight: 500; }
+        .unsubscribe { color: #9ca3af; text-decoration: underline; margin-top: 15px; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <div class="container">
+            <div class="header">
+                <!-- Usar logo genérico temporal o el oficial si ya está en vivo -->
+                <img src="https://lovia.com.mx/assets/logo-geobooker-black.png" alt="Geobooker" class="logo" onerror="this.src='https://geobooker.com.mx/logo.png'" />
+            </div>
+            <div class="content">
+                ${baseHtmlContent}
+            </div>
+            <div class="footer">
+                <div class="social-links">
+                    <a href="https://geobooker.com.mx">Buscador</a> | 
+                    <a href="https://geobooker.com.mx/about">Nosotros</a> | 
+                    <a href="https://geobooker.com.mx/enterprise">Empresas</a>
+                </div>
+                <p>Geobooker México &copy; ${new Date().getFullYear()}</p>
+                <p>Torre Mayor, Paseo de la Reforma, CDMX. <br>Le contactamos cortésmente hoy porque <strong>${companyName}</strong> está registrada como negocio público local.</p>
+                <p>Para no volver a recibir mensajes corporativos, responda este correo con la palabra <strong>BAJA</strong>.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
 
                 let finalSubject = template.subject
                     .replace(/{contact_name}/g, greeting)

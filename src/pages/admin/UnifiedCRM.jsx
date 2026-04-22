@@ -36,6 +36,7 @@ const UnifiedCRM = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [tierFilter, setTierFilter] = useState('all');
     const [typeFilter, setTypeFilter] = useState('all');
+    const [industryFilter, setIndustryFilter] = useState('all');
 
     // Templates State
     const [templates, setTemplates] = useState([]);
@@ -363,9 +364,12 @@ const UnifiedCRM = () => {
             c.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             c.industry?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchTier = tierFilter === 'all' || c.tier === tierFilter;
+        const matchIndustry = industryFilter === 'all' || c.industry === industryFilter;
         const matchType = typeFilter === 'all' || c.company_type === typeFilter;
-        return matchSearch && matchTier && matchType;
+        return matchSearch && matchTier && matchIndustry && matchType;
     });
+
+    const uniqueIndustries = Array.from(new Set(contacts.map(c => c.industry).filter(Boolean))).sort();
 
     // ============ TEMPLATES FUNCTIONS ============
     const loadTemplates = async () => {
@@ -579,6 +583,13 @@ const UnifiedCRM = () => {
         let ok = 0, fail = 0;
 
         for (const c of selected) {
+            // Reemplazo dinámico de variables en el texto
+            let finalMessage = customMessage
+                .replace(/{{contact_name}}/gi, c.contact_name || '')
+                .replace(/{{company_name}}/gi, c.company_name || '')
+                .replace(/{{city}}/gi, c.city || '')
+                .replace(/{{industry}}/gi, c.industry || '');
+
             try {
                 const res = await fetch(N8N_WEBHOOK, {
                     method: 'POST',
@@ -594,7 +605,8 @@ const UnifiedCRM = () => {
                             contact_name: c.contact_name,
                             city: c.city,
                             state: c.state,
-                            custom_message: customMessage
+                            industry: c.industry,
+                            custom_message: finalMessage
                         }
                     })
                 });
@@ -934,6 +946,16 @@ const UnifiedCRM = () => {
                                     <option value="AA">AA</option>
                                     <option value="A">A</option>
                                     <option value="B">B</option>
+                                </select>
+                                <select
+                                    value={industryFilter}
+                                    onChange={(e) => setIndustryFilter(e.target.value)}
+                                    className="px-3 py-2 border rounded-lg bg-white max-w-[200px]"
+                                >
+                                    <option value="all">Todos los Giros</option>
+                                    {uniqueIndustries.map(ind => (
+                                        <option key={ind} value={ind}>{ind}</option>
+                                    ))}
                                 </select>
                             </div>
 

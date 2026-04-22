@@ -1,6 +1,7 @@
 // src/pages/BusinessProfilePage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import { supabase } from '../lib/supabase';
 import {
     MapPin, Phone, Globe, Clock, Star,
@@ -41,6 +42,15 @@ const BusinessProfilePage = () => {
     const [loading, setLoading] = useState(true);
     const [isFavorite, setIsFavorite] = useState(false);
     const [showClaimForm, setShowClaimForm] = useState(false);
+
+    // Load persisted favorite state
+    useEffect(() => {
+        if (!id) return;
+        try {
+            const saved = JSON.parse(localStorage.getItem('geobooker_favorites') || '[]');
+            setIsFavorite(saved.includes(id));
+        } catch { /* ignore */ }
+    }, [id]);
 
     // Si no hay ID, redirigir al inicio
     if (!id) {
@@ -117,8 +127,13 @@ const BusinessProfilePage = () => {
     const handleDirections = () => {
         if (business?.latitude && business?.longitude) {
             trackDirectionsClick(id, business.name);
-            const url = `https://www.google.com/maps/dir/?api=1&destination=${business.latitude},${business.longitude}`;
-            window.open(url, '_blank');
+            const lat = business.latitude;
+            const lng = business.longitude;
+            // On iOS native open Apple Maps directly; on web use Google Maps
+            const url = Capacitor.isNativePlatform()
+                ? `maps://?daddr=${lat},${lng}`
+                : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+            window.location.href = url;
         }
     };
 
@@ -130,11 +145,15 @@ const BusinessProfilePage = () => {
     };
 
     const toggleFavorite = () => {
-        setIsFavorite(!isFavorite);
-        if (!isFavorite) {
-            trackSaveFavorite(id, business?.name);
-        }
-        toast.success(isFavorite ? 'Eliminado de favoritos' : 'Agregado a favoritos');
+        const next = !isFavorite;
+        setIsFavorite(next);
+        try {
+            const saved = JSON.parse(localStorage.getItem('geobooker_favorites') || '[]');
+            const updated = next ? [...new Set([...saved, id])] : saved.filter(fid => fid !== id);
+            localStorage.setItem('geobooker_favorites', JSON.stringify(updated));
+        } catch { /* ignore */ }
+        if (next) trackSaveFavorite(id, business?.name);
+        toast.success(next ? 'Guardado en favoritos' : 'Eliminado de favoritos');
     };
 
     const handleWhatsAppClick = () => {

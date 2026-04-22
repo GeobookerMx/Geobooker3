@@ -474,6 +474,36 @@ const HomePage = () => {
         </div>
       )}
 
+      {/* 🌟 BANNER Enterprise VIP (50% OFF) - Visible hasta 1 de Julio 2026 */}
+      {new Date() < new Date('2026-07-02T00:00:00-06:00') && (
+        <div className="bg-gradient-to-r from-slate-900 via-gray-900 to-black text-amber-500 py-3 px-4 shadow-xl border-b border-amber-500/30">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">🚀</span>
+              <div>
+                <span className="font-extrabold text-lg block text-amber-500">
+                  Impulsa tu Negocio: <span className="text-white">50% OFF en Publicidad Global</span>
+                </span>
+                <span className="text-amber-500/80 text-sm">
+                  Descuento exclusivo en todos los paquetes de Geobooker Enterprise Ads
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <div className="flex items-center gap-2 text-gray-300">
+                <span className="opacity-90">Vigencia</span>
+                <span className="bg-amber-500/10 border border-amber-500/30 text-amber-400 backdrop-blur px-3 py-1.5 rounded-lg font-bold text-base uppercase">
+                  Hasta Julio 2026
+                </span>
+              </div>
+              <a href="/enterprise#pricing" className="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-900 px-5 py-2 rounded-lg font-bold hover:shadow-lg hover:shadow-amber-500/20 hover:scale-105 transition-all">
+                Ver Paquetes VIP
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal de permiso de ubicación */}
       <LocationPermissionModal
         isOpen={showLocationModal}

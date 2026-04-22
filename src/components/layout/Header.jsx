@@ -19,7 +19,6 @@ export default function Header() {
   const mobileMenuRef = useRef(null);
   const userMenuRef = useRef(null);
 
-  // Cerrar menús al hacer click fuera
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (isOpen && mobileMenuRef.current && !mobileMenuRef.current.contains(e.target)) {
@@ -29,45 +28,48 @@ export default function Header() {
         setShowUserMenu(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('touchstart', handleClickOutside);
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
     };
   }, [isOpen, showUserMenu]);
 
   useEffect(() => {
-    // Función reutilizable para cargar datos del usuario
     const fetchUserData = async (sessionUser) => {
       if (!sessionUser) return;
 
       const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', sessionUser.id)
+        .from("user_profiles")
+        .select("*")
+        .eq("id", sessionUser.id)
         .maybeSingle();
 
       setUserProfile(profile);
 
       try {
         const { data: businesses, error: bizError } = await supabase
-          .from('businesses')
-          .select('logo_url')
-          .eq('owner_id', sessionUser.id)
+          .from("businesses")
+          .select("logo_url")
+          .eq("owner_id", sessionUser.id)
           .limit(1);
 
         if (!bizError && businesses && businesses.length > 0 && businesses[0].logo_url) {
           setBusinessLogo(businesses[0].logo_url);
         }
       } catch (e) {
-        if (import.meta.env.DEV) console.log('No logo available:', e);
+        if (import.meta.env.DEV) console.log("No logo available:", e);
       }
     };
 
-    // Cargar sesión actual al montar
     const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       if (session?.user) {
         setUser(session.user);
         await fetchUserData(session.user);
@@ -76,11 +78,12 @@ export default function Header() {
 
     getUser();
 
-    // Escuchar cambios en autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
+
       if (session?.user) {
-        // Recargar perfil y logo al hacer login (fix: antes no se recargaba)
         await fetchUserData(session.user);
       } else {
         setUserProfile(null);
@@ -97,24 +100,25 @@ export default function Header() {
       setUser(null);
       setUserProfile(null);
       setShowUserMenu(false);
-      toast.success(t('nav.logoutSuccess'));
-      navigate('/welcome');
+      toast.success(t("nav.logoutSuccess"));
+      navigate("/welcome");
     } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-      toast.error(t('nav.logoutError'));
+      console.error("Error al cerrar sesión:", error);
+      toast.error(t("nav.logoutError"));
     }
   };
 
   const getUserInitials = () => {
     if (userProfile?.full_name) {
       return userProfile.full_name
-        .split(' ')
-        .map(n => n[0])
-        .join('')
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
         .toUpperCase()
         .slice(0, 2);
     }
-    return user?.email?.[0]?.toUpperCase() || 'U';
+
+    return user?.email?.[0]?.toUpperCase() || "U";
   };
 
   return (
@@ -127,43 +131,80 @@ export default function Header() {
         <button
           className="md:hidden flex flex-col items-center justify-center space-y-1"
           onClick={() => setIsOpen(!isOpen)}
-          aria-label={t('nav.openMenu')}
+          aria-label={t("nav.openMenu")}
         >
-          <span className={`block w-6 h-[3px] bg-geoPurple transition-transform ${isOpen ? "rotate-45 translate-y-2" : ""}`} />
-          <span className={`block w-6 h-[3px] bg-geoPurple transition-opacity ${isOpen ? "opacity-0" : "opacity-100"}`} />
-          <span className={`block w-6 h-[3px] bg-geoPurple transition-transform ${isOpen ? "-rotate-45 -translate-y-2" : ""}`} />
+          <span
+            className={`block w-6 h-[3px] bg-geoPurple transition-transform ${
+              isOpen ? "rotate-45 translate-y-2" : ""
+            }`}
+          />
+          <span
+            className={`block w-6 h-[3px] bg-geoPurple transition-opacity ${
+              isOpen ? "opacity-0" : "opacity-100"
+            }`}
+          />
+          <span
+            className={`block w-6 h-[3px] bg-geoPurple transition-transform ${
+              isOpen ? "-rotate-45 -translate-y-2" : ""
+            }`}
+          />
         </button>
 
         <nav className="hidden md:flex items-center space-x-6 font-brand">
-          <Link to="/" className="text-geoPurple hover:text-geoPink transition-colors">{t('nav.home')}</Link>
-          <Link to="/categories" className="text-geoPurple hover:text-geoPink transition-colors">{t('nav.categories')}</Link>
-          <Link to="/quienes-somos" className="text-geoPurple hover:text-geoPink transition-colors">{t('nav.about')}</Link>
-          <Link to="/comunidad" className="text-geoPurple hover:text-geoPink transition-colors">{t('nav.community')}</Link>
-          <Link to="/claim" className="border-2 border-amber-600 text-amber-700 px-4 py-1.5 rounded-full font-bold hover:bg-amber-600 hover:text-white transition-all flex items-center gap-1 shadow-sm hover:-translate-y-0.5">
-            🏪 {t('nav.claimBusiness', 'Reclamar Negocio')}
+          <Link to="/" className="text-geoPurple hover:text-geoPink transition-colors">
+            {t("nav.home")}
           </Link>
+          <Link to="/categories" className="text-geoPurple hover:text-geoPink transition-colors">
+            {t("nav.categories")}
+          </Link>
+          <Link to="/quienes-somos" className="text-geoPurple hover:text-geoPink transition-colors">
+            {t("nav.about")}
+          </Link>
+          <Link to="/comunidad" className="text-geoPurple hover:text-geoPink transition-colors">
+            {t("nav.community")}
+          </Link>
+          <Link to="/b2b-connect" className="text-geoPurple font-bold hover:text-geoPink transition-colors flex items-center gap-1">
+            💼 Proveedores B2B
+          </Link>
+
+          <Link
+            to="/claim"
+            className="border-2 border-amber-600 text-amber-700 px-4 py-1.5 rounded-full font-bold hover:bg-amber-600 hover:text-white transition-all flex items-center gap-1 shadow-sm hover:-translate-y-0.5"
+          >
+            🏪 {t("nav.claimBusiness", "Reclamar Negocio")}
+          </Link>
+
           {user && (
             <button
               onClick={() => setShowRecommendForm(true)}
               className="border-2 border-geoPurple text-geoPurple px-4 py-1.5 rounded-full font-bold hover:bg-geoPurple hover:text-white transition-all flex items-center gap-1 shadow-sm hover:-translate-y-0.5"
             >
-              ⭐ {t('nav.recommend', 'Recomendar Negocio')}
+              ⭐ {t("nav.recommend", "Recomendar Negocio")}
             </button>
           )}
-          <Link to="/advertise" className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 py-1.5 rounded-lg font-bold hover:from-red-600 hover:to-orange-600 transition-all flex items-center gap-1 shadow-lg hover:scale-105">
-            🚀 {t('nav.moreSales')}
+
+          <Link
+            to="/advertise"
+            className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 py-1.5 rounded-lg font-bold hover:from-red-600 hover:to-orange-600 transition-all flex items-center gap-1 shadow-lg hover:scale-105"
+          >
+            🚀 {t("nav.moreSales")}
           </Link>
-          <Link to="/business/register" className="bg-geoPink text-white px-4 py-2 rounded-full hover:bg-geoPurple transition-colors">+ {t('nav.addBusiness')}</Link>
+
+          <Link
+            to="/business/register"
+            className="bg-geoPink text-white px-4 py-2 rounded-full hover:bg-geoPurple transition-colors"
+          >
+            + {t("nav.addBusiness")}
+          </Link>
+
           <LanguageSelector />
 
-          {/* User Menu */}
           {user ? (
             <div className="relative flex items-center gap-2" ref={userMenuRef}>
-              {/* Dashboard notification bell */}
               <Link
                 to="/dashboard"
                 className="relative p-2 text-geoPurple hover:text-geoPink transition-colors"
-                title={t('nav.viewDashboard')}
+                title={t("nav.viewDashboard")}
               >
                 <span className="text-xl">🔔</span>
                 <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
@@ -184,38 +225,50 @@ export default function Header() {
                     {getUserInitials()}
                   </div>
                 )}
-                <span className="hidden lg:block">{userProfile?.full_name || t('nav.user')}</span>
+                <span className="hidden lg:block">{userProfile?.full_name || t("nav.user")}</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
 
-              {/* Dropdown Menu */}
               {showUserMenu && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
+                <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
                   <div className="px-4 py-2 border-b border-gray-200">
-                    <p className="text-sm font-semibold text-gray-900">{userProfile?.full_name || t('nav.user')}</p>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {userProfile?.full_name || t("nav.user")}
+                    </p>
                     <p className="text-xs text-gray-500 truncate">{user.email}</p>
                   </div>
+
                   <Link
                     to="/dashboard"
                     onClick={() => setShowUserMenu(false)}
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    📊 {t('nav.dashboard')}
+                    📊 {t("nav.dashboard")}
                   </Link>
+
                   <Link
                     to="/business/register"
                     onClick={() => setShowUserMenu(false)}
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    🏪 {t('nav.addBusiness')}
+                    🏪 {t("nav.addBusiness")}
                   </Link>
+
+                  <Link
+                    to="/account/delete"
+                    onClick={() => setShowUserMenu(false)}
+                    className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    🗑️ Eliminar cuenta
+                  </Link>
+
                   <button
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                   >
-                    🚪 {t('nav.logout')}
+                    🚪 {t("nav.logout")}
                   </button>
                 </div>
               )}
@@ -225,72 +278,129 @@ export default function Header() {
               to="/login"
               className="bg-geoPurple text-white px-4 py-2 rounded-full hover:bg-geoPink transition-colors"
             >
-              {t('nav.login')}
+              {t("nav.login")}
             </Link>
           )}
         </nav>
       </div>
 
-      {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden bg-geoYellow shadow-inner border-t border-geoPurple/10 px-4 py-4 space-y-4 font-brand">
-          <Link to="/" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">{t('nav.home')}</Link>
-          <Link to="/categories" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">{t('nav.categories')}</Link>
-          <Link to="/quienes-somos" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">{t('nav.about')}</Link>
-          <Link to="/comunidad" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">{t('nav.community')}</Link>
-          <Link to="/claim" onClick={() => setIsOpen(false)} className="block text-center border-2 border-amber-600 text-amber-700 hover:bg-amber-600 hover:text-white px-4 py-2 rounded-full w-full font-bold transition-all mb-2">
-            🏪 {t('nav.claimBusiness', 'Reclamar Negocio')}
+          <Link to="/" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">
+            {t("nav.home")}
           </Link>
+          <Link
+            to="/categories"
+            onClick={() => setIsOpen(false)}
+            className="block text-geoPurple hover:text-geoPink"
+          >
+            {t("nav.categories")}
+          </Link>
+          <Link
+            to="/quienes-somos"
+            onClick={() => setIsOpen(false)}
+            className="block text-geoPurple hover:text-geoPink"
+          >
+            {t("nav.about")}
+          </Link>
+          <Link
+            to="/comunidad"
+            onClick={() => setIsOpen(false)}
+            className="block text-geoPurple hover:text-geoPink"
+          >
+            {t("nav.community")}
+          </Link>
+          <Link
+            to="/b2b-connect"
+            onClick={() => setIsOpen(false)}
+            className="block text-geoPurple font-bold hover:text-geoPink py-1"
+          >
+            💼 Proveedores B2B
+          </Link>
+
+          <Link
+            to="/claim"
+            onClick={() => setIsOpen(false)}
+            className="block text-center border-2 border-amber-600 text-amber-700 hover:bg-amber-600 hover:text-white px-4 py-2 rounded-full w-full font-bold transition-all mb-2"
+          >
+            🏪 {t("nav.claimBusiness", "Reclamar Negocio")}
+          </Link>
+
           {user && (
             <button
-              onClick={() => { setIsOpen(false); setShowRecommendForm(true); }}
+              onClick={() => {
+                setIsOpen(false);
+                setShowRecommendForm(true);
+              }}
               className="block text-center border-2 border-geoPurple text-geoPurple hover:bg-geoPurple hover:text-white px-4 py-2 rounded-full w-full font-bold transition-all"
             >
-              ⭐ {t('nav.recommend', 'Recomendar Negocio')}
+              ⭐ {t("nav.recommend", "Recomendar Negocio")}
             </button>
           )}
-          <Link to="/advertise" onClick={() => setIsOpen(false)} className="block text-red-600 font-bold bg-red-50 p-2 rounded">
-            🚀 {t('nav.moreSales')}
+
+          <Link
+            to="/advertise"
+            onClick={() => setIsOpen(false)}
+            className="block text-red-600 font-bold bg-red-50 p-2 rounded"
+          >
+            🚀 {t("nav.moreSales")}
           </Link>
-          <Link to="/business/register" onClick={() => setIsOpen(false)} className="block bg-geoPink text-white px-4 py-2 rounded-full w-max hover:bg-geoPurple transition">+ {t('nav.addBusiness')}</Link>
+
+          <Link
+            to="/business/register"
+            onClick={() => setIsOpen(false)}
+            className="block bg-geoPink text-white px-4 py-2 rounded-full w-max hover:bg-geoPurple transition"
+          >
+            + {t("nav.addBusiness")}
+          </Link>
 
           {user ? (
-            <>
-              <div className="border-t border-geoPurple/10 pt-4">
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="w-10 h-10 bg-geoPurple text-white rounded-full flex items-center justify-center font-bold">
-                    {getUserInitials()}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-geoPurple">{userProfile?.full_name || t('nav.user')}</p>
-                    <p className="text-xs text-gray-600">{user.email}</p>
-                  </div>
+            <div className="border-t border-geoPurple/10 pt-4">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="w-10 h-10 bg-geoPurple text-white rounded-full flex items-center justify-center font-bold">
+                  {getUserInitials()}
                 </div>
-                <Link
-                  to="/dashboard"
-                  onClick={() => setIsOpen(false)}
-                  className="block text-geoPurple hover:text-geoPink mb-2"
-                >
-                  📊 {t('nav.dashboard')}
-                </Link>
-                <button
-                  onClick={() => {
-                    setIsOpen(false);
-                    handleLogout();
-                  }}
-                  className="block text-red-600 hover:text-red-700"
-                >
-                  🚪 {t('nav.logout')}
-                </button>
+                <div>
+                  <p className="text-sm font-semibold text-geoPurple">
+                    {userProfile?.full_name || t("nav.user")}
+                  </p>
+                  <p className="text-xs text-gray-600">{user.email}</p>
+                </div>
               </div>
-            </>
+
+              <Link
+                to="/dashboard"
+                onClick={() => setIsOpen(false)}
+                className="block text-geoPurple hover:text-geoPink mb-2"
+              >
+                📊 {t("nav.dashboard")}
+              </Link>
+
+              <Link
+                to="/account/delete"
+                onClick={() => setIsOpen(false)}
+                className="block text-red-600 hover:text-red-700 mb-2"
+              >
+                🗑️ Eliminar cuenta
+              </Link>
+
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  handleLogout();
+                }}
+                className="block text-red-600 hover:text-red-700"
+              >
+                🚪 {t("nav.logout")}
+              </button>
+            </div>
           ) : (
             <Link
               to="/login"
               onClick={() => setIsOpen(false)}
               className="block bg-geoPurple text-white px-4 py-2 rounded-full w-max hover:bg-geoPink transition"
             >
-              {t('nav.login')}
+              {t("nav.login")}
             </Link>
           )}
 
@@ -299,7 +409,7 @@ export default function Header() {
           </div>
         </div>
       )}
-      {/* Modal de Recomendar Negocio */}
+
       <RecommendationForm
         isOpen={showRecommendForm}
         onClose={() => setShowRecommendForm(false)}

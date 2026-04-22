@@ -1,6 +1,8 @@
 // src/contexts/LocationContext.jsx
 // Apple Guideline 2.1(a) fix: prevent location permission loop
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import { Capacitor } from "@capacitor/core";
+import { requestDeviceLocation } from "../services/deviceLocationService";
 
 const LocationContext = createContext(null);
 
@@ -61,13 +63,38 @@ export const LocationProvider = ({ children }) => {
   const hasRequestedRef = useRef(false);
   const permissionCheckDoneRef = useRef(false);
 
-  const requestLocationPermission = () => {
+  const requestLocationPermission = async () => {
+    hasRequestedRef.current = true;
+
+    // On native iOS/Android use Capacitor plugin for proper permission handling
+    if (Capacitor.isNativePlatform()) {
+      const result = await requestDeviceLocation();
+      if (result.ok) {
+        const location = { lat: result.latitude, lng: result.longitude };
+        setUserLocation(location);
+        saveLocationToStorage(location);
+        setPermissionGranted(true);
+        setLoading(false);
+        return location;
+      }
+      // Denied or error — fall through to cached/default
+      const cached = getStoredLocation();
+      if (cached) {
+        setUserLocation(cached);
+        setPermissionGranted(true);
+        setLoading(false);
+        return cached;
+      }
+      setPermissionGranted(false);
+      setLoading(false);
+      throw new Error(result.message || "Ubicación no disponible");
+    }
+
+    // Web fallback: browser geolocation API
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
-        // Use cached if available
         const cached = getStoredLocation();
         if (cached) {
-          console.log('📍 Using cached location (no geolocation API)');
           setUserLocation(cached);
           setLoading(false);
           resolve(cached);
@@ -77,10 +104,6 @@ export const LocationProvider = ({ children }) => {
         return;
       }
 
-      // Mark that we've requested
-      hasRequestedRef.current = true;
-
-      // First try low accuracy (faster, uses WiFi/IP)
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const location = {
@@ -88,16 +111,13 @@ export const LocationProvider = ({ children }) => {
             lng: position.coords.longitude,
             accuracy: position.coords.accuracy,
           };
-          console.log('📍 Location obtained:', location);
           setUserLocation(location);
           saveLocationToStorage(location);
           setPermissionGranted(true);
           setLoading(false);
           resolve(location);
         },
-        (error) => {
-          // If low accuracy fails, try high accuracy
-          console.log('⚠️ Retrying with high accuracy...');
+        () => {
           navigator.geolocation.getCurrentPosition(
             (position) => {
               const location = {
@@ -105,84 +125,62 @@ export const LocationProvider = ({ children }) => {
                 lng: position.coords.longitude,
                 accuracy: position.coords.accuracy,
               };
-              console.log('📍 Location obtained (high accuracy):', location);
               setUserLocation(location);
               saveLocationToStorage(location);
               setPermissionGranted(true);
               setLoading(false);
               resolve(location);
             },
-            (err) => {
-              // FALLBACK: Use cached location
+            () => {
               const cachedLocation = getStoredLocation();
               if (cachedLocation) {
-                console.log('📍 Using cached location (timeout):', cachedLocation);
                 setUserLocation(cachedLocation);
                 setPermissionGranted(true);
                 setLoading(false);
                 resolve(cachedLocation);
                 return;
               }
-
-              // FALLBACK 2: Default location (CDMX)
-              console.log('📍 Using default location (CDMX)');
-              const defaultLocation = {
-                lat: 19.4326,
-                lng: -99.1332,
-                accuracy: 10000,
-                isDefault: true
-              };
+              const defaultLocation = { lat: 19.4326, lng: -99.1332, accuracy: 10000, isDefault: true };
               setUserLocation(defaultLocation);
               setPermissionGranted(true);
               setLoading(false);
               resolve(defaultLocation);
             },
-            {
-              enableHighAccuracy: true,
-              timeout: 10000,
-              maximumAge: 300000,
-            }
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
           );
         },
-        {
-          enableHighAccuracy: false,
-          timeout: 5000,
-          maximumAge: 600000,
-        }
+        { enableHighAccuracy: false, timeout: 5000, maximumAge: 600000 }
       );
     });
   };
 
-  // Refresh location manually
-  const refreshLocation = () => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error("Geolocalización no soportada"));
-        return;
+  const refreshLocation = async () => {
+    setLoading(true);
+    if (Capacitor.isNativePlatform()) {
+      const result = await requestDeviceLocation();
+      if (result.ok) {
+        const location = { lat: result.latitude, lng: result.longitude };
+        setUserLocation(location);
+        saveLocationToStorage(location);
+        setLoading(false);
+        return location;
       }
+      setLoading(false);
+      throw new Error(result.message);
+    }
 
-      setLoading(true);
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) { setLoading(false); reject(new Error("Geolocalización no soportada")); return; }
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const location = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-          };
+          const location = { lat: position.coords.latitude, lng: position.coords.longitude, accuracy: position.coords.accuracy };
           setUserLocation(location);
           saveLocationToStorage(location);
           setLoading(false);
           resolve(location);
         },
-        (error) => {
-          setLoading(false);
-          reject(error);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 0,
-        }
+        (error) => { setLoading(false); reject(error); },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
     });
   };

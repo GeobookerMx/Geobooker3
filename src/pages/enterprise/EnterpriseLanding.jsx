@@ -60,22 +60,38 @@ export default function EnterpriseLanding() {
                         minutes: Math.floor((diff / (1000 * 60)) % 60)
                     });
                 }
+            } else {
+                throw new Error('Supabase return empty data, using fallback');
             }
         } catch (error) {
             console.error('Error fetching pricing:', error);
+            const promoDateStr = '2026-07-01T23:59:59Z';
+            setPromoEndDate(promoDateStr);
             setPricing([
-                { code: 'city_launch', name: 'City Launch', regular_price_usd: 390, current_price_usd: 290, discount_percent: 25, cities_included: 1, countries_included: 1, duration_months: 1, is_promo_active: true,
+                { code: 'city_launch', name: 'City Launch', regular_price_usd: 100, current_price_usd: 50, discount_percent: 50, cities_included: 1, countries_included: 1, duration_months: 1, is_promo_active: true,
                   features: ['1 ciudad activa', 'Búsqueda patrocinada', '1 placement destacado', 'Pin patrocinado', 'Dashboard básico'] },
-                { code: 'regional', name: 'Regional Pack', regular_price_usd: 2490, current_price_usd: 1990, discount_percent: 20, cities_included: 5, countries_included: 2, duration_months: 3, is_promo_active: true,
+                { code: 'regional', name: 'Regional Pack', regular_price_usd: 500, current_price_usd: 250, discount_percent: 50, cities_included: 5, countries_included: 2, duration_months: 3, is_promo_active: true,
                   features: ['Hasta 5 ciudades', 'Rotación de inventario', 'Dashboard por ciudad', '2 optimizaciones incluidas', 'Soporte prioritario'] },
-                { code: 'country', name: 'Country Select', regular_price_usd: 4900, current_price_usd: 3900, discount_percent: 20, cities_included: 12, countries_included: 1, duration_months: 3, is_promo_active: true,
+                { code: 'country', name: 'Country Select', regular_price_usd: 1200, current_price_usd: 600, discount_percent: 50, cities_included: 12, countries_included: 1, duration_months: 3, is_promo_active: true,
                   features: ['Hasta 12 ciudades', 'Placements premium', 'Dashboard ciudad/dispositivo/horario', 'Revisión mensual', 'Soporte prioritario'] },
-                { code: 'crossborder', name: 'Cross-Border Event', regular_price_usd: 8900, current_price_usd: 6900, discount_percent: 22, cities_included: 30, countries_included: 3, duration_months: 3, is_promo_active: true,
+                { code: 'crossborder', name: 'Cross-Border Event', regular_price_usd: 2000, current_price_usd: 1000, discount_percent: 50, cities_included: 30, countries_included: 3, duration_months: 3, is_promo_active: true,
                   features: ['2-3 países', 'Segmentación por idioma', 'Flight por evento/temporada', 'Reporte ejecutivo final', 'Soporte consultivo'] },
-                { code: 'global_custom', name: 'Global Custom', regular_price_usd: 0, current_price_usd: 0, discount_percent: 0, cities_included: 999, countries_included: 999, duration_months: 0, is_promo_active: false, is_custom: true,
+                { code: 'global_custom', name: 'Global Custom', regular_price_usd: 3200, current_price_usd: 1600, discount_percent: 50, cities_included: 999, countries_included: 999, duration_months: 3, is_promo_active: true, is_custom: true,
                   features: ['Multi-país o continental', 'Setup de campaña a medida', 'Inventario premium asignado', 'Reporting ejecutivo', 'Propuesta comercial personalizada'] }
             ]);
-            setTimeLeft({ days: 90, hours: 0, minutes: 0 });
+
+            const now = new Date();
+            const end = new Date(promoDateStr);
+            const diff = end - now;
+            if (diff > 0) {
+                setTimeLeft({
+                    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+                    hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+                    minutes: Math.floor((diff / (1000 * 60)) % 60)
+                });
+            } else {
+                setTimeLeft({ days: 0, hours: 0, minutes: 0 });
+            }
         } finally {
             setLoading(false);
         }

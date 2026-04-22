@@ -34,8 +34,6 @@ const ReportsModeration = lazy(() => import("./pages/admin/ReportsModeration.jsx
 const AdReportsModeration = lazy(() => import("./pages/admin/AdReportsModeration.jsx"));
 const ReferralManagement = lazy(() => import("./pages/admin/ReferralManagement.jsx"));
 const BulkImport = lazy(() => import("./pages/admin/BulkImport.jsx"));
-const EmailCampaigns = lazy(() => import("./pages/admin/EmailCampaigns.jsx"));
-const ContactsCRM = lazy(() => import("./pages/admin/ContactsCRM.jsx"));
 const SmartCampaignLauncher = lazy(() => import("./pages/admin/SmartCampaignLauncher.jsx"));
 const UnifiedCRM = lazy(() => import("./pages/admin/UnifiedCRM.jsx"));
 const ApifyScraper = lazy(() => import("./pages/admin/ApifyScraper.jsx"));
@@ -46,7 +44,7 @@ const ClaimsManagement = lazy(() => import("./pages/admin/ClaimsManagement.jsx")
 const UnsubscribePage = lazy(() => import("./pages/UnsubscribePage.jsx"));
 
 // User Pages - Lazy Loaded (except HomePage for LCP)
-import HomePage from "./pages/HomePage.jsx"; // Static import for faster LCP
+import HomePage from "./pages/HomePage.jsx";
 const FAQPage = lazy(() => import("./pages/FAQPage.jsx"));
 const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage.jsx"));
 const TermsOfServicePage = lazy(() => import("./pages/TermsOfServicePage.jsx"));
@@ -91,6 +89,7 @@ const EnterpriseLanding = lazy(() => import("./pages/enterprise/EnterpriseLandin
 const EnterpriseContact = lazy(() => import("./pages/enterprise/EnterpriseContact.jsx"));
 const EnterpriseCheckout = lazy(() => import("./pages/enterprise/EnterpriseCheckout.jsx"));
 const EnterpriseSuccess = lazy(() => import("./pages/enterprise/EnterpriseSuccess.jsx"));
+const B2bConnect = lazy(() => import("./pages/enterprise/B2bConnect.jsx"));
 const EnterpriseEdit = lazy(() => import("./pages/enterprise/EnterpriseEdit.jsx"));
 const AdvertiserDashboard = lazy(() => import("./pages/advertiser/AdvertiserDashboard.jsx"));
 const OxxoPendingPage = lazy(() => import("./pages/OxxoPendingPage.jsx"));
@@ -107,10 +106,8 @@ export default function AppRouter() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        {/* 🔒 Callback de autenticación OAuth (sin layout) */}
         <Route path="/auth/callback" element={<AuthCallback />} />
 
-        {/* 🌐 Rutas públicas que usan el layout general (Header + Footer) */}
         <Route element={<PublicLayout />}>
           <Route path="/welcome" element={<WelcomePage />} />
           <Route path="/signup" element={<SignupPage />} />
@@ -122,81 +119,49 @@ export default function AppRouter() {
           <Route path="/terms" element={<TermsOfServicePage />} />
           <Route path="/faq" element={<FAQPage />} />
 
-          {/* 🆕 Páginas públicas para acceso de invitados (con límite de búsqueda) */}
           <Route path="/" element={<HomePage />} />
           <Route path="/c/:category" element={<HomePage />} />
           <Route path="/c/:category/:subcategory" element={<HomePage />} />
           <Route path="/ciudad/:city" element={<HomePage />} />
           <Route path="/categories" element={<CategoriesPage />} />
 
-          {/* 🌍 International City Landing Pages (SEO USA/UK/CA) */}
           <Route path="/cities/:citySlug" element={<CityLandingPage />} />
-
-          {/* 🇬🇧 English B2B Landing Pages (International SEO) */}
           <Route path="/en/advertise-in-mexico" element={<AdvertiseInMexicoPage />} />
           <Route path="/en/pricing" element={<EnPricingPage />} />
           <Route path="/en/industries" element={<IndustriesPage />} />
 
-          {/* Página comercial de publicidad (SIN login) */}
           <Route path="/advertise" element={<AdvertisePage />} />
-
-          {/* Referral Landing Page */}
           <Route path="/r/:code" element={<ReferralLanding />} />
-
-          {/* Download App Page - Para QR codes y campañas */}
           <Route path="/download" element={<DownloadPage />} />
 
-          {/* Claim Business Page - Search & claim DENUE businesses */}
           <Route path="/claim" element={<ClaimBusinessPage />} />
 
-          {/* Delete Account Page - Required for app stores */}
           <Route path="/delete-account" element={<DeleteAccountPage />} />
+          <Route path="/account/delete" element={<DeleteAccountPage />} />
 
-          {/* Políticas de anuncios (página legal pública) */}
           <Route path="/legal/ads-policy" element={<AdsPolicyPage />} />
-
-          {/* Página de seguridad y anti-extorsión */}
           <Route path="/seguridad" element={<SecurityPage />} />
-
-          {/* Quiénes Somos / About Us */}
           <Route path="/about" element={<AboutPage />} />
           <Route path="/quienes-somos" element={<AboutPage />} />
-
-          {/* Comunidad Geobooker */}
           <Route path="/comunidad" element={<CommunityPage />} />
           <Route path="/community" element={<CommunityPage />} />
-
-          {/* Desarrollo de Apps - Cotización */}
           <Route path="/desarrollo-apps" element={<AppDevelopmentPage />} />
-
-          {/* Información fiscal para usuarios internacionales */}
           <Route path="/legal/fiscal" element={<FiscalInfoPage />} />
-
-          {/* Guía para darse de alta en el SAT como RESICO */}
           <Route path="/guia-resico" element={<GuiaResicoPage />} />
-
-          {/* Página de pago OXXO pendiente */}
           <Route path="/payment/oxxo-pending" element={<OxxoPendingPage />} />
-
-          {/* Enterprise / Global Ads */}
           <Route path="/enterprise" element={<EnterpriseLanding />} />
           <Route path="/enterprise/contact" element={<EnterpriseContact />} />
           <Route path="/enterprise/checkout" element={<EnterpriseCheckout />} />
           <Route path="/enterprise/success" element={<EnterpriseSuccess />} />
           <Route path="/enterprise/edit/:id" element={<EnterpriseEdit />} />
-
-          {/* Advertiser Dashboard */}
+          <Route path="/b2b-connect" element={<B2bConnect />} />
+          <Route path="/proveedores" element={<B2bConnect />} />
           <Route path="/advertiser/dashboard" element={<AdvertiserDashboard />} />
-
-          {/* Perfil público de negocio */}
           <Route path="/business" element={<Navigate to="/" replace />} />
           <Route path="/business/:id" element={<BusinessProfilePage />} />
-
-          {/* Perfil de negocio de Google Places */}
           <Route path="/place/:placeId" element={<PlaceProfilePage />} />
         </Route>
 
-        {/* 🔐 Rutas protegidas (requieren login) */}
         <Route
           element={
             <ProtectedRoute>
@@ -208,8 +173,6 @@ export default function AppRouter() {
           <Route path="/register" element={<RegisterPage />} />
         </Route>
 
-
-        {/* 📊 Dashboard de usuario (layout tipo panel) */}
         <Route
           element={
             <ProtectedRoute>
@@ -218,51 +181,34 @@ export default function AppRouter() {
           }
         >
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route
-            path="/dashboard/business/:id/edit"
-            element={<BusinessEditPage />}
-          />
+          <Route path="/dashboard/business/:id/edit" element={<BusinessEditPage />} />
           <Route path="/dashboard/upgrade" element={<UpgradePage />} />
-
-          {/* Wizard de creación de campañas (Protegido, dentro del dashboard) */}
           <Route path="/advertise/create" element={<CampaignCreateWizard />} />
           <Route path="/advertise/success" element={<AdvertiseSuccessPage />} />
           <Route path="/dashboard/billing" element={<BillingPortal />} />
         </Route>
 
-        {/* 🛠️ Rutas de administrador */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminDashboardLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<DashboardHome />} />
           <Route path="businesses" element={<BusinessApprovals />} />
-
           <Route path="users" element={<UsersPage />} />
-
           <Route path="ads" element={<AdsManagement />} />
-
           <Route path="ads-qa" element={<AdsQATool />} />
-
           <Route path="reports" element={<ReportsModeration />} />
-
           <Route path="ad-reports" element={<AdReportsModeration />} />
-
           <Route path="analytics" element={<AnalyticsPage />} />
-
           <Route path="revenue" element={<RevenuePage />} />
-
           <Route path="inventory" element={<AdInventory />} />
-
           <Route path="blog" element={<PostsManagement />} />
-
           <Route path="scan-invite" element={<ScanInvitePage />} />
-
           <Route path="settings" element={<SettingsPage />} />
           <Route path="referrals" element={<ReferralManagement />} />
           <Route path="import" element={<BulkImport />} />
-          <Route path="campaigns" element={<UnifiedCRM />} />
           <Route path="crm" element={<UnifiedCRM />} />
-          <Route path="marketing" element={<UnifiedCRM />} />
+          <Route path="campaigns" element={<Navigate to="/admin/crm" replace />} />
+          <Route path="marketing" element={<Navigate to="/admin/crm" replace />} />
           <Route path="smart-campaigns" element={<SmartCampaignLauncher />} />
           <Route path="scraper" element={<ApifyScraper />} />
           <Route path="scraper-history" element={<LeadsHistory />} />

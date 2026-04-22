@@ -83,7 +83,7 @@ const LocationPermissionModal = ({
                                 onClick={onClose}
                                 className="w-full mt-3 text-gray-500 py-2 text-sm hover:text-gray-700"
                             >
-                                Omitir
+                                Ingresar ubicación manualmente
                             </button>
                         </>
                     ) : (

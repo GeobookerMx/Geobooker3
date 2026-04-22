@@ -51,5 +51,7 @@
 	<string>Usamos tu permiso para ofrecer anuncios más relevantes y medir campañas. Puedes elegir 'No permitir' sin afectar el uso básico de Geobooker.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Usamos tu ubicación para mostrarte negocios cercanos a tu alrededor de forma rápida.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Usamos tu ubicación para mostrarte negocios cercanos a tu alrededor de forma rápida.</string>
 </dict>
 </plist>

@@ -10,10 +10,12 @@ import UserLevelCard from '../components/gamification/UserLevelCard';
 import ReferralDashboard from '../components/referral/ReferralDashboard';
 import { RecommendationForm } from '../components/recommendations';
 import { Crown, Star, Plus, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 
 
 const DashboardPage = () => {
   const { user } = useAuth();
+  const isNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
   const [activeTab, setActiveTab] = useState('businesses');
   const [isPremium, setIsPremium] = useState(false);
   const [businessCount, setBusinessCount] = useState(0);
@@ -119,7 +121,7 @@ const DashboardPage = () => {
             </h1>
             <p className="text-gray-600">Bienvenido a tu panel de control</p>
           </div>
-          {!isPremium && (
+          {!isPremium && !isNative && (
             <Link
               to="/dashboard/upgrade"
               className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition flex items-center"
@@ -132,7 +134,7 @@ const DashboardPage = () => {
       </div>
 
       {/* Banner de Límite Alcanzado */}
-      {showUpgradeBanner && (
+      {showUpgradeBanner && !isNative && (
         <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-6 mb-8">
           <div className="flex items-start justify-between">
             <div className="flex-1">

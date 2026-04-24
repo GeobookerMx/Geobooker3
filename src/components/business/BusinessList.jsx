@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
+import { Capacitor } from '@capacitor/core';
 import { Eye, EyeOff, MapPin, Info, Crown, Lock } from 'lucide-react';
 import LocationEditModal from './LocationEditModal';
 import { invalidateBusinessCache } from '../../services/businessCacheService';
@@ -11,6 +12,7 @@ const FREE_BUSINESS_LIMIT = 2;
 
 const BusinessList = () => {
     const { user } = useAuth();
+    const isNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
     const [businesses, setBusinesses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [togglingId, setTogglingId] = useState(null);
@@ -147,13 +149,15 @@ const BusinessList = () => {
                         <span className="mr-2">+</span> Registrar Negocio
                     </Link>
                 ) : (
-                    <Link
-                        to="/dashboard/upgrade"
-                        className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2 rounded-lg hover:from-yellow-600 hover:to-orange-600 transition duration-200 font-semibold flex items-center gap-2"
-                    >
-                        <Lock className="w-4 h-4" />
-                        Desbloquear más negocios
-                    </Link>
+                    !isNative && (
+                        <Link
+                            to="/dashboard/upgrade"
+                            className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2 rounded-lg hover:from-yellow-600 hover:to-orange-600 transition duration-200 font-semibold flex items-center gap-2"
+                        >
+                            <Lock className="w-4 h-4" />
+                            Desbloquear más negocios
+                        </Link>
+                    )
                 )}
             </div>
 

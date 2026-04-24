@@ -5,11 +5,13 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import { RecommendationForm } from '../recommendations';
+import { Capacitor } from '@capacitor/core';
 
 const UserSidebar = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const isNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [showRecommendForm, setShowRecommendForm] = useState(false);
 
@@ -53,12 +55,12 @@ const UserSidebar = () => {
             icon: Star,
             isAction: true
         },
-        {
+        ...(!isNative ? [{
             name: 'Actualizar a Premium',
             path: '/dashboard/upgrade',
             icon: Crown,
             highlight: true
-        }
+        }] : [])
     ];
 
     const isActive = (path) => {

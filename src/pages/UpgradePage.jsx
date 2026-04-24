@@ -8,11 +8,13 @@ import OxxoVoucher from '../components/payment/OxxoVoucher';
 import { formatPrice, getCurrencyConfig } from '../utils/currencyUtils';
 import { isPremiumPromoActive, getDaysRemaining, PROMOTIONS } from '../config/promotions';
 import { clarityMarkConversion } from '../services/trackingService';
+import { Capacitor } from '@capacitor/core';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 const UpgradePage = () => {
     const navigate = useNavigate();
+    const isNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
     const [loading, setLoading] = useState(false);
     const [priceId, setPriceId] = useState(null);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -33,6 +35,13 @@ const UpgradePage = () => {
         deadline: new Date(PROMOTIONS.PREMIUM_FREE_UNTIL).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }),
         isLaunchActive: true
     };
+
+    // Redirect native iOS users completely to avoid App Store rejection
+    React.useEffect(() => {
+        if (isNative) {
+            navigate('/dashboard');
+        }
+    }, [isNative, navigate]);
 
     React.useEffect(() => {
         const fetchPlanConfig = async () => {

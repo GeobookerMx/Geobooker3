@@ -74,7 +74,7 @@ const DownloadPage = () => {
 
     const renderAndroidInstructions = () => (
         <div className="bg-gray-800 rounded-xl p-6 mt-6">
-            <h3 className="text-lg font-bold text-white mb-4">📱 Instalar en Android</h3>
+            <h3 className="text-lg font-bold text-white mb-4">📱 Instalar App</h3>
             {deferredPrompt ? (
                 <button
                     onClick={handleInstall}

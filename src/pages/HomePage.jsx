@@ -308,7 +308,9 @@ const HomePage = () => {
   }, [categoryFilter, subcategoryFilter, userLocation]);
 
   // Show location modal only if no location at all (not even cached)
-  // FIX: Don't show if we already have ANY location (Apple 2.1(a) loop fix)
+  // [APP STORE FIX] Apple Guideline 5.1.1: Do not ask for location on app launch.
+  // Wait until user clicks a button that requires it.
+  /*
   useEffect(() => {
     if (!locationLoading && !permissionGranted && !userLocation) {
       // Only show once per session
@@ -326,6 +328,7 @@ const HomePage = () => {
       setShowLocationModal(false);
     }
   }, [locationLoading, permissionGranted, userLocation, t]);
+  */
 
   const handleBusinessesFound = (foundBusinesses) => {
     setBusinesses(foundBusinesses);

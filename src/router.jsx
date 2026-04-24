@@ -46,6 +46,7 @@ const UnsubscribePage = lazy(() => import("./pages/UnsubscribePage.jsx"));
 // User Pages - Lazy Loaded (except HomePage for LCP)
 import HomePage from "./pages/HomePage.jsx";
 const FAQPage = lazy(() => import("./pages/FAQPage.jsx"));
+const SupportPage = lazy(() => import("./pages/SupportPage.jsx"));
 const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage.jsx"));
 const TermsOfServicePage = lazy(() => import("./pages/TermsOfServicePage.jsx"));
 const RegisterPage = lazy(() => import("./pages/RegisterPage.jsx"));
@@ -118,6 +119,8 @@ export default function AppRouter() {
           <Route path="/unsubscribe" element={<UnsubscribePage />} />
           <Route path="/terms" element={<TermsOfServicePage />} />
           <Route path="/faq" element={<FAQPage />} />
+          <Route path="/support" element={<SupportPage />} />
+          <Route path="/soporte" element={<SupportPage />} />
 
           <Route path="/" element={<HomePage />} />
           <Route path="/c/:category" element={<HomePage />} />

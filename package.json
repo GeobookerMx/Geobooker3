@@ -11,10 +11,10 @@
     "clean": "rm -rf dist node_modules/.vite"
   },
   "dependencies": {
-    "@capacitor/cli": "^8.1.0",
-    "@capacitor/core": "^8.1.0",
-    "@capacitor/geolocation": "8.1.0",
-    "@capacitor/ios": "^8.1.0",
+    "@capacitor/cli": "8.2.0",
+    "@capacitor/core": "8.2.0",
+    "@capacitor/geolocation": "8.2.0",
+    "@capacitor/ios": "8.2.0",
     "@capgo/capacitor-app-tracking-transparency": "^8.1.5",
     "@react-google-maps/api": "^2.20.7",
     "@stripe/stripe-js": "^8.5.3",

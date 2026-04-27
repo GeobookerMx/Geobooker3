@@ -72,18 +72,12 @@ const LocationPermissionModal = ({
                                 </div>
                             </div>
 
+                            {/* Apple Guideline 5.1.1: No exit button before the system permission dialog */}
                             <button
                                 onClick={handleRequestPermission}
                                 className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-purple-700 transition shadow-lg"
                             >
                                 Continuar
-                            </button>
-
-                            <button
-                                onClick={onClose}
-                                className="w-full mt-3 text-gray-500 py-2 text-sm hover:text-gray-700"
-                            >
-                                Ingresar ubicación manualmente
                             </button>
                         </>
                     ) : (

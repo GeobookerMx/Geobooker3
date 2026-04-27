@@ -1,18 +1,23 @@
 // src/components/modals/UpgradeRequiredModal.jsx
+// Apple Guidelines 3.1.1 & 2.1(a): Hidden entirely on native iOS
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Crown, X, Store, Check, ArrowRight, Gift } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { isPremiumPromoActive, getDaysRemaining, PROMOTIONS } from '../../config/promotions';
+import { Capacitor } from '@capacitor/core';
 
 const UpgradeRequiredModal = ({ isOpen, onClose, currentBusinessCount = 1 }) => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const promoActive = isPremiumPromoActive();
     const promoDaysLeft = promoActive ? getDaysRemaining() : 0;
+    // Apple Guideline 3.1.1 & 2.1(a): Never show upgrade/payment UI on native iOS
+    const isNative = Capacitor.isNativePlatform();
 
     if (!isOpen) return null;
+    if (isNative) return null; // Hidden on iOS App Store build
 
     // 🎉 Activar Premium gratis durante promoción
     const handleFreeUpgrade = async () => {

@@ -89,7 +89,7 @@ La e.firma es tu firma electrónica avanzada:
 **Opciones gratuitas para facturar:**
 
 1. **Factura SAT Móvil** (App oficial)
-   - Gratis, disponible en iOS y Android
+   - Gratis, disponible en iOS
    - Ideal para pocas facturas al mes
 
 2. **Portal del SAT**

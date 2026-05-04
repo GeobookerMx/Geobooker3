@@ -112,7 +112,7 @@ const DashboardPage = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
               Hola, {user?.user_metadata?.full_name || 'Usuario'} 👋
-              {isPremium && (
+              {isPremium && !isNative && (
                 <span className="ml-3 inline-flex items-center bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">
                   <Crown className="w-4 h-4 mr-1 fill-yellow-500" />
                   Premium

@@ -11,6 +11,7 @@
     "clean": "rm -rf dist node_modules/.vite"
   },
   "dependencies": {
+    "@capacitor/android": "^8.2.0",
     "@capacitor/cli": "8.2.0",
     "@capacitor/core": "8.2.0",
     "@capacitor/geolocation": "8.2.0",

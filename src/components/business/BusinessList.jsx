@@ -54,7 +54,8 @@ const BusinessList = () => {
         }
     };
 
-    const canAddMoreBusinesses = isPremium || businesses.length < FREE_BUSINESS_LIMIT;
+    // En iOS nativo: sin límites ni menciones de Premium (App Store Guideline 3.1.1)
+    const canAddMoreBusinesses = isNative || isPremium || businesses.length < FREE_BUSINESS_LIMIT;
     const businessesRemaining = FREE_BUSINESS_LIMIT - businesses.length;
 
     // Toggle business visibility on/off
@@ -125,17 +126,17 @@ const BusinessList = () => {
                 <div>
                     <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
                         Mis Negocios
-                        {isPremium && (
+                        {isPremium && !isNative && (
                             <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full flex items-center gap-1">
                                 <Crown className="w-3 h-3 fill-yellow-500" /> Premium
                             </span>
                         )}
                     </h2>
-                    {!isPremium && businesses.length > 0 && (
+                    {!isPremium && !isNative && businesses.length > 0 && (
                         <p className="text-sm text-gray-500 mt-1">
                             {businessesRemaining > 0
                                 ? `${businessesRemaining} negocio${businessesRemaining > 1 ? 's' : ''} gratis restante${businessesRemaining > 1 ? 's' : ''}`
-                                : '⚠️ Límite de negocios gratis alcanzado'
+                                : ''
                             }
                         </p>
                     )}

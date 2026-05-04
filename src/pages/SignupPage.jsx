@@ -66,7 +66,9 @@ const SignupPage = () => {
                     data: {
                         full_name: formData.fullName,
                         referred_by: referralCode || null
-                    }
+                    },
+                    // En iOS nativo: no redirigir a browser externo para confirmación
+                    emailRedirectTo: isNative ? undefined : `${window.location.origin}/auth/callback`
                 }
             });
 
@@ -293,17 +295,19 @@ const SignupPage = () => {
                         </button>
                     </form>
 
-                    {/* Divider */}
-                    <div className="relative my-6">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-300"></div>
+                    {/* Divider y OAuth: solo en web, no en iOS nativo (Guideline 4) */}
+                    {!isNative && (
+                        <div className="relative my-6">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-gray-300"></div>
+                            </div>
+                            <div className="relative flex justify-center text-sm">
+                                <span className="px-4 bg-white text-gray-500">{t('signup.orSignUpWith')}</span>
+                            </div>
                         </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="px-4 bg-white text-gray-500">{t('signup.orSignUpWith')}</span>
-                        </div>
-                    </div>
+                    )}
 
-                    {/* OAuth solo para web, no para entorno nativo por App Store Guidelines */}
+                    {/* OAuth: solo en web, no en iOS nativo (Guideline 4) */}
                     {!isNative && (
                         <>
                             {/* Google Sign-up */}

@@ -34,6 +34,14 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading }) => {
     try {
       onSearch(true);
 
+      // Verificar que Google Maps esté cargado antes de buscar
+      if (!window.google || !window.google.maps) {
+        console.error('Google Maps no está disponible');
+        onBusinessesFound([]);
+        onSearch(false);
+        return;
+      }
+
       // Verificar si el término coincide con una categoría conocida
       const placeType = getPlaceType(searchQuery);
 

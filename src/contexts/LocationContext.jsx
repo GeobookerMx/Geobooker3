@@ -162,6 +162,7 @@ export const LocationProvider = ({ children }) => {
         const location = { lat: result.latitude, lng: result.longitude };
         setUserLocation(location);
         saveLocationToStorage(location);
+        setPermissionGranted(true); // FIX: update permission state on success
         setLoading(false);
         return location;
       }

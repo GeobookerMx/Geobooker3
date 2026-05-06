@@ -578,6 +578,17 @@ export default function BusinessFormPage() {
               </div>
             </section>
 
+            {/* Nota de Fotos */}
+            <section className="bg-blue-50 border border-blue-200 rounded-xl p-5">
+              <h2 className="text-lg font-semibold text-blue-800 mb-2 flex items-center">
+                <span className="mr-2">📸</span> Fotos de tu Negocio
+              </h2>
+              <p className="text-sm text-blue-700">
+                Podrás subir fotos de tu negocio <strong>después de registrarlo</strong>, desde tu panel de control en "Editar negocio".
+                El plan gratuito incluye <strong>1 foto</strong>, y Premium hasta <strong>10 fotos</strong>.
+              </p>
+            </section>
+
             {/* Botones */}
             <div className="pt-6 border-t border-gray-200 flex justify-between items-center">
               <p className="text-sm text-gray-500">

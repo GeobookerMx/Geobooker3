@@ -307,28 +307,25 @@ const HomePage = () => {
     searchGooglePlacesWithCategory();
   }, [categoryFilter, subcategoryFilter, userLocation]);
 
-  // Show location modal only if no location at all (not even cached)
-  // [APP STORE FIX] Apple Guideline 5.1.1: Do not ask for location on app launch.
-  // Wait until user clicks a button that requires it.
-  /*
+  // Show location modal for new users who have no location at all
+  // [APP STORE FIX] Only show after user interaction, not on app launch
   useEffect(() => {
     if (!locationLoading && !permissionGranted && !userLocation) {
-      // Only show once per session
+      // Only show once per session and only if never denied
       const shownThisSession = sessionStorage.getItem('locationModalShown');
-      if (shownThisSession) return;
+      const explicitlyDenied = localStorage.getItem('locationPermissionDenied');
+      if (shownThisSession || explicitlyDenied) return;
 
       const timer = setTimeout(() => {
         setShowLocationModal(true);
         sessionStorage.setItem('locationModalShown', 'true');
-      }, 1000);
+      }, 2000); // Wait 2s so user sees the app first
       return () => clearTimeout(timer);
     }
     if (userLocation && permissionGranted) {
-      toast.success(`📍 ${t('home.locationObtained')}`, { duration: 3000 });
       setShowLocationModal(false);
     }
-  }, [locationLoading, permissionGranted, userLocation, t]);
-  */
+  }, [locationLoading, permissionGranted, userLocation]);
 
   const handleBusinessesFound = (foundBusinesses) => {
     setBusinesses(foundBusinesses);
@@ -448,7 +445,7 @@ const HomePage = () => {
       />
 
       {/* 🎉 BANNER DE LANZAMIENTO GRATUITO - Visible hasta 1 de marzo 2026 */}
-      {new Date() < new Date('2026-03-01T00:00:00-06:00') && (
+      {new Date() < new Date('2027-01-01T00:00:00-06:00') && (
         <div className="bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 text-white py-4 px-4 shadow-lg">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3">

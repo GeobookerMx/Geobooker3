@@ -191,13 +191,13 @@ const BusinessEditPage = () => {
             try {
                 const fileName = `${id}/${Date.now()}_${file.name}`;
                 const { error: uploadError } = await supabase.storage
-                    .from('business images')
+                    .from('business_photos')
                     .upload(fileName, file);
 
                 if (uploadError) throw uploadError;
 
                 const { data: { publicUrl } } = supabase.storage
-                    .from('business images')
+                    .from('business_photos')
                     .getPublicUrl(fileName);
 
                 console.log('📸 Imagen subida exitosamente:', publicUrl);
@@ -221,10 +221,10 @@ const BusinessEditPage = () => {
 
     const removeImage = async (imageUrl) => {
         try {
-            const pathMatch = imageUrl.match(/business images\/(.+)$/);
+            const pathMatch = imageUrl.match(/business_photos\/(.+)$/);
             if (pathMatch) {
                 await supabase.storage
-                    .from('business images')
+                    .from('business_photos')
                     .remove([pathMatch[1]]);
             }
 

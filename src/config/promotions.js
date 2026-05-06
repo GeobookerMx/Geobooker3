@@ -3,7 +3,7 @@
 
 export const PROMOTIONS = {
     // Fecha límite para Premium gratis (formato ISO)
-    PREMIUM_FREE_UNTIL: '2026-05-01',
+    PREMIUM_FREE_UNTIL: '2027-01-01',
 
     // Requisitos para obtener 2 negocios gratis
     REFERRAL_BONUS: {

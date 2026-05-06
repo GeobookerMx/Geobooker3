@@ -1,6 +1,7 @@
 // src/App.jsx
-import React, { useEffect } from "react";
-import { BrowserRouter } from "react-router-dom";
+import React, { useEffect, Component } from "react";
+import { BrowserRouter, HashRouter } from "react-router-dom";
+import { Capacitor } from "@capacitor/core";
 
 import { AppProvider } from "./contexts/AppContext";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -22,13 +23,62 @@ import ScrollToTop from "./components/common/ScrollToTop";
 import CookieConsent from "./components/CookieConsent";
 import { Toaster } from "react-hot-toast";
 
-// Component to active session timeout monitoring
+// ✅ FIX iPad/iOS: HashRouter en nativo (capacitor://) — BrowserRouter en web
+// BrowserRouter falla en Capacitor porque usa HTML5 History API sobre file://
+const isNative = Capacitor.isNativePlatform();
+const Router = isNative ? HashRouter : BrowserRouter;
+
+// ✅ Error Boundary global: captura errores silenciosos que causan pantalla blanca
+class AppErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, info) {
+    console.error("🚨 App Error Boundary caught:", error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          display: "flex", flexDirection: "column", alignItems: "center",
+          justifyContent: "center", minHeight: "100vh", padding: "20px",
+          fontFamily: "system-ui, sans-serif", backgroundColor: "#f8fafc"
+        }}>
+          <div style={{ fontSize: "48px", marginBottom: "16px" }}>⚠️</div>
+          <h1 style={{ fontSize: "20px", color: "#1e293b", marginBottom: "8px" }}>
+            Error al cargar la app
+          </h1>
+          <p style={{ color: "#64748b", marginBottom: "20px", textAlign: "center" }}>
+            {this.state.error?.message || "Error desconocido"}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              backgroundColor: "#2563eb", color: "white", border: "none",
+              padding: "12px 24px", borderRadius: "8px", fontSize: "16px", cursor: "pointer"
+            }}
+          >
+            Reintentar
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function SessionTimeoutMonitor() {
   useSessionTimeout();
   return null;
 }
 
-// Component to track page views
 function PageTracker() {
   usePageTracking();
   return null;
@@ -36,44 +86,32 @@ function PageTracker() {
 
 function AppInitializer() {
   useEffect(() => {
-    // 1. Verificar versión y limpiar caché si es necesario
     checkAppVersion();
-
-    // 2. Initialize tracking (only loads if user previously consented)
-    // Apple 5.1.2(i): NO tracking before consent/ATT
     initTrackingFromConsent();
     trackSessionStart(false);
 
-    // 2b. Flush offline event queue (enviar eventos encolados)
     flushEventQueue();
     const handleOnline = () => flushEventQueue();
-    window.addEventListener('online', handleOnline);
+    window.addEventListener("online", handleOnline);
 
-    // 3. Detectar país por IP para moneda y SEO (Background)
     const initGeo = async () => {
       const geoData = await detectUserCountry();
       if (geoData) {
-        localStorage.setItem('userCountryCode', geoData.country);
-        localStorage.setItem('userCountryName', geoData.countryName);
-        localStorage.setItem('userCity', geoData.city);
+        localStorage.setItem("userCountryCode", geoData.country);
+        localStorage.setItem("userCountryName", geoData.countryName);
+        localStorage.setItem("userCity", geoData.city);
 
-        // 4. Cambiar idioma automáticamente si NO hay preferencia guardada ya
-        // ⚠️ NO auto-cambiar idioma si estamos en .com.mx o en Capacitor nativo
-        // porque el dominio ya define el idioma correcto (es) en i18n.js
-        const isComMx = window.location.hostname.endsWith('geobooker.com.mx');
+        const isComMx = window.location.hostname.endsWith("geobooker.com.mx");
         const isCapacitor = window.Capacitor?.isNativePlatform?.();
-        const savedLang = localStorage.getItem('language');
+        const savedLang = localStorage.getItem("language");
         if (!savedLang && !isComMx && !isCapacitor) {
           const country = geoData.country;
           let newLang = null;
-
-          if (country === 'FR') newLang = 'fr';
-          else if (['CN', 'HK', 'TW'].includes(country)) newLang = 'zh';
-          else if (['ES', 'MX', 'CO', 'AR', 'CL', 'PE', 'EC', 'GT', 'PR'].includes(country)) newLang = 'es';
-          else if (['US', 'GB', 'CA', 'AU', 'NZ', 'IE', 'DE', 'IT', 'NL', 'BE', 'SE', 'NO', 'FI', 'DK'].includes(country)) newLang = 'en';
-
+          if (country === "FR") newLang = "fr";
+          else if (["CN", "HK", "TW"].includes(country)) newLang = "zh";
+          else if (["ES", "MX", "CO", "AR", "CL", "PE", "EC", "GT", "PR"].includes(country)) newLang = "es";
+          else if (["US", "GB", "CA", "AU", "NZ", "IE", "DE", "IT", "NL", "BE", "SE", "NO", "FI", "DK"].includes(country)) newLang = "en";
           if (newLang && i18n.language !== newLang) {
-            console.log(`🌐 Cambiando idioma automáticamente a ${newLang} para el país ${country}`);
             i18n.changeLanguage(newLang);
           }
         }
@@ -81,35 +119,34 @@ function AppInitializer() {
     };
     initGeo();
 
-    return () => window.removeEventListener('online', handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
   }, []);
   return null;
 }
 
 function App() {
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <AuthProvider>
-        <Toaster position="top-right" />
-        <SessionTimeoutMonitor />
-        <AppInitializer />
-        <PageTracker />
-        <AppProvider>
-          <LocationProvider>
-            <AppRouter />
-            {/* Asistente AI flotante */}
-            <ChatWidget />
-            {/* Banner de instalación PWA */}
-            <InstallPWAButton variant="banner" />
-            {/* Modal de descarga de app */}
-            <DownloadAppModal />
-            {/* GDPR Cookie Consent Banner */}
-            <CookieConsent />
-          </LocationProvider>
-        </AppProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    <AppErrorBoundary>
+      <Router>
+        {/* ScrollToTop solo en web — HashRouter no necesita scroll reset */}
+        {!isNative && <ScrollToTop />}
+        <AuthProvider>
+          <Toaster position="top-right" />
+          <SessionTimeoutMonitor />
+          <AppInitializer />
+          <PageTracker />
+          <AppProvider>
+            <LocationProvider>
+              <AppRouter />
+              <ChatWidget />
+              <InstallPWAButton variant="banner" />
+              <DownloadAppModal />
+              <CookieConsent />
+            </LocationProvider>
+          </AppProvider>
+        </AuthProvider>
+      </Router>
+    </AppErrorBoundary>
   );
 }
 

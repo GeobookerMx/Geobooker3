@@ -316,10 +316,13 @@ const SignupPage = () => {
                             <button
                                 onClick={async () => {
                                     try {
+                                        const redirectUrl = isNative
+                                          ? 'https://www.geobooker.com.mx/auth/callback'
+                                          : `${window.location.origin}/auth/callback`;
                                         const { error } = await supabase.auth.signInWithOAuth({
                                             provider: 'google',
                                             options: {
-                                                redirectTo: `${window.location.origin}/auth/callback`,
+                                                redirectTo: redirectUrl,
                                                 queryParams: {
                                                     access_type: 'offline',
                                                     prompt: 'select_account',
@@ -348,11 +351,12 @@ const SignupPage = () => {
                                 <button
                                     onClick={async () => {
                                         try {
+                                            const redirectUrl = isNative
+                                              ? 'https://www.geobooker.com.mx/auth/callback'
+                                              : `${window.location.origin}/auth/callback`;
                                             const { error } = await supabase.auth.signInWithOAuth({
                                                 provider: 'apple',
-                                                options: {
-                                                    redirectTo: `${window.location.origin}/auth/callback`
-                                                }
+                                                options: { redirectTo: redirectUrl }
                                             });
                                             if (error) throw error;
                                         } catch (error) {
@@ -373,11 +377,12 @@ const SignupPage = () => {
                             <button
                                 onClick={async () => {
                                     try {
+                                        const redirectUrl = isNative
+                                          ? 'https://www.geobooker.com.mx/auth/callback'
+                                          : `${window.location.origin}/auth/callback`;
                                         const { error } = await supabase.auth.signInWithOAuth({
                                             provider: 'facebook',
-                                            options: {
-                                                redirectTo: `${window.location.origin}/auth/callback`
-                                            }
+                                            options: { redirectTo: redirectUrl }
                                         });
                                         if (error) throw error;
                                     } catch (error) {

@@ -178,10 +178,15 @@ const LoginPage = () => {
               <button
                 onClick={async () => {
                   try {
+                    // En Capacitor Android, window.location.origin = capacitor://localhost
+                    // lo que rompe el callback. Siempre usamos la URL de producción en nativo.
+                    const redirectUrl = isNative
+                      ? 'https://www.geobooker.com.mx/auth/callback'
+                      : `${window.location.origin}/auth/callback`;
                     const { error } = await supabase.auth.signInWithOAuth({
                       provider: 'google',
                       options: {
-                        redirectTo: `${window.location.origin}/auth/callback`,
+                        redirectTo: redirectUrl,
                         queryParams: {
                           access_type: 'offline',
                           prompt: 'select_account',
@@ -210,11 +215,12 @@ const LoginPage = () => {
                 <button
                   onClick={async () => {
                     try {
+                      const redirectUrl = isNative
+                        ? 'https://www.geobooker.com.mx/auth/callback'
+                        : `${window.location.origin}/auth/callback`;
                       const { error } = await supabase.auth.signInWithOAuth({
                         provider: 'apple',
-                        options: {
-                          redirectTo: `${window.location.origin}/auth/callback`
-                        }
+                        options: { redirectTo: redirectUrl }
                       });
                       if (error) throw error;
                     } catch (error) {
@@ -235,11 +241,12 @@ const LoginPage = () => {
               <button
                 onClick={async () => {
                   try {
+                    const redirectUrl = isNative
+                      ? 'https://www.geobooker.com.mx/auth/callback'
+                      : `${window.location.origin}/auth/callback`;
                     const { error } = await supabase.auth.signInWithOAuth({
                       provider: 'facebook',
-                      options: {
-                        redirectTo: `${window.location.origin}/auth/callback`
-                      }
+                      options: { redirectTo: redirectUrl }
                     });
                     if (error) throw error;
                   } catch (error) {

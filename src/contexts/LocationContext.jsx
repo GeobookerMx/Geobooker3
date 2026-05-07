@@ -239,7 +239,14 @@ export const LocationProvider = ({ children }) => {
       }
     };
 
-    checkPermissionAndGetLocation();
+    // ⏱️ Timeout de seguridad: si el check de permisos no termina en 10s, liberamos el loading
+    // Esto previene que la app quede congelada en Android WebView
+    const safetyTimeout = setTimeout(() => {
+      if (!permissionCheckDoneRef.current) return;
+      setLoading(false);
+    }, 10000);
+
+    checkPermissionAndGetLocation().finally(() => clearTimeout(safetyTimeout));
   }, []);
 
   const value = {

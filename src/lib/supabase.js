@@ -6,15 +6,11 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 if (!supabaseUrl || !supabaseKey) {
-  // No lanzar excepción — dejamos que React monte y el AuthProvider maneje el error
   console.error('[Geobooker] ⚠️ Variables de entorno de Supabase no encontradas. Verifica tu .env');
 }
 
-// En Capacitor (Android/iOS), detectSessionInUrl causa loops de OAuth
-// porque window.location no es una URL HTTP válida (es capacitor://)
 const isNative = Capacitor.isNativePlatform();
 
-// Configuración básica del cliente Supabase
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
   supabaseKey || 'placeholder',
@@ -22,9 +18,11 @@ export const supabase = createClient(
     auth: {
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: !isNative, // ← false en Android/iOS nativo — previene loops de OAuth
+      // ✅ FIX Bug #2/#3: false en nativo — previene loops OAuth con capacitor://
+      detectSessionInUrl: !isNative,
       flowType: 'pkce',
       storageKey: 'geobooker-auth'
     }
   }
 );
+

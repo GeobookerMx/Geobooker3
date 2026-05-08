@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { clarityIdentifyUser } from "../services/trackingService";
+import { Capacitor } from "@capacitor/core";
 
 const AuthContext = createContext(null);
 
@@ -39,12 +40,14 @@ export const AuthProvider = ({ children }) => {
       }
     };
 
-    // Timeout de seguridad: si auth no responde en 8s, renderizar la app sin sesión
+    // ✅ FIX: En Android/iOS nativo dar más tiempo — redes 3G/4G pueden ser lentas
+    // 8s era insuficiente y causaba que el usuario apareciera como "no logueado"
+    const AUTH_TIMEOUT_MS = Capacitor.isNativePlatform() ? 15000 : 8000;
     timeoutId = setTimeout(() => {
       console.warn('⚠️ Auth timeout: renderizando app sin sesión');
       setUser(null);
       setLoading(false);
-    }, 8000);
+    }, AUTH_TIMEOUT_MS);
 
     getSession();
 

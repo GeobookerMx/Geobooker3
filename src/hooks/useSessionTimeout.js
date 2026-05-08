@@ -2,13 +2,18 @@
 /**
  * Hook para cerrar sesión automáticamente después de inactividad
  * Solo aplica para usuarios con negocios registrados (seguridad adicional)
+ * ✅ FIX Bug #3: En Android/iOS nativo el timeout es 7 días para no pedir login repetidamente
  */
 import { useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
+import { Capacitor } from '@capacitor/core';
 
-const SESSION_TIMEOUT_MINUTES = 30; // 30 minutos de inactividad
+// ✅ En nativo (Android/iOS) el usuario no debe ser deslogueado por inactividad
+// ya que el sistema operativo suspende la app — 7 días para nativo, 30 min para web
+const isNative = Capacitor.isNativePlatform();
+const SESSION_TIMEOUT_MINUTES = isNative ? 60 * 24 * 7 : 30;
 
 export const useSessionTimeout = () => {
     const { user, signOut } = useAuth();

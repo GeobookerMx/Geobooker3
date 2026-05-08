@@ -14,7 +14,16 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 const UpgradePage = () => {
     const navigate = useNavigate();
-    const isNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
+
+    // ✅ FIX Apple Guideline 2.1(a): Detectar iOS de forma robusta
+    // Usamos try/catch porque Capacitor puede no estar listo en todos los contextos
+    let isNative = false;
+    try {
+        isNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
+    } catch (e) {
+        // Fallback: detectar por userAgent si Capacitor falla
+        isNative = /iPhone|iPad|iPod/.test(navigator.userAgent) && !!window.Capacitor;
+    }
     const [loading, setLoading] = useState(false);
     const [priceId, setPriceId] = useState(null);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -36,12 +45,28 @@ const UpgradePage = () => {
         isLaunchActive: true
     };
 
-    // Redirect native iOS users completely to avoid App Store rejection
-    React.useEffect(() => {
-        if (isNative) {
-            navigate('/dashboard');
-        }
-    }, [isNative, navigate]);
+    // ✅ FIX Apple Guideline 2.1(a): Redirigir ANTES de renderizar cualquier contenido
+    // useEffect causa pantalla blanca porque se ejecuta DESPUÉS del primer render
+    // Con return inmediato: iOS nunca ve ni un milisegundo de pantalla blanca
+    if (isNative) {
+        // Redirigir al dashboard en siguiente tick para no bloquear el render
+        setTimeout(() => navigate('/dashboard', { replace: true }), 0);
+        return (
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '100vh',
+                backgroundColor: '#f8fafc',
+                fontFamily: 'system-ui, sans-serif'
+            }}>
+                <div style={{ textAlign: 'center', color: '#64748b' }}>
+                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>&#128512;</div>
+                    <p>Redirigiendo...</p>
+                </div>
+            </div>
+        );
+    }
 
     React.useEffect(() => {
         const fetchPlanConfig = async () => {

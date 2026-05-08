@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { GoogleMap, useJsApiLoader, MarkerF } from '@react-google-maps/api';
@@ -675,7 +676,7 @@ const BusinessEditPage = () => {
                         </h2>
                         <span className="text-sm text-gray-600">
                             {currentImageCount} / {maxImages} fotos
-                            {!isPremium && (
+                            {!isPremium && !Capacitor.isNativePlatform() && (
                                 <Link to="/dashboard/upgrade" className="ml-2 text-blue-600 hover:underline">
                                     Actualizar a Premium
                                 </Link>
@@ -683,7 +684,7 @@ const BusinessEditPage = () => {
                         </span>
                     </div>
 
-                    {!isPremium && (
+                    {!isPremium && !Capacitor.isNativePlatform() && (
                         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
                             <p className="text-sm text-yellow-800">
                                 <strong>Plan Gratuito:</strong> Puedes subir 1 foto.

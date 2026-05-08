@@ -2,6 +2,7 @@
 import React, { useEffect, Component } from "react";
 import { BrowserRouter, HashRouter } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
+import { App as CapApp } from "@capacitor/app";
 
 import { AppProvider } from "./contexts/AppContext";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -12,6 +13,8 @@ import { flushEventQueue } from "./services/analyticsService";
 import { initTrackingFromConsent } from "./services/trackingService";
 import { detectUserCountry } from "./services/geoLocationService";
 import { usePageTracking } from "./hooks/usePageTracking";
+// ✅ FIX Apple Guideline 2.1: ATT permission request
+import { AppTrackingTransparency } from "@capgo/capacitor-app-tracking-transparency";
 import i18n from "./i18n";
 
 import AppRouter from "./router";
@@ -94,6 +97,44 @@ function AppInitializer() {
     const handleOnline = () => flushEventQueue();
     window.addEventListener("online", handleOnline);
 
+    // ✅ FIX Bug #3: Refrescar sesión cuando la app vuelve al primer plano (Android/iOS)
+    // Sin esto el token expira en background y el usuario ve la pantalla de login al regresar
+    let appStateListener = null;
+    if (Capacitor.isNativePlatform()) {
+      const setupAppStateListener = async () => {
+        try {
+          appStateListener = await CapApp.addListener('appStateChange', async ({ isActive }) => {
+            if (isActive) {
+              const { supabase } = await import('./lib/supabase');
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session) {
+                await supabase.auth.refreshSession();
+                console.log('[Auth] Sesión refrescada al volver al frente');
+              }
+            }
+          });
+        } catch (err) {
+          console.warn('[App] No se pudo configurar listener de estado:', err);
+        }
+      };
+      setupAppStateListener();
+    }
+
+    // ✅ FIX Apple Guideline 2.1: Solicitar permiso ATT en iOS
+    const requestATTPermission = async () => {
+      try {
+        if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios") {
+          await new Promise(resolve => setTimeout(resolve, 800));
+          const { status } = await AppTrackingTransparency.requestPermission();
+          console.log("[ATT] Estado de permiso de tracking:", status);
+          localStorage.setItem("att_status", status);
+        }
+      } catch (err) {
+        console.warn("[ATT] No se pudo solicitar permiso:", err);
+      }
+    };
+    requestATTPermission();
+
     const initGeo = async () => {
       const geoData = await detectUserCountry();
       if (geoData) {
@@ -119,7 +160,10 @@ function AppInitializer() {
     };
     initGeo();
 
-    return () => window.removeEventListener("online", handleOnline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      if (appStateListener) appStateListener.remove();
+    };
   }, []);
   return null;
 }

@@ -13,8 +13,10 @@ import { useAuth } from '../contexts/AuthContext';
 const GUEST_SEARCH_KEY = 'geobooker_guest_searches';
 const MAX_GUEST_SEARCHES = 1;
 
-// 🎉 Fecha límite del período de lanzamiento gratuito (1 de marzo 2026, medianoche CST)
-const FREE_LAUNCH_END_DATE = new Date('2026-03-01T00:00:00-06:00');
+// 🎉 Fecha límite del período de lanzamiento gratuito (31 de diciembre 2026, medianoche CST)
+// Extendido desde 2026-03-01 porque al expirar disparaba el modal de login al buscar
+// para sesiones que aún se estaban restaurando (AuthContext loading), sacando al usuario.
+const FREE_LAUNCH_END_DATE = new Date('2026-12-31T23:59:59-06:00');
 
 // Helper: ¿Estamos en el período de lanzamiento gratuito?
 const isFreeLaunchPeriod = () => new Date() < FREE_LAUNCH_END_DATE;

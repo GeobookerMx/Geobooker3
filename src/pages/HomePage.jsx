@@ -496,7 +496,8 @@ const HomePage = () => {
                   Hasta Julio 2026
                 </span>
               </div>
-              <Link to="/enterprise#pricing" className="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-900 px-5 py-2 rounded-lg font-bold hover:shadow-lg hover:shadow-amber-500/20 hover:scale-105 transition-all">
+              {/* [APP STORE FIX] Link sin #anchor para evitar pantalla blanca en HashRouter (Capacitor) */}
+              <Link to="/enterprise" className="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-900 px-5 py-2 rounded-lg font-bold hover:shadow-lg hover:shadow-amber-500/20 hover:scale-105 transition-all">
                 Ver Paquetes VIP
               </Link>
             </div>
@@ -1081,12 +1082,6 @@ const HomePage = () => {
 
       {/* Christmas Promo Modal - Seasonal */}
       <ChristmasPromoModal />
-
-      {/* Guest Login Prompt - Aparece después de 1 búsqueda sin cuenta */}
-      <GuestLoginPromptModal
-        isOpen={showLoginPrompt}
-        onClose={closeLoginPrompt}
-      />
     </div >
   );
 };

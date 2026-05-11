@@ -20,7 +20,10 @@ const FREE_LAUNCH_END_DATE = new Date('2026-03-01T00:00:00-06:00');
 const isFreeLaunchPeriod = () => new Date() < FREE_LAUNCH_END_DATE;
 
 export const useGuestSearchLimit = () => {
-    const { user } = useAuth();
+    // ✅ Esperamos a que AuthContext termine de restaurar la sesión.
+    // Antes, durante los primeros segundos `user` era null aunque el usuario sí
+    // estuviera autenticado, y al buscar se disparaba el modal de login.
+    const { user, loading } = useAuth();
     const [searchCount, setSearchCount] = useState(0);
     const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
@@ -29,24 +32,28 @@ export const useGuestSearchLimit = () => {
 
     // Load search count from localStorage
     useEffect(() => {
+        if (loading) return; // aún no sabemos si está logueado
         if (!user) {
             const stored = localStorage.getItem(GUEST_SEARCH_KEY);
             setSearchCount(stored ? parseInt(stored, 10) : 0);
         } else {
-            // Reset for logged in users
+            // Reset for logged in users + limpiar contador legado en localStorage
             setSearchCount(0);
+            localStorage.removeItem(GUEST_SEARCH_KEY);
         }
-    }, [user]);
+    }, [user, loading]);
 
     // Check if guest can search
     const canSearch = useCallback(() => {
+        if (loading) return true; // mientras carga, no bloqueamos
         if (freeLaunch) return true; // 🎉 Lanzamiento gratuito: todos pueden buscar
         if (user) return true; // Logged in users can always search
         return searchCount < MAX_GUEST_SEARCHES;
-    }, [user, searchCount, freeLaunch]);
+    }, [user, loading, searchCount, freeLaunch]);
 
     // Increment search count for guests
     const recordSearch = useCallback(() => {
+        if (loading) return; // no contar mientras AuthContext carga
         if (!user) {
             const newCount = searchCount + 1;
             setSearchCount(newCount);
@@ -57,17 +64,18 @@ export const useGuestSearchLimit = () => {
                 setShowLoginPrompt(true);
             }
         }
-    }, [user, searchCount, freeLaunch]);
+    }, [user, loading, searchCount, freeLaunch]);
 
     // Check and prompt for login if needed
     const checkAndPrompt = useCallback(() => {
+        if (loading) return true; // permitir mientras carga
         if (freeLaunch) return true; // 🎉 Lanzamiento: siempre permitido
         if (!user && searchCount >= MAX_GUEST_SEARCHES) {
             setShowLoginPrompt(true);
             return false; // Cannot search
         }
         return true; // Can search
-    }, [user, searchCount, freeLaunch]);
+    }, [user, loading, searchCount, freeLaunch]);
 
     // Close prompt
     const closeLoginPrompt = useCallback(() => {

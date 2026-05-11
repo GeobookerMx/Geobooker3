@@ -120,14 +120,49 @@ function AppInitializer() {
       setupAppStateListener();
     }
 
-    // ✅ FIX Apple Guideline 2.1: Solicitar permiso ATT en iOS
+    // ✅ FIX Apple Guideline 2.1 (build 19): Solicitar permiso ATT en iOS
+    // iOS solo muestra el diálogo cuando la app está en UIApplicationState.active.
+    // Esperamos al evento appStateChange con isActive=true antes de pedirlo.
+    let attListener = null;
     const requestATTPermission = async () => {
       try {
-        if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios") {
-          await new Promise(resolve => setTimeout(resolve, 800));
-          const { status } = await AppTrackingTransparency.requestPermission();
-          console.log("[ATT] Estado de permiso de tracking:", status);
-          localStorage.setItem("att_status", status);
+        if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== "ios") return;
+
+        // 1) Verificar status actual — solo pedir si no se ha decidido
+        const { status: currentStatus } = await AppTrackingTransparency.getStatus();
+        console.log("[ATT] Status inicial:", currentStatus);
+        localStorage.setItem("att_status", currentStatus);
+
+        if (currentStatus !== "notDetermined") return;
+
+        // 2) Esperar a que la app esté completamente activa (splash fuera)
+        const fireRequest = async () => {
+          // Pequeño delay extra para asegurar que la UI esté visible
+          await new Promise(r => setTimeout(r, 1500));
+          try {
+            const { status } = await AppTrackingTransparency.requestPermission();
+            console.log("[ATT] Resultado del prompt:", status);
+            localStorage.setItem("att_status", status);
+          } catch (e) {
+            console.warn("[ATT] requestPermission falló:", e);
+          }
+        };
+
+        // Si la app ya está activa, dispara de inmediato
+        const state = await CapApp.getState();
+        if (state.isActive) {
+          fireRequest();
+        } else {
+          // Si no, espera el primer appStateChange con isActive=true
+          attListener = await CapApp.addListener("appStateChange", ({ isActive }) => {
+            if (isActive) {
+              fireRequest();
+              if (attListener) {
+                attListener.remove();
+                attListener = null;
+              }
+            }
+          });
         }
       } catch (err) {
         console.warn("[ATT] No se pudo solicitar permiso:", err);
@@ -163,6 +198,7 @@ function AppInitializer() {
     return () => {
       window.removeEventListener("online", handleOnline);
       if (appStateListener) appStateListener.remove();
+      if (attListener) attListener.remove();
     };
   }, []);
   return null;

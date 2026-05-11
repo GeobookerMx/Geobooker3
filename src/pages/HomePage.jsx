@@ -496,9 +496,9 @@ const HomePage = () => {
                   Hasta Julio 2026
                 </span>
               </div>
-              <a href="/enterprise#pricing" className="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-900 px-5 py-2 rounded-lg font-bold hover:shadow-lg hover:shadow-amber-500/20 hover:scale-105 transition-all">
+              <Link to="/enterprise#pricing" className="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-900 px-5 py-2 rounded-lg font-bold hover:shadow-lg hover:shadow-amber-500/20 hover:scale-105 transition-all">
                 Ver Paquetes VIP
-              </a>
+              </Link>
             </div>
           </div>
         </div>

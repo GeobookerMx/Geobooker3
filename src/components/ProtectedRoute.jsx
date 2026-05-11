@@ -1,35 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
+// ✅ Antes este componente mantenía su propio onAuthStateChange y getSession(),
+// generando un tercer listener paralelo al de AuthContext y Header — esto causaba
+// re-renders en cascada y prompts de login duplicados después de OAuth.
+// Ahora delegamos en AuthContext (fuente única de verdad).
 const ProtectedRoute = ({ children }) => {
-    const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState(null);
-
-    useEffect(() => {
-        // Verificar sesión actual
-        const checkUser = async () => {
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                setUser(session?.user ?? null);
-            } catch (error) {
-                console.error('Error verificando sesión:', error);
-                setUser(null);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        checkUser();
-
-        // Escuchar cambios en la autenticación
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user ?? null);
-            setLoading(false);
-        });
-
-        return () => subscription.unsubscribe();
-    }, []);
+    const { user, loading } = useAuth();
 
     if (loading) {
         return (

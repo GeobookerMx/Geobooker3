@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "react-hot-toast";
 import BrandLogo from "../common/BrandLogo.jsx";
 import LanguageSelector from "../LanguageSelector.jsx";
@@ -10,8 +11,10 @@ import { RecommendationForm } from "../recommendations";
 export default function Header() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  // ✅ Fuente única de verdad de auth — antes había un onAuthStateChange duplicado
+  // que disparaba race conditions con AuthContext y forzaba re-renders extras.
+  const { user, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [businessLogo, setBusinessLogo] = useState(null);
@@ -38,9 +41,17 @@ export default function Header() {
     };
   }, [isOpen, showUserMenu]);
 
+  // ✅ Cargar perfil y logo del negocio cuando cambia el user del AuthContext.
+  // Antes este efecto suscribía su propio onAuthStateChange (duplicado con AuthContext).
   useEffect(() => {
+    let cancelled = false;
+
     const fetchUserData = async (sessionUser) => {
-      if (!sessionUser) return;
+      if (!sessionUser) {
+        setUserProfile(null);
+        setBusinessLogo(null);
+        return;
+      }
 
       const { data: profile } = await supabase
         .from("user_profiles")
@@ -48,6 +59,7 @@ export default function Header() {
         .eq("id", sessionUser.id)
         .maybeSingle();
 
+      if (cancelled) return;
       setUserProfile(profile);
 
       try {
@@ -57,51 +69,32 @@ export default function Header() {
           .eq("owner_id", sessionUser.id)
           .limit(1);
 
+        if (cancelled) return;
         if (!bizError && businesses && businesses.length > 0 && businesses[0].logo_url) {
           setBusinessLogo(businesses[0].logo_url);
+        } else {
+          setBusinessLogo(null);
         }
       } catch (e) {
         if (import.meta.env.DEV) console.log("No logo available:", e);
       }
     };
 
-    const getUser = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+    fetchUserData(user);
 
-      if (session?.user) {
-        setUser(session.user);
-        await fetchUserData(session.user);
-      }
-    };
-
-    getUser();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        await fetchUserData(session.user);
-      } else {
-        setUserProfile(null);
-        setBusinessLogo(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => { cancelled = true; };
+  }, [user]);
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
-      setUser(null);
+      // El AuthProvider y su listener onAuthStateChange ya propagan user=null
+      // automáticamente — no es necesario manejar el estado aquí manualmente.
+      await signOut();
       setUserProfile(null);
+      setBusinessLogo(null);
       setShowUserMenu(false);
       toast.success(t("nav.logoutSuccess"));
-      navigate("/welcome");
+      navigate("/welcome", { replace: true });
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
       toast.error(t("nav.logoutError"));

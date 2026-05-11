@@ -1,9 +1,19 @@
 // src/pages/AuthCallback.jsx
-// Maneja el callback de OAuth (Google, Apple) después de autenticación
+// Maneja el callback de OAuth (Google, Apple, Facebook) después de autenticación.
+//
+// Estrategia:
+// - Espera activamente al evento SIGNED_IN de Supabase en lugar de hacer polling
+//   sobre getSession(). Esto evita el race condition donde getSession() responde
+//   `null` porque el token de la URL todavía no se procesó internamente.
+// - Hasta 8s de espera total: si para entonces no llegó SIGNED_IN, revisa una vez
+//   más getSession() (cubre el caso donde la sesión ya estaba persistida y no
+//   se dispara un nuevo evento).
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { trackUserLogin } from '../services/analyticsService';
+
+const MAX_WAIT_MS = 8000;
 
 const AuthCallback = () => {
     const navigate = useNavigate();
@@ -11,95 +21,97 @@ const AuthCallback = () => {
     const [status, setStatus] = useState('processing');
 
     useEffect(() => {
-        const handleCallback = async () => {
+        let resolved = false;
+        let timeoutId;
+        let subscription;
+
+        const persistProfile = async (sessionUser) => {
             try {
-                // Verificar si hay error en los parámetros
-                const error = searchParams.get('error');
-                const errorDescription = searchParams.get('error_description');
-
-                if (error) {
-                    console.error('OAuth error:', error, errorDescription);
-                    setStatus('error');
-                    setTimeout(() => {
-                        navigate('/login?error=' + encodeURIComponent(errorDescription || error));
-                    }, 2000);
-                    return;
-                }
-
-                // Obtener la sesión actual (Supabase maneja el token automáticamente)
-                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-                if (sessionError) {
-                    console.error('Error obteniendo sesión:', sessionError);
-                    setStatus('error');
-                    setTimeout(() => navigate('/login?error=session_failed'), 2000);
-                    return;
-                }
-
-                if (session) {
-                    setStatus('success');
-
-                    // ✅ TRACKEAR OAuth LOGIN - Registrar en user_sessions
-                    const provider = session.user?.app_metadata?.provider || 'oauth';
-                    trackUserLogin(session.user.id, provider);
-
-                    // 🌍 Guardar datos de registro internacional para usuarios OAuth
-                    try {
-                        const registrationDomain = window.location.hostname;
-                        const preferredLanguage = registrationDomain.includes('.mx') ? 'es' : 'en';
-
-                        await supabase.from('user_profiles').upsert({
-                            id: session.user.id,
-                            email: session.user.email,
-                            full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
-                            preferred_language: preferredLanguage,
-                            registration_domain: registrationDomain,
-                            updated_at: new Date().toISOString()
-                        }, { onConflict: 'id', ignoreDuplicates: false });
-                    } catch (profileErr) {
-                        console.warn('Error saving profile for OAuth user:', profileErr);
-                    }
-
-                    // Track OAuth login in internal analytics
-                    try {
-                        await supabase.from('page_analytics').insert({
-                            page_path: '/auth/callback',
-                            page_title: 'OAuth Login Success',
-                            user_id: session.user?.id,
-                            session_id: `oauth-${Date.now()}`,
-                            device_type: window.innerWidth < 768 ? 'mobile' : 'desktop',
-                            browser: navigator.userAgent.includes('Chrome') ? 'Chrome' : 'Other',
-                            os: navigator.platform
-                        });
-                    } catch (e) {
-                        console.warn('Error tracking OAuth login:', e);
-                    }
-
-                    // Pequeño delay para mostrar mensaje de éxito
-                    setTimeout(() => navigate('/'), 1000);
-                } else {
-                    // No hay sesión, puede que el token aún no se haya procesado
-                    // Esperamos un momento y reintentamos
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-
-                    const { data: { session: retrySession } } = await supabase.auth.getSession();
-
-                    if (retrySession) {
-                        setStatus('success');
-                        setTimeout(() => navigate('/'), 1000);
-                    } else {
-                        setStatus('error');
-                        setTimeout(() => navigate('/login'), 2000);
-                    }
-                }
-            } catch (err) {
-                console.error('Error en callback:', err);
-                setStatus('error');
-                setTimeout(() => navigate('/login?error=callback_failed'), 2000);
+                const registrationDomain = window.location.hostname;
+                const preferredLanguage = registrationDomain.includes('.mx') ? 'es' : 'en';
+                await supabase.from('user_profiles').upsert({
+                    id: sessionUser.id,
+                    email: sessionUser.email,
+                    full_name: sessionUser.user_metadata?.full_name || sessionUser.email?.split('@')[0],
+                    preferred_language: preferredLanguage,
+                    registration_domain: registrationDomain,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'id', ignoreDuplicates: false });
+            } catch (e) {
+                console.warn('[AuthCallback] No se pudo persistir user_profiles:', e);
             }
         };
 
-        handleCallback();
+        const onSuccess = async (session) => {
+            if (resolved) return;
+            resolved = true;
+            clearTimeout(timeoutId);
+            if (subscription) subscription.unsubscribe();
+
+            setStatus('success');
+            const provider = session.user?.app_metadata?.provider || 'oauth';
+            try { trackUserLogin(session.user.id, provider); } catch (e) { /* analytics opcional */ }
+            await persistProfile(session.user);
+
+            // Pequeño delay para mostrar el mensaje de éxito antes de redirigir
+            setTimeout(() => navigate('/', { replace: true }), 800);
+        };
+
+        const onFailure = (reason) => {
+            if (resolved) return;
+            resolved = true;
+            clearTimeout(timeoutId);
+            if (subscription) subscription.unsubscribe();
+
+            console.error('[AuthCallback] Falló el callback:', reason);
+            setStatus('error');
+            setTimeout(() => {
+                navigate('/login?error=' + encodeURIComponent(reason || 'callback_failed'), { replace: true });
+            }, 1500);
+        };
+
+        const run = async () => {
+            // 1. Revisar error explícito en query params (?error=...)
+            const error = searchParams.get('error');
+            const errorDescription = searchParams.get('error_description');
+            if (error) {
+                onFailure(errorDescription || error);
+                return;
+            }
+
+            // 2. Suscribirse a onAuthStateChange ANTES de cualquier getSession()
+            //    para no perder el evento SIGNED_IN si llega entre llamadas.
+            const sub = supabase.auth.onAuthStateChange((event, session) => {
+                if (resolved) return;
+                if (event === 'SIGNED_IN' && session) {
+                    onSuccess(session);
+                }
+            });
+            subscription = sub.data.subscription;
+
+            // 3. Revisar si Supabase ya tiene una sesión persistida (caso de retorno
+            //    rápido o de PWA con detectSessionInUrl=true que ya procesó el token).
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    onSuccess(session);
+                    return;
+                }
+            } catch (e) {
+                // Ignorar — seguimos esperando el evento
+            }
+
+            // 4. Timeout global: si pasados MAX_WAIT_MS no llegó la sesión, fallar.
+            timeoutId = setTimeout(() => onFailure('timeout'), MAX_WAIT_MS);
+        };
+
+        run();
+
+        return () => {
+            resolved = true;
+            clearTimeout(timeoutId);
+            if (subscription) subscription.unsubscribe();
+        };
     }, [navigate, searchParams]);
 
     return (
@@ -128,7 +140,7 @@ const AuthCallback = () => {
                             ¡Inicio de sesión exitoso!
                         </h2>
                         <p className="mt-2 text-gray-500">
-                            Redirigiendo al dashboard...
+                            Redirigiendo...
                         </p>
                     </>
                 )}

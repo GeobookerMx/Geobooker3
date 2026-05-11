@@ -5,6 +5,7 @@
  * ✅ FIX Bug #3: En Android/iOS nativo el timeout es 7 días para no pedir login repetidamente
  */
 import { useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
@@ -17,6 +18,7 @@ const SESSION_TIMEOUT_MINUTES = isNative ? 60 * 24 * 7 : 30;
 
 export const useSessionTimeout = () => {
     const { user, signOut } = useAuth();
+    const navigate = useNavigate();
     const timeoutRef = useRef(null);
     const hasBusinessRef = useRef(false);
 
@@ -41,6 +43,9 @@ export const useSessionTimeout = () => {
     }, [user]);
 
     // Logout function
+    // Antes hacíamos `window.location.href = '/login'` que en HashRouter (Capacitor)
+    // intenta navegar a `capacitor://localhost/login` y deja la app en blanco.
+    // Ahora usamos navigate de react-router para que funcione igual en web y nativo.
     const handleTimeout = useCallback(async () => {
         if (hasBusinessRef.current && user) {
             toast('Tu sesión ha expirado por inactividad', {
@@ -48,9 +53,9 @@ export const useSessionTimeout = () => {
                 duration: 5000,
             });
             await signOut();
-            window.location.href = '/login';
+            navigate('/login', { replace: true });
         }
-    }, [user, signOut]);
+    }, [user, signOut, navigate]);
 
     // Reset timer on activity
     const resetTimer = useCallback(() => {

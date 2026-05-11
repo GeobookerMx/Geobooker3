@@ -422,13 +422,13 @@ const AdvertisePage = () => {
 
                 <div className="p-6 bg-gray-50 mt-auto border-t border-gray-100">
                   {space.name === 'enterprise' ? (
-                    <a
-                      href="/enterprise"
+                    <Link
+                      to="/enterprise"
                       className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition flex items-center justify-center group-hover:scale-[1.02] transform text-sm"
                     >
                       Solicitar cotización
                       <ArrowRight className="w-5 h-5 ml-2" />
-                    </a>
+                    </Link>
                   ) : (
                     <button
                       onClick={() => handleSelectSpace(space.id)}

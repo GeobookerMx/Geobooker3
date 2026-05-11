@@ -21,7 +21,6 @@ import AppRouter from "./router";
 import ChatWidget from "./components/agent/ChatWidget";
 import { checkAppVersion } from "./services/cacheVersionService";
 import InstallPWAButton from "./components/common/InstallPWAButton";
-import DownloadAppModal from "./components/pwa/DownloadAppModal";
 import ScrollToTop from "./components/common/ScrollToTop";
 import CookieConsent from "./components/CookieConsent";
 import { Toaster } from "react-hot-toast";
@@ -220,7 +219,6 @@ function App() {
               <AppRouter />
               <ChatWidget />
               <InstallPWAButton variant="banner" />
-              <DownloadAppModal />
               <CookieConsent />
             </LocationProvider>
           </AppProvider>

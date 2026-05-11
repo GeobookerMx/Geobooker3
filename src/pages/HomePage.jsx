@@ -45,6 +45,8 @@ import { GeobookersRecommend } from '../components/recommendations';
 // Guest search limit
 import { useGuestSearchLimit } from '../hooks/useGuestSearchLimit';
 import GuestLoginPromptModal from '../components/modals/GuestLoginPromptModal';
+// Apple Guideline 3.1.1: ocultar promos de paquetes pagos en iOS nativo
+import { IS_IOS_NATIVE } from '../utils/iosStore';
 import OpenNowFilter from '../components/common/OpenNowFilter';
 import LocationRefreshButton from '../components/common/LocationRefreshButton';
 import { isBusinessOpen } from '../utils/businessHours';
@@ -475,7 +477,8 @@ const HomePage = () => {
       )}
 
       {/* 🌟 BANNER Enterprise VIP (50% OFF) - Visible hasta 1 de Julio 2026 */}
-      {new Date() < new Date('2026-07-02T00:00:00-06:00') && (
+      {/* Apple 3.1.1: oculto en iOS nativo — promoción de servicio pago fuera de IAP */}
+      {!IS_IOS_NATIVE && new Date() < new Date('2026-07-02T00:00:00-06:00') && (
         <div className="bg-gradient-to-r from-slate-900 via-gray-900 to-black text-amber-500 py-3 px-4 shadow-xl border-b border-amber-500/30">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -1003,6 +1006,8 @@ const HomePage = () => {
       </div>
 
       {/* Sección Promoción Geobooker Global */}
+      {/* Apple 3.1.1: oculta en iOS nativo — promoción de planes Enterprise / Ads pagos */}
+      {!IS_IOS_NATIVE && (
       <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-16 px-4">
         <div className="container mx-auto max-w-5xl text-center">
           <div className="inline-flex items-center gap-2 bg-blue-600/30 backdrop-blur-sm text-blue-300 px-4 py-2 rounded-full mb-6">
@@ -1045,6 +1050,7 @@ const HomePage = () => {
           </Link>
         </div>
       </div>
+      )}
 
       {/* Call to Action Final */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">

@@ -7,6 +7,8 @@ import { toast } from "react-hot-toast";
 import BrandLogo from "../common/BrandLogo.jsx";
 import LanguageSelector from "../LanguageSelector.jsx";
 import { RecommendationForm } from "../recommendations";
+// Apple Guideline 3.1.1: ocultar promos de planes pagos en iOS nativo
+import { IS_IOS_NATIVE } from "../../utils/iosStore";
 
 export default function Header() {
   const { t } = useTranslation();
@@ -176,12 +178,15 @@ export default function Header() {
             </button>
           )}
 
-          <Link
-            to="/advertise"
-            className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 py-1.5 rounded-lg font-bold hover:from-red-600 hover:to-orange-600 transition-all flex items-center gap-1 shadow-lg hover:scale-105"
-          >
-            🚀 {t("nav.moreSales")}
-          </Link>
+          {/* Apple 3.1.1: link a planes pagos oculto en iOS nativo */}
+          {!IS_IOS_NATIVE && (
+            <Link
+              to="/advertise"
+              className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 py-1.5 rounded-lg font-bold hover:from-red-600 hover:to-orange-600 transition-all flex items-center gap-1 shadow-lg hover:scale-105"
+            >
+              🚀 {t("nav.moreSales")}
+            </Link>
+          )}
 
           <Link
             to="/business/register"
@@ -331,13 +336,16 @@ export default function Header() {
             </button>
           )}
 
-          <Link
-            to="/advertise"
-            onClick={() => setIsOpen(false)}
-            className="block text-red-600 font-bold bg-red-50 p-2 rounded"
-          >
-            🚀 {t("nav.moreSales")}
-          </Link>
+          {/* Apple 3.1.1: link a planes pagos oculto en iOS nativo */}
+          {!IS_IOS_NATIVE && (
+            <Link
+              to="/advertise"
+              onClick={() => setIsOpen(false)}
+              className="block text-red-600 font-bold bg-red-50 p-2 rounded"
+            >
+              🚀 {t("nav.moreSales")}
+            </Link>
+          )}
 
           <Link
             to="/business/register"

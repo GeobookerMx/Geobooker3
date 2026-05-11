@@ -20,7 +20,6 @@ import i18n from "./i18n";
 import AppRouter from "./router";
 import ChatWidget from "./components/agent/ChatWidget";
 import { checkAppVersion } from "./services/cacheVersionService";
-import InstallPWAButton from "./components/common/InstallPWAButton";
 import ScrollToTop from "./components/common/ScrollToTop";
 import CookieConsent from "./components/CookieConsent";
 import { Toaster } from "react-hot-toast";
@@ -218,7 +217,6 @@ function App() {
             <LocationProvider>
               <AppRouter />
               <ChatWidget />
-              <InstallPWAButton variant="banner" />
               <CookieConsent />
             </LocationProvider>
           </AppProvider>

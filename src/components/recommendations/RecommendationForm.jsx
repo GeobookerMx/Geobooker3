@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { GoogleMap, MarkerF, useJsApiLoader } from '@react-google-maps/api';
 import { requestDeviceLocation } from '../../services/deviceLocationService';
+import { GOOGLE_MAPS_API_KEY } from '../../config/supabase';
 
 const CATEGORIES = [
   { value: 'restaurantes', label: '🍴 Restaurantes y Comida' },
@@ -49,7 +50,7 @@ const RecommendationForm = ({ isOpen, onClose, userLocation, onSuccess }) => {
   const mapRef = useRef(null);
 
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
     libraries: ['places'],
   });
 

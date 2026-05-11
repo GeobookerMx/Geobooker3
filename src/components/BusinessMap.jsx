@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, MarkerClusterer, CircleF, OverlayView } from '@react-google-maps/api';
 import LastUpdatedBadge from './common/LastUpdatedBadge';
 import { trackRouteClick, trackBusinessView } from '../services/analyticsService';
+import { GOOGLE_MAPS_API_KEY } from '../config/supabase';
 // ⚡ IMPORTANTE: Constantes fuera del componente para evitar recargas
 const GOOGLE_MAPS_LIBRARIES = ['places'];
 
@@ -344,7 +345,7 @@ export const BusinessMap = memo(({
 
   // ⚡ useJsApiLoader en lugar de LoadScript - evita cargas múltiples
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
     libraries: GOOGLE_MAPS_LIBRARIES,
   });
 

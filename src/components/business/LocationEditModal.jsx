@@ -9,6 +9,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { X, MapPin, AlertCircle, Check, Navigation } from 'lucide-react';
 import { GoogleMap, MarkerF, useJsApiLoader } from '@react-google-maps/api';
 import { supabase } from '../../lib/supabase';
+import { GOOGLE_MAPS_API_KEY } from '../../config/supabase';
 import toast from 'react-hot-toast';
 
 const mapContainerStyle = {
@@ -34,7 +35,7 @@ export default function LocationEditModal({
     const mapRef = useRef(null);
 
     const { isLoaded } = useJsApiLoader({
-        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+        googleMapsApiKey: GOOGLE_MAPS_API_KEY,
         libraries: ['places'],
     });
 

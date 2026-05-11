@@ -10,12 +10,21 @@ const ForgotPasswordPage = () => {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [emailSent, setEmailSent] = useState(false);
+    // ✅ FIX Bug #5: Rate limiting en cliente — previene "Limit Exceeded"
+    const [cooldown, setCooldown] = useState(0); // Segundos restantes de espera
+    const cooldownRef = React.useRef(null);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!email.trim()) {
             toast.error('Por favor ingresa tu correo electrónico');
+            return;
+        }
+
+        // ✅ FIX Bug #5: No enviar si hay cooldown activo
+        if (cooldown > 0) {
+            toast.error(`Espera ${cooldown} segundos antes de intentar de nuevo.`);
             return;
         }
 
@@ -30,9 +39,37 @@ const ForgotPasswordPage = () => {
 
             setEmailSent(true);
             toast.success('¡Correo enviado! Revisa tu bandeja de entrada.');
+
+            // ✅ FIX Bug #5: Activar cooldown de 60 segundos tras enviar exitosamente
+            setCooldown(60);
+            cooldownRef.current = setInterval(() => {
+                setCooldown(prev => {
+                    if (prev <= 1) {
+                        clearInterval(cooldownRef.current);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+
         } catch (error) {
             console.error('Error sending reset email:', error);
-            toast.error(error.message || 'Error al enviar el correo de recuperación');
+
+            // ✅ FIX Bug #5: Mensajes de error amigables según el código de error
+            const msg = error.message || '';
+            const code = error.code || error.status || '';
+
+            if (msg.includes('rate') || msg.includes('limit') || msg.includes('Limit') || code === 'over_email_send_rate_limit') {
+                toast.error('⏳ Demasiados intentos. Espera unos minutos e intenta de nuevo.', { duration: 6000 });
+            } else if (msg.includes('Invalid email') || msg.includes('invalid')) {
+                toast.error('El correo ingresado no es válido.');
+            } else if (msg.includes('User not found') || msg.includes('not found')) {
+                // Por seguridad mostramos éxito aunque el correo no exista
+                setEmailSent(true);
+                toast.success('¡Correo enviado! Revisa tu bandeja de entrada.');
+            } else {
+                toast.error('Error al enviar el correo. Inténtalo de nuevo en unos minutos.');
+            }
         } finally {
             setLoading(false);
         }
@@ -128,7 +165,7 @@ const ForgotPasswordPage = () => {
 
                             <button
                                 type="submit"
-                                disabled={loading}
+                                disabled={loading || cooldown > 0}
                                 className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? (
@@ -139,6 +176,8 @@ const ForgotPasswordPage = () => {
                                         </svg>
                                         Enviando...
                                     </span>
+                                ) : cooldown > 0 ? (
+                                    <span>⏳ Espera {cooldown}s para reintentar</span>
                                 ) : (
                                     'Enviar enlace de recuperación'
                                 )}

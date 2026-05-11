@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import PhoneInput from '../components/PhoneInput';
 import { supabase } from '../lib/supabase';
+import { GOOGLE_MAPS_API_KEY } from '../config/supabase';
 import UpgradeRequiredModal from '../components/modals/UpgradeRequiredModal';
 import { isPremiumPromoActive } from '../config/promotions';
 
@@ -119,7 +120,7 @@ export default function BusinessFormPage() {
   const mapRef = useRef(null);
 
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
     libraries: MAPS_LIBRARIES,
   });
 

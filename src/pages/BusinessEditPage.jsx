@@ -4,6 +4,7 @@ import { Capacitor } from '@capacitor/core';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { GoogleMap, useJsApiLoader, MarkerF } from '@react-google-maps/api';
+import { GOOGLE_MAPS_API_KEY } from '../config/supabase';
 
 const MAPS_LIBRARIES = ['places'];
 import { toast } from 'react-hot-toast';
@@ -27,7 +28,7 @@ const BusinessEditPage = () => {
     const mapRef = useRef(null);
 
     const { isLoaded } = useJsApiLoader({
-        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+        googleMapsApiKey: GOOGLE_MAPS_API_KEY,
         libraries: MAPS_LIBRARIES,
     });
 

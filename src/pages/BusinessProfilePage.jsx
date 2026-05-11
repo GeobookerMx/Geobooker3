@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '../lib/supabase';
+import { GOOGLE_MAPS_API_KEY } from '../config/supabase';
 import {
     MapPin, Phone, Globe, Clock, Star,
     Navigation, Share2, Heart, ArrowLeft,
@@ -450,7 +451,7 @@ const BusinessProfilePage = () => {
                                 height="100%"
                                 frameBorder="0"
                                 style={{ border: 0 }}
-                                src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&q=${business.latitude},${business.longitude}&zoom=16`}
+                                src={`https://www.google.com/maps/embed/v1/place?key=${GOOGLE_MAPS_API_KEY}&q=${business.latitude},${business.longitude}&zoom=16`}
                                 allowFullScreen
                             />
                         </div>

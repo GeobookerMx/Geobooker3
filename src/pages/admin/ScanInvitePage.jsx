@@ -5,6 +5,7 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
+import { GOOGLE_MAPS_API_KEY } from '../../config/supabase';
 import { toast } from 'react-hot-toast';
 import { useJsApiLoader } from '@react-google-maps/api';
 import {
@@ -20,7 +21,7 @@ const libraries = ['places'];
 const ScanInvitePage = () => {
     // Load Google Maps API
     const { isLoaded: googleMapsLoaded } = useJsApiLoader({
-        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+        googleMapsApiKey: GOOGLE_MAPS_API_KEY,
         libraries: libraries,
     });
 

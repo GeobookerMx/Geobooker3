@@ -794,17 +794,47 @@ const HomePage = () => {
             <p className="text-gray-600">{t('home.video.subtitle')}</p>
           </div>
 
-          {/* YouTube Short Embed - Vertical Format */}
-          <div className="relative w-full aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-black">
-            <iframe
-              className="absolute top-0 left-0 w-full h-full"
-              src="https://www.youtube.com/embed/2IaVw19pgzY"
-              title="Geobooker - Cómo funciona"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
+          {/* YouTube Video — iframe en web, thumbnail en iOS nativo (WKWebView bloquea iframes) */}
+          {IS_IOS_NATIVE ? (
+            // ✅ FIX Bug #2: En iOS, abrir video en Safari directamente
+            <a
+              href="https://www.youtube.com/watch?v=2IaVw19pgzY"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative w-full aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-black flex flex-col items-center justify-center block"
+            >
+              {/* Thumbnail de YouTube */}
+              <img
+                src="https://img.youtube.com/vi/2IaVw19pgzY/maxresdefault.jpg"
+                alt="Geobooker - Cómo funciona"
+                className="absolute inset-0 w-full h-full object-cover opacity-80"
+                onError={(e) => { e.target.src = 'https://img.youtube.com/vi/2IaVw19pgzY/hqdefault.jpg'; }}
+              />
+              {/* Botón Play */}
+              <div className="relative z-10 flex flex-col items-center gap-3">
+                <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center shadow-2xl">
+                  <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+                <span className="text-white font-bold text-sm bg-black/60 px-3 py-1 rounded-full">
+                  📩 Ver en YouTube
+                </span>
+              </div>
+            </a>
+          ) : (
+            // Web y Android: iframe normal
+            <div className="relative w-full aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-black">
+              <iframe
+                className="absolute top-0 left-0 w-full h-full"
+                src="https://www.youtube.com/embed/2IaVw19pgzY"
+                title="Geobooker - Cómo funciona"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          )}
 
           {/* Subscribe CTA */}
           <div className="text-center mt-6">

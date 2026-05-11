@@ -27,18 +27,28 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading }) => {
         await requestLocationPermission();
       } catch (error) {
         console.error('Error obteniendo ubicación:', error);
+        // ✅ FIX Bug #3: Liberar loading antes de salir cuando falla la ubicación
+        onSearch(false);
         return;
       }
     }
+
+    // ✅ FIX Bug #3: Timeout de seguridad 15s — evita spinner eterno en iOS
+    const loadingTimeout = setTimeout(() => {
+      console.warn('⏱️ SearchBar: timeout de 15s alcanzado, liberando loading');
+      onSearch(false);
+      onBusinessesFound([]);
+    }, 15000);
 
     try {
       onSearch(true);
 
       // Verificar que Google Maps esté cargado antes de buscar
       if (!window.google || !window.google.maps) {
-        console.error('Google Maps no está disponible');
+        console.error('Google Maps no está disponible — verifica la API key en iOS');
         onBusinessesFound([]);
         onSearch(false);
+        clearTimeout(loadingTimeout);
         return;
       }
 
@@ -60,7 +70,9 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading }) => {
       console.error('Error buscando negocios:', error);
       onBusinessesFound([]);
     } finally {
+      // ✅ FIX Bug #3: finally garantiza que loading SIEMPRE se libera
       onSearch(false);
+      clearTimeout(loadingTimeout);
     }
   };
 

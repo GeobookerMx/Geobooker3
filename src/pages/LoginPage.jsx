@@ -49,8 +49,24 @@ const LoginPage = () => {
     } catch (error) {
       console.error('Error al iniciar sesión:', error);
 
-      if (error.message?.includes('Invalid login credentials')) {
-        toast.error(t('login.invalidCredentials'));
+      const msg = error.message || '';
+
+      if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials')) {
+        // Distinguir si es un correo @icloud.com para dar tip extra
+        if (formData.email.toLowerCase().includes('@icloud.com') ||
+            formData.email.toLowerCase().includes('@apple.com') ||
+            formData.email.toLowerCase().includes('@me.com')) {
+          toast.error(
+            '❌ Correo o contraseña incorrectos. Si usaste "Continuar con Apple" antes, usa ese botón en lugar de contraseña.',
+            { duration: 7000 }
+          );
+        } else {
+          toast.error(t('login.invalidCredentials'));
+        }
+      } else if (msg.includes('Email not confirmed') || msg.includes('email_not_confirmed')) {
+        toast.error('¡Confirma tu correo electrónico! Revisa tu bandeja de entrada y haz clic en el enlace de verificación.', { duration: 8000 });
+      } else if (msg.includes('rate') || msg.includes('too many')) {
+        toast.error('⏳ Demasiados intentos fallidos. Espera unos minutos e intenta de nuevo.', { duration: 6000 });
       } else {
         toast.error(error.message || t('login.error'));
       }

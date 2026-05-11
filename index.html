@@ -4,6 +4,23 @@
 <head>
   <meta charset="UTF-8" />
 
+  <!-- Google Maps API Key para iOS Capacitor WKWebView -->
+  <!-- Esta meta tag permite que el JS lea la key sin depender de variables de entorno en iOS -->
+  <meta name="google-maps-key" content="AIzaSyB0sOzA3Hzj8zX7Rn9M0eGJM4pEeBdTff4" />
+
+  <!-- Precarga Google Maps antes que React para garantizar que window.google esté disponible -->
+  <script>
+    (function() {
+      var key = document.querySelector('meta[name="google-maps-key"]')?.content || 'AIzaSyB0sOzA3Hzj8zX7Rn9M0eGJM4pEeBdTff4';
+      var script = document.createElement('script');
+      script.src = 'https://maps.googleapis.com/maps/api/js?key=' + key + '&libraries=places&loading=async';
+      script.async = true;
+      script.defer = true;
+      script.onerror = function() { console.error('[Geobooker] Error cargando Google Maps API'); };
+      document.head.appendChild(script);
+    })();
+  </script>
+
   <!-- FAVICONS Y APP ICONS - Google requires .ico format -->
   <link rel="icon" href="/favicon.ico" sizes="48x48" />
   <link rel="icon" type="image/svg+xml" href="/images/geobooker-logo.svg" />

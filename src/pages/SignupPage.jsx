@@ -297,8 +297,8 @@ const SignupPage = () => {
                         </button>
                     </form>
 
-                    {/* Divider y OAuth: oculto en iOS, visible en web y Android */}
-                    {!isIOS && (
+                    {/* Divider y OAuth: Visible en todas las plataformas */}
+                    {true && (
                         <div className="relative my-6">
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-gray-300"></div>
@@ -309,8 +309,8 @@ const SignupPage = () => {
                         </div>
                     )}
 
-                    {/* OAuth: oculto en iOS, visible en web y Android */}
-                    {!isIOS && (
+                    {/* OAuth: Visible en todas las plataformas */}
+                    {true && (
                         <>
                             {/* Google Sign-up */}
                             <button

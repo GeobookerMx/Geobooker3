@@ -176,8 +176,8 @@ const LoginPage = () => {
             </button>
           </form>
 
-          {/* OAuth: oculto solo en iOS (Apple lo requiere), visible en web y Android */}
-          {!isIOS && (
+          {/* OAuth: Visible en todas las plataformas. En iOS es obligatorio tener Apple si tienes Google/Facebook */}
+          {true && (
             <>
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">

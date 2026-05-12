@@ -23,7 +23,7 @@ dist-ssr/
 .env
 .env.local
 .env.development
-.env.production
+# .env.production → NO ignorar: contiene solo VITE_ vars públicas necesarias para el build de iOS en Mac
 .env.test
 .env.*.local
 

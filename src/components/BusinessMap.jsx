@@ -1,11 +1,81 @@
 import React, { useMemo, memo, useCallback, useRef, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, MarkerClusterer, CircleF, OverlayView } from '@react-google-maps/api';
+import { GoogleMap, MarkerF, InfoWindowF, MarkerClusterer, CircleF, OverlayView } from '@react-google-maps/api';
 import LastUpdatedBadge from './common/LastUpdatedBadge';
 import { trackRouteClick, trackBusinessView } from '../services/analyticsService';
 import { GOOGLE_MAPS_API_KEY } from '../config/supabase';
+
 // ⚡ IMPORTANTE: Constantes fuera del componente para evitar recargas
 const GOOGLE_MAPS_LIBRARIES = ['places'];
+
+// ✅ FIX iOS: Función para cargar Google Maps de forma compatible con Capacitor WKWebView
+// useJsApiLoader falla silenciosamente en iOS nativo — esta función lo reemplaza
+function loadGoogleMapsScript(apiKey) {
+  return new Promise((resolve, reject) => {
+    // Si ya está cargado, resolver inmediatamente
+    if (window.google && window.google.maps && window.google.maps.Map) {
+      resolve(window.google.maps);
+      return;
+    }
+
+    // Verificar si el script ya está en el DOM (evitar cargas dobles)
+    const existing = document.getElementById('google-maps-script');
+    if (existing) {
+      // Script ya existe, esperar a que cargue
+      const interval = setInterval(() => {
+        if (window.google && window.google.maps && window.google.maps.Map) {
+          clearInterval(interval);
+          resolve(window.google.maps);
+        }
+      }, 100);
+      setTimeout(() => {
+        clearInterval(interval);
+        reject(new Error('Google Maps timeout'));
+      }, 15000);
+      return;
+    }
+
+    // Crear callback único
+    const callbackName = '__gmapsCallback_' + Date.now();
+    window[callbackName] = () => {
+      delete window[callbackName];
+      resolve(window.google.maps);
+    };
+
+    const script = document.createElement('script');
+    script.id = 'google-maps-script';
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=${callbackName}`;
+    script.async = true;
+    script.defer = true;
+    script.onerror = () => {
+      delete window[callbackName];
+      reject(new Error('Error cargando Google Maps API'));
+    };
+    document.head.appendChild(script);
+  });
+}
+
+// ✅ Hook personalizado que reemplaza useJsApiLoader — compatible con iOS WKWebView
+function useGoogleMaps(apiKey) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(null);
+
+  useEffect(() => {
+    if (!apiKey) {
+      setLoadError(new Error('No API key provided'));
+      return;
+    }
+
+    loadGoogleMapsScript(apiKey)
+      .then(() => setIsLoaded(true))
+      .catch((err) => {
+        console.error('[Geobooker] Google Maps error:', err);
+        setLoadError(err);
+      });
+  }, [apiKey]);
+
+  return { isLoaded, loadError };
+}
 
 const mapContainerStyle = {
   width: '100%',
@@ -343,11 +413,8 @@ export const BusinessMap = memo(({
   ];
   const [activeCategory, setActiveCategory] = useState('all');
 
-  // ⚡ useJsApiLoader en lugar de LoadScript - evita cargas múltiples
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    libraries: GOOGLE_MAPS_LIBRARIES,
-  });
+  // ✅ Usando hook personalizado compatible con iOS WKWebView (reemplaza useJsApiLoader)
+  const { isLoaded, loadError } = useGoogleMaps(GOOGLE_MAPS_API_KEY);
 
   // Estado para saber si el mapa ya cargó
   const [mapLoaded, setMapLoaded] = React.useState(false);

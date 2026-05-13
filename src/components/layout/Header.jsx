@@ -124,7 +124,7 @@ export default function Header() {
         </Link>
 
         <button
-          className="md:hidden flex flex-col items-center justify-center space-y-1"
+          className="md:hidden p-3 -mr-2 flex flex-col items-center justify-center space-y-1.5 min-w-[44px] min-h-[44px] active:bg-black/5 rounded-lg transition-colors"
           onClick={() => setIsOpen(!isOpen)}
           aria-label={t("nav.openMenu")}
         >

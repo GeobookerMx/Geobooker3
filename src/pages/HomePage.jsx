@@ -477,8 +477,8 @@ const HomePage = () => {
       )}
 
       {/* 🌟 BANNER Enterprise VIP (50% OFF) - Visible hasta 1 de Julio 2026 */}
-      {/* Apple 3.1.1: oculto en iOS nativo — promoción de servicio pago fuera de IAP */}
-      {!IS_IOS_NATIVE && new Date() < new Date('2026-07-02T00:00:00-06:00') && (
+      {/* Apple 3.1.1: oculto temporalmente para revisión con feature flag VITE_SHOW_VIP_BANNER */}
+      {import.meta.env.VITE_SHOW_VIP_BANNER === 'true' && !IS_IOS_NATIVE && new Date() < new Date('2026-07-02T00:00:00-06:00') && (
         <div className="bg-gradient-to-r from-slate-900 via-gray-900 to-black text-amber-500 py-3 px-4 shadow-xl border-b border-amber-500/30">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3">

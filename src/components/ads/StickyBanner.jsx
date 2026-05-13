@@ -11,6 +11,9 @@ import ReportAdButton from './ReportAdButton';
  * Tamaño: 728x90 (Desktop), 320x50 (Mobile)
  */
 export default function StickyBanner() {
+    // 🚧 TEMPORAL: Oculto para la revisión de Apple (Build 24/25)
+    return null;
+
     const [isVisible, setIsVisible] = useState(true);
 
     const { currentCampaign, hasCampaigns, loading } = useActiveCampaigns('bottom_banner', {

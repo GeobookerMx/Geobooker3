@@ -29,6 +29,75 @@ import { Toaster } from "react-hot-toast";
 const isNative = Capacitor.isNativePlatform();
 const Router = isNative ? HashRouter : BrowserRouter;
 
+// ✅ FIX OAuth iOS Global Listener: Registrar a nivel de módulo lo antes posible
+// Captura el deep link de inmediato al reanudar la app, evitando race conditions con React.
+if (isNative) {
+  try {
+    CapApp.addListener('appUrlOpen', async (data) => {
+      console.log('[App Global] Deep link recibido:', data.url);
+      if (data?.url?.includes('auth/callback')) {
+        try {
+          // 1. Cerrar el navegador in-app de forma inmediata y fulminante
+          const { Browser } = await import('@capacitor/browser');
+          await Browser.close();
+          console.log('[App Global] Navegador in-app cerrado exitosamente');
+        } catch (e) {
+          console.warn('[App Global] Error al cerrar Browser:', e);
+        }
+
+        try {
+          const { supabase } = await import('./lib/supabase');
+          const urlObj = new URL(data.url);
+
+          // 2A. Verificar si viene un código de autorización PKCE (?code=xxxx)
+          // Supabase JS v2 en iOS nativo utiliza el flujo PKCE por defecto.
+          const code = urlObj.searchParams.get('code');
+          if (code) {
+            console.log('[Auth Global] Intercambiando código PKCE por sesión...');
+            const { error } = await supabase.auth.exchangeCodeForSession(code);
+            if (error) throw error;
+            console.log('[Auth Global] Sesión PKCE configurada exitosamente');
+            window.location.hash = '/';
+            return;
+          }
+
+          // 2B. Fallback: extraer tokens directamente del hash (#access_token=xxxx)
+          const hashStr = urlObj.hash.replace(/^#/, '');
+          const urlParams = new URLSearchParams(hashStr);
+          const access_token = urlParams.get('access_token');
+          const refresh_token = urlParams.get('refresh_token');
+
+          if (access_token && refresh_token) {
+            console.log('[Auth Global] Configurando sesión con access_token...');
+            const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+            if (error) throw error;
+            console.log('[Auth Global] Sesión de tokens configurada nativamente');
+            window.location.hash = '/';
+            return;
+          }
+
+          // 2C. Manejo de error explícito devuelto por el proveedor
+          if (urlObj.searchParams.has('error')) {
+            const errDesc = urlObj.searchParams.get('error_description') || urlObj.searchParams.get('error');
+            window.location.hash = `/login?error=${encodeURIComponent(errDesc)}`;
+            return;
+          }
+
+          // Fallback final por si la estructura requiere ser procesada por AuthCallback
+          window.location.hash = `/auth/callback${urlObj.hash || urlObj.search}`;
+        } catch (err) {
+          console.error('[Auth Global] Error crítico procesando deep link:', err);
+          window.location.hash = '/login?error=auth_failed';
+        }
+      }
+    });
+    console.log('[App Global] Listener appUrlOpen registrado exitosamente a nivel raíz');
+  } catch (err) {
+    console.warn('[App Global] No se pudo registrar listener global:', err);
+  }
+}
+
+
 // ✅ Error Boundary global: captura errores silenciosos que causan pantalla blanca
 class AppErrorBoundary extends Component {
   constructor(props) {
@@ -98,8 +167,9 @@ function AppInitializer() {
     // ✅ FIX Bug #3: Refrescar sesión cuando la app vuelve al primer plano (Android/iOS)
     // Sin esto el token expira en background y el usuario ve la pantalla de login al regresar
     let appStateListener = null;
+
     if (Capacitor.isNativePlatform()) {
-      const setupAppStateListener = async () => {
+      const setupNativeListeners = async () => {
         try {
           appStateListener = await CapApp.addListener('appStateChange', async ({ isActive }) => {
             if (isActive) {
@@ -112,10 +182,10 @@ function AppInitializer() {
             }
           });
         } catch (err) {
-          console.warn('[App] No se pudo configurar listener de estado:', err);
+          console.warn('[App] No se pudo configurar listeners nativos:', err);
         }
       };
-      setupAppStateListener();
+      setupNativeListeners();
     }
 
     // ✅ FIX Apple Guideline 2.1 (build 19): Solicitar permiso ATT en iOS

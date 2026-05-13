@@ -4,6 +4,17 @@
 <dict>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.geobooker.ios</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>geobooker</string>
+            </array>
+        </dict>
+    </array>
 	<key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>

@@ -106,9 +106,17 @@ const DashboardPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header del Dashboard */}
+      {/* Navegación y Header del Dashboard */}
       <div className="mb-8">
-        <div className="flex justify-between items-center">
+        <div className="mb-4">
+          <Link
+            to="/"
+            className="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold transition-colors bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-full shadow-sm"
+          >
+            ← Volver al Mapa
+          </Link>
+        </div>
+        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
               Hola, {user?.user_metadata?.full_name || 'Usuario'} 👋
@@ -119,12 +127,12 @@ const DashboardPage = () => {
                 </span>
               )}
             </h1>
-            <p className="text-gray-600">Bienvenido a tu panel de control</p>
+            <p className="text-gray-600 mt-1">Bienvenido a tu panel de control</p>
           </div>
           {!isPremium && !isNative && (
             <Link
               to="/dashboard/upgrade"
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition flex items-center"
+              className="w-full md:w-auto text-center bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition flex items-center justify-center shadow-md"
             >
               <Crown className="w-5 h-5 mr-2" />
               Actualizar a Premium
@@ -136,8 +144,8 @@ const DashboardPage = () => {
       {/* Banner de Límite Alcanzado */}
       {showUpgradeBanner && !isNative && (
         <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-6 mb-8">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
+            <div className="flex-1 text-center sm:text-left">
               <h3 className="text-lg font-bold text-gray-900 mb-2">
                 🎉 ¡Llegaste al límite de negocios gratuitos!
               </h3>
@@ -145,20 +153,22 @@ const DashboardPage = () => {
                 Has registrado <strong>2 negocios</strong> en el plan gratuito.
                 Actualiza a Premium para registrar negocios ilimitados y desbloquear más funciones.
               </p>
-              <ul className="text-sm text-gray-600 mb-4 space-y-1">
+              <ul className="text-sm text-gray-600 mb-4 space-y-1 inline-block text-left">
                 <li>✓ Negocios ilimitados</li>
                 <li>✓ Hasta 10 fotos por negocio</li>
                 <li>✓ Estadísticas de visitas</li>
                 <li>✓ Prioridad en búsquedas</li>
               </ul>
-              <Link
-                to="/dashboard/upgrade"
-                className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
-              >
-                Ver Planes Premium →
-              </Link>
+              <div className="mt-2">
+                <Link
+                  to="/dashboard/upgrade"
+                  className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+                >
+                  Ver Planes Premium →
+                </Link>
+              </div>
             </div>
-            <div className="ml-6">
+            <div className="hidden sm:block">
               <Crown className="w-24 h-24 text-yellow-500" />
             </div>
           </div>
@@ -181,11 +191,11 @@ const DashboardPage = () => {
         </div>
       )}
 
-      {/* Tabs de Navegación */}
-      <div className="flex border-b border-gray-200 mb-8">
+      {/* Tabs de Navegación con Scroll Horizontal Suave */}
+      <div className="flex overflow-x-auto whitespace-nowrap scrollbar-hide border-b border-gray-200 mb-8 pb-1 snap-x">
         <button
           onClick={() => setActiveTab('businesses')}
-          className={`px-6 py-3 font-medium text-sm transition-colors duration-200 border-b-2 ${activeTab === 'businesses'
+          className={`px-6 py-3 font-medium text-sm transition-colors duration-200 border-b-2 snap-start ${activeTab === 'businesses'
             ? 'border-blue-600 text-blue-600'
             : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
@@ -194,7 +204,7 @@ const DashboardPage = () => {
         </button>
         <button
           onClick={() => setActiveTab('referrals')}
-          className={`px-6 py-3 font-medium text-sm transition-colors duration-200 border-b-2 ${activeTab === 'referrals'
+          className={`px-6 py-3 font-medium text-sm transition-colors duration-200 border-b-2 snap-start ${activeTab === 'referrals'
             ? 'border-blue-600 text-blue-600'
             : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
@@ -203,7 +213,7 @@ const DashboardPage = () => {
         </button>
         <button
           onClick={() => setActiveTab('recommendations')}
-          className={`px-6 py-3 font-medium text-sm transition-colors duration-200 border-b-2 ${activeTab === 'recommendations'
+          className={`px-6 py-3 font-medium text-sm transition-colors duration-200 border-b-2 snap-start ${activeTab === 'recommendations'
             ? 'border-green-600 text-green-600'
             : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
@@ -212,7 +222,7 @@ const DashboardPage = () => {
         </button>
         <button
           onClick={() => setActiveTab('profile')}
-          className={`px-6 py-3 font-medium text-sm transition-colors duration-200 border-b-2 ${activeTab === 'profile'
+          className={`px-6 py-3 font-medium text-sm transition-colors duration-200 border-b-2 snap-start ${activeTab === 'profile'
             ? 'border-blue-600 text-blue-600'
             : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}

@@ -105,7 +105,9 @@ const DashboardPage = () => {
   const showUpgradeBanner = !isPremium && businessCount >= 2;
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8"
+      style={isNative ? { paddingTop: '56px', paddingBottom: '96px', paddingLeft: '16px', paddingRight: '16px' } : {}}
+    >
       {/* Navegación y Header del Dashboard */}
       <div className="mb-8">
         <div className="mb-4">
@@ -345,7 +347,8 @@ const DashboardPage = () => {
       {/* Floating Action Button - Recomendar */}
       <button
         onClick={() => setShowRecommendForm(true)}
-        className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-green-600 to-emerald-600 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:from-green-700 hover:to-emerald-700 transition-all hover:scale-110 active:scale-95 group"
+        className="fixed z-40 bg-gradient-to-r from-green-600 to-emerald-600 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:from-green-700 hover:to-emerald-700 transition-all hover:scale-110 active:scale-95 group"
+        style={isNative ? { bottom: '96px', right: '24px' } : { bottom: '24px', right: '24px' }}
         title="Recomendar Negocio"
       >
         <Star className="w-6 h-6 fill-current group-hover:rotate-12 transition-transform" />

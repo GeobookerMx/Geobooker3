@@ -36,19 +36,22 @@ const BusinessList = () => {
         }
     };
 
+    const [error, setError] = useState(null);
+
     const fetchBusinesses = async () => {
+        setError(null);
         try {
             const { data, error } = await supabase
                 .from('businesses')
-                .select('*')
+                .select('id, name, category, address, status, images, is_visible, is_verified, is_premium, created_at, owner_id, latitude, longitude')
                 .eq('owner_id', user.id)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
             setBusinesses(data || []);
-        } catch (error) {
-            console.error('Error fetching businesses:', error);
-            toast.error('Error al cargar tus negocios');
+        } catch (err) {
+            console.error('Error fetching businesses:', err);
+            setError(err.message || 'No se pudieron cargar tus negocios');
         } finally {
             setLoading(false);
         }
@@ -115,6 +118,22 @@ const BusinessList = () => {
         return (
             <div className="flex justify-center items-center h-48">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="text-center py-12 bg-red-50 rounded-xl border border-red-200">
+                <div className="text-4xl mb-3">⚠️</div>
+                <h3 className="text-lg font-semibold text-red-800 mb-2">No se pudieron cargar tus negocios</h3>
+                <p className="text-red-600 text-sm mb-4">{error}</p>
+                <button
+                    onClick={() => { setLoading(true); fetchBusinesses(); }}
+                    className="bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+                >
+                    Reintentar
+                </button>
             </div>
         );
     }

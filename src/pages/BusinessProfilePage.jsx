@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
+import { Share } from '@capacitor/share';
 import { supabase } from '../lib/supabase';
 import { GOOGLE_MAPS_API_KEY } from '../config/supabase';
 import {
@@ -104,24 +105,35 @@ const BusinessProfilePage = () => {
     }, [id]);
 
     const handleShare = async () => {
-        const shareData = {
-            title: business?.name,
-            text: `Mira ${business?.name} en Geobooker`,
-            url: window.location.href
-        };
+        const shareUrl = window.location.href;
+        const shareTitle = business?.name || 'Negocio en Geobooker';
+        const shareText = `Mira ${shareTitle} en Geobooker`;
 
         // Track share intent
-        trackShareBusiness(id, business?.name, navigator.share ? 'native' : 'clipboard');
+        trackShareBusiness(id, business?.name, Capacitor.isNativePlatform() ? 'native' : 'web');
 
         try {
-            if (navigator.share) {
-                await navigator.share(shareData);
+            if (Capacitor.isNativePlatform()) {
+                // ✅ iOS nativo: usar plugin nativo de Capacitor para abrir el share sheet
+                await Share.share({
+                    title: shareTitle,
+                    text: shareText,
+                    url: shareUrl,
+                    dialogTitle: 'Compartir negocio'
+                });
+            } else if (navigator.share) {
+                // Web moderno con soporte de Web Share API
+                await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
             } else {
-                await navigator.clipboard.writeText(window.location.href);
+                // Fallback: copiar al portapapeles
+                await navigator.clipboard.writeText(shareUrl);
                 toast.success('Enlace copiado al portapapeles');
             }
         } catch (error) {
-            console.error('Error sharing:', error);
+            // El usuario canceló — no es un error real
+            if (error.message !== 'Share canceled') {
+                console.error('Error sharing:', error);
+            }
         }
     };
 

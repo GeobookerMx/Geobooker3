@@ -15,7 +15,8 @@ import { Capacitor } from '@capacitor/core';
 
 const DashboardPage = () => {
   const { user } = useAuth();
-  const isNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
+  const isNative = Capacitor.isNativePlatform();
+  const isIOS = Capacitor.getPlatform() === 'ios';
   const [activeTab, setActiveTab] = useState('businesses');
   const [isPremium, setIsPremium] = useState(false);
   const [businessCount, setBusinessCount] = useState(0);
@@ -122,7 +123,7 @@ const DashboardPage = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
               Hola, {user?.user_metadata?.full_name || 'Usuario'} 👋
-              {isPremium && !isNative && (
+              {isPremium && !isIOS && (
                 <span className="ml-3 inline-flex items-center bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">
                   <Crown className="w-4 h-4 mr-1 fill-yellow-500" />
                   Premium
@@ -131,7 +132,7 @@ const DashboardPage = () => {
             </h1>
             <p className="text-gray-600 mt-1">Bienvenido a tu panel de control</p>
           </div>
-          {!isPremium && !isNative && (
+          {!isPremium && !isIOS && (
             <Link
               to="/dashboard/upgrade"
               className="w-full md:w-auto text-center bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition flex items-center justify-center shadow-md"
@@ -144,7 +145,7 @@ const DashboardPage = () => {
       </div>
 
       {/* Banner de Límite Alcanzado */}
-      {showUpgradeBanner && !isNative && (
+      {showUpgradeBanner && !isIOS && (
         <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-6 mb-8">
           <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
             <div className="flex-1 text-center sm:text-left">

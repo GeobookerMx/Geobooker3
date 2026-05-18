@@ -12,7 +12,8 @@ const FREE_BUSINESS_LIMIT = 2;
 
 const BusinessList = () => {
     const { user } = useAuth();
-    const isNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
+    const isNative = Capacitor.isNativePlatform();
+    const isIOS = Capacitor.getPlatform() === 'ios';
     const [businesses, setBusinesses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [togglingId, setTogglingId] = useState(null);
@@ -58,7 +59,8 @@ const BusinessList = () => {
     };
 
     // En iOS nativo: sin límites ni menciones de Premium (App Store Guideline 3.1.1)
-    const canAddMoreBusinesses = isNative || isPremium || businesses.length < FREE_BUSINESS_LIMIT;
+    // En Android/Web: mantenemos la monetización
+    const reachedLimit = !isPremium && !isIOS && businesses.length >= FREE_BUSINESS_LIMIT;
     const businessesRemaining = FREE_BUSINESS_LIMIT - businesses.length;
 
     // Toggle business visibility on/off
@@ -124,13 +126,13 @@ const BusinessList = () => {
 
     if (error) {
         return (
-            <div className="text-center py-12 bg-red-50 rounded-xl border border-red-200">
-                <div className="text-4xl mb-3">⚠️</div>
+            <div className="flex flex-col items-center justify-center p-8 bg-red-50 rounded-xl border border-red-100 mt-8 text-center">
+                <Info className="w-12 h-12 text-red-400 mb-4" />
                 <h3 className="text-lg font-semibold text-red-800 mb-2">No se pudieron cargar tus negocios</h3>
-                <p className="text-red-600 text-sm mb-4">{error}</p>
+                <p className="text-red-600 mb-6">{error}</p>
                 <button
-                    onClick={() => { setLoading(true); fetchBusinesses(); }}
-                    className="bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+                    onClick={fetchBusinesses}
+                    className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
                 >
                     Reintentar
                 </button>
@@ -145,7 +147,7 @@ const BusinessList = () => {
                 <div>
                     <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
                         Mis Negocios
-                        {isPremium && !isNative && (
+                        {isPremium && !isIOS && (
                             <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full flex items-center gap-1">
                                 <Crown className="w-3 h-3 fill-yellow-500" /> Premium
                             </span>

@@ -8,6 +8,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getPlaceDetails } from '../services/googlePlacesService';
 import { openMapsNavigation, openPhoneCall, openWhatsApp, trackViewProfile } from '../services/navigationService';
 import { useLocation } from '../contexts/LocationContext';
+import { Capacitor } from '@capacitor/core';
+import { Share } from '@capacitor/share';
 import {
     MapPin, Phone, Globe, Clock, Star, ArrowLeft,
     Navigation, Share2, ExternalLink, AlertCircle,
@@ -80,21 +82,28 @@ const PlaceProfilePage = () => {
     }, [placeId]);
 
     const handleShare = async () => {
-        const shareData = {
-            title: place?.name || 'Negocio en Geobooker',
-            text: `Mira ${place?.name} en Geobooker`,
-            url: window.location.href
-        };
+        const shareTitle = place?.name || 'Negocio en Geobooker';
+        const shareText = `Mira ${shareTitle} en Geobooker`;
+        const shareUrl = window.location.href;
 
         try {
-            if (navigator.share) {
-                await navigator.share(shareData);
+            if (Capacitor.isNativePlatform()) {
+                await Share.share({
+                    title: shareTitle,
+                    text: shareText,
+                    url: shareUrl,
+                    dialogTitle: 'Compartir negocio'
+                });
+            } else if (navigator.share) {
+                await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
             } else {
-                await navigator.clipboard.writeText(window.location.href);
+                await navigator.clipboard.writeText(shareUrl);
                 toast.success('Enlace copiado');
             }
         } catch (err) {
-            console.error('Error sharing:', err);
+            if (err.message !== 'Share canceled') {
+                console.error('Error sharing:', err);
+            }
         }
     };
 

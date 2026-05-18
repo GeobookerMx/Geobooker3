@@ -1,23 +1,27 @@
 // src/pages/OxxoPendingPage.jsx
 /**
  * Página de "Esperando Pago OXXO"
- * Se muestra después de generar un voucher OXXO
- * El usuario ve el estado de su pago y puede volver a ver el voucher
+ * ✅ Apple Guideline 3.1.1: No disponible en iOS nativo
  */
 import React, { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Clock, CheckCircle, XCircle, Store, FileText, ArrowLeft, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { Capacitor } from '@capacitor/core';
 
 const OxxoPendingPage = () => {
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const paymentIntentId = searchParams.get('payment_intent');
-    const [status, setStatus] = useState('pending'); // pending, succeeded, failed
+    const [status, setStatus] = useState('pending');
     const [loading, setLoading] = useState(false);
     const [voucherData, setVoucherData] = useState(null);
 
-    // Intentar recuperar datos del voucher del sessionStorage
+    // ✅ Apple Guideline 3.1.1: Redirigir en iOS nativo
+    const isIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
     useEffect(() => {
+        if (isIOS) { navigate('/', { replace: true }); return; }
+        // Recuperar datos del voucher del sessionStorage
         const stored = sessionStorage.getItem('oxxo_voucher');
         if (stored) {
             try {
@@ -26,7 +30,7 @@ const OxxoPendingPage = () => {
                 console.error('Error parsing voucher data:', e);
             }
         }
-    }, []);
+    }, [isIOS]);
 
     // Verificar estado del pago (polling opcional)
     const checkPaymentStatus = async () => {

@@ -15,6 +15,7 @@ import { supabase } from '../../lib/supabase';
 import { loadStripe } from '@stripe/stripe-js';
 import toast from 'react-hot-toast';
 import SEO from '../../components/SEO';
+import { Capacitor } from '@capacitor/core';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -322,6 +323,13 @@ export default function EnterpriseCheckout() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const preselectedPlan = searchParams.get('plan') || '';
+
+    // ✅ Apple Guideline 3.1.1: Ocultar Enterprise Checkout en iOS nativo
+    const isIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
+    if (isIOS) {
+        setTimeout(() => navigate('/', { replace: true }), 0);
+        return null;
+    }
 
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);

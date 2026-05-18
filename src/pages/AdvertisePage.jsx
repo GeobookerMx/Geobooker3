@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { useNavigate, Link } from "react-router-dom";
+import { Capacitor } from "@capacitor/core";
 import {
   Monitor,
   Smartphone,
@@ -190,6 +191,13 @@ const AdvertisePage = () => {
   const [adSpaces, setAdSpaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  // ✅ Apple Guideline 3.1.1: Ocultar página de publicidad en iOS nativo
+  const isIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
+  if (isIOS) {
+    setTimeout(() => navigate('/', { replace: true }), 0);
+    return null;
+  }
 
   useEffect(() => {
     loadSpaces();

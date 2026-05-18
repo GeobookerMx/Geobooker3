@@ -120,6 +120,7 @@ export const AuthProvider = ({ children }) => {
     signUp,
     signIn,
     signOut,
+    logout: signOut, // ✅ alias para compatibilidad con DeleteAccountPage
   };
 
   return (

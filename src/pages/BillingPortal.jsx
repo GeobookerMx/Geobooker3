@@ -7,9 +7,20 @@ import {
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import { Capacitor } from '@capacitor/core';
+import { useNavigate } from 'react-router-dom';
 
 const BillingPortal = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
+
+    // ✅ Apple Guideline 3.1.1: Ocultar portal de facturación en iOS nativo
+    const isIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
+    if (isIOS) {
+        setTimeout(() => navigate('/dashboard', { replace: true }), 0);
+        return null;
+    }
+
     const [loading, setLoading] = useState(true);
     const [invoices, setInvoices] = useState([]);
     const [payments, setPayments] = useState([]);

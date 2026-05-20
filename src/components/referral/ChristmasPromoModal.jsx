@@ -6,6 +6,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { X, Gift, Sparkles, Star, Users, Crown, ChevronRight, MessageCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -85,6 +86,7 @@ const CONTENT = {
 export default function ChristmasPromoModal() {
     const { i18n } = useTranslation();
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [show, setShow] = useState(false);
     const [referralCode, setReferralCode] = useState(null);
 
@@ -145,8 +147,8 @@ export default function ChristmasPromoModal() {
     };
 
     const handleRegister = () => {
-        window.location.href = '/signup';
         handleDismiss();
+        navigate('/signup');
     };
 
     if (!show) return null;

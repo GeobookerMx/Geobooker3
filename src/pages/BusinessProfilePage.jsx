@@ -1,8 +1,9 @@
-// src/pages/BusinessProfilePage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
+import { Browser } from '@capacitor/browser';
+import { App } from '@capacitor/app';
 import { supabase } from '../lib/supabase';
 import { GOOGLE_MAPS_API_KEY } from '../config/supabase';
 import {
@@ -142,20 +143,43 @@ const BusinessProfilePage = () => {
             trackDirectionsClick(id, business.name);
             const lat = business.latitude;
             const lng = business.longitude;
-            // On iOS native open Apple Maps directly; on web use Google Maps
-            const url = Capacitor.isNativePlatform()
-                ? `maps://?daddr=${lat},${lng}`
-                : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-            window.location.href = url;
+
+            if (Capacitor.isNativePlatform()) {
+                // Use Browser.open so Capacitor keeps the WebView alive in the background
+                const mapsUrl = Capacitor.getPlatform() === 'ios'
+                    ? `maps://?daddr=${lat},${lng}`
+                    : `geo:${lat},${lng}?q=${lat},${lng}`;
+                Browser.open({ url: mapsUrl }).catch(() => {
+                    // Fallback to Google Maps web if native maps fails
+                    window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+                });
+            } else {
+                window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+            }
         }
     };
 
     const handleCall = () => {
         if (business?.phone) {
             trackCallClick(id, business.name);
-            window.location.href = `tel:${business.phone}`;
+            // Use window.open so the WebView is not replaced (stays alive)
+            window.open(`tel:${business.phone}`, '_self');
         }
     };
+
+    // Refresh Supabase session when app returns to foreground after Maps/WhatsApp
+    useEffect(() => {
+        if (!Capacitor.isNativePlatform()) return;
+        let cleanup = null;
+        App.addListener('appStateChange', ({ isActive }) => {
+            if (isActive) {
+                supabase.auth.getSession().catch(() => {});
+            }
+        }).then(handle => {
+            cleanup = () => handle.remove();
+        });
+        return () => { if (cleanup) cleanup(); };
+    }, []);
 
     const toggleFavorite = () => {
         const next = !isFavorite;

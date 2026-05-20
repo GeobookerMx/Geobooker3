@@ -162,7 +162,14 @@ const UserSidebar = () => {
     return (
         <>
             {/* Mobile Top Bar */}
-            <div className="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50 px-4 py-3 flex items-center justify-between">
+            <div className="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50 flex items-center justify-between"
+                style={{
+                    paddingTop: 'max(12px, env(safe-area-inset-top))',
+                    paddingLeft: 'max(16px, env(safe-area-inset-left))',
+                    paddingRight: 'max(16px, env(safe-area-inset-right))',
+                    paddingBottom: '12px',
+                    minHeight: 'calc(56px + env(safe-area-inset-top))'
+                }}>
                 <button onClick={() => handleNavigate('/')} className="flex items-center">
                     <img
                         src="/images/geobooker-logo-horizontal-new.png"

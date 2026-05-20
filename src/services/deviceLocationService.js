@@ -2,16 +2,32 @@ import { Geolocation } from '@capacitor/geolocation';
 
 export const requestDeviceLocation = async () => {
   try {
-    const permission = await Geolocation.requestPermissions();
+    // Step 1: Check current permission status BEFORE requesting
+    // This prevents iOS from opening Settings automatically if already denied
+    const status = await Geolocation.checkPermissions();
 
-    if (permission.location !== 'granted') {
+    if (status.location === 'denied') {
+      // Permission was previously denied — do NOT request again (opens Settings on iOS)
       return {
         ok: false,
         reason: 'denied',
-        message: 'El usuario no concedió permiso de ubicación.',
+        message: 'El permiso de ubicación fue denegado. Puedes activarlo en Configuración > Privacidad > Ubicación.',
       };
     }
 
+    // Step 2: If not yet decided, request it (shows native iOS/Android prompt)
+    if (status.location !== 'granted') {
+      const permission = await Geolocation.requestPermissions();
+      if (permission.location !== 'granted') {
+        return {
+          ok: false,
+          reason: 'denied',
+          message: 'El usuario no concedió permiso de ubicación.',
+        };
+      }
+    }
+
+    // Step 3: Permission is granted, get location
     const position = await Geolocation.getCurrentPosition({
       enableHighAccuracy: true,
       timeout: 10000,

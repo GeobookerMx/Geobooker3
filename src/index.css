@@ -174,3 +174,23 @@ iframe {
     padding-right: max(0.75rem, var(--safe-area-inset-right));
   }
 }
+
+/* ✅ Fix: quitar bordes y outline de foco en Google Maps */
+#map {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#map:focus,
+#map canvas:focus,
+#map [tabindex]:focus,
+.gm-style:focus,
+.gm-style canvas:focus,
+.gm-style [tabindex]:focus {
+  outline: none !important;
+}

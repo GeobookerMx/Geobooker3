@@ -462,6 +462,16 @@ export const BusinessMap = memo(({
     mapRef.current = map;
     setMapLoaded(true);
     
+    // ✅ Fix: quitar tabIndex a todos los divs que Google Maps inyecta al estar 'idle'
+    window.google?.maps?.event?.addListenerOnce(map, 'idle', () => {
+      const mapDiv = map.getDiv();
+      if (mapDiv) {
+        mapDiv.querySelectorAll('[tabindex]').forEach(el => {
+          el.setAttribute('tabindex', '-1');
+        });
+      }
+    });
+
     // ✅ SUPER BULLETPROOF FOCUS & AUTO-SCROLL BLOCKER FOR MOBILE WEBVIEWS
     // Google Maps forces focus on its iframe/container multiple times during load.
     // We run a sequence of resets to clear focus and force all parent containers to scroll 0,0.
@@ -713,6 +723,7 @@ export const BusinessMap = memo(({
       )}
 
       <GoogleMap
+        id="map"
         mapContainerStyle={mapContainerStyle}
         center={activeCenter}
         zoom={zoom}

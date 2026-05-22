@@ -399,6 +399,44 @@ export const BusinessMap = memo(({
   const [hoveredMarkerId, setHoveredMarkerId] = useState(null); // For bounce animation
   const bounceTimerRef = useRef(null);
 
+  // 📍 NUEVO: Estado para el centro activo del mapa
+  // Evita que el mapa regrese bruscamente al usuario en cada re-render
+  const [activeCenter, setActiveCenter] = useState(userLocation || defaultCenter);
+  const prevUserLocationRef = useRef(userLocation);
+  const prevSelectedBusinessRef = useRef(selectedBusiness);
+
+  useEffect(() => {
+    // 1) Si la ubicación del usuario cambia por primera vez (se concede permiso o se actualiza manualmente)
+    const locChanged = userLocation && (
+      !prevUserLocationRef.current ||
+      prevUserLocationRef.current.lat !== userLocation.lat ||
+      prevUserLocationRef.current.lng !== userLocation.lng
+    );
+
+    if (locChanged) {
+      setActiveCenter(userLocation);
+      prevUserLocationRef.current = userLocation;
+    }
+  }, [userLocation]);
+
+  useEffect(() => {
+    // 2) Si se selecciona un nuevo negocio, centrar el mapa en él de forma inteligente
+    if (selectedBusiness && (!prevSelectedBusinessRef.current || prevSelectedBusinessRef.current.id !== selectedBusiness.id)) {
+      const lat = Number(selectedBusiness.latitude ?? selectedBusiness.lat);
+      const lng = Number(selectedBusiness.longitude ?? selectedBusiness.lng);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setActiveCenter({ lat, lng });
+      }
+      prevSelectedBusinessRef.current = selectedBusiness;
+    } else if (!selectedBusiness && prevSelectedBusinessRef.current) {
+      // Si se deselecciona, regresar la vista al usuario
+      if (userLocation) {
+        setActiveCenter(userLocation);
+      }
+      prevSelectedBusinessRef.current = null;
+    }
+  }, [selectedBusiness, userLocation]);
+
   // 🗂️ Filtros de categoría para negocios DENUE
   const DENUE_CATEGORIES = [
     { id: 'all',           emoji: '🗺️', label: 'Todos' },
@@ -661,7 +699,7 @@ export const BusinessMap = memo(({
 
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
-        center={mapCenter}
+        center={activeCenter}
         zoom={zoom}
         options={mapOptions}
         onLoad={onMapLoad}

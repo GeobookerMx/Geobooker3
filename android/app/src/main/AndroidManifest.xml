@@ -18,7 +18,25 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- Deep Link: geobooker:// — CRÍTICO para que OAuth de Google regrese a la app -->
+            <!-- Sin este filtro, al seleccionar cuenta Google el usuario queda en pantalla de carga infinita -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="geobooker" />
+            </intent-filter>
+
+            <!-- App Links HTTPS: fallback para cuando Google redirige via HTTPS -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/auth/callback" />
+            </intent-filter>
         </activity>
+
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -27,7 +45,12 @@
             android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
         </provider>
+        <!-- Google Maps API Key — OBLIGATORIO para que el mapa no salga en blanco -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${GOOGLE_MAPS_API_KEY}" />
     </application>
+
 
     <!-- Permissions -->
 

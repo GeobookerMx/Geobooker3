@@ -1,8 +1,9 @@
 {
-  "appId": "com.geobooker.ios",
+  "appId": "com.geobooker.app",
   "appName": "Geobooker",
   "webDir": "dist",
   "server": {
+
     "androidScheme": "https",
     "allowNavigation": [
       "*.googleapis.com",

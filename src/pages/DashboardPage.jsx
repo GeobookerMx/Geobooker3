@@ -11,6 +11,8 @@ import ReferralDashboard from '../components/referral/ReferralDashboard';
 import { RecommendationForm } from '../components/recommendations';
 import { Crown, Star, Plus, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
+import CarouselAd from '../components/ads/CarouselAd';
+import AIRecommendations from '../components/recommendations/AIRecommendations';
 
 
 const DashboardPage = () => {
@@ -107,8 +109,15 @@ const DashboardPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8"
-      style={isNative ? { paddingTop: '56px', paddingBottom: '96px', paddingLeft: '16px', paddingRight: '16px' } : {}}
+      style={isNative ? {
+        // env(safe-area-inset-top) asegura que el contenido no quede debajo del notch/status bar
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 56px)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)',
+        paddingLeft: '16px',
+        paddingRight: '16px',
+      } : {}}
     >
+
       {/* Navegación y Header del Dashboard */}
       <div className="mb-8">
         <div className="mb-4">
@@ -256,6 +265,16 @@ const DashboardPage = () => {
               </div>
             )}
             <BusinessList />
+
+            {/* Carrusel de destacados en el panel */}
+            <div style={{ marginTop: '32px' }}>
+              <CarouselAd />
+            </div>
+
+            {/* La IA te recomienda — en el panel */}
+            <div style={{ marginTop: '16px' }}>
+              <AIRecommendations />
+            </div>
           </div>
         ) : activeTab === 'referrals' ? (
           <ReferralDashboard />

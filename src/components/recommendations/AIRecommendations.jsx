@@ -7,7 +7,7 @@
  * - Rating alto
  * - Negocios Premium
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useLocation } from '../../contexts/LocationContext';
@@ -21,6 +21,7 @@ const AIRecommendations = () => {
     const [loading, setLoading] = useState(true);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [timeContext, setTimeContext] = useState('');
+    const autoRotateRef = useRef(null);
 
     useEffect(() => {
         loadRecommendations();
@@ -122,16 +123,37 @@ const AIRecommendations = () => {
         return R * c;
     };
 
+    // Auto-rotación cada 4 segundos
+    const startAutoRotate = useCallback(() => {
+        if (autoRotateRef.current) clearInterval(autoRotateRef.current);
+        autoRotateRef.current = setInterval(() => {
+            setCurrentIndex(prev =>
+                prev + 2 >= recommendations.length ? 0 : prev + 2
+            );
+        }, 4000);
+    }, [recommendations.length]);
+
+    useEffect(() => {
+        if (recommendations.length > 2) {
+            startAutoRotate();
+        }
+        return () => { if (autoRotateRef.current) clearInterval(autoRotateRef.current); };
+    }, [recommendations.length, startAutoRotate]);
+
     const nextSlide = () => {
+        if (autoRotateRef.current) clearInterval(autoRotateRef.current);
         setCurrentIndex((prev) =>
             prev + 2 >= recommendations.length ? 0 : prev + 2
         );
+        startAutoRotate();
     };
 
     const prevSlide = () => {
+        if (autoRotateRef.current) clearInterval(autoRotateRef.current);
         setCurrentIndex((prev) =>
             prev - 2 < 0 ? Math.max(0, recommendations.length - 2) : prev - 2
         );
+        startAutoRotate();
     };
 
     const openWhatsApp = (businessId, businessName, phone) => {
@@ -175,45 +197,58 @@ const AIRecommendations = () => {
     const visibleItems = recommendations.slice(currentIndex, currentIndex + 2);
 
     return (
-        <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-cyan-50 rounded-2xl p-6 mb-6 shadow-lg border border-purple-100">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-3">
-                    <div className="relative">
-                        <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                            <Sparkles className="w-5 h-5 text-white" />
-                        </div>
-                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white animate-pulse"></span>
+        <div className="rounded-2xl mb-6 overflow-hidden" style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #eff6ff 50%, #ecfeff 100%)', border: '1px solid #e9d5ff' }}>
+            {/* Header pill — "La IA te recomienda" */}
+            <div style={{
+                background: 'linear-gradient(90deg, #7c3aed, #2563eb)',
+                padding: '10px 20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                        background: 'rgba(255,255,255,0.2)',
+                        borderRadius: '10px',
+                        padding: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                    }}>
+                        <Sparkles style={{ width: 18, height: 18, color: '#fff' }} />
                     </div>
                     <div>
-                        <h3 className="font-bold text-gray-900 text-lg">
-                            🤖 La IA de Geobooker te recomienda
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                            Basado en tu ubicación y la {timeContext}
+                        <p style={{ color: '#fff', fontWeight: 700, fontSize: '15px', margin: 0 }}>
+                            🤖 La IA te recomienda
+                        </p>
+                        <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '11px', margin: 0 }}>
+                            Basado en tu ubicación · Esta {timeContext}
                         </p>
                     </div>
                 </div>
 
                 {/* Navigation */}
-                <div className="flex gap-2">
+                <div className="flex gap-1.5">
                     <button
                         onClick={prevSlide}
-                        className="p-2 bg-white rounded-full shadow hover:bg-gray-50 transition"
+                        style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                        aria-label="Anterior"
                     >
-                        <ChevronLeft className="w-5 h-5 text-gray-600" />
+                        <ChevronLeft style={{ width: 18, height: 18, color: '#fff' }} />
                     </button>
                     <button
                         onClick={nextSlide}
-                        className="p-2 bg-white rounded-full shadow hover:bg-gray-50 transition"
+                        style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                        aria-label="Siguiente"
                     >
-                        <ChevronRight className="w-5 h-5 text-gray-600" />
+                        <ChevronRight style={{ width: 18, height: 18, color: '#fff' }} />
                     </button>
                 </div>
             </div>
 
+            <div style={{ padding: '16px' }}>
+
             {/* Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginBottom: '12px' }}>
                 {visibleItems.map((business) => (
                     <div
                         key={business.id}
@@ -302,18 +337,28 @@ const AIRecommendations = () => {
             </div>
 
             {/* Pagination Dots */}
-            <div className="flex justify-center gap-2 mt-4">
-                {Array.from({ length: Math.ceil(recommendations.length / 2) }).map((_, i) => (
-                    <button
-                        key={i}
-                        onClick={() => setCurrentIndex(i * 2)}
-                        className={`w-2 h-2 rounded-full transition-all ${Math.floor(currentIndex / 2) === i
-                            ? 'w-6 bg-purple-600'
-                            : 'bg-gray-300 hover:bg-gray-400'
-                            }`}
-                    />
-                ))}
-            </div>
+            {Math.ceil(recommendations.length / 2) > 1 && (
+                <div className="flex justify-center gap-1.5 mt-3">
+                    {Array.from({ length: Math.ceil(recommendations.length / 2) }).map((_, i) => (
+                        <button
+                            key={i}
+                            onClick={() => { setCurrentIndex(i * 2); startAutoRotate(); }}
+                            style={{
+                                width: Math.floor(currentIndex / 2) === i ? '20px' : '8px',
+                                height: '8px',
+                                borderRadius: '4px',
+                                background: Math.floor(currentIndex / 2) === i ? '#7c3aed' : '#d1d5db',
+                                border: 'none',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s',
+                                padding: 0,
+                            }}
+                            aria-label={`Página ${i + 1}`}
+                        />
+                    ))}
+                </div>
+            )}
+            </div>{/* cierre padding wrapper */}
         </div>
     );
 };

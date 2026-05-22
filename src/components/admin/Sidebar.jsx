@@ -134,7 +134,7 @@ const Sidebar = ({ onLogout }) => {
     const SidebarContent = () => (
         <>
             {/* Logo */}
-            <div className="p-6 border-b border-gray-800 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-800 dark:border-gray-700 pt-[calc(1.5rem+var(--safe-area-inset-top))] pb-4">
                 <img
                     src="/images/geobooker-logo.png"
                     alt="Geobooker"
@@ -224,7 +224,7 @@ const Sidebar = ({ onLogout }) => {
             {/* Botón hamburger para móvil */}
             <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden fixed top-4 left-4 z-50 p-2 bg-gray-900 text-white rounded-lg shadow-lg"
+                className="md:hidden fixed top-[calc(1rem+var(--safe-area-inset-top))] left-4 z-50 p-2 bg-gray-900 text-white rounded-lg shadow-lg"
                 aria-label="Abrir menú"
             >
                 {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

@@ -423,6 +423,19 @@ export const BusinessMap = memo(({
   const onMapLoad = useCallback((map) => {
     mapRef.current = map;
     setMapLoaded(true);
+    
+    // ✅ PREVENT AUTO-SCROLL/FOCUS ON MOBILE:
+    // Google Maps focuses its container automatically. We blur the active element
+    // and force the window back to the top to prevent auto-scrolling on load.
+    setTimeout(() => {
+      if (document.activeElement && 
+         (document.activeElement.tagName === 'IFRAME' || 
+          document.activeElement.classList.contains('gm-style') || 
+          document.activeElement.getAttribute('role') === 'application')) {
+        document.activeElement.blur();
+      }
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }, 50);
   }, []);
 
   // 🎮 Hover handler: bounce animation + tooltip

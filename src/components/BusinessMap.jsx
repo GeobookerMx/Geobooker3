@@ -457,7 +457,9 @@ export const BusinessMap = memo(({
     mapTypeControl: false,
     fullscreenControl: true,
     minZoom: 10,
-    maxZoom: 18
+    maxZoom: 18,
+    keyboardShortcuts: false, // Evita que Google Maps robe el foco del teclado y haga scroll automático al cargar
+    gestureHandling: 'cooperative' // Permite scroll suave en la página web con un dedo
   }), []);
 
   // Función para calcular distancia

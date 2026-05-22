@@ -257,7 +257,7 @@ export default function ChatWidget() {
                     </div>
 
                     {/* Input */}
-                    <div className="p-3 bg-white border-t border-gray-200 flex-shrink-0">
+                    <div className="p-3 bg-white border-t border-gray-200 flex-shrink-0" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
                         <div className="flex items-center space-x-2">
                             <input
                                 ref={inputRef}

@@ -58,6 +58,7 @@ export const LocationProvider = ({ children }) => {
   const [userLocation, setUserLocation] = useState(storedLocation);
   const [loading, setLoading] = useState(!storedLocation);
   const [permissionGranted, setPermissionGranted] = useState(!!storedLocation);
+  const [permissionDenied, setPermissionDenied] = useState(false);
 
   // FIX: Prevent multiple permission requests (Apple 2.1(a) bug)
   const hasRequestedRef = useRef(false);
@@ -74,6 +75,7 @@ export const LocationProvider = ({ children }) => {
         setUserLocation(location);
         saveLocationToStorage(location);
         setPermissionGranted(true);
+        setPermissionDenied(false);
         setLoading(false);
         return location;
       }
@@ -82,8 +84,12 @@ export const LocationProvider = ({ children }) => {
       if (cached) {
         setUserLocation(cached);
         setPermissionGranted(true);
+        setPermissionDenied(false);
         setLoading(false);
         return cached;
+      }
+      if (result.reason === 'denied') {
+        setPermissionDenied(true);
       }
       setPermissionGranted(false);
       setLoading(false);
@@ -114,10 +120,16 @@ export const LocationProvider = ({ children }) => {
           setUserLocation(location);
           saveLocationToStorage(location);
           setPermissionGranted(true);
+          setPermissionDenied(false);
           setLoading(false);
           resolve(location);
         },
-        () => {
+        (error) => {
+          const isExplicitDenied = error.code === error.PERMISSION_DENIED;
+          if (isExplicitDenied) {
+            setPermissionDenied(true);
+            setPermissionGranted(false);
+          }
           navigator.geolocation.getCurrentPosition(
             (position) => {
               const location = {
@@ -128,6 +140,7 @@ export const LocationProvider = ({ children }) => {
               setUserLocation(location);
               saveLocationToStorage(location);
               setPermissionGranted(true);
+              setPermissionDenied(false);
               setLoading(false);
               resolve(location);
             },
@@ -136,6 +149,7 @@ export const LocationProvider = ({ children }) => {
               if (cachedLocation) {
                 setUserLocation(cachedLocation);
                 setPermissionGranted(true);
+                setPermissionDenied(false);
                 setLoading(false);
                 resolve(cachedLocation);
                 return;
@@ -143,6 +157,7 @@ export const LocationProvider = ({ children }) => {
               const defaultLocation = { lat: 19.4326, lng: -99.1332, accuracy: 10000, isDefault: true };
               setUserLocation(defaultLocation);
               setPermissionGranted(true);
+              // Si no tiene permisos pero cargamos default, no forzamos denied a menos que lo haya bloqueado explícitamente antes
               setLoading(false);
               resolve(defaultLocation);
             },
@@ -163,8 +178,13 @@ export const LocationProvider = ({ children }) => {
         setUserLocation(location);
         saveLocationToStorage(location);
         setPermissionGranted(true); // FIX: update permission state on success
+        setPermissionDenied(false);
         setLoading(false);
         return location;
+      }
+      if (result.reason === 'denied') {
+        setPermissionDenied(true);
+        setPermissionGranted(false);
       }
       setLoading(false);
       throw new Error(result.message);
@@ -177,10 +197,19 @@ export const LocationProvider = ({ children }) => {
           const location = { lat: position.coords.latitude, lng: position.coords.longitude, accuracy: position.coords.accuracy };
           setUserLocation(location);
           saveLocationToStorage(location);
+          setPermissionGranted(true);
+          setPermissionDenied(false);
           setLoading(false);
           resolve(location);
         },
-        (error) => { setLoading(false); reject(error); },
+        (error) => {
+          if (error.code === error.PERMISSION_DENIED) {
+            setPermissionDenied(true);
+            setPermissionGranted(false);
+          }
+          setLoading(false);
+          reject(error);
+        },
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
     });
@@ -197,25 +226,54 @@ export const LocationProvider = ({ children }) => {
 
     const checkPermissionAndGetLocation = async () => {
       try {
-        // Check if browser supports Permissions API
+        // Native path checks
+        if (Capacitor.isNativePlatform()) {
+          const { Geolocation } = await import('@capacitor/geolocation');
+          const status = await Geolocation.checkPermissions();
+          if (status.location === 'granted') {
+            setPermissionGranted(true);
+            setPermissionDenied(false);
+            if (!hasRequestedRef.current) {
+              await requestLocationPermission();
+            }
+          } else if (status.location === 'denied') {
+            setPermissionGranted(false);
+            setPermissionDenied(true);
+            const cached = getStoredLocation();
+            if (cached) {
+              setUserLocation(cached);
+            }
+          } else {
+            setPermissionGranted(false);
+            setPermissionDenied(false);
+          }
+          setLoading(false);
+          return;
+        }
+
+        // Web path checks
         if (navigator.permissions && navigator.permissions.query) {
           const result = await navigator.permissions.query({ name: 'geolocation' });
 
           if (result.state === 'granted') {
             // Already have permissions, get location silently
             console.log('📍 Location permissions already granted, getting location...');
+            setPermissionGranted(true);
+            setPermissionDenied(false);
             if (!hasRequestedRef.current) {
               await requestLocationPermission();
             }
           } else if (result.state === 'prompt') {
             // User hasn't decided yet — DON'T auto-prompt
-            // Let the UI show a modal/prompt component instead
+            setPermissionGranted(false);
+            setPermissionDenied(false);
             setLoading(false);
           } else if (result.state === 'denied') {
             // Permissions denied — DON'T ask again (causes loop!)
             console.log('📍 Location permissions denied — not re-requesting');
-            setLoading(false);
             setPermissionGranted(false);
+            setPermissionDenied(true);
+            setLoading(false);
             // Still use cached location if available
             const cached = getStoredLocation();
             if (cached) {
@@ -227,6 +285,12 @@ export const LocationProvider = ({ children }) => {
           result.addEventListener('change', () => {
             if (result.state === 'granted' && !hasRequestedRef.current) {
               requestLocationPermission();
+            } else if (result.state === 'denied') {
+              setPermissionGranted(false);
+              setPermissionDenied(true);
+            } else if (result.state === 'prompt') {
+              setPermissionGranted(false);
+              setPermissionDenied(false);
             }
           });
         } else {
@@ -253,6 +317,7 @@ export const LocationProvider = ({ children }) => {
     userLocation,
     loading,
     permissionGranted,
+    permissionDenied,
     requestLocationPermission,
     refreshLocation,
     updateLocation,

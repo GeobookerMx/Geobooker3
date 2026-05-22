@@ -9,6 +9,7 @@ import LanguageSelector from "../LanguageSelector.jsx";
 import { RecommendationForm } from "../recommendations";
 // Apple Guideline 3.1.1: ocultar promos de planes pagos en iOS nativo
 import { IS_IOS_NATIVE } from "../../utils/iosStore";
+import { Capacitor } from "@capacitor/core";
 
 export default function Header() {
   const { t } = useTranslation();
@@ -116,8 +117,14 @@ export default function Header() {
     return user?.email?.[0]?.toUpperCase() || "U";
   };
 
+  const isNative = Capacitor.isNativePlatform();
+
   return (
-    <header className="bg-geoYellow shadow-lg sticky top-0 z-50" ref={mobileMenuRef}>
+    <header 
+      className="bg-geoYellow shadow-lg sticky top-0 z-50" 
+      ref={mobileMenuRef}
+      style={isNative ? { paddingTop: 'var(--safe-area-inset-top)' } : {}}
+    >
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
         <Link to="/" className="flex items-center space-x-3">
           <BrandLogo size={48} className="hover:scale-105 transition-transform duration-200" />

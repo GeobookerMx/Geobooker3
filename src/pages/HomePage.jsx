@@ -55,7 +55,7 @@ const HomePage = () => {
   const { t } = useTranslation();
   const { category, subcategory, city } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { userLocation, loading: locationLoading, permissionGranted, requestLocationPermission, refreshLocation } = useLocation();
+  const { userLocation, loading: locationLoading, permissionGranted, permissionDenied, requestLocationPermission, refreshLocation } = useLocation();
   const [searchLoading, setSearchLoading] = useState(false);
   const [businesses, setBusinesses] = useState([]); // Google Places
   const [geobookerBusinesses, setGeobookerBusinesses] = useState([]); // Native Businesses
@@ -513,7 +513,7 @@ const HomePage = () => {
         isOpen={showLocationModal}
         onClose={() => setShowLocationModal(false)}
         onRequestPermission={requestLocationPermission}
-        permissionDenied={!permissionGranted && !locationLoading}
+        permissionDenied={permissionDenied}
       />
 
       {/* Modal de login para invitados (después de 1 búsqueda gratis) */}

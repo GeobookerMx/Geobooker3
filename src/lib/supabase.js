@@ -13,6 +13,7 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 
 const isNative = Capacitor.isNativePlatform();
+const isAndroid = Capacitor.getPlatform() === 'android';
 
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
@@ -21,11 +22,17 @@ export const supabase = createClient(
     auth: {
       autoRefreshToken: true,
       persistSession: true,
-      // ✅ FIX Bug #2/#3: false en nativo — previene loops OAuth con capacitor://
+      // false en nativo — previene loops OAuth con capacitor://
       detectSessionInUrl: !isNative,
-      flowType: 'pkce',
+      // ⚠️ Android: Chrome Custom Tab corre en proceso separado al WebView.
+      // PKCE guarda code_verifier en localStorage del WebView, pero cuando
+      // el deep link regresa, el code_verifier ya no está disponible → error 401.
+      // Solución: usar 'implicit' en Android (tokens directos en el hash #access_token)
+      // iOS puede usar PKCE porque SFSafariViewController comparte el mismo proceso.
+      flowType: isAndroid ? 'implicit' : 'pkce',
       storageKey: 'geobooker-auth'
     }
   }
 );
+
 

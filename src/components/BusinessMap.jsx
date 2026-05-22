@@ -462,18 +462,33 @@ export const BusinessMap = memo(({
     mapRef.current = map;
     setMapLoaded(true);
     
-    // ✅ PREVENT AUTO-SCROLL/FOCUS ON MOBILE:
-    // Google Maps focuses its container automatically. We blur the active element
-    // and force the window back to the top to prevent auto-scrolling on load.
-    setTimeout(() => {
+    // ✅ SUPER BULLETPROOF FOCUS & AUTO-SCROLL BLOCKER FOR MOBILE WEBVIEWS
+    // Google Maps forces focus on its iframe/container multiple times during load.
+    // We run a sequence of resets to clear focus and force all parent containers to scroll 0,0.
+    const resetScroll = () => {
+      // 1) Quitar foco si el elemento activo es el mapa o un control interactivo
       if (document.activeElement && 
          (document.activeElement.tagName === 'IFRAME' || 
           document.activeElement.classList.contains('gm-style') || 
           document.activeElement.getAttribute('role') === 'application')) {
         document.activeElement.blur();
       }
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    }, 50);
+      
+      // 2) Resetear scroll del window
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      
+      // 3) Resetear scroll de todos los divs contenedores (el scrollable real en DashboardLayout es el div.overflow-y-auto)
+      const scrollableElements = document.querySelectorAll('.overflow-y-auto, .overflow-x-auto, [class*="overflow-y"], [class*="overflow-x"]');
+      scrollableElements.forEach(el => {
+        el.scrollTop = 0;
+        el.scrollLeft = 0;
+      });
+    };
+
+    // Ejecutar en ráfaga a diferentes intervalos para asegurar capturar a Google Maps al terminar de cargarse
+    [10, 50, 150, 300, 600, 1000, 1500].forEach(delay => {
+      setTimeout(resetScroll, delay);
+    });
   }, []);
 
   // 🎮 Hover handler: bounce animation + tooltip

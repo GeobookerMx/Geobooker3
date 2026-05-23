@@ -99,12 +99,12 @@ const UpgradePage = () => {
             // Actualizar directamente en user_profiles
             const { error } = await supabase
                 .from('user_profiles')
-                .upsert({
-                    id: session.user.id,
+                .update({
                     is_premium_owner: true,
                     premium_until: PROMOTIONS.PREMIUM_FREE_UNTIL,
                     updated_at: new Date().toISOString()
-                }, { onConflict: 'id' });
+                })
+                .eq('id', session.user.id);
 
             if (error) throw error;
 

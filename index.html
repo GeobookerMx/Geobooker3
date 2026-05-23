@@ -13,6 +13,7 @@
     (function() {
       var key = document.querySelector('meta[name="google-maps-key"]')?.content || 'AIzaSyB0sOzA3Hzj8zX7Rn9M0eGJM4pEeBdTff4';
       var script = document.createElement('script');
+      script.id = 'google-maps-script';
       script.src = 'https://maps.googleapis.com/maps/api/js?key=' + key + '&libraries=places&loading=async';
       script.async = true;
       script.defer = true;

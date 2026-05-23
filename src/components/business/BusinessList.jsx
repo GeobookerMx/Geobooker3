@@ -44,7 +44,7 @@ const BusinessList = () => {
         try {
             const { data, error } = await supabase
                 .from('businesses')
-                .select('id, name, category, address, status, images, is_visible, is_verified, is_premium, created_at, owner_id, latitude, longitude')
+                .select('id, name, category, address, status, images, is_visible, is_verified, created_at, owner_id, latitude, longitude')
                 .eq('owner_id', user.id)
                 .order('created_at', { ascending: false });
 
@@ -163,7 +163,7 @@ const BusinessList = () => {
                     )}
                 </div>
 
-                {canAddMoreBusinesses ? (
+                {!reachedLimit ? (
                     <Link
                         to="/business/register"
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 font-semibold flex items-center"

@@ -437,6 +437,29 @@ export const BusinessMap = memo(({
     }
   }, [selectedBusiness, userLocation]);
 
+  useEffect(() => {
+    // ✅ CAPTURE-PHASE FOCUS INTERCEPTOR FOR IOS/WKWEBVIEW
+    // Previene que Google Maps robe el foco y obligue a la WebView a auto-centrar el mapa en pantalla.
+    const handleFocusInterceptor = (e) => {
+      if (e.target && (
+        e.target.tagName === 'IFRAME' || 
+        e.target.classList.contains('gm-style') || 
+        (e.target.closest && e.target.closest('#map'))
+      )) {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+          e.target.blur();
+        } catch (err) {}
+      }
+    };
+
+    document.addEventListener('focus', handleFocusInterceptor, true);
+    return () => {
+      document.removeEventListener('focus', handleFocusInterceptor, true);
+    };
+  }, []);
+
   // 🗂️ Filtros de categoría para negocios DENUE
   const DENUE_CATEGORIES = [
     { id: 'all',           emoji: '🗺️', label: 'Todos' },
@@ -470,34 +493,6 @@ export const BusinessMap = memo(({
           el.setAttribute('tabindex', '-1');
         });
       }
-    });
-
-    // ✅ SUPER BULLETPROOF FOCUS & AUTO-SCROLL BLOCKER FOR MOBILE WEBVIEWS
-    // Google Maps forces focus on its iframe/container multiple times during load.
-    // We run a sequence of resets to clear focus and force all parent containers to scroll 0,0.
-    const resetScroll = () => {
-      // 1) Quitar foco si el elemento activo es el mapa o un control interactivo
-      if (document.activeElement && 
-         (document.activeElement.tagName === 'IFRAME' || 
-          document.activeElement.classList.contains('gm-style') || 
-          document.activeElement.getAttribute('role') === 'application')) {
-        document.activeElement.blur();
-      }
-      
-      // 2) Resetear scroll del window
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-      
-      // 3) Resetear scroll de todos los divs contenedores (el scrollable real en DashboardLayout es el div.overflow-y-auto)
-      const scrollableElements = document.querySelectorAll('.overflow-y-auto, .overflow-x-auto, [class*="overflow-y"], [class*="overflow-x"]');
-      scrollableElements.forEach(el => {
-        el.scrollTop = 0;
-        el.scrollLeft = 0;
-      });
-    };
-
-    // Ejecutar en ráfaga a diferentes intervalos para asegurar capturar a Google Maps al terminar de cargarse
-    [10, 50, 150, 300, 600, 1000, 1500].forEach(delay => {
-      setTimeout(resetScroll, delay);
     });
   }, []);
 
@@ -691,7 +686,7 @@ export const BusinessMap = memo(({
   }
 
   return (
-    <div className="w-full relative">
+    <div className="w-full relative overflow-hidden rounded-xl">
       {/* Estado del mapa */}
       <div className="absolute top-2 left-2 z-10 bg-white px-3 py-1 rounded-lg shadow-md text-sm text-gray-600">
         {userLocation ? `📍 ${t('home.locationActive')}` : `📍 ${t('home.locationDefault')}`}
@@ -753,7 +748,9 @@ export const BusinessMap = memo(({
           }
         }}
       >
-        {/* Círculo de ubicación del usuario */}
+        {mapLoaded && (
+          <>
+            {/* Círculo de ubicación del usuario */}
         {userLocation?.lat && userLocation?.lng && (
           <>
             {/* Área de precisión - círculo exterior morado */}
@@ -1059,6 +1056,8 @@ export const BusinessMap = memo(({
               </div>
             </div>
           </InfoWindowF>
+        )}
+          </>
         )}
       </GoogleMap>
     </div>

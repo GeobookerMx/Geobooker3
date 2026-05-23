@@ -112,3 +112,23 @@ button {
   width: 100% !important;
   box-sizing: border-box;
 }
+
+/* ✅ ULTIMATE VIEWPORT & HORIZONTAL LOCK FOR IOS/IPAD WEBVIEW */
+/* Previene cualquier desbordamiento o scroll lateral no deseado en iPads e iPhones */
+html,
+body,
+#root,
+.flex.min-h-screen,
+main,
+header,
+footer,
+.container {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Evitar desbordamiento de grids y flexboxes en contenedores flex */
+.grid,
+.flex {
+  min-width: 0 !important;
+}

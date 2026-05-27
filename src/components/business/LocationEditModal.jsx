@@ -32,6 +32,7 @@ export default function LocationEditModal({
     const [canChange, setCanChange] = useState(true);
     const [changesRemaining, setChangesRemaining] = useState(3);
     const [checkingLimit, setCheckingLimit] = useState(true);
+    const [mapLoaded, setMapLoaded] = useState(false);
     const mapRef = useRef(null);
 
     const { isLoaded } = useJsApiLoader({
@@ -199,22 +200,35 @@ export default function LocationEditModal({
                             center={position}
                             zoom={15}
                             onClick={onMapClick}
-                            onLoad={(map) => { mapRef.current = map; }}
+                            onLoad={(map) => {
+                                mapRef.current = map;
+                                setMapLoaded(true);
+                                window.google?.maps?.event?.addListenerOnce(map, 'idle', () => {
+                                    const mapDiv = map.getDiv();
+                                    if (mapDiv) {
+                                        mapDiv.querySelectorAll('[tabindex]').forEach(el => {
+                                            el.setAttribute('tabindex', '-1');
+                                        });
+                                    }
+                                });
+                            }}
                             options={{
                                 streetViewControl: false,
                                 mapTypeControl: false,
                             }}
                         >
-                            <MarkerF
-                                position={position}
-                                draggable={canChange}
-                                onDragEnd={(e) => {
-                                    setPosition({
-                                        lat: e.latLng.lat(),
-                                        lng: e.latLng.lng()
-                                    });
-                                }}
-                            />
+                            {mapLoaded && (
+                                <MarkerF
+                                    position={position}
+                                    draggable={canChange}
+                                    onDragEnd={(e) => {
+                                        setPosition({
+                                            lat: e.latLng.lat(),
+                                            lng: e.latLng.lng()
+                                        });
+                                    }}
+                                />
+                            )}
                         </GoogleMap>
                     ) : (
                         <div className="h-[300px] bg-gray-100 rounded-xl flex items-center justify-center">

@@ -206,9 +206,6 @@ const UserSidebar = () => {
                 <SidebarContent />
             </aside>
 
-            {/* Spacer for mobile top bar */}
-            <div className="md:hidden" style={{ height: 'calc(56px + env(safe-area-inset-top))' }} />
-
             {/* Modal de Recomendar Negocio */}
             <RecommendationForm
                 isOpen={showRecommendForm}

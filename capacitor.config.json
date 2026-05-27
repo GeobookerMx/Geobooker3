@@ -3,8 +3,8 @@
   "appName": "Geobooker",
   "webDir": "dist",
   "server": {
-
     "androidScheme": "https",
+    "iosScheme": "https",
     "allowNavigation": [
       "*.googleapis.com",
       "*.gstatic.com",
@@ -15,7 +15,9 @@
       "img.youtube.com",
       "dllckokqkgcraxyxsfqc.supabase.co",
       "fonts.googleapis.com",
-      "fonts.gstatic.com"
+      "fonts.gstatic.com",
+      "localhost",
+      "*.localhost"
     ]
   },
   "plugins": {

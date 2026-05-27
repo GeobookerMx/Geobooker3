@@ -47,6 +47,7 @@ const RecommendationForm = ({ isOpen, onClose, userLocation, onSuccess }) => {
 
   const [photoPreview, setPhotoPreview] = useState(null);
   const [showMap, setShowMap] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
   const mapRef = useRef(null);
 
   const { isLoaded } = useJsApiLoader({
@@ -401,6 +402,15 @@ const RecommendationForm = ({ isOpen, onClose, userLocation, onSuccess }) => {
                         onClick={onMapClick}
                         onLoad={(map) => {
                           mapRef.current = map;
+                          setMapLoaded(true);
+                          window.google?.maps?.event?.addListenerOnce(map, 'idle', () => {
+                            const mapDiv = map.getDiv();
+                            if (mapDiv) {
+                              mapDiv.querySelectorAll('[tabindex]').forEach(el => {
+                                el.setAttribute('tabindex', '-1');
+                              });
+                            }
+                          });
                         }}
                         options={{
                           streetViewControl: false,
@@ -409,7 +419,7 @@ const RecommendationForm = ({ isOpen, onClose, userLocation, onSuccess }) => {
                           zoomControl: true,
                         }}
                       >
-                        {location.verified && (
+                        {mapLoaded && location.verified && (
                           <MarkerF
                             position={{ lat: location.lat, lng: location.lng }}
                             draggable

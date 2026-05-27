@@ -21,6 +21,7 @@ import AppRouter from "./router";
 import ChatWidget from "./components/agent/ChatWidget";
 import { checkAppVersion } from "./services/cacheVersionService";
 import ScrollToTop from "./components/common/ScrollToTop";
+import NativeScrollStabilizer from "./components/common/NativeScrollStabilizer";
 import CookieConsent from "./components/CookieConsent";
 import { Toaster } from "react-hot-toast";
 
@@ -278,6 +279,8 @@ function App() {
       <Router>
         {/* ScrollToTop solo en web — HashRouter no necesita scroll reset */}
         {!isNative && <ScrollToTop />}
+        {/* ✅ NativeScrollStabilizer: Previene scroll automático en iOS y Android */}
+        <NativeScrollStabilizer />
         <AuthProvider>
           <Toaster position="top-right" />
           <SessionTimeoutMonitor />

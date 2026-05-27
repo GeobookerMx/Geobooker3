@@ -5,19 +5,46 @@
   <meta charset="UTF-8" />
 
   <!-- Google Maps API Key para iOS Capacitor WKWebView -->
-  <!-- Esta meta tag permite que el JS lea la key sin depender de variables de entorno en iOS -->
   <meta name="google-maps-key" content="AIzaSyB0sOzA3Hzj8zX7Rn9M0eGJM4pEeBdTff4" />
 
-  <!-- Precarga Google Maps antes que React para garantizar que window.google esté disponible -->
+  <!-- 
+    FIX iOS WKWebView: Carga Google Maps con callback explícito.
+    'loading=async' falla silenciosamente en WKWebView de iOS Capacitor.
+    Usamos el parámetro 'callback=__gmInit' para detectar cuando Maps está listo.
+  -->
   <script>
+    // Callback global que Google Maps llama cuando termina de cargar
+    window.__gmInit = function() {
+      window.__gmReady = true;
+      // Disparar evento custom para que BusinessMap.jsx se entere
+      document.dispatchEvent(new Event('google-maps-ready'));
+    };
+
+    // Handler de error de autenticación (API key inválida o sin billing)
+    window.gm_authFailure = function() {
+      console.error('[Geobooker] Google Maps auth failure. Verifica la API Key y billing en Google Cloud.');
+      document.dispatchEvent(new Event('google-maps-auth-error'));
+    };
+
     (function() {
-      var key = document.querySelector('meta[name="google-maps-key"]')?.content || 'AIzaSyB0sOzA3Hzj8zX7Rn9M0eGJM4pEeBdTff4';
+      // Evitar cargar dos veces
+      if (document.getElementById('google-maps-script')) return;
+      
+      var key = document.querySelector('meta[name="google-maps-key"]')?.content
+                || 'AIzaSyB0sOzA3Hzj8zX7Rn9M0eGJM4pEeBdTff4';
+
       var script = document.createElement('script');
       script.id = 'google-maps-script';
-      script.src = 'https://maps.googleapis.com/maps/api/js?key=' + key + '&libraries=places&loading=async';
+      // ✅ callback=__gmInit garantiza que iOS WKWebView detecte la carga correctamente
+      // ❌ NO usar loading=async con callback (son mutuamente excluyentes en iOS)
+      script.src = 'https://maps.googleapis.com/maps/api/js?key=' + key
+                   + '&libraries=places&callback=__gmInit';
       script.async = true;
       script.defer = true;
-      script.onerror = function() { console.error('[Geobooker] Error cargando Google Maps API'); };
+      script.onerror = function() {
+        console.error('[Geobooker] Error de red cargando Google Maps API');
+        document.dispatchEvent(new Event('google-maps-network-error'));
+      };
       document.head.appendChild(script);
     })();
   </script>

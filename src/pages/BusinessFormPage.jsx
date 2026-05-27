@@ -151,6 +151,7 @@ export default function BusinessFormPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [mapCenter, setMapCenter] = useState(defaultCenter);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   // Verificar límite de negocios al cargar
   useEffect(() => {
@@ -217,6 +218,15 @@ export default function BusinessFormPage() {
 
   const onMapLoad = useCallback((map) => {
     mapRef.current = map;
+    setMapLoaded(true);
+    window.google?.maps?.event?.addListenerOnce(map, 'idle', () => {
+      const mapDiv = map.getDiv();
+      if (mapDiv) {
+        mapDiv.querySelectorAll('[tabindex]').forEach(el => {
+          el.setAttribute('tabindex', '-1');
+        });
+      }
+    });
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -425,14 +435,16 @@ export default function BusinessFormPage() {
                     onClick={onMapClick}
                     options={{ streetViewControl: false, mapTypeControl: false }}
                   >
-                    <MarkerF
-                      position={form.latitude && form.longitude ? {
-                        lat: parseFloat(form.latitude),
-                        lng: parseFloat(form.longitude)
-                      } : null}
-                      draggable={true}
-                      onDragEnd={onMarkerDragEnd}
-                    />
+                    {mapLoaded && form.latitude && form.longitude && (
+                      <MarkerF
+                        position={{
+                          lat: parseFloat(form.latitude),
+                          lng: parseFloat(form.longitude)
+                        }}
+                        draggable={true}
+                        onDragEnd={onMarkerDragEnd}
+                      />
+                    )}
                   </GoogleMap>
                 ) : (
                   <div className="flex items-center justify-center h-64 bg-gray-50">

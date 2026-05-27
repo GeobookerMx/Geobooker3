@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
+import './styles/ios-android-viewport-fix.css'
 import './i18n' // Importar configuración de i18n
 
 

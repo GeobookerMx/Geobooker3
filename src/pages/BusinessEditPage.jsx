@@ -37,6 +37,7 @@ const BusinessEditPage = () => {
     const [isPremium, setIsPremium] = useState(false);
     const [business, setBusiness] = useState(null);
     const [mapCenter, setMapCenter] = useState(defaultCenter);
+    const [mapLoaded, setMapLoaded] = useState(false);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -141,6 +142,15 @@ const BusinessEditPage = () => {
 
     const onMapLoad = useCallback((map) => {
         mapRef.current = map;
+        setMapLoaded(true);
+        window.google?.maps?.event?.addListenerOnce(map, 'idle', () => {
+            const mapDiv = map.getDiv();
+            if (mapDiv) {
+                mapDiv.querySelectorAll('[tabindex]').forEach(el => {
+                    el.setAttribute('tabindex', '-1');
+                });
+            }
+        });
     }, []);
 
     const onMarkerDragEnd = (e) => {
@@ -446,7 +456,7 @@ const BusinessEditPage = () => {
                                     mapTypeControl: false,
                                 }}
                             >
-                                {formData.latitude && formData.longitude && (
+                                {mapLoaded && formData.latitude && formData.longitude && (
                                     <MarkerF
                                         position={{ lat: formData.latitude, lng: formData.longitude }}
                                         draggable={true}

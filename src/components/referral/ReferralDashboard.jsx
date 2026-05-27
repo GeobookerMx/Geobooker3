@@ -12,6 +12,10 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { Capacitor } from '@capacitor/core';
+import { Share } from '@capacitor/share';
+import toast from 'react-hot-toast';
+
 
 export default function ReferralDashboard({ isModal = false, onClose = null }) {
     const { user } = useAuth();
@@ -95,29 +99,66 @@ export default function ReferralDashboard({ isModal = false, onClose = null }) {
         }
     };
 
-    // Copiar código al portapapeles
     const handleCopyCode = async () => {
         if (profile?.referral_code) {
             await navigator.clipboard.writeText(profile.referral_code);
             setCopied(true);
+            toast.success('¡Código copiado!');
             setTimeout(() => setCopied(false), 2000);
         }
     };
 
-    // Copiar link completo
-    const handleCopyLink = async () => {
-        const link = `https://geobooker.com.mx/ref/${profile?.referral_code}`;
-        await navigator.clipboard.writeText(link);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+    const handleShareWhatsApp = async () => {
+        if (!profile?.referral_code) {
+            toast.error('No se ha podido cargar tu código aún.');
+            return;
+        }
+        const referralLink = `https://geobooker.com.mx/r/${profile.referral_code}`;
+        const isNative = Capacitor.isNativePlatform();
+
+        const messageText = 
+            `━━━━━━━━━━━━━━━━━━━━━\n` +
+            `🗺️ *GEOBOOKER* 📍\n` +
+            `━━━━━━━━━━━━━━━━━━━━━\n\n` +
+            `¡Hola! 👋\n\n` +
+            `¿Tienes un negocio y quieres más clientes? 🚀\n\n` +
+            `Te invito a *registrar tu negocio GRATIS* en Geobooker:\n\n` +
+            `✅ Apareces en el mapa para que te encuentren\n` +
+            `✅ Prende y apaga tu negocio cuando quieras\n` +
+            `✅ Es 100% gratis\n` +
+            `✅ Funciona con Google Maps\n\n` +
+            `📲 *Regístrate aquí:*\n` +
+            `${referralLink}\n\n` +
+            `¡Miles de negocios ya están en Geobooker! 🌟\n\n` +
+            `_geobooker.com.mx_`;
+
+        if (isNative) {
+            try {
+                await Share.share({
+                    title: 'Geobooker - Registra tu negocio gratis',
+                    text: 'Te invito a registrar tu negocio GRATIS en Geobooker para aparecer en el mapa y conseguir más clientes. 🚀',
+                    url: referralLink,
+                    dialogTitle: 'Compartir invitación'
+                });
+            } catch (error) {
+                console.error('Error al compartir nativamente:', error);
+                window.open(`https://wa.me/?text=${encodeURIComponent(messageText)}`, '_blank');
+            }
+        } else {
+            window.open(`https://wa.me/?text=${encodeURIComponent(messageText)}`, '_blank');
+        }
     };
 
-    // Compartir por WhatsApp
-    const handleShareWhatsApp = () => {
-        const code = profile?.referral_code || '';
-        const link = `https://geobooker.com.mx/ref/${code}`;
-        const message = `🎁 ¡Únete a Geobooker y registra tu negocio GRATIS!\n\n📍 Geobooker es el directorio de negocios #cercadeti que te ayuda a conseguir más clientes.\n\n✨ Usa mi código: ${code}\n🔗 ${link}\n\n¡Es gratis y toma menos de 5 minutos!`;
-        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+    const handleCopyLink = async () => {
+        if (profile?.referral_code) {
+            const referralLink = `https://geobooker.com.mx/r/${profile.referral_code}`;
+            await navigator.clipboard.writeText(referralLink);
+            setCopied(true);
+            toast.success('¡Enlace de invitación copiado!');
+            setTimeout(() => setCopied(false), 2000);
+        } else {
+            toast.error('No hay un código disponible para copiar el enlace.');
+        }
     };
 
     if (loading) {

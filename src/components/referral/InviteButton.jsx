@@ -1,22 +1,18 @@
-// src/components/referral/InviteButton.jsx
-/**
- * Referral Invite Button Component
- * Shows a motivational CTA that opens WhatsApp with pre-filled message
- * 
- * Usage: <InviteButton referralCode="ABC123" />
- */
 import React, { useState } from 'react';
 import {
     Gift, Share2, MessageCircle, Copy, Check,
     Sparkles, Users, X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Capacitor } from '@capacitor/core';
+import { Share } from '@capacitor/share';
 
 export default function InviteButton({ referralCode, variant = 'default', className = '' }) {
     const [showModal, setShowModal] = useState(false);
     const [copied, setCopied] = useState(false);
 
     const referralLink = `https://geobooker.com.mx/r/${referralCode}`;
+    const isNative = Capacitor.isNativePlatform();
 
     // WhatsApp message in Spanish - with branding
     const whatsappMessage = encodeURIComponent(
@@ -49,15 +45,34 @@ export default function InviteButton({ referralCode, variant = 'default', classN
         window.open(whatsappUrl, '_blank');
     };
 
+    const handleShare = async () => {
+        if (isNative) {
+            try {
+                await Share.share({
+                    title: 'Geobooker - Registra tu negocio gratis',
+                    text: 'Te invito a registrar tu negocio GRATIS en Geobooker para aparecer en el mapa y conseguir más clientes. 🚀',
+                    url: referralLink,
+                    dialogTitle: 'Compartir invitación'
+                });
+            } catch (error) {
+                console.error('Error al compartir nativo:', error);
+                // Fallback
+                handleWhatsApp();
+            }
+        } else {
+            handleWhatsApp();
+        }
+    };
+
     // Compact button variant
     if (variant === 'compact') {
         return (
             <button
-                onClick={handleWhatsApp}
+                onClick={handleShare}
                 className={`flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg hover:from-green-600 hover:to-green-700 transition-all ${className}`}
             >
-                <MessageCircle className="w-4 h-4" />
-                Invitar por WhatsApp
+                {isNative ? <Share2 className="w-4 h-4" /> : <MessageCircle className="w-4 h-4" />}
+                {isNative ? 'Compartir invitación' : 'Invitar por WhatsApp'}
             </button>
         );
     }
@@ -86,19 +101,19 @@ export default function InviteButton({ referralCode, variant = 'default', classN
                         {/* Action Buttons */}
                         <div className="flex flex-wrap gap-3">
                             <button
-                                onClick={handleWhatsApp}
+                                onClick={handleShare}
                                 className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-2.5 rounded-xl font-medium hover:from-green-600 hover:to-green-700 transition-all shadow-lg hover:shadow-green-500/30"
                             >
-                                <MessageCircle className="w-5 h-5" />
-                                Enviar por WhatsApp
+                                {isNative ? <Share2 className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
+                                {isNative ? 'Compartir Invitación' : 'Enviar por WhatsApp'}
                             </button>
 
                             <button
-                                onClick={() => setShowModal(true)}
+                                onClick={isNative ? handleCopy : () => setShowModal(true)}
                                 className="flex items-center gap-2 bg-gray-700 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-gray-600 transition-all"
                             >
-                                <Share2 className="w-5 h-5" />
-                                Más opciones
+                                {isNative ? (copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />) : <Share2 className="w-5 h-5" />}
+                                {isNative ? (copied ? '¡Copiado!' : 'Copiar Link') : 'Más opciones'}
                             </button>
                         </div>
                     </div>

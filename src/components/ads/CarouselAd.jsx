@@ -27,7 +27,11 @@ export default function CarouselAd() {
         if (!scrollRef.current) return;
         const cards = scrollRef.current.querySelectorAll('[data-card]');
         if (cards[index]) {
-            cards[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+            const card = cards[index];
+            const container = scrollRef.current;
+            // ✅ FIX: Usar scrollTo horizontal en el contenedor en vez de scrollIntoView (evita scroll vertical de la página)
+            const targetLeft = card.offsetLeft - container.offsetLeft;
+            container.scrollTo({ left: targetLeft, behavior: 'smooth' });
             setActiveIndex(index);
         }
     }, []);
@@ -41,7 +45,11 @@ export default function CarouselAd() {
                 if (scrollRef.current) {
                     const cards = scrollRef.current.querySelectorAll('[data-card]');
                     if (cards[next]) {
-                        cards[next].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+                        const card = cards[next];
+                        const container = scrollRef.current;
+                        // ✅ FIX: Usar scrollTo horizontal
+                        const targetLeft = card.offsetLeft - container.offsetLeft;
+                        container.scrollTo({ left: targetLeft, behavior: 'smooth' });
                     }
                 }
                 return next;

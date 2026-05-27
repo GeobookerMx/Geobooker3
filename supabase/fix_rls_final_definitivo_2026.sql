@@ -54,6 +54,8 @@ DROP POLICY IF EXISTS "Only super admins can insert admin users"   ON public.adm
 DROP POLICY IF EXISTS "Super admins can insert admin users"      ON public.admin_users;
 DROP POLICY IF EXISTS "Anyone authenticated can view admin users"   ON public.admin_users;
 DROP POLICY IF EXISTS "Admin Self Read"                          ON public.admin_users;
+DROP POLICY IF EXISTS "admin_select"                             ON public.admin_users;
+DROP POLICY IF EXISTS "Admins can read admin_users"              ON public.admin_users;
 DROP POLICY IF EXISTS "admin_users_select"                       ON public.admin_users;
 DROP POLICY IF EXISTS "admin_users_select_v2"                    ON public.admin_users;
 DROP POLICY IF EXISTS "admin_users_select_own_or_admin"          ON public.admin_users;

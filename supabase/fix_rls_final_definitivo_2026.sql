@@ -76,10 +76,7 @@ CREATE POLICY "admin_users_select_safe"
   ON public.admin_users
   FOR SELECT
   TO authenticated
-  USING (
-    id = auth.uid()
-    OR private.is_admin(auth.uid())
-  );
+  USING (true);
 
 -- ESCRITURA: Solo administradores pueden gestionar la lista de admins
 CREATE POLICY "admin_users_insert_safe"

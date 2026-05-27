@@ -634,36 +634,40 @@ export const BusinessMap = memo(({
     }));
   }, [recommendedBusinesses, userLocation]);
 
-  // 🔎 EFECTO: Ajustar mapa para mostrar todas las recomendaciones al cargar
+  // 🔎 EFECTO: Ajustar mapa para mostrar todas las recomendaciones al cargar (retrasado por seguridad)
   useEffect(() => {
     if (mapLoaded && mapRef.current && recommendedMarkers.length > 0) {
-      if (import.meta.env.DEV) console.log('🔎 [BusinessMap] Ajustando vista para incluir recomendaciones...');
-      const google = window.google;
-      if (!google) return;
+      const timer = setTimeout(() => {
+        if (import.meta.env.DEV) console.log('🔎 [BusinessMap] Ajustando vista para incluir recomendaciones...');
+        const google = window.google;
+        if (!google) return;
 
-      const bounds = new google.maps.LatLngBounds();
+        const bounds = new google.maps.LatLngBounds();
 
-      // Incluir ubicación del usuario si existe
-      if (userLocation?.lat && userLocation?.lng) {
-        bounds.extend({ lat: Number(userLocation.lat), lng: Number(userLocation.lng) });
-      }
+        // Incluir ubicación del usuario si existe
+        if (userLocation?.lat && userLocation?.lng) {
+          bounds.extend({ lat: Number(userLocation.lat), lng: Number(userLocation.lng) });
+        }
 
-      // Incluir todas las recomendaciones
-      recommendedMarkers.forEach(rec => {
-        bounds.extend({ lat: Number(rec.latitude), lng: Number(rec.longitude) });
-      });
-
-      // Solo ajustar si las recomendaciones están lejos o son las primeras en cargar
-      try {
-        mapRef.current.fitBounds(bounds, 50); // padding de 50px
-
-        // Evitar que el zoom sea demasiado alto (muy cerca)
-        google.maps.event.addListenerOnce(mapRef.current, 'bounds_changed', () => {
-          if (mapRef.current.getZoom() > 15) mapRef.current.setZoom(15);
+        // Incluir todas las recomendaciones
+        recommendedMarkers.forEach(rec => {
+          bounds.extend({ lat: Number(rec.latitude), lng: Number(rec.longitude) });
         });
-      } catch (err) {
-        if (import.meta.env.DEV) console.error('❌ [BusinessMap] Error ajustando bounds:', err);
-      }
+
+        // Solo ajustar si las recomendaciones están lejos o son las primeras en cargar
+        try {
+          mapRef.current.fitBounds(bounds, 50); // padding de 50px
+
+          // Evitar que el zoom sea demasiado alto (muy cerca)
+          google.maps.event.addListenerOnce(mapRef.current, 'bounds_changed', () => {
+            if (mapRef.current.getZoom() > 15) mapRef.current.setZoom(15);
+          });
+        } catch (err) {
+          if (import.meta.env.DEV) console.error('❌ [BusinessMap] Error ajustando bounds:', err);
+        }
+      }, 300);
+
+      return () => clearTimeout(timer);
     }
   }, [recommendedMarkers.length, mapLoaded]);
 

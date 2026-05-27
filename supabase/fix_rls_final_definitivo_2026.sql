@@ -64,6 +64,10 @@ DROP POLICY IF EXISTS "admin_users_insert_v2"                    ON public.admin
 DROP POLICY IF EXISTS "admin_users_update_v2"                    ON public.admin_users;
 DROP POLICY IF EXISTS "admin_users_delete_v2"                    ON public.admin_users;
 DROP POLICY IF EXISTS "Solo admins pueden ver admins"            ON public.admin_users;
+DROP POLICY IF EXISTS "admin_users_select_safe"                  ON public.admin_users;
+DROP POLICY IF EXISTS "admin_users_insert_safe"                  ON public.admin_users;
+DROP POLICY IF EXISTS "admin_users_update_safe"                  ON public.admin_users;
+DROP POLICY IF EXISTS "admin_users_delete_safe"                  ON public.admin_users;
 
 
 -- =========================================================
@@ -117,6 +121,10 @@ DROP POLICY IF EXISTS "businesses_select_v2"                        ON public.bu
 DROP POLICY IF EXISTS "businesses_insert_v2"                        ON public.businesses;
 DROP POLICY IF EXISTS "businesses_update_v2"                        ON public.businesses;
 DROP POLICY IF EXISTS "businesses_delete_v2"                        ON public.businesses;
+DROP POLICY IF EXISTS "businesses_select_safe"                      ON public.businesses;
+DROP POLICY IF EXISTS "businesses_insert_safe"                      ON public.businesses;
+DROP POLICY IF EXISTS "businesses_update_safe"                      ON public.businesses;
+DROP POLICY IF EXISTS "businesses_delete_safe"                      ON public.businesses;
 
 -- 1. LECTURA: Negocios aprobados son públicos. Propietarios y Admins ven pendientes.
 CREATE POLICY "businesses_select_safe"
@@ -164,6 +172,8 @@ BEGIN
     DROP POLICY IF EXISTS "Admins can update claims"     ON public.business_claims;
     DROP POLICY IF EXISTS "claims_admin_select_v2"       ON public.business_claims;
     DROP POLICY IF EXISTS "claims_admin_update_v2"       ON public.business_claims;
+    DROP POLICY IF EXISTS "claims_select_safe"           ON public.business_claims;
+    DROP POLICY IF EXISTS "claims_update_safe"           ON public.business_claims;
 
     EXECUTE $pol$
       CREATE POLICY "claims_select_safe"

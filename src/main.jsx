@@ -19,6 +19,10 @@ import './index.css'
 import './styles/ios-android-viewport-fix.css'
 import './i18n' // Importar configuración de i18n
 
+// 🔍 Scroll Spy para auditoría forense de scroll/focus automáticos
+import { installScrollSpy } from './debug/scrollSpy'
+installScrollSpy()
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App />  {/* ✅ Simple y limpio */}

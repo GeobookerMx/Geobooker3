@@ -22,6 +22,7 @@ import ChatWidget from "./components/agent/ChatWidget";
 import { checkAppVersion } from "./services/cacheVersionService";
 import ScrollToTop from "./components/common/ScrollToTop";
 import NativeScrollStabilizer from "./components/common/NativeScrollStabilizer";
+import ScrollLockManager from "./components/common/ScrollLockManager";
 import CookieConsent from "./components/CookieConsent";
 import { Toaster } from "react-hot-toast";
 
@@ -277,6 +278,8 @@ function App() {
   return (
     <AppErrorBoundary>
       <Router>
+        {/* ✅ ScrollLockManager: Previene scroll automático hacia el centro en Web, iOS y Android */}
+        <ScrollLockManager />
         {/* ScrollToTop solo en web — HashRouter no necesita scroll reset */}
         {!isNative && <ScrollToTop />}
         {/* ✅ NativeScrollStabilizer: Previene scroll automático en iOS y Android */}

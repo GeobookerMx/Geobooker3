@@ -197,7 +197,9 @@ const UserSidebar = () => {
             <aside className={`
                 md:hidden fixed top-0 left-0 w-72 h-full bg-white z-50 transform transition-transform duration-300 flex flex-col
                 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-            `}>
+            `}
+            style={!isMobileMenuOpen ? { visibility: 'hidden' } : { visibility: 'visible' }}
+            >
                 <SidebarContent />
             </aside>
 

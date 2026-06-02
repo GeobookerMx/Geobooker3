@@ -51,6 +51,25 @@ import OpenNowFilter from '../components/common/OpenNowFilter';
 import LocationRefreshButton from '../components/common/LocationRefreshButton';
 import { isBusinessOpen } from '../utils/businessHours';
 
+const CITY_COORDINATES = {
+  cdmx: { lat: 19.4326, lng: -99.1332 },
+  guadalajara: { lat: 20.6597, lng: -103.3496 },
+  monterrey: { lat: 25.6866, lng: -100.3161 },
+  puebla: { lat: 19.0413, lng: -98.2062 },
+  tijuana: { lat: 32.5149, lng: -117.0382 },
+  merida: { lat: 20.9754, lng: -89.6220 },
+  queretaro: { lat: 20.5888, lng: -100.3899 },
+  leon: { lat: 21.1236, lng: -101.6800 },
+  'los-angeles': { lat: 34.0522, lng: -118.2437 },
+  'new-york': { lat: 40.7128, lng: -74.0060 },
+  'houston': { lat: 29.7604, lng: -95.3698 },
+  miami: { lat: 25.7617, lng: -80.1918 },
+  london: { lat: 51.5074, lng: -0.1278 },
+  manchester: { lat: 53.4808, lng: -2.2426 },
+  toronto: { lat: 43.6532, lng: -79.3832 },
+  vancouver: { lat: 49.2827, lng: -123.1207 }
+};
+
 const HomePage = () => {
   const { t } = useTranslation();
   const { category, subcategory, city } = useParams();
@@ -66,12 +85,21 @@ const HomePage = () => {
   const [openNowFilter, setOpenNowFilter] = useState(false); // Filtro abierto ahora
   const [lastSearchQuery, setLastSearchQuery] = useState(''); // Para persistencia
   const mapIdleTimerRef = useRef(null);
+  const mapBoundsRef = useRef(null); // 📍 OPCION 1: Guardar bounds del mapa para filtrar recomendaciones
   const navigate = useNavigate();
 
   // Filtros de categoría desde URL (parámetros de consulta o ruta)
   const categoryFilter = category || searchParams.get('category');
   const subcategoryFilter = subcategory || searchParams.get('subcategory');
   const cityFilter = city || searchParams.get('city');
+
+  const getMapCenter = () => {
+    if (cityFilter) {
+      const coords = CITY_COORDINATES[cityFilter.toLowerCase()];
+      if (coords) return coords;
+    }
+    return userLocation;
+  };
 
   // SEO dinámico basado en filtros
   const getSEOTitle = () => {
@@ -198,29 +226,32 @@ const HomePage = () => {
     }
   };
 
-  // 💚 Cargar recomendaciones aprobadas por usuarios (con ubicación)
-  const fetchRecommendations = async () => {
+  // 💚 OPCION 1: Cargar recomendaciones filtradas por viewport del mapa
+  // Solo se cargan las recomendaciones visibles en el área del mapa, no TODAS.
+  const fetchRecommendationsByBounds = async (bounds) => {
+    if (!bounds) return;
     try {
-      console.log('📡 [HomePage] Iniciando carga de recomendaciones...');
-      const { data: allApproved, error: allError } = await supabase
+      const { south, west, north, east } = bounds;
+      const { data: inView, error } = await supabase
         .from('user_recommendations')
         .select('id, name, status, latitude, longitude, category')
-        .eq('status', 'approved');
+        .eq('status', 'approved')
+        .gte('latitude', south)
+        .lte('latitude', north)
+        .gte('longitude', west)
+        .lte('longitude', east)
+        .limit(100); // Máximo 100 recomendaciones por viewport
 
-      if (allError) {
-        console.error('❌ [HomePage] Error al consultar recomendaciones:', allError.message);
-        throw allError;
+      if (error) {
+        console.error('❌ [HomePage] Error recomendaciones por viewport:', error.message);
+        return;
       }
 
-      console.log(`💚 [HomePage] Recuperadas ${allApproved?.length || 0} recomendaciones aprobadas`);
-
-      if (allApproved?.length > 0) {
-        const conCoords = allApproved.filter(r => r.latitude != null && r.longitude != null);
-        setRecommendedBusinesses(conCoords);
-        console.log(`📍 [HomePage] Válidas para mapa: ${conCoords.length}`);
-      }
+      const conCoords = (inView || []).filter(r => r.latitude != null && r.longitude != null);
+      console.log(`💚 [HomePage] ${conCoords.length} recomendaciones en viewport`);
+      setRecommendedBusinesses(conCoords);
     } catch (error) {
-      console.error('❌ [HomePage] Error fatal cargando recomendaciones:', error);
+      console.error('❌ [HomePage] Error cargando recomendaciones:', error);
     }
   };
 
@@ -228,9 +259,7 @@ const HomePage = () => {
     fetchGeobookerBusinesses();
   }, [categoryFilter, subcategoryFilter, userLocation]);
 
-  useEffect(() => {
-    fetchRecommendations();
-  }, []);
+  // NOTA: Las recomendaciones ahora se cargan en handleMapIdle (filtradas por viewport)
 
   // ✅ FIX: Escuchar cambios de visibilidad de negocios (toggle on/off)
   // Cuando un usuario cambia is_visible en el dashboard, actualizar el mapa inmediatamente
@@ -346,13 +375,17 @@ const HomePage = () => {
     }
   };
 
-  // 📍 NUEVO: Handler para consultar DENUE en background cuando el mapa se mueve
+  // 📍 Handler para consultar DENUE + Recomendaciones en background cuando el mapa se mueve
   const handleMapIdle = useCallback(({ bounds, zoom }) => {
+    // Guardar bounds actuales para posibles re-cargas
+    mapBoundsRef.current = bounds;
+
     // Si el zoom es muy lejano, no saturar la base de datos
     // Permite DENUE desde nivel de ciudad (10) para arriba. Si hay filtro, mostramos siempre (1).
     const minZoom = categoryFilter ? 1 : 10;
     if (zoom < minZoom) {
       setDenueBusinesses([]);
+      setRecommendedBusinesses([]);
       return;
     }
 
@@ -402,6 +435,9 @@ const HomePage = () => {
         } else {
           setDenueBusinesses([]);
         }
+
+        // 💚 OPCION 1: Cargar recomendaciones filtradas por viewport (lazy loading)
+        await fetchRecommendationsByBounds(bounds);
       } catch (error) {
         console.error('Error fetching DENUE businesses:', error);
       }
@@ -660,6 +696,7 @@ const HomePage = () => {
           <Suspense fallback={<MapLoadingFallback />}>
             <BusinessMap
               userLocation={userLocation}
+              center={getMapCenter()}
               businesses={businesses} // Google Places
               geobookerBusinesses={
                 // Aplicar filtro "Abierto ahora" si está activo

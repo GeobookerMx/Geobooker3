@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useEffect, Component } from "react";
+import React, { useEffect, Component, lazy, Suspense } from "react";
 import { BrowserRouter, HashRouter } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import { App as CapApp } from "@capacitor/app";
@@ -18,13 +18,15 @@ import { AppTrackingTransparency } from "@capgo/capacitor-app-tracking-transpare
 import i18n from "./i18n";
 
 import AppRouter from "./router";
-import ChatWidget from "./components/agent/ChatWidget";
 import { checkAppVersion } from "./services/cacheVersionService";
 import ScrollToTop from "./components/common/ScrollToTop";
 import NativeScrollStabilizer from "./components/common/NativeScrollStabilizer";
 import ScrollLockManager from "./components/common/ScrollLockManager";
-import CookieConsent from "./components/CookieConsent";
 import { Toaster } from "react-hot-toast";
+import { captureQrAttribution } from "./services/qrAttributionService";
+
+const ChatWidget = lazy(() => import("./components/agent/ChatWidget"));
+const CookieConsent = lazy(() => import("./components/CookieConsent"));
 
 // ✅ FIX iPad/iOS: HashRouter en nativo (capacitor://) — BrowserRouter en web
 // BrowserRouter falla en Capacitor porque usa HTML5 History API sobre file://
@@ -264,6 +266,7 @@ function AppInitializer() {
       }
     };
     initGeo();
+    captureQrAttribution(window.location.href);
 
     return () => {
       window.removeEventListener("online", handleOnline);
@@ -292,8 +295,10 @@ function App() {
           <AppProvider>
             <LocationProvider>
               <AppRouter />
-              <ChatWidget />
-              <CookieConsent />
+              <Suspense fallback={null}>
+                <ChatWidget />
+                <CookieConsent />
+              </Suspense>
             </LocationProvider>
           </AppProvider>
         </AuthProvider>

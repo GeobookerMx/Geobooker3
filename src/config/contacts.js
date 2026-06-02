@@ -16,11 +16,12 @@ export const CONTACT_EMAILS = {
 };
 
 export const SOCIAL_LINKS = {
-    facebook: 'https://facebook.com/geobooker.mx',
-    instagram: 'https://instagram.com/geobooker.mx',
-    twitter: 'https://twitter.com/geobookermx',
+    facebook: 'https://www.facebook.com/Geobooker',
+    instagram: 'https://www.instagram.com/geobookermx',
+    twitter: 'https://twitter.com/GeoBookermx',
     linkedin: 'https://linkedin.com/company/geobooker',
-    tiktok: 'https://tiktok.com/@geobooker.mx',
+    tiktok: 'https://www.tiktok.com/@geobookermx',
+    youtube: 'https://www.youtube.com/@Geobooker',
 };
 
 export const PHONE_NUMBERS = {

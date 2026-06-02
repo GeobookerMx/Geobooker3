@@ -27,6 +27,7 @@ const DashboardPage = () => {
   const [showRecommendForm, setShowRecommendForm] = useState(false);
   const [myRecommendations, setMyRecommendations] = useState([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
+  const [recommendationStats, setRecommendationStats] = useState({ pending: 0, approved: 0, rejected: 0 });
 
   useEffect(() => {
     if (user) {
@@ -92,12 +93,18 @@ const DashboardPage = () => {
     try {
       const { data, error } = await supabase
         .from('user_recommendations')
-        .select('*')
+        .select('id, name, category, address, rating, pros, status, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setMyRecommendations(data || []);
+      const rows = data || [];
+      setMyRecommendations(rows);
+      setRecommendationStats({
+        pending: rows.filter((rec) => rec.status === 'pending').length,
+        approved: rows.filter((rec) => rec.status === 'approved').length,
+        rejected: rows.filter((rec) => rec.status === 'rejected').length
+      });
     } catch (error) {
       console.error('Error loading recommendations:', error);
     } finally {
@@ -293,6 +300,21 @@ const DashboardPage = () => {
                 <Plus className="w-5 h-5" />
                 Recomendar
               </button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                <div className="text-xs text-amber-700">En revision</div>
+                <div className="text-2xl font-bold text-amber-800">{recommendationStats.pending}</div>
+              </div>
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3">
+                <div className="text-xs text-green-700">Aprobadas</div>
+                <div className="text-2xl font-bold text-green-800">{recommendationStats.approved}</div>
+              </div>
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+                <div className="text-xs text-red-700">Rechazadas</div>
+                <div className="text-2xl font-bold text-red-800">{recommendationStats.rejected}</div>
+              </div>
             </div>
 
             {/* Lista */}

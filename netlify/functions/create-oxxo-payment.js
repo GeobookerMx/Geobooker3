@@ -31,6 +31,7 @@ exports.handler = async (event, context) => {
             productName,      // Nombre del producto (ej: "Hero Banner")
             productId,        // ID del producto/campaña
             userId,           // ID del usuario en Supabase
+            metadata = {},    // Metadata adicional para webhook y trazabilidad
             description       // Descripción del pago
         } = JSON.parse(event.body);
 
@@ -59,17 +60,20 @@ exports.handler = async (event, context) => {
             };
         }
 
+        const finalMetadata = {
+            product_name: productName || 'Geobooker',
+            product_id: productId || '',
+            user_id: userId || '',
+            payment_type: 'oxxo',
+            ...metadata,
+        };
+
         // Crear PaymentIntent con OXXO
         const paymentIntent = await stripe.paymentIntents.create({
             amount: Math.round(amount * 100), // Convertir a centavos
             currency: 'mxn',
             payment_method_types: ['oxxo'],
-            metadata: {
-                product_name: productName || 'Geobooker',
-                product_id: productId || '',
-                user_id: userId || '',
-                payment_type: 'oxxo'
-            },
+            metadata: finalMetadata,
             description: description || `Pago Geobooker - ${productName}`,
             receipt_email: email,
         });

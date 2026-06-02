@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO';
 import {
   Utensils, Coffee, ShoppingBag, Briefcase, Wrench, HeartPulse, Film, GraduationCap,
   ArrowRight, MapPin, Search, Hotel, Home, Banknote, Smartphone, PartyPopper
@@ -123,6 +124,23 @@ const CategoriesPage = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
 
+  const categorySchema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Categorías de negocios en Geobooker",
+    "description": "Explora categorías y subcategorías de negocios locales en México.",
+    "url": "https://geobooker.com.mx/categories",
+    "mainEntity": {
+      "@type": "ItemList",
+      "itemListElement": CATEGORIES.map((category, index) => ({
+        "@type": "ListItem",
+        "position": index + 1,
+        "name": category.name,
+        "url": `https://geobooker.com.mx/c/${category.id}`
+      }))
+    }
+  };
+
   const handleCategoryClick = (category) => {
     setSelectedCategory(category);
     setSelectedSubcategory(null);
@@ -146,6 +164,16 @@ const CategoriesPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <SEO
+        title="Categorías de negocios en México"
+        description="Explora restaurantes, talleres, farmacias, tiendas, servicios y más categorías de negocios locales en Geobooker."
+        url="https://geobooker.com.mx/categories"
+        structuredData={categorySchema}
+        breadcrumbs={[
+          { name: 'Inicio', item: '/' },
+          { name: 'Categorías', item: '/categories' }
+        ]}
+      />
       <div className="max-w-6xl mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-12">

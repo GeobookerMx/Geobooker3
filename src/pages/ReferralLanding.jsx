@@ -15,12 +15,14 @@ export default function ReferralLanding() {
     const navigate = useNavigate();
     const [referrerName, setReferrerName] = useState('un amigo');
     const [loading, setLoading] = useState(true);
+    const [isValidCode, setIsValidCode] = useState(true);
 
     useEffect(() => {
-        // Store referral code for later use during signup
         if (code) {
-            localStorage.setItem('referral_code', code.toUpperCase());
             loadReferrerInfo(code.toUpperCase());
+        } else {
+            setLoading(false);
+            setIsValidCode(false);
         }
     }, [code]);
 
@@ -32,11 +34,21 @@ export default function ReferralLanding() {
                 .eq('referral_code', refCode)
                 .single();
 
+            if (error || !data?.full_name) {
+                localStorage.removeItem('referral_code');
+                setIsValidCode(false);
+                return;
+            }
+
+            localStorage.setItem('referral_code', refCode);
             if (data && data.full_name) {
                 setReferrerName(data.full_name);
+                setIsValidCode(true);
             }
         } catch (error) {
             console.warn('Could not load referrer info');
+            localStorage.removeItem('referral_code');
+            setIsValidCode(false);
         } finally {
             setLoading(false);
         }
@@ -84,6 +96,12 @@ export default function ReferralLanding() {
                             <strong className="text-white">{referrerName}</strong> te invitó a unirte a <strong className="text-blue-400">Geobooker</strong>,
                             la plataforma donde los clientes encuentran negocios como el tuyo.
                         </p>
+
+                        {!loading && !isValidCode && (
+                            <div className="mb-6 rounded-2xl border border-amber-400/30 bg-amber-500/10 px-5 py-4 text-amber-100">
+                                El codigo de invitacion no es valido o ya no esta disponible. Puedes registrarte de todos modos y empezar gratis.
+                            </div>
+                        )}
 
                         {/* CTA Buttons */}
                         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">

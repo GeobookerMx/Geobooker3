@@ -1,13 +1,17 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from '../contexts/LocationContext';
 import { searchNearbyPlaces, searchByType, getPlaceType } from '../services/googlePlacesService';
 
-const SearchBar = ({ onSearch, onBusinessesFound, loading }) => {
+const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) => {
   const { t } = useTranslation();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialValue);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const { userLocation, permissionGranted, requestLocationPermission } = useLocation();
+
+  useEffect(() => {
+    setSearchTerm(initialValue || '');
+  }, [initialValue]);
 
   // Categorías populares para sugerencias (en español)
   const popularCategories = [

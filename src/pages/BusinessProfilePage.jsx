@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
@@ -40,7 +40,7 @@ const TAG_CONFIG = {
 };
 
 const BusinessProfilePage = () => {
-    const { id } = useParams();
+    const { slugOrId } = useParams();
     const [business, setBusiness] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isFavorite, setIsFavorite] = useState(false);
@@ -48,15 +48,15 @@ const BusinessProfilePage = () => {
 
     // Load persisted favorite state
     useEffect(() => {
-        if (!id) return;
+        if (!slugOrId) return;
         try {
             const saved = JSON.parse(localStorage.getItem('geobooker_favorites') || '[]');
-            setIsFavorite(saved.includes(id));
+            setIsFavorite(saved.includes(slugOrId));
         } catch { /* ignore */ }
-    }, [id]);
+    }, [slugOrId]);
 
     // Si no hay ID, redirigir al inicio
-    if (!id) {
+    if (!slugOrId) {
         return <Navigate to="/" replace />;
     }
 
@@ -66,15 +66,26 @@ const BusinessProfilePage = () => {
                 let { data, error } = await supabase
                     .from('businesses')
                     .select('*')
-                    .eq('id', id)
+                    .eq('slug', slugOrId)
                     .single();
+
+                if (error || !data) {
+                    const byIdResult = await supabase
+                        .from('businesses')
+                        .select('*')
+                        .eq('id', slugOrId)
+                        .single();
+
+                    data = byIdResult.data;
+                    error = byIdResult.error;
+                }
 
                 // Si no existe en validos/activos, buscar en las tablas de DENUE (candidatos)
                 if (error || !data) {
                     const { data: candidateData, error: candidateError } = await supabase
                         .from('business_candidates')
                         .select('*')
-                        .eq('id', id)
+                        .or(`slug.eq.${slugOrId},id.eq.${slugOrId}`)
                         .single();
 
                     if (!candidateError && candidateData) {
@@ -93,7 +104,7 @@ const BusinessProfilePage = () => {
                 if (error) throw error;
                 setBusiness(data);
                 // Track profile view (sellable KPI)
-                if (data) trackBusinessProfileView(id, data.name, 'direct');
+                if (data) trackBusinessProfileView(data.id || slugOrId, data.name, 'direct');
             } catch (error) {
                 console.error('Error loading business:', error);
                 toast.error('No se pudo cargar el negocio');
@@ -102,8 +113,8 @@ const BusinessProfilePage = () => {
             }
         };
 
-        if (id) loadBusiness();
-    }, [id]);
+        if (slugOrId) loadBusiness();
+    }, [slugOrId]);
 
     const handleShare = async () => {
         const shareUrl = window.location.href;
@@ -111,7 +122,7 @@ const BusinessProfilePage = () => {
         const shareText = `Mira ${shareTitle} en Geobooker`;
 
         // Track share intent
-        trackShareBusiness(id, business?.name, Capacitor.isNativePlatform() ? 'native' : 'web');
+        trackShareBusiness(business?.id || slugOrId, business?.name, Capacitor.isNativePlatform() ? 'native' : 'web');
 
         try {
             if (Capacitor.isNativePlatform()) {
@@ -140,7 +151,7 @@ const BusinessProfilePage = () => {
 
     const handleDirections = () => {
         if (business?.latitude && business?.longitude) {
-            trackDirectionsClick(id, business.name);
+            trackDirectionsClick(business?.id || slugOrId, business.name);
             const lat = business.latitude;
             const lng = business.longitude;
 
@@ -161,7 +172,7 @@ const BusinessProfilePage = () => {
 
     const handleCall = () => {
         if (business?.phone) {
-            trackCallClick(id, business.name);
+            trackCallClick(business?.id || slugOrId, business.name);
             // Use window.open so the WebView is not replaced (stays alive)
             window.open(`tel:${business.phone}`, '_self');
         }
@@ -186,15 +197,16 @@ const BusinessProfilePage = () => {
         setIsFavorite(next);
         try {
             const saved = JSON.parse(localStorage.getItem('geobooker_favorites') || '[]');
-            const updated = next ? [...new Set([...saved, id])] : saved.filter(fid => fid !== id);
+            const favoriteKey = business?.slug || business?.id || slugOrId;
+            const updated = next ? [...new Set([...saved, favoriteKey])] : saved.filter(fid => fid !== favoriteKey);
             localStorage.setItem('geobooker_favorites', JSON.stringify(updated));
         } catch { /* ignore */ }
-        if (next) trackSaveFavorite(id, business?.name);
+        if (next) trackSaveFavorite(business?.id || slugOrId, business?.name);
         toast.success(next ? 'Guardado en favoritos' : 'Eliminado de favoritos');
     };
 
     const handleWhatsAppClick = () => {
-        trackWhatsAppClick(id, business?.name);
+        trackWhatsAppClick(business?.id || slugOrId, business?.name);
     };
 
     if (loading) {
@@ -216,6 +228,8 @@ const BusinessProfilePage = () => {
         );
     }
 
+    const businessPath = `/business/${business.slug || business.id || slugOrId}`;
+
     return (
         <div className="min-h-screen bg-gray-50">
             {/* SEO Meta Tags */}
@@ -223,12 +237,13 @@ const BusinessProfilePage = () => {
                 title={`${business.name} - ${business.category}`}
                 description={business.description || `${business.name} en ${business.address || 'Geobooker'}`}
                 image={business.image_url || '/images/geobooker-og.png'}
+                url={`${window.location.origin}${businessPath}`}
                 type="business.business"
                 business={business}
                 breadcrumbs={[
                     { name: 'Inicio', item: '/' },
                     { name: business.category, item: `/c/${business.category.toLowerCase().replace(/ /g, '-')}` },
-                    { name: business.name, item: `/business/${id}` }
+                    { name: business.name, item: businessPath }
                 ]}
             />
 
@@ -531,12 +546,12 @@ const BusinessProfilePage = () => {
                 )}
                 {/* Photo Gallery */}
                 <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
-                    <PhotoGallery businessId={id} isOwner={false} />
+                    <PhotoGallery businessId={business.id} isOwner={false} />
                 </div>
 
                 {/* Reviews Section */}
                 <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
-                    <ReviewsSection businessId={id} ownerId={business.owner_id} />
+                    <ReviewsSection businessId={business.id} ownerId={business.owner_id} />
                 </div>
 
                 {/* Trust Score Widget (Desktop Sidebar) */}

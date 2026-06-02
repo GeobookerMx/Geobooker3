@@ -89,8 +89,17 @@ exports.handler = async (event) => {
         }
 
         // Add metadata
-        formData.append('metadata[type]', metadata.type || 'payment');
-        formData.append('metadata[country]', 'MX');
+        const finalMetadata = {
+            type: metadata.type || 'payment',
+            country: metadata.country || metadata.billing_country || 'MX',
+            ...metadata
+        };
+
+        Object.entries(finalMetadata).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+                formData.append(`metadata[${key}]`, String(value));
+            }
+        });
 
         // Call Stripe API directly
         const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {

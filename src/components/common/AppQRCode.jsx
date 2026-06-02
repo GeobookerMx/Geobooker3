@@ -5,15 +5,17 @@
  */
 import React from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import { APP_LINKS } from '../../config/appLinks';
 
 const AppQRCode = ({
     size = 120,
     showLabel = true,
     darkMode = false,
-    className = ''
+    className = '',
+    value = APP_LINKS.downloadHub,
+    label = 'Escanea para descargar',
+    subtitle = null
 }) => {
-    const appUrl = 'https://geobooker.com.mx';
-
     return (
         <div className={`flex flex-col items-center ${className}`}>
             <div className={`
@@ -21,7 +23,7 @@ const AppQRCode = ({
         ${darkMode ? 'bg-white' : 'bg-white'}
       `}>
                 <QRCodeSVG
-                    value={appUrl}
+                    value={value}
                     size={size}
                     level="H" // High error correction
                     includeMargin={false}
@@ -42,9 +44,14 @@ const AppQRCode = ({
           mt-2 text-sm font-medium text-center
           ${darkMode ? 'text-gray-300' : 'text-gray-600'}
         `}>
-                    📱 Escanea para visitar
+                    {label}
                 </p>
             )}
+            {subtitle ? (
+                <p className={`mt-1 text-xs text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {subtitle}
+                </p>
+            ) : null}
         </div>
     );
 };

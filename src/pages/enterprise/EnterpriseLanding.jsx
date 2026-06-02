@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import SEO from '../../components/SEO';
+import { ENTERPRISE_FALLBACK_PRICING, ENTERPRISE_PROMO_END } from '../../config/enterprisePricing';
 
 export default function EnterpriseLanding() {
     const { t, i18n } = useTranslation();
@@ -65,20 +66,9 @@ export default function EnterpriseLanding() {
             }
         } catch (error) {
             console.error('Error fetching pricing:', error);
-            const promoDateStr = '2026-07-01T23:59:59Z';
+            const promoDateStr = ENTERPRISE_PROMO_END;
             setPromoEndDate(promoDateStr);
-            setPricing([
-                { code: 'city_launch', name: 'City Launch', regular_price_usd: 100, current_price_usd: 50, discount_percent: 50, cities_included: 1, countries_included: 1, duration_months: 1, is_promo_active: true,
-                  features: ['1 ciudad activa', 'Búsqueda patrocinada', '1 placement destacado', 'Pin patrocinado', 'Dashboard básico'] },
-                { code: 'regional', name: 'Regional Pack', regular_price_usd: 500, current_price_usd: 250, discount_percent: 50, cities_included: 5, countries_included: 2, duration_months: 3, is_promo_active: true,
-                  features: ['Hasta 5 ciudades', 'Rotación de inventario', 'Dashboard por ciudad', '2 optimizaciones incluidas', 'Soporte prioritario'] },
-                { code: 'country', name: 'Country Select', regular_price_usd: 1200, current_price_usd: 600, discount_percent: 50, cities_included: 12, countries_included: 1, duration_months: 3, is_promo_active: true,
-                  features: ['Hasta 12 ciudades', 'Placements premium', 'Dashboard ciudad/dispositivo/horario', 'Revisión mensual', 'Soporte prioritario'] },
-                { code: 'crossborder', name: 'Cross-Border Event', regular_price_usd: 2000, current_price_usd: 1000, discount_percent: 50, cities_included: 30, countries_included: 3, duration_months: 3, is_promo_active: true,
-                  features: ['2-3 países', 'Segmentación por idioma', 'Flight por evento/temporada', 'Reporte ejecutivo final', 'Soporte consultivo'] },
-                { code: 'global_custom', name: 'Global Custom', regular_price_usd: 3200, current_price_usd: 1600, discount_percent: 50, cities_included: 999, countries_included: 999, duration_months: 3, is_promo_active: true, is_custom: true,
-                  features: ['Multi-país o continental', 'Setup de campaña a medida', 'Inventario premium asignado', 'Reporting ejecutivo', 'Propuesta comercial personalizada'] }
-            ]);
+            setPricing(ENTERPRISE_FALLBACK_PRICING);
 
             const now = new Date();
             const end = new Date(promoDateStr);
@@ -106,11 +96,42 @@ export default function EnterpriseLanding() {
         }).format(price);
     };
 
+    const enterpriseStructuredData = [
+        {
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            name: "Geobooker Enterprise Ads",
+            description: "Paquetes enterprise de Geobooker para campañas multi-ciudad, regionales, nacionales y cross-border.",
+            url: "https://geobooker.com.mx/enterprise",
+            mainEntity: {
+                "@type": "ItemList",
+                itemListElement: pricing.map((plan, index) => ({
+                    "@type": "ListItem",
+                    position: index + 1,
+                    item: {
+                        "@type": "Product",
+                        name: plan.name,
+                        description: plan.description || "Paquete enterprise de Geobooker",
+                        category: "Enterprise Advertising",
+                        offers: plan.is_custom ? undefined : {
+                            "@type": "Offer",
+                            priceCurrency: "USD",
+                            price: Number(plan.current_price_usd || 0),
+                            availability: "https://schema.org/InStock",
+                            url: `https://geobooker.com.mx/enterprise/checkout?plan=${plan.code}`,
+                        },
+                    },
+                })),
+            },
+        },
+    ];
+
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
             <SEO
                 title={t('enterprise.seoTitle')}
                 description={t('enterprise.seoDescription')}
+                structuredData={enterpriseStructuredData}
             />
 
             {/* Promo Banner Sticky */}
@@ -118,7 +139,7 @@ export default function EnterpriseLanding() {
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                         <Sparkles className="w-5 h-5 animate-pulse" />
-                        <span className="font-bold">🚀 {t('enterprise.promoBanner')}</span>
+                        <span className="font-bold">🚀 Precios especiales de lanzamiento 2026</span>
                         <Sparkles className="w-5 h-5 animate-pulse" />
                     </div>
                     <div className="flex items-center gap-4 text-sm">
@@ -307,6 +328,11 @@ export default function EnterpriseLanding() {
                                                 {formatPrice(plan.current_price_usd)}
                                                 <span className="text-lg text-gray-400 font-normal"> USD</span>
                                             </div>
+                                            {plan.current_price_mxn ? (
+                                                <div className="text-sm text-amber-300 mt-1">
+                                                    ≈ ${Number(plan.current_price_mxn).toLocaleString('es-MX')} MXN
+                                                </div>
+                                            ) : null}
                                         </>
                                     )}
                                 </div>

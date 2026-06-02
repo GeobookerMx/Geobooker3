@@ -198,6 +198,39 @@ const RecommendationForm = ({ isOpen, onClose, userLocation, onSuccess }) => {
     setLoading(true);
 
     try {
+      const normalizedName = formData.name.trim();
+      const normalizedAddress = formData.address.trim();
+
+      const { data: duplicateRecommendations, error: duplicateRecommendationsError } = await supabase
+        .from('user_recommendations')
+        .select('id, status, name')
+        .ilike('name', normalizedName)
+        .limit(3);
+
+      if (duplicateRecommendationsError) throw duplicateRecommendationsError;
+
+      if ((duplicateRecommendations || []).length > 0) {
+        toast.error('Ese negocio ya fue recomendado anteriormente. Gracias por ayudar a mantener limpio el mapa.');
+        setLoading(false);
+        return;
+      }
+
+      if (normalizedAddress) {
+        const { data: duplicateBusinesses, error: duplicateBusinessesError } = await supabase
+          .from('businesses')
+          .select('id, name')
+          .or(`name.ilike.%${normalizedName}%,address.ilike.%${normalizedAddress}%`)
+          .limit(3);
+
+        if (duplicateBusinessesError) throw duplicateBusinessesError;
+
+        if ((duplicateBusinesses || []).length > 0) {
+          toast.error('Ese negocio parece ya existir en Geobooker. Buscalo en el mapa antes de recomendarlo.');
+          setLoading(false);
+          return;
+        }
+      }
+
       let photoUrl = null;
 
       if (formData.photo) {
@@ -208,9 +241,9 @@ const RecommendationForm = ({ isOpen, onClose, userLocation, onSuccess }) => {
         .from('user_recommendations')
         .insert({
           user_id: user.id,
-          name: formData.name.trim(),
+          name: normalizedName,
           category: formData.category,
-          address: formData.address.trim() || null,
+          address: normalizedAddress || null,
           latitude: location.lat || null,
           longitude: location.lng || null,
           rating: formData.rating,

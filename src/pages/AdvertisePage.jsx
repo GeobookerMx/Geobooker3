@@ -12,6 +12,8 @@ import {
   TrendingUp,
   Info,
 } from "lucide-react";
+import { LOCAL_AD_PROMO, getLocalAdPricing } from "../config/adPricing";
+import SEO from "../components/SEO";
 
 /**
  * Metadatos adicionales por espacio publicitario.
@@ -108,12 +110,6 @@ const MOCK_SPACES = [
 /**
  * Configuración de promoción de lanzamiento
  */
-const PROMO_CONFIG = {
-  discountPercent: 50,
-  endDate: new Date('2026-08-01T23:59:59'),
-  isActive: () => new Date() < PROMO_CONFIG.endDate
-};
-
 const IVA_RATE = 0.16;
 
 /**
@@ -139,15 +135,17 @@ function getPricingLabel(space) {
   const price = Number(space.price_monthly || 0);
   if (!price || Number.isNaN(price)) return { display: "Consultar precio", original: null, hasDiscount: false };
 
-  if (PROMO_CONFIG.isActive()) {
-    const discountedPrice = Math.round(price * (1 - PROMO_CONFIG.discountPercent / 100));
+  const pricing = getLocalAdPricing(price);
+
+  if (pricing.hasDiscount) {
+    const discountedPrice = pricing.discountedPrice;
     const ivaAmount = Math.round(discountedPrice * IVA_RATE);
     const totalWithIva = discountedPrice + ivaAmount;
     return {
       display: `$${discountedPrice.toLocaleString("es-MX")} MXN / mes`,
       original: `$${price.toLocaleString("es-MX")} MXN`,
       hasDiscount: true,
-      discountPercent: PROMO_CONFIG.discountPercent,
+      discountPercent: pricing.discountPercent,
       ivaDisplay: `+ $${ivaAmount.toLocaleString("es-MX")} IVA = $${totalWithIva.toLocaleString("es-MX")} total`,
       totalWithIva
     };
@@ -187,10 +185,76 @@ function enrichSpace(space) {
   };
 }
 
+function buildAdvertiseSchema(adSpaces) {
+  const listItems = adSpaces.map((space, index) => {
+    const pricing = getPricingLabel(space);
+    const offerPrice = pricing.totalWithIva || Number(space.price_monthly || 0);
+
+    return {
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "Product",
+        name: space.display_name,
+        description: space.description || space.tipoLabel || "Espacio publicitario en Geobooker",
+        brand: {
+          "@type": "Brand",
+          name: "Geobooker Ads",
+        },
+        category: space.type || "advertising",
+        offers: {
+          "@type": "Offer",
+          priceCurrency: "MXN",
+          price: offerPrice,
+          availability: "https://schema.org/InStock",
+          url: space.name === "enterprise" ? "https://geobooker.com.mx/enterprise" : "https://geobooker.com.mx/advertise",
+        },
+      },
+    };
+  });
+
+  return [
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: "Publicidad en Geobooker",
+      description: "Paquetes publicitarios de Geobooker para negocios locales, patrocinio de ciudad y campañas enterprise.",
+      url: "https://geobooker.com.mx/advertise",
+      mainEntity: {
+        "@type": "ItemList",
+        itemListElement: listItems,
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: "¿Qué tipos de anuncios ofrece Geobooker?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Geobooker ofrece Impulso Local, Sponsor de Ciudad y paquetes Enterprise para campañas multi-ciudad o multi-país.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "¿Cómo se compra un anuncio en Geobooker?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Seleccionas un espacio, cargas el creativo, defines segmentación geográfica, pagas y la campaña entra a revisión antes de activarse.",
+          },
+        },
+      ],
+    },
+  ];
+}
+
 const AdvertisePage = () => {
   const [adSpaces, setAdSpaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const structuredData = buildAdvertiseSchema(adSpaces.length > 0 ? adSpaces : MOCK_SPACES.map(enrichSpace));
 
   // ✅ Apple Guideline 3.1.1: Ocultar página de publicidad en iOS nativo
   const isIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
@@ -234,8 +298,14 @@ const AdvertisePage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen font-sans">
+      <SEO
+        title="Publicidad en Geobooker | Ads locales, premium y enterprise"
+        description="Consulta precios, características y espacios publicitarios de Geobooker. Lanza campañas locales, patrocinio de ciudad o publicidad global desde la PWA."
+        structuredData={structuredData}
+      />
+
       {/* PROMO BANNER STICKY */}
-      {PROMO_CONFIG.isActive() && (
+      {LOCAL_AD_PROMO.isActive() && (
         <div className="sticky top-0 z-50 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 text-white py-3 px-4">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -409,6 +479,9 @@ const AdvertisePage = () => {
                         🌍 Internacional: IVA 0% (exportación de servicios)
                       </p>
                     )}
+                    <p className="text-[10px] text-gray-500 mt-1">
+                      Slot técnico: {space.position || 'custom'} · Desktop {space.size_desktop || 'N/D'} · Mobile {space.size_mobile || 'N/D'}
+                    </p>
                   </div>
 
                   {/* Características - Features list */}
@@ -449,6 +522,59 @@ const AdvertisePage = () => {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {!loading && adSpaces.length > 0 && (
+          <div className="mt-14 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-100">
+              <h3 className="text-2xl font-bold text-gray-900">
+                Auditoría rápida de slots publicitarios
+              </h3>
+              <p className="text-sm text-gray-600 mt-2">
+                Esta matriz resume qué compra el anunciante, cuánto inventario existe y qué
+                formato técnico debe preparar para cada espacio.
+              </p>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-slate-900 text-white">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-semibold">Slot</th>
+                    <th className="px-4 py-3 text-left font-semibold">Objetivo</th>
+                    <th className="px-4 py-3 text-left font-semibold">Inventario</th>
+                    <th className="px-4 py-3 text-left font-semibold">Formato</th>
+                    <th className="px-4 py-3 text-left font-semibold">Precio visible</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {adSpaces.map((space) => (
+                    <tr key={`audit-${space.id}`} className="border-t border-gray-100 align-top">
+                      <td className="px-4 py-4">
+                        <div className="font-semibold text-gray-900">{space.display_name}</div>
+                        <div className="text-xs text-gray-500 mt-1">{space.tipoLabel}</div>
+                      </td>
+                      <td className="px-4 py-4 text-gray-700">
+                        {space.idealPara}
+                      </td>
+                      <td className="px-4 py-4 text-gray-700">
+                        {typeof space.max_slots !== "undefined" ? `${space.max_slots} slots` : "Según disponibilidad"}
+                      </td>
+                      <td className="px-4 py-4 text-gray-700">
+                        Desktop {space.size_desktop || "N/D"} · Mobile {space.size_mobile || "N/D"}
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="font-semibold text-green-600">{space.pricingLabel.display}</div>
+                        {space.pricingLabel.original ? (
+                          <div className="text-xs text-gray-400 line-through mt-1">{space.pricingLabel.original}</div>
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -662,9 +788,9 @@ const AdvertisePage = () => {
                 • <strong>Clientes internacionales:</strong> Tasa 0% de IVA por ser <strong>exportación de servicios digitales</strong> conforme al Artículo 29 de la Ley del IVA mexicana.
               </li>
               <li>
-                • En <strong>Resultados Patrocinados</strong> aplicamos modelo
-                de <strong>Pago por Clic (PPC)</strong>: el cobro se basa en los
-                clics generados, con un valor desde $1.50 MXN por clic.
+                • Los paquetes de autoservicio visibles en esta página operan con
+                <strong> inversión fija mensual</strong>. Si necesitas esquemas especiales
+                por evento, multi-ciudad o estrategia corporativa, te cotizamos desde Enterprise.
               </li>
               <li>
                 • <strong>Facturación:</strong> Una vez que tu campaña sea aprobada y entre en pauta, recibirás tu factura al correo registrado. La factura incluirá el desglose de impuestos correspondiente.
@@ -673,7 +799,7 @@ const AdvertisePage = () => {
           </div>
 
           {/* Términos de la Promoción de Lanzamiento */}
-          {PROMO_CONFIG.isActive() && (
+          {LOCAL_AD_PROMO.isActive() && (
             <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl shadow-sm border border-red-200 p-6">
               <div className="flex items-start mb-3">
                 <span className="text-2xl mr-2">🎉</span>
@@ -683,10 +809,10 @@ const AdvertisePage = () => {
               </div>
               <ul className="text-sm text-gray-700 space-y-2">
                 <li>
-                  • <strong>Descuento del 50%</strong> aplicable a Impulso Local y Sponsor de Ciudad durante los primeros 3 meses de contrato.
+                  • <strong>Descuento del 50%</strong> aplicable a Impulso Local y Sponsor de Ciudad durante la vigencia promocional de lanzamiento.
                 </li>
                 <li>
-                  • El periodo de 3 meses comienza a partir de la <strong>fecha de pago confirmado</strong>.
+                  • La tarifa promocional se respeta para campañas contratadas dentro del periodo activo y confirmadas por pago.
                 </li>
                 <li>
                   • Esta promoción es válida para contratos iniciados <strong>hasta el 1 de Agosto de 2026</strong>.

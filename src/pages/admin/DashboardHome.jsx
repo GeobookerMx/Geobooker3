@@ -104,17 +104,17 @@ export default function DashboardHome() {
       // Total de usuarios
       const { count: usersCount } = await supabase
         .from('user_profiles')
-        .select('*', { count: 'exact', head: true });
+        .select('id', { count: 'exact', head: true });
 
       // Total de negocios
       const { count: businessesCount } = await supabase
         .from('businesses')
-        .select('*', { count: 'exact', head: true });
+        .select('id', { count: 'exact', head: true });
 
       // Campañas activas
       const { count: activeCampaignsCount } = await supabase
         .from('ad_campaigns')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('status', 'active');
 
       // Ingresos del mes (suma de presupuestos de campañas activas)
@@ -164,7 +164,7 @@ export default function DashboardHome() {
       try {
         const { count: pendingRecsCount } = await supabase
           .from('user_recommendations')
-          .select('*', { count: 'exact', head: true })
+          .select('id', { count: 'exact', head: true })
           .eq('status', 'pending');
         setStats(prev => ({ ...prev, pendingRecommendations: pendingRecsCount || 0 }));
       } catch (recsErr) {
@@ -175,7 +175,7 @@ export default function DashboardHome() {
       try {
         const { count: claimsCount } = await supabase
           .from('business_claims')
-          .select('*', { count: 'exact', head: true })
+          .select('id', { count: 'exact', head: true })
           .in('status', ['submitted', 'under_review']);
         setStats(prev => ({ ...prev, pendingClaims: claimsCount || 0 }));
       } catch (claimsErr) {
@@ -186,7 +186,7 @@ export default function DashboardHome() {
       try {
         const { count: denueCount } = await supabase
           .from('businesses')
-          .select('*', { count: 'exact', head: true })
+          .select('id', { count: 'exact', head: true })
           .eq('source', 'denue');
         setStats(prev => ({ ...prev, denueCount: denueCount || 0 }));
       } catch (denueErr) {
@@ -197,7 +197,7 @@ export default function DashboardHome() {
       try {
         const { count: claimedCount } = await supabase
           .from('businesses')
-          .select('*', { count: 'exact', head: true })
+          .select('id', { count: 'exact', head: true })
           .eq('source', 'denue')
           .eq('claimed', true);
         setStats(prev => ({ ...prev, claimedCount: claimedCount || 0 }));

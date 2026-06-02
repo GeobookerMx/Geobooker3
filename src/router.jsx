@@ -161,7 +161,7 @@ export default function AppRouter() {
           <Route path="/proveedores" element={<B2bConnect />} />
           <Route path="/advertiser/dashboard" element={<AdvertiserDashboard />} />
           <Route path="/business" element={<Navigate to="/" replace />} />
-          <Route path="/business/:id" element={<BusinessProfilePage />} />
+          <Route path="/business/:slugOrId" element={<BusinessProfilePage />} />
           <Route path="/place/:placeId" element={<PlaceProfilePage />} />
         </Route>
 

@@ -1,5 +1,6 @@
 // src/components/SEO.jsx
 import { useEffect } from 'react';
+import { COMPANY_INFO, CONTACT_EMAILS, SOCIAL_LINKS } from '../config/contacts';
 
 /**
  * Componente SEO para manejar meta tags dinámicos
@@ -11,6 +12,8 @@ import { useEffect } from 'react';
  * @param {string} props.type - Tipo de contenido (website, article, business.business)
  * @param {Object} props.business - Datos del negocio para Schema.org
  * @param {Array} props.breadcrumbs - Arreglo de {name, item} para Breadcrumbs
+ * @param {boolean} props.noindex - Si true, evita indexación
+ * @param {Array|Object|null} props.structuredData - Schema adicional para la página
  */
 const SEO = ({
     title = 'Geobooker - Directorio de Negocios',
@@ -19,7 +22,9 @@ const SEO = ({
     url,
     type = 'website',
     business = null,
-    breadcrumbs = []
+    breadcrumbs = [],
+    noindex = false,
+    structuredData = null
 }) => {
     useEffect(() => {
         const canonicalUrl = url || window.location.href;
@@ -32,6 +37,8 @@ const SEO = ({
 
         // Actualizar meta tags
         updateMetaTag('description', description);
+        updateMetaTag('robots', noindex ? 'noindex, nofollow' : 'index, follow');
+        updateMetaTag('googlebot', noindex ? 'noindex, nofollow' : 'index, follow');
 
         // Open Graph
         updateMetaTag('og:title', title, 'property');
@@ -81,6 +88,9 @@ const SEO = ({
         // 5. Schema.org Organization (marca)
         addOrganizationSchema();
 
+        // 6. Schema.org WebSite con SearchAction
+        addWebsiteSchema();
+
         // Schema.org para negocios locales
         if (business) {
             addBusinessSchema(business);
@@ -91,15 +101,19 @@ const SEO = ({
             addBreadcrumbSchema(breadcrumbs);
         }
 
+        if (structuredData) {
+            addCustomStructuredData(structuredData);
+        }
+
         // Cleanup
         return () => {
-            const schemas = ['business', 'breadcrumbs', 'webapp', 'organization'];
+            const schemas = ['business', 'breadcrumbs', 'webapp', 'organization', 'website', 'custom'];
             schemas.forEach(s => {
                 const existing = document.querySelector(`script[data-schema="${s}"]`);
                 if (existing) existing.remove();
             });
         };
-    }, [title, description, image, url, type, business, breadcrumbs]);
+    }, [title, description, image, url, type, business, breadcrumbs, noindex, structuredData]);
 
     return null;
 };
@@ -285,18 +299,24 @@ const addOrganizationSchema = () => {
     const schema = {
         "@context": "https://schema.org",
         "@type": "Organization",
-        "name": "Geobooker",
-        "alternateName": "Geobooker México",
-        "url": "https://geobooker.com.mx",
+        "name": COMPANY_INFO.name,
+        "alternateName": COMPANY_INFO.legalName,
+        "url": COMPANY_INFO.website,
         "logo": "https://geobooker.com.mx/images/logo-main.png",
         "description": "Mexico's leading local business directory. Find restaurants, shops, services and more near you.",
-        "foundingDate": "2025",
+        "foundingDate": String(COMPANY_INFO.founded),
         "sameAs": [
-            "https://geobooker.com"
+            "https://geobooker.com",
+            SOCIAL_LINKS.facebook,
+            SOCIAL_LINKS.instagram,
+            SOCIAL_LINKS.twitter,
+            SOCIAL_LINKS.linkedin,
+            SOCIAL_LINKS.tiktok,
+            SOCIAL_LINKS.youtube
         ],
         "contactPoint": {
             "@type": "ContactPoint",
-            "email": "soporte@geobooker.com",
+            "email": CONTACT_EMAILS.soporte,
             "contactType": "customer support",
             "availableLanguage": ["Spanish", "English"]
         },
@@ -313,6 +333,53 @@ const addOrganizationSchema = () => {
     script.type = 'application/ld+json';
     script.setAttribute('data-schema', 'organization');
     script.textContent = JSON.stringify(schema);
+    document.head.appendChild(script);
+};
+
+const addWebsiteSchema = () => {
+    const existingSchema = document.querySelector('script[data-schema="website"]');
+    if (existingSchema) {
+        existingSchema.remove();
+    }
+
+    const schema = {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Geobooker",
+        "alternateName": "Geobooker México",
+        "url": "https://geobooker.com.mx",
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://geobooker.com.mx/?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": COMPANY_INFO.name,
+            "url": COMPANY_INFO.website
+        }
+    };
+
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.setAttribute('data-schema', 'website');
+    script.textContent = JSON.stringify(schema);
+    document.head.appendChild(script);
+};
+
+const addCustomStructuredData = (structuredData) => {
+    const existingSchema = document.querySelector('script[data-schema="custom"]');
+    if (existingSchema) {
+        existingSchema.remove();
+    }
+
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.setAttribute('data-schema', 'custom');
+    script.textContent = JSON.stringify(structuredData);
     document.head.appendChild(script);
 };
 

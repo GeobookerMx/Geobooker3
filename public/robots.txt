@@ -6,15 +6,6 @@
 User-agent: *
 Allow: /
 
-# Páginas importantes
-Allow: /
-Allow: /categories
-Allow: /community
-Allow: /advertise
-Allow: /global
-Allow: /business/*
-Allow: /seguridad
-
 # Bloquear páginas privadas
 Disallow: /admin/*
 Disallow: /dashboard/*
@@ -23,18 +14,9 @@ Disallow: /auth/*
 Disallow: /*.json$
 Disallow: /*?debug=*
 
-# Bloquear recursos no relevantes para SEO
-Disallow: /assets/
-Disallow: /*.js$
-Disallow: /*.css$
-
-# Pero permitir recursos necesarios para renderizado
-Allow: /assets/*.js
-Allow: /assets/*.css
-
 # Sitemaps
-# Sitemaps (Dinámico)
 Sitemap: https://geobooker.com.mx/sitemap.xml
+Host: https://geobooker.com.mx
 
 # Crawl-delay para ser amigable con el servidor
 Crawl-delay: 1

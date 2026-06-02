@@ -147,6 +147,16 @@ exports.handler = async (event) => {
                             .select()
                             .single();
 
+                        try {
+                            await fetch(`${process.env.URL}/.netlify/functions/notify-admin-campaign`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ campaign: updatedCampaign })
+                            });
+                        } catch (notifyError) {
+                            console.error('Error notifying admin:', notifyError);
+                        }
+
                         // 🆕 PASO 3:  Enviar email de bienvenida (solo si es nuevo usuario)
                         if (isNewUser && temporaryPassword) {
                             try {

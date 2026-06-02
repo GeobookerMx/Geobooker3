@@ -9,6 +9,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import SEO from '../../components/SEO';
+import { getStoredQrAttribution } from '../../services/qrAttributionService';
 
 export default function B2bConnect() {
     const [submitting, setSubmitting] = useState(false);
@@ -18,6 +19,8 @@ export default function B2bConnect() {
         company_name: '',
         contact_name: '',
         contact_email: '',
+        contact_phone: '',
+        company_website: '',
         target_audience: '',
         message: ''
     });
@@ -37,18 +40,28 @@ export default function B2bConnect() {
 
         try {
             setSubmitting(true);
+            const qrAttribution = getStoredQrAttribution();
 
             const { error } = await supabase.from('enterprise_leads').insert({
                 company_name: form.company_name,
                 contact_name: form.contact_name,
                 contact_email: form.contact_email,
                 target_cities: form.target_audience,
-                message: `[B2B MATCHMAKING LEAD] Audiencia: ${form.target_audience} | Notas: ${form.message}`,
+                message: JSON.stringify({
+                    lead_type: 'b2b_connect',
+                    target_audience: form.target_audience,
+                    notes: form.message || '',
+                    company_website: form.company_website || null,
+                    contact_phone: form.contact_phone || null,
+                    source: 'b2b_connect_landing',
+                    qr_attribution: qrAttribution || null,
+                    submitted_at: new Date().toISOString()
+                }),
                 status: 'new'
             });
 
             if (error) {
-                console.warn('Posible problema de tabla, contactar administrador:', error);
+                throw error;
             }
 
             setSubmitted(true);
@@ -56,7 +69,7 @@ export default function B2bConnect() {
 
         } catch (error) {
             console.error('Error enviando formulario B2B:', error);
-            setSubmitted(true);
+            toast.error('No pudimos registrar tu solicitud. Intenta de nuevo o escríbenos a ventasgeobooker@gmail.com');
         } finally {
             setSubmitting(false);
         }

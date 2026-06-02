@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Image as ImageIcon, CreditCard, Loader, Globe, M
 import { loadStripe } from '@stripe/stripe-js';
 import toast from 'react-hot-toast';
 import OxxoVoucher from '../../components/payment/OxxoVoucher';
+import { getLocalAdPricing } from '../../config/adPricing';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -260,6 +261,8 @@ const CampaignCreateWizard = () => {
         const toastId = toast.loading('Procesando tu campaña...');
 
         try {
+            const adPricing = getLocalAdPricing(adSpace?.price_monthly);
+
             // 1. Primero crear la campaña como draft
             const { data: campaignId, error } = await supabase.rpc('create_draft_campaign', {
                 p_space_id: spaceId,
@@ -268,7 +271,7 @@ const CampaignCreateWizard = () => {
                 p_geographic_scope: formData.geographic_scope,
                 p_target_location: getTargetLocation(),
                 p_audience_targeting: { countries: [formData.target_country], languages: [formData.target_language] },
-                p_budget: adSpace?.price_monthly || 0,
+                p_budget: adPricing.finalPrice || 0,
                 p_creative_title: formData.title,
                 p_creative_description: formData.description,
                 p_creative_url: formData.cta_url,
@@ -297,7 +300,7 @@ const CampaignCreateWizard = () => {
 
                 console.log('Creating checkout session...', {
                     adSpace: adSpace.name,
-                    amount: adSpace.price_monthly,
+                    amount: adPricing.finalPrice,
                     currency
                 });
 
@@ -308,7 +311,7 @@ const CampaignCreateWizard = () => {
                         priceId: adSpace.stripe_price_id || null,
                         productId: adSpace.stripe_product_id || null,
                         productName: `Geobooker Ads - ${adSpace.display_name}`,
-                        amount: Math.round(adSpace.price_monthly * 100),
+                        amount: Math.round(adPricing.finalPrice * 100),
                         currency: currency,
                         userId: user?.id || null,
                         customerEmail: formData.advertiser_email,
@@ -319,7 +322,8 @@ const CampaignCreateWizard = () => {
                             type: 'ad_payment',
                             campaign_id: campaignId,
                             ad_space_id: spaceId,
-                            ad_space_name: adSpace.name
+                            ad_space_name: adSpace.name,
+                            billing_country: formData.target_country
                         }
                     }),
                 });
@@ -344,11 +348,20 @@ const CampaignCreateWizard = () => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        amount: adSpace.price_monthly,
+                        amount: adPricing.finalPrice,
                         email: formData.advertiser_email,
+                        name: formData.advertiser_name,
                         productName: `Campaña ${adSpace.display_name}`,
                         productId: campaignId,
                         userId: (await supabase.auth.getUser()).data.user?.id,
+                        metadata: {
+                            type: 'ad_payment',
+                            campaign_id: campaignId,
+                            ad_space_id: spaceId,
+                            ad_space_name: adSpace.name,
+                            billing_country: formData.target_country,
+                            advertiser_email: formData.advertiser_email,
+                        },
                         description: `Publicidad Geobooker - ${adSpace.display_name}`
                     }),
                 });
@@ -359,12 +372,15 @@ const CampaignCreateWizard = () => {
                 }
 
                 toast.success('¡Voucher generado!', { id: toastId });
-                setOxxoVoucher({
+                const voucherPayload = {
                     voucherUrl: data.voucher.hostedVoucherUrl,
                     referenceNumber: data.voucher.number,
                     expiresAt: data.voucher.expiresAfter,
                     amount: data.amount
-                });
+                };
+                sessionStorage.setItem('oxxo_voucher', JSON.stringify(voucherPayload));
+                setOxxoVoucher(voucherPayload);
+                navigate(`/payment/oxxo-pending?payment_intent=${data.paymentIntentId}`);
             }
 
         } catch (error) {
@@ -376,6 +392,10 @@ const CampaignCreateWizard = () => {
     };
 
     if (!adSpace) return <div className="p-10 text-center">Cargando...</div>;
+    const adPricing = getLocalAdPricing(adSpace?.price_monthly);
+    const subtotal = adPricing.finalPrice || 0;
+    const ivaAmount = formData.target_country === 'MX' ? subtotal * 0.16 : 0;
+    const totalAmount = subtotal + ivaAmount;
 
     const scopeOptions = [
         { value: 'global', icon: Globe, label: 'Global', desc: 'Todos los países' },
@@ -398,7 +418,16 @@ const CampaignCreateWizard = () => {
 
                 <div className="bg-white rounded-xl shadow-lg p-6">
                     <h2 className="text-xl font-bold mb-1">{adSpace.display_name}</h2>
-                    <p className="text-gray-500 mb-6">${adSpace.price_monthly}/mes</p>
+                    <p className="text-gray-500 mb-6">
+                        {adPricing.hasDiscount ? (
+                            <>
+                                <span className="line-through mr-2">${adPricing.basePrice}/mes</span>
+                                <span className="text-green-600 font-bold">${adPricing.finalPrice}/mes</span>
+                            </>
+                        ) : (
+                            <>${adPricing.finalPrice}/mes</>
+                        )}
+                    </p>
 
                     {/* PASO 1 */}
                     {step === 1 && (
@@ -578,17 +607,23 @@ const CampaignCreateWizard = () => {
                                 <div className="border-t pt-3 mt-3 space-y-1">
                                     <div className="flex justify-between text-sm">
                                         <span className="text-gray-600">Subtotal:</span>
-                                        <span>${adSpace.price_monthly?.toLocaleString('es-MX')} MXN</span>
+                                        <span>${subtotal.toLocaleString('es-MX')} MXN</span>
                                     </div>
+                                    {adPricing.hasDiscount && (
+                                        <div className="flex justify-between text-sm text-green-600">
+                                            <span>Promoción activa:</span>
+                                            <span>-{adPricing.discountPercent}% sobre tarifa base</span>
+                                        </div>
+                                    )}
                                     {formData.target_country === 'MX' ? (
                                         <>
                                             <div className="flex justify-between text-sm">
                                                 <span className="text-gray-600">IVA (16%):</span>
-                                                <span>${(adSpace.price_monthly * 0.16).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN</span>
+                                                <span>${ivaAmount.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN</span>
                                             </div>
                                             <div className="flex justify-between text-lg font-bold border-t pt-2">
                                                 <span>Total:</span>
-                                                <span className="text-green-600">${(adSpace.price_monthly * 1.16).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN/mes</span>
+                                                <span className="text-green-600">${totalAmount.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN/mes</span>
                                             </div>
                                         </>
                                     ) : (
@@ -599,7 +634,7 @@ const CampaignCreateWizard = () => {
                                             </div>
                                             <div className="flex justify-between text-lg font-bold border-t pt-2">
                                                 <span>Total:</span>
-                                                <span className="text-green-600">${adSpace.price_monthly?.toLocaleString('es-MX')} MXN/mes</span>
+                                                <span className="text-green-600">${totalAmount.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN/mes</span>
                                             </div>
                                         </>
                                     )}
@@ -629,11 +664,11 @@ const CampaignCreateWizard = () => {
 
                                 <button
                                     onClick={() => setPaymentMethod('oxxo')}
-                                    disabled={adSpace.price_monthly > 10000}
+                                    disabled={subtotal > 10000}
                                     className={`w-full p-3 rounded-xl border-2 text-left transition-all flex items-center gap-3 ${paymentMethod === 'oxxo'
                                         ? 'border-yellow-500 bg-yellow-50'
                                         : 'border-gray-200 hover:border-gray-300'
-                                        } ${adSpace.price_monthly > 10000 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        } ${subtotal > 10000 ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                     <div className={`p-2 rounded-lg ${paymentMethod === 'oxxo' ? 'bg-yellow-500 text-white' : 'bg-gray-100'}`}>
                                         <Store className="w-5 h-5" />
@@ -705,7 +740,7 @@ const CampaignCreateWizard = () => {
                             amount={oxxoVoucher.amount}
                             onClose={() => {
                                 setOxxoVoucher(null);
-                                navigate('/advertise/pending');
+                                navigate('/payment/oxxo-pending');
                             }}
                         />
                     </div>

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import SafetyBanner from '../SafetyBanner';
 import AppQRCode from '../common/AppQRCode';
+import { APP_LINKS, buildTrackedDownloadUrl } from '../../config/appLinks';
 
 const Footer = () => {
   const { t } = useTranslation();
@@ -279,11 +280,31 @@ const Footer = () => {
           {/* QR Code Section */}
           <div className="flex justify-center mb-8">
             <div className="bg-gray-800 rounded-2xl px-8 py-6 flex flex-col md:flex-row items-center gap-6">
-              <AppQRCode size={100} darkMode={true} />
+              <AppQRCode
+                size={100}
+                darkMode={true}
+                value={buildTrackedDownloadUrl({
+                  platform: 'generic',
+                  source: 'qr',
+                  medium: 'footer',
+                  campaign: 'footer_download',
+                  target: 'hub',
+                })}
+                label="Escanea para descargar"
+                subtitle="QR principal: Android, iPhone y PWA"
+              />
               <div className="text-center md:text-left">
                 <h4 className="text-white font-bold text-lg mb-1">{t('footer.share')}</h4>
                 <p className="text-gray-400 text-sm">{t('footer.shareDesc')}</p>
-                <p className="text-blue-400 text-xs mt-1">geobooker.com.mx</p>
+                <p className="text-blue-400 text-xs mt-1">QR primero · link de respaldo: geobooker.com.mx/download</p>
+                <div className="flex flex-wrap gap-3 mt-3 text-xs">
+                  <a href={APP_LINKS.androidStoreUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 underline underline-offset-4">
+                    Google Play
+                  </a>
+                  <a href={APP_LINKS.iosStoreUrl} target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-sky-300 underline underline-offset-4">
+                    App Store
+                  </a>
+                </div>
               </div>
             </div>
           </div>

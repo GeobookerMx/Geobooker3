@@ -34,8 +34,12 @@ export default async (request, context) => {
     let business = null;
 
     try {
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(businessId);
+        const isInt = /^\d+$/.test(businessId);
+        const queryParam = (isUuid || isInt) ? `id=eq.${businessId}` : `slug=eq.${businessId}`;
+
         // Primera tabla: business_candidates (Donde están los 260k del DENUE)
-        let res = await fetch(`${supabaseUrl}/rest/v1/business_candidates?id=eq.${businessId}&select=name,city,state,industry,description`, {
+        let res = await fetch(`${supabaseUrl}/rest/v1/business_candidates?${queryParam}&select=name,city,state,industry,description`, {
             headers: {
                 "apikey": supabaseKey,
                 "Authorization": `Bearer ${supabaseKey}`
@@ -47,7 +51,7 @@ export default async (request, context) => {
             business = data[0];
         } else {
             // Segunda tabla: businesses (Donde están los Claimed/Verified)
-            res = await fetch(`${supabaseUrl}/rest/v1/businesses?id=eq.${businessId}&select=name,city,state,industry,description`, {
+            res = await fetch(`${supabaseUrl}/rest/v1/businesses?${queryParam}&select=name,city,state,industry,description`, {
                 headers: {
                     "apikey": supabaseKey,
                     "Authorization": `Bearer ${supabaseKey}`

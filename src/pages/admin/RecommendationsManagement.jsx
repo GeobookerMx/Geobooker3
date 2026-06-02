@@ -15,6 +15,7 @@ const RecommendationsManagement = () => {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('pending'); // pending, approved, rejected, all
     const [processing, setProcessing] = useState(null);
+    const [stats, setStats] = useState({ pending: 0, approved: 0, rejected: 0, total: 0 });
 
     // Cargar recomendaciones
     const loadRecommendations = async () => {
@@ -22,7 +23,7 @@ const RecommendationsManagement = () => {
         try {
             let query = supabase
                 .from('user_recommendations')
-                .select('*')
+                .select('id, user_id, name, category, address, latitude, longitude, rating, pros, cons, photo_url, status, rejection_reason, created_at, approved_at')
                 .order('created_at', { ascending: false });
 
             if (filter !== 'all') {
@@ -31,7 +32,43 @@ const RecommendationsManagement = () => {
 
             const { data, error } = await query;
             if (error) throw error;
-            setRecommendations(data || []);
+
+            const recommendationRows = data || [];
+            const userIds = [...new Set(recommendationRows.map((row) => row.user_id).filter(Boolean))];
+            let profileMap = {};
+
+            if (userIds.length > 0) {
+                const { data: profiles, error: profilesError } = await supabase
+                    .from('user_profiles')
+                    .select('id, full_name, email')
+                    .in('id', userIds);
+
+                if (profilesError) throw profilesError;
+
+                profileMap = (profiles || []).reduce((acc, profile) => {
+                    acc[profile.id] = profile;
+                    return acc;
+                }, {});
+            }
+
+            setRecommendations(recommendationRows.map((row) => ({
+                ...row,
+                recommender: profileMap[row.user_id] || null
+            })));
+
+            const [totalResult, pendingResult, approvedResult, rejectedResult] = await Promise.all([
+                supabase.from('user_recommendations').select('id', { count: 'exact', head: true }),
+                supabase.from('user_recommendations').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+                supabase.from('user_recommendations').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
+                supabase.from('user_recommendations').select('id', { count: 'exact', head: true }).eq('status', 'rejected')
+            ]);
+
+            setStats({
+                total: totalResult.count || 0,
+                pending: pendingResult.count || 0,
+                approved: approvedResult.count || 0,
+                rejected: rejectedResult.count || 0
+            });
         } catch (err) {
             console.error('Error loading recommendations:', err);
             toast.error('Error cargando recomendaciones');
@@ -114,6 +151,25 @@ const RecommendationsManagement = () => {
                     <p className="text-gray-600">
                         Revisa y aprueba las recomendaciones de negocios hechas por usuarios
                     </p>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <p className="text-sm text-gray-500">Pendientes</p>
+                        <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
+                    </div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <p className="text-sm text-gray-500">Aprobadas</p>
+                        <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
+                    </div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <p className="text-sm text-gray-500">Rechazadas</p>
+                        <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
+                    </div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <p className="text-sm text-gray-500">Total</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                    </div>
                 </div>
 
                 {/* Filtros y Stats */}

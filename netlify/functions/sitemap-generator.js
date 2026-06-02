@@ -14,7 +14,7 @@ exports.handler = async (event, context) => {
         // Negocios
         const { data: businesses, error: businessError } = await supabase
             .from('businesses')
-            .select('id, updated_at, name')
+            .select('id, slug, updated_at, name')
             .eq('status', 'approved') // Solo negocios aprobados
             .order('updated_at', { ascending: false })
             .limit(10000);
@@ -22,7 +22,7 @@ exports.handler = async (event, context) => {
         // Novedad: Traer candidatos del DENUE para asegurar presencia masiva
         const { data: candidates, error: candidateError } = await supabase
             .from('business_candidates')
-            .select('id, updated_at')
+            .select('id, slug, updated_at')
             .order('updated_at', { ascending: false })
             .limit(30000);
 
@@ -42,6 +42,33 @@ exports.handler = async (event, context) => {
             '/enterprise', '/privacy', '/terms', '/quienes-somos',
             '/download', '/legal/ads-policy',
             '/en/advertise-in-mexico', '/en/pricing', '/en/industries'
+        ];
+
+        const categoryRoutes = [
+            '/c/restaurantes',
+            '/c/bares',
+            '/c/tiendas',
+            '/c/servicios',
+            '/c/hogar_autos',
+            '/c/salud',
+            '/c/entretenimiento',
+            '/c/educacion',
+            '/c/alojamiento',
+            '/c/inmobiliarias',
+            '/c/finanzas',
+            '/c/tecnologia',
+            '/c/eventos'
+        ];
+
+        const mexicoCityRoutes = [
+            '/ciudad/cdmx',
+            '/ciudad/guadalajara',
+            '/ciudad/monterrey',
+            '/ciudad/puebla',
+            '/ciudad/tijuana',
+            '/ciudad/merida',
+            '/ciudad/queretaro',
+            '/ciudad/leon'
         ];
 
         // Ciudades internacionales para SEO
@@ -93,16 +120,18 @@ exports.handler = async (event, context) => {
 
         // Agregar ciudades internacionales (prioridad más alta para SEO)
         cityRoutes.forEach(route => addUrl(route));
+        categoryRoutes.forEach(route => addUrl(route));
+        mexicoCityRoutes.forEach(route => addUrl(route));
 
         // Agregar Negocios Verificados
         businesses.forEach(biz => {
-            addUrl(`/business/${biz.id}`, biz.updated_at);
+            addUrl(`/business/${biz.slug || biz.id}`, biz.updated_at);
         });
 
         // Agregar Negocios del DENUE (Candidatos)
         if (candidates) {
             candidates.forEach(cand => {
-                addUrl(`/business/${cand.id}`, cand.updated_at);
+                addUrl(`/business/${cand.slug || cand.id}`, cand.updated_at);
             });
         }
 

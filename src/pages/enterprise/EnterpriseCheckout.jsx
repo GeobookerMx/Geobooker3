@@ -16,6 +16,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import toast from 'react-hot-toast';
 import SEO from '../../components/SEO';
 import { Capacitor } from '@capacitor/core';
+import { ENTERPRISE_FALLBACK_PRICING } from '../../config/enterprisePricing';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -376,65 +377,7 @@ export default function EnterpriseCheckout() {
                 setPricing(data || []);
             } catch (e) {
                 console.error('Error loading pricing:', e);
-                // Fallback pricing - PRICES ARE TOTAL (not per month)
-                // With 50% launch discount applied
-                setPricing([
-                    {
-                        code: 'city_launch',
-                        name: 'City Launch',
-                        current_price_usd: 50,
-                        regular_price_usd: 100,
-                        discount_percent: 50,
-                        cities_included: 1,
-                        countries_included: 1,
-                        duration_months: 1,
-                        description: '1 city, 1 month'
-                    },
-                    {
-                        code: 'regional',
-                        name: 'Regional Pack',
-                        current_price_usd: 250,
-                        regular_price_usd: 500,
-                        discount_percent: 50,
-                        cities_included: 5,
-                        countries_included: 2,
-                        duration_months: 3,
-                        description: 'Up to 5 cities in 2 countries, 3 months'
-                    },
-                    {
-                        code: 'country',
-                        name: 'Country Select',
-                        current_price_usd: 600,
-                        regular_price_usd: 1200,
-                        discount_percent: 50,
-                        cities_included: 12,
-                        countries_included: 1,
-                        duration_months: 3,
-                        description: 'Up to 12 cities in 1 country, 3 months'
-                    },
-                    {
-                        code: 'crossborder',
-                        name: 'Cross-Border Event',
-                        current_price_usd: 1000,
-                        regular_price_usd: 2000,
-                        discount_percent: 50,
-                        cities_included: 30,
-                        countries_included: 3,
-                        duration_months: 3,
-                        description: '2-3 countries, event/seasonal campaigns'
-                    },
-                    {
-                        code: 'global_custom',
-                        name: 'Global Custom',
-                        current_price_usd: 1600,
-                        regular_price_usd: 3200,
-                        discount_percent: 50,
-                        cities_included: 999,
-                        countries_included: 999,
-                        duration_months: 3,
-                        description: 'Multi-country or continental, custom proposal'
-                    }
-                ]);
+                setPricing(ENTERPRISE_FALLBACK_PRICING);
             }
         };
         loadPricing();
@@ -638,13 +581,6 @@ export default function EnterpriseCheckout() {
 
             if (campaignError) throw campaignError;
 
-            // 1b. Notify admin via email (async, non-blocking)
-            fetch('/.netlify/functions/notify-admin-campaign', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ campaign })
-            }).catch(err => console.warn('Admin notification failed:', err));
-
             // 2. Create Stripe checkout session
             const stripe = await stripePromise;
             if (!stripe) throw new Error('Stripe failed to load');
@@ -712,7 +648,7 @@ export default function EnterpriseCheckout() {
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 px-4 py-2 rounded-full mb-4">
                         <Zap className="w-4 h-4" />
-                        <span className="font-bold text-sm">50% LAUNCH DISCOUNT</span>
+                        <span className="font-bold text-sm">2026 LAUNCH PRICING</span>
                     </div>
                     <h1 className="text-3xl font-bold text-white mb-2">Create Your Campaign</h1>
                     <p className="text-gray-400">Complete in 4 simple steps</p>

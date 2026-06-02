@@ -12,8 +12,8 @@ const GOOGLE_MAPS_LIBRARIES = ['places'];
 // useJsApiLoader falla silenciosamente en iOS nativo — esta función lo reemplaza
 function loadGoogleMapsScript(apiKey) {
   return new Promise((resolve, reject) => {
-    // Si ya está cargado, resolver inmediatamente
-    if (window.google && window.google.maps && window.google.maps.Map) {
+    // Si ya está cargado e inicializado completamente por el callback global de index.html, resolver inmediatamente
+    if (window.google && window.google.maps && window.google.maps.Map && window.__gmReady) {
       resolve(window.google.maps);
       return;
     }
@@ -21,9 +21,9 @@ function loadGoogleMapsScript(apiKey) {
     // Verificar si el script ya está en el DOM (evitar cargas dobles)
     const existing = document.getElementById('google-maps-script');
     if (existing) {
-      // Script ya existe, esperar a que cargue
+      // Script ya existe (cargado por index.html), esperar a que complete la inicialización y el callback oficial ponga __gmReady a true
       const interval = setInterval(() => {
-        if (window.google && window.google.maps && window.google.maps.Map) {
+        if (window.google && window.google.maps && window.google.maps.Map && window.__gmReady) {
           clearInterval(interval);
           resolve(window.google.maps);
         }
@@ -35,10 +35,11 @@ function loadGoogleMapsScript(apiKey) {
       return;
     }
 
-    // Crear callback único
+    // Crear callback único si no existía el script
     const callbackName = '__gmapsCallback_' + Date.now();
     window[callbackName] = () => {
       delete window[callbackName];
+      window.__gmReady = true; // Seteamos listo
       resolve(window.google.maps);
     };
 
@@ -381,6 +382,7 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
 // Componente principal del mapa
 export const BusinessMap = memo(({
   userLocation,
+  center,
   businesses = [],
   geobookerBusinesses = [],
   denueBusinesses = [], // Added DENUE candidates explicitly
@@ -392,7 +394,7 @@ export const BusinessMap = memo(({
   zoom = 14
 }) => {
   const { t, i18n } = useTranslation();
-  const mapCenter = userLocation || defaultCenter;
+  const mapCenter = center || userLocation || defaultCenter;
   const mapRef = useRef(null);
   const userCircleRef = useRef(null);
   const [hoveredBusiness, setHoveredBusiness] = useState(null);
@@ -401,12 +403,20 @@ export const BusinessMap = memo(({
 
   // 📍 NUEVO: Estado para el centro activo del mapa
   // Evita que el mapa regrese bruscamente al usuario en cada re-render
-  const [activeCenter, setActiveCenter] = useState(userLocation || defaultCenter);
+  const [activeCenter, setActiveCenter] = useState(center || userLocation || defaultCenter);
   const prevUserLocationRef = useRef(userLocation);
   const prevSelectedBusinessRef = useRef(selectedBusiness);
 
   useEffect(() => {
-    // 1) Si la ubicación del usuario cambia por primera vez (se concede permiso o se actualiza manualmente)
+    if (center) {
+      setActiveCenter(center);
+    }
+  }, [center]);
+
+  useEffect(() => {
+    // 1) Si la ubicación del usuario cambia por primera vez (se concede permiso o se actualiza manualmente) y no hay center override
+    if (center) return;
+
     const locChanged = userLocation && (
       !prevUserLocationRef.current ||
       prevUserLocationRef.current.lat !== userLocation.lat ||
@@ -417,7 +427,7 @@ export const BusinessMap = memo(({
       setActiveCenter(userLocation);
       prevUserLocationRef.current = userLocation;
     }
-  }, [userLocation]);
+  }, [userLocation, center]);
 
   useEffect(() => {
     // 2) Si se selecciona un nuevo negocio, centrar el mapa en él de forma inteligente
@@ -429,13 +439,14 @@ export const BusinessMap = memo(({
       }
       prevSelectedBusinessRef.current = selectedBusiness;
     } else if (!selectedBusiness && prevSelectedBusinessRef.current) {
-      // Si se deselecciona, regresar la vista al usuario
-      if (userLocation) {
-        setActiveCenter(userLocation);
+      // Si se deselecciona, regresar la vista al centro o al usuario
+      const fallbackCenter = center || userLocation;
+      if (fallbackCenter) {
+        setActiveCenter(fallbackCenter);
       }
       prevSelectedBusinessRef.current = null;
     }
-  }, [selectedBusiness, userLocation]);
+  }, [selectedBusiness, userLocation, center]);
 
   useEffect(() => {
     // ✅ CAPTURE-PHASE FOCUS INTERCEPTOR FOR IOS/WKWEBVIEW

@@ -90,6 +90,17 @@ const UnifiedCRM = () => {
     // Company Types for filter
     const [companyTypes, setCompanyTypes] = useState([]);
 
+    // 🌟 NUEVO: Drawer de detalle de contacto
+    const [drawerContact, setDrawerContact] = useState(null);
+
+    // 🌟 NUEVO: Modal preview de email
+    const [showEmailPreview, setShowEmailPreview] = useState(false);
+    const [emailPreviewHtml, setEmailPreviewHtml] = useState('');
+
+    // 🌟 NUEVO: Log en vivo de campaña
+    const [campaignLog, setCampaignLog] = useState([]);
+    const addLog = (msg, type = 'info') => setCampaignLog(prev => [...prev.slice(-49), { msg, type, t: new Date().toLocaleTimeString() }]);
+
     useEffect(() => {
         loadInitialData();
     }, []);
@@ -640,6 +651,8 @@ const UnifiedCRM = () => {
 
         setIsSending(true);
         setSendProgress(0);
+        setCampaignLog([]);
+        addLog('🚀 Iniciando campaña...', 'info');
         const toastId = toast.loading('Enviando campaña...');
 
         try {
@@ -695,6 +708,7 @@ const UnifiedCRM = () => {
                     }
 
                     console.log(`✅ Email enviado a ${item.contact_email} (ID: ${result.emailId})`);
+                    addLog(`✅ ${item.contact_email} — ${item.company_name || ''}`, 'success');
 
                     // 1. Mark as sent in marketing_contacts (so it's not selected again)
                     await supabase.from('marketing_contacts').update({
@@ -717,6 +731,7 @@ const UnifiedCRM = () => {
                     successCount++;
                 } catch (err) {
                     console.error('Send error:', err);
+                    addLog(`❌ ${item.contact_email} — ${err.message}`, 'error');
                     failCount++;
                 }
 
@@ -726,6 +741,7 @@ const UnifiedCRM = () => {
             }
 
             toast.success(`Campaña finalizada: ${successCount} enviados, ${failCount} fallidos`, { id: toastId });
+            addLog(`🏁 Campaña finalizada: ${successCount} ✅ ${failCount} ❌`, 'info');
             setEmailQueue([]);
             loadHistory();
         } catch (err) {
@@ -826,6 +842,19 @@ const UnifiedCRM = () => {
         toast.success('Abriendo WhatsApp Web para prueba...');
     };
 
+
+    // ============ EMAIL PREVIEW ============
+    const openEmailPreview = () => {
+        if (!selectedTemplate) { toast.error('Selecciona una plantilla primero'); return; }
+        const sample = { empresa: 'Empresa Ejemplo S.A.', nombre: 'Juan Contacto', tier: 'AAA' };
+        let html = selectedTemplate.html_content;
+        Object.entries(sample).forEach(([k, v]) => {
+            html = html.replace(new RegExp(`{{${k}}}`, 'g'), v);
+        });
+        const sig = selectedSender?.signature || '';
+        setEmailPreviewHtml(`${html}${sig}`);
+        setShowEmailPreview(true);
+    };
 
     // ============ TABS CONFIG ============
     const tabs = [
@@ -1056,7 +1085,11 @@ const UnifiedCRM = () => {
                                             </tr>
                                         ) : (
                                             filteredContacts.slice(0, 100).map(contact => (
-                                                <tr key={contact.id} className="hover:bg-gray-50">
+                                                <tr
+                                                    key={contact.id}
+                                                    className="hover:bg-blue-50 cursor-pointer transition-colors"
+                                                    onClick={() => setDrawerContact(contact)}
+                                                >
                                                     <td className="p-3">
                                                         <button onClick={() => toggleContact(contact.id)}>
                                                             {selectedContacts.has(contact.id) ? (
@@ -1295,6 +1328,16 @@ const UnifiedCRM = () => {
                                                 <option value="AA">Solo AA</option>
                                                 <option value="A">Solo A</option>
                                             </select>
+                                            {/* 🌟 Botón Preview Email */}
+                                            {selectedTemplate && (
+                                                <button
+                                                    onClick={openEmailPreview}
+                                                    className="flex items-center gap-2 px-4 py-2.5 bg-white/20 text-white border border-white/30 rounded-lg font-medium hover:bg-white/30 transition"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                    Vista previa
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={async () => {
                                                     const toastId = toast.loading('Generando cola de emails...');
@@ -1337,7 +1380,42 @@ const UnifiedCRM = () => {
                                     </div>
 
                                     {/* Email Queue Display */}
-                                    {emailQueue.length > 0 && (
+                                    {/* 🌟 Live Campaign Log */}
+                                    {campaignLog.length > 0 && (
+                                        <div className="mt-4 bg-gray-900 rounded-xl p-4 max-h-48 overflow-y-auto">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-xs font-bold text-gray-300 uppercase tracking-wider">📡 Log en vivo</span>
+                                                {isSending && <span className="flex gap-1"><span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-ping"></span></span>}
+                                            </div>
+                                            <div className="space-y-0.5 font-mono text-xs">
+                                                {campaignLog.map((entry, i) => (
+                                                    <div key={i} className={`flex gap-2 ${
+                                                        entry.type === 'success' ? 'text-green-400' :
+                                                        entry.type === 'error' ? 'text-red-400' : 'text-blue-300'
+                                                    }`}>
+                                                        <span className="text-gray-500 flex-shrink-0">[{entry.t}]</span>
+                                                        <span>{entry.msg}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Barra de progreso mejorada */}
+                                    {isSending && (
+                                        <div className="mt-4">
+                                            <div className="flex justify-between text-xs text-white/80 mb-1">
+                                                <span>Progreso de envío</span>
+                                                <span>{sendProgress}%</span>
+                                            </div>
+                                            <div className="w-full bg-white/20 rounded-full h-2">
+                                                <div
+                                                    className="bg-white h-2 rounded-full transition-all duration-300"
+                                                    style={{ width: `${sendProgress}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                         <div className="mt-4 bg-white/10 rounded-lg p-4">
                                             <div className="flex justify-between items-center mb-2">
                                                 <span className="font-medium">📋 Cola actual: {emailQueue.length} emails</span>
@@ -1798,6 +1876,256 @@ const UnifiedCRM = () => {
                     -ms-overflow-style: none;
                     scrollbar-width: none;
                 }
+            `}</style>
+
+            {/* ====================================================
+                🌟 DRAWER: Detalle de Contacto
+                Panel lateral que aparece al hacer click en una fila
+            ==================================================== */}
+            {drawerContact && (
+                <div className="fixed inset-0 z-50 flex">
+                    {/* Overlay */}
+                    <div
+                        className="flex-1 bg-black/40 backdrop-blur-sm"
+                        onClick={() => setDrawerContact(null)}
+                    />
+                    {/* Panel */}
+                    <div className="w-full max-w-md bg-white h-full overflow-y-auto shadow-2xl flex flex-col animate-slide-in-right">
+                        {/* Header del drawer */}
+                        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-5 flex items-start justify-between flex-shrink-0">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
+                                        drawerContact.tier === 'AAA' ? 'bg-yellow-400 text-yellow-900 border-yellow-300' :
+                                        drawerContact.tier === 'AA'  ? 'bg-purple-300 text-purple-900 border-purple-200' :
+                                        drawerContact.tier === 'A'   ? 'bg-blue-300 text-blue-900 border-blue-200' :
+                                        'bg-gray-200 text-gray-700 border-gray-200'
+                                    }`}>{drawerContact.tier}</span>
+                                    {drawerContact.email_status === 'sent' && (
+                                        <span className="text-xs bg-green-400/20 text-green-100 px-2 py-0.5 rounded-full">📧 Email enviado</span>
+                                    )}
+                                </div>
+                                <h2 className="text-lg font-bold truncate">{drawerContact.company_name || 'Sin empresa'}</h2>
+                                <p className="text-blue-200 text-sm">{drawerContact.contact_name || 'Sin contacto'}</p>
+                            </div>
+                            <button
+                                onClick={() => setDrawerContact(null)}
+                                className="p-2 hover:bg-white/20 rounded-lg ml-2 flex-shrink-0"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Cuerpo del drawer */}
+                        <div className="flex-1 p-5 space-y-4">
+                            {/* Información de contacto */}
+                            <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">📋 Datos de Contacto</h3>
+                                {drawerContact.email && (
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <Mail className="w-4 h-4 text-blue-600" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-xs text-gray-400">Email</p>
+                                            <a href={`mailto:${drawerContact.email}`}
+                                               className="text-sm font-medium text-blue-600 hover:underline truncate block">
+                                                {drawerContact.email}
+                                            </a>
+                                        </div>
+                                    </div>
+                                )}
+                                {drawerContact.phone && (
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <MessageCircle className="w-4 h-4 text-green-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-400">Teléfono</p>
+                                            <a href={`https://wa.me/${drawerContact.phone?.replace(/\D/g,'')}`}
+                                               target="_blank" rel="noopener noreferrer"
+                                               className="text-sm font-medium text-green-600 hover:underline">
+                                                {drawerContact.phone}
+                                            </a>
+                                        </div>
+                                    </div>
+                                )}
+                                {drawerContact.city && (
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <Building2 className="w-4 h-4 text-orange-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-400">Ciudad / Estado</p>
+                                            <p className="text-sm font-medium text-gray-800">
+                                                {[drawerContact.city, drawerContact.state].filter(Boolean).join(', ')}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                                {drawerContact.industry && (
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <BarChart3 className="w-4 h-4 text-purple-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-400">Giro / Industria</p>
+                                            <p className="text-sm font-medium text-gray-800">{drawerContact.industry}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Estado de campañas */}
+                            <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">📊 Estado de Campañas</h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className={`p-3 rounded-lg text-center ${drawerContact.email_status === 'sent' ? 'bg-green-50 border border-green-200' : 'bg-gray-100'}`}>
+                                        <p className="text-2xl mb-0.5">{drawerContact.email_status === 'sent' ? '✅' : '⏳'}</p>
+                                        <p className="text-xs font-semibold text-gray-700">Email</p>
+                                        <p className="text-xs text-gray-400">{drawerContact.email_status === 'sent' ? 'Enviado' : 'Pendiente'}</p>
+                                        {drawerContact.email_sent_at && (
+                                            <p className="text-xs text-gray-400 mt-1">{new Date(drawerContact.email_sent_at).toLocaleDateString()}</p>
+                                        )}
+                                    </div>
+                                    <div className={`p-3 rounded-lg text-center ${drawerContact.whatsapp_status === 'sent' ? 'bg-green-50 border border-green-200' : 'bg-gray-100'}`}>
+                                        <p className="text-2xl mb-0.5">{drawerContact.whatsapp_status === 'sent' ? '✅' : '⏳'}</p>
+                                        <p className="text-xs font-semibold text-gray-700">WhatsApp</p>
+                                        <p className="text-xs text-gray-400">{drawerContact.whatsapp_status === 'sent' ? 'Enviado' : 'Pendiente'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Metadatos */}
+                            <div className="bg-gray-50 rounded-xl p-4">
+                                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">🔍 Metadatos</h3>
+                                <div className="space-y-1">
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-400">Fuente</span>
+                                        <span className="font-medium text-gray-700">{drawerContact.source || 'CSV'}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-400">Creado</span>
+                                        <span className="font-medium text-gray-700">
+                                            {drawerContact.created_at ? new Date(drawerContact.created_at).toLocaleDateString() : '—'}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-400">ID</span>
+                                        <span className="font-mono text-gray-400 text-[10px]">{drawerContact.id?.slice(0,8)}…</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer del drawer — acciones rápidas */}
+                        <div className="p-4 border-t bg-white flex-shrink-0 space-y-2">
+                            {drawerContact.email && (
+                                <a
+                                    href={`mailto:${drawerContact.email}`}
+                                    className="flex items-center justify-center gap-2 w-full py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition"
+                                >
+                                    <Mail className="w-4 h-4" />
+                                    Enviar email directo
+                                </a>
+                            )}
+                            {drawerContact.phone && (
+                                <a
+                                    href={`https://wa.me/${drawerContact.phone?.replace(/\D/g,'')}`}
+                                    target="_blank" rel="noopener noreferrer"
+                                    className="flex items-center justify-center gap-2 w-full py-2.5 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 transition"
+                                >
+                                    <MessageCircle className="w-4 h-4" />
+                                    Abrir WhatsApp
+                                </a>
+                            )}
+                            <button
+                                onClick={() => {
+                                    toggleContact(drawerContact.id);
+                                    setDrawerContact(null);
+                                }}
+                                className="w-full py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition text-sm"
+                            >
+                                {selectedContacts.has(drawerContact.id) ? '☑ Deseleccionar' : '☐ Seleccionar para campaña'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ====================================================
+                🌟 MODAL: Vista Previa de Email
+            ==================================================== */}
+            {showEmailPreview && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-4 border-b bg-gray-50 flex-shrink-0">
+                            <div>
+                                <h2 className="font-bold text-gray-900">👁 Vista Previa del Email</h2>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                    Plantilla: <strong>{selectedTemplate?.name}</strong> · Remitente: {selectedSender?.name || '—'}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowEmailPreview(false)}
+                                className="p-2 hover:bg-gray-200 rounded-lg"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        {/* Subheader — asunto del email */}
+                        <div className="px-4 py-2 bg-blue-50 border-b flex-shrink-0">
+                            <p className="text-xs text-gray-500">Asunto:</p>
+                            <p className="text-sm font-semibold text-gray-800">{selectedTemplate?.subject}</p>
+                        </div>
+                        {/* Preview iframe */}
+                        <div className="flex-1 overflow-auto p-4">
+                            <div className="border rounded-xl overflow-hidden bg-white min-h-[300px]">
+                                <iframe
+                                    srcDoc={emailPreviewHtml}
+                                    title="Email Preview"
+                                    className="w-full"
+                                    style={{ minHeight: '400px', border: 'none' }}
+                                    sandbox="allow-same-origin"
+                                />
+                            </div>
+                            <p className="text-xs text-gray-400 mt-2 text-center">
+                                ⚠️ Vista de prueba con datos de ejemplo. Los emails reales usarán los datos de cada contacto.
+                            </p>
+                        </div>
+                        {/* Footer */}
+                        <div className="p-4 border-t bg-gray-50 flex justify-between items-center flex-shrink-0">
+                            <p className="text-xs text-gray-500">Cola actual: <strong>{emailQueue.length}</strong> emails listos</p>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setShowEmailPreview(false)}
+                                    className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition"
+                                >
+                                    Cerrar
+                                </button>
+                                <button
+                                    onClick={() => { setShowEmailPreview(false); sendCampaign(); }}
+                                    disabled={emailQueue.length === 0 || isSending}
+                                    className="px-5 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    <Send className="w-4 h-4" />
+                                    Enviar {emailQueue.length} emails
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <style>{`
+                .scrollbar-hide::-webkit-scrollbar { display: none; }
+                .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+                @keyframes slide-in-right {
+                    from { transform: translateX(100%); }
+                    to { transform: translateX(0); }
+                }
+                .animate-slide-in-right { animation: slide-in-right 0.25s ease-out; }
             `}</style>
         </div >
     );

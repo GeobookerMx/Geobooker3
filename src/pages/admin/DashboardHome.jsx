@@ -23,7 +23,8 @@ import {
   Phone,
   Navigation,
   Share2,
-  Heart
+  Heart,
+  Shield
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -31,8 +32,11 @@ import {
   getTopSearches,
   getDeviceBreakdown
 } from '../../services/analyticsService';
+import { useAdminAuditLog } from '../../hooks/useAdminAuditLog';
 
 export default function DashboardHome() {
+  const { fetchAuditLogs } = useAdminAuditLog();
+  const [auditLogs, setAuditLogs] = useState([]);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalBusinesses: 0,
@@ -258,6 +262,14 @@ export default function DashboardHome() {
         }
       } catch (intentErr) {
         console.warn('Error loading intent metrics:', intentErr);
+      }
+
+      // Cargar logs de auditoría admin
+      try {
+        const logs = await fetchAuditLogs(5);
+        setAuditLogs(logs || []);
+      } catch (auditErr) {
+        console.warn('Error loading audit logs in dashboard:', auditErr);
       }
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -655,6 +667,88 @@ export default function DashboardHome() {
         </div>
       </div>
 
+      {/* Sección de Auditoría y Seguridad */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-md border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <Shield className="w-5 h-5 text-indigo-600" />
+              Auditoría de Administradores (Últimas Acciones)
+            </h2>
+            <Link
+              to="/admin/security"
+              className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+            >
+              Ver panel de seguridad
+              <ArrowUpRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="space-y-3">
+            {auditLogs.length === 0 ? (
+              <p className="text-center text-gray-500 py-8">No hay registros de auditoría recientes (las migraciones de base de datos están pendientes)</p>
+            ) : (
+              auditLogs.map((log) => (
+                <div
+                  key={log.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-gray-900 text-sm truncate">{log.admin_email}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${getActionColor(log.action)}`}>
+                        {getActionLabel(log.action)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1 truncate">
+                      {log.target_type && `${log.target_type}: `}
+                      <span className="font-medium text-gray-700">{log.target_name || log.target_id || 'N/A'}</span>
+                      {log.details && Object.keys(log.details).length > 0 && ` · ${JSON.stringify(log.details)}`}
+                    </p>
+                  </div>
+                  <div className="text-xs text-gray-400 font-mono ml-4 flex-shrink-0">
+                    {new Date(log.created_at).toLocaleString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit', day: 'numeric', month: 'short' })}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Panel de Enlaces de Seguridad */}
+        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 flex flex-col justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              🛡️ Estado de Seguridad
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Control de accesos y monitorización de base de datos.
+            </p>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm bg-green-50 p-2.5 rounded-lg border border-green-200">
+                <span className="font-medium text-green-800">RLS (Row Level Security)</span>
+                <span className="bg-green-200 text-green-900 text-xs px-2 py-0.5 rounded-full font-bold">Activo</span>
+              </div>
+              <div className="flex items-center justify-between text-sm bg-blue-50 p-2.5 rounded-lg border border-blue-200">
+                <span className="font-medium text-blue-800">Conexión Supabase SSL</span>
+                <span className="bg-blue-200 text-blue-900 text-xs px-2 py-0.5 rounded-full font-bold">Forzado</span>
+              </div>
+              <div className="flex items-center justify-between text-sm bg-purple-50 p-2.5 rounded-lg border border-purple-200">
+                <span className="font-medium text-purple-800">Autenticación Admin</span>
+                <span className="bg-purple-200 text-purple-900 text-xs px-2 py-0.5 rounded-full font-bold">Vía RLS</span>
+              </div>
+            </div>
+          </div>
+          <Link
+            to="/admin/security"
+            className="mt-6 flex items-center justify-center gap-2 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition w-full text-center"
+          >
+            <Shield className="w-4 h-4" />
+            Configuración de Seguridad
+          </Link>
+        </div>
+      </div>
+
       {/* Stats Summary - métricas REALES del mes */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg p-6 text-white">
         <h3 className="text-xl font-bold mb-4">📊 Resumen del Mes (métricas reales)</h3>
@@ -744,3 +838,28 @@ function QuickLink({ to, icon: Icon, label, color }) {
     </Link>
   );
 }
+
+// Helpers for Audit Log Action formatting
+const getActionLabel = (action) => {
+  const actions = {
+    approve_business: 'Aprobó negocio',
+    reject_business: 'Rechazó negocio',
+    edit_business: 'Modificó negocio',
+    create_ad: 'Creó anuncio',
+    delete_user: 'Eliminó usuario',
+    import_contacts: 'Importó contactos',
+    send_campaign: 'Lanzó campaña CRM',
+    save_settings: 'Cambió configuración',
+  };
+  return actions[action] || action;
+};
+
+const getActionColor = (action) => {
+  if (action.includes('approve') || action.includes('create') || action.includes('send')) {
+    return 'bg-green-100 text-green-800';
+  }
+  if (action.includes('reject') || action.includes('delete')) {
+    return 'bg-red-100 text-red-800';
+  }
+  return 'bg-blue-100 text-blue-800';
+};

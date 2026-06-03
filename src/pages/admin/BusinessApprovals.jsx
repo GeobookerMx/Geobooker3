@@ -3,8 +3,10 @@ import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { Check, X, Eye, MapPin, Phone, Mail, Calendar, User, Building2, FileText, Briefcase, RotateCcw } from 'lucide-react';
 import { sendBusinessApprovedEmail, sendBusinessRejectedEmail } from '../../services/notificationService';
+import { useAdminAuditLog } from '../../hooks/useAdminAuditLog';
 
 const BusinessApprovals = () => {
+    const { logAction } = useAdminAuditLog();
     const [businesses, setBusinesses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('pending'); // 'all', 'pending', 'approved', 'rejected'
@@ -59,6 +61,9 @@ const BusinessApprovals = () => {
                 throw error;
             }
 
+            // Registrar en logs de auditoría
+            await logAction('approve_business', 'business', businessId, business?.name);
+
             // Enviar notificación por correo
             if (business?.owner?.email) {
                 await sendBusinessApprovedEmail(
@@ -89,6 +94,9 @@ const BusinessApprovals = () => {
                 .eq('id', businessId);
 
             if (error) throw error;
+
+            // Registrar en logs de auditoría
+            await logAction('reject_business', 'business', businessId, business?.name, { reason });
 
             // Enviar notificación por correo
             if (business?.owner?.email) {
@@ -121,6 +129,10 @@ const BusinessApprovals = () => {
                 .eq('id', businessId);
 
             if (error) throw error;
+
+            // Registrar en logs de auditoría
+            const business = businesses.find(b => b.id === businessId);
+            await logAction('re-evaluate_business', 'business', businessId, business?.name);
 
             toast.success('Negocio movido a Pendiente ✅', { id: loadingToast });
             fetchBusinesses();

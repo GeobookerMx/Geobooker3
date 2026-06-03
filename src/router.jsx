@@ -36,6 +36,7 @@ const ReferralManagement = lazy(() => import("./pages/admin/ReferralManagement.j
 const BulkImport = lazy(() => import("./pages/admin/BulkImport.jsx"));
 const SmartCampaignLauncher = lazy(() => import("./pages/admin/SmartCampaignLauncher.jsx"));
 const UnifiedCRM = lazy(() => import("./pages/admin/UnifiedCRM.jsx"));
+const AdminSecurity = lazy(() => import("./pages/admin/Security.jsx"));
 const ApifyScraper = lazy(() => import("./pages/admin/ApifyScraper.jsx"));
 const LeadsHistory = lazy(() => import("./pages/admin/LeadsHistory.jsx"));
 const FiscalManagement = lazy(() => import("./pages/admin/FiscalManagement.jsx"));
@@ -210,6 +211,7 @@ export default function AppRouter() {
           <Route path="referrals" element={<ReferralManagement />} />
           <Route path="import" element={<BulkImport />} />
           <Route path="crm" element={<UnifiedCRM />} />
+          <Route path="security" element={<AdminSecurity />} />
           <Route path="campaigns" element={<Navigate to="/admin/crm" replace />} />
           <Route path="marketing" element={<Navigate to="/admin/crm" replace />} />
           <Route path="smart-campaigns" element={<SmartCampaignLauncher />} />

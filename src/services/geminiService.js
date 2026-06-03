@@ -76,7 +76,7 @@ const SYSTEM_CONTEXT = `Eres GeoBot, el asistente virtual oficial de Geobooker. 
 
 ## 🏪 RECLAMO DE NEGOCIOS (GRATUITO)
 *   Muchos negocios ya están listados (importados de fuentes oficiales como DENUE/INEGI). El dueño puede **reclamar su negocio gratis**:
-    *   Debe dar clic en "Reclamar negocio" en la app o ir a `/claim`.
+    *   Debe dar clic en "Reclamar negocio" en la app o ir a '/claim'.
     *   Sube una prueba de propiedad (ej. foto física de su local). Tras la revisión, se le otorga una insignia de **Verificado** verde, permitiéndole subir fotos, horarios y ver estadísticas.
 
 ## 💎 PLANES Y PRECIOS PARA NEGOCIOS

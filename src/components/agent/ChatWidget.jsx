@@ -2,13 +2,16 @@
 /**
  * Widget de chat flotante con asistente AI de Geobooker
  * Usa Google Gemini para respuestas inteligentes
+ * FIX PWA: usa Link de react-router para evitar conflictos de minificación en producción
  */
 import React, { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { MessageCircle, X, Send, Loader2, Bot, User, Sparkles } from 'lucide-react';
-import { sendMessageToGemini, QUICK_REPLIES } from '../../services/geminiService';
+import { sendMessageToGemini } from '../../services/geminiService';
 import { useTranslation } from 'react-i18next';
 
-export default function ChatWidget() {
+
+function ChatWidget() {
     const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([]);
@@ -236,24 +239,24 @@ export default function ChatWidget() {
 
                     {/* ⚡ Botones de Acción Directa */}
                     <div className="px-3 pt-2 pb-1 bg-white border-t border-gray-100 flex gap-2 overflow-x-auto flex-shrink-0">
-                        <a
-                            href="/businesses"
+                        <Link
+                            to="/"
                             className="flex-shrink-0 flex items-center gap-1.5 text-xs bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-full hover:bg-blue-100 transition-colors font-medium whitespace-nowrap"
                         >
                             📍 Buscar negocios
-                        </a>
-                        <a
-                            href="/claim"
+                        </Link>
+                        <Link
+                            to="/claim"
                             className="flex-shrink-0 flex items-center gap-1.5 text-xs bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-full hover:bg-amber-100 transition-colors font-medium whitespace-nowrap"
                         >
                             🏪 Reclamar negocio
-                        </a>
-                        <a
-                            href="/advertise"
+                        </Link>
+                        <Link
+                            to="/advertise"
                             className="flex-shrink-0 flex items-center gap-1.5 text-xs bg-purple-50 text-purple-700 border border-purple-200 px-3 py-1.5 rounded-full hover:bg-purple-100 transition-colors font-medium whitespace-nowrap"
                         >
                             📣 Publicitar
-                        </a>
+                        </Link>
                     </div>
 
                     {/* Input */}
@@ -288,5 +291,34 @@ export default function ChatWidget() {
                 </div>
             )}
         </>
+    );
+}
+
+// ErrorBoundary local para ChatWidget — si el chat falla, NO tumba la app completa
+class ChatWidgetErrorBoundary extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false };
+    }
+    static getDerivedStateFromError() {
+        return { hasError: true };
+    }
+    componentDidCatch(error) {
+        console.warn('[ChatWidget] Error atrapado por boundary local:', error?.message);
+    }
+    render() {
+        if (this.state.hasError) {
+            // Silencioso: el chat simplemente desaparece si hay un error interno
+            return null;
+        }
+        return this.props.children;
+    }
+}
+
+export default function ChatWidgetWithBoundary() {
+    return (
+        <ChatWidgetErrorBoundary>
+            <ChatWidget />
+        </ChatWidgetErrorBoundary>
     );
 }

@@ -3,7 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { GoogleMap, useJsApiLoader, MarkerF } from '@react-google-maps/api';
+import { GoogleMap, MarkerF } from '@react-google-maps/api';
+import { useSharedGoogleMaps } from '../hooks/useSharedGoogleMaps';
 import { GOOGLE_MAPS_API_KEY } from '../config/supabase';
 
 const MAPS_LIBRARIES = ['places'];
@@ -27,10 +28,7 @@ const BusinessEditPage = () => {
     const { user } = useAuth();
     const mapRef = useRef(null);
 
-    const { isLoaded } = useJsApiLoader({
-        googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-        libraries: MAPS_LIBRARIES,
-    });
+    const { isLoaded } = useSharedGoogleMaps();
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);

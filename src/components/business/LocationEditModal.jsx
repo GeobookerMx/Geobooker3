@@ -7,7 +7,8 @@
  */
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { X, MapPin, AlertCircle, Check, Navigation } from 'lucide-react';
-import { GoogleMap, MarkerF, useJsApiLoader } from '@react-google-maps/api';
+import { GoogleMap, MarkerF } from '@react-google-maps/api';
+import { useSharedGoogleMaps } from '../../hooks/useSharedGoogleMaps';
 import { supabase } from '../../lib/supabase';
 import { GOOGLE_MAPS_API_KEY } from '../../config/supabase';
 import toast from 'react-hot-toast';
@@ -35,10 +36,7 @@ export default function LocationEditModal({
     const [mapLoaded, setMapLoaded] = useState(false);
     const mapRef = useRef(null);
 
-    const { isLoaded } = useJsApiLoader({
-        googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-        libraries: ['places'],
-    });
+    const { isLoaded } = useSharedGoogleMaps();
 
     // Check if user can change location
     useEffect(() => {

@@ -3,7 +3,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { createBusiness } from "../services/businessService";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
+import { GoogleMap, MarkerF } from "@react-google-maps/api";
+import { useSharedGoogleMaps } from "../hooks/useSharedGoogleMaps";
 
 const MAPS_LIBRARIES = ['places'];
 import {
@@ -119,10 +120,7 @@ export default function BusinessFormPage() {
   const navigate = useNavigate();
   const mapRef = useRef(null);
 
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    libraries: MAPS_LIBRARIES,
-  });
+  const { isLoaded } = useSharedGoogleMaps();
 
   // Estado para el modal de upgrade
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);

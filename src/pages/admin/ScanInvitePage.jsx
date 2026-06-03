@@ -7,7 +7,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { GOOGLE_MAPS_API_KEY } from '../../config/supabase';
 import { toast } from 'react-hot-toast';
-import { useJsApiLoader } from '@react-google-maps/api';
+import { useSharedGoogleMaps } from '../../hooks/useSharedGoogleMaps';
 import {
     Search, MapPin, Phone, Mail, Globe, ExternalLink,
     Play, Pause, CheckCircle, XCircle, MessageCircle,
@@ -20,10 +20,7 @@ const libraries = ['places'];
 
 const ScanInvitePage = () => {
     // Load Google Maps API
-    const { isLoaded: googleMapsLoaded } = useJsApiLoader({
-        googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-        libraries: libraries,
-    });
+    const { isLoaded: googleMapsLoaded } = useSharedGoogleMaps();
 
     // Estados
     const [scanning, setScanning] = useState(false);

@@ -6,7 +6,8 @@ import { X, Star, MapPin, Camera, Send, AlertCircle, Navigation } from 'lucide-r
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
-import { GoogleMap, MarkerF, useJsApiLoader } from '@react-google-maps/api';
+import { GoogleMap, MarkerF } from '@react-google-maps/api';
+import { useSharedGoogleMaps } from '../../hooks/useSharedGoogleMaps';
 import { requestDeviceLocation } from '../../services/deviceLocationService';
 import { GOOGLE_MAPS_API_KEY } from '../../config/supabase';
 
@@ -50,10 +51,7 @@ const RecommendationForm = ({ isOpen, onClose, userLocation, onSuccess }) => {
   const [mapLoaded, setMapLoaded] = useState(false);
   const mapRef = useRef(null);
 
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    libraries: ['places'],
-  });
+  const { isLoaded } = useSharedGoogleMaps();
 
   const mapCenter = {
     lat: location.lat || userLocation?.lat || 19.4326,

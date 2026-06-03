@@ -494,23 +494,30 @@ export async function flushEventQueue() {
  * Con cola offline automática si no hay red
  */
 async function trackIntentEvent(eventName, businessId, businessName, extra = {}) {
+    // Validar si businessId es un UUID válido.
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(businessId);
+    const validBusinessId = isUuid ? businessId : null;
+
     const eventData = {
         event_name: eventName,
-        business_id: businessId,
-        business_name: businessName || null,
-        business_category: extra.category || null,
+        business_id: validBusinessId,
         device_id: getOrCreateDeviceId(),
         session_id: getSessionId(),
         user_id: (await supabase.auth.getUser())?.data?.user?.id || null,
-        source: extra.source || 'business_profile',
         platform: extra.platform || 'web',
-        country: localStorage.getItem('userCountry') || null,
-        country_code: localStorage.getItem('userCountryCode') || null,
         city: localStorage.getItem('userCity') || null,
-        device_type: getDeviceType(),
-        browser: getBrowser(),
-        os: getOS(),
-        metadata: extra.metadata || {}
+        metadata: {
+            business_name: businessName || null,
+            business_category: extra.category || null,
+            source: extra.source || 'business_profile',
+            country: localStorage.getItem('userCountry') || null,
+            country_code: localStorage.getItem('userCountryCode') || null,
+            device_type: getDeviceType(),
+            browser: getBrowser(),
+            os: getOS(),
+            original_business_id: businessId || null,
+            ...(extra.metadata || {})
+        }
     };
 
     // GA4 tracking (dual)

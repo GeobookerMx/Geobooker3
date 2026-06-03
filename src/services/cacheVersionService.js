@@ -1,6 +1,6 @@
 // src/services/cacheVersionService.js
 
-const APP_VERSION = '1.3.0'; // Incrementa esto para forzar limpieza de caché
+const APP_VERSION = '1.3.1'; // Incrementa esto para forzar limpieza de caché
 const VERSION_KEY = 'gb_app_version';
 const DB_NAMES = ['business-cache', 'google-places-cache'];
 
@@ -60,8 +60,8 @@ export const checkAppVersion = async () => {
             localStorage.setItem(VERSION_KEY, APP_VERSION);
             console.log('✨ Caché purgado con éxito.');
 
-            // Opcional: Recargar la página si es crítico
-            // window.location.reload();
+            // Recargar la página para cargar el nuevo bundle de producción
+            window.location.reload();
         } else {
             console.log(`✅ App version ${APP_VERSION} está al día.`);
         }

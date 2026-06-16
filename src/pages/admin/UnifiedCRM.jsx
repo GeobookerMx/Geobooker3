@@ -96,6 +96,7 @@ const UnifiedCRM = () => {
     // 🌟 NUEVO: Modal preview de email
     const [showEmailPreview, setShowEmailPreview] = useState(false);
     const [emailPreviewHtml, setEmailPreviewHtml] = useState('');
+    const [queueStats, setQueueStats] = useState({ prepared: 0, pending: 0, sentToday: 0 });
 
     // 🌟 NUEVO: Log en vivo de campaña
     const [campaignLog, setCampaignLog] = useState([]);
@@ -111,8 +112,35 @@ const UnifiedCRM = () => {
             loadTemplates(),
             loadStats(),
             loadHistory(),
-            loadSettings()
+            loadSettings(),
+            loadQueueStats()
         ]);
+    };
+
+    const loadQueueStats = async () => {
+        try {
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const [{ count: pendingCount }, { count: sentTodayCount }] = await Promise.all([
+                supabase
+                    .from('email_queue')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'pending'),
+                supabase
+                    .from('campaign_history')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('campaign_type', 'email')
+                    .gte('sent_at', `${todayStr}T00:00:00`)
+                    .lte('sent_at', `${todayStr}T23:59:59`)
+            ]);
+
+            setQueueStats(prev => ({
+                ...prev,
+                pending: pendingCount || 0,
+                sentToday: sentTodayCount || 0
+            }));
+        } catch (err) {
+            console.error('Error loading queue stats:', err);
+        }
     };
 
     const loadSettings = async () => {
@@ -469,36 +497,63 @@ const UnifiedCRM = () => {
 
         try {
             if (campaignType === 'email') {
-                let query = supabase
-                    .from('marketing_contacts')
-                    .select('id, contact_name, company_name, email, tier')
-                    .is('email_sent_at', null)
-                    .neq('email', null)
-                    .neq('email', '')
-                    .order('tier', { ascending: true }) // Prioridad a AAA, AA
-                    .limit(dailyLimit);
+                const response = await fetch('/.netlify/functions/generate-email-queue', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        limit: dailyLimit,
+                        tier: emailSearchTier === 'all' ? null : emailSearchTier
+                    })
+                });
 
-                if (emailSearchTier !== 'all') {
-                    query = query.eq('tier', emailSearchTier);
+                const result = await response.json();
+                if (!response.ok || result.success === false) {
+                    throw new Error(result.error || 'No se pudo preparar la cola');
                 }
 
-                const { data, error } = await query;
+                const { data: queueRows, error: queueError } = await supabase
+                    .from('email_queue')
+                    .select(`
+                        id,
+                        contact_id,
+                        email_round,
+                        priority,
+                        marketing_contacts!inner (
+                            contact_name,
+                            company_name,
+                            email,
+                            tier
+                        )
+                    `)
+                    .eq('status', 'pending')
+                    .order('priority', { ascending: false })
+                    .order('email_round', { ascending: true })
+                    .order('created_at', { ascending: true })
+                    .limit(dailyLimit);
 
-                if (error) throw error;
-                
-                // Mapear al formato que usa la cola
-                const mappedQueue = (data || []).map(row => ({
-                    contact_id: row.id,
-                    contact_name: row.contact_name,
-                    company_name: row.company_name,
-                    contact_email: row.email,
-                    contact_tier: row.tier
+                if (queueError) throw queueError;
+
+                const mappedQueue = (queueRows || []).map(row => ({
+                    queue_id: row.id,
+                    contact_id: row.contact_id,
+                    contact_name: row.marketing_contacts?.contact_name,
+                    company_name: row.marketing_contacts?.company_name,
+                    contact_email: row.marketing_contacts?.email,
+                    contact_tier: row.marketing_contacts?.tier,
+                    email_round: row.email_round,
+                    priority: row.priority
                 }));
-                
-                setEmailQueue(mappedQueue);
 
-                if (data && data.length > 0) {
-                    toast.success(`✅ Cola generada: ${data.length} emails listos para enviar`, { id: toastId });
+                setEmailQueue(mappedQueue);
+                setQueueStats(prev => ({
+                    ...prev,
+                    prepared: result.contacts_added || mappedQueue.length,
+                    pending: mappedQueue.length
+                }));
+                loadQueueStats();
+
+                if (mappedQueue.length > 0) {
+                    toast.success(`✅ Cola preparada en base de datos: ${mappedQueue.length} emails pendientes`, { id: toastId });
                 } else {
                     toast.error(`❌ No se encontraron contactos con email que cumplan los criterios:\n- Tier: ${emailSearchTier === 'all' ? 'Todos' : emailSearchTier}\n- Estado: Sin enviar`, { id: toastId, duration: 5000 });
                 }
@@ -664,6 +719,7 @@ const UnifiedCRM = () => {
 
                 // Process template with contact data
                 let processedBody = selectedTemplate.html_content;
+                let processedSubject = selectedTemplate.subject;
                 const variables = {
                     empresa: item.company_name || 'Negocio',
                     nombre: item.contact_name || 'Amigo',
@@ -673,6 +729,7 @@ const UnifiedCRM = () => {
                 Object.keys(variables).forEach(key => {
                     const regex = new RegExp(`{{${key}}}`, 'g');
                     processedBody = processedBody.replace(regex, variables[key]);
+                    processedSubject = processedSubject.replace(regex, variables[key]);
                 });
 
                 // Add signature
@@ -686,8 +743,9 @@ const UnifiedCRM = () => {
                             type: 'custom',
                             data: {
                                 email: item.contact_email,
-                                subject: selectedTemplate.subject,
+                                subject: processedSubject,
                                 html: finalHtml,
+                                company_name: item.company_name,
                                 from_name: selectedSender.name,
                                 from_email: selectedSender.email
                             }
@@ -720,12 +778,28 @@ const UnifiedCRM = () => {
                     // 2. Log to history
                     await supabase.from('crm_email_logs').insert({
                         recipient_email: item.contact_email,
-                        subject: selectedTemplate.subject,
+                        subject: processedSubject,
                         html_content: finalHtml,
                         status: 'sent',
                         tier: item.contact_tier,
                         template_id: selectedTemplate.id,
-                        contact_id: item.contact_id
+                        contact_id: item.contact_id,
+                        message_id: result.emailId || null
+                    });
+
+                    await supabase.from('campaign_history').insert({
+                        contact_id: item.contact_id,
+                        campaign_type: 'email',
+                        status: 'sent',
+                        sent_at: new Date().toISOString(),
+                        message_id: result.emailId || null,
+                        details: {
+                            subject: processedSubject,
+                            sender_email: selectedSender.email,
+                            sender_name: selectedSender.name,
+                            template_id: selectedTemplate.id,
+                            source: 'unified_crm_manual'
+                        }
                     });
 
                     successCount++;
@@ -744,6 +818,8 @@ const UnifiedCRM = () => {
             addLog(`🏁 Campaña finalizada: ${successCount} ✅ ${failCount} ❌`, 'info');
             setEmailQueue([]);
             loadHistory();
+            loadQueueStats();
+            loadContacts();
         } catch (err) {
             toast.error('Error enviando: ' + err.message, { id: toastId });
         } finally {
@@ -809,6 +885,7 @@ const UnifiedCRM = () => {
                                 email: email,
                                 subject: `[PRUEBA] ${processedSubject}`,
                                 html: `<div style="background:#fff3cd;padding:10px;margin-bottom:20px;border-radius:8px;border:1px solid #ffc107;"><strong>⚠️ ESTO ES UNA PRUEBA</strong> - El correo real no tendrá este aviso.</div>${finalHtml}`,
+                                company_name: 'Mi Empresa de Prueba',
                                 from_name: selectedSender.name,
                                 from_email: selectedSender.email
                             }
@@ -852,7 +929,25 @@ const UnifiedCRM = () => {
             html = html.replace(new RegExp(`{{${k}}}`, 'g'), v);
         });
         const sig = selectedSender?.signature || '';
-        setEmailPreviewHtml(`${html}${sig}`);
+        setEmailPreviewHtml(`
+            <div style="margin:0;padding:24px;background:linear-gradient(180deg,#eff6ff 0%,#f8fafc 100%);font-family:Arial,Helvetica,sans-serif;">
+                <div style="max-width:680px;margin:0 auto;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 12px 40px rgba(15,23,42,.10);">
+                    <div style="padding:30px 28px 24px;background:linear-gradient(135deg,#0f172a 0%,#1d4ed8 60%,#2563eb 100%);text-align:center;color:#fff;">
+                        <img src="https://geobooker.com.mx/images/geobooker-logo-horizontal-new.png" alt="Geobooker" style="width:210px;max-width:100%;height:auto;display:block;margin:0 auto 14px;" />
+                        <p style="margin:0;font-size:13px;opacity:.92;">Publicidad local, premium y enterprise para hacer crecer tu negocio</p>
+                    </div>
+                    <div style="padding:34px 28px 22px;color:#1f2937;line-height:1.65;font-size:16px;">
+                        ${html}${sig}
+                    </div>
+                    <div style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:28px;text-align:center;">
+                        <img src="https://geobooker.com.mx/images/geobooker-logo-horizontal-new.png" alt="Geobooker" style="width:145px;max-width:100%;height:auto;opacity:.92;" />
+                        <p style="margin:12px 0 0;color:#475569;font-size:13px;line-height:1.6;">
+                            El envío real incluirá footer profesional, botones de descarga y QR para App Store y Google Play.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `);
         setShowEmailPreview(true);
     };
 
@@ -909,8 +1004,17 @@ const UnifiedCRM = () => {
                             emailMetrics.todayCount >= 60 ? 'bg-orange-50 border-orange-200' :
                             'bg-gray-50 border-gray-200'
                         }`}>
-                            <span className="text-xs font-semibold text-gray-600">📬 Hoy: {emailMetrics.todayCount}/100</span>
+                            <span className="text-xs font-semibold text-gray-600">📬 Hoy: {queueStats.sentToday}/{campaignLimits.daily_email_limit}</span>
                         </div>
+                    </div>
+                </div>
+
+                <div className="px-4 pb-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900">
+                        <p className="font-semibold mb-1">Estado operativo del CRM</p>
+                        <p>
+                            `Preparación de cola` ahora inserta contactos reales en `email_queue`. `Resend/Netlify` sí envía correos desde Geobooker. `N8N` solo dispara lo que tu workflow haga: por sí solo no manda correos ni cuenta envíos si el flujo no está configurado para eso.
+                        </p>
                     </div>
                 </div>
 
@@ -1313,7 +1417,7 @@ const UnifiedCRM = () => {
                                                 📧 Envío Rápido de Emails
                                             </h3>
                                             <p className="text-blue-100 text-sm mt-1">
-                                                Genera una cola de 100 contactos pendientes para enviar hoy.
+                                                Prepara una cola real en base de datos con hasta {campaignLimits.daily_email_limit} contactos pendientes para enviar hoy.
                                                 Los contactos ya enviados no se repetirán.
                                             </p>
                                         </div>
@@ -1339,42 +1443,11 @@ const UnifiedCRM = () => {
                                                 </button>
                                             )}
                                             <button
-                                                onClick={async () => {
-                                                    const toastId = toast.loading('Generando cola de emails...');
-                                                    try {
-                                                        let query = supabase
-                                                            .from('marketing_contacts')
-                                                            .select('id, email, contact_name, company_name, tier')
-                                                            .not('email', 'is', null)
-                                                            .neq('email', '')
-                                                            .or('email_status.is.null,email_status.neq.sent')
-                                                            .order('tier', { ascending: true })
-                                                            .limit(100);
-
-                                                        if (emailSearchTier !== 'all') {
-                                                            query = query.eq('tier', emailSearchTier);
-                                                        }
-
-                                                        const { data, error } = await query;
-
-                                                        if (error) throw error;
-
-                                                        if (!data || data.length === 0) {
-                                                            toast.error('No hay contactos pendientes con email', { id: toastId });
-                                                            return;
-                                                        }
-
-                                                        setEmailQueue(data);
-                                                        toast.success(`✅ Cola generada: ${data.length} emails listos para enviar`, { id: toastId });
-                                                    } catch (err) {
-                                                        console.error('Error generating email queue:', err);
-                                                        toast.error('Error: ' + err.message, { id: toastId });
-                                                    }
-                                                }}
+                                                onClick={generateQueue}
                                                 className="flex items-center gap-2 px-6 py-3 bg-white text-blue-600 rounded-lg font-bold hover:bg-blue-50 transition shadow-lg"
                                             >
                                                 <Play className="w-5 h-5" />
-                                                Generar Cola de 100
+                                                Preparar Cola Real
                                             </button>
                                         </div>
                                     </div>
@@ -1416,18 +1489,39 @@ const UnifiedCRM = () => {
                                             </div>
                                         </div>
                                     )}
+                                    {emailQueue.length > 0 && (
                                         <div className="mt-4 bg-white/10 rounded-lg p-4">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <span className="font-medium">📋 Cola actual: {emailQueue.length} emails</span>
-                                                <button
-                                                    onClick={() => setEmailQueue([])}
-                                                    className="text-sm text-blue-200 hover:text-white"
-                                                >
-                                                    Limpiar cola
-                                                </button>
+                                            <div className="flex flex-wrap justify-between items-center gap-3 mb-2">
+                                                <div>
+                                                    <span className="font-medium">📋 Cola actual: {emailQueue.length} emails</span>
+                                                    <p className="text-xs text-blue-200 mt-1">
+                                                        Preparados en cola real para envío con Resend desde Geobooker.
+                                                    </p>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <button
+                                                        onClick={openEmailPreview}
+                                                        className="px-4 py-2 bg-white/15 border border-white/20 rounded-lg text-sm font-medium text-white hover:bg-white/25"
+                                                    >
+                                                        Vista previa
+                                                    </button>
+                                                    <button
+                                                        onClick={sendCampaign}
+                                                        disabled={!selectedTemplate || !selectedSender || isSending || emailQueue.length === 0}
+                                                        className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-bold hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        {isSending ? 'Enviando...' : `Enviar ${emailQueue.length} emails`}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setEmailQueue([])}
+                                                        className="text-sm text-blue-200 hover:text-white"
+                                                    >
+                                                        Limpiar cola
+                                                    </button>
+                                                </div>
                                             </div>
                                             <p className="text-blue-200 text-xs">
-                                                Usa el dashboard de abajo para enviar los emails con la plantilla seleccionada.
+                                                El envío real usa la plantilla seleccionada, el remitente activo y registra historial con `message_id` de Resend.
                                             </p>
                                         </div>
                                     )}

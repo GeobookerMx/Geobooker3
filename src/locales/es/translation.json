@@ -484,19 +484,19 @@
         "guiaResico": "Guía Alta SAT (RESICO)"
     },
     "ads_placeholder": {
-        "badge": "Espacio Disponible",
-        "msg1_title": "🚀 Impulsa tu Negocio",
-        "msg1_subtitle": "Más de 10,000 usuarios buscan negocios como el tuyo cada día",
-        "msg1_cta": "¡Anúnciate Aquí!",
-        "msg2_title": "📍 ¿Ya abriste digitalmente?",
-        "msg2_subtitle": "Prende tu negocio en el mapa y atrae nuevos clientes",
-        "msg2_cta": "Registra tu Negocio",
-        "msg3_title": "🔥 ¿Quieres más ventas?",
-        "msg3_subtitle": "Este espacio puede ser tuyo. Crea tu campaña ahora",
-        "msg3_cta": "Crear Campaña",
-        "msg4_title": "💡 Espacio Disponible",
-        "msg4_subtitle": "Anuncia tu negocio aquí y llega a miles de clientes",
-        "msg4_cta": "Ver Opciones"
+        "badge": "Anuncio",
+        "msg1_title": "⚽ ¡Vive la Temporada Mundialista! ⚽",
+        "msg1_subtitle": "Encuentra negocios, comida y servicios cerca de ti durante el fútbol internacional.",
+        "msg1_cta": "Ver Mapa",
+        "msg2_title": "📢 Registra tu negocio 100% gratis",
+        "msg2_subtitle": "¿Tienes restaurante, barbería o tienda? Regístrate en Geobooker hoy mismo.",
+        "msg2_cta": "Sube tu Negocio",
+        "msg3_title": "🌎 México, EE. UU. y Canadá reciben al mundo",
+        "msg3_subtitle": "Turismo 2026: encuentra farmacias, transporte y comida cerca de tu ubicación.",
+        "msg3_cta": "Buscar Cerca",
+        "msg4_title": "💡 Tu negocio puede aparecer aquí",
+        "msg4_subtitle": "Promociónate desde solo $199 MXN al mes y llega a miles de visitantes.",
+        "msg4_cta": "Anúnciate Desde $199"
     },
     "ads": {
         "sponsored": "Publicidad",

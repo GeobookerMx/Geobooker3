@@ -744,7 +744,7 @@ const ScanInvitePage = () => {
                             </div>
                             <div>
                                 <p className={`text-2xl font-bold ${dailyCount >= dailyLimit ? 'text-red-600' : ''}`}>{dailyCount}/{dailyLimit}</p>
-                                <p className="text-sm text-gray-500">WhatsApp Local</p>
+                                <p className="text-sm text-gray-500">WhatsApp Local (cap interno)</p>
                             </div>
                         </div>
                     </div>
@@ -758,7 +758,7 @@ const ScanInvitePage = () => {
                             <div>
                                 <p className="font-bold text-red-800">¡Límite diario alcanzado!</p>
                                 <p className="text-red-700 text-sm">
-                                    Has enviado {dailyCount} de {dailyLimit} WhatsApp locales hoy.
+                                    Has enviado {dailyCount} de {dailyLimit} WhatsApp locales hoy dentro del cap operativo de Geobooker.
                                     El contador se reinicia a medianoche.
                                 </p>
                             </div>

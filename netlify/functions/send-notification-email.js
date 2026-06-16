@@ -5,6 +5,7 @@
  * 
  * Uses Resend (free tier: 100 emails/day)
  */
+const { wrapEmailLayout } = require('./_email-branding');
 
 export async function handler(event) {
     if (event.httpMethod !== 'POST') {
@@ -299,13 +300,23 @@ function getEmailTemplate(type, data) {
         // ==================== CUSTOM EMAIL (for campaigns) ====================
         custom: {
             subject: data.subject || 'Mensaje de Geobooker',
-            html: data.html || '<p>Mensaje sin contenido</p>'
+            html: wrapEmailLayout({
+                contentHtml: data.html || '<p>Mensaje sin contenido</p>',
+                preheader: data.preheader || 'Conoce Geobooker Ads y descarga la app',
+                title: data.subject || 'Mensaje de Geobooker',
+                companyName: data.company_name || data.companyName || 'tu empresa'
+            })
         },
 
         // ==================== CRM CAMPAIGN EMAIL ====================
         crm_campaign: {
             subject: data.subject || 'Mensaje de Geobooker',
-            html: data.html || '<p>Mensaje sin contenido</p>'
+            html: wrapEmailLayout({
+                contentHtml: data.html || '<p>Mensaje sin contenido</p>',
+                preheader: data.preheader || 'Campaña CRM Geobooker Ads',
+                title: data.subject || 'Campaña CRM Geobooker',
+                companyName: data.company_name || data.companyName || 'tu empresa'
+            })
         }
     };
 

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
     ArrowLeft, Building2, Mail, Phone, Globe,
     MapPin, Send, CheckCircle, Loader2, Users,
@@ -10,20 +10,34 @@ import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import SEO from '../../components/SEO';
 import { getStoredQrAttribution } from '../../services/qrAttributionService';
+import { getCrossPlatformPackage } from '../../config/crossPlatformPackages';
 
 export default function B2bConnect() {
+    const [searchParams] = useSearchParams();
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const selectedPackage = getCrossPlatformPackage(searchParams.get('package'));
 
     const [form, setForm] = useState({
         company_name: '',
         contact_name: '',
         contact_email: '',
         contact_phone: '',
+        country: 'México',
         company_website: '',
         target_audience: '',
         message: ''
     });
+
+    useEffect(() => {
+        if (!selectedPackage) return;
+
+        setForm((prev) => ({
+            ...prev,
+            target_audience: prev.target_audience || selectedPackage.audience,
+            message: prev.message || `Me interesa el ${selectedPackage.name}. Busco una propuesta para ${selectedPackage.audience}.`
+        }));
+    }, [selectedPackage]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -42,10 +56,13 @@ export default function B2bConnect() {
             setSubmitting(true);
             const qrAttribution = getStoredQrAttribution();
 
-            const { error } = await supabase.from('enterprise_leads').insert({
+            const payload = {
                 company_name: form.company_name,
                 contact_name: form.contact_name,
                 contact_email: form.contact_email,
+                contact_phone: form.contact_phone || null,
+                country: form.country || 'México',
+                company_website: form.company_website || null,
                 target_cities: form.target_audience,
                 message: JSON.stringify({
                     lead_type: 'b2b_connect',
@@ -53,12 +70,32 @@ export default function B2bConnect() {
                     notes: form.message || '',
                     company_website: form.company_website || null,
                     contact_phone: form.contact_phone || null,
+                    package_code: selectedPackage?.code || null,
+                    package_name: selectedPackage?.name || null,
                     source: 'b2b_connect_landing',
                     qr_attribution: qrAttribution || null,
                     submitted_at: new Date().toISOString()
                 }),
                 status: 'new'
-            });
+            };
+
+            let { error } = await supabase.from('enterprise_leads').insert(payload);
+
+            if (error) {
+                console.warn('B2B insert with extended payload failed, retrying minimal payload:', error);
+                const fallback = {
+                    company_name: form.company_name,
+                    contact_name: form.contact_name,
+                    contact_email: form.contact_email,
+                    country: form.country || 'México',
+                    target_cities: form.target_audience,
+                    message: form.message || `Lead B2B desde Geobooker Connect. Paquete: ${selectedPackage?.name || 'general'}`,
+                    status: 'new'
+                };
+
+                const retry = await supabase.from('enterprise_leads').insert(fallback);
+                error = retry.error;
+            }
 
             if (error) {
                 throw error;
@@ -69,7 +106,7 @@ export default function B2bConnect() {
 
         } catch (error) {
             console.error('Error enviando formulario B2B:', error);
-            toast.error('No pudimos registrar tu solicitud. Intenta de nuevo o escríbenos a ventasgeobooker@gmail.com');
+            toast.error(`No pudimos registrar tu solicitud. Intenta de nuevo o escríbenos a ventasgeobooker@gmail.com. ${error.message || ''}`);
         } finally {
             setSubmitting(false);
         }
@@ -105,12 +142,42 @@ export default function B2bConnect() {
                                 <span className="font-bold text-sm tracking-wide">LANZAMIENTO EXCLUSIVO MÉXICO</span>
                             </div>
                             
+                            {selectedPackage && (
+                                <div className="mb-6 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
+                                        Paquete preseleccionado
+                                    </p>
+                                    <h2 className="text-xl font-bold text-white mt-2">{selectedPackage.name}</h2>
+                                    <p className="text-sm text-emerald-100 mt-1">{selectedPackage.summary}</p>
+                                    <p className="text-xs text-emerald-200/80 mt-2">
+                                        Inversion de referencia: ${selectedPackage.priceMxn.toLocaleString('es-MX')} MXN
+                                    </p>
+                                </div>
+                            )}
+
                             <h1 className="text-4xl md:text-5xl lg:text-7xl font-extrabold text-white leading-tight mb-6">
                                 Mayoristas y <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Proveedores</span>.
                             </h1>
                             <p className="text-xl md:text-2xl text-gray-300 font-light mb-8 max-w-lg leading-relaxed">
                                 No persiga clientes. Apunte directo al blanco llegando al tomador de decisiones a través de nuestra base de datos hiper-segmentada.
                             </p>
+
+                            <div className="flex flex-wrap gap-2 mb-8">
+                                {[
+                                    'Mayoristas',
+                                    'Proveedores logisticos',
+                                    'Refaccionarias',
+                                    'Talleres pesados',
+                                    'Servicios industriales'
+                                ].map((tag) => (
+                                    <span
+                                        key={tag}
+                                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-gray-200"
+                                    >
+                                        {tag}
+                                    </span>
+                                ))}
+                            </div>
 
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <button 
@@ -177,7 +244,7 @@ export default function B2bConnect() {
                             </div>
                             <h3 className="text-2xl font-bold text-white mb-4">Segmentación Geográfica</h3>
                             <p className="text-gray-400 leading-relaxed">
-                                Extraemos y localizamos únicamente negocios activos verificados en todo el país (Por sector, ciudad y rubro) para garantizar afinidad total con tus productos.
+                                Extraemos y localizamos únicamente negocios activos verificados en todo el país por sector, ciudad y rubro para garantizar afinidad total con tus productos, incluyendo verticales industriales y logísticas.
                             </p>
                         </div>
                         <div className="bg-gray-800/40 p-8 rounded-2xl border border-gray-700 hover:border-amber-500/30 transition-colors relative overflow-hidden">
@@ -214,6 +281,20 @@ export default function B2bConnect() {
                                 Llena este breve formulario para indicarnos tu interés particular. Sin compromiso analizaremos si tenemos el alcance que requieres en tu estado y sector.
                             </p>
                         </div>
+
+                        {selectedPackage && (
+                            <div className="mb-8 rounded-2xl border border-white/10 bg-white/5 p-5">
+                                <h3 className="text-lg font-bold text-white mb-3">Lo que incluye este paquete</h3>
+                                <div className="space-y-2">
+                                    {selectedPackage.includes.map((feature) => (
+                                        <div key={feature} className="flex items-start gap-3 text-sm text-gray-300">
+                                            <CheckCircle className="w-4 h-4 mt-0.5 text-emerald-400 flex-shrink-0" />
+                                            <span>{feature}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {!submitted ? (
                             <form onSubmit={handleSubmit} className="space-y-6">

@@ -325,12 +325,10 @@ export default function EnterpriseCheckout() {
     const navigate = useNavigate();
     const preselectedPlan = searchParams.get('plan') || '';
 
-    // ✅ Apple Guideline 3.1.1: Ocultar Enterprise Checkout en iOS nativo
-    const isIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
-    if (isIOS) {
-        setTimeout(() => navigate('/', { replace: true }), 0);
-        return null;
-    }
+    // Redirect to contact form as enterprise plans are now quote-only
+    useEffect(() => {
+        navigate(`/enterprise/contact${preselectedPlan ? `?plan=${preselectedPlan}` : ''}`, { replace: true });
+    }, [navigate, preselectedPlan]);
 
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -636,6 +634,7 @@ export default function EnterpriseCheckout() {
         }).format(price);
     };
 
+    return null; // Redirecting to /enterprise/contact
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 py-8 px-4">
             <SEO

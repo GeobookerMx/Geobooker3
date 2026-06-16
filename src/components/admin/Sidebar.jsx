@@ -1,5 +1,5 @@
 // src/components/admin/Sidebar.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
     Home,
@@ -29,12 +29,10 @@ const Sidebar = ({ onLogout }) => {
     const [pendingClaims, setPendingClaims] = useState(0);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    // Cerrar menú al cambiar de ruta
     useEffect(() => {
         setIsMobileMenuOpen(false);
     }, [location.pathname]);
 
-    // Cargar conteos de pendientes
     useEffect(() => {
         loadPendingCounts();
         const interval = setInterval(loadPendingCounts, 30000);
@@ -71,84 +69,88 @@ const Sidebar = ({ onLogout }) => {
         }
     };
 
-    // Sidebar organizado en secciones
     const menuSections = [
         {
-            title: '📊 General',
+            title: 'General',
             items: [
                 { path: '/admin/dashboard', icon: Home, label: 'Vista General' },
                 { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
                 { path: '/admin/revenue', icon: DollarSign, label: 'Ingresos' },
-                { path: 'https://clarity.microsoft.com/projects', icon: BarChart3, label: '🔥 Clarity (Heatmaps)', external: true },
+                { path: 'https://clarity.microsoft.com/projects', icon: BarChart3, label: 'Clarity (Heatmaps)', external: true }
             ]
         },
         {
-            title: '🏪 Negocios & Usuarios',
+            title: 'Negocios y Usuarios',
             items: [
                 { path: '/admin/businesses', icon: Store, label: 'Negocios', badge: pendingBusinesses, badgeColor: 'yellow' },
                 { path: '/admin/users', icon: Users, label: 'Usuarios' },
-                { path: '/admin/reports', icon: BarChart3, label: '⚠️ Reportes Negocios' },
+                { path: '/admin/reports', icon: BarChart3, label: 'Reportes Negocios' }
             ]
         },
         {
-            title: '📢 Publicidad',
+            title: 'Publicidad',
             items: [
-                { path: '/admin/ads', icon: TrendingUp, label: '🚀 Geobooker Ads', badge: pendingCampaigns, badgeColor: 'red' },
-                { path: '/admin/ads-qa', icon: BarChart3, label: '🧪 Ads QA Tool' },
-                { path: '/admin/inventory', icon: BarChart3, label: '📦 Ad Inventory' },
-                { path: '/admin/ad-reports', icon: BarChart3, label: '🚩 Reportes Anuncios' },
+                { path: '/admin/ads', icon: TrendingUp, label: 'Geobooker Ads', badge: pendingCampaigns, badgeColor: 'red' },
+                { path: '/admin/ads-qa', icon: BarChart3, label: 'Ads QA Tool' },
+                { path: '/admin/inventory', icon: BarChart3, label: 'Ad Inventory' },
+                { path: '/admin/ad-reports', icon: BarChart3, label: 'Reportes Anuncios' }
             ]
         },
         {
-            title: '⭐ Comunidad',
+            title: 'Comunidad',
             items: [
-                { path: '/admin/recommendations', icon: Store, label: '⭐ Recomendaciones', badge: pendingRecommendations, badgeColor: 'yellow' },
-                { path: '/admin/claims', icon: Shield, label: '🛡️ Reclamos', badge: pendingClaims, badgeColor: 'yellow' },
-                { path: '/admin/referrals', icon: Gift, label: '🎁 Referidos' },
-                { path: '/admin/blog', icon: Newspaper, label: '📝 Blog' },
+                { path: '/admin/recommendations', icon: Store, label: 'Recomendaciones', badge: pendingRecommendations, badgeColor: 'yellow' },
+                { path: '/admin/claims', icon: Shield, label: 'Reclamos', badge: pendingClaims, badgeColor: 'yellow' },
+                { path: '/admin/referrals', icon: Gift, label: 'Referidos' },
+                { path: '/admin/blog', icon: Newspaper, label: 'Blog' }
             ]
         },
         {
-            title: '🎯 Marketing & CRM',
+            title: 'Marketing y CRM',
             items: [
-                { path: '/admin/marketing', icon: Mail, label: '🎯 CRM & Marketing' },
-                { path: '/admin/scan-invite', icon: Users, label: '🇲🇽 Scan Local' },
-                { path: '/admin/scraper', icon: Globe, label: '🌍 Apify Scraper (Global)' },
-                { path: '/admin/scraper-history', icon: Database, label: '📂 Leads x Scrapping' },
+                { path: '/admin/crm', icon: Mail, label: 'CRM y Marketing' },
+                { path: '/admin/scan-invite', icon: Users, label: 'Scan Local' },
+                { path: '/admin/scraper', icon: Globe, label: 'Apify Scraper (Global)' },
+                { path: '/admin/scraper-history', icon: Database, label: 'Leads x Scraping' }
             ]
         },
         {
-            title: '⚙️ Sistema',
+            title: 'Sistema',
             items: [
-                { path: '/admin/import', icon: Database, label: '📥 Importar Datos' },
-                { path: '/admin/fiscal', icon: Database, label: '🧾 Control Fiscal' },
-                { path: '/admin/settings', icon: Settings, label: 'Configuración' },
+                { path: '/admin/import', icon: Database, label: 'Importar Datos' },
+                { path: '/admin/fiscal', icon: Database, label: 'Control Fiscal' },
+                { path: '/admin/settings', icon: Settings, label: 'Configuracion' }
             ]
-        },
+        }
     ];
 
+    const routeAliases = {
+        '/admin/crm': ['/admin/crm', '/admin/marketing', '/admin/campaigns']
+    };
 
-
-    const isActive = (path) => location.pathname === path;
+    const isActive = (path) => {
+        const aliases = routeAliases[path];
+        if (aliases) {
+            return aliases.includes(location.pathname);
+        }
+        return location.pathname === path;
+    };
 
     const SidebarContent = () => (
         <>
-            {/* Logo */}
             <div className="p-6 border-b border-gray-800 dark:border-gray-700 pt-[calc(1.5rem+var(--safe-area-inset-top))] pb-4">
                 <img
                     src="/images/geobooker-logo.png"
                     alt="Geobooker"
                     className="h-10 w-auto mb-2"
                 />
-                <p className="text-xs text-gray-400">Panel de Administración</p>
+                <p className="text-xs text-gray-400">Panel de Administracion</p>
             </div>
 
-            {/* Navegación por secciones */}
             <nav className="flex-1 overflow-y-auto py-2">
-                {menuSections.map((section, sIdx) => (
+                {menuSections.map((section, sectionIndex) => (
                     <div key={section.title}>
-                        {/* Section Header */}
-                        {sIdx > 0 && <div className="border-t border-gray-700/50 mx-4 my-2" />}
+                        {sectionIndex > 0 && <div className="border-t border-gray-700/50 mx-4 my-2" />}
                         <p className="px-6 pt-3 pb-1 text-[10px] uppercase tracking-wider text-gray-500 font-bold">
                             {section.title}
                         </p>
@@ -205,15 +207,13 @@ const Sidebar = ({ onLogout }) => {
                 ))}
             </nav>
 
-
-            {/* Logout */}
             <div className="p-4 border-t border-gray-800 dark:border-gray-700">
                 <button
                     onClick={onLogout}
                     className="flex items-center w-full px-4 py-3 text-gray-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors"
                 >
                     <LogOut className="w-5 h-5 mr-3" />
-                    <span className="font-medium">Cerrar Sesión</span>
+                    <span className="font-medium">Cerrar Sesion</span>
                 </button>
             </div>
         </>
@@ -221,16 +221,14 @@ const Sidebar = ({ onLogout }) => {
 
     return (
         <>
-            {/* Botón hamburger para móvil */}
             <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="md:hidden fixed top-[calc(1rem+var(--safe-area-inset-top))] left-4 z-50 p-2 bg-gray-900 text-white rounded-lg shadow-lg"
-                aria-label="Abrir menú"
+                aria-label="Abrir menu"
             >
                 {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
 
-            {/* Overlay para móvil */}
             {isMobileMenuOpen && (
                 <div
                     className="md:hidden fixed inset-0 bg-black/50 z-40"
@@ -238,16 +236,16 @@ const Sidebar = ({ onLogout }) => {
                 />
             )}
 
-            {/* Sidebar móvil (drawer) */}
-            <div className={`
+            <div
+                className={`
                 md:hidden fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white flex flex-col
                 transform transition-transform duration-300 ease-in-out
                 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-            `}>
+            `}
+            >
                 <SidebarContent />
             </div>
 
-            {/* Sidebar desktop (siempre visible) */}
             <div className="hidden md:flex h-screen w-64 bg-gray-900 text-white flex-col fixed left-0 top-0">
                 <SidebarContent />
             </div>

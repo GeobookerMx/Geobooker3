@@ -6,12 +6,25 @@ import { loadStripe } from '@stripe/stripe-js';
 import toast from 'react-hot-toast';
 import OxxoVoucher from '../../components/payment/OxxoVoucher';
 import { getLocalAdPricing } from '../../config/adPricing';
+import { Capacitor } from '@capacitor/core';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 const CampaignCreateWizard = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+
+    // Store Compliance platform checks
+    const isIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
+    const isAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+
+    useEffect(() => {
+        if (isIOS) {
+            navigate('/', { replace: true });
+        }
+    }, [isIOS, navigate]);
+
+    if (isIOS) return null;
 
     // Estados del Wizard
     const [step, setStep] = useState(1);
@@ -641,45 +654,73 @@ const CampaignCreateWizard = () => {
                                 </div>
                             </div>
 
-                            {/* Selector de Método de Pago */}
-                            <div className="space-y-3 mt-6">
-                                <h4 className="font-semibold text-gray-800">💳 Método de Pago</h4>
-
-                                <button
-                                    onClick={() => setPaymentMethod('card')}
-                                    className={`w-full p-3 rounded-xl border-2 text-left transition-all flex items-center gap-3 ${paymentMethod === 'card'
-                                        ? 'border-blue-500 bg-blue-50'
-                                        : 'border-gray-200 hover:border-gray-300'
-                                        }`}
-                                >
-                                    <div className={`p-2 rounded-lg ${paymentMethod === 'card' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}>
+                            {/* Selector de Método de Pago / Android Guideline Compliance */}
+                            {isAndroid ? (
+                                <div className="bg-blue-50 border border-blue-200 p-5 rounded-xl mt-6 space-y-3">
+                                    <h4 className="font-bold text-blue-900 flex items-center gap-2">
                                         <CreditCard className="w-5 h-5" />
+                                        Completar pago en la web
+                                    </h4>
+                                    <p className="text-sm text-blue-800 leading-relaxed">
+                                        Para cumplir con las políticas de Google Play, no es posible procesar pagos directos por servicios publicitarios dentro de la aplicación.
+                                    </p>
+                                    <p className="text-sm text-blue-800">
+                                        Puedes completar de manera segura la contratación de tu campaña visitando nuestro sitio web oficial desde tu navegador:
+                                    </p>
+                                    <div className="text-center py-2">
+                                        <a
+                                            href="https://geobooker.com.mx/advertise"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-block bg-blue-600 text-white font-bold px-6 py-2.5 rounded-lg hover:bg-blue-700 transition"
+                                        >
+                                            Ir a geobooker.com.mx
+                                        </a>
                                     </div>
-                                    <div className="flex-1">
-                                        <span className="font-medium">Tarjeta</span>
-                                        <span className="text-xs text-gray-500 ml-2">Pago inmediato</span>
-                                    </div>
-                                    {paymentMethod === 'card' && <Check className="w-5 h-5 text-blue-500" />}
-                                </button>
+                                    <p className="text-xs text-gray-500 text-center">
+                                        O contáctanos directamente a nuestro correo de soporte para asistencia personalizada.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3 mt-6">
+                                    <h4 className="font-semibold text-gray-800">💳 Método de Pago</h4>
 
-                                <button
-                                    onClick={() => setPaymentMethod('oxxo')}
-                                    disabled={subtotal > 10000}
-                                    className={`w-full p-3 rounded-xl border-2 text-left transition-all flex items-center gap-3 ${paymentMethod === 'oxxo'
-                                        ? 'border-yellow-500 bg-yellow-50'
-                                        : 'border-gray-200 hover:border-gray-300'
-                                        } ${subtotal > 10000 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                >
-                                    <div className={`p-2 rounded-lg ${paymentMethod === 'oxxo' ? 'bg-yellow-500 text-white' : 'bg-gray-100'}`}>
-                                        <Store className="w-5 h-5" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <span className="font-medium">Efectivo</span>
-                                        <span className="text-xs text-gray-500 ml-2">OXXO, 7-Eleven</span>
-                                    </div>
-                                    {paymentMethod === 'oxxo' && <Check className="w-5 h-5 text-yellow-500" />}
-                                </button>
-                            </div>
+                                    <button
+                                        onClick={() => setPaymentMethod('card')}
+                                        className={`w-full p-3 rounded-xl border-2 text-left transition-all flex items-center gap-3 ${paymentMethod === 'card'
+                                            ? 'border-blue-500 bg-blue-50'
+                                            : 'border-gray-200 hover:border-gray-300'
+                                            }`}
+                                    >
+                                        <div className={`p-2 rounded-lg ${paymentMethod === 'card' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}>
+                                            <CreditCard className="w-5 h-5" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <span className="font-medium">Tarjeta</span>
+                                            <span className="text-xs text-gray-500 ml-2">Pago inmediato</span>
+                                        </div>
+                                        {paymentMethod === 'card' && <Check className="w-5 h-5 text-blue-500" />}
+                                    </button>
+
+                                    <button
+                                        onClick={() => setPaymentMethod('oxxo')}
+                                        disabled={subtotal > 10000}
+                                        className={`w-full p-3 rounded-xl border-2 text-left transition-all flex items-center gap-3 ${paymentMethod === 'oxxo'
+                                            ? 'border-yellow-500 bg-yellow-50'
+                                            : 'border-gray-200 hover:border-gray-300'
+                                            } ${subtotal > 10000 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                        <div className={`p-2 rounded-lg ${paymentMethod === 'oxxo' ? 'bg-yellow-500 text-white' : 'bg-gray-100'}`}>
+                                            <Store className="w-5 h-5" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <span className="font-medium">Efectivo</span>
+                                            <span className="text-xs text-gray-500 ml-2">OXXO, 7-Eleven</span>
+                                        </div>
+                                        {paymentMethod === 'oxxo' && <Check className="w-5 h-5 text-yellow-500" />}
+                                    </button>
+                                </div>
+                            )}
 
                             {/* Avisos importantes */}
                             <div className="space-y-3 mt-4">
@@ -714,6 +755,11 @@ const CampaignCreateWizard = () => {
                                 className="bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center hover:bg-blue-700">
                                 Continuar <ArrowRight size={18} className="ml-1" />
                             </button>
+                        ) : isAndroid ? (
+                            <a href="https://geobooker.com.mx/advertise" target="_blank" rel="noopener noreferrer"
+                                className="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-700 transition">
+                                🌐 Ir a la Web para Pagar
+                            </a>
                         ) : (
                             <button onClick={handleSubmit} disabled={loading}
                                 className={`text-white px-8 py-3 rounded-lg font-bold disabled:opacity-50 ${paymentMethod === 'card'

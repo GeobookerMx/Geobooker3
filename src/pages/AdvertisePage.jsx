@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { useNavigate, Link } from "react-router-dom";
-import { Capacitor } from "@capacitor/core";
 import {
   Monitor,
   Smartphone,
@@ -14,12 +13,55 @@ import {
 } from "lucide-react";
 import { LOCAL_AD_PROMO, getLocalAdPricing } from "../config/adPricing";
 import SEO from "../components/SEO";
+import { IS_IOS_NATIVE } from "../utils/iosStore";
+import { HOUSE_AD_CAMPAIGNS } from "../config/houseAds";
+import { CROSS_PLATFORM_PACKAGES } from "../config/crossPlatformPackages";
+import GeobookerPromoPlaceholder from "../components/ads/GeobookerPromoPlaceholder";
 
 /**
  * Metadatos adicionales por espacio publicitario.
  * Se combinan con lo que viene de la BD (ad_spaces).
  */
 const AD_SPACE_META = {
+  destacado_basico: {
+    prioridad: "Básico",
+    tipoLabel: "Posicionamiento destacado en búsquedas locales",
+    badge: "Acceso económico",
+    idealPara: "Negocios de barrio y PyMEs locales que apenas van empezando.",
+    features: [
+      "Posición mejorada en su categoría local",
+      "Badge básico de 'Destacado'",
+      "Visualización en lista y mapa",
+      "Métricas: impresiones y vistas",
+      "Duración: 30 días"
+    ]
+  },
+  pin_patrocinado: {
+    prioridad: "Básico",
+    tipoLabel: "Pin personalizado en el mapa interactivo",
+    badge: "Alta visibilidad visual",
+    idealPara: "Locales físicos que quieren llamar la atención en el mapa.",
+    features: [
+      "Pin destacado con icono en el mapa",
+      "Aparece al navegar por la zona geográfica",
+      "Tarjeta informativa rápida al hacer clic",
+      "Métricas: clics en pin, vistas de perfil",
+      "Duración: 30 días"
+    ]
+  },
+  tarjeta_patrocinada: {
+    prioridad: "Medio",
+    tipoLabel: "Tarjeta patrocinada en resultados prioritarios",
+    badge: "Excelente conversión",
+    idealPara: "Restaurantes y comercios locales que quieren superar a la competencia.",
+    features: [
+      "Aparece arriba en listados de búsqueda",
+      "Foto y datos clave del negocio destacados",
+      "Llamado a la acción (CTA) directo",
+      "Métricas avanzadas: clics, CTR, acciones",
+      "Duración: 30 días"
+    ]
+  },
   impulso_local: {
     prioridad: "Local",
     tipoLabel: "Tarjeta patrocinada en ciudad y categoría",
@@ -28,17 +70,30 @@ const AD_SPACE_META = {
       "Negocios locales que quieren aparecer primero en búsquedas de su ciudad y categoría.",
     features: [
       "Tarjeta patrocinada en resultados de búsqueda",
-      "Presencia en página de ciudad y categoría",
+      "Presencia destacada en páginas locales",
       "CTA directo: WhatsApp, llamar, ruta",
       "Badge de 'Patrocinado' visible",
       "Métricas: impresiones, clics, CTR, taps WhatsApp",
       "Duración: 30 días"
     ]
   },
+  sponsor_categoria: {
+    prioridad: "Premium",
+    tipoLabel: "Patrocinador principal de una categoría local",
+    badge: "Líder de categoría",
+    idealPara: "Negocios establecidos que quieren dominar su rubro por completo.",
+    features: [
+      "Banner superior en la categoría seleccionada",
+      "Tarjeta patrocinada prioritaria incluida",
+      "Presencia exclusiva frente a competidores",
+      "Métricas de impresiones y clics",
+      "Duración: 30 días"
+    ]
+  },
   sponsor_ciudad: {
     prioridad: "Premium",
     tipoLabel: "Hero principal + tarjeta + pin en mapa",
-    badge: "Máxima visibilidad",
+    badge: "Máxima visibilidad local",
     idealPara:
       "Negocios que quieren dominar su ciudad o categoría con presencia premium.",
     features: [
@@ -47,6 +102,19 @@ const AD_SPACE_META = {
       "Pin destacado en el mapa interactivo",
       "Presencia en carrusel de destacados",
       "Métricas avanzadas + reporte PDF mensual",
+      "Duración: 30 días"
+    ]
+  },
+  max_espacio: {
+    prioridad: "Premium",
+    tipoLabel: "Hero/Banner principal rotativo en ventana principal",
+    badge: "Mayor impacto visual",
+    idealPara: "Marcas y negocios que quieren la máxima exposición visual en la app.",
+    features: [
+      "Hero banner principal en la portada de la app",
+      "Presencia prioritaria en mapa y destacados",
+      "Diseño responsive adaptado a desktop y mobile",
+      "Reportes de CTR detallados semanalmente",
       "Duración: 30 días"
     ]
   },
@@ -71,37 +139,97 @@ const AD_SPACE_META = {
 const MOCK_SPACES = [
   {
     id: "1",
-    name: "impulso_local",
-    display_name: "Impulso Local",
+    name: "destacado_basico",
+    display_name: "Destacado Básico",
     type: "local",
-    price_monthly: 990,
+    price_monthly: 199,
     size_desktop: "Responsive",
     size_mobile: "Responsive",
-    description: "Aparece en los primeros resultados de tu ciudad y categoría. Incluye CTA directo a WhatsApp, llamada o ruta.",
-    max_slots: 20,
+    description: "Mejor posición y visibilidad en tu categoría de negocio local.",
+    max_slots: 50,
     duration_label: "30 días",
   },
   {
     id: "2",
-    name: "sponsor_ciudad",
-    display_name: "Sponsor de Ciudad",
-    type: "premium",
-    price_monthly: 2990,
-    size_desktop: "970x250",
-    size_mobile: "320x100",
-    description: "Domina tu ciudad con hero banner principal, tarjeta patrocinada y pin destacado en el mapa.",
-    max_slots: 3,
+    name: "pin_patrocinado",
+    display_name: "Pin Patrocinado en Mapa",
+    type: "map",
+    price_monthly: 299,
+    size_desktop: "Pin",
+    size_mobile: "Pin",
+    description: "Pin destacado visualmente en el mapa interactivo para atraer visitas.",
+    max_slots: 50,
     duration_label: "30 días",
   },
   {
     id: "3",
+    name: "tarjeta_patrocinada",
+    display_name: "Tarjeta Patrocinada",
+    type: "local",
+    price_monthly: 499,
+    size_desktop: "Responsive",
+    size_mobile: "Responsive",
+    description: "Aparece arriba de los listados en los resultados de búsqueda.",
+    max_slots: 20,
+    duration_label: "30 días",
+  },
+  {
+    id: "4",
+    name: "impulso_local",
+    display_name: "Impulso Local",
+    type: "local",
+    price_monthly: 799,
+    size_desktop: "Responsive",
+    size_mobile: "Responsive",
+    description: "Tarjeta destacada con botón de llamada a la acción directa (WhatsApp/Llamada).",
+    max_slots: 20,
+    duration_label: "30 días",
+  },
+  {
+    id: "5",
+    name: "sponsor_categoria",
+    display_name: "Sponsor de Categoría",
+    type: "premium",
+    price_monthly: 1499,
+    size_desktop: "728x90",
+    size_mobile: "320x100",
+    description: "Patrocina una categoría completa de tu ciudad y domina tu rubro.",
+    max_slots: 5,
+    duration_label: "30 días",
+  },
+  {
+    id: "6",
+    name: "sponsor_ciudad",
+    display_name: "Sponsor de Ciudad / Zona",
+    type: "premium",
+    price_monthly: 2499,
+    size_desktop: "970x250",
+    size_mobile: "320x100",
+    description: "Sponsor de ciudad con banner principal, pin y tarjeta patrocinada.",
+    max_slots: 3,
+    duration_label: "30 días",
+  },
+  {
+    id: "7",
+    name: "max_espacio",
+    display_name: "Máximo Espacio",
+    type: "premium",
+    price_monthly: 2999,
+    size_desktop: "970x250",
+    size_mobile: "320x100",
+    description: "Hero banner principal en la portada + mapa interactivo + destacado.",
+    max_slots: 3,
+    duration_label: "30 días",
+  },
+  {
+    id: "8",
     name: "enterprise",
-    display_name: "Enterprise / Multi-Ciudad",
+    display_name: "Enterprise / Global / Multi-País",
     type: "enterprise",
-    price_monthly: 9900,
+    price_monthly: 0,
     size_desktop: "Personalizado",
     size_mobile: "Personalizado",
-    description: "Cobertura multi-ciudad y multi-país. Dashboard corporativo con KPIs por sucursal. Cotización personalizada.",
+    description: "Cobertura internacional multi-ciudad y multi-país. Cotización personalizada.",
     max_slots: 5,
     duration_label: "Cotización",
   },
@@ -111,6 +239,43 @@ const MOCK_SPACES = [
  * Configuración de promoción de lanzamiento
  */
 const IVA_RATE = 0.16;
+
+const REPORTING_COMMITMENTS = [
+  {
+    title: "Dashboard visible",
+    description: "Acceso a impresiones, clics y CTR reales por campana activa."
+  },
+  {
+    title: "Acciones rastreables",
+    description: "En espacios compatibles, Geobooker puede medir taps como WhatsApp o interacciones directas."
+  },
+  {
+    title: "Reporte final",
+    description: "Cierre con resumen de rendimiento, periodo, formato y resultados observados."
+  },
+  {
+    title: "Transparencia operativa",
+    description: "No prometemos ventas garantizadas ni CTR minimo; entregamos datos reales de la pauta."
+  }
+];
+
+const HOUSE_AD_SLOT_GUIDE = [
+  {
+    name: "Hero principal",
+    purpose: "Abrir la venta con un mensaje fuerte y mover al anunciante hacia paquetes premium.",
+    delivery: "Banner dominante, CTA directo y narrativa de temporada."
+  },
+  {
+    name: "Carrusel / cards",
+    purpose: "Reforzar formatos y precios mientras el usuario ya explora la oferta.",
+    delivery: "Creativos cortos, rotables y faciles de repetir por ciudad o categoria."
+  },
+  {
+    name: "Sticky CTA",
+    purpose: "Recuperar la atencion de quien ya vio la pagina pero aun no envia lead.",
+    delivery: "Mensaje corto, promo puntual y contacto inmediato."
+  }
+];
 
 /**
  * Helper para formatear el precio visible al usuario
@@ -124,10 +289,10 @@ function getPricingLabel(space) {
   // Enterprise es por cotización
   if (space.name === 'enterprise') {
     return {
-      display: 'Desde $9,900 MXN / mes',
+      display: 'Cotización especial de lanzamiento',
       original: null,
       hasDiscount: false,
-      ivaDisplay: 'Cotización personalizada',
+      ivaDisplay: 'Contacto comercial',
       isEnterprise: true
     };
   }
@@ -257,15 +422,17 @@ const AdvertisePage = () => {
   const structuredData = buildAdvertiseSchema(adSpaces.length > 0 ? adSpaces : MOCK_SPACES.map(enrichSpace));
 
   // ✅ Apple Guideline 3.1.1: Ocultar página de publicidad en iOS nativo
-  const isIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
-  if (isIOS) {
-    setTimeout(() => navigate('/', { replace: true }), 0);
+  useEffect(() => {
+    if (IS_IOS_NATIVE) {
+      navigate("/", { replace: true });
+      return;
+    }
+    loadSpaces();
+  }, [navigate]);
+
+  if (IS_IOS_NATIVE) {
     return null;
   }
-
-  useEffect(() => {
-    loadSpaces();
-  }, []);
 
   const loadSpaces = async () => {
     try {
@@ -391,7 +558,7 @@ const AdvertisePage = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div id="catalogo-publicidad" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {adSpaces.map((space) => (
               <div
                 key={space.id}
@@ -577,6 +744,211 @@ const AdvertisePage = () => {
             </div>
           </div>
         )}
+
+        <div className="mt-14 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+          <div id="reportes-publicidad" className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-2xl font-bold text-gray-900">
+              Que reportes entrega Geobooker al anunciante
+            </h3>
+            <p className="text-sm text-gray-600 mt-2">
+              Esta es la promesa comercial mas sana para vender hoy sin sobreprometer.
+            </p>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              {REPORTING_COMMITMENTS.map((item) => (
+                <div key={item.title} className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <h4 className="font-semibold text-gray-900">{item.title}</h4>
+                  <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 rounded-2xl shadow-sm border border-slate-800 p-6 text-white">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold">
+              Temporada especial
+            </div>
+            <h3 className="text-2xl font-bold mt-4">
+              Banners internos sugeridos para vender tus propios espacios
+            </h3>
+            <p className="text-sm text-white/80 mt-2">
+              Previews visuales con ambiente futbolero 2026 para usarlos como autopromocion dentro de Geobooker, sin usar marcas oficiales.
+            </p>
+
+            <div className="mt-5 grid gap-3">
+              {HOUSE_AD_SLOT_GUIDE.map((slot) => (
+                <div key={slot.name} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">
+                    {slot.name}
+                  </p>
+                  <p className="mt-2 text-sm font-bold text-white">{slot.purpose}</p>
+                  <p className="mt-1 text-xs text-slate-300">{slot.delivery}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 space-y-4">
+              {HOUSE_AD_CAMPAIGNS.map((campaign) => (
+                <div key={campaign.id} className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${campaign.gradient} p-4 shadow-lg`}>
+                  <div className="absolute inset-0 opacity-20">
+                    <div className="absolute left-6 top-1/2 h-16 w-16 -translate-y-1/2 rounded-full border-2 border-white/50" />
+                    <div className="absolute right-6 top-1/2 h-20 w-20 -translate-y-1/2 rounded-full border border-white/30" />
+                    <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-white/30" />
+                  </div>
+                  <div className="relative flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 text-2xl backdrop-blur animate-pulse">
+                        ⚽
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">
+                          {campaign.badge}
+                        </p>
+                        <p className="text-sm font-bold leading-tight">{campaign.title}</p>
+                        <p className="mt-1 text-[11px] text-white/75">
+                          {campaign.slot} • {campaign.metricHook}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="rounded-xl bg-white/15 px-3 py-2 text-xs font-bold backdrop-blur whitespace-nowrap">
+                      {campaign.cta}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-14 rounded-3xl border border-slate-200 bg-slate-50 p-6 md:p-8">
+          <div className="max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+              Preview creativo
+            </p>
+            <h3 className="mt-2 text-3xl font-bold text-slate-900">
+              Asi se verian nuestros banners internos por slot
+            </h3>
+            <p className="mt-2 text-sm text-slate-600">
+              Esta vista te deja revisar la campana de autopromocion como si ya estuviera ocupando los espacios de Geobooker.
+            </p>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Objetivo
+              </p>
+              <p className="mt-2 text-sm font-bold text-slate-900">
+                Convertir inventario propio en solicitudes de pauta y paquetes B2B.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Tono creativo
+              </p>
+              <p className="mt-2 text-sm font-bold text-slate-900">
+                Futbolero, comercial y energico, sin referencias oficiales de FIFA.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                CTA esperado
+              </p>
+              <p className="mt-2 text-sm font-bold text-slate-900">
+                Llevar al usuario a catalogo, reportes o formulario B2B segun su etapa.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8 space-y-8">
+            <div>
+              <p className="mb-3 text-sm font-bold text-slate-800">Hero banner principal</p>
+              <div className="-mx-4 sm:mx-0">
+                <GeobookerPromoPlaceholder variant="banner" rotate={false} initialIndex={0} />
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-3 text-sm font-bold text-slate-800">Carrusel destacado</p>
+              <div className="flex gap-4 overflow-x-auto pb-2">
+                <GeobookerPromoPlaceholder variant="card" rotate={false} initialIndex={1} />
+                <GeobookerPromoPlaceholder variant="card" rotate={false} initialIndex={2} />
+                <GeobookerPromoPlaceholder variant="card" rotate={false} initialIndex={4} />
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-3 text-sm font-bold text-slate-800">Sticky CTA / recordatorio corto</p>
+              <GeobookerPromoPlaceholder variant="sticky" rotate={false} initialIndex={3} />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-14 bg-slate-950 rounded-3xl border border-slate-800 p-6 md:p-8 text-white">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
+                Geobooker + TT
+              </p>
+              <h3 className="text-3xl font-bold mt-2">
+                Paquetes cruzados para transporte, logistica e industria
+              </h3>
+              <p className="text-sm text-slate-300 mt-2 max-w-3xl">
+                Esta capa comercial aprovecha lo que Geobooker ya tiene en mapa, CRM y publicidad para abrir una linea especializada hacia proveedores logisticos y servicios industriales.
+              </p>
+            </div>
+            <Link
+              to="/proveedores"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white text-slate-950 px-5 py-3 text-sm font-bold hover:bg-slate-100 transition"
+            >
+              Ver captacion B2B
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-3">
+            {CROSS_PLATFORM_PACKAGES.map((pkg) => (
+              <div
+                key={pkg.code}
+                className="rounded-2xl border border-white/10 bg-white/5 p-5 flex flex-col"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="text-xl font-bold">{pkg.name}</h4>
+                  <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-300">
+                    ${pkg.priceMxn.toLocaleString("es-MX")} MXN
+                  </span>
+                </div>
+
+                <p className="text-sm text-slate-300 mt-3">{pkg.summary}</p>
+                <p className="text-xs text-slate-400 mt-3">{pkg.audience}</p>
+
+                <ul className="mt-5 space-y-2 text-sm text-slate-200 flex-grow">
+                  {pkg.includes.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 mt-0.5 text-emerald-300 flex-shrink-0" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-6 flex gap-3">
+                  <Link
+                    to={`/proveedores?package=${pkg.code}`}
+                    className="flex-1 rounded-xl bg-emerald-500 px-4 py-3 text-center text-sm font-bold text-white hover:bg-emerald-400 transition"
+                  >
+                    Solicitar paquete
+                  </Link>
+                  <a
+                    href="#catalogo-publicidad"
+                    className="rounded-xl border border-white/15 px-4 py-3 text-sm font-semibold text-slate-200 hover:bg-white/5 transition"
+                  >
+                    Ver espacios base
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* STATS - MOVIDO ABAJO */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 my-16 text-center">

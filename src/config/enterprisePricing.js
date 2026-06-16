@@ -15,6 +15,7 @@ export const ENTERPRISE_FALLBACK_PRICING = [
     duration_months: 1,
     is_promo_active: true,
     promo_ends_at: ENTERPRISE_PROMO_END,
+    is_custom: true,
     features: ['1 ciudad activa', 'Busqueda patrocinada', '1 placement destacado en ciudad o categoria', 'Pin patrocinado en mapa', 'Dashboard basico']
   },
   {
@@ -31,6 +32,7 @@ export const ENTERPRISE_FALLBACK_PRICING = [
     duration_months: 3,
     is_promo_active: true,
     promo_ends_at: ENTERPRISE_PROMO_END,
+    is_custom: true,
     features: ['Hasta 5 ciudades activas', 'Rotacion de inventario patrocinado', 'Dashboard por ciudad', '2 optimizaciones incluidas', 'Soporte prioritario']
   },
   {
@@ -47,6 +49,7 @@ export const ENTERPRISE_FALLBACK_PRICING = [
     duration_months: 3,
     is_promo_active: true,
     promo_ends_at: ENTERPRISE_PROMO_END,
+    is_custom: true,
     features: ['Hasta 12 ciudades dentro de un pais', 'Placements premium en territorios seleccionados', 'Dashboard por ciudad/dispositivo/horario', 'Revision mensual de desempeño', 'Soporte prioritario']
   },
   {
@@ -63,6 +66,7 @@ export const ENTERPRISE_FALLBACK_PRICING = [
     duration_months: 3,
     is_promo_active: true,
     promo_ends_at: ENTERPRISE_PROMO_END,
+    is_custom: true,
     features: ['2-3 paises o region continental', 'Segmentacion por idioma', 'Flight por evento o temporada', 'Reporte ejecutivo final', 'Soporte consultivo dedicado']
   },
   {

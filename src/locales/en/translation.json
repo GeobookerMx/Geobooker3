@@ -484,19 +484,19 @@
         "guiaResico": "SAT Registration Guide (RESICO)"
     },
     "ads_placeholder": {
-        "badge": "Space Available",
-        "msg1_title": "🚀 Boost Your Business",
-        "msg1_subtitle": "More than 10,000 users search for businesses like yours every day",
-        "msg1_cta": "Advertise Here!",
-        "msg2_title": "📍 Is your business digital?",
-        "msg2_subtitle": "Put your business on the map and attract customers",
-        "msg2_cta": "Register Business",
-        "msg3_title": "🔥 Want more sales?",
-        "msg3_subtitle": "This space can be yours. Create your campaign now",
-        "msg3_cta": "Create Campaign",
-        "msg4_title": "💡 Space Available",
-        "msg4_subtitle": "Advertise your business here and reach thousands",
-        "msg4_cta": "View Options"
+        "badge": "Ad",
+        "msg1_title": "⚽ Experience the Soccer Season! ⚽",
+        "msg1_subtitle": "Find local businesses, food, and services near you during international matches.",
+        "msg1_cta": "View Map",
+        "msg2_title": "📢 List your business 100% free",
+        "msg2_subtitle": "Have a restaurant, barber shop, or store? Register on Geobooker today.",
+        "msg2_cta": "Add Business",
+        "msg3_title": "🌎 Mexico, USA & Canada welcome the world",
+        "msg3_subtitle": "Tourism 2026: find pharmacies, transit, and food near your location.",
+        "msg3_cta": "Search Nearby",
+        "msg4_title": "💡 Your business can appear here",
+        "msg4_subtitle": "Promote your brand from just $199 MXN (~$10 USD)/month and reach visitors.",
+        "msg4_cta": "Advertise From $199"
     },
     "ads": {
         "sponsored": "Sponsored",

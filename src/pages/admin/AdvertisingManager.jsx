@@ -8,9 +8,10 @@ const AdvertisingManager = () => {
 
   // Espacios publicitarios — sincronizados con AdvertisePage.jsx
   const fallbackAdSpaces = [
-    { id: 1, name: 'impulso_local', display_name: 'Impulso Local', price_monthly: 990, is_active: true, type: 'local', max_slots: 20 },
-    { id: 2, name: 'sponsor_ciudad', display_name: 'Sponsor de Ciudad', price_monthly: 2990, is_active: true, type: 'premium', max_slots: 3 },
-    { id: 3, name: 'enterprise', display_name: 'Enterprise / Multi-Ciudad', price_monthly: 9900, is_active: true, type: 'enterprise', max_slots: 5 }
+    { id: 1, name: 'impulso_local', display_name: 'Impulso Local', price_monthly: 799, is_active: true, type: 'local', max_slots: 20 },
+    { id: 2, name: 'sponsor_ciudad', display_name: 'Sponsor de Ciudad', price_monthly: 2499, is_active: true, type: 'premium', max_slots: 3 },
+    { id: 3, name: 'max_espacio', display_name: 'Maximo Espacio', price_monthly: 2999, is_active: true, type: 'premium', max_slots: 3 },
+    { id: 4, name: 'enterprise', display_name: 'Enterprise / Multi-Ciudad', price_monthly: 0, is_active: true, type: 'enterprise', max_slots: 5 }
   ];
 
   useEffect(() => {
@@ -48,7 +49,7 @@ const AdvertisingManager = () => {
   const updateAdSpace = async (id, updates) => {
     try {
       const { error } = await supabase
-        .from('advertising_spaces')
+        .from('ad_spaces')
         .update(updates)
         .eq('id', id);
 
@@ -174,7 +175,7 @@ const AdvertisingManager = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     <button
-                      onClick={() => updateAdSpace(space.id, { active: !space.active })}
+                      onClick={() => updateAdSpace(space.id, { is_active: !space.active, active: !space.active })}
                       className={`px-3 py-1 rounded text-xs ${
                         space.active 
                           ? 'bg-red-100 text-red-700 hover:bg-red-200' 

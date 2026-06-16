@@ -568,7 +568,7 @@ const ApifyScraper = () => {
                         <span className={`font-bold ${globalSent >= globalLimit ? 'text-red-600' : 'text-green-600'}`}>
                             {globalSent}/{globalLimit}
                         </span>
-                        <span className="text-sm text-gray-500">WhatsApp Global</span>
+                        <span className="text-sm text-gray-500">WhatsApp Global (cap interno)</span>
                     </div>
                 </div>
             </div>
@@ -1000,7 +1000,7 @@ const ApifyScraper = () => {
                     <li>• <strong>Seleccionar:</strong> Marca los negocios que te interesen</li>
                     <li>• <strong>Importar:</strong> Los leads se guardan en tu CRM</li>
                     <li>• <strong>Contactar:</strong> Envía WhatsApp o Email desde el CRM</li>
-                    <li>• <strong>Costo:</strong> ~$0.002-0.01 por negocio (Apify)</li>
+                    <li>• <strong>Costo:</strong> Variable segun tu plan, consumo y proxies de Apify. Revisalo desde el panel antes de escalar.</li>
                 </ul>
             </div>
         </div>

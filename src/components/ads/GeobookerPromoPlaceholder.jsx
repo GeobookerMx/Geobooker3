@@ -1,174 +1,232 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { Megaphone, TrendingUp, Users, Sparkles, MapPin, Zap, ArrowRight } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ArrowRight, Megaphone } from 'lucide-react';
+import { HOUSE_AD_CAMPAIGNS, getHouseAdMessage } from '../../config/houseAds';
 
 /**
  * @param {Object} props
- * @param {'banner'|'card'|'inline'|'small'} props.variant - Style variant
- * @param {boolean} props.rotate - Whether to rotate through messages
+ * @param {'banner'|'card'|'inline'|'small'|'sticky'} props.variant
+ * @param {boolean} props.rotate
+ * @param {number} props.initialIndex
  */
-export default function GeobookerPromoPlaceholder({ variant = 'banner', rotate = true }) {
-    const { t } = useTranslation();
-    const [messageIndex, setMessageIndex] = useState(1); // Start from 1-4
-
-    // Dynamic message construction using translations
-    const getMessage = (idx) => ({
-        title: t(`ads_placeholder.msg${idx}_title`),
-        subtitle: t(`ads_placeholder.msg${idx}_subtitle`),
-        cta: t(`ads_placeholder.msg${idx}_cta`),
-        gradient: idx === 1 ? 'from-blue-600 to-purple-600' :
-            idx === 2 ? 'from-green-500 to-teal-600' :
-                idx === 3 ? 'from-orange-500 to-red-600' :
-                    'from-yellow-500 to-orange-500',
-        icon: idx === 1 ? Megaphone :
-            idx === 2 ? MapPin :
-                idx === 3 ? TrendingUp :
-                    Sparkles
-    });
+export default function GeobookerPromoPlaceholder({
+    variant = 'banner',
+    rotate = true,
+    initialIndex = 0
+}) {
+    const [messageIndex, setMessageIndex] = useState(initialIndex);
 
     useEffect(() => {
-        if (!rotate) return;
+        setMessageIndex(initialIndex);
+    }, [initialIndex]);
+
+    useEffect(() => {
+        if (!rotate) return undefined;
         const interval = setInterval(() => {
-            setMessageIndex(prev => (prev % 4) + 1); // Cycle through 1, 2, 3, 4
-        }, 8000);
+            setMessageIndex((prev) => (prev + 1) % HOUSE_AD_CAMPAIGNS.length);
+        }, 6500);
         return () => clearInterval(interval);
     }, [rotate]);
 
-    const message = getMessage(messageIndex);
+    const message = getHouseAdMessage(messageIndex);
     const Icon = message.icon;
+    const href = message.targetHref || '/advertise';
+    const detailPills = message.proofPoints || message.chips || [];
 
-    // Banner variant - Full width hero style
     if (variant === 'banner') {
         return (
             <div className="w-full py-4">
                 <div className="max-w-6xl mx-auto px-4">
-                    <Link
-                        to="/advertise"
-                        className={`relative block bg-gradient-to-r ${message.gradient} rounded-2xl p-6 md:p-8 text-white shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group`}
+                    <a
+                        href={href}
+                        className={`relative block overflow-hidden rounded-[28px] bg-gradient-to-r ${message.gradient} p-6 md:p-8 text-white shadow-[0_20px_60px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_80px_rgba(0,0,0,0.24)]`}
                     >
-                        <div className="absolute inset-0 opacity-10">
-                            <div className="absolute transform rotate-12 -right-8 -top-8 w-32 h-32 bg-white rounded-full" />
-                            <div className="absolute transform -rotate-12 -left-4 -bottom-4 w-24 h-24 bg-white rounded-full" />
+                        <div className="absolute inset-0 opacity-20">
+                            <div className="absolute left-[8%] top-1/2 h-20 w-20 -translate-y-1/2 rounded-full border-4 border-white/45" />
+                            <div className="absolute right-[7%] top-1/2 h-28 w-28 -translate-y-1/2 rounded-full border border-white/30" />
+                            <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-white/30" />
+                            <div className="absolute right-20 top-6 rounded-full bg-white/10 px-4 py-2 text-3xl font-black tracking-[0.25em]">
+                                {message.score}
+                            </div>
                         </div>
+                        <div className="absolute inset-x-5 bottom-5 h-14 rounded-[20px] border border-white/10 bg-black/10 backdrop-blur-sm" />
 
-                        <div className="relative flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <div className="hidden md:flex w-16 h-16 bg-white/20 backdrop-blur rounded-xl items-center justify-center">
-                                    <img
-                                        src="/images/geobooker-favicon.png"
-                                        alt="Geobooker"
-                                        className="w-10 h-10 object-contain"
-                                    />
+                        <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                            <div className="flex items-start gap-4">
+                                <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/15 backdrop-blur md:flex">
+                                    <Icon className="h-8 w-8" />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl md:text-2xl font-black mb-1">
+                                    <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/90">
+                                        <span className="inline-flex h-2 w-2 rounded-full bg-lime-300" />
+                                        {message.badge}
+                                    </div>
+                                    <h3 className="mt-3 max-w-3xl text-2xl font-black leading-tight md:text-3xl">
                                         {message.title}
                                     </h3>
-                                    <p className="text-white/90 text-sm md:text-base">
+                                    <p className="mt-2 max-w-2xl text-sm text-white/90 md:text-base">
                                         {message.subtitle}
+                                    </p>
+                                    <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-white/75">
+                                        {message.slot} • {message.placement}
                                     </p>
                                 </div>
                             </div>
-                            <button className="hidden md:flex items-center gap-2 bg-white text-gray-900 px-6 py-3 rounded-xl font-bold hover:bg-gray-100 transition-colors shadow-lg group-hover:scale-105 transition-transform">
-                                {message.cta}
-                                <ArrowRight className="w-5 h-5" />
-                            </button>
+
+                            <div className="flex flex-col items-start gap-3 md:items-end">
+                                <div className="flex flex-wrap gap-2 md:justify-end">
+                                    {message.chips?.map((chip) => (
+                                        <span
+                                            key={chip}
+                                            className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur"
+                                        >
+                                            {chip}
+                                        </span>
+                                    ))}
+                                </div>
+                                <span className="inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-slate-900 shadow-lg">
+                                    {message.cta}
+                                    <ArrowRight className="h-4 w-4" />
+                                </span>
+                            </div>
                         </div>
 
-                        <button className="md:hidden w-full mt-4 flex items-center justify-center gap-2 bg-white/20 backdrop-blur text-white px-4 py-3 rounded-xl font-bold border border-white/30">
-                            {message.cta}
-                            <ArrowRight className="w-4 h-4" />
-                        </button>
-
-                        <span className="absolute top-2 right-2 bg-white/20 backdrop-blur text-white text-xs px-3 py-1 rounded-full">
-                            {t('ads_placeholder.badge')}
-                        </span>
-                    </Link>
+                        <div className="relative mt-6 grid gap-3 md:grid-cols-3">
+                            {detailPills.slice(0, 3).map((item) => (
+                                <div
+                                    key={item}
+                                    className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm"
+                                >
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
+                                        Entregable
+                                    </p>
+                                    <p className="mt-1 text-sm font-bold text-white">{item}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </a>
                 </div>
             </div>
         );
     }
 
-    // Card variant - For carousel style
     if (variant === 'card') {
         return (
-            <Link
-                to="/advertise"
-                className="flex-shrink-0 w-72 bg-gradient-to-br from-gray-50 to-blue-50 border-2 border-dashed border-blue-300 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 group"
+            <a
+                href={href}
+                className="flex w-72 shrink-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
             >
-                <div className="h-40 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center relative">
-                    <div className="text-center p-4">
-                        <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-2">
-                            <Megaphone className="w-6 h-6 text-white" />
-                        </div>
-                        <p className="text-blue-900 font-bold">{t('ads_placeholder.msg1_cta')}</p>
+                <div className={`relative h-44 bg-gradient-to-br ${message.gradient} p-5 text-white`}>
+                    <div className="absolute inset-0 opacity-20">
+                        <div className="absolute left-5 top-1/2 h-16 w-16 -translate-y-1/2 rounded-full border-2 border-white/40" />
+                        <div className="absolute right-5 top-1/2 h-20 w-20 -translate-y-1/2 rounded-full border border-white/25" />
+                        <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-white/30" />
                     </div>
-                    <span className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
-                        {t('ads_placeholder.badge')}
-                    </span>
-                </div>
-                <div className="p-4">
-                    <h3 className="font-bold text-lg text-gray-900 mb-1">
-                        🎯 {t('ads_placeholder.msg1_title')}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-3">
-                        {t('ads_placeholder.msg1_subtitle')}
-                    </p>
-                    <button className="flex items-center text-blue-600 hover:text-blue-700 font-semibold text-sm group-hover:underline">
-                        {t('ads_placeholder.msg1_cta')} <ArrowRight className="w-4 h-4 ml-1" />
-                    </button>
-                </div>
-            </Link>
-        );
-    }
-
-    // Inline variant - For sponsored results
-    if (variant === 'inline') {
-        return (
-            <Link
-                to="/advertise"
-                className="block bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-dashed border-blue-300 rounded-lg p-4 mb-3 hover:shadow-md hover:border-blue-400 transition-all"
-            >
-                <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Icon className="w-8 h-8 text-white" />
-                    </div>
-                    <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded">
-                                📢 {t('ads_placeholder.badge')}
+                    <div className="relative flex h-full flex-col justify-between">
+                        <div className="flex items-center justify-between gap-3">
+                            <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] backdrop-blur">
+                                {message.badge}
+                            </span>
+                            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-black backdrop-blur">
+                                {message.score}
                             </span>
                         </div>
-                        <h3 className="font-bold text-gray-900">{message.title}</h3>
-                        <p className="text-sm text-gray-600">{message.subtitle}</p>
+                        <div>
+                            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
+                                <Icon className="h-6 w-6" />
+                            </div>
+                            <p className="text-lg font-black leading-tight">{message.title}</p>
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/75">
+                                {message.slot}
+                            </p>
+                        </div>
                     </div>
-                    <button className="hidden md:flex items-center gap-1 text-blue-600 font-semibold text-sm whitespace-nowrap">
-                        {message.cta} <ArrowRight className="w-4 h-4" />
-                    </button>
                 </div>
-            </Link>
+                <div className="flex flex-1 flex-col p-4">
+                    <p className="text-sm font-bold text-slate-900">Campana interna Geobooker</p>
+                    <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">
+                        {message.subtitle}
+                    </p>
+                    <p className="mt-3 text-xs font-medium text-slate-500">
+                        {message.metricHook}
+                    </p>
+                    <div className="mt-4 flex items-center justify-between">
+                        <div className="flex flex-wrap gap-1">
+                            {message.chips?.slice(0, 2).map((chip) => (
+                                <span
+                                    key={chip}
+                                    className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600"
+                                >
+                                    {chip}
+                                </span>
+                            ))}
+                        </div>
+                        <span className="inline-flex items-center gap-1 text-sm font-black text-blue-700">
+                            {message.cta}
+                            <ArrowRight className="h-4 w-4" />
+                        </span>
+                    </div>
+                </div>
+            </a>
         );
     }
 
-    // Small variant - For tight spaces
-    if (variant === 'small') {
+    if (variant === 'inline') {
         return (
-            <Link
-                to="/advertise"
-                className="block bg-gradient-to-r from-gray-50 to-blue-50 border border-dashed border-blue-300 rounded-lg p-3 text-center hover:shadow-md transition-all"
+            <a
+                href={href}
+                className="mb-3 block overflow-hidden rounded-2xl border border-blue-200 bg-white shadow-sm transition-all hover:shadow-md"
             >
-                <div className="flex items-center justify-center gap-2">
-                    <img
-                        src="/images/geobooker-favicon.png"
-                        alt="Geobooker"
-                        className="w-6 h-6 object-contain"
-                    />
-                    <span className="text-sm text-blue-600 font-semibold">
-                        {t('ads_placeholder.msg4_subtitle')} →
+                <div className="flex items-center gap-4 p-4">
+                    <div className={`relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${message.gradient} text-white`}>
+                        <span className="absolute -right-1 -top-1 rounded-full bg-white px-1.5 py-0.5 text-[10px] font-black text-slate-800">
+                            {message.score}
+                        </span>
+                        <Icon className="h-7 w-7" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <div className="mb-1 inline-flex rounded-full bg-blue-100 px-2 py-1 text-[11px] font-semibold text-blue-700">
+                            Publicidad interna
+                        </div>
+                        <h3 className="truncate font-bold text-slate-900">{message.title}</h3>
+                        <p className="text-sm text-slate-600 line-clamp-2">{message.subtitle}</p>
+                        <p className="mt-1 text-xs font-medium text-slate-500">{message.slot}</p>
+                    </div>
+                    <span className="hidden items-center gap-1 whitespace-nowrap text-sm font-black text-blue-700 md:inline-flex">
+                        {message.cta}
+                        <ArrowRight className="h-4 w-4" />
                     </span>
                 </div>
-            </Link>
+            </a>
+        );
+    }
+
+    if (variant === 'sticky' || variant === 'small') {
+        return (
+            <a
+                href={href}
+                className={`relative block overflow-hidden rounded-2xl bg-gradient-to-r ${message.gradient} p-3 text-white shadow-lg`}
+            >
+                <div className="absolute inset-0 opacity-20">
+                    <div className="absolute left-3 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full border-2 border-white/40" />
+                    <div className="absolute right-3 top-1/2 h-12 w-12 -translate-y-1/2 rounded-full border border-white/25" />
+                    <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-white/25" />
+                </div>
+                <div className="relative flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
+                        {variant === 'small' ? <Megaphone className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-semibold uppercase tracking-[0.18em] text-white/80">
+                            {message.badge}
+                        </p>
+                        <p className="truncate text-sm font-black">{message.title}</p>
+                        <p className="truncate text-[11px] text-white/75">{message.metricHook}</p>
+                    </div>
+                    <span className="shrink-0 rounded-xl bg-white px-3 py-2 text-xs font-black text-slate-900">
+                        {message.cta}
+                    </span>
+                </div>
+            </a>
         );
     }
 

@@ -482,31 +482,36 @@ const HomePage = () => {
         description={getSEODescription()}
       />
 
-      {/* 🎉 BANNER DE LANZAMIENTO GRATUITO - Visible hasta 1 de marzo 2026 */}
-      {new Date() < new Date('2027-01-01T00:00:00-06:00') && (
-        <div className="bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 text-white py-4 px-4 shadow-lg">
+      {/* Banner comercial interno de temporada - visible hasta el 31 de agosto de 2026 */}
+      {new Date() < new Date('2026-08-31T23:59:59-06:00') && (
+        <div className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,_#14532d,_#0f172a_55%,_#111827)] text-white py-4 px-4 shadow-lg">
+          <div className="pointer-events-none absolute inset-0 opacity-20">
+            <div className="absolute left-[10%] top-1/2 h-16 w-16 -translate-y-1/2 rounded-full border-2 border-white/40" />
+            <div className="absolute right-[12%] top-1/2 h-24 w-24 -translate-y-1/2 rounded-full border border-white/25" />
+            <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-white/30" />
+          </div>
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <span className="text-3xl animate-bounce">🎉</span>
+              <span className="text-3xl animate-pulse">⚽</span>
               <div>
                 <span className="font-extrabold text-lg block">
-                  ¡Geobooker es GRATIS!
+                  Temporada futbolera 2026 para anunciarte en Geobooker
                 </span>
                 <span className="text-emerald-100 text-sm">
-                  Usa todas las funciones sin costo por lanzamiento
+                  Usa nuestros espacios para destacar tu negocio o impulsar tu paquete Geobooker + TT en industria, transporte y logistica.
                 </span>
               </div>
             </div>
             <div className="flex items-center gap-3 text-sm">
               <div className="flex items-center gap-2">
-                <span className="opacity-90">Válido hasta</span>
+                <span className="opacity-90">Temporada</span>
                 <span className="bg-white/25 backdrop-blur px-3 py-1.5 rounded-lg font-bold text-base">
-                  1 de marzo del 2026
+                  Futbol 2026
                 </span>
               </div>
-              <a href="/categories" className="bg-white text-emerald-700 px-4 py-2 rounded-lg font-bold hover:bg-emerald-50 transition shadow-md">
-                🗺️ Explorar ahora
-              </a>
+              <Link to="/advertise" className="bg-white text-emerald-700 px-4 py-2 rounded-lg font-bold hover:bg-emerald-50 transition shadow-md">
+                Anunciate aqui
+              </Link>
             </div>
           </div>
         </div>

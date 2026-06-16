@@ -327,7 +327,7 @@ Juan Pablo
     };
 
     const totalSent = (stats.google_places?.sent_today || 0) + (stats.apify?.sent_today || 0);
-    // HARD LIMIT: Maximum 20 WhatsApp per day to avoid spam
+    // Cap interno conservador para no sobrecargar la operacion manual.
     const MAX_WHATSAPP_DAILY = 20;
     const totalLimit = Math.min(config.gp_limit + config.apify_limit, MAX_WHATSAPP_DAILY);
     const progress = Math.round((totalSent / totalLimit) * 100);

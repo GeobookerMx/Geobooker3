@@ -15,37 +15,25 @@ exports.handler = async (event, context) => {
         const limit = body.limit || 100;
         const tierFilter = body.tier || null;
 
-        let query = supabase
-            .from('marketing_contacts')
-            .select('id, contact_name, company_name, email, tier')
-            .is('email_sent_at', null)
-            .not('email', 'is', null)
-            .neq('email', '')
-            .order('tier', { ascending: true })
-            .limit(limit);
-
-        if (tierFilter) {
-            query = query.eq('tier', tierFilter);
-        }
-
-        const { data, error } = await query;
+        const { data, error } = await supabase.rpc('generate_daily_email_queue', {
+            p_limit: limit,
+            p_tier_filter: tierFilter
+        });
         if (error) throw error;
-
-        const contacts = data || [];
-        const tierDistribution = contacts.reduce((acc, c) => {
-            acc[c.tier] = (acc[c.tier] || 0) + 1;
-            return acc;
-        }, {});
+        const result = Array.isArray(data) ? data[0] : data;
+        const contactsAdded = result?.contacts_added || 0;
+        const tierDistribution = result?.tier_distribution || {};
+        const roundDistribution = result?.round_distribution || {};
 
         return {
             statusCode: 200,
             headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
             body: JSON.stringify({
                 success: true,
-                contacts_added: contacts.length,
-                contacts,
+                contacts_added: contactsAdded,
                 tier_distribution: tierDistribution,
-                message: `Cola generada: ${contacts.length} contactos`
+                round_distribution: roundDistribution,
+                message: `Cola generada: ${contactsAdded} contactos`
             })
         };
 

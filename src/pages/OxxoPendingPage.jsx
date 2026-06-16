@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Clock, CheckCircle, XCircle, Store, FileText, ArrowLeft, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { Capacitor } from '@capacitor/core';
+import { IS_IOS_NATIVE } from '../utils/iosStore';
 
 const OxxoPendingPage = () => {
     const [searchParams] = useSearchParams();
@@ -18,9 +18,11 @@ const OxxoPendingPage = () => {
     const [voucherData, setVoucherData] = useState(null);
 
     // ✅ Apple Guideline 3.1.1: Redirigir en iOS nativo
-    const isIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
     useEffect(() => {
-        if (isIOS) { navigate('/', { replace: true }); return; }
+        if (IS_IOS_NATIVE) {
+            navigate('/', { replace: true });
+            return;
+        }
         // Recuperar datos del voucher del sessionStorage
         const stored = sessionStorage.getItem('oxxo_voucher');
         if (stored) {
@@ -30,7 +32,11 @@ const OxxoPendingPage = () => {
                 console.error('Error parsing voucher data:', e);
             }
         }
-    }, [isIOS]);
+    }, [navigate]);
+
+    if (IS_IOS_NATIVE) {
+        return null;
+    }
 
     // Verificar estado del pago (polling opcional)
     const checkPaymentStatus = async () => {

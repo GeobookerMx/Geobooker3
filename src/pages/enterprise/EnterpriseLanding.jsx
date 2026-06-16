@@ -113,12 +113,12 @@ export default function EnterpriseLanding() {
                         name: plan.name,
                         description: plan.description || "Paquete enterprise de Geobooker",
                         category: "Enterprise Advertising",
-                        offers: plan.is_custom ? undefined : {
+                        offers: {
                             "@type": "Offer",
                             priceCurrency: "USD",
-                            price: Number(plan.current_price_usd || 0),
+                            price: 0,
                             availability: "https://schema.org/InStock",
-                            url: `https://geobooker.com.mx/enterprise/checkout?plan=${plan.code}`,
+                            url: `https://geobooker.com.mx/enterprise/contact?plan=${plan.code}`,
                         },
                     },
                 })),
@@ -182,7 +182,7 @@ export default function EnterpriseLanding() {
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
                         <Link
-                            to="/enterprise/checkout"
+                            to="/enterprise/contact"
                             className="group bg-gradient-to-r from-amber-500 to-orange-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 transition-all flex items-center gap-2"
                         >
                             {t('enterprise.ctaGetStarted')}
@@ -305,36 +305,10 @@ export default function EnterpriseLanding() {
                                 </p>
 
                                 <div className="mb-6">
-                                    {plan.is_custom ? (
-                                        <div>
-                                            <div className="text-2xl font-bold text-purple-400">
-                                                Desde $9,900 USD
-                                            </div>
-                                            <div className="text-gray-500 text-sm">Bajo propuesta</div>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            {plan.is_promo_active && (
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="text-gray-500 line-through text-lg">
-                                                        {formatPrice(plan.regular_price_usd)}
-                                                    </span>
-                                                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">
-                                                        -{plan.discount_percent}%
-                                                    </span>
-                                                </div>
-                                            )}
-                                            <div className="text-3xl font-bold text-white">
-                                                {formatPrice(plan.current_price_usd)}
-                                                <span className="text-lg text-gray-400 font-normal"> USD</span>
-                                            </div>
-                                            {plan.current_price_mxn ? (
-                                                <div className="text-sm text-amber-300 mt-1">
-                                                    ≈ ${Number(plan.current_price_mxn).toLocaleString('es-MX')} MXN
-                                                </div>
-                                            ) : null}
-                                        </>
-                                    )}
+                                    <div className="text-xl font-bold text-purple-400">
+                                        Cotización especial
+                                    </div>
+                                    <div className="text-gray-400 text-sm">Lanzamiento 2026</div>
                                 </div>
 
                                 <ul className="space-y-2 mb-6">
@@ -350,24 +324,12 @@ export default function EnterpriseLanding() {
                                     ))}
                                 </ul>
 
-                                {plan.is_custom ? (
-                                    <Link
-                                        to="/enterprise/contact"
-                                        className="block text-center py-3 px-4 rounded-xl font-semibold bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg hover:shadow-purple-500/30 transition-all"
-                                    >
-                                        Solicitar Propuesta
-                                    </Link>
-                                ) : (
-                                    <Link
-                                        to={`/enterprise/checkout?plan=${plan.code}`}
-                                        className={`block text-center py-3 px-4 rounded-xl font-semibold transition-all ${plan.code === 'regional'
-                                            ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:shadow-lg hover:shadow-amber-500/30'
-                                            : 'bg-gray-700 text-white hover:bg-gray-600'
-                                        }`}
-                                    >
-                                        {t('enterprise.getStarted')}
-                                    </Link>
-                                )}
+                                <Link
+                                    to={`/enterprise/contact?plan=${plan.code}`}
+                                    className="block text-center py-3 px-4 rounded-xl font-semibold bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg hover:shadow-purple-500/30 transition-all"
+                                >
+                                    Solicitar Propuesta
+                                </Link>
                             </div>
                         ))}
                     </div>
@@ -565,7 +527,7 @@ export default function EnterpriseLanding() {
                         {t('enterprise.ctaFinalSubtitle')}
                     </p>
                     <Link
-                        to="/enterprise/checkout"
+                        to="/enterprise/contact"
                         className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg shadow-orange-500/30 hover:shadow-xl transition-all"
                     >
                         {t('enterprise.ctaTalkToSales')}

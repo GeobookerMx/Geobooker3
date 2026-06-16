@@ -31,6 +31,7 @@ const ScanInvitePage = () => {
     const [loading, setLoading] = useState(true);
     const [dailyLimit, setDailyLimit] = useState(WhatsAppService.config.dailyLimit);
     const [dailyCount, setDailyCount] = useState(0);
+    const [dailyRemaining, setDailyRemaining] = useState(0);
     const [sessionLeadIds, setSessionLeadIds] = useState(new Set()); // Leads añadidos en esta sesión
     const [hiddenLeadIds, setHiddenLeadIds] = useState(new Set()); // Leads ocultados tras contactar
 
@@ -205,21 +206,8 @@ const ScanInvitePage = () => {
                 .select('*', { count: 'exact', head: true })
                 .eq('status', 'contacted');
 
-            // Invitaciones hoy - SOLO de scan_invite (nacionales)
-            // Usando hora de México (UTC-6) para sincronizar contadores
-            const getTodayMexico = () => {
-                const now = new Date();
-                const mexicoOffset = -6 * 60;
-                const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
-                const mexicoTime = new Date(utcTime + (mexicoOffset * 60000));
-                return mexicoTime.toISOString().split('T')[0];
-            };
-            const today = getTodayMexico();
-            const { count: todayCount } = await supabase
-                .from('unified_whatsapp_outreach')
-                .select('*', { count: 'exact', head: true })
-                .gte('sent_at', today)
-                .eq('source', 'scan_invite');  // Solo nacionales
+            const nationalLimit = await WhatsAppService.canSendToday('scan_invite');
+            const todayCount = nationalLimit?.sent || 0;
 
             setStats({
                 total: total || 0,
@@ -228,8 +216,8 @@ const ScanInvitePage = () => {
                 today: todayCount || 0
             });
             setDailyCount(todayCount || 0);
-            // Usar límite específico para scan_invite (nacionales)
-            setDailyLimit(WhatsAppService.config.limits?.scan_invite || 10);
+            setDailyLimit(nationalLimit?.dailyLimit || WhatsAppService.config.limits?.scan_invite || 10);
+            setDailyRemaining(nationalLimit?.remaining ?? 0);
         } catch (error) {
             console.error('Error cargando stats:', error);
         }
@@ -1173,7 +1161,7 @@ const ScanInvitePage = () => {
                     <h4 className="font-semibold text-blue-900 mb-2">📋 Notas importantes:</h4>
                     <ul className="text-sm text-blue-800 space-y-1">
                         <li>• El escaneo usa Google Places API (requiere API Key configurada)</li>
-                        <li>• Límite diario: {dailyLimit} invitaciones por WhatsApp</li>
+                        <li>• Límite diario: {dailyCount}/{dailyLimit} enviadas, restan {dailyRemaining}</li>
                         <li>• Los mensajes se envían manualmente - tú presionas "Enviar" en WhatsApp</li>
                         <li>• Usa "No contactar" para agregar a la lista negra</li>
                     </ul>

@@ -99,10 +99,10 @@ INSERT INTO crm_settings (setting_key, setting_value, description) VALUES
     'email_senders',
     '[
         {
-            "name": "Equipo Ventas",
-            "email": "ventasgeobooker@gmail.com",
+            "name": "Geobooker Ads",
+            "email": "hola@geobooker.com.mx",
             "signature": "<div style=\"margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 14px; color: #6b7280;\"><p><strong>Equipo de Ventas</strong><br>Geobooker - Tu Buscador de Negocios<br>📧 ventasgeobooker@gmail.com<br>📱 WhatsApp: +52 55 2670 2368<br>🌐 <a href=\"https://geobooker.com.mx\">geobooker.com.mx</a></p></div>",
-            "use_for": ["commercial", "tier_AA", "tier_A"]
+            "use_for": ["default", "commercial", "enterprise", "tier_AAA", "tier_AA", "tier_A", "tier_B"]
         }
     ]'::jsonb,
     'Email sender configurations with signatures'

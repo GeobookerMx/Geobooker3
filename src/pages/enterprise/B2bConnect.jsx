@@ -106,7 +106,7 @@ export default function B2bConnect() {
 
         } catch (error) {
             console.error('Error enviando formulario B2B:', error);
-            toast.error(`No pudimos registrar tu solicitud. Intenta de nuevo o escríbenos a ventasgeobooker@gmail.com. ${error.message || ''}`);
+            toast.error(`No pudimos registrar tu solicitud. Intenta de nuevo o escríbenos a hola@geobooker.com.mx. ${error.message || ''}`);
         } finally {
             setSubmitting(false);
         }

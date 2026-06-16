@@ -62,6 +62,7 @@ const ApifyScraper = () => {
     // Global WhatsApp limit tracking
     const [globalLimit, setGlobalLimit] = useState(10);
     const [globalSent, setGlobalSent] = useState(0);
+    const [globalRemaining, setGlobalRemaining] = useState(0);
 
     useEffect(() => {
         loadSettings();
@@ -74,6 +75,7 @@ const ApifyScraper = () => {
             const limit = await WhatsAppService.canSendToday('apify');
             setGlobalSent(limit.sent || 0);
             setGlobalLimit(limit.dailyLimit || 10);
+            setGlobalRemaining(limit.remaining ?? 0);
         } catch (err) {
             console.error('Error loading global stats:', err);
         }
@@ -480,6 +482,7 @@ const ApifyScraper = () => {
                 setSelectedLeads(new Set()); // Clear selections
                 // Actualizar contador global
                 setGlobalSent(prev => prev + 1);
+                setGlobalRemaining(result.remaining ?? Math.max(0, globalLimit - (globalSent + 1)));
                 toast.success(`WhatsApp enviado. ${result.remaining} restantes hoy`);
             }
         } catch (error) {
@@ -790,6 +793,9 @@ const ApifyScraper = () => {
                                     {whatsappSent} WhatsApp enviados
                                 </span>
                             )}
+                            <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${globalRemaining <= 0 ? 'bg-red-100 text-red-700' : 'bg-purple-100 text-purple-700'}`}>
+                                🌍 Global hoy: {globalSent}/{globalLimit} · Restan {globalRemaining}
+                            </span>
                             {cooldownSeconds > 0 && (
                                 <span className="flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium animate-pulse">
                                     ⏱️ Próximo en {cooldownSeconds}s

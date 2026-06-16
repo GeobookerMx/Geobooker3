@@ -70,7 +70,7 @@ const EmailTester = () => {
             </div>
           </div>
         `,
-                from: 'Geobooker <ventas@geobooker.com>' // ✅ Dominio verificado
+                from: 'Geobooker Ads <hola@geobooker.com.mx>'
             });
 
             setResult(response);

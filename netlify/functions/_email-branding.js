@@ -65,6 +65,7 @@ function buildFooter({ companyName = 'tu empresa' } = {}) {
             <div class="gb-footer-meta">
                 <p><strong>Web:</strong> <a href="${DEFAULT_BASE_URL}">${DEFAULT_BASE_URL}</a></p>
                 <p><strong>Email comercial:</strong> <a href="mailto:hola@geobooker.com.mx">hola@geobooker.com.mx</a></p>
+                <p><strong>Respuesta comercial:</strong> <a href="mailto:ventasgeobooker@gmail.com">ventasgeobooker@gmail.com</a></p>
                 <p>
                     Este mensaje comercial se envía porque <strong>${companyName}</strong> aparece como negocio público
                     o contacto comercial relacionado con presencia local.

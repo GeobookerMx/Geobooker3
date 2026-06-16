@@ -20,6 +20,15 @@ const getTodayMexico = () => {
 };
 
 export class WhatsAppService {
+    static SOURCE_ALIASES = {
+        google_places: 'scan_invite',
+        scan_invite: 'scan_invite',
+        apify: 'apify',
+        csv: 'crm_queue',
+        crm_queue: 'crm_queue',
+        manual: 'manual'
+    };
+
     // Configuración (cargada de Supabase)
     static config = {
         phone: '525526702368',
@@ -32,25 +41,52 @@ export class WhatsAppService {
         }
     };
 
+    static normalizeSource(source = 'manual') {
+        return this.SOURCE_ALIASES[source] || source || 'manual';
+    }
+
     /**
      * Inicializar configuración desde Supabase
      */
     static async loadConfig() {
         try {
-            const { data, error } = await supabase
-                .from('crm_settings')
-                .select('setting_value')
-                .eq('setting_key', 'whatsapp_business')
-                .single();
+            const [{ data, error }, { data: campaignConfig, error: campaignError }] = await Promise.all([
+                supabase
+                    .from('crm_settings')
+                    .select('setting_value')
+                    .eq('setting_key', 'whatsapp_business')
+                    .single(),
+                supabase
+                    .from('campaign_config')
+                    .select('source, daily_limit')
+                    .eq('channel', 'whatsapp')
+                    .eq('is_active', true)
+            ]);
 
             if (!error && data) {
                 this.config = {
-                    phone: data.setting_value.phone,
-                    displayNumber: data.setting_value.display_number,
-                    dailyLimit: data.setting_value.daily_limit || 20,
+                    phone: data.setting_value.phone || this.config.phone,
+                    displayNumber: data.setting_value.display_number || this.config.displayNumber,
+                    dailyLimit: data.setting_value.daily_limit || this.config.dailyLimit,
                     limits: {
-                        scan_invite: data.setting_value.limit_scan_invite || 10,
-                        apify: data.setting_value.limit_apify || 10
+                        scan_invite: data.setting_value.limit_scan_invite || this.config.limits.scan_invite,
+                        apify: data.setting_value.limit_apify || this.config.limits.apify
+                    }
+                };
+            }
+
+            if (!campaignError && Array.isArray(campaignConfig)) {
+                const national = campaignConfig.find(c => c.source === 'google_places');
+                const global = campaignConfig.find(c => c.source === 'apify');
+                const total = (national?.daily_limit || 0) + (global?.daily_limit || 0);
+
+                this.config = {
+                    ...this.config,
+                    dailyLimit: total > 0 ? total : this.config.dailyLimit,
+                    limits: {
+                        ...this.config.limits,
+                        scan_invite: national?.daily_limit ?? this.config.limits.scan_invite,
+                        apify: global?.daily_limit ?? this.config.limits.apify
                     }
                 };
             }
@@ -65,6 +101,8 @@ export class WhatsAppService {
      */
     static async canSendToday(source = null) {
         try {
+            const normalizedSource = source ? this.normalizeSource(source) : null;
+
             // Obtener conteo por fuente
             const today = getTodayMexico();
             const { data, error } = await supabase
@@ -73,7 +111,17 @@ export class WhatsAppService {
                 .gte('sent_at', today)
                 .neq('status', 'failed');
 
-            if (error) throw error;
+            if (error) {
+                return {
+                    canSend: false,
+                    sent: 0,
+                    remaining: 0,
+                    dailyLimit: 0,
+                    source: normalizedSource,
+                    bySource: {},
+                    error: `No se pudo consultar unified_whatsapp_outreach: ${error.message}`
+                };
+            }
 
             // Contar por fuente
             const countBySource = {
@@ -91,15 +139,15 @@ export class WhatsAppService {
             });
 
             // Si se especifica una fuente, usar límite específico
-            if (source && this.config.limits[source] !== undefined) {
-                const sent = countBySource[source] || 0;
-                const limit = this.config.limits[source];
+            if (normalizedSource && this.config.limits[normalizedSource] !== undefined) {
+                const sent = countBySource[normalizedSource] || 0;
+                const limit = this.config.limits[normalizedSource];
                 return {
                     canSend: sent < limit,
                     sent: sent,
                     remaining: Math.max(0, limit - sent),
                     dailyLimit: limit,
-                    source: source,
+                    source: normalizedSource,
                     bySource: countBySource
                 };
             }
@@ -117,7 +165,14 @@ export class WhatsAppService {
             };
         } catch (error) {
             console.error('Error checking daily limit:', error);
-            return { canSend: false, sent: 0, remaining: 0, dailyLimit: 10, bySource: {} };
+            return {
+                canSend: false,
+                sent: 0,
+                remaining: 0,
+                dailyLimit: 0,
+                bySource: {},
+                error: error.message || 'Error checking daily limit'
+            };
         }
     }
 
@@ -370,9 +425,14 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
             }
 
             // 1. Verificar límite diario POR FUENTE
-            const limit = await this.canSendToday(source);
+            const normalizedSource = this.normalizeSource(source);
+            const limit = await this.canSendToday(normalizedSource);
+            if (limit.error) {
+                toast.error(`WhatsApp no está listo: ${limit.error}`);
+                return { success: false, error: 'limit_check_failed', details: limit.error };
+            }
             if (!limit.canSend) {
-                const sourceLabel = source === 'scan_invite' ? 'Nacional' : source === 'apify' ? 'Global' : source;
+                const sourceLabel = normalizedSource === 'scan_invite' ? 'Nacional' : normalizedSource === 'apify' ? 'Global' : normalizedSource;
                 toast.error(`Límite ${sourceLabel} alcanzado (${limit.sent}/${limit.dailyLimit})`);
                 return { success: false, error: 'daily_limit', limit };
             }
@@ -392,7 +452,7 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
                 p_phone: contact.phone,
                 p_contact_name: contact.name || contact.contact_name,
                 p_company_name: contact.company || contact.company_name,
-                p_source: source,
+                p_source: normalizedSource,
                 p_message: message,
                 p_language: contact.language || this.detectLanguage(contact.phone)
             });

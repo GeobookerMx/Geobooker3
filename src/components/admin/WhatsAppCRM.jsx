@@ -18,8 +18,8 @@ const WhatsAppCRM = () => {
     // Estado
     const [queue, setQueue] = useState([]);
     const [stats, setStats] = useState({
-        google_places: { sent: 0, limit: 10 },
-        apify: { sent: 0, limit: 10 }
+        national: { sent_today: 0, daily_limit: 10, remaining: 10 },
+        apify: { sent_today: 0, daily_limit: 10, remaining: 10 }
     });
     const [isGenerating, setIsGenerating] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -70,7 +70,7 @@ const WhatsAppCRM = () => {
         if (data) {
             const waStats = data.filter(s => s.channel === 'whatsapp');
             const newStats = {
-                google_places: waStats.find(s => s.source === 'google_places') || { sent_today: 0, daily_limit: 10, remaining: 10 },
+                national: waStats.find(s => s.source === 'google_places') || { sent_today: 0, daily_limit: 10, remaining: 10 },
                 apify: waStats.find(s => s.source === 'apify') || { sent_today: 0, daily_limit: 10, remaining: 10 }
             };
             setStats(newStats);
@@ -326,7 +326,7 @@ Juan Pablo
         return colors[tier] || colors['B'];
     };
 
-    const totalSent = (stats.google_places?.sent_today || 0) + (stats.apify?.sent_today || 0);
+    const totalSent = (stats.national?.sent_today || 0) + (stats.apify?.sent_today || 0);
     // Cap interno conservador para no sobrecargar la operacion manual.
     const MAX_WHATSAPP_DAILY = 20;
     const totalLimit = Math.min(config.gp_limit + config.apify_limit, MAX_WHATSAPP_DAILY);
@@ -359,10 +359,10 @@ Juan Pablo
                         <span className="font-medium text-gray-700">🇲🇽 Nacional</span>
                     </div>
                     <p className="text-2xl font-bold text-green-600">
-                        {stats.google_places?.sent_today || 0}/{config.gp_limit}
+                        {stats.national?.sent_today || 0}/{config.gp_limit}
                     </p>
                     <p className="text-sm text-gray-500">
-                        Quedan: {stats.google_places?.remaining ?? config.gp_limit}
+                        Quedan: {stats.national?.remaining ?? config.gp_limit}
                     </p>
                 </div>
 

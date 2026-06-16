@@ -6,6 +6,7 @@
  * Uses Resend (free tier: 100 emails/day)
  */
 const { wrapEmailLayout } = require('./_email-branding');
+const { resolveEmailSender } = require('./_email-config');
 
 export async function handler(event) {
     if (event.httpMethod !== 'POST') {
@@ -16,8 +17,6 @@ export async function handler(event) {
         const { type, data } = JSON.parse(event.body);
 
         const RESEND_API_KEY = process.env.RESEND_API_KEY;
-        const DEFAULT_FROM_EMAIL = 'Geobooker <hola@geobooker.com.mx>';
-
         if (!RESEND_API_KEY) {
             console.warn('RESEND_API_KEY not configured');
             return {
@@ -38,14 +37,12 @@ export async function handler(event) {
 
         // Determine sender (for CRM campaigns, use dynamic sender)
         // Acepta camelCase (fromEmail) y snake_case (from_email) para compatibilidad
-        let fromEmail = DEFAULT_FROM_EMAIL;
         const senderEmail = data.fromEmail || data.from_email;
         const senderName = data.fromName || data.from_name;
-        if ((type === 'crm_campaign' || type === 'custom') && senderEmail && senderName) {
-            fromEmail = `${senderName} <${senderEmail}>`;
-        } else if (senderEmail) {
-            fromEmail = senderEmail;
-        }
+        const senderConfig = resolveEmailSender({
+            preferredEmail: senderEmail,
+            preferredName: (type === 'crm_campaign' || type === 'custom') ? senderName : 'Geobooker Ads'
+        });
 
         // Send via Resend
         const response = await fetch('https://api.resend.com/emails', {
@@ -55,7 +52,8 @@ export async function handler(event) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                from: fromEmail,
+                from: senderConfig.from,
+                reply_to: senderConfig.replyTo,
                 to: [data.email],
                 subject: emailTemplate.subject,
                 html: emailTemplate.html
@@ -76,7 +74,14 @@ export async function handler(event) {
             body: JSON.stringify({
                 success: true,
                 message: 'Email sent',
-                emailId: result.id
+                emailId: result.id,
+                sender: {
+                    from: senderConfig.from,
+                    replyTo: senderConfig.replyTo,
+                    fallbackApplied: senderConfig.fallbackApplied,
+                    requestedEmail: senderConfig.requestedEmail,
+                    effectiveEmail: senderConfig.effectiveEmail
+                }
             })
         };
 

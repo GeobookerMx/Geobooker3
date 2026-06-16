@@ -24,6 +24,13 @@ import WhatsAppCRM from '../../components/admin/WhatsAppCRM';
 import WhatsAppService from '../../services/whatsappService';
 import KPIsPanel from '../../components/admin/KPIsPanel';
 
+const FALLBACK_EMAIL_SENDER = {
+    name: 'Geobooker Ads',
+    email: 'hola@geobooker.com.mx',
+    signature: '<div style="margin-top:20px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:14px;color:#6b7280;"><p><strong>Geobooker Ads</strong><br>Publicidad local y enterprise<br>📧 hola@geobooker.com.mx<br>🌐 <a href="https://geobooker.com.mx">geobooker.com.mx</a></p></div>',
+    use_for: ['default', 'crm']
+};
+
 const UnifiedCRM = () => {
     // Active Tab
     const [activeTab, setActiveTab] = useState('contactos');
@@ -152,10 +159,10 @@ const UnifiedCRM = () => {
 
             if (error) throw error;
 
+            let loadedSenders = null;
             data.forEach(s => {
                 if (s.setting_key === 'email_senders') {
-                    setSenders(s.setting_value);
-                    if (s.setting_value.length > 0) setSelectedSender(s.setting_value[0]);
+                    loadedSenders = Array.isArray(s.setting_value) ? s.setting_value : [];
                 }
                 if (s.setting_key === 'whatsapp_business') setWhatsappConfig(s.setting_value);
                 if (s.setting_key === 'campaign_limits') {
@@ -166,8 +173,17 @@ const UnifiedCRM = () => {
                     }
                 }
             });
+
+            const safeSenders = loadedSenders && loadedSenders.length > 0
+                ? loadedSenders
+                : [FALLBACK_EMAIL_SENDER];
+
+            setSenders(safeSenders);
+            setSelectedSender((prev) => prev || safeSenders[0]);
         } catch (err) {
             console.error('Error cargando configuración:', err);
+            setSenders([FALLBACK_EMAIL_SENDER]);
+            setSelectedSender(FALLBACK_EMAIL_SENDER);
         } finally {
             setSettingsLoading(false);
         }
@@ -1681,6 +1697,10 @@ const UnifiedCRM = () => {
                             </div>
 
                             <div className="space-y-4">
+                                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                                    Resend debe enviar desde un correo verificado del dominio de Geobooker.
+                                    Si aquí capturas un Gmail u otro externo, el sistema ahora lo usará como respuesta (`reply-to`), pero el envío real saldrá desde <strong>hola@geobooker.com.mx</strong>.
+                                </div>
                                 {senders.map((sender, idx) => (
                                     <div key={idx} className="p-4 border rounded-xl bg-gray-50/50 space-y-3">
                                         <div className="flex flex-col md:flex-row gap-4">

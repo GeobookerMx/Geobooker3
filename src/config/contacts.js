@@ -3,16 +3,16 @@
 
 export const CONTACT_EMAILS = {
     // Email principal de ventas
-    ventas: 'ventasgeobooker@gmail.com',
+    ventas: 'hola@geobooker.com.mx',
 
     // Email de soporte (configurar cuando esté disponible)
-    soporte: 'ventasgeobooker@gmail.com',
+    soporte: 'hola@geobooker.com.mx',
 
     // Email de admin (configurar cuando esté disponible)
-    admin: 'ventasgeobooker@gmail.com',
+    admin: 'hola@geobooker.com.mx',
 
     // Email para anunciantes
-    publicidad: 'ventasgeobooker@gmail.com',
+    publicidad: 'hola@geobooker.com.mx',
 };
 
 export const SOCIAL_LINKS = {

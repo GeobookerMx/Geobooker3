@@ -2,6 +2,7 @@
 // Path: netlify/functions/send-email.js
 
 const { Resend } = require('resend');
+const { resolveEmailSender } = require('./_email-config');
 
 exports.handler = async (event, context) => {
     // Solo permitir POST
@@ -17,7 +18,7 @@ exports.handler = async (event, context) => {
         const resend = new Resend(process.env.RESEND_API_KEY);
 
         // Parsear body
-        const { to, subject, html, from } = JSON.parse(event.body);
+        const { to, subject, html, from, fromName } = JSON.parse(event.body);
 
         // Validar campos requeridos
         if (!to || !subject || !html) {
@@ -29,13 +30,23 @@ exports.handler = async (event, context) => {
             };
         }
 
+        const senderConfig = resolveEmailSender({
+            preferredEmail: from,
+            preferredName: fromName || 'Geobooker Ads'
+        });
+
         // Enviar email
         const data = await resend.emails.send({
-            from: from || 'Geobooker <onboarding@resend.dev>', // Default: dominio de Resend
+            from: senderConfig.from,
+            reply_to: senderConfig.replyTo,
             to: to,
             subject: subject,
             html: html
         });
+
+        if (data?.error) {
+            throw new Error(data.error.message || 'Resend send failed');
+        }
 
         // Respuesta exitosa
         return {
@@ -46,8 +57,15 @@ exports.handler = async (event, context) => {
             },
             body: JSON.stringify({
                 success: true,
-                messageId: data.id,
-                message: 'Email sent successfully'
+                messageId: data?.data?.id || null,
+                message: 'Email sent successfully',
+                sender: {
+                    from: senderConfig.from,
+                    replyTo: senderConfig.replyTo,
+                    fallbackApplied: senderConfig.fallbackApplied,
+                    requestedEmail: senderConfig.requestedEmail,
+                    effectiveEmail: senderConfig.effectiveEmail
+                }
             })
         };
 

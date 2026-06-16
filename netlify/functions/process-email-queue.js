@@ -4,6 +4,7 @@
 const { Resend } = require('resend');
 const { createClient } = require('@supabase/supabase-js');
 const { wrapEmailLayout } = require('./_email-branding');
+const { resolveEmailSender } = require('./_email-config');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const supabase = createClient(
@@ -193,12 +194,24 @@ exports.handler = async (event, context) => {
                     .replace(/{company_name}/g, companyName);
 
                 // Enviar email con Resend
+                const senderConfig = resolveEmailSender({
+                    preferredEmail: contact.assigned_email_sender,
+                    preferredName: 'Geobooker Ads'
+                });
+
                 const emailResult = await resend.emails.send({
-                    from: 'Geobooker <juanpablopg@geobooker.com.mx>',
+                    from: senderConfig.from,
+                    reply_to: senderConfig.replyTo,
                     to: contact.email,
                     subject: finalSubject,
                     html: finalHtml
                 });
+
+                if (emailResult?.error) {
+                    throw new Error(`Resend: ${emailResult.error.message}`);
+                }
+
+                const messageId = emailResult?.data?.id || null;
 
                 // Registrar en historial
                 await supabase
@@ -208,11 +221,16 @@ exports.handler = async (event, context) => {
                         campaign_type: 'email',
                         status: 'sent',
                         sent_at: new Date().toISOString(),
-                        message_id: emailResult.id,
+                        message_id: messageId,
                         details: {
                             subject: finalSubject,
                             tier: contact.tier,
-                            template_id: template.id
+                            template_id: template.id,
+                            sender_requested: contact.assigned_email_sender || null,
+                            sender_effective: senderConfig.effectiveEmail,
+                            reply_to: senderConfig.replyTo,
+                            sender_fallback_applied: senderConfig.fallbackApplied,
+                            email_round: emailRound
                         }
                     });
 
@@ -222,7 +240,7 @@ exports.handler = async (event, context) => {
                     .update({
                         status: 'sent',
                         sent_at: new Date().toISOString(),
-                        message_id: emailResult.id
+                        message_id: messageId
                     })
                     .eq('id', item.id);
 

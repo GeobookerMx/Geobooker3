@@ -7,7 +7,7 @@
  * @param {string} emailData.to - Email destinatario
  * @param {string} emailData.subject - Asunto
  * @param {string} emailData.html - Contenido HTML
- * @param {string} [emailData.from] - Email remitente (opcional, usa default de Resend)
+ * @param {string} [emailData.from] - Email remitente preferido (si no es verificado, se usa como reply-to)
  * @returns {Promise<Object>} - Resultado del envío
  */
 export async function sendEmail({ to, subject, html, from }) {
@@ -21,7 +21,7 @@ export async function sendEmail({ to, subject, html, from }) {
         to,
         subject,
         html,
-        from // Opcional: 'Geobooker <ventasgeobooker@gmail.com>'
+        from // Opcional: 'Geobooker Ads <hola@geobooker.com.mx>'
       })
     });
 
@@ -197,6 +197,6 @@ export async function sendCampaignEmail(contact) {
     to: contact.email,
     subject,
     html,
-    from: 'Geobooker <ventas@geobooker.com>' // ✅ Dominio verificado
+    from: 'Geobooker Ads <hola@geobooker.com.mx>'
   });
 }

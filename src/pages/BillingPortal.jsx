@@ -133,8 +133,111 @@ const BillingPortal = () => {
             return;
         }
 
-        toast.success('Solicitud de factura enviada. El equipo la generará pronto.');
-        // Here you could create a pending invoice request
+        const toastId = toast.loading('Enviando solicitud de factura...');
+
+        try {
+            // 1. Obtener detalles de la campaña
+            const { data: campaign, error: campError } = await supabase
+                .from('ad_campaigns')
+                .select('*')
+                .eq('id', campaignId)
+                .single();
+
+            if (campError || !campaign) {
+                throw new Error(campError?.message || 'No se encontró la campaña');
+            }
+
+            // 2. Calcular montos
+            const subtotal = parseFloat(campaign.budget || campaign.total_budget || 0);
+            const ivaAmount = campaign.billing_country === 'MX' || fiscalData.rfc.length === 12 || fiscalData.rfc.length === 13 ? subtotal * 0.16 : 0;
+            const total = subtotal + ivaAmount;
+
+            // 3. Crear el registro de factura en estado pending si no existe
+            const { data: existingInvoice } = await supabase
+                .from('invoices')
+                .select('id')
+                .eq('campaign_id', campaignId)
+                .maybeSingle();
+
+            if (!existingInvoice) {
+                const { error: invError } = await supabase
+                    .from('invoices')
+                    .insert({
+                        campaign_id: campaignId,
+                        fiscal_client_id: fiscalData.id,
+                        subtotal: subtotal,
+                        iva_rate: campaign.billing_country === 'MX' ? 16.00 : 0.00,
+                        iva_amount: ivaAmount,
+                        total: total,
+                        currency: campaign.currency || 'MXN',
+                        status: 'pending',
+                        created_by: user.id,
+                        concept: `Servicios de publicidad digital - Campaña: ${campaign.advertiser_name || 'Sin nombre'}`
+                    });
+
+                if (invError) throw invError;
+            }
+
+            // 4. Actualizar estado en la campaña
+            const { error: updateError } = await supabase
+                .from('ad_campaigns')
+                .update({ invoice_status: 'requested' })
+                .eq('id', campaignId);
+
+            if (updateError) throw updateError;
+
+            // 5. Enviar notificación al admin via correo
+            const emailBody = `
+                <div style="font-family: sans-serif; padding: 20px; color: #333; line-height: 1.5;">
+                    <h2 style="color: #2563eb; margin-top: 0;">Solicitud de Factura Recibida</h2>
+                    <p>El anunciante <strong>${fiscalData.razon_social}</strong> ha solicitado la factura para su campaña publicitaria.</p>
+                    
+                    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 8px; margin-top: 20px; color: #4b5563;">Datos de la Campaña:</h3>
+                    <ul style="padding-left: 20px;">
+                        <li><strong>ID Campaña:</strong> ${campaign.id}</li>
+                        <li><strong>Negocio/Anunciante:</strong> ${campaign.advertiser_name || 'N/A'}</li>
+                        <li><strong>Email del Anunciante:</strong> ${campaign.advertiser_email || 'N/A'}</li>
+                        <li><strong>Inversión (Subtotal):</strong> $${subtotal.toLocaleString()} ${campaign.currency || 'MXN'}</li>
+                        <li><strong>IVA:</strong> $${ivaAmount.toLocaleString()}</li>
+                        <li><strong>Total:</strong> $${total.toLocaleString()}</li>
+                    </ul>
+
+                    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 8px; margin-top: 20px; color: #4b5563;">Datos Fiscales del Cliente:</h3>
+                    <ul style="padding-left: 20px;">
+                        <li><strong>RFC:</strong> ${fiscalData.rfc}</li>
+                        <li><strong>Razón Social:</strong> ${fiscalData.razon_social}</li>
+                        <li><strong>Régimen Fiscal:</strong> ${fiscalData.regimen_fiscal}</li>
+                        <li><strong>Código Postal:</strong> ${fiscalData.codigo_postal}</li>
+                        <li><strong>Uso de CFDI:</strong> ${fiscalData.uso_cfdi || 'G03'}</li>
+                    </ul>
+
+                    <p style="margin-top: 30px; text-align: center;">
+                        <a href="https://geobooker.com.mx/admin/revenue" style="background: #2563eb; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">Ver en el Panel de Administración</a>
+                    </p>
+                </div>
+            `;
+
+            await fetch('/.netlify/functions/send-notification-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'custom',
+                    data: {
+                        email: 'hola@geobooker.com.mx', // Email del admin
+                        subject: `📄 Factura Solicitada: ${fiscalData.rfc} (${fiscalData.razon_social})`,
+                        html: emailBody,
+                        companyName: 'Geobooker Administrador'
+                    }
+                })
+            });
+
+            toast.success('Solicitud de factura enviada. El equipo la generará pronto.', { id: toastId });
+            loadData();
+
+        } catch (err) {
+            console.error('Error al solicitar factura:', err);
+            toast.error('Error al enviar la solicitud: ' + err.message, { id: toastId });
+        }
     };
 
     const regimenes = [

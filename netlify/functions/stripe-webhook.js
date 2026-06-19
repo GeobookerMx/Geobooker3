@@ -354,6 +354,52 @@ exports.handler = async (event) => {
                 }
                 break;
             }
+
+            // CASO: Expiración de Sesión de Checkout (Limpieza de borradores)
+            case 'checkout.session.expired': {
+                const session = stripeEvent.data.object;
+                const metadata = session.metadata || {};
+                
+                if (metadata.type === 'ad_payment' || metadata.type === 'enterprise_campaign') {
+                    const campaignId = metadata.campaign_id;
+                    if (campaignId) {
+                        const { error } = await supabase
+                            .from('ad_campaigns')
+                            .delete()
+                            .eq('id', campaignId);
+                        
+                        if (error) {
+                            console.error(`Error eliminando campaña expirada ${campaignId}:`, error);
+                        } else {
+                            console.log(`Borrador de campaña expirada ${campaignId} eliminado de la BD.`);
+                        }
+                    }
+                }
+                break;
+            }
+
+            // CASO: Error de Pago (Tarjeta declinada, etc.)
+            case 'payment_intent.payment_failed': {
+                const paymentIntent = stripeEvent.data.object;
+                const metadata = paymentIntent.metadata || {};
+                const campaignId = metadata.campaign_id || metadata.product_id;
+                
+                if (campaignId) {
+                    const { error } = await supabase
+                        .from('ad_campaigns')
+                        .update({
+                            payment_status: 'failed'
+                        })
+                        .eq('id', campaignId);
+                    
+                    if (error) {
+                        console.error(`Error actualizando campaña fallida ${campaignId}:`, error);
+                    } else {
+                        console.log(`Pago fallido para campaña ${campaignId}. Estado de pago marcado como failed.`);
+                    }
+                }
+                break;
+            }
         }
 
         return { statusCode: 200, body: JSON.stringify({ received: true }) };

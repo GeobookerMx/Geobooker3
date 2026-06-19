@@ -1,11 +1,20 @@
 -- ========================================
 -- ACTUALIZAR FUNCIÓN create_draft_campaign
--- Para soportar segmentación por Región y Ciudad
+-- Para soportar segmentación por Región y Ciudad, y guardar user_id
 -- ========================================
+
+-- Asegurar que la columna user_id existe en ad_campaigns
+ALTER TABLE ad_campaigns ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id);
 
 -- PASO 1: Eliminar función anterior
 DROP FUNCTION IF EXISTS create_draft_campaign(
     UUID, TEXT, TEXT, TEXT, TEXT, JSONB, NUMERIC, TEXT, TEXT, TEXT, TEXT, TEXT
+);
+DROP FUNCTION IF EXISTS create_draft_campaign(
+    UUID, TEXT, TEXT, TEXT, TEXT, JSONB, NUMERIC, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, UUID, UUID
+);
+DROP FUNCTION IF EXISTS create_draft_campaign(
+    UUID, TEXT, TEXT, TEXT, TEXT, JSONB, NUMERIC, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, UUID, UUID, UUID
 );
 
 -- PASO 2: Crear nueva función con parámetros adicionales
@@ -22,12 +31,14 @@ CREATE OR REPLACE FUNCTION create_draft_campaign(
     p_creative_url TEXT,
     p_creative_cta TEXT,
     p_creative_image TEXT,
-    p_target_country TEXT DEFAULT NULL,      -- NUEVO (al final)
-    p_target_region UUID DEFAULT NULL,       -- NUEVO (al final)
-    p_target_city UUID DEFAULT NULL          -- NUEVO (al final)
+    p_target_country TEXT DEFAULT NULL,
+    p_target_region UUID DEFAULT NULL,
+    p_target_city UUID DEFAULT NULL,
+    p_user_id UUID DEFAULT NULL
 )
 RETURNS UUID
 LANGUAGE plpgsql
+SECURITY DEFINER
 AS $$
 DECLARE
     v_campaign_id UUID;
@@ -40,9 +51,9 @@ BEGIN
         status,
         geographic_scope,
         target_location,
-        target_country,         -- NUEVO
-        target_region,          -- NUEVO
-        target_city,            -- NUEVO
+        target_country,
+        target_region,
+        target_city,
         audience_targeting,
         budget,
         start_date,
@@ -51,7 +62,8 @@ BEGIN
         creative_description,
         creative_url,
         creative_cta,
-        creative_image
+        creative_image,
+        user_id
     )
     VALUES (
         p_space_id,
@@ -60,9 +72,9 @@ BEGIN
         'pending_payment',
         p_geographic_scope,
         p_target_location,
-        p_target_country,       -- NUEVO
-        p_target_region,        -- NUEVO
-        p_target_city,          -- NUEVO
+        p_target_country,
+        p_target_region,
+        p_target_city,
         p_audience_targeting,
         p_budget,
         CURRENT_DATE,
@@ -71,7 +83,8 @@ BEGIN
         p_creative_description,
         p_creative_url,
         p_creative_cta,
-        p_creative_image
+        p_creative_image,
+        COALESCE(p_user_id, auth.uid())
     )
     RETURNING id INTO v_campaign_id;
 
@@ -84,16 +97,9 @@ SELECT proname, pronargs
 FROM pg_proc 
 WHERE proname = 'create_draft_campaign';
 
--- Deberías ver: create_draft_campaign | 15
--- (15 parámetros en total)
+-- Deberías ver: create_draft_campaign | 16
+-- (16 parámetros en total)
 
 -- ========================================
 -- ✅ LISTO!
--- ========================================
--- La función ahora acepta:
--- - p_target_country (TEXT)
--- - p_target_region (UUID)
--- - p_target_city (UUID)
---
--- El wizard ya está preparado para enviar estos datos.
 -- ========================================

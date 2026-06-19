@@ -25,8 +25,6 @@ const CampaignCreateWizard = () => {
         }
     }, [isIOS, navigate]);
 
-    if (isIOS) return null;
-
     // Estados del Wizard
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -175,6 +173,8 @@ const CampaignCreateWizard = () => {
         }
     }, [formData.target_region, formData.geographic_scope]);
 
+    if (isIOS) return null;
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -275,7 +275,13 @@ const CampaignCreateWizard = () => {
         const toastId = toast.loading('Procesando tu campaña...');
 
         try {
+            const { data: { user } } = await supabase.auth.getUser();
             const adPricing = getLocalAdPricing(adSpace?.price_monthly);
+            
+            // Calcular IVA y total final para cobrar lo mismo que se muestra en UI
+            const subtotal = adPricing.finalPrice || 0;
+            const ivaAmount = formData.target_country === 'MX' ? subtotal * 0.16 : 0;
+            const totalWithIva = subtotal + ivaAmount;
 
             // 1. Primero crear la campaña como draft
             const { data: campaignId, error } = await supabase.rpc('create_draft_campaign', {
@@ -285,7 +291,7 @@ const CampaignCreateWizard = () => {
                 p_geographic_scope: formData.geographic_scope,
                 p_target_location: getTargetLocation(),
                 p_audience_targeting: { countries: [formData.target_country], languages: [formData.target_language] },
-                p_budget: adPricing.finalPrice || 0,
+                p_budget: subtotal,
                 p_creative_title: formData.title,
                 p_creative_description: formData.description,
                 p_creative_url: formData.cta_url,
@@ -293,7 +299,8 @@ const CampaignCreateWizard = () => {
                 p_creative_image: formData.image_url,
                 p_target_country: formData.target_country || null,
                 p_target_region: formData.target_region || null,
-                p_target_city: formData.target_city || null
+                p_target_city: formData.target_city || null,
+                p_user_id: user?.id || null
             });
 
             if (error) throw error;
@@ -307,14 +314,12 @@ const CampaignCreateWizard = () => {
                     throw new Error('Stripe no pudo cargarse. Verifica la configuración.');
                 }
 
-                const { data: { user } } = await supabase.auth.getUser();
-
                 // Determine currency based on country
                 const currency = ['US', 'CA'].includes(formData.target_country) ? 'usd' : 'mxn';
 
                 console.log('Creating checkout session...', {
                     adSpace: adSpace.name,
-                    amount: adPricing.finalPrice,
+                    amount: totalWithIva,
                     currency
                 });
 
@@ -322,10 +327,10 @@ const CampaignCreateWizard = () => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        priceId: adSpace.stripe_price_id || null,
+                        priceId: null, // Forzar uso de amount con IVA en lugar de stripe_price_id
                         productId: adSpace.stripe_product_id || null,
                         productName: `Geobooker Ads - ${adSpace.display_name}`,
-                        amount: Math.round(adPricing.finalPrice * 100),
+                        amount: Math.round(totalWithIva * 100),
                         currency: currency,
                         userId: user?.id || null,
                         customerEmail: formData.advertiser_email,
@@ -362,12 +367,12 @@ const CampaignCreateWizard = () => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        amount: adPricing.finalPrice,
+                        amount: totalWithIva,
                         email: formData.advertiser_email,
                         name: formData.advertiser_name,
                         productName: `Campaña ${adSpace.display_name}`,
                         productId: campaignId,
-                        userId: (await supabase.auth.getUser()).data.user?.id,
+                        userId: user?.id || null,
                         metadata: {
                             type: 'ad_payment',
                             campaign_id: campaignId,

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import SafetyBanner from '../SafetyBanner';
 import AppQRCode from '../common/AppQRCode';
 import { APP_LINKS, buildTrackedDownloadUrl } from '../../config/appLinks';
+import { IS_IOS_NATIVE } from '../../utils/iosStore';
 
 const Footer = () => {
   const { t } = useTranslation();
@@ -128,16 +129,18 @@ const Footer = () => {
                     <span>geobookerr@gmail.com</span>
                     <span className="ml-2 text-xs text-gray-500">({t('footer.support')})</span>
                   </a>
-                  <a
-                    href="mailto:ventasgeobooker@gmail.com"
-                    className="flex items-center text-gray-300 hover:text-purple-400 transition-colors group"
-                  >
-                    <svg className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <span>ventasgeobooker@gmail.com</span>
-                    <span className="ml-2 text-xs text-gray-500">({t('nav.moreSales')})</span>
-                  </a>
+                  {!IS_IOS_NATIVE && (
+                    <a
+                      href="mailto:ventasgeobooker@gmail.com"
+                      className="flex items-center text-gray-300 hover:text-purple-400 transition-colors group"
+                    >
+                      <svg className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      <span>ventasgeobooker@gmail.com</span>
+                      <span className="ml-2 text-xs text-gray-500">({t('nav.moreSales')})</span>
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
@@ -171,11 +174,13 @@ const Footer = () => {
                     → {t('nav.login')}
                   </Link>
                 </li>
-                <li>
-                  <Link to="/advertise" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → {t('footer.adsPolicy')}
-                  </Link>
-                </li>
+                {!IS_IOS_NATIVE && (
+                  <li>
+                    <Link to="/advertise" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
+                      → {t('footer.adsPolicy')}
+                    </Link>
+                  </li>
+                )}
                 <li>
                   <Link to="/guia-resico" className="text-gray-300 hover:text-green-400 hover:pl-2 transition-all duration-200 inline-block">
                     📋 {t('footer.guiaResico')}
@@ -256,26 +261,24 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Métodos de pago aceptados */}
-          <div className="flex justify-center mb-8">
-            <div className="bg-gray-800/50 rounded-xl px-6 py-4 flex flex-col md:flex-row items-center gap-4">
-              <span className="text-gray-400 text-sm font-medium">{t('footer.payments')}:</span>
-              <div className="flex items-center gap-4">
-                {/* OXXO Pay */}
-                <div className="flex items-center gap-2 bg-yellow-500/20 px-3 py-1.5 rounded-lg">
-                  <span className="text-yellow-400 font-bold text-sm">🏪 OXXO Pay</span>
-                </div>
-                {/* Visa */}
-                <div className="flex items-center gap-1 bg-blue-500/20 px-3 py-1.5 rounded-lg">
-                  <span className="text-blue-400 font-bold text-sm">💳 Visa</span>
-                </div>
-                {/* Mastercard */}
-                <div className="flex items-center gap-1 bg-orange-500/20 px-3 py-1.5 rounded-lg">
-                  <span className="text-orange-400 font-bold text-sm">Mastercard</span>
+          {!IS_IOS_NATIVE && (
+            <div className="flex justify-center mb-8">
+              <div className="bg-gray-800/50 rounded-xl px-6 py-4 flex flex-col md:flex-row items-center gap-4">
+                <span className="text-gray-400 text-sm font-medium">{t('footer.payments')}:</span>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 bg-yellow-500/20 px-3 py-1.5 rounded-lg">
+                    <span className="text-yellow-400 font-bold text-sm">🏪 OXXO Pay</span>
+                  </div>
+                  <div className="flex items-center gap-1 bg-blue-500/20 px-3 py-1.5 rounded-lg">
+                    <span className="text-blue-400 font-bold text-sm">💳 Visa</span>
+                  </div>
+                  <div className="flex items-center gap-1 bg-orange-500/20 px-3 py-1.5 rounded-lg">
+                    <span className="text-orange-400 font-bold text-sm">Mastercard</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* QR Code Section */}
           <div className="flex justify-center mb-8">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -31,16 +31,8 @@ const DashboardPage = () => {
   const [recommendationStats, setRecommendationStats] = useState({ pending: 0, approved: 0, rejected: 0 });
   const premiumPromoActive = isPremiumPromoActive();
 
-  useEffect(() => {
-    if (user) {
-      checkPremiumStatus();
-      countBusinesses();
-      loadReferralCode();
-      loadMyRecommendations();
-    }
-  }, [user]);
-
-  const checkPremiumStatus = async () => {
+  const checkPremiumStatus = useCallback(async () => {
+    if (!user) return;
     try {
       const { data, error } = await supabase.rpc('get_user_premium_status', { user_id: user.id });
       if (error) throw error;
@@ -48,9 +40,10 @@ const DashboardPage = () => {
     } catch (error) {
       console.error('Error checking premium:', error);
     }
-  };
+  }, [user]);
 
-  const countBusinesses = async () => {
+  const countBusinesses = useCallback(async () => {
+    if (!user) return;
     try {
       const { data } = await supabase
         .from('businesses')
@@ -62,9 +55,10 @@ const DashboardPage = () => {
     } catch (error) {
       console.error('Error counting businesses:', error);
     }
-  };
+  }, [user]);
 
-  const loadReferralCode = async () => {
+  const loadReferralCode = useCallback(async () => {
+    if (!user) return;
     try {
       const { data } = await supabase
         .from('user_profiles')
@@ -88,9 +82,10 @@ const DashboardPage = () => {
       // Fallback code
       setReferralCode(user.id?.substring(0, 6).toUpperCase() || 'GEOBKR');
     }
-  };
+  }, [user]);
 
-  const loadMyRecommendations = async () => {
+  const loadMyRecommendations = useCallback(async () => {
+    if (!user) return;
     setLoadingRecs(true);
     try {
       const { data, error } = await supabase
@@ -112,7 +107,16 @@ const DashboardPage = () => {
     } finally {
       setLoadingRecs(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      checkPremiumStatus();
+      countBusinesses();
+      loadReferralCode();
+      loadMyRecommendations();
+    }
+  }, [checkPremiumStatus, countBusinesses, loadMyRecommendations, loadReferralCode, user]);
 
   const showUpgradeBanner = !isPremium && !premiumPromoActive && businessCount >= 2;
 

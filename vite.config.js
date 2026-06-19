@@ -71,7 +71,8 @@ export default defineConfig({
       },
     },
     // Chunk pequeños = carga más rápida en Android WebView
-    chunkSizeWarningLimit: 300,
+    // Los chunks que siguen grandes son librerías admin-only ya aisladas del flujo principal
+    chunkSizeWarningLimit: 450,
     // Source maps OFF en producción (menos MB para descargar)
     sourcemap: false,
     // esbuild es el minificador más rápido

@@ -1,7 +1,7 @@
 // src/pages/enterprise/EnterpriseLanding.jsx
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useTranslation, Trans } from 'react-i18next';
+import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
     Globe, TrendingUp, Users, MapPin, Star, ArrowRight,
     CheckCircle, Clock, Zap, Shield, BarChart3, Target,
@@ -15,17 +15,22 @@ import {
     ENTERPRISE_PROMO_DISCOUNT_PERCENT,
     ENTERPRISE_PROMO_END
 } from '../../config/enterprisePricing';
+import { IS_IOS_NATIVE } from '../../utils/iosStore';
 
 export default function EnterpriseLanding() {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
+    const navigate = useNavigate();
     const [pricing, setPricing] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [promoEndDate, setPromoEndDate] = useState(null);
     const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0 });
 
     useEffect(() => {
+        if (IS_IOS_NATIVE) {
+            navigate('/', { replace: true });
+            return;
+        }
         fetchPricing();
-    }, []);
+    }, [navigate]);
 
     useEffect(() => {
         if (!promoEndDate) return;
@@ -89,7 +94,7 @@ export default function EnterpriseLanding() {
                 setTimeLeft({ days: 0, hours: 0, minutes: 0 });
             }
         } finally {
-            setLoading(false);
+            // Pricing is rendered from live or fallback data, so no separate loading gate is needed here.
         }
     };
 
@@ -131,6 +136,10 @@ export default function EnterpriseLanding() {
             },
         },
     ];
+
+    if (IS_IOS_NATIVE) {
+        return null;
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">

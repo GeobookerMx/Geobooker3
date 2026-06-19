@@ -12,7 +12,6 @@ const SignupPage = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const isNative = Capacitor.isNativePlatform();
-    const isIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
     const isAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
     const [loading, setLoading] = useState(false);
     const oauthRedirectTo = isNative

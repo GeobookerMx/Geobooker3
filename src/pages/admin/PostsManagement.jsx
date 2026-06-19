@@ -203,7 +203,7 @@ export default function PostsManagement() {
             const fileExt = file.name.split('.').pop();
             const fileName = `posts/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
 
-            const { data, error } = await supabase.storage
+            const { error } = await supabase.storage
                 .from('public-assets')
                 .upload(fileName, file, {
                     cacheControl: '3600',

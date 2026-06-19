@@ -3,7 +3,7 @@
  * Enterprise Ad Inventory Dashboard
  * Shows: Slot availability, Calendar view, Campaign metrics, Revenue tracking
  */
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import {
     Globe, MapPin, Calendar, TrendingUp, DollarSign,
@@ -23,18 +23,13 @@ export default function AdInventory() {
     const [inventory, setInventory] = useState([]);
     const [campaigns, setCampaigns] = useState([]);
     const [metrics, setMetrics] = useState(null);
-    const [selectedPeriod, setSelectedPeriod] = useState('month');
     const [expandedLevels, setExpandedLevels] = useState(['global', 'region']);
     const [selectedCampaign, setSelectedCampaign] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [showEmailModal, setShowEmailModal] = useState(false);
     const [emailCampaign, setEmailCampaign] = useState(null);
 
-    useEffect(() => {
-        loadData();
-    }, []);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true);
         try {
             // Load inventory status directly from table (fallback if RPC doesn't exist)
@@ -88,7 +83,11 @@ export default function AdInventory() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
     const calculateMetrics = (camps) => {
         const active = camps.filter(c => c.status === 'active');

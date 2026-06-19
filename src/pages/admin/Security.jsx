@@ -1,5 +1,5 @@
 // src/pages/admin/Security.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Shield, Search, Filter, ArrowLeft, CheckCircle, Clock,
@@ -18,11 +18,7 @@ export default function Security() {
     const [actionFilter, setActionFilter] = useState('all');
     const [selectedLog, setSelectedLog] = useState(null);
 
-    useEffect(() => {
-        loadLogs();
-    }, []);
-
-    const loadLogs = async () => {
+    const loadLogs = useCallback(async () => {
         setLoading(true);
         try {
             const data = await fetchAuditLogs(100);
@@ -32,7 +28,11 @@ export default function Security() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [fetchAuditLogs]);
+
+    useEffect(() => {
+        loadLogs();
+    }, [loadLogs]);
 
     // Filtered logs
     const filteredLogs = logs.filter(log => {
@@ -343,7 +343,8 @@ function SecurityCheckItem({ title, desc, status }) {
     );
 }
 
-function StatCard({ title, value, desc, icon: Icon, color }) {
+function StatCard({ title, value, desc, icon, color }) {
+    const Icon = icon;
     const colors = {
         blue: 'bg-blue-50 text-blue-600 border-blue-100',
         purple: 'bg-purple-50 text-purple-600 border-purple-100',

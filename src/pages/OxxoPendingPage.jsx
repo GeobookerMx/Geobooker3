@@ -6,7 +6,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Clock, CheckCircle, XCircle, Store, FileText, ArrowLeft, RefreshCw } from 'lucide-react';
-import { supabase } from '../lib/supabase';
 import { IS_IOS_NATIVE } from '../utils/iosStore';
 
 const OxxoPendingPage = () => {

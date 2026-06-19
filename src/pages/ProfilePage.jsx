@@ -6,7 +6,7 @@ import { supabase } from "../lib/supabase";
 import { toast } from 'react-hot-toast';
 
 const ProfilePage = () => {
-  const { state } = useApp();
+  useApp();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [myBusinesses, setMyBusinesses] = useState([]);

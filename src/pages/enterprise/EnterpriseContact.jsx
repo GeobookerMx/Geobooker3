@@ -1,5 +1,5 @@
 // src/pages/enterprise/EnterpriseContact.jsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft, Building2, Mail, Phone, Globe,
@@ -8,6 +8,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import SEO from '../../components/SEO';
+import { IS_IOS_NATIVE } from '../../utils/iosStore';
 
 const INDUSTRIES = [
     'Bebidas (alcohólicas)',
@@ -35,7 +36,6 @@ export default function EnterpriseContact() {
 
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
-
     const [form, setForm] = useState({
         company_name: '',
         contact_name: '',
@@ -50,6 +50,16 @@ export default function EnterpriseContact() {
         budget_range: '',
         message: ''
     });
+
+    useEffect(() => {
+        if (IS_IOS_NATIVE) {
+            navigate('/', { replace: true });
+        }
+    }, [navigate]);
+
+    if (IS_IOS_NATIVE) {
+        return null;
+    }
 
     const handleChange = (e) => {
         const { name, value } = e.target;

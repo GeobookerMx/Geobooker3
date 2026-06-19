@@ -44,8 +44,8 @@ const RecommendationsManagement = lazy(() => import("./pages/admin/Recommendatio
 const ClaimsManagement = lazy(() => import("./pages/admin/ClaimsManagement.jsx"));
 const UnsubscribePage = lazy(() => import("./pages/UnsubscribePage.jsx"));
 
-// User Pages - Lazy Loaded (except HomePage for LCP)
-import HomePage from "./pages/HomePage.jsx";
+// User Pages - Lazy Loaded
+const HomePage = lazy(() => import("./pages/HomePage.jsx"));
 const FAQPage = lazy(() => import("./pages/FAQPage.jsx"));
 const SupportPage = lazy(() => import("./pages/SupportPage.jsx"));
 const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage.jsx"));

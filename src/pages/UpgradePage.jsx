@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Check, X, Star, Zap, TrendingUp, Camera, MapPin, BarChart, Clock, Instagram, Facebook, Globe, CreditCard, Store, Gift } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import OxxoVoucher from '../components/payment/OxxoVoucher';
-import { formatPrice, getCurrencyConfig } from '../utils/currencyUtils';
+import { formatPrice } from '../utils/currencyUtils';
 import { getDaysRemaining, getPremiumPromoDeadlineLabel, isPremiumPromoActive, PROMOTIONS } from '../config/promotions';
 import { clarityMarkConversion } from '../services/trackingService';
 import { Capacitor } from '@capacitor/core';
@@ -27,7 +27,6 @@ const UpgradePage = () => {
         isNative = /iPhone|iPad|iPod/.test(navigator.userAgent) && !!window.Capacitor;
     }
     const [loading, setLoading] = useState(false);
-    const [priceId, setPriceId] = useState(null);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('card');
     const [oxxoVoucher, setOxxoVoucher] = useState(null);
@@ -50,9 +49,12 @@ const UpgradePage = () => {
     // ✅ FIX Apple Guideline 2.1(a): Redirigir ANTES de renderizar cualquier contenido
     // useEffect causa pantalla blanca porque se ejecuta DESPUÉS del primer render
     // Con return inmediato: iOS nunca ve ni un milisegundo de pantalla blanca
+    useEffect(() => {
+        if (!isNative) return;
+        navigate('/dashboard', { replace: true });
+    }, [isNative, navigate]);
+
     if (isNative) {
-        // Redirigir al dashboard en siguiente tick para no bloquear el render
-        setTimeout(() => navigate('/dashboard', { replace: true }), 0);
         return (
             <div style={{
                 display: 'flex',
@@ -70,21 +72,6 @@ const UpgradePage = () => {
         );
     }
 
-    React.useEffect(() => {
-        const fetchPlanConfig = async () => {
-            try {
-                const { data } = await supabase
-                    .from('subscription_plans')
-                    .select('stripe_price_id_mxn')
-                    .eq('code', 'premium_monthly')
-                    .single();
-                if (data) setPriceId(data.stripe_price_id_mxn);
-            } catch (err) {
-                console.error('Error fetching plan:', err);
-            }
-        };
-        fetchPlanConfig();
-    }, []);
 
     // 🎉 Activar Premium GRATIS durante promoción (sin Stripe)
     const handleFreeUpgrade = async () => {

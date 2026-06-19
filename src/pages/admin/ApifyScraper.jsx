@@ -5,7 +5,7 @@
  * - Import to CRM
  * - Send WhatsApp/Email directly
  */
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Search, Globe, MapPin, Phone, Mail, ExternalLink, Download,
     Loader2, Building2, Star, MessageCircle, Send, CheckCircle,
@@ -42,7 +42,6 @@ const ApifyScraper = () => {
     // WhatsApp tracking state
     const [whatsappSent, setWhatsappSent] = useState(0);
     const [contactedPhones, setContactedPhones] = useState(new Set()); // Phones already messaged
-    const [sessionPhones, setSessionPhones] = useState(new Set()); // Phones from current results (for dedup)
 
     // Rate limiting state
     const [cooldownSeconds, setCooldownSeconds] = useState(0);
@@ -50,12 +49,6 @@ const ApifyScraper = () => {
     const [hourlyResetTime, setHourlyResetTime] = useState(null);
 
     // WhatsApp Business Configuration (Default values, will be overridden by DB)
-    const [whatsappSettings, setWhatsappSettings] = useState({
-        phone: '525526702368',
-        display_number: '+52 55 2670 2368',
-        default_message: '¡Hola! Vi tu perfil en Geobooker y me gustaría platicar sobre cómo pueden ayudarte a crecer. ¿Tienes unos minutos?'
-    });
-
     const [rateLimitConfig, setRateLimitConfig] = useState({
         cooldownMs: 45000,
         maxPerHour: 30,
@@ -96,9 +89,6 @@ const ApifyScraper = () => {
             if (error) throw error;
 
             data.forEach(s => {
-                if (s.setting_key === 'whatsapp_business') {
-                    setWhatsappSettings(s.setting_value);
-                }
                 if (s.setting_key === 'campaign_limits') {
                     setRateLimitConfig(prev => ({
                         ...prev,
@@ -507,6 +497,12 @@ const ApifyScraper = () => {
                 const newResults = results.filter((_, i) => i !== index);
                 setResults(newResults);
                 setSelectedLeads(new Set()); // Clear selections
+                setWhatsappSent(prev => prev + 1);
+                setContactedPhones(prev => new Set(prev).add(String(lead.phone).replace(/\D/g, '')));
+                setHourlyCount(prev => prev + 1);
+                setHourlyResetTime(prev => prev || (Date.now() + 60 * 60 * 1000));
+                startCooldown();
+                checkHourlyLimit();
                 // Actualizar contador global
                 setGlobalSent(prev => prev + 1);
                 setGlobalRemaining(result.remaining ?? Math.max(0, globalLimit - (globalSent + 1)));

@@ -284,8 +284,6 @@ const HOUSE_AD_SLOT_GUIDE = [
  * - Todos los precios muestran +IVA
  */
 function getPricingLabel(space) {
-  const meta = AD_SPACE_META[space.name];
-
   // Enterprise es por cotización
   if (space.name === 'enterprise') {
     return {

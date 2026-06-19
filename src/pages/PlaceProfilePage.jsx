@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getPlaceDetails } from '../services/googlePlacesService';
-import { openMapsNavigation, openPhoneCall, openWhatsApp, trackViewProfile } from '../services/navigationService';
+import { openMapsNavigation, openPhoneCall, trackViewProfile } from '../services/navigationService';
 import { useLocation } from '../contexts/LocationContext';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';

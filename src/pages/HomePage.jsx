@@ -287,7 +287,6 @@ const HomePage = () => {
 
   // Sistema de límite de búsquedas para invitados
   const {
-    canSearch: canGuestSearch,
     recordSearch: recordGuestSearch,
     showLoginPrompt,
     closeLoginPrompt,
@@ -331,19 +330,8 @@ const HomePage = () => {
   }, [businesses, lastSearchQuery]);
 
   // Limpiar búsqueda (botón separado)
-  const handleClearSearch = () => {
-    setBusinesses([]);
-    setLastSearchQuery('');
-    setSelectedBusiness(null);
-    setAwardFilter('all');
-    sessionStorage.removeItem('geobooker_search_state');
-    // Limpiar URL params de búsqueda pero mantener ubicación
-    setSearchParams({});
-    toast.success(t('home.searchCleared', { defaultValue: 'Búsqueda limpiada' }));
-  };
-
   // Cargar negocios nativos de Geobooker (CON CACHÉ IndexedDB)
-  const fetchGeobookerBusinesses = async () => {
+  const fetchGeobookerBusinesses = useCallback(async () => {
     try {
       // ⚡ PASO 1: Intentar cargar desde caché primero (instantáneo)
       const cacheStatus = await isCacheValid(userLocation);
@@ -403,7 +391,7 @@ const HomePage = () => {
     } catch (error) {
       console.error('Error fetching Geobooker businesses:', error);
     }
-  };
+  }, [categoryFilter, subcategoryFilter, userLocation]);
 
   // 💚 OPCION 1: Cargar recomendaciones filtradas por viewport del mapa
   // Solo se cargan las recomendaciones visibles en el área del mapa, no TODAS.
@@ -436,7 +424,7 @@ const HomePage = () => {
 
   useEffect(() => {
     fetchGeobookerBusinesses();
-  }, [categoryFilter, subcategoryFilter, userLocation]);
+  }, [fetchGeobookerBusinesses]);
 
   // NOTA: Las recomendaciones ahora se cargan en handleMapIdle (filtradas por viewport)
 
@@ -472,7 +460,7 @@ const HomePage = () => {
     return () => {
       window.removeEventListener('business-visibility-changed', handleVisibilityChange);
     };
-  }, []); // Sin dependencias porque fetchGeobookerBusinesses ya está definido arriba
+  }, [fetchGeobookerBusinesses]);
 
   // ⚡ NUEVO: Buscar en Google Places automáticamente cuando hay filtro de categoría
   useEffect(() => {
@@ -626,8 +614,6 @@ const HomePage = () => {
     { id: 'tasting_menu', label: 'Tasting menu' }
   ];
 
-  const awardViewportCategory = awardFilter !== 'all' ? 'restaurantes' : null;
-
   const handleAwardFilterToggle = useCallback(async (nextFilter) => {
     const resolvedFilter = awardFilter === nextFilter ? 'all' : nextFilter;
     awardFilterRef.current = resolvedFilter;
@@ -778,7 +764,7 @@ const HomePage = () => {
         console.error('Error fetching DENUE businesses:', error);
       }
     }, 1000); // 1 segundo de debounce
-  }, [geobookerBusinesses, categoryFilter, awardFilter, awardViewportCategory]);
+  }, [geobookerBusinesses, categoryFilter]);
 
   useEffect(() => {
     if (awardFilter === 'all' || !mapBoundsRef.current) {
@@ -819,7 +805,7 @@ const HomePage = () => {
         console.error('Error refreshing award-filter viewport:', error);
       }
     }, 150);
-  }, [awardFilter, categoryFilter, geobookerBusinesses, awardViewportCategory]);
+  }, [awardFilter]);
 
   const handleRetryLocation = async () => {
     try {

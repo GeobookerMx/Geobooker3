@@ -3,7 +3,7 @@
  * ADS.3: QA Tool para validar segmentación de anuncios por geo
  * Permite simular ubicación y ver qué anuncios se mostrarían
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import {
@@ -129,7 +129,7 @@ export default function AdsQATool() {
     };
 
 
-    const getScopeColor = (scope) => {
+    const GET_SCOPE_COLOR = (scope) => {
         const priority = AD_PRIORITY.find(p => p.scope === scope);
         return priority?.color || 'gray';
     };

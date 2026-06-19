@@ -42,7 +42,7 @@ const UnifiedCRM = () => {
     const [contactsLoading, setContactsLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [tierFilter, setTierFilter] = useState('all');
-    const [typeFilter, setTypeFilter] = useState('all');
+    const [typeFilter] = useState('all');
     const [industryFilter, setIndustryFilter] = useState('all');
     const [cityFilter, setCityFilter] = useState('all');
     const [stateFilter, setStateFilter] = useState('all');
@@ -56,9 +56,9 @@ const UnifiedCRM = () => {
     });
 
     // Stats State
-    const [companyTypeStats, setCompanyTypeStats] = useState([]);
-    const [tierStats, setTierStats] = useState([]);
-    const [statsLoading, setStatsLoading] = useState(false);
+    const [, setCompanyTypeStats] = useState([]);
+    const [, setTierStats] = useState([]);
+    const [, setStatsLoading] = useState(false);
 
     // Email Status Metrics
     const [emailMetrics, setEmailMetrics] = useState({ enviados: 0, pendientes: 0, abiertos: 0, todayCount: 0 });
@@ -71,12 +71,12 @@ const UnifiedCRM = () => {
     const [waQueue, setWaQueue] = useState([]);
     const [isSending, setIsSending] = useState(false);
     const [sendProgress, setSendProgress] = useState(0);
-    const [waSearchTier, setWaSearchTier] = useState('all');
+    const [waSearchTier] = useState('all');
     const [emailSearchTier, setEmailSearchTier] = useState('all');
 
     // History State
-    const [emailLogs, setEmailLogs] = useState([]);
-    const [waLogs, setWaLogs] = useState([]);
+    const [, setEmailLogs] = useState([]);
+    const [, setWaLogs] = useState([]);
     const [followUpDays, setFollowUpDays] = useState(15);
     const [isResetting, setIsResetting] = useState(false);
 
@@ -88,14 +88,14 @@ const UnifiedCRM = () => {
     const [senders, setSenders] = useState([]);
     const [whatsappConfig, setWhatsappConfig] = useState({ phone: '', display_number: '', default_message: '' });
     const [campaignLimits, setCampaignLimits] = useState({ daily_email_limit: 100, daily_whatsapp_limit: 50 });
-    const [settingsLoading, setSettingsLoading] = useState(false);
+    const [, setSettingsLoading] = useState(false);
 
     // Import State
     const [importing, setImporting] = useState(false);
-    const [previewData, setPreviewData] = useState([]);
+    const [, setPreviewData] = useState([]);
 
     // Company Types for filter
-    const [companyTypes, setCompanyTypes] = useState([]);
+    const [, setCompanyTypes] = useState([]);
 
     // 🌟 NUEVO: Drawer de detalle de contacto
     const [drawerContact, setDrawerContact] = useState(null);
@@ -109,11 +109,7 @@ const UnifiedCRM = () => {
     const [campaignLog, setCampaignLog] = useState([]);
     const addLog = (msg, type = 'info') => setCampaignLog(prev => [...prev.slice(-49), { msg, type, t: new Date().toLocaleTimeString() }]);
 
-    useEffect(() => {
-        loadInitialData();
-    }, []);
-
-    const loadInitialData = async () => {
+    const loadInitialData = useCallback(async () => {
         await Promise.all([
             loadContacts(),
             loadTemplates(),
@@ -122,7 +118,11 @@ const UnifiedCRM = () => {
             loadSettings(),
             loadQueueStats()
         ]);
-    };
+    }, []);
+
+    useEffect(() => {
+        loadInitialData();
+    }, [loadInitialData]);
 
     const loadQueueStats = async () => {
         try {
@@ -857,7 +857,7 @@ const UnifiedCRM = () => {
     };
 
     // ============ SEND TEST EMAIL ============
-    const sendTestEmail = async () => {
+    const SEND_TEST_EMAIL = async () => {
         if (!selectedTemplate) {
             toast.error('Selecciona una plantilla primero');
             return;

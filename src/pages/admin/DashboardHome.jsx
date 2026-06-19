@@ -1,5 +1,5 @@
 // src/pages/admin/DashboardHome.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import {
   Users,
@@ -29,8 +29,7 @@ import {
 import { Link } from 'react-router-dom';
 import {
   getAnalyticsSummary,
-  getTopSearches,
-  getDeviceBreakdown
+  getTopSearches
 } from '../../services/analyticsService';
 import { useAdminAuditLog } from '../../hooks/useAdminAuditLog';
 
@@ -65,7 +64,6 @@ export default function DashboardHome() {
   });
 
   const [topSearches, setTopSearches] = useState([]);
-  const [deviceBreakdown, setDeviceBreakdown] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
   const [intlStats, setIntlStats] = useState({
     byCountry: [],
@@ -83,27 +81,20 @@ export default function DashboardHome() {
     topBusinesses: []
   });
 
-  useEffect(() => {
-    loadDashboardData();
-    loadAnalyticsData();
-  }, []);
-
-  const loadAnalyticsData = async () => {
+  const loadAnalyticsData = useCallback(async () => {
     try {
-      const [summary, searches, devices] = await Promise.all([
+      const [summary, searches] = await Promise.all([
         getAnalyticsSummary(7),
-        getTopSearches(5, 7),
-        getDeviceBreakdown(30)
+        getTopSearches(5, 7)
       ]);
       setAnalyticsStats(summary);
       setTopSearches(searches);
-      setDeviceBreakdown(devices);
     } catch (error) {
       console.error('Error loading analytics:', error);
     }
-  };
+  }, []);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       // Total de usuarios
       const { count: usersCount } = await supabase
@@ -275,7 +266,12 @@ export default function DashboardHome() {
       console.error('Error loading dashboard data:', error);
       setStats(prev => ({ ...prev, loading: false }));
     }
-  };
+  }, [fetchAuditLogs]);
+
+  useEffect(() => {
+    loadDashboardData();
+    loadAnalyticsData();
+  }, [loadAnalyticsData, loadDashboardData]);
 
   const getStatusColor = (status) => {
     const colors = {
@@ -784,7 +780,8 @@ export default function DashboardHome() {
 }
 
 // KPI Card Component
-function KPICard({ title, value, icon: Icon, color, link }) {
+function KPICard({ title, value, icon, color, link }) {
+  const Icon = icon;
   const colors = {
     blue: 'bg-blue-50 text-blue-600',
     green: 'bg-green-50 text-green-600',
@@ -817,7 +814,8 @@ function KPICard({ title, value, icon: Icon, color, link }) {
 }
 
 // Quick Link Component
-function QuickLink({ to, icon: Icon, label, color }) {
+function QuickLink({ to, icon, label, color }) {
+  const Icon = icon;
   const colors = {
     blue: 'text-blue-600 bg-blue-50',
     green: 'text-green-600 bg-green-50',

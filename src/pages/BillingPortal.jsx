@@ -1,5 +1,5 @@
 // src/pages/BillingPortal.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     Receipt, Download, FileText, CreditCard, Calendar,
     Mail, Building2, Edit2, Check, X, Loader2, AlertCircle
@@ -31,22 +31,8 @@ const BillingPortal = () => {
         uso_cfdi: 'G03'
     });
 
-    useEffect(() => {
-        if (IS_IOS_NATIVE) {
-            navigate('/dashboard', { replace: true });
-            return;
-        }
-
-        if (user) {
-            loadData();
-        }
-    }, [navigate, user]);
-
-    if (IS_IOS_NATIVE) {
-        return null;
-    }
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
+        if (!user) return;
         setLoading(true);
         try {
             // Load fiscal data
@@ -90,7 +76,22 @@ const BillingPortal = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user]);
+
+    useEffect(() => {
+        if (IS_IOS_NATIVE) {
+            navigate('/dashboard', { replace: true });
+            return;
+        }
+
+        if (user) {
+            loadData();
+        }
+    }, [loadData, navigate, user]);
+
+    if (IS_IOS_NATIVE) {
+        return null;
+    }
 
     const saveFiscalData = async () => {
         try {

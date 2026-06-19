@@ -18,7 +18,6 @@ const SmartCampaignLauncher = () => {
     // Stats state
     const [companyTypeStats, setCompanyTypeStats] = useState([]);
     const [tierStats, setTierStats] = useState([]);
-    const [dailySummary, setDailySummary] = useState(null);
     const [loading, setLoading] = useState(true);
 
     // Campaign settings
@@ -28,9 +27,6 @@ const SmartCampaignLauncher = () => {
     const [whatsappQueue, setWhatsappQueue] = useState([]);
 
     // Sending state
-    const [isSending, setIsSending] = useState(false);
-    const [sendProgress, setSendProgress] = useState(0);
-
     useEffect(() => {
         loadStats();
     }, []);
@@ -56,13 +52,6 @@ const SmartCampaignLauncher = () => {
             setTierStats(tStats || []);
 
             // Load daily summary  
-            const { data: summary, error: sError } = await supabase
-                .from('crm_daily_summary')
-                .select('*')
-                .single();
-
-            if (!sError) setDailySummary(summary);
-
         } catch (err) {
             console.error('Error loading stats:', err);
             toast.error('Error cargando estadísticas');
@@ -375,7 +364,7 @@ const SmartCampaignLauncher = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y text-sm">
-                                {emailQueue.slice(0, 50).map((contact, i) => (
+                                {emailQueue.slice(0, 50).map((contact) => (
                                     <tr key={contact.contact_id} className="hover:bg-gray-50">
                                         <td className="px-4 py-2 text-gray-500">{contact.scheduled_order}</td>
                                         <td className="px-4 py-2 font-medium">{contact.contact_name || '-'}</td>

@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import { Lock, Eye, EyeOff, Check, X } from 'lucide-react';
 
 const ResetPasswordPage = () => {
-    const { t } = useTranslation();
+    useTranslation();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);

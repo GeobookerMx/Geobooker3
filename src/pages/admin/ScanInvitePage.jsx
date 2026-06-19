@@ -3,7 +3,7 @@
  * Scan & Invite - Herramienta de captura de leads
  * Solo para administradores
  */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { GOOGLE_MAPS_API_KEY } from '../../config/supabase';
 import { toast } from 'react-hot-toast';
@@ -15,8 +15,6 @@ import {
 } from 'lucide-react';
 import WhatsAppService from '../../services/whatsappService';
 
-// Libraries needed for Places API
-const libraries = ['places'];
 const HIDDEN_LEADS_STORAGE_KEY = 'scanInviteHiddenLeadIds';
 
 const normalizeLeadId = (id) => String(id);
@@ -54,7 +52,6 @@ const ScanInvitePage = () => {
     const [dailyLimit, setDailyLimit] = useState(WhatsAppService.config.dailyLimit);
     const [dailyCount, setDailyCount] = useState(0);
     const [dailyRemaining, setDailyRemaining] = useState(0);
-    const [sessionLeadIds, setSessionLeadIds] = useState(new Set()); // Leads añadidos en esta sesión
     const [hiddenLeadIds, setHiddenLeadIds] = useState(() => loadHiddenLeadIds()); // Leads ocultados tras contactar
 
     // ✅ NUEVO: Estado para agregar teléfonos manualmente
@@ -145,14 +142,6 @@ const ScanInvitePage = () => {
     });
 
 
-
-    // Mensaje de WhatsApp precargado
-    const whatsappMessage = `Hola 👋 Soy del equipo de *Geobooker*. Estamos sumando negocios para que la gente los encuentre cerca de ellos en minutos (WhatsApp, llamadas y rutas).
-
-📍 Conoce nuestra plataforma: geobooker.com.mx
-#cercadeti
-
-¿Te puedo mandar info rápida? Si prefieres que no te contacte, dime NO y listo.`;
 
     // Cargar datos iniciales
     useEffect(() => {
@@ -343,7 +332,7 @@ const ScanInvitePage = () => {
             for (const type of types) {
 
                 try {
-                    const places = await new Promise((resolve, reject) => {
+                    const places = await new Promise((resolve) => {
                         service.nearbySearch({
                             location: new window.google.maps.LatLng(scanLocation.lat, scanLocation.lng),
                             radius: scanRadius * 1000, // Convert km to meters
@@ -382,7 +371,7 @@ const ScanInvitePage = () => {
                         let detailsStatus = 'success'; // Track API status
 
                         try {
-                            const details = await new Promise((resolve, reject) => {
+                            const details = await new Promise((resolve) => {
                                 service.getDetails({
                                     placeId: place.place_id,
                                     fields: ['formatted_phone_number', 'international_phone_number', 'website', 'url']
@@ -575,7 +564,7 @@ const ScanInvitePage = () => {
     };
 
     // Opción B: Eliminar de la DB los contactados (⚠️ IRREVERSIBLE)
-    const deleteContactedLeads = async () => {
+    const DELETE_CONTACTED_LEADS = async () => {
         const contactedLeads = leads.filter(l => l.status === 'contacted' || l.status === 'blacklisted');
         const count = contactedLeads.length;
 

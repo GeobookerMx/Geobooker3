@@ -1,5 +1,5 @@
 // src/pages/admin/LeadsHistory.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     Database, Search, Download, Trash2, ExternalLink,
     Filter, Calendar, MapPin, Building2, Loader2,
@@ -25,14 +25,9 @@ const LeadsHistory = () => {
     const pageSize = 50;
 
     // WhatsApp config
-    const [whatsappMessage, setWhatsappMessage] = useState(
+    const [whatsappMessage] = useState(
         '¡Hola! Vi tu perfil en Geobooker y me gustaría platicar sobre cómo podemos ayudarte a crecer. ¿Tienes unos minutos?'
     );
-
-    useEffect(() => {
-        fetchLeads();
-        fetchStats();
-    }, [page, selectedLocation, selectedTier]);
 
     const fetchStats = async () => {
         try {
@@ -57,7 +52,7 @@ const LeadsHistory = () => {
         }
     };
 
-    const fetchLeads = async () => {
+    const fetchLeads = useCallback(async () => {
         setLoading(true);
         try {
             let query = supabase
@@ -89,7 +84,12 @@ const LeadsHistory = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [page, searchTerm, selectedLocation, selectedTier]);
+
+    useEffect(() => {
+        fetchLeads();
+        fetchStats();
+    }, [fetchLeads, page, selectedLocation, selectedTier]);
 
     const handleSearch = (e) => {
         e.preventDefault();

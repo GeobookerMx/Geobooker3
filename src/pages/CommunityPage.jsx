@@ -6,7 +6,7 @@
  * - Expandable post content with markdown
  * - Comments section for each post
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Newspaper, Calendar, User, ChevronDown, ChevronUp,
     Sparkles, ArrowRight, MessageCircle, Send, ExternalLink,
@@ -96,13 +96,7 @@ function CommentSection({ postId }) {
     const [reportDetails, setReportDetails] = useState('');
     const [isReporting, setIsReporting] = useState(false);
 
-    useEffect(() => {
-        if (showComments) {
-            loadComments();
-        }
-    }, [showComments, postId]);
-
-    const loadComments = async () => {
+    const loadComments = useCallback(async () => {
         try {
             console.log('Loading comments for post:', postId);
             const { data, error } = await supabase
@@ -120,7 +114,13 @@ function CommentSection({ postId }) {
         } catch (err) {
             console.error('Error loading comments:', err);
         }
-    };
+    }, [postId]);
+
+    useEffect(() => {
+        if (showComments) {
+            loadComments();
+        }
+    }, [showComments, loadComments]);
 
     const handleSubmit = async () => {
         if (!newComment.trim()) return;
@@ -345,11 +345,7 @@ export default function CommunityPage() {
     const { i18n } = useTranslation();
     const isSpanish = i18n.language?.startsWith('es') ?? true;
 
-    useEffect(() => {
-        loadPosts();
-    }, [selectedCategory]);
-
-    const loadPosts = async () => {
+    const loadPosts = useCallback(async () => {
         setLoading(true);
         try {
             let query = supabase
@@ -372,7 +368,11 @@ export default function CommunityPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [selectedCategory]);
+
+    useEffect(() => {
+        loadPosts();
+    }, [loadPosts]);
 
     const formatDate = (dateStr) => {
         const date = new Date(dateStr);

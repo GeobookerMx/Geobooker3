@@ -4,7 +4,7 @@
  * Shows: Campaign metrics, performance, PDF export
  * Access: /advertiser/dashboard (authenticated advertisers)
  */
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -37,11 +37,8 @@ export default function AdvertiserDashboard() {
         totalBudget: 0
     });
 
-    useEffect(() => {
-        if (user?.email) loadCampaigns();
-    }, [user]);
-
-    const loadCampaigns = async () => {
+    const loadCampaigns = useCallback(async () => {
+        if (!user?.email) return;
         setLoading(true);
         try {
             // Get campaigns for this advertiser
@@ -99,7 +96,11 @@ export default function AdvertiserDashboard() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user?.email]);
+
+    useEffect(() => {
+        if (user?.email) loadCampaigns();
+    }, [loadCampaigns, user?.email]);
 
     const formatNumber = (num) => {
         if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -266,7 +267,7 @@ export default function AdvertiserDashboard() {
                             <h3 className="text-lg text-white mb-2">No campaigns yet</h3>
                             <p className="text-gray-400 mb-4">Create your first Enterprise ad campaign</p>
                             <Link
-                                to="/enterprise/checkout"
+                                to="/enterprise/contact"
                                 className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
                             >
                                 Create Campaign

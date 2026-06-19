@@ -3,7 +3,7 @@
  * Panel de Moderación de Reportes de Anuncios
  * Permite a admins revisar y actuar sobre reportes de anuncios inapropiados
  */
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import {
@@ -52,11 +52,7 @@ export default function AdReportsModeration() {
         { value: 'advertiser_banned', label: t('admin.reports.actions.banUser'), desc: t('admin.reports.actions.banUserDesc', { defaultValue: 'Se prohibió al anunciante' }), icon: Ban },
     ];
 
-    useEffect(() => {
-        fetchReports();
-    }, [filter]);
-
-    const fetchReports = async () => {
+    const fetchReports = useCallback(async () => {
         setLoading(true);
         try {
             let query = supabase
@@ -89,7 +85,11 @@ export default function AdReportsModeration() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filter, t]);
+
+    useEffect(() => {
+        fetchReports();
+    }, [fetchReports]);
 
     const updateReportStatus = async (reportId, newStatus) => {
         if (newStatus === 'resolved' && !actionTaken) {
@@ -191,7 +191,6 @@ export default function AdReportsModeration() {
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {Object.entries(STATUS_CONFIG).map(([status, config]) => {
-                    const count = reports.filter(r => filter === 'all' ? r.status === status : true).length;
                     const Icon = config.icon;
                     return (
                         <button

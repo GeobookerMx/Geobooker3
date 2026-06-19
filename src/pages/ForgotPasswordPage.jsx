@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import { Mail, ArrowLeft, Check } from 'lucide-react';
 
 const ForgotPasswordPage = () => {
-    const { t } = useTranslation();
+    useTranslation();
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [emailSent, setEmailSent] = useState(false);

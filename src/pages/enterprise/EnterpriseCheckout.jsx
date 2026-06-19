@@ -19,6 +19,7 @@ import { Capacitor } from '@capacitor/core';
 import { ENTERPRISE_FALLBACK_PRICING } from '../../config/enterprisePricing';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+const ENTERPRISE_SELF_SERVICE_ENABLED = import.meta.env.VITE_ENABLE_ENTERPRISE_CHECKOUT === 'true';
 
 // Major cities for targeting (COMPREHENSIVE - All US States, Canada Provinces, Europe Top 10)
 const MAJOR_CITIES = {
@@ -381,6 +382,34 @@ export default function EnterpriseCheckout() {
         loadPricing();
     }, []);
 
+    if (!ENTERPRISE_SELF_SERVICE_ENABLED) {
+        return (
+            <div className="min-h-screen bg-slate-950 px-4 py-16 text-white">
+                <SEO
+                    title="Enterprise Checkout - Geobooker Ads"
+                    description="Enterprise campaigns are currently handled through our contact flow."
+                />
+                <div className="mx-auto flex max-w-2xl flex-col items-center justify-center rounded-3xl border border-slate-800 bg-slate-900/80 p-8 text-center shadow-2xl">
+                    <div className="mb-4 rounded-full bg-amber-500/15 p-4 text-amber-400">
+                        <AlertCircle className="h-8 w-8" />
+                    </div>
+                    <h1 className="text-2xl font-bold text-white">Redirecting to Enterprise Contact</h1>
+                    <p className="mt-3 text-sm text-slate-300">
+                        Enterprise campaigns are currently handled with assisted onboarding so pricing,
+                        targeting, creatives, and approvals stay aligned before launch.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => navigate(`/enterprise/contact${preselectedPlan ? `?plan=${preselectedPlan}` : ''}`)}
+                        className="mt-6 inline-flex items-center rounded-xl bg-amber-500 px-5 py-3 font-semibold text-slate-950 transition hover:bg-amber-400"
+                    >
+                        Continue to Contact Form
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     const selectedPlanData = pricing.find(p => p.code === form.selectedPlan);
 
     // Plan limits - use countries_included from plan data
@@ -634,7 +663,6 @@ export default function EnterpriseCheckout() {
         }).format(price);
     };
 
-    return null; // Redirecting to /enterprise/contact
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 py-8 px-4">
             <SEO

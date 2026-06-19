@@ -1,6 +1,6 @@
 // src/pages/ClaimBusinessPage.jsx
 // Landing page para buscar y reclamar negocios DENUE / existentes
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,7 +11,7 @@ import { trackEvent } from '../services/analyticsService';
 import SEO from '../components/SEO';
 
 const ClaimBusinessPage = () => {
-  const { t } = useTranslation();
+  useTranslation();
   const { user } = useAuth();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);

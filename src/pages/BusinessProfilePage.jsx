@@ -57,11 +57,6 @@ const BusinessProfilePage = () => {
         } catch { /* ignore */ }
     }, [slugOrId]);
 
-    // Si no hay ID, redirigir al inicio
-    if (!slugOrId) {
-        return <Navigate to="/" replace />;
-    }
-
     useEffect(() => {
         const loadBusiness = async () => {
             try {
@@ -200,6 +195,11 @@ const BusinessProfilePage = () => {
         });
         return () => { if (cleanup) cleanup(); };
     }, []);
+
+    // Si no hay ID, redirigir al inicio
+    if (!slugOrId) {
+        return <Navigate to="/" replace />;
+    }
 
     const toggleFavorite = () => {
         const next = !isFavorite;

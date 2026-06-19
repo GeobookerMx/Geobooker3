@@ -3,7 +3,7 @@
  * P1.2b: Panel de Moderación de Reportes
  * Permite a admins revisar y resolver reportes de información incorrecta
  */
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import {
@@ -41,11 +41,7 @@ export default function ReportsModeration() {
         rejected: { label: t('admin.reports.stats.rejected'), color: 'red', icon: XCircle }
     };
 
-    useEffect(() => {
-        fetchReports();
-    }, [filter]);
-
-    const fetchReports = async () => {
+    const fetchReports = useCallback(async () => {
         setLoading(true);
         try {
             let query = supabase
@@ -69,7 +65,11 @@ export default function ReportsModeration() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filter, t]);
+
+    useEffect(() => {
+        fetchReports();
+    }, [fetchReports]);
 
     const updateReportStatus = async (reportId, newStatus) => {
         setProcessing(true);
@@ -140,7 +140,6 @@ export default function ReportsModeration() {
             {/* Stats */}
             <div className="grid grid-cols-4 gap-4">
                 {Object.entries(STATUS_CONFIG).map(([status, config]) => {
-                    const count = reports.filter(r => filter === 'all' ? r.status === status : true).length;
                     const Icon = config.icon;
                     return (
                         <button

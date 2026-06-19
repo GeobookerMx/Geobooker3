@@ -13,6 +13,10 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import PostSaleEmailModal from '../../components/admin/PostSaleEmailModal';
+import {
+    ENTERPRISE_PROMO_DISCOUNT_PERCENT,
+    ENTERPRISE_PROMO_END,
+} from '../../config/enterprisePricing';
 
 export default function AdInventory() {
     const [loading, setLoading] = useState(true);
@@ -308,10 +312,18 @@ export default function AdInventory() {
                         message: '¡Promoción activa! Todos los espacios con 50% OFF'
                     };
 
-                    const promoEndDate = new Date(PROMO_CONFIG.endDate);
+                    const effectivePromoConfig = {
+                        ...PROMO_CONFIG,
+                        discount: ENTERPRISE_PROMO_DISCOUNT_PERCENT,
+                        endDate: ENTERPRISE_PROMO_END,
+                        label: 'PROMO GLOBAL',
+                        message: `Promocion activa: ${ENTERPRISE_PROMO_DISCOUNT_PERCENT}% OFF en precios enterprise`
+                    };
+
+                    const promoEndDate = new Date(effectivePromoConfig.endDate);
                     const today = new Date();
                     const daysRemaining = Math.ceil((promoEndDate - today) / (1000 * 60 * 60 * 24));
-                    const isPromoActive = PROMO_CONFIG.active && today < promoEndDate;
+                    const isPromoActive = effectivePromoConfig.active && today < promoEndDate;
 
                     if (!isPromoActive) return null;
 
@@ -320,10 +332,10 @@ export default function AdInventory() {
                             <div className="flex items-center justify-between flex-wrap gap-4">
                                 <div className="flex items-center gap-3">
                                     <div className="bg-white/20 px-3 py-1 rounded-full text-white font-bold text-sm animate-pulse">
-                                        -{PROMO_CONFIG.discount}% OFF
+                                        -{effectivePromoConfig.discount}% OFF
                                     </div>
                                     <div>
-                                        <p className="text-white font-bold text-lg">{PROMO_CONFIG.message}</p>
+                                        <p className="text-white font-bold text-lg">{effectivePromoConfig.message}</p>
                                         <p className="text-white/80 text-sm">
                                             Válido hasta: {promoEndDate.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}
                                             {daysRemaining <= 30 && (

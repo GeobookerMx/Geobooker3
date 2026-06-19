@@ -9,7 +9,12 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import SEO from '../../components/SEO';
-import { ENTERPRISE_FALLBACK_PRICING, ENTERPRISE_PROMO_END } from '../../config/enterprisePricing';
+import {
+    applyEnterpriseGlobalPromo,
+    ENTERPRISE_FALLBACK_PRICING,
+    ENTERPRISE_PROMO_DISCOUNT_PERCENT,
+    ENTERPRISE_PROMO_END
+} from '../../config/enterprisePricing';
 
 export default function EnterpriseLanding() {
     const { t, i18n } = useTranslation();
@@ -48,11 +53,12 @@ export default function EnterpriseLanding() {
             if (error) throw error;
 
             if (data && data.length > 0) {
-                setPricing(data);
-                setPromoEndDate(data[0].promo_ends_at);
+                const promoPricing = applyEnterpriseGlobalPromo(data);
+                setPricing(promoPricing);
+                setPromoEndDate(ENTERPRISE_PROMO_END);
 
                 const now = new Date();
-                const end = new Date(data[0].promo_ends_at);
+                const end = new Date(ENTERPRISE_PROMO_END);
                 const diff = end - now;
                 if (diff > 0) {
                     setTimeLeft({
@@ -68,7 +74,7 @@ export default function EnterpriseLanding() {
             console.error('Error fetching pricing:', error);
             const promoDateStr = ENTERPRISE_PROMO_END;
             setPromoEndDate(promoDateStr);
-            setPricing(ENTERPRISE_FALLBACK_PRICING);
+            setPricing(applyEnterpriseGlobalPromo(ENTERPRISE_FALLBACK_PRICING));
 
             const now = new Date();
             const end = new Date(promoDateStr);
@@ -139,7 +145,7 @@ export default function EnterpriseLanding() {
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                         <Sparkles className="w-5 h-5 animate-pulse" />
-                        <span className="font-bold">🚀 Precios especiales de lanzamiento 2026</span>
+                        <span className="font-bold">🚀 {ENTERPRISE_PROMO_DISCOUNT_PERCENT}% OFF global hasta el 1 de septiembre de 2026</span>
                         <Sparkles className="w-5 h-5 animate-pulse" />
                     </div>
                     <div className="flex items-center gap-4 text-sm">
@@ -305,10 +311,15 @@ export default function EnterpriseLanding() {
                                 </p>
 
                                 <div className="mb-6">
-                                    <div className="text-xl font-bold text-purple-400">
-                                        Cotización especial
+                                    <div className="text-sm text-gray-400 line-through">
+                                        {formatPrice(plan.regular_price_usd)}
                                     </div>
-                                    <div className="text-gray-400 text-sm">Lanzamiento 2026</div>
+                                    <div className="text-3xl font-bold text-amber-400">
+                                        {formatPrice(plan.current_price_usd)}
+                                    </div>
+                                    <div className="text-gray-400 text-sm">
+                                        {plan.discount_percent}% OFF global hasta el 1 de septiembre de 2026
+                                    </div>
                                 </div>
 
                                 <ul className="space-y-2 mb-6">

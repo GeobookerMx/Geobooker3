@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import OxxoVoucher from '../../components/payment/OxxoVoucher';
 import { getLocalAdPricing } from '../../config/adPricing';
 import { Capacitor } from '@capacitor/core';
+import { buildPaymentReturnUrl } from '../../services/paymentReturnUrls';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -328,8 +329,8 @@ const CampaignCreateWizard = () => {
                         currency: currency,
                         userId: user?.id || null,
                         customerEmail: formData.advertiser_email,
-                        successUrl: window.location.origin + '/advertise/success?campaign=' + campaignId,
-                        cancelUrl: window.location.origin + '/advertise/create?space=' + spaceId + '&canceled=true',
+                        successUrl: buildPaymentReturnUrl(`/advertise/success?campaign=${campaignId}`),
+                        cancelUrl: buildPaymentReturnUrl(`/advertise/create?space=${spaceId}&canceled=true`),
                         mode: 'payment',
                         metadata: {
                             type: 'ad_payment',

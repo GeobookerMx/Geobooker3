@@ -66,7 +66,7 @@
         "foundBusinesses": "Encontramos {{count}} negocios cerca de ti",
         "businessList": "Lista de Negocios",
         "promo": {
-            "launch": "¡LANZAMIENTO! 50% OFF en todos los espacios publicitarios",
+            "launch": "PROMO GLOBAL ENTERPRISE: 70% OFF en precios globales",
             "validUntil": "Válido hasta:",
             "seeOffers": "Ver ofertas →",
             "march1": "1 de Marzo 2026"
@@ -311,8 +311,8 @@
     },
     "enterprise": {
         "seoTitle": "Geobooker Enterprise - Publicidad Global para Marcas Internacionales",
-        "seoDescription": "Alcanza millones de usuarios en eventos como FIFA 2026. Publicidad geolocalizada para marcas globales.",
-        "promoBanner": "PROMOCIÓN DE LANZAMIENTO: 50% OFF",
+        "seoDescription": "Alcanza millones de usuarios en eventos como FIFA 2026. Precios enterprise globales con 70% OFF hasta el 1 de septiembre de 2026.",
+        "promoBanner": "PROMOCIÓN GLOBAL ENTERPRISE: 70% OFF",
         "offerEnds": "Oferta termina en",
         "days": "días",
         "hours": "hrs",
@@ -344,8 +344,8 @@
         "featureSafetyDesc": "Tu marca en contextos seguros y alineados con tus valores.",
         "featureManager": "Account Manager",
         "featureManagerDesc": "Un experto dedicado para optimizar tu campaña.",
-        "launchPromo": "PROMOCIÓN DE LANZAMIENTO",
-        "pricingTitle": "50% de Descuento en Todos los Paquetes",
+        "launchPromo": "PROMOCIÓN GLOBAL ENTERPRISE",
+        "pricingTitle": "70% de Descuento en Precios Globales",
         "pricingSubtitle": "Por ser de nuestros primeros clientes enterprise, te ofrecemos precios exclusivos. Válido hasta agotar disponibilidad.",
         "mostPopular": "MÁS POPULAR",
         "fullCoverage": "Cobertura total",
@@ -558,7 +558,7 @@
             "oxxo": "¿Puedo pagar en OXXO?",
             "search": "¿Cómo busco negocios?",
             "howItWorks": "¿Cómo funciona Geobooker?",
-            "promo": "¿Qué es la promoción 50% OFF?",
+            "promo": "¿Qué incluye la promoción global enterprise 70% OFF?",
             "contact": "¿Cómo contacto un negocio?",
             "problem": "Tengo un problema"
         }
@@ -699,7 +699,7 @@
             },
             "advertise": {
                 "q": "¿Cómo puedo anunciar mi marca en Geobooker?",
-                "a": "Visita nuestra página de publicidad o el apartado Enterprise. Ofrecemos banners, carruseles, resultados patrocinados e intersticiales. Actualmente tenemos un 50% de descuento de lanzamiento en todos los espacios."
+                "a": "Visita nuestra página de publicidad o el apartado Enterprise. Ofrecemos banners, carruseles, resultados patrocinados e intersticiales. Actualmente tenemos 70% OFF en precios globales enterprise hasta el 1 de septiembre de 2026."
             },
             "premium": {
                 "q": "¿Qué incluye la publicidad premium?",

@@ -17,6 +17,28 @@ import WhatsAppService from '../../services/whatsappService';
 
 // Libraries needed for Places API
 const libraries = ['places'];
+const HIDDEN_LEADS_STORAGE_KEY = 'scanInviteHiddenLeadIds';
+
+const normalizeLeadId = (id) => String(id);
+
+const loadHiddenLeadIds = () => {
+    if (typeof window === 'undefined') {
+        return new Set();
+    }
+
+    try {
+        const raw = window.sessionStorage.getItem(HIDDEN_LEADS_STORAGE_KEY);
+        if (!raw) return new Set();
+
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return new Set();
+
+        return new Set(parsed.map(normalizeLeadId));
+    } catch (error) {
+        console.error('Error loading hidden lead ids:', error);
+        return new Set();
+    }
+};
 
 const ScanInvitePage = () => {
     // Load Google Maps API
@@ -33,7 +55,7 @@ const ScanInvitePage = () => {
     const [dailyCount, setDailyCount] = useState(0);
     const [dailyRemaining, setDailyRemaining] = useState(0);
     const [sessionLeadIds, setSessionLeadIds] = useState(new Set()); // Leads añadidos en esta sesión
-    const [hiddenLeadIds, setHiddenLeadIds] = useState(new Set()); // Leads ocultados tras contactar
+    const [hiddenLeadIds, setHiddenLeadIds] = useState(() => loadHiddenLeadIds()); // Leads ocultados tras contactar
 
     // ✅ NUEVO: Estado para agregar teléfonos manualmente
     const [manualPhoneInputs, setManualPhoneInputs] = useState({}); // { leadId: phoneValue }
@@ -138,6 +160,19 @@ const ScanInvitePage = () => {
         loadStats();
         getUserLocation();
     }, []);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        try {
+            window.sessionStorage.setItem(
+                HIDDEN_LEADS_STORAGE_KEY,
+                JSON.stringify([...hiddenLeadIds])
+            );
+        } catch (error) {
+            console.error('Error saving hidden lead ids:', error);
+        }
+    }, [hiddenLeadIds]);
 
     // Obtener ubicación del usuario
     const getUserLocation = () => {
@@ -519,7 +554,7 @@ const ScanInvitePage = () => {
                     .eq('id', lead.id);
 
                 // Ocultar lead de la lista visual
-                setHiddenLeadIds(prev => new Set([...prev, lead.id]));
+                setHiddenLeadIds(prev => new Set([...prev, normalizeLeadId(lead.id)]));
 
                 // Recargar stats
                 loadStats();
@@ -534,8 +569,8 @@ const ScanInvitePage = () => {
     const hideContactedLeads = () => {
         const contactedIds = leads
             .filter(l => l.status === 'contacted' || l.status === 'blacklisted')
-            .map(l => l.id);
-        setHiddenLeadIds(new Set([...hiddenLeadIds, ...contactedIds]));
+            .map(l => normalizeLeadId(l.id));
+        setHiddenLeadIds(prev => new Set([...prev, ...contactedIds]));
         toast.success(`${contactedIds.length} leads contactados/blacklisted ocultados. Solo quedan los nuevos.`);
     };
 
@@ -578,8 +613,8 @@ const ScanInvitePage = () => {
 
     // Limpiar lista visual completa (oculta todos los visibles)
     const clearVisibleList = () => {
-        const allVisibleIds = filteredLeads.map(l => l.id);
-        setHiddenLeadIds(new Set(allVisibleIds));
+        const allVisibleIds = filteredLeads.map(l => normalizeLeadId(l.id));
+        setHiddenLeadIds(prev => new Set([...prev, ...allVisibleIds]));
         toast.success('Lista visual limpiada. Los leads siguen en la base de datos.');
     };
 
@@ -656,7 +691,7 @@ const ScanInvitePage = () => {
     // Filtrar leads (con exclusión de ocultos)
     const filteredLeads = leads.filter(lead => {
         // Excluir leads ocultos manualmente
-        if (hiddenLeadIds.has(lead.id)) return false;
+        if (hiddenLeadIds.has(normalizeLeadId(lead.id))) return false;
         if (filters.status !== 'all' && lead.status !== filters.status) return false;
         if (filters.contactType === 'phone') {
             return lead.scan_lead_contacts?.some(c => c.type === 'phone');
@@ -673,7 +708,8 @@ const ScanInvitePage = () => {
         hiddenCount: hiddenLeadIds.size,
         filterStatus: filters.status,
         filteredCount: filteredLeads.length,
-        sampleStatus: leads[0]?.status
+        sampleStatus: leads[0]?.status,
+        sampleLeadId: leads[0]?.id ? normalizeLeadId(leads[0].id) : null
     });
 
     return (

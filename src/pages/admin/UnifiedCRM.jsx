@@ -16,13 +16,13 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
-import * as XLSX from 'xlsx';
 import EmailTester from '../../components/admin/EmailTester';
 import MarketingDashboard from '../../components/admin/MarketingDashboard';
 import WhatsAppQueueManager from '../../components/admin/WhatsAppQueueManager';
 import WhatsAppCRM from '../../components/admin/WhatsAppCRM';
 import WhatsAppService from '../../services/whatsappService';
 import KPIsPanel from '../../components/admin/KPIsPanel';
+import { matchesSemanticText } from '../../utils/semanticDictionary';
 
 const FALLBACK_EMAIL_SENDER = {
     name: 'Geobooker Ads',
@@ -272,6 +272,7 @@ const UnifiedCRM = () => {
             reader.onload = async (event) => {
                 try {
                     console.log('📖 File read, parsing...');
+                    const XLSX = await import('xlsx');
                     const data = new Uint8Array(event.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
                     const sheetName = workbook.SheetNames[0];
@@ -387,10 +388,14 @@ const UnifiedCRM = () => {
     };
 
     const selectAll = () => {
-        if (selectedContacts.size === filteredContacts.length) {
-            setSelectedContacts(new Set());
+        if (allVisibleSelected) {
+            setSelectedContacts(prev => {
+                const next = new Set(prev);
+                filteredContacts.forEach(contact => next.delete(contact.id));
+                return next;
+            });
         } else {
-            setSelectedContacts(new Set(filteredContacts.map(c => c.id)));
+            setSelectedContacts(prev => new Set([...prev, ...filteredContacts.map(c => c.id)]));
         }
     };
 
@@ -413,13 +418,18 @@ const UnifiedCRM = () => {
         }
     };
 
+    const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+
     const filteredContacts = contacts.filter(c => {
-        const matchSearch = !searchTerm ||
-            c.contact_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.industry?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchSearch = !normalizedSearchTerm || matchesSemanticText(normalizedSearchTerm, [
+            c.contact_name,
+            c.email,
+            c.company_name,
+            c.city,
+            c.state,
+            c.industry,
+            c.company_type
+        ]);
         const matchTier = tierFilter === 'all' || c.tier === tierFilter;
         const matchIndustry = industryFilter === 'all' || c.industry === industryFilter;
         const matchType = typeFilter === 'all' || c.company_type === typeFilter;
@@ -427,6 +437,9 @@ const UnifiedCRM = () => {
         const matchState = stateFilter === 'all' || c.state === stateFilter;
         return matchSearch && matchTier && matchIndustry && matchType && matchCity && matchState;
     });
+
+    const allVisibleSelected = filteredContacts.length > 0 &&
+        filteredContacts.every(contact => selectedContacts.has(contact.id));
 
     const uniqueIndustries = Array.from(new Set(contacts.map(c => c.industry).filter(Boolean))).sort();
     const uniqueStates = Array.from(new Set(contacts.map(c => c.state).filter(Boolean))).sort();
@@ -1174,7 +1187,7 @@ const UnifiedCRM = () => {
                                         <tr>
                                             <th className="w-10 p-3">
                                                 <button onClick={selectAll}>
-                                                    {selectedContacts.size === filteredContacts.length && filteredContacts.length > 0 ? (
+                                                    {allVisibleSelected ? (
                                                         <CheckSquare className="w-5 h-5 text-blue-600" />
                                                     ) : (
                                                         <Square className="w-5 h-5 text-gray-400" />
@@ -1193,13 +1206,13 @@ const UnifiedCRM = () => {
                                     <tbody className="divide-y">
                                         {contactsLoading ? (
                                             <tr>
-                                                <td colSpan={7} className="p-8 text-center">
+                                                <td colSpan={8} className="p-8 text-center">
                                                     <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-600" />
                                                 </td>
                                             </tr>
                                         ) : filteredContacts.length === 0 ? (
                                             <tr>
-                                                <td colSpan={7} className="p-8 text-center text-gray-500">
+                                                <td colSpan={8} className="p-8 text-center text-gray-500">
                                                     No hay contactos. Importa un archivo CSV.
                                                 </td>
                                             </tr>
@@ -1211,7 +1224,12 @@ const UnifiedCRM = () => {
                                                     onClick={() => setDrawerContact(contact)}
                                                 >
                                                     <td className="p-3">
-                                                        <button onClick={() => toggleContact(contact.id)}>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                toggleContact(contact.id);
+                                                            }}
+                                                        >
                                                             {selectedContacts.has(contact.id) ? (
                                                                 <CheckSquare className="w-5 h-5 text-blue-600" />
                                                             ) : (

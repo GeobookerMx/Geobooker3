@@ -133,13 +133,46 @@ export default function CityLandingPage() {
     const isSpanish = i18n.language === 'es';
     const description = isSpanish && city.descriptionEs ? city.descriptionEs : city.description;
     const countryLabels = { US: 'United States', GB: 'United Kingdom', CA: 'Canada' };
+    const cityUrl = `https://geobooker.com/cities/${citySlug}`;
+    const cityStructuredData = [
+        {
+            "@context": "https://schema.org",
+            "@type": "Place",
+            name: city.name,
+            address: {
+                "@type": "PostalAddress",
+                addressLocality: city.name,
+                addressRegion: city.state,
+                addressCountry: city.country
+            },
+            url: cityUrl,
+            description
+        },
+        {
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            name: isSpanish ? `Categorias populares en ${city.name}` : `Popular categories in ${city.name}`,
+            itemListElement: city.popularCategories.map((category, index) => ({
+                "@type": "ListItem",
+                position: index + 1,
+                name: category.replace(/_/g, ' '),
+                url: `${window.location.origin}/search?q=${encodeURIComponent(category)}&city=${encodeURIComponent(citySlug)}`
+            }))
+        }
+    ];
 
     return (
         <>
             <SEO
-                title={`${city.name} Local Businesses | Geobooker`}
+                title={isSpanish ? `${city.name}: negocios, servicios y comida local` : `${city.name} local businesses, food and services`}
                 description={description}
-                url={`https://geobooker.com/cities/${citySlug}`}
+                url={cityUrl}
+                breadcrumbs={[
+                    { name: isSpanish ? 'Inicio' : 'Home', item: '/' },
+                    { name: isSpanish ? 'Ciudades' : 'Cities', item: '/cities' },
+                    { name: city.name, item: `/cities/${citySlug}` }
+                ]}
+                structuredData={cityStructuredData}
             />
 
             {/* Hero Section */}

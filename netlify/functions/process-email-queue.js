@@ -28,15 +28,29 @@ const getMexicoDateTime = () => {
 exports.handler = async (event, context) => {
     try {
         console.log('🚀 Iniciando procesamiento de cola de emails...');
+        const body = event.body ? JSON.parse(event.body) : {};
+        const requestedLimit = Number(body.limit) || null;
 
-        // 1. Obtener límite diario configurado
-        const { data: config } = await supabase
-            .from('automation_config')
-            .select('daily_limit')
-            .eq('campaign_type', 'email')
-            .single();
+        // 1. Obtener límite diario configurado desde crm_settings y fallback a automation_config
+        let dailyLimit = 100;
 
-        const dailyLimit = config?.daily_limit || 100;
+        const { data: crmSettings } = await supabase
+            .from('crm_settings')
+            .select('setting_key, setting_value')
+            .eq('setting_key', 'campaign_limits')
+            .maybeSingle();
+
+        if (crmSettings?.setting_value?.daily_email_limit) {
+            dailyLimit = crmSettings.setting_value.daily_email_limit;
+        } else {
+            const { data: config } = await supabase
+                .from('automation_config')
+                .select('daily_limit')
+                .eq('campaign_type', 'email')
+                .maybeSingle();
+
+            dailyLimit = config?.daily_limit || 100;
+        }
 
         // 2. Verificar cuántos emails se han enviado hoy (HORA MÉXICO)
         const today = getMexicoDate();
@@ -66,6 +80,12 @@ exports.handler = async (event, context) => {
         console.log(`📊 Límite: ${dailyLimit}, Enviados hoy: ${sentToday}, Restantes: ${remaining}`);
 
         // 3. Obtener contactos pendientes de la cola (priorizando por tier y ronda)
+        const batchLimit = Math.min(
+            remaining,
+            requestedLimit || remaining,
+            25
+        );
+
         const { data: queueItems, error: queueError } = await supabase
             .from('email_queue')
             .select(`
@@ -86,7 +106,7 @@ exports.handler = async (event, context) => {
             .order('email_round', { ascending: true })  // Priorizar ronda 1 primero
             .order('created_at', { ascending: true })
             // LÍMITE DE BATCH: máximo 25 emails por llamada para evitar timeout de Netlify (10s)
-            .limit(Math.min(remaining, 25));
+            .limit(batchLimit);
 
         if (queueError) throw queueError;
 
@@ -293,6 +313,8 @@ exports.handler = async (event, context) => {
                 sent: results.sent,
                 failed: results.failed,
                 dailyLimit,
+                requestedLimit,
+                processedBatch: batchLimit,
                 sentToday: (sentToday || 0) + results.sent,
                 remaining: remaining - results.sent,
                 errors: results.errors

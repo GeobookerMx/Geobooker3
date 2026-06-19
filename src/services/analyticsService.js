@@ -11,6 +11,7 @@
  */
 import { supabase } from '../lib/supabase';
 import { logger } from '../utils/logger';
+import { appendAttributionToEvent, getAttributionSummary, getCurrentAttribution, getFirstTouchAttribution } from './attributionService';
 
 // ============================================
 // FUNCIONES DE COMPATIBILIDAD CON GA4
@@ -35,11 +36,34 @@ export function trackSessionStart(isReturning = false) {
  * Trackear evento genérico (compatible con GA4)
  */
 export function trackEvent(eventName, params = {}) {
-    logger.dev(`📊 Event: ${eventName}`, params);
+    const enrichedParams = appendAttributionToEvent(params);
+    logger.dev(`📊 Event: ${eventName}`, enrichedParams);
     // Si gtag está disponible, enviar a GA4 también
     if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('event', eventName, params);
+        window.gtag('event', eventName, enrichedParams);
     }
+}
+
+async function insertWithOptionalColumns(table, fullPayload, fallbackPayload = null) {
+    const primaryPayload = { ...fullPayload };
+    const safeFallback = fallbackPayload || fullPayload;
+
+    const { error } = await supabase.from(table).insert(primaryPayload);
+    if (!error) return { error: null, usedFallback: false };
+
+    const message = `${error.message || ''} ${error.details || ''}`.toLowerCase();
+    const shouldRetryWithoutOptionalColumns =
+        message.includes('column') ||
+        message.includes('schema cache') ||
+        message.includes('could not find') ||
+        message.includes('does not exist');
+
+    if (!shouldRetryWithoutOptionalColumns) {
+        return { error, usedFallback: false };
+    }
+
+    const { error: fallbackError } = await supabase.from(table).insert(safeFallback);
+    return { error: fallbackError, usedFallback: true };
 }
 
 /**
@@ -153,7 +177,9 @@ const getOS = () => {
  */
 export async function trackPageView(pagePath, pageTitle = document.title) {
     try {
-        const { error } = await supabase.from('page_analytics').insert({
+        const attribution = getCurrentAttribution();
+        const firstTouch = getFirstTouchAttribution();
+        const fullPayload = {
             page_path: pagePath,
             page_title: pageTitle,
             referrer: document.referrer || null,
@@ -164,8 +190,34 @@ export async function trackPageView(pagePath, pageTitle = document.title) {
             city: localStorage.getItem('userCity') || null,
             device_type: getDeviceType(),
             browser: getBrowser(),
-            os: getOS()
-        });
+            os: getOS(),
+            traffic_source: attribution?.utm_source || null,
+            traffic_medium: attribution?.utm_medium || null,
+            traffic_campaign: attribution?.utm_campaign || null,
+            channel_group: attribution?.channel_group || 'direct',
+            language: localStorage.getItem('language') || document.documentElement.lang || navigator.language || 'es',
+            landing_path: attribution?.landing_path || pagePath,
+            attribution_snapshot: {
+                current: attribution,
+                first_touch: firstTouch
+            }
+        };
+
+        const fallbackPayload = {
+            page_path: fullPayload.page_path,
+            page_title: fullPayload.page_title,
+            referrer: fullPayload.referrer,
+            user_id: fullPayload.user_id,
+            session_id: fullPayload.session_id,
+            country: fullPayload.country,
+            country_code: fullPayload.country_code,
+            city: fullPayload.city,
+            device_type: fullPayload.device_type,
+            browser: fullPayload.browser,
+            os: fullPayload.os
+        };
+
+        const { error } = await insertWithOptionalColumns('page_analytics', fullPayload, fallbackPayload);
 
         if (error) {
             logger.error('[Analytics] Error tracking page view:', error);
@@ -183,6 +235,8 @@ export async function trackPageView(pagePath, pageTitle = document.title) {
  */
 export async function trackSearch(query, options = {}) {
     try {
+        const attribution = getCurrentAttribution();
+        const firstTouch = getFirstTouchAttribution();
         const {
             category = null,
             subcategory = null,
@@ -191,7 +245,7 @@ export async function trackSearch(query, options = {}) {
             userLng = null
         } = options;
 
-        const { error } = await supabase.from('search_analytics').insert({
+        const fullPayload = {
             query,
             category,
             subcategory,
@@ -199,8 +253,30 @@ export async function trackSearch(query, options = {}) {
             user_lat: userLat,
             user_lng: userLng,
             country: localStorage.getItem('userCountry') || null,
-            city: localStorage.getItem('userCity') || null
-        });
+            city: localStorage.getItem('userCity') || null,
+            traffic_source: attribution?.utm_source || null,
+            traffic_medium: attribution?.utm_medium || null,
+            traffic_campaign: attribution?.utm_campaign || null,
+            channel_group: attribution?.channel_group || 'direct',
+            language: localStorage.getItem('language') || document.documentElement.lang || navigator.language || 'es',
+            attribution_snapshot: {
+                current: attribution,
+                first_touch: firstTouch
+            }
+        };
+
+        const fallbackPayload = {
+            query: fullPayload.query,
+            category: fullPayload.category,
+            subcategory: fullPayload.subcategory,
+            results_count: fullPayload.results_count,
+            user_lat: fullPayload.user_lat,
+            user_lng: fullPayload.user_lng,
+            country: fullPayload.country,
+            city: fullPayload.city
+        };
+
+        const { error } = await insertWithOptionalColumns('search_analytics', fullPayload, fallbackPayload);
 
         if (error) {
             logger.error('[Analytics] Error tracking search:', error);
@@ -398,13 +474,32 @@ export async function trackUserSignup(userId, method = 'email', metadata = {}) {
 
     // Supabase tracking (para dashboard admin)
     try {
-        await supabase.from('user_sessions').insert({
+        const attribution = getCurrentAttribution();
+        const fullPayload = {
             user_id: userId,
             session_type: `signup_${method}`,
-            referral_source: metadata.referralCode || null,
+            referral_source: metadata.referralCode || getAttributionSummary() || null,
             country: localStorage.getItem('userCountry'),
-            city: localStorage.getItem('userCity')
-        });
+            city: localStorage.getItem('userCity'),
+            language: localStorage.getItem('language') || document.documentElement.lang || navigator.language || 'es',
+            traffic_source: attribution?.utm_source || null,
+            traffic_medium: attribution?.utm_medium || null,
+            traffic_campaign: attribution?.utm_campaign || null,
+            attribution_snapshot: {
+                current: attribution,
+                first_touch: getFirstTouchAttribution()
+            }
+        };
+
+        const fallbackPayload = {
+            user_id: fullPayload.user_id,
+            session_type: fullPayload.session_type,
+            referral_source: fullPayload.referral_source,
+            country: fullPayload.country,
+            city: fullPayload.city
+        };
+
+        await insertWithOptionalColumns('user_sessions', fullPayload, fallbackPayload);
         logger.success(`✅ User signup tracked: ${userId} (${method})`);
     } catch (err) {
         logger.warn('[Analytics] Failed to track signup:', err);
@@ -424,12 +519,32 @@ export async function trackUserLogin(userId, method = 'email') {
 
     // Supabase tracking
     try {
-        await supabase.from('user_sessions').insert({
+        const attribution = getCurrentAttribution();
+        const fullPayload = {
             user_id: userId,
             session_type: `login_${method}`,
             country: localStorage.getItem('userCountry'),
-            city: localStorage.getItem('userCity')
-        });
+            city: localStorage.getItem('userCity'),
+            referral_source: getAttributionSummary() || null,
+            language: localStorage.getItem('language') || document.documentElement.lang || navigator.language || 'es',
+            traffic_source: attribution?.utm_source || null,
+            traffic_medium: attribution?.utm_medium || null,
+            traffic_campaign: attribution?.utm_campaign || null,
+            attribution_snapshot: {
+                current: attribution,
+                first_touch: getFirstTouchAttribution()
+            }
+        };
+
+        const fallbackPayload = {
+            user_id: fullPayload.user_id,
+            session_type: fullPayload.session_type,
+            country: fullPayload.country,
+            city: fullPayload.city,
+            referral_source: fullPayload.referral_source
+        };
+
+        await insertWithOptionalColumns('user_sessions', fullPayload, fallbackPayload);
         logger.success(`✅ User login tracked: ${userId} (${method})`);
     } catch (err) {
         logger.warn('[Analytics] Failed to track login:', err);
@@ -516,6 +631,10 @@ async function trackIntentEvent(eventName, businessId, businessName, extra = {})
             browser: getBrowser(),
             os: getOS(),
             original_business_id: businessId || null,
+            attribution: getCurrentAttribution(),
+            first_touch_attribution: getFirstTouchAttribution(),
+            channel_group: getCurrentAttribution()?.channel_group || 'direct',
+            language: localStorage.getItem('language') || document.documentElement.lang || navigator.language || 'es',
             ...(extra.metadata || {})
         }
     };
@@ -590,6 +709,21 @@ export async function trackBusinessProfileView(businessId, businessName, source 
  */
 export async function trackSaveFavorite(businessId, businessName) {
     return trackIntentEvent('save_favorite', businessId, businessName);
+}
+
+export async function trackBusinessCreated(businessId, businessName, extra = {}) {
+    return trackIntentEvent('business_created', businessId, businessName, {
+        source: 'business_form',
+        metadata: extra
+    });
+}
+
+export async function trackTopBusinessesClick(context = {}) {
+    trackEvent('top_businesses_click', context);
+}
+
+export async function trackMichelinCampaignClick(context = {}) {
+    trackEvent('michelin_campaign_click', context);
 }
 
 /**

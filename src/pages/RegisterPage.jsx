@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
+import { trackUserSignup } from '../services/analyticsService';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -60,6 +61,7 @@ const RegisterPage = () => {
       if (error) throw error;
 
       if (data.user?.id) {
+        trackUserSignup(data.user.id, 'email');
         try {
           await supabase.from('user_profiles').upsert(
             {

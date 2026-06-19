@@ -89,21 +89,21 @@ const DashboardLayout = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
+        <div className="min-h-screen overflow-x-hidden bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
             {/* Sidebar */}
             <Sidebar onLogout={handleLogout} />
 
             {/* Main Content - responsive: sin margen en móvil, con margen en desktop */}
-            <div id="geobooker-screen" className="md:ml-64 overflow-y-auto overflow-x-hidden min-h-screen min-w-0">
+            <div id="geobooker-screen" className="md:ml-64 min-h-screen min-w-0 overflow-x-hidden overflow-y-auto">
                 {/* Header */}
                 <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10 pt-[var(--safe-area-inset-top)]">
-                    <div className="px-4 md:px-8 py-4 flex justify-between items-center">
+                    <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4 px-4 py-4 md:px-6 xl:px-8">
                         {/* Espacio para hamburger en móvil */}
-                        <div className="ml-10 md:ml-0">
+                        <div className="ml-10 min-w-0 md:ml-0">
                             <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white">Dashboard</h2>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 hidden md:block">Bienvenido, {user?.email}</p>
+                            <p className="hidden truncate text-sm text-gray-600 dark:text-gray-400 md:block">Bienvenido, {user?.email}</p>
                         </div>
-                        <div className="flex items-center space-x-3">
+                        <div className="flex shrink-0 items-center space-x-3">
                             {/* Toggle Dark Mode */}
                             <button
                                 onClick={() => setDarkMode(!darkMode)}
@@ -120,8 +120,10 @@ const DashboardLayout = () => {
                 </header>
 
                 {/* Page Content - allow horizontal scroll in tables */}
-                <main className="p-4 md:p-8 w-full max-w-full overflow-x-auto">
-                    <Outlet />
+                <main className="w-full max-w-full overflow-x-hidden px-3 py-4 md:px-5 md:py-6 xl:px-8">
+                    <div className="mx-auto w-full max-w-[1600px] min-w-0 overflow-x-hidden">
+                        <Outlet />
+                    </div>
                 </main>
             </div>
         </div>

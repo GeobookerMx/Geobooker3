@@ -426,6 +426,158 @@ export const getPlaceType = (searchTerm) => {
     return CATEGORY_MAPPING[normalized] || null;
 };
 
+const normalizeSearchTerm = (value = '') =>
+    String(value)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+
+const SEARCH_VARIANTS = {
+    estetica: ['salon de belleza', 'beauty salon', 'hair salon', 'spa'],
+    tatuaje: ['tattoo studio', 'tattoo shop', 'tatuador'],
+    tatuajes: ['tattoo studio', 'tattoo shop', 'tatuador'],
+    tatuador: ['tattoo studio', 'tattoo shop', 'tatuajes'],
+    tattoo: ['tattoo studio', 'tattoo shop', 'tatuajes'],
+    'tattoo studio': ['tattoo shop', 'tatuajes', 'tatuador'],
+    manicure: ['nail salon', 'beauty salon', 'pedicure'],
+    pedicure: ['nail salon', 'beauty salon', 'manicure'],
+    unas: ['nail salon', 'manicure', 'pedicure'],
+    spa: ['wellness spa', 'massage spa', 'facial spa'],
+    barberia: ['barbershop', 'hair salon', 'peluqueria'],
+    peluqueria: ['hair salon', 'beauty salon', 'barbershop'],
+    michelin: ['fine dining', 'tasting menu', 'chef table'],
+    'fine dining': ['chef table', 'tasting menu', 'michelin restaurant']
+};
+
+export const getSearchVariants = (searchTerm = '') => {
+    const normalized = normalizeSearchTerm(searchTerm);
+    const variants = new Set([String(searchTerm).trim()]);
+
+    Object.entries(SEARCH_VARIANTS).forEach(([key, related]) => {
+        if (normalized === key || normalized.includes(key)) {
+            related.forEach((alias) => variants.add(alias));
+        }
+    });
+
+    return [...variants].filter(Boolean);
+};
+
+const mapPlaceResult = (place, fallbackCategory = 'general') => ({
+    id: place.place_id,
+    name: place.name,
+    category: place.types?.[0] || fallbackCategory,
+    address: place.formatted_address || place.vicinity,
+    latitude: place.geometry.location.lat(),
+    longitude: place.geometry.location.lng(),
+    rating: place.rating || 0,
+    userRatingsTotal: place.user_ratings_total || 0,
+    isOpen: place.opening_hours?.isOpen?.() || null,
+    priceLevel: place.price_level || null,
+    photos: place.photos || [],
+    placeId: place.place_id,
+    isFromGoogle: true,
+    googleData: {
+        icon: place.icon,
+        types: place.types,
+        businessStatus: place.business_status
+    }
+});
+
+const mergeUniqueBusinesses = (...groups) => {
+    const merged = [];
+    const seenIds = new Set();
+
+    groups.flat().forEach((business) => {
+        const key = business.placeId || business.id;
+        if (!key || seenIds.has(key)) return;
+        seenIds.add(key);
+        merged.push(business);
+    });
+
+    return merged;
+};
+
+export const searchTextPlaces = async (location, query, radius = 10000, forceRefresh = false) => {
+    const cacheKey = generateCacheKey(location, query, 'text');
+    if (!forceRefresh) {
+        const cached = getFromCache(cacheKey);
+        if (cached) {
+            return cached;
+        }
+    }
+
+    return new Promise((resolve, reject) => {
+        if (!window.google || !window.google.maps) {
+            reject(new Error('Google Maps no estÃ¡ cargado'));
+            return;
+        }
+
+        const service = new window.google.maps.places.PlacesService(
+            document.createElement('div')
+        );
+
+        const request = {
+            query,
+            location: new window.google.maps.LatLng(location.lat, location.lng),
+            radius,
+            language: window.localStorage.getItem('language') || 'es'
+        };
+
+        console.log(`🔎 Buscando por texto en Google Places: "${query}"`);
+
+        service.textSearch(request, (results, status) => {
+            if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+                const businesses = (results || []).map((place) => mapPlaceResult(place, query));
+                saveToCache(cacheKey, businesses, CACHE_CONFIG.SEARCH_TTL);
+                resolve(businesses);
+            } else if (status === window.google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+                saveToCache(cacheKey, [], CACHE_CONFIG.SEARCH_TTL);
+                resolve([]);
+            } else {
+                reject(new Error(`Error en bÃºsqueda por texto: ${status}`));
+            }
+        });
+    });
+};
+
+export const searchPlacesUniversal = async (location, searchTerm, radius = 10000, forceRefresh = false) => {
+    const normalized = normalizeSearchTerm(searchTerm);
+    const placeType = getPlaceType(normalized);
+    const variants = getSearchVariants(searchTerm).slice(0, 4);
+    let mergedResults = [];
+
+    if (placeType) {
+        try {
+            const typeResults = await searchByType(location, placeType, radius, forceRefresh);
+            mergedResults = mergeUniqueBusinesses(mergedResults, typeResults);
+        } catch (error) {
+            console.warn('searchByType failed:', error.message);
+        }
+    }
+
+    for (const variant of variants) {
+        if (mergedResults.length >= 24) break;
+        try {
+            const textResults = await searchTextPlaces(location, variant, radius, forceRefresh);
+            mergedResults = mergeUniqueBusinesses(mergedResults, textResults);
+        } catch (error) {
+            console.warn(`searchTextPlaces failed for "${variant}":`, error.message);
+        }
+    }
+
+    if (mergedResults.length < 8) {
+        try {
+            const nearbyResults = await searchNearbyPlaces(location, searchTerm, radius, forceRefresh);
+            mergedResults = mergeUniqueBusinesses(mergedResults, nearbyResults);
+        } catch (error) {
+            console.warn('searchNearbyPlaces failed:', error.message);
+        }
+    }
+
+    return mergedResults;
+};
+
 /**
  * Estadísticas de caché (para debugging/admin)
  */

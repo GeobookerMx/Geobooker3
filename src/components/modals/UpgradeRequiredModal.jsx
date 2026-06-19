@@ -5,14 +5,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Crown, X, Store, Check, ArrowRight, Gift } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
-import { isPremiumPromoActive, getDaysRemaining, PROMOTIONS } from '../../config/promotions';
+import { getPremiumPromoDeadlineLabel, isPremiumPromoActive, PROMOTIONS } from '../../config/promotions';
 import { Capacitor } from '@capacitor/core';
+import { PREMIUM_PRICING } from '../../config/premiumPricing';
 
 const UpgradeRequiredModal = ({ isOpen, onClose, currentBusinessCount = 1 }) => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const promoActive = isPremiumPromoActive();
-    const promoDaysLeft = promoActive ? getDaysRemaining() : 0;
     // Apple Guideline 3.1.1 & 2.1(a): Never show upgrade/payment UI on native iOS
     const isNative = Capacitor.isNativePlatform();
 
@@ -132,7 +132,7 @@ const UpgradeRequiredModal = ({ isOpen, onClose, currentBusinessCount = 1 }) => 
                                     {loading ? 'Activando...' : '✨ Activar Premium GRATIS'}
                                 </button>
                                 <p className="text-center text-sm text-emerald-600 font-medium">
-                                    🎉 Promoción activa — {promoDaysLeft} días restantes
+                                    Promoción activa hasta el {getPremiumPromoDeadlineLabel('es-MX')}
                                 </p>
                             </>
                         ) : (
@@ -158,8 +158,8 @@ const UpgradeRequiredModal = ({ isOpen, onClose, currentBusinessCount = 1 }) => 
                 <div className="bg-gray-50 px-6 py-3 text-center border-t">
                     <p className="text-xs text-gray-500">
                         {promoActive
-                            ? <>🎉 <span className="font-bold text-green-600">¡Premium GRATIS por tiempo limitado!</span></>
-                            : <>💰 Precio especial de lanzamiento: <span className="font-bold text-green-600">$119/mes</span></>
+                            ? <>🎉 <span className="font-bold text-green-600">Premium GRATIS hasta el {getPremiumPromoDeadlineLabel('es-MX')}</span></>
+                            : <>💰 Precio especial de lanzamiento: <span className="font-bold text-green-600">${PREMIUM_PRICING.monthlyPriceMxn}/mes</span></>
                         }
                     </p>
                 </div>

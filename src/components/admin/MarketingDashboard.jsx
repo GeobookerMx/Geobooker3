@@ -61,14 +61,26 @@ const MarketingDashboard = () => {
 
             const sentToday = sentTodayData?.count || 0;
 
-            // 5. Límite configurado
-            const { data: config } = await supabase
-                .from('automation_config')
-                .select('daily_limit')
-                .eq('campaign_type', 'email')
-                .single();
+            // 5. Límite configurado: prioridad crm_settings, fallback automation_config
+            let dailyLimit = 100;
 
-            const dailyLimit = config?.daily_limit || 100;
+            const { data: crmSettings } = await supabase
+                .from('crm_settings')
+                .select('setting_key, setting_value')
+                .eq('setting_key', 'campaign_limits')
+                .maybeSingle();
+
+            if (crmSettings?.setting_value?.daily_email_limit) {
+                dailyLimit = crmSettings.setting_value.daily_email_limit;
+            } else {
+                const { data: config } = await supabase
+                    .from('automation_config')
+                    .select('daily_limit')
+                    .eq('campaign_type', 'email')
+                    .maybeSingle();
+
+                dailyLimit = config?.daily_limit || 100;
+            }
 
             // 6. Conteo en Cola de Envío (NUEVO)
             const { count: queueCount } = await supabase

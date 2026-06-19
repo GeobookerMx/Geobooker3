@@ -12,9 +12,18 @@ const PRECACHE_ASSETS = [
     '/',
     '/index.html',
     '/manifest.json',
+    '/favicon.ico',
     '/images/geobooker-logo.svg',
     '/images/geobooker-logo.png',
-    '/images/geobooker-favicon.png'
+    '/images/geobooker-favicon.png',
+    '/images/geobooker-app-icon-original.jpg',
+    '/assets/icons/icon-48.webp',
+    '/assets/icons/icon-72.webp',
+    '/assets/icons/icon-96.webp',
+    '/assets/icons/icon-128.webp',
+    '/assets/icons/icon-192.webp',
+    '/assets/icons/icon-256.webp',
+    '/assets/icons/icon-512.webp'
 ];
 
 // Instalación - Cachear assets críticos

@@ -77,7 +77,11 @@ const CampaignSender = ({ metrics, onCampaignComplete }) => {
             const result = await response.json();
             if (!response.ok) throw new Error(result.error);
 
-            toast.success(`✅ ¡Campaña completada exitosamente!\nEnviados: ${result.sent}`);
+            const batchInfo = result.processedBatch && result.requestedLimit && result.processedBatch < result.requestedLimit
+                ? `\nLote procesado ahora: ${result.processedBatch} (Netlify procesa por bloques).`
+                : '';
+
+            toast.success(`✅ ¡Campaña completada exitosamente!\nEnviados: ${result.sent}${batchInfo}`);
             if (onCampaignComplete) onCampaignComplete();
 
         } catch (error) {

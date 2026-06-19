@@ -2,7 +2,7 @@
 // Modal para que un usuario reclame un negocio existente en Geobooker
 // Compatible con negocios nativos, importados del DENUE o de Overture
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Shield, Upload, Send, AlertCircle, Building2, User, Mail, Phone, Globe, Instagram } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -31,6 +31,14 @@ const ClaimBusinessForm = ({ isOpen, onClose, business, onSuccess }) => {
         evidence_description: '',
     });
 
+    useEffect(() => {
+        return () => {
+            if (evidencePreview) {
+                URL.revokeObjectURL(evidencePreview);
+            }
+        };
+    }, [evidencePreview]);
+
     if (!isOpen || !business) return null;
 
     const isSeeded = business.source_type && business.source_type !== 'native';
@@ -51,6 +59,9 @@ const ClaimBusinessForm = ({ isOpen, onClose, business, onSuccess }) => {
                 return;
             }
             setEvidenceFile(file);
+            if (evidencePreview) {
+                URL.revokeObjectURL(evidencePreview);
+            }
             setEvidencePreview(URL.createObjectURL(file));
         }
     };

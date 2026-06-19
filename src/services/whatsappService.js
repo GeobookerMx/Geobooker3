@@ -103,6 +103,34 @@ export class WhatsAppService {
         try {
             const normalizedSource = source ? this.normalizeSource(source) : null;
 
+            const buildResponse = (countBySource) => {
+                if (normalizedSource && this.config.limits[normalizedSource] !== undefined) {
+                    const sent = countBySource[normalizedSource] || 0;
+                    const limit = this.config.limits[normalizedSource];
+                    return {
+                        canSend: sent < limit,
+                        sent,
+                        remaining: Math.max(0, limit - sent),
+                        dailyLimit: limit,
+                        source: normalizedSource,
+                        bySource: countBySource
+                    };
+                }
+
+                const totalSent = countBySource.total;
+                const remaining = this.config.dailyLimit - totalSent;
+
+                return {
+                    canSend: remaining > 0,
+                    sent: totalSent,
+                    remaining,
+                    dailyLimit: this.config.dailyLimit,
+                    bySource: countBySource
+                };
+            };
+
+            let countBySource = null;
+
             // Obtener conteo por fuente
             const today = getTodayMexico();
             const { data, error } = await supabase
@@ -111,58 +139,52 @@ export class WhatsAppService {
                 .gte('sent_at', today)
                 .neq('status', 'failed');
 
-            if (error) {
-                return {
-                    canSend: false,
-                    sent: 0,
-                    remaining: 0,
-                    dailyLimit: 0,
-                    source: normalizedSource,
-                    bySource: {},
-                    error: `No se pudo consultar unified_whatsapp_outreach: ${error.message}`
+            if (!error) {
+                countBySource = {
+                    scan_invite: 0,
+                    apify: 0,
+                    manual: 0,
+                    crm_queue: 0,
+                    total: data?.length || 0
                 };
-            }
 
-            // Contar por fuente
-            const countBySource = {
-                scan_invite: 0,
-                apify: 0,
-                manual: 0,
-                crm_queue: 0,
-                total: data?.length || 0
-            };
+                (data || []).forEach(item => {
+                    if (countBySource.hasOwnProperty(item.source)) {
+                        countBySource[item.source]++;
+                    }
+                });
+            } else {
+                // Fallback para entornos con RLS/403: usar RPC resumido
+                const { data: statsData, error: statsError } = await supabase.rpc('get_daily_campaign_stats');
 
-            (data || []).forEach(item => {
-                if (countBySource.hasOwnProperty(item.source)) {
-                    countBySource[item.source]++;
+                if (statsError) {
+                    return {
+                        canSend: false,
+                        sent: 0,
+                        remaining: 0,
+                        dailyLimit: 0,
+                        source: normalizedSource,
+                        bySource: {},
+                        error: `No se pudo consultar WhatsApp hoy: ${error.message}. Fallback RPC falló: ${statsError.message}`
+                    };
                 }
-            });
 
-            // Si se especifica una fuente, usar límite específico
-            if (normalizedSource && this.config.limits[normalizedSource] !== undefined) {
-                const sent = countBySource[normalizedSource] || 0;
-                const limit = this.config.limits[normalizedSource];
-                return {
-                    canSend: sent < limit,
-                    sent: sent,
-                    remaining: Math.max(0, limit - sent),
-                    dailyLimit: limit,
-                    source: normalizedSource,
-                    bySource: countBySource
+                const waStats = (statsData || []).filter(s => s.channel === 'whatsapp');
+                countBySource = {
+                    scan_invite: waStats.find(s => s.source === 'google_places')?.sent_today || 0,
+                    apify: waStats.find(s => s.source === 'apify')?.sent_today || 0,
+                    manual: waStats.find(s => s.source === 'manual')?.sent_today || 0,
+                    crm_queue: waStats.find(s => s.source === 'csv')?.sent_today || 0,
+                    total: 0
                 };
+                countBySource.total =
+                    countBySource.scan_invite +
+                    countBySource.apify +
+                    countBySource.manual +
+                    countBySource.crm_queue;
             }
 
-            // Si no hay fuente específica, usar límite global
-            const totalSent = countBySource.total;
-            const remaining = this.config.dailyLimit - totalSent;
-
-            return {
-                canSend: remaining > 0,
-                sent: totalSent,
-                remaining: remaining,
-                dailyLimit: this.config.dailyLimit,
-                bySource: countBySource
-            };
+            return buildResponse(countBySource);
         } catch (error) {
             console.error('Error checking daily limit:', error);
             return {

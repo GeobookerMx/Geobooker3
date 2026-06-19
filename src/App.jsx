@@ -3,6 +3,7 @@ import React, { useEffect, Component, lazy, Suspense } from "react";
 import { BrowserRouter, HashRouter } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import { App as CapApp } from "@capacitor/app";
+import { supabase } from "./lib/supabase";
 
 import { AppProvider } from "./contexts/AppContext";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -24,6 +25,7 @@ import NativeScrollStabilizer from "./components/common/NativeScrollStabilizer";
 import ScrollLockManager from "./components/common/ScrollLockManager";
 import { Toaster } from "react-hot-toast";
 import { captureQrAttribution } from "./services/qrAttributionService";
+import { captureAttribution } from "./services/attributionService";
 
 const ChatWidget = lazy(() => import("./components/agent/ChatWidget"));
 const CookieConsent = lazy(() => import("./components/CookieConsent"));
@@ -50,7 +52,6 @@ if (isNative) {
         }
 
         try {
-          const { supabase } = await import('./lib/supabase');
           const urlObj = new URL(data.url);
 
           // 2A. Verificar si viene un código de autorización PKCE (?code=xxxx)
@@ -177,7 +178,6 @@ function AppInitializer() {
         try {
           appStateListener = await CapApp.addListener('appStateChange', async ({ isActive }) => {
             if (isActive) {
-              const { supabase } = await import('./lib/supabase');
               const { data: { session } } = await supabase.auth.getSession();
               if (session) {
                 await supabase.auth.refreshSession();
@@ -266,6 +266,7 @@ function AppInitializer() {
       }
     };
     initGeo();
+    captureAttribution(window.location.href);
     captureQrAttribution(window.location.href);
 
     return () => {

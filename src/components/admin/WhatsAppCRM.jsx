@@ -23,6 +23,7 @@ const WhatsAppCRM = () => {
     });
     const [isGenerating, setIsGenerating] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [activeItemId, setActiveItemId] = useState(null);
     const [config, setConfig] = useState({ gp_limit: 10, apify_limit: 10 });
     const [showConfig, setShowConfig] = useState(false);
 
@@ -38,6 +39,9 @@ const WhatsAppCRM = () => {
                 loadStats(),
                 loadConfig()
             ]);
+        } catch (error) {
+            console.error('Error loading WhatsApp CRM:', error);
+            toast.error('Error cargando WhatsApp CRM');
         } finally {
             setIsLoading(false);
         }
@@ -61,11 +65,16 @@ const WhatsAppCRM = () => {
             .order('priority', { ascending: false })
             .order('created_at', { ascending: true });
 
-        if (!error) setQueue(data || []);
+        if (error) throw error;
+
+        const safeQueue = (data || []).filter(item => item.marketing_contacts?.phone);
+        setQueue(safeQueue);
     };
 
     const loadStats = async () => {
-        const { data } = await supabase.rpc('get_daily_campaign_stats');
+        const { data, error } = await supabase.rpc('get_daily_campaign_stats');
+
+        if (error) throw error;
 
         if (data) {
             const waStats = data.filter(s => s.channel === 'whatsapp');
@@ -78,10 +87,12 @@ const WhatsAppCRM = () => {
     };
 
     const loadConfig = async () => {
-        const { data } = await supabase
+        const { data, error } = await supabase
             .from('campaign_config')
             .select('*')
             .eq('channel', 'whatsapp');
+
+        if (error) throw error;
 
         if (data) {
             const gpConfig = data.find(c => c.source === 'google_places');
@@ -118,7 +129,19 @@ const WhatsAppCRM = () => {
 
     const openWhatsApp = async (item) => {
         const contact = item.marketing_contacts;
-        const phone = WhatsAppService.normalizePhone(contact.phone).replace(/^\+/, '');
+
+        if (!contact?.phone) {
+            toast.error('Este contacto no tiene teléfono válido');
+            return;
+        }
+
+        const normalizedPhone = WhatsAppService.normalizePhone(contact.phone);
+        if (!normalizedPhone) {
+            toast.error('No se pudo normalizar el teléfono');
+            return;
+        }
+
+        const phone = normalizedPhone.replace(/^\+/, '');
         const tier = contact.tier;
         const source = item.source || contact.source;
         const isInternational = source === 'apify';
@@ -207,46 +230,58 @@ Juan Pablo
 📍 Geobooker - Directorio de Geolocalizaciones`;
         }
 
-        // Abrir WhatsApp
-        WhatsAppService.openWhatsApp(phone, message);
-
-        // Marcar como enviado
         try {
-            await supabase.rpc('register_campaign_send', {
+            setActiveItemId(item.id);
+
+            // Abrir WhatsApp
+            WhatsAppService.openWhatsApp(phone, message);
+
+            const { error: sendLogError } = await supabase.rpc('register_campaign_send', {
                 p_channel: 'whatsapp',
                 p_source: item.source || contact.source || 'csv',
                 p_contact_id: item.contact_id
             });
 
-            await supabase
+            if (sendLogError) throw sendLogError;
+
+            const { error: queueError } = await supabase
                 .from('whatsapp_queue')
                 .update({ status: 'sent', sent_at: new Date().toISOString() })
                 .eq('id', item.id);
+
+            if (queueError) throw queueError;
 
             toast.success(`✓ Enviado a ${companyName}`);
             await loadData();
         } catch (error) {
             console.error('Error registrando envío:', error);
+            toast.error('No se pudo registrar el envío');
+        } finally {
+            setActiveItemId(null);
         }
     };
 
     const saveConfig = async () => {
         try {
-            await supabase
+            const { error: gpError } = await supabase
                 .from('campaign_config')
                 .update({ daily_limit: config.gp_limit })
                 .eq('channel', 'whatsapp')
                 .eq('source', 'google_places');
 
-            await supabase
+            if (gpError) throw gpError;
+
+            const { error: apifyError } = await supabase
                 .from('campaign_config')
                 .update({ daily_limit: config.apify_limit })
                 .eq('channel', 'whatsapp')
                 .eq('source', 'apify');
 
+            if (apifyError) throw apifyError;
+
             toast.success('Configuración guardada');
             setShowConfig(false);
-            loadStats();
+            await loadData();
         } catch (error) {
             toast.error('Error guardando');
         }
@@ -255,16 +290,22 @@ Juan Pablo
     // Saltar contacto (remover de cola sin enviar) + regenerar
     const skipFromQueue = async (item) => {
         try {
-            await supabase
+            setActiveItemId(item.id);
+
+            const { error } = await supabase
                 .from('whatsapp_queue')
                 .update({ status: 'skipped' })
                 .eq('id', item.id);
+
+            if (error) throw error;
 
             toast('Contacto saltado, agregando reemplazo...', { icon: '⏭️' });
             // Regenerar para llenar el espacio
             await generateQueue();
         } catch (error) {
             toast.error('Error al saltar');
+        } finally {
+            setActiveItemId(null);
         }
     };
 
@@ -273,29 +314,46 @@ Juan Pablo
         if (!confirm(`¿Bloquear permanentemente a "${item.marketing_contacts?.company_name}"?`)) return;
 
         try {
+            setActiveItemId(item.id);
+
             // Remover de cola
-            await supabase
+            const { error: queueError } = await supabase
                 .from('whatsapp_queue')
                 .update({ status: 'blacklisted' })
                 .eq('id', item.id);
 
+            if (queueError) throw queueError;
+
             // Marcar contacto como blacklisted
-            await supabase
+            const { error: contactError } = await supabase
                 .from('marketing_contacts')
                 .update({ whatsapp_status: 'blacklisted' })
                 .eq('id', item.contact_id);
+
+            if (contactError) throw contactError;
 
             toast.success('Contacto bloqueado, agregando reemplazo...');
             // Regenerar para llenar el espacio
             await generateQueue();
         } catch (error) {
             toast.error('Error al bloquear');
+        } finally {
+            setActiveItemId(null);
         }
     };
 
     // Limpiar contactos ya enviados + regenerar cola completa
     const clearSentContacts = async () => {
-        const sentCount = queue.filter(q => q.status === 'sent').length;
+        const { count: sentCount, error: countError } = await supabase
+            .from('whatsapp_queue')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'sent');
+
+        if (countError) {
+            toast.error('No se pudo consultar enviados');
+            return;
+        }
+
         if (sentCount === 0) {
             toast('No hay contactos enviados para limpiar', { icon: 'ℹ️' });
             return;
@@ -303,10 +361,12 @@ Juan Pablo
         if (!confirm(`¿Limpiar ${sentCount} contactos ya enviados y generar nuevos?`)) return;
 
         try {
-            await supabase
+            const { error } = await supabase
                 .from('whatsapp_queue')
                 .delete()
                 .eq('status', 'sent');
+
+            if (error) throw error;
 
             toast.success(`${sentCount} eliminados, generando nuevos...`);
             // Regenerar cola completa
@@ -330,7 +390,7 @@ Juan Pablo
     // Cap interno conservador para no sobrecargar la operacion manual.
     const MAX_WHATSAPP_DAILY = 20;
     const totalLimit = Math.min(config.gp_limit + config.apify_limit, MAX_WHATSAPP_DAILY);
-    const progress = Math.round((totalSent / totalLimit) * 100);
+    const progress = totalLimit > 0 ? Math.min(Math.round((totalSent / totalLimit) * 100), 100) : 0;
     const isOverLimit = (config.gp_limit + config.apify_limit) > MAX_WHATSAPP_DAILY;
 
     return (
@@ -505,6 +565,7 @@ Juan Pablo
                         queue.map((item) => {
                             const contact = item.marketing_contacts;
                             const isInvalidPhone = contact?.phone?.includes('800') || contact?.phone?.startsWith('+521800');
+                            const isItemBusy = activeItemId === item.id;
                             return (
                                 <div key={item.id} className={`p-4 hover:bg-gray-50 transition-colors ${isInvalidPhone ? 'bg-red-50' : ''}`}>
                                     <div className="flex items-center justify-between gap-4">
@@ -538,13 +599,15 @@ Juan Pablo
                                         <div className="flex gap-2">
                                             <button
                                                 onClick={() => skipFromQueue(item)}
+                                                disabled={isItemBusy}
                                                 className="p-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition"
                                                 title="Saltar (remover de cola)"
                                             >
-                                                ⏭️
+                                                {isItemBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : '⏭️'}
                                             </button>
                                             <button
                                                 onClick={() => blacklistContact(item)}
+                                                disabled={isItemBusy}
                                                 className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
                                                 title="Bloquear permanentemente"
                                             >
@@ -552,10 +615,11 @@ Juan Pablo
                                             </button>
                                             <button
                                                 onClick={() => openWhatsApp(item)}
-                                                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2 whitespace-nowrap"
+                                                disabled={isItemBusy || isInvalidPhone}
+                                                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2 whitespace-nowrap disabled:opacity-50"
                                             >
-                                                <ExternalLink className="w-4 h-4" />
-                                                Abrir WA
+                                                {isItemBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
+                                                {isItemBusy ? 'Procesando...' : 'Abrir WA'}
                                             </button>
                                         </div>
                                     </div>

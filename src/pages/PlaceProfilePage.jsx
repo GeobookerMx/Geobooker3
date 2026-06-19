@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import SEO from '../components/SEO';
+import { buildBusinessShareMessage, buildCanonicalShareUrl } from '../services/shareService';
+import { useSharedGoogleMaps } from '../hooks/useSharedGoogleMaps';
 
 // Mapeo de tipos de Places a categorías legibles
 const TYPE_LABELS = {
@@ -50,8 +52,14 @@ const PlaceProfilePage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedPhoto, setSelectedPhoto] = useState(0);
+    const { isLoaded: mapsReady } = useSharedGoogleMaps();
 
     useEffect(() => {
+        if (!mapsReady) {
+            setLoading(true);
+            return;
+        }
+
         const loadPlace = async () => {
             if (!placeId) {
                 setError('ID de lugar no válido');
@@ -72,19 +80,27 @@ const PlaceProfilePage = () => {
                 trackViewProfile(placeId, details.name, true);
             } catch (err) {
                 console.error('Error loading place:', err);
-                setError('Error al cargar el negocio');
+                setError(err.message === 'Google Maps no está cargado'
+                    ? 'Cargando servicios de Google Maps...'
+                    : 'Error al cargar el negocio');
             } finally {
                 setLoading(false);
             }
         };
 
         loadPlace();
-    }, [placeId]);
+    }, [placeId, mapsReady]);
 
     const handleShare = async () => {
         const shareTitle = place?.name || 'Negocio en Geobooker';
-        const shareText = `Mira ${shareTitle} en Geobooker`;
-        const shareUrl = window.location.href;
+        const shareText = buildBusinessShareMessage({
+            name: place?.name,
+            category: getReadableType(place?.types),
+            address: place?.address,
+            city: place?.city,
+            sourceLabel: 'Geobooker'
+        });
+        const shareUrl = buildCanonicalShareUrl(`/place/${placeId}`);
 
         try {
             if (Capacitor.isNativePlatform()) {
@@ -97,8 +113,8 @@ const PlaceProfilePage = () => {
             } else if (navigator.share) {
                 await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
             } else {
-                await navigator.clipboard.writeText(shareUrl);
-                toast.success('Enlace copiado');
+                await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+                toast.success('Mensaje de compartir copiado');
             }
         } catch (err) {
             if (err.message !== 'Share canceled') {

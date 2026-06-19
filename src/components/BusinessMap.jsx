@@ -4,6 +4,7 @@ import { GoogleMap, MarkerF, InfoWindowF, MarkerClusterer, CircleF, OverlayView 
 import LastUpdatedBadge from './common/LastUpdatedBadge';
 import { trackRouteClick, trackBusinessView } from '../services/analyticsService';
 import { GOOGLE_MAPS_API_KEY } from '../config/supabase';
+import { getAwardMeta } from '../utils/awardUtils';
 
 // ⚡ IMPORTANTE: Constantes fuera del componente para evitar recargas
 const GOOGLE_MAPS_LIBRARIES = ['places'];
@@ -126,6 +127,36 @@ const PREMIUM_ICON = {
   strokeWeight: 3,
   scale: 2.5, // Más grande que el normal
   anchor: { x: 12, y: 12 }
+};
+
+const AWARD_ICONS = {
+  gold_star: {
+    path: 'M 12,2 L 15,10 L 23,10 L 17,15 L 19,23 L 12,18 L 5,23 L 7,15 L 1,10 L 9,10 Z',
+    fillColor: '#FACC15',
+    fillOpacity: 1,
+    strokeColor: '#A16207',
+    strokeWeight: 3,
+    scale: 2.9,
+    anchor: { x: 12, y: 12 }
+  },
+  gold_double_star: {
+    path: 'M 12,2 L 15,10 L 23,10 L 17,15 L 19,23 L 12,18 L 5,23 L 7,15 L 1,10 L 9,10 Z',
+    fillColor: '#F59E0B',
+    fillOpacity: 1,
+    strokeColor: '#78350F',
+    strokeWeight: 3.5,
+    scale: 3.2,
+    anchor: { x: 12, y: 12 }
+  },
+  gold_star_green_leaf: {
+    path: 'M 12,2 L 15,10 L 23,10 L 17,15 L 19,23 L 12,18 L 5,23 L 7,15 L 1,10 L 9,10 Z',
+    fillColor: '#FACC15',
+    fillOpacity: 1,
+    strokeColor: '#166534',
+    strokeWeight: 3.5,
+    scale: 3,
+    anchor: { x: 12, y: 12 }
+  }
 };
 
 // ✅ Icono RECOMENDADO POR USUARIOS - Corazón verde esmeralda con check
@@ -306,6 +337,7 @@ const getCategoryIcon = (category, isPremium = false) => {
 const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewProfile, t }) => {
   const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLocation?.lat},${userLocation?.lng}&destination=${business.latitude},${business.longitude}&travelmode=driving`;
   const isGeobooker = !!business.owner_id;
+  const awardMeta = getAwardMeta(business);
 
   return (
     <InfoWindowF
@@ -341,6 +373,21 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
         <p className="text-gray-500 text-xs mb-3">
           <span className="font-semibold">{t('business.address')}:</span> {business.address}
         </p>
+        {awardMeta && (
+          <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-amber-700">
+              {awardMeta.recognitionLabel}
+            </p>
+            <p className="text-[11px] text-amber-800">
+              Fuente: {awardMeta.sourceLabel}
+            </p>
+            {awardMeta.verificationDate && (
+              <p className="text-[11px] text-amber-700">
+                Verificado: {new Date(awardMeta.verificationDate).toLocaleDateString()}
+              </p>
+            )}
+          </div>
+        )}
         <div className="flex justify-between items-center mb-2">
           <span className="text-yellow-500 text-sm font-semibold">
             ★ {business.rating || 'N/A'}
@@ -838,7 +885,10 @@ export const BusinessMap = memo(({
         {/* Marcadores nativos de Geobooker (Íconos por categoría, Premium con estrella dorada) */}
         {geobookerMarkers.map((business) => {
           const isPremium = business.is_premium_owner || business.is_premium || false;
-          const categoryIcon = getCategoryIcon(business.category, isPremium);
+          const awardMeta = getAwardMeta(business);
+          const categoryIcon = awardMeta
+            ? (AWARD_ICONS[awardMeta.pinType] || AWARD_ICONS.gold_star)
+            : getCategoryIcon(business.category, isPremium);
           const markerId = `geobooker-${business.id}`;
           const isHovered = hoveredMarkerId === markerId;
 
@@ -885,7 +935,10 @@ export const BusinessMap = memo(({
                   || business.category_raw                           // fallback al nombre INEGI crudo
                   || business.nombre_actividad                       // legado
                   || '';
-                const categoryIcon = getCategoryIcon(denueCategory, false);
+                const awardMeta = getAwardMeta(business);
+                const categoryIcon = awardMeta
+                  ? (AWARD_ICONS[awardMeta.pinType] || AWARD_ICONS.gold_star)
+                  : getCategoryIcon(denueCategory, false);
                 const markerId = `denue-${business.id}`;
                 const isHovered = hoveredMarkerId === markerId;
                 return (

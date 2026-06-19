@@ -11,14 +11,31 @@ export default defineConfig({
   ],
   // Alias para imports más cortos en todo el proyecto
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@components': path.resolve(__dirname, './src/components'),
-      '@pages': path.resolve(__dirname, './src/pages'),
-      '@utils': path.resolve(__dirname, './src/utils'),
-      '@services': path.resolve(__dirname, './src/services'),
-      '@contexts': path.resolve(__dirname, './src/contexts'),
-    }
+    alias: [
+      { find: 'use-sync-external-store/shim/with-selector.js', replacement: path.resolve(__dirname, './src/shims/useSyncExternalStoreWithSelector.js') },
+      { find: 'use-sync-external-store/shim/with-selector', replacement: path.resolve(__dirname, './src/shims/useSyncExternalStoreWithSelector.js') },
+      { find: 'use-sync-external-store/with-selector.js', replacement: path.resolve(__dirname, './src/shims/useSyncExternalStoreWithSelector.js') },
+      { find: 'use-sync-external-store/with-selector', replacement: path.resolve(__dirname, './src/shims/useSyncExternalStoreWithSelector.js') },
+      { find: 'use-sync-external-store/shim/index.js', replacement: path.resolve(__dirname, './src/shims/useSyncExternalStoreShim.js') },
+      { find: 'use-sync-external-store/shim', replacement: path.resolve(__dirname, './src/shims/useSyncExternalStoreShim.js') },
+      { find: 'es-toolkit/compat/get', replacement: path.resolve(__dirname, './src/shims/esToolkitCompatGet.js') },
+      { find: 'es-toolkit/compat/uniqBy', replacement: path.resolve(__dirname, './src/shims/esToolkitCompatUniqBy.js') },
+      { find: 'es-toolkit/compat/sortBy', replacement: path.resolve(__dirname, './src/shims/esToolkitCompatSortBy.js') },
+      { find: 'es-toolkit/compat/isPlainObject', replacement: path.resolve(__dirname, './src/shims/esToolkitCompatIsPlainObject.js') },
+      { find: 'es-toolkit/compat/last', replacement: path.resolve(__dirname, './src/shims/esToolkitCompatLast.js') },
+      { find: 'es-toolkit/compat/maxBy', replacement: path.resolve(__dirname, './src/shims/esToolkitCompatMaxBy.js') },
+      { find: 'es-toolkit/compat/minBy', replacement: path.resolve(__dirname, './src/shims/esToolkitCompatMinBy.js') },
+      { find: 'es-toolkit/compat/throttle', replacement: path.resolve(__dirname, './src/shims/esToolkitCompatThrottle.js') },
+      { find: 'es-toolkit/compat/range', replacement: path.resolve(__dirname, './src/shims/esToolkitCompatRange.js') },
+      { find: 'es-toolkit/compat/omit', replacement: path.resolve(__dirname, './src/shims/esToolkitCompatOmit.js') },
+      { find: 'es-toolkit/compat/sumBy', replacement: path.resolve(__dirname, './src/shims/esToolkitCompatSumBy.js') },
+      { find: '@', replacement: path.resolve(__dirname, './src') },
+      { find: '@components', replacement: path.resolve(__dirname, './src/components') },
+      { find: '@pages', replacement: path.resolve(__dirname, './src/pages') },
+      { find: '@utils', replacement: path.resolve(__dirname, './src/utils') },
+      { find: '@services', replacement: path.resolve(__dirname, './src/services') },
+      { find: '@contexts', replacement: path.resolve(__dirname, './src/contexts') },
+    ]
   },
   build: {
     rollupOptions: {
@@ -85,4 +102,4 @@ export default defineConfig({
     // Excluir librerías que se cargan bajo demanda
     exclude: ['xlsx', 'recharts'],
   },
-})
+})

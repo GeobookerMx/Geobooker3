@@ -16,7 +16,7 @@ export default function PublicLayout() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-white">
+      <main className="min-h-screen overflow-x-hidden bg-white">
         <Outlet />
       </main>
       <Footer />

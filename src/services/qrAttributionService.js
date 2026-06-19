@@ -1,4 +1,5 @@
 import { trackEvent } from './analyticsService';
+import { captureAttribution } from './attributionService';
 
 const STORAGE_KEY = 'gb_qr_attribution';
 
@@ -21,6 +22,7 @@ export function captureQrAttribution(url = window.location.href) {
     if (!hasQrSignal) return null;
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    captureAttribution(url);
     window.dispatchEvent(new CustomEvent('geobooker:qr-attribution', { detail: payload }));
 
     trackEvent('qr_attribution_captured', payload);

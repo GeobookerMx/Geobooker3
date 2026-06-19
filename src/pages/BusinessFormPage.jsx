@@ -17,6 +17,7 @@ import { supabase } from '../lib/supabase';
 import { GOOGLE_MAPS_API_KEY } from '../config/supabase';
 import UpgradeRequiredModal from '../components/modals/UpgradeRequiredModal';
 import { isPremiumPromoActive } from '../config/promotions';
+import { trackBusinessCreated } from '../services/analyticsService';
 
 const mapContainerStyle = {
   width: "100%",
@@ -259,6 +260,12 @@ export default function BusinessFormPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!user?.id) {
+      toast.error("Debes iniciar sesión para registrar tu negocio");
+      navigate('/login');
+      return;
+    }
+
     // Validación de campos requeridos
     if (!form.business_name.trim()) {
       toast.error("El nombre del negocio es obligatorio");
@@ -272,10 +279,21 @@ export default function BusinessFormPage() {
       toast.error("Por favor selecciona la ubicación en el mapa");
       return;
     }
+    if (!form.address.trim()) {
+      toast.error("Escribe la direccion de tu negocio");
+      return;
+    }
 
     try {
       setSubmitting(true);
-      await createBusiness(form, user);
+      const createdBusiness = await createBusiness(form, user);
+      if (createdBusiness?.id) {
+        trackBusinessCreated(createdBusiness.id, createdBusiness.name || form.business_name, {
+          category: createdBusiness.category || form.category,
+          subcategory: createdBusiness.subcategory || form.subcategory,
+          city: localStorage.getItem('userCity') || null
+        });
+      }
       toast.success("¡Negocio registrado exitosamente!");
       navigate("/dashboard");
     } catch (error) {
@@ -452,7 +470,7 @@ export default function BusinessFormPage() {
               </div>
 
               <div>
-                <OptionalLabel>Dirección escrita</OptionalLabel>
+                <RequiredLabel>Dirección escrita</RequiredLabel>
                 <input
                   type="text"
                   name="address"

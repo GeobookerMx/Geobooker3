@@ -60,7 +60,7 @@
             "oxxo": "可以用现金支付吗？",
             "search": "如何搜索商家？",
             "howItWorks": "Geobooker 是如何运作的？",
-            "promo": "什么是 50% OFF 优惠？",
+            "promo": "什么是企业全球 70% OFF 优惠？",
             "contact": "如何联系商家？",
             "problem": "我遇到了问题"
         }
@@ -110,7 +110,7 @@
     "enterprise": {
         "seoTitle": "Geobooker 企业版 - 国际品牌全球广告",
         "seoDescription": "在 2026 年世界杯等活动中精准触达数百万用户。地理定位广告。",
-        "promoBanner": "发布促销：5折优惠",
+        "promoBanner": "企业全球促销：7折优惠",
         "offerEnds": "优惠截止倒计时",
         "days": "天",
         "hours": "小时",
@@ -150,8 +150,8 @@
         "featureMultiLocationDesc": "在单一仪表板内管理多个分支机构。",
         "featureReferralProg": "推荐计划",
         "featureReferralProgDesc": "集成推荐系统：客户推荐，品牌获利。",
-        "launchPromo": "发布促销",
-        "pricingTitle": "所有套餐 5 折优惠",
+        "launchPromo": "企业全球促销",
+        "pricingTitle": "全球价格 7 折优惠",
         "pricingSubtitle": "作为首批企业客户，尊享专属早鸟价。",
         "mostPopular": "最受欢迎",
         "fullCoverage": "全面覆盖",

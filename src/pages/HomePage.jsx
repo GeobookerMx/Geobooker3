@@ -10,7 +10,7 @@ import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { getCachedBusinesses, isCacheValid, cacheBusinesses } from '../services/businessCacheService';
 import { getBusinessesInBounds } from '../services/denueMapService';
-import { searchNearbyPlaces } from '../services/googlePlacesService';
+import { generateCacheKey, getFromCache, searchPlacesUniversal } from '../services/googlePlacesService';
 import { MapPin, Loader2 } from 'lucide-react';
 
 // Map loading fallback component
@@ -50,6 +50,8 @@ import { IS_IOS_NATIVE } from '../utils/iosStore';
 import OpenNowFilter from '../components/common/OpenNowFilter';
 import LocationRefreshButton from '../components/common/LocationRefreshButton';
 import { isBusinessOpen } from '../utils/businessHours';
+import { getAwardMeta, getAwardSearchFilter, isAwardSearchQuery, isAwardedBusiness, matchesAwardFilter } from '../utils/awardUtils';
+import michelinSeed2026 from '../../data/seed/awards/michelin_mexico_2026.json';
 
 const CITY_COORDINATES = {
   cdmx: { lat: 19.4326, lng: -99.1332 },
@@ -70,6 +72,167 @@ const CITY_COORDINATES = {
   vancouver: { lat: 49.2827, lng: -123.1207 }
 };
 
+
+const toMergedArray = (...values) => {
+  const seen = new Set();
+  const merged = [];
+
+  values.flat().forEach((value) => {
+    if (!value) return;
+
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        const normalized = String(item || '').trim();
+        if (!normalized || seen.has(normalized)) return;
+        seen.add(normalized);
+        merged.push(normalized);
+      });
+      return;
+    }
+
+    String(value)
+      .split(/[|,]/)
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .forEach((item) => {
+        if (seen.has(item)) return;
+        seen.add(item);
+        merged.push(item);
+      });
+  });
+
+  return merged;
+};
+
+const enrichBusinessesWithAwards = async (businesses = []) => {
+  const businessIds = [...new Set(businesses.map((business) => business.id).filter(Boolean))];
+  if (businessIds.length === 0) return businesses;
+
+  const { data: awards, error } = await supabase
+    .from('business_awards_active')
+    .select('*')
+    .in('business_id', businessIds);
+
+  if (error) {
+    console.warn('Error loading award metadata:', error.message);
+    return businesses;
+  }
+
+  const awardGroups = new Map();
+  (awards || []).forEach((award) => {
+    const current = awardGroups.get(award.business_id) || [];
+    current.push(award);
+    awardGroups.set(award.business_id, current);
+  });
+
+  return businesses.map((business) => {
+    const businessAwards = awardGroups.get(business.id);
+    if (!businessAwards?.length) return business;
+
+    const primaryAward = businessAwards.reduce((best, current) => {
+      if (!best) return current;
+
+      const bestScore = Number(best.award_level || 0) * 10000 + Number(best.current_award_year || best.award_year || 0);
+      const currentScore = Number(current.award_level || 0) * 10000 + Number(current.current_award_year || current.award_year || 0);
+      return currentScore >= bestScore ? current : best;
+    }, null);
+
+    const mergedTags = toMergedArray(
+      business.tags,
+      businessAwards.map((award) => award.tags),
+      businessAwards.map((award) => award.active_badges),
+      businessAwards.map((award) => award.search_aliases),
+      businessAwards.map((award) => award.related_terms)
+    );
+
+    const mergedBadges = toMergedArray(
+      business.active_badges,
+      businessAwards.map((award) => award.active_badges),
+      businessAwards.map((award) => award.badge_text),
+      businessAwards.map((award) => award.award_name)
+    );
+
+    return {
+      ...business,
+      award_source: primaryAward.award_source,
+      award_name: primaryAward.award_name,
+      award_year: primaryAward.award_year,
+      award_level: primaryAward.award_level,
+      current_award_year: primaryAward.current_award_year,
+      first_awarded_year: primaryAward.first_awarded_year,
+      green_award: businessAwards.some((award) => Boolean(award.green_award)),
+      has_tasting_menu: business.has_tasting_menu || businessAwards.some((award) => Boolean(award.has_tasting_menu)),
+      is_fine_dining: business.is_fine_dining || businessAwards.some((award) => Boolean(award.is_fine_dining || award.award_source?.toLowerCase().includes('michelin'))),
+      source_url: primaryAward.source_url,
+      last_verified_at: primaryAward.last_verified_at,
+      verification_status: primaryAward.verification_status,
+      tags: mergedTags.length > 0 ? mergedTags : business.tags,
+      active_badges: mergedBadges.length > 0 ? mergedBadges : business.active_badges,
+      search_aliases: toMergedArray(business.search_aliases, businessAwards.map((award) => award.search_aliases)),
+      related_terms: toMergedArray(business.related_terms, businessAwards.map((award) => award.related_terms))
+    };
+  });
+};
+
+const fetchAwardBusinessesInBounds = async (bounds, limit = 400) => {
+  const { data, error } = await supabase
+    .from('businesses')
+    .select('*')
+    .gte('latitude', bounds.south)
+    .lte('latitude', bounds.north)
+    .gte('longitude', bounds.west)
+    .lte('longitude', bounds.east)
+    .limit(limit);
+
+  if (error) {
+    throw error;
+  }
+
+  const visibleBusinesses = (data || []).filter((business) => business?.is_visible !== false);
+  const enrichedBusinesses = await enrichBusinessesWithAwards(visibleBusinesses);
+
+  return enrichedBusinesses
+    .filter(isAwardedBusiness)
+    .map((business) => ({
+      ...business,
+      lat: business.latitude,
+      lng: business.longitude,
+      source_type: business.source_type || 'award_directory'
+    }));
+};
+
+const filterBusinessesInBounds = (businesses, bounds) =>
+  businesses.filter((business) => {
+    const lat = Number(business.latitude ?? business.lat);
+    const lng = Number(business.longitude ?? business.lng);
+    return !isNaN(lat) && !isNaN(lng) &&
+      lat >= bounds.south && lat <= bounds.north &&
+      lng >= bounds.west && lng <= bounds.east;
+  });
+
+// ✅ Los restaurantes del seed ya tienen lat/lng hardcodeados — no necesitamos geocodificar
+const getAwardSeedFallbackBusinesses = async (bounds, awardFilter) => {
+  const matchingSeedBusinesses = michelinSeed2026
+    .filter((business) => matchesAwardFilter(business, awardFilter))
+    .map((business) => ({
+      ...business,
+      id: `michelin-seed-${business.name}-${business.city}`.replace(/\s+/g, '_').toLowerCase(),
+      // Asegurar que lat/lng y latitude/longitude están presentes
+      lat: Number(business.lat ?? business.latitude),
+      lng: Number(business.lng ?? business.longitude),
+      latitude: Number(business.latitude ?? business.lat),
+      longitude: Number(business.longitude ?? business.lng),
+      source_type: 'michelin_seed_local'
+    }))
+    .filter((b) => !isNaN(b.lat) && !isNaN(b.lng)); // Solo restaurantes con coordenadas válidas
+
+  if (import.meta.env.DEV) {
+    console.log(`[AwardSeed] ${matchingSeedBusinesses.length} restaurantes del seed (${awardFilter}) con coordenadas válidas`);
+  }
+
+  return filterBusinessesInBounds(matchingSeedBusinesses, bounds);
+};
+
 const HomePage = () => {
   const { t } = useTranslation();
   const { category, subcategory, city } = useParams();
@@ -84,7 +247,12 @@ const HomePage = () => {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [openNowFilter, setOpenNowFilter] = useState(false); // Filtro abierto ahora
   const [lastSearchQuery, setLastSearchQuery] = useState(''); // Para persistencia
+  const [awardFilter, setAwardFilter] = useState('all');
+  const [showAwardsPrompt, setShowAwardsPrompt] = useState(false);
+  const [nearbyAwardCount, setNearbyAwardCount] = useState(0);
   const mapIdleTimerRef = useRef(null);
+  const awardFilterRef = useRef('all');
+  const viewportRequestSeqRef = useRef(0);
   const mapBoundsRef = useRef(null); // 📍 OPCION 1: Guardar bounds del mapa para filtrar recomendaciones
   const navigate = useNavigate();
 
@@ -167,6 +335,7 @@ const HomePage = () => {
     setBusinesses([]);
     setLastSearchQuery('');
     setSelectedBusiness(null);
+    setAwardFilter('all');
     sessionStorage.removeItem('geobooker_search_state');
     // Limpiar URL params de búsqueda pero mantener ubicación
     setSearchParams({});
@@ -181,7 +350,8 @@ const HomePage = () => {
       if (cacheStatus.isValid && !categoryFilter) {
         const cachedBusinesses = await getCachedBusinesses();
         if (cachedBusinesses.length > 0) {
-          setGeobookerBusinesses(cachedBusinesses);
+          const enrichedCachedBusinesses = await enrichBusinessesWithAwards(cachedBusinesses);
+          setGeobookerBusinesses(enrichedCachedBusinesses);
           return; // Usar caché, no llamar a Supabase
         }
       }
@@ -199,19 +369,28 @@ const HomePage = () => {
       const { data, error } = await query;
       if (error) throw error;
       if (data) {
-        // Obtener estado Premium
-        const ownerIds = [...new Set(data.map(b => b.owner_id).filter(Boolean))];
-        let premiumOwners = {};
-        for (const ownerId of ownerIds) {
-          try {
-            const { data: isPremium } = await supabase.rpc('get_user_premium_status', { user_id: ownerId });
-            premiumOwners[ownerId] = isPremium || false;
-          } catch (e) {
-            premiumOwners[ownerId] = false;
-          }
-        }
+        const businessesWithAwards = await enrichBusinessesWithAwards(data);
+        const baseBusinesses = businessesWithAwards.map((business) => ({
+          ...business,
+          is_premium_owner: false
+        }));
 
-        const businessesWithPremium = data.map(business => ({
+        setGeobookerBusinesses(baseBusinesses);
+
+        const ownerIds = [...new Set(data.map((business) => business.owner_id).filter(Boolean))];
+        const premiumEntries = await Promise.all(
+          ownerIds.map(async (ownerId) => {
+            try {
+              const { data: isPremium } = await supabase.rpc('get_user_premium_status', { user_id: ownerId });
+              return [ownerId, Boolean(isPremium)];
+            } catch (premiumError) {
+              return [ownerId, false];
+            }
+          })
+        );
+
+        const premiumOwners = Object.fromEntries(premiumEntries);
+        const businessesWithPremium = businessesWithAwards.map((business) => ({
           ...business,
           is_premium_owner: premiumOwners[business.owner_id] || false
         }));
@@ -303,7 +482,6 @@ const HomePage = () => {
 
       try {
         // ⚡ OPTIMIZACIÓN: Mostrar caché inmediatamente (loading optimista)
-        const { getFromCache, generateCacheKey } = await import('../services/googlePlacesService');
         const searchTerm = subcategoryFilter || categoryFilter;
         const cacheKey = generateCacheKey(userLocation, searchTerm, 'search');
         const cachedResults = getFromCache(cacheKey);
@@ -316,8 +494,7 @@ const HomePage = () => {
         }
 
         // Buscar en Google Places (actualiza en background)
-        const { searchNearbyPlaces } = await import('../services/googlePlacesService');
-        const results = await searchNearbyPlaces(userLocation, searchTerm, 10000);
+        const results = await searchPlacesUniversal(userLocation, searchTerm, 10000);
 
         if (results && results.length > 0) {
           setBusinesses(results);
@@ -358,8 +535,30 @@ const HomePage = () => {
     }
   }, [locationLoading, permissionGranted, userLocation]);
 
-  const handleBusinessesFound = (foundBusinesses) => {
+  const calculateDistanceKm = (lat1, lon1, lat2, lon2) => {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
+  const handleBusinessesFound = (foundBusinesses, meta = {}) => {
     setBusinesses(foundBusinesses);
+
+    if (meta.query) {
+      setLastSearchQuery(meta.query);
+    }
+
+    if (meta.query && isAwardSearchQuery(meta.query)) {
+      setAwardFilter(getAwardSearchFilter(meta.query) || 'michelin');
+    } else if (meta.source === 'google' && awardFilter !== 'all') {
+      setAwardFilter('all');
+    }
     // Incrementar contador de búsquedas para trigger de interstitial
     incrementSearchCount();
 
@@ -376,13 +575,107 @@ const HomePage = () => {
   };
 
   // 📍 Handler para consultar DENUE + Recomendaciones en background cuando el mapa se mueve
+  const awardBusinesses = [...geobookerBusinesses, ...denueBusinesses].filter(isAwardedBusiness);
+  const filteredBusinesses = awardFilter === 'all'
+    ? businesses
+    : businesses.filter((business) => matchesAwardFilter(business, awardFilter));
+  const filteredGeobookerBusinesses = awardFilter === 'all'
+    ? geobookerBusinesses
+    : geobookerBusinesses.filter((business) => matchesAwardFilter(business, awardFilter));
+  const filteredRecommendedBusinesses = awardFilter === 'all'
+    ? recommendedBusinesses
+    : recommendedBusinesses.filter((business) => matchesAwardFilter(business, awardFilter));
+  const filteredDenueBusinesses = awardFilter === 'all'
+    ? denueBusinesses
+    : denueBusinesses.filter((business) => matchesAwardFilter(business, awardFilter));
+
+  useEffect(() => {
+    awardFilterRef.current = awardFilter;
+  }, [awardFilter]);
+
+  useEffect(() => {
+    if (!userLocation || awardBusinesses.length === 0) {
+      setNearbyAwardCount(0);
+      return;
+    }
+
+    const nearbyBusinesses = awardBusinesses.filter((business) => {
+      const lat = Number(business.latitude ?? business.lat);
+      const lng = Number(business.longitude ?? business.lng);
+      if (Number.isNaN(lat) || Number.isNaN(lng)) return false;
+
+      const distanceKm = calculateDistanceKm(userLocation.lat, userLocation.lng, lat, lng);
+      const awardMeta = getAwardMeta(business);
+      const radiusKm = awardMeta?.isMichelin ? 1.5 : 2.5;
+      return distanceKm <= radiusKm;
+    });
+
+    setNearbyAwardCount(nearbyBusinesses.length);
+
+    if (nearbyBusinesses.length > 0 && !sessionStorage.getItem('geobooker_awards_prompt_shown')) {
+      setShowAwardsPrompt(true);
+      sessionStorage.setItem('geobooker_awards_prompt_shown', 'true');
+    }
+  }, [awardBusinesses, userLocation]);
+
+  const awardFilterOptions = [
+    { id: 'awarded', label: 'Restaurantes premiados' },
+    { id: 'michelin', label: 'Michelin' },
+    { id: 'green', label: 'Estrella Verde' },
+    { id: 'fine_dining', label: 'Alta cocina' },
+    { id: 'tasting_menu', label: 'Tasting menu' }
+  ];
+
+  const awardViewportCategory = awardFilter !== 'all' ? 'restaurantes' : null;
+
+  const handleAwardFilterToggle = useCallback(async (nextFilter) => {
+    const resolvedFilter = awardFilter === nextFilter ? 'all' : nextFilter;
+    awardFilterRef.current = resolvedFilter;
+    setAwardFilter(resolvedFilter);
+
+    if (resolvedFilter === 'all' || !mapBoundsRef.current) {
+      return;
+    }
+
+    if (mapIdleTimerRef.current) clearTimeout(mapIdleTimerRef.current);
+
+    const requestId = ++viewportRequestSeqRef.current;
+
+    try {
+      const awardedBusinesses = await fetchAwardBusinessesInBounds(mapBoundsRef.current, 400);
+      const filteredAwardBusinesses = awardedBusinesses.filter((business) => matchesAwardFilter(business, resolvedFilter));
+      if (requestId !== viewportRequestSeqRef.current || awardFilterRef.current !== resolvedFilter) {
+        console.log(`[Awards] Ignorando respuesta atrasada para filtro "${resolvedFilter}"`);
+        return;
+      }
+
+      if (filteredAwardBusinesses.length > 0) {
+        console.log(`[Awards] ${resolvedFilter}: ${filteredAwardBusinesses.length} negocios renderizables desde Supabase`);
+        setDenueBusinesses(filteredAwardBusinesses);
+        return;
+      }
+
+      const fallbackAwardBusinesses = await getAwardSeedFallbackBusinesses(mapBoundsRef.current, resolvedFilter);
+      if (requestId !== viewportRequestSeqRef.current || awardFilterRef.current !== resolvedFilter) {
+        console.log(`[Awards] Ignorando fallback atrasado para filtro "${resolvedFilter}"`);
+        return;
+      }
+
+      console.log(`[Awards] ${resolvedFilter}: ${fallbackAwardBusinesses.length} negocios renderizables desde seed local`);
+      setDenueBusinesses(fallbackAwardBusinesses);
+    } catch (error) {
+      console.error('Error loading award filter businesses:', error);
+    }
+  }, [awardFilter]);
+
   const handleMapIdle = useCallback(({ bounds, zoom }) => {
     // Guardar bounds actuales para posibles re-cargas
     mapBoundsRef.current = bounds;
+    const currentAwardFilter = awardFilterRef.current;
 
     // Si el zoom es muy lejano, no saturar la base de datos
     // Permite DENUE desde nivel de ciudad (10) para arriba. Si hay filtro, mostramos siempre (1).
-    const minZoom = categoryFilter ? 1 : 10;
+    const minZoom = (categoryFilter || currentAwardFilter !== 'all') ? 1 : 10;
     if (zoom < minZoom) {
       setDenueBusinesses([]);
       setRecommendedBusinesses([]);
@@ -392,7 +685,11 @@ const HomePage = () => {
     // 🎯 Límite dinámico según zoom para evitar saturación visual
     // Cuando hay categoría, permitir más resultados (están filtrados)
     let dynamicLimit;
-    if (categoryFilter) {
+    if (currentAwardFilter !== 'all') {
+      if (zoom <= 12)      dynamicLimit = 240;
+      else if (zoom <= 14) dynamicLimit = 400;
+      else                 dynamicLimit = 650;
+    } else if (categoryFilter) {
       // Con categoría: más resultados porque ya están filtrados
       if (zoom <= 13)      dynamicLimit = 100;
       else if (zoom <= 14) dynamicLimit = 200;
@@ -409,16 +706,46 @@ const HomePage = () => {
     if (mapIdleTimerRef.current) clearTimeout(mapIdleTimerRef.current);
 
     mapIdleTimerRef.current = setTimeout(async () => {
+      const requestId = ++viewportRequestSeqRef.current;
+      const activeAwardFilter = awardFilterRef.current;
+
       try {
-        const catLabel = categoryFilter ? `, cat=${categoryFilter}` : '';
-        console.log(`🗺️ [HomePage] Consultando DENUE en viewport (zoom=${zoom}, limit=${dynamicLimit}${catLabel})...`, bounds);
+        if (activeAwardFilter !== 'all') {
+          const awardedBusinesses = await fetchAwardBusinessesInBounds(bounds, dynamicLimit);
+          const filteredAwardBusinesses = awardedBusinesses.filter((business) => matchesAwardFilter(business, activeAwardFilter));
+          if (requestId !== viewportRequestSeqRef.current || awardFilterRef.current !== activeAwardFilter) {
+            console.log(`[Awards] Ignorando viewport atrasado para filtro "${activeAwardFilter}"`);
+            return;
+          }
+
+          if (filteredAwardBusinesses.length > 0) {
+            console.log(`[Awards] viewport ${activeAwardFilter}: ${filteredAwardBusinesses.length} negocios renderizables desde Supabase`);
+            setDenueBusinesses(filteredAwardBusinesses);
+          } else {
+            const fallbackAwardBusinesses = await getAwardSeedFallbackBusinesses(bounds, activeAwardFilter);
+            if (requestId !== viewportRequestSeqRef.current || awardFilterRef.current !== activeAwardFilter) {
+              console.log(`[Awards] Ignorando fallback de viewport atrasado para filtro "${activeAwardFilter}"`);
+              return;
+            }
+
+            console.log(`[Awards] viewport ${activeAwardFilter}: ${fallbackAwardBusinesses.length} negocios renderizables desde seed local`);
+            setDenueBusinesses(fallbackAwardBusinesses);
+          }
+          await fetchRecommendationsByBounds(bounds);
+          return;
+        }
+
+        const effectiveCategory = categoryFilter || (activeAwardFilter !== 'all' ? 'restaurantes' : null);
+        const catLabel = effectiveCategory ? `, cat=${effectiveCategory}` : '';
+        const awardLabel = activeAwardFilter !== 'all' ? `, award=${activeAwardFilter}` : '';
+        console.log(`🗺️ [HomePage] Consultando DENUE en viewport (zoom=${zoom}, limit=${dynamicLimit}${catLabel}${awardLabel})...`, bounds);
         const candidates = await getBusinessesInBounds(
           bounds.south,
           bounds.west,
           bounds.north,
           bounds.east,
           dynamicLimit,
-          categoryFilter || null  // 🎯 Filtro de categoría al RPC
+          effectiveCategory || null
         );
         
         if (candidates && candidates.length > 0) {
@@ -431,8 +758,17 @@ const HomePage = () => {
           });
           
           console.log(`✅ [HomePage] ${candidates.length} resultados RPC → ${onlyDenueCandidates.length} candidatos DENUE únicos.`);
-          setDenueBusinesses(onlyDenueCandidates);
+          const enrichedDenueCandidates = await enrichBusinessesWithAwards(onlyDenueCandidates);
+          if (requestId !== viewportRequestSeqRef.current || awardFilterRef.current !== 'all') {
+            console.log('[HomePage] Ignorando resultados genéricos atrasados porque cambió el filtro');
+            return;
+          }
+          setDenueBusinesses(enrichedDenueCandidates);
         } else {
+          if (requestId !== viewportRequestSeqRef.current || awardFilterRef.current !== 'all') {
+            console.log('[HomePage] Ignorando limpieza genérica atrasada porque cambió el filtro');
+            return;
+          }
           setDenueBusinesses([]);
         }
 
@@ -442,7 +778,48 @@ const HomePage = () => {
         console.error('Error fetching DENUE businesses:', error);
       }
     }, 1000); // 1 segundo de debounce
-  }, [geobookerBusinesses, categoryFilter]);
+  }, [geobookerBusinesses, categoryFilter, awardFilter, awardViewportCategory]);
+
+  useEffect(() => {
+    if (awardFilter === 'all' || !mapBoundsRef.current) {
+      return;
+    }
+
+    if (mapIdleTimerRef.current) clearTimeout(mapIdleTimerRef.current);
+
+    mapIdleTimerRef.current = setTimeout(async () => {
+      const requestId = ++viewportRequestSeqRef.current;
+      const activeAwardFilter = awardFilterRef.current;
+
+      try {
+        const bounds = mapBoundsRef.current;
+        const dynamicLimit = activeAwardFilter === 'all' ? 100 : 400;
+        const awardedBusinesses = await fetchAwardBusinessesInBounds(bounds, dynamicLimit);
+        const filteredAwardBusinesses = awardedBusinesses.filter((business) => matchesAwardFilter(business, activeAwardFilter));
+
+        if (requestId !== viewportRequestSeqRef.current || awardFilterRef.current !== activeAwardFilter) {
+          console.log(`[Awards] Ignorando refresh atrasado para filtro "${activeAwardFilter}"`);
+          return;
+        }
+
+        if (filteredAwardBusinesses.length > 0) {
+          console.log(`[Awards] refresh ${activeAwardFilter}: ${filteredAwardBusinesses.length} negocios renderizables desde Supabase`);
+          setDenueBusinesses(filteredAwardBusinesses);
+        } else {
+          const fallbackAwardBusinesses = await getAwardSeedFallbackBusinesses(bounds, activeAwardFilter);
+          if (requestId !== viewportRequestSeqRef.current || awardFilterRef.current !== activeAwardFilter) {
+            console.log(`[Awards] Ignorando fallback refresh atrasado para filtro "${activeAwardFilter}"`);
+            return;
+          }
+
+          console.log(`[Awards] refresh ${activeAwardFilter}: ${fallbackAwardBusinesses.length} negocios renderizables desde seed local`);
+          setDenueBusinesses(fallbackAwardBusinesses);
+        }
+      } catch (error) {
+        console.error('Error refreshing award-filter viewport:', error);
+      }
+    }, 150);
+  }, [awardFilter, categoryFilter, geobookerBusinesses, awardViewportCategory]);
 
   const handleRetryLocation = async () => {
     try {
@@ -519,14 +896,14 @@ const HomePage = () => {
 
       {/* 🌟 BANNER Enterprise VIP (50% OFF) - Visible hasta 1 de Julio 2026 */}
       {/* Apple 3.1.1: oculto temporalmente para revisión con feature flag VITE_SHOW_VIP_BANNER */}
-      {import.meta.env.VITE_SHOW_VIP_BANNER === 'true' && !IS_IOS_NATIVE && new Date() < new Date('2026-07-02T00:00:00-06:00') && (
+      {import.meta.env.VITE_SHOW_VIP_BANNER === 'true' && !IS_IOS_NATIVE && new Date() < new Date('2026-09-02T00:00:00-06:00') && (
         <div className="bg-gradient-to-r from-slate-900 via-gray-900 to-black text-amber-500 py-3 px-4 shadow-xl border-b border-amber-500/30">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <span className="text-3xl">🚀</span>
               <div>
                 <span className="font-extrabold text-lg block text-amber-500">
-                  Impulsa tu Negocio: <span className="text-white">50% OFF en Publicidad Global</span>
+                  Impulsa tu Negocio: <span className="text-white">70% OFF en Publicidad Global</span>
                 </span>
                 <span className="text-amber-500/80 text-sm">
                   Descuento exclusivo en todos los paquetes de Geobooker Enterprise Ads
@@ -563,6 +940,47 @@ const HomePage = () => {
         onClose={closeLoginPrompt}
       />
 
+      {showAwardsPrompt && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/55 px-4 pb-6 md:items-center">
+          <div className="w-full max-w-md rounded-3xl border border-amber-200 bg-white p-6 shadow-2xl">
+            <div className="mb-4 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-700">
+              Restaurantes premiados
+            </div>
+            <h3 className="text-2xl font-black text-slate-900">
+              Estas cerca de un restaurante MICHELIN?
+            </h3>
+            <p className="mt-2 text-sm text-slate-600">
+              {nearbyAwardCount > 1
+                ? `Tienes ${nearbyAwardCount} restaurantes MICHELIN o premiados cerca de ti.`
+                : 'Descubre restaurantes MICHELIN cerca de ti en el mapa de Geobooker.'}
+            </p>
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <button
+                onClick={() => {
+                  handleAwardFilterToggle('michelin');
+                  setShowAwardsPrompt(false);
+                }}
+                className="flex-1 rounded-2xl bg-amber-500 px-4 py-3 text-sm font-bold text-slate-950 transition hover:bg-amber-400"
+              >
+                Ver MICHELIN cerca de mi
+              </button>
+              <button
+                onClick={() => setShowAwardsPrompt(false)}
+                className="flex-1 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                Explorar mapa
+              </button>
+            </div>
+            <button
+              onClick={() => setShowAwardsPrompt(false)}
+              className="mt-3 w-full text-sm text-slate-500 hover:text-slate-700"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section con búsqueda */}
       <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white">
         <div className="container mx-auto px-4 py-16">
@@ -580,7 +998,24 @@ const HomePage = () => {
               onSearch={setSearchLoading}
               onBusinessesFound={handleBusinessesFound}
               loading={searchLoading}
+              initialValue={lastSearchQuery}
             />
+
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {awardFilterOptions.map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => handleAwardFilterToggle(option.id)}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    awardFilter === option.id
+                      ? 'bg-amber-400 text-slate-950 shadow-lg'
+                      : 'bg-white/15 text-white backdrop-blur hover:bg-white/25'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
 
             {/* Badge de filtro activo */}
             {categoryFilter && (
@@ -620,6 +1055,14 @@ const HomePage = () => {
                   >
                     {t('home.allowLocation')}
                   </button>
+                  {awardBusinesses.length > 0 && (
+                    <button
+                      onClick={() => handleAwardFilterToggle('michelin')}
+                      className="mt-3 rounded-lg bg-amber-400 px-4 py-2 text-sm font-bold text-slate-900 transition hover:bg-amber-300"
+                    >
+                      Explora restaurantes MICHELIN en el mapa
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -702,27 +1145,27 @@ const HomePage = () => {
             <BusinessMap
               userLocation={userLocation}
               center={getMapCenter()}
-              businesses={businesses} // Google Places
+              businesses={filteredBusinesses} // Google Places o resultados semanticos
               geobookerBusinesses={
                 // Aplicar filtro "Abierto ahora" si está activo
                 openNowFilter
-                  ? geobookerBusinesses.filter(b => {
+                  ? filteredGeobookerBusinesses.filter(b => {
                       const result = isBusinessOpen(b.opening_hours);
                       return result.isOpen === true;
                     })
-                  : geobookerBusinesses
+                  : filteredGeobookerBusinesses
               }
               denueBusinesses={
                 openNowFilter
-                  ? denueBusinesses // Asumimos DENUE sin horario como abierto o ignoramos el filtro
-                  : denueBusinesses
+                  ? filteredDenueBusinesses
+                  : filteredDenueBusinesses
               }
-              recommendedBusinesses={recommendedBusinesses}
+              recommendedBusinesses={filteredRecommendedBusinesses}
               selectedBusiness={selectedBusiness}
               onBusinessSelect={setSelectedBusiness}
               onViewBusinessProfile={handleViewBusinessProfile}
               onMapIdle={handleMapIdle}
-              zoom={businesses.length > 0 ? 13 : 12}
+              zoom={filteredBusinesses.length > 0 ? 13 : 12}
             />
           </Suspense>
         </div>

@@ -13,6 +13,7 @@ import { Crown, Star, Plus, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import CarouselAd from '../components/ads/CarouselAd';
 import AIRecommendations from '../components/recommendations/AIRecommendations';
+import { getPremiumPromoDeadlineLabel, isPremiumPromoActive } from '../config/promotions';
 
 
 const DashboardPage = () => {
@@ -28,6 +29,7 @@ const DashboardPage = () => {
   const [myRecommendations, setMyRecommendations] = useState([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
   const [recommendationStats, setRecommendationStats] = useState({ pending: 0, approved: 0, rejected: 0 });
+  const premiumPromoActive = isPremiumPromoActive();
 
   useEffect(() => {
     if (user) {
@@ -112,7 +114,7 @@ const DashboardPage = () => {
     }
   };
 
-  const showUpgradeBanner = !isPremium && businessCount >= 2;
+  const showUpgradeBanner = !isPremium && !premiumPromoActive && businessCount >= 2;
 
   return (
     <div className="container mx-auto px-4 py-8"
@@ -151,14 +153,36 @@ const DashboardPage = () => {
           {!isPremium && !isIOS && (
             <Link
               to="/dashboard/upgrade"
-              className="w-full md:w-auto text-center bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition flex items-center justify-center shadow-md"
+              className={`w-full md:w-auto text-center ${premiumPromoActive ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700' : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'} text-white px-6 py-3 rounded-lg font-semibold transition flex items-center justify-center shadow-md`}
             >
               <Crown className="w-5 h-5 mr-2" />
-              Actualizar a Premium
+              {premiumPromoActive ? 'Activar Premium GRATIS' : 'Actualizar a Premium'}
             </Link>
           )}
         </div>
       </div>
+
+      {premiumPromoActive && !isPremium && !isIOS && (
+        <div className="bg-gradient-to-r from-emerald-50 via-green-50 to-lime-50 border-2 border-emerald-200 rounded-xl p-6 mb-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-bold text-emerald-900">Premium gratis por lanzamiento</h3>
+              <p className="text-emerald-800 mt-1">
+                Activa todas las funciones Premium sin costo hasta el {getPremiumPromoDeadlineLabel('es-MX')}.
+              </p>
+              <p className="text-sm text-emerald-700 mt-2">
+                Incluye mejor visibilidad, más negocios, métricas y un perfil más fuerte para atraer clientes.
+              </p>
+            </div>
+            <Link
+              to="/dashboard/upgrade"
+              className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-5 py-3 font-semibold text-white hover:bg-emerald-700 transition"
+            >
+              Activarlo ahora
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Banner de Límite Alcanzado */}
       {showUpgradeBanner && !isIOS && (

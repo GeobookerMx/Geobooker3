@@ -20,6 +20,7 @@ import PhotoGallery from '../components/business/PhotoGallery';
 import ReviewsSection from '../components/business/ReviewsSection';
 import TrustScoreWidget from '../components/business/TrustScoreWidget';
 import ClaimBusinessForm from '../components/business/ClaimBusinessForm';
+import { getAwardMeta } from '../utils/awardUtils';
 import {
     trackDirectionsClick,
     trackCallClick,
@@ -28,6 +29,7 @@ import {
     trackSaveFavorite,
     trackBusinessProfileView
 } from '../services/analyticsService';
+import { buildBusinessShareMessage, buildCanonicalShareUrl } from '../services/shareService';
 
 // Mapeo de tags a iconos y nombres
 const TAG_CONFIG = {
@@ -117,9 +119,16 @@ const BusinessProfilePage = () => {
     }, [slugOrId]);
 
     const handleShare = async () => {
-        const shareUrl = window.location.href;
+        const sharePath = `/business/${business?.slug || business?.id || slugOrId}`;
+        const shareUrl = buildCanonicalShareUrl(sharePath);
         const shareTitle = business?.name || 'Negocio en Geobooker';
-        const shareText = `Mira ${shareTitle} en Geobooker`;
+        const shareText = buildBusinessShareMessage({
+            name: business?.name,
+            category: business?.subcategory || business?.category,
+            address: business?.address,
+            city: business?.city,
+            sourceLabel: 'Geobooker'
+        });
 
         // Track share intent
         trackShareBusiness(business?.id || slugOrId, business?.name, Capacitor.isNativePlatform() ? 'native' : 'web');
@@ -138,8 +147,8 @@ const BusinessProfilePage = () => {
                 await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
             } else {
                 // Fallback: copiar al portapapeles
-                await navigator.clipboard.writeText(shareUrl);
-                toast.success('Enlace copiado al portapapeles');
+                await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+                toast.success('Mensaje de compartir copiado al portapapeles');
             }
         } catch (error) {
             // El usuario canceló — no es un error real
@@ -229,6 +238,7 @@ const BusinessProfilePage = () => {
     }
 
     const businessPath = `/business/${business.slug || business.id || slugOrId}`;
+    const awardMeta = getAwardMeta(business);
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -327,6 +337,29 @@ const BusinessProfilePage = () => {
                         {/* Trust Badges */}
                         {business.active_badges && business.active_badges.length > 0 && (
                             <BadgeDisplay badges={business.active_badges} layout="horizontal" />
+                        )}
+                        {awardMeta && (
+                            <div className="mt-4 rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-lime-50 p-4">
+                                <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-700">
+                                    Reconocimiento
+                                </p>
+                                <p className="mt-1 text-lg font-bold text-slate-900">
+                                    {awardMeta.recognitionLabel}
+                                </p>
+                                <p className="mt-1 text-sm text-slate-600">
+                                    Fuente: {awardMeta.sourceLabel}
+                                </p>
+                                {awardMeta.verificationDate && (
+                                    <p className="text-sm text-slate-600">
+                                        Ultima verificacion: {new Date(awardMeta.verificationDate).toLocaleDateString()}
+                                    </p>
+                                )}
+                                {awardMeta.hasGreenAward && (
+                                    <p className="mt-2 text-sm font-medium text-emerald-700">
+                                        Tambien reconocido por practicas sostenibles
+                                    </p>
+                                )}
+                            </div>
                         )}
                     </div>
 

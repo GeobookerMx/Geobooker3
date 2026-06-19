@@ -20,6 +20,11 @@ export const PROMOTIONS = {
     }
 };
 
+export const PREMIUM_PROMO_COPY = {
+    headline: 'Premium GRATIS por lanzamiento',
+    cta: 'Activar Premium GRATIS',
+};
+
 /**
  * Verifica si la promoción de Premium gratis está activa
  * @returns {boolean}
@@ -49,8 +54,18 @@ export const getPromoMessage = () => {
     if (days <= 0) return null;
     if (days <= 7) return `¡Solo ${days} días para Premium GRATIS!`;
     if (days <= 30) return `🎉 Premium GRATIS por ${days} días más`;
-    return '🚀 ¡Regístrate y obtén Premium GRATIS!';
+    return '🚀 ¡Regístrate y activa Premium GRATIS!';
 };
+
+export const getPremiumPromoDeadlineLabel = (locale = 'es-MX') =>
+    new Date(PROMOTIONS.PREMIUM_FREE_UNTIL).toLocaleDateString(locale, {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
+
+export const getPremiumPromoLongMessage = (locale = 'es-MX') =>
+    `${PREMIUM_PROMO_COPY.headline} hasta el ${getPremiumPromoDeadlineLabel(locale)}`;
 
 /**
  * Verifica si un usuario califica para negocios extra por referidos

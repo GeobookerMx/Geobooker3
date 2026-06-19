@@ -1,10 +1,14 @@
 import { Geolocation } from '@capacitor/geolocation';
 
+export const checkDeviceLocationPermissions = async () => {
+  return Geolocation.checkPermissions();
+};
+
 export const requestDeviceLocation = async () => {
   try {
     // Step 1: Check current permission status BEFORE requesting
     // This prevents iOS from opening Settings automatically if already denied
-    const status = await Geolocation.checkPermissions();
+    const status = await checkDeviceLocationPermissions();
 
     if (status.location === 'denied') {
       // Permission was previously denied — do NOT request again (opens Settings on iOS)

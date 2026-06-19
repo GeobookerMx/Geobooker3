@@ -18,7 +18,13 @@ import * as XLSX from 'xlsx';
 import { Link } from 'react-router-dom';
 import WhatsAppService from '../../services/whatsappService';
 
+const FUNCTIONS_BASE_URL = (import.meta.env.VITE_FUNCTIONS_BASE_URL || '/.netlify/functions').replace(/\/$/, '');
+
 const ApifyScraper = () => {
+    const isPureLocalVite = typeof window !== 'undefined'
+        && ['localhost', '127.0.0.1'].includes(window.location.hostname)
+        && window.location.port !== '8888';
+
     // Search state
     const [searchQuery, setSearchQuery] = useState('');
     const [location, setLocation] = useState('');
@@ -219,8 +225,22 @@ const ApifyScraper = () => {
         setSelectedLeads(new Set());
 
         try {
+            const safeJson = async (response) => {
+                const text = await response.text();
+                if (!text) {
+                    return {};
+                }
+                try {
+                    return JSON.parse(text);
+                } catch {
+                    throw new Error(`Respuesta invalida del servidor (${response.status})`);
+                }
+            };
+
+            const functionsUrl = `${FUNCTIONS_BASE_URL}/apify-scraper`;
+
             // PASO 1: Iniciar el job
-            const startResponse = await fetch('/.netlify/functions/apify-scraper', {
+            const startResponse = await fetch(functionsUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -231,10 +251,13 @@ const ApifyScraper = () => {
                 })
             });
 
-            const startData = await startResponse.json();
+            const startData = await safeJson(startResponse);
 
             if (!startResponse.ok || !startData.runId) {
-                throw new Error(startData.error || 'Error iniciando scraper');
+                const localFunctionsHint = isPureLocalVite && startResponse.status === 404
+                    ? ' Estas en Vite puro; prueba este flujo en Netlify Dev (http://localhost:8888/admin/scraper) o define VITE_FUNCTIONS_BASE_URL.'
+                    : '';
+                throw new Error(startData.error || `Error iniciando scraper (${startResponse.status}).${localFunctionsHint}`);
             }
 
             toast.success('🚀 Búsqueda iniciada, espera...');
@@ -251,7 +274,7 @@ const ApifyScraper = () => {
                     // Esperar 5 segundos
                     await new Promise(resolve => setTimeout(resolve, 5000));
 
-                    const pollResponse = await fetch('/.netlify/functions/apify-scraper', {
+                    const pollResponse = await fetch(functionsUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -260,7 +283,11 @@ const ApifyScraper = () => {
                         })
                     });
 
-                    const pollData = await pollResponse.json();
+                    const pollData = await safeJson(pollResponse);
+
+                    if (!pollResponse.ok) {
+                        throw new Error(pollData.error || `Error consultando scraper (${pollResponse.status})`);
+                    }
 
                     if (pollData.status === 'completed') {
                         const businesses = pollData.businesses || [];
@@ -771,6 +798,20 @@ const ApifyScraper = () => {
                                 Configura tu token de Apify en las variables de entorno de Netlify
                             </p>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {isPureLocalVite && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
+                    <div>
+                        <p className="font-medium text-amber-900">Modo local detectado: este modulo necesita Netlify Functions</p>
+                        <p className="text-sm text-amber-800 mt-1">
+                            En `localhost:{window.location.port}` la interfaz corre con Vite puro y `/.netlify/functions/apify-scraper` puede responder `404`.
+                            Para validar scraping real usa `netlify dev` en `http://localhost:8888/admin/scraper`
+                            o configura `VITE_FUNCTIONS_BASE_URL` apuntando a un backend con esa funcion disponible.
+                        </p>
                     </div>
                 </div>
             )}

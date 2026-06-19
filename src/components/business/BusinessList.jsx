@@ -7,6 +7,7 @@ import { Capacitor } from '@capacitor/core';
 import { Eye, EyeOff, MapPin, Info, Crown, Lock } from 'lucide-react';
 import LocationEditModal from './LocationEditModal';
 import { invalidateBusinessCache } from '../../services/businessCacheService';
+import { getPremiumPromoDeadlineLabel, isPremiumPromoActive } from '../../config/promotions';
 
 const FREE_BUSINESS_LIMIT = 2;
 
@@ -19,6 +20,7 @@ const BusinessList = () => {
     const [togglingId, setTogglingId] = useState(null);
     const [locationModalBusiness, setLocationModalBusiness] = useState(null);
     const [isPremium, setIsPremium] = useState(false);
+    const premiumPromoActive = isPremiumPromoActive();
 
     useEffect(() => {
         if (user) {
@@ -60,7 +62,7 @@ const BusinessList = () => {
 
     // En iOS nativo: sin límites ni menciones de Premium (App Store Guideline 3.1.1)
     // En Android/Web: mantenemos la monetización
-    const reachedLimit = !isPremium && !isIOS && businesses.length >= FREE_BUSINESS_LIMIT;
+    const reachedLimit = !premiumPromoActive && !isPremium && !isIOS && businesses.length >= FREE_BUSINESS_LIMIT;
     const businessesRemaining = FREE_BUSINESS_LIMIT - businesses.length;
 
     // Toggle business visibility on/off
@@ -155,7 +157,9 @@ const BusinessList = () => {
                     </h2>
                     {!isPremium && !isNative && businesses.length > 0 && (
                         <p className="text-sm text-gray-500 mt-1">
-                            {businessesRemaining > 0
+                            {premiumPromoActive
+                                ? `Premium gratis activo hasta el ${getPremiumPromoDeadlineLabel('es-MX')}`
+                                : businessesRemaining > 0
                                 ? `${businessesRemaining} negocio${businessesRemaining > 1 ? 's' : ''} gratis restante${businessesRemaining > 1 ? 's' : ''}`
                                 : ''
                             }
@@ -182,6 +186,25 @@ const BusinessList = () => {
                     )
                 )}
             </div>
+
+            {premiumPromoActive && !isPremium && !isIOS && (
+                <div className="mb-6 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 p-4">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 className="font-semibold text-emerald-900">Premium gratis por lanzamiento</h3>
+                            <p className="text-sm text-emerald-800">
+                                Actívalo y accede a funciones Premium sin costo hasta el {getPremiumPromoDeadlineLabel('es-MX')}.
+                            </p>
+                        </div>
+                        <Link
+                            to="/dashboard/upgrade"
+                            className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700 transition"
+                        >
+                            Activar Premium GRATIS
+                        </Link>
+                    </div>
+                </div>
+            )}
 
             {/* Premium benefits banner for location changes */}
             {businesses.length > 0 && (

@@ -1,4 +1,7 @@
-export const ENTERPRISE_PROMO_END = '2026-08-01T23:59:59Z';
+export const ENTERPRISE_PROMO_END = '2026-09-01T23:59:59Z';
+export const ENTERPRISE_PROMO_DISCOUNT_PERCENT = 70;
+
+const applyDiscount = (amount, discountPercent) => Math.round(amount * ((100 - discountPercent) / 100));
 
 export const ENTERPRISE_FALLBACK_PRICING = [
   {
@@ -6,10 +9,10 @@ export const ENTERPRISE_FALLBACK_PRICING = [
     name: 'City Launch',
     description: '1 ciudad activa por 1 mes - ideal para validar mercado',
     regular_price_usd: 390,
-    current_price_usd: 290,
+    current_price_usd: 117,
     regular_price_mxn: 7020,
-    current_price_mxn: 5220,
-    discount_percent: 25,
+    current_price_mxn: 2106,
+    discount_percent: 70,
     cities_included: 1,
     countries_included: 1,
     duration_months: 1,
@@ -21,12 +24,12 @@ export const ENTERPRISE_FALLBACK_PRICING = [
   {
     code: 'regional',
     name: 'Regional Pack',
-    description: 'Hasta 5 ciudades activas en 2 paises, 3 meses de campaña',
+    description: 'Hasta 5 ciudades activas en 2 paises, 3 meses de campana',
     regular_price_usd: 2490,
-    current_price_usd: 1990,
+    current_price_usd: 747,
     regular_price_mxn: 44820,
-    current_price_mxn: 35820,
-    discount_percent: 20,
+    current_price_mxn: 13446,
+    discount_percent: 70,
     cities_included: 5,
     countries_included: 2,
     duration_months: 3,
@@ -38,29 +41,29 @@ export const ENTERPRISE_FALLBACK_PRICING = [
   {
     code: 'country',
     name: 'Country Select',
-    description: '1 pais, hasta 12 ciudades activas, 3 meses de campaña',
+    description: '1 pais, hasta 12 ciudades activas, 3 meses de campana',
     regular_price_usd: 4900,
-    current_price_usd: 3900,
+    current_price_usd: 1470,
     regular_price_mxn: 88200,
-    current_price_mxn: 70200,
-    discount_percent: 20,
+    current_price_mxn: 26460,
+    discount_percent: 70,
     cities_included: 12,
     countries_included: 1,
     duration_months: 3,
     is_promo_active: true,
     promo_ends_at: ENTERPRISE_PROMO_END,
     is_custom: true,
-    features: ['Hasta 12 ciudades dentro de un pais', 'Placements premium en territorios seleccionados', 'Dashboard por ciudad/dispositivo/horario', 'Revision mensual de desempeño', 'Soporte prioritario']
+    features: ['Hasta 12 ciudades dentro de un pais', 'Placements premium en territorios seleccionados', 'Dashboard por ciudad/dispositivo/horario', 'Revision mensual de desempeno', 'Soporte prioritario']
   },
   {
     code: 'crossborder',
     name: 'Cross-Border Event',
-    description: '2-3 paises o region especifica, campañas de 2-3 meses',
+    description: '2-3 paises o region especifica, campanas de 2-3 meses',
     regular_price_usd: 8900,
-    current_price_usd: 6900,
+    current_price_usd: 2670,
     regular_price_mxn: 160200,
-    current_price_mxn: 124200,
-    discount_percent: 22,
+    current_price_mxn: 48060,
+    discount_percent: 70,
     cities_included: 30,
     countries_included: 3,
     duration_months: 3,
@@ -74,16 +77,31 @@ export const ENTERPRISE_FALLBACK_PRICING = [
     name: 'Global Custom',
     description: 'Cobertura multi-pais o continental, bajo propuesta personalizada',
     regular_price_usd: 9900,
-    current_price_usd: 9900,
+    current_price_usd: 2970,
     regular_price_mxn: 178200,
-    current_price_mxn: 178200,
-    discount_percent: 0,
+    current_price_mxn: 53460,
+    discount_percent: 70,
     cities_included: 999,
     countries_included: 999,
     duration_months: 3,
-    is_promo_active: false,
+    is_promo_active: true,
     promo_ends_at: ENTERPRISE_PROMO_END,
     is_custom: true,
-    features: ['Multi-pais o continental', 'Setup de campaña a medida', 'Inventario premium asignado', 'Reporting ejecutivo personalizado', 'Propuesta comercial y fiscal a medida']
+    features: ['Multi-pais o continental', 'Setup de campana a medida', 'Inventario premium asignado', 'Reporting ejecutivo personalizado', 'Propuesta comercial y fiscal a medida']
   }
 ];
+
+export const applyEnterpriseGlobalPromo = (pricing = []) =>
+  pricing.map((plan) => {
+    const regularUsd = Number(plan.regular_price_usd || 0);
+    const regularMxn = Number(plan.regular_price_mxn || 0);
+
+    return {
+      ...plan,
+      current_price_usd: regularUsd ? applyDiscount(regularUsd, ENTERPRISE_PROMO_DISCOUNT_PERCENT) : plan.current_price_usd,
+      current_price_mxn: regularMxn ? applyDiscount(regularMxn, ENTERPRISE_PROMO_DISCOUNT_PERCENT) : plan.current_price_mxn,
+      discount_percent: ENTERPRISE_PROMO_DISCOUNT_PERCENT,
+      is_promo_active: true,
+      promo_ends_at: ENTERPRISE_PROMO_END,
+    };
+  });

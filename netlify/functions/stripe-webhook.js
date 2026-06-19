@@ -30,6 +30,40 @@ function generateRandomPassword(length = 16) {
     return password;
 }
 
+async function updateUserProfileWithFallback(supabase, userId, fullPayload, fallbackPayload = null) {
+    const primaryPayload = { ...fullPayload };
+    const safeFallbackPayload = fallbackPayload || fullPayload;
+
+    const { error } = await supabase
+        .from('user_profiles')
+        .update(primaryPayload)
+        .eq('id', userId);
+
+    if (!error) {
+        return;
+    }
+
+    const isMissingColumnError =
+        error.code === '42703' ||
+        (typeof error.message === 'string' &&
+            error.message.toLowerCase().includes('does not exist'));
+
+    if (!isMissingColumnError || JSON.stringify(primaryPayload) === JSON.stringify(safeFallbackPayload)) {
+        throw error;
+    }
+
+    console.warn('[stripe-webhook] Optional user_profiles column missing, retrying with fallback payload:', error.message);
+
+    const { error: fallbackError } = await supabase
+        .from('user_profiles')
+        .update(safeFallbackPayload)
+        .eq('id', userId);
+
+    if (fallbackError) {
+        throw fallbackError;
+    }
+}
+
 
 exports.handler = async (event) => {
     const headers = { 'Access-Control-Allow-Origin': '*' };
@@ -201,16 +235,22 @@ exports.handler = async (event) => {
                             premiumUntil = oneYearLater.toISOString();
                         }
 
-                        await supabase
-                            .from('user_profiles')
-                            .update({
+                        await updateUserProfileWithFallback(
+                            supabase,
+                            userId,
+                            {
                                 is_premium: true,
                                 premium_since: new Date().toISOString(),
                                 premium_until: premiumUntil,
                                 stripe_customer_id: session.customer,
                                 stripe_subscription_id: subscriptionId || null
-                            })
-                            .eq('id', userId);
+                            },
+                            {
+                                is_premium: true,
+                                premium_since: new Date().toISOString(),
+                                premium_until: premiumUntil
+                            }
+                        );
 
                         console.log(`Usuario ${userId} actualizado a Premium hasta ${premiumUntil}`);
                     }
@@ -235,13 +275,14 @@ exports.handler = async (event) => {
                     const userId = users[0].id;
                     const premiumUntil = new Date(invoice.lines.data[0].period.end * 1000).toISOString();
 
-                    await supabase
-                        .from('user_profiles')
-                        .update({
+                    await updateUserProfileWithFallback(
+                        supabase,
+                        userId,
+                        {
                             is_premium: true,
                             premium_until: premiumUntil
-                        })
-                        .eq('id', userId);
+                        }
+                    );
 
                     console.log(`Renovación exitosa para usuario ${userId}`);
                 }
@@ -292,15 +333,21 @@ exports.handler = async (event) => {
                         const premiumUntil = new Date();
                         premiumUntil.setMonth(premiumUntil.getMonth() + 1);
 
-                        await supabase
-                            .from('user_profiles')
-                            .update({
+                        await updateUserProfileWithFallback(
+                            supabase,
+                            metadata.user_id,
+                            {
                                 is_premium: true,
                                 premium_since: new Date().toISOString(),
                                 premium_until: premiumUntil.toISOString(),
                                 last_payment_method: 'oxxo'
-                            })
-                            .eq('id', metadata.user_id);
+                            },
+                            {
+                                is_premium: true,
+                                premium_since: new Date().toISOString(),
+                                premium_until: premiumUntil.toISOString()
+                            }
+                        );
 
                         console.log(`Usuario ${metadata.user_id} activado Premium via OXXO`);
                     }

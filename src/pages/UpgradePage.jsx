@@ -6,9 +6,11 @@ import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import OxxoVoucher from '../components/payment/OxxoVoucher';
 import { formatPrice, getCurrencyConfig } from '../utils/currencyUtils';
-import { isPremiumPromoActive, getDaysRemaining, PROMOTIONS } from '../config/promotions';
+import { getDaysRemaining, getPremiumPromoDeadlineLabel, isPremiumPromoActive, PROMOTIONS } from '../config/promotions';
 import { clarityMarkConversion } from '../services/trackingService';
 import { Capacitor } from '@capacitor/core';
+import { buildPaymentReturnUrl } from '../services/paymentReturnUrls';
+import { PREMIUM_PRICING } from '../config/premiumPricing';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -36,12 +38,12 @@ const UpgradePage = () => {
 
     // Configuración de lanzamiento
     const LAUNCH_CONFIG = {
-        regularPrice: getCurrencyConfig().code === 'MXN' ? 299 : 14.99,
+        regularPrice: PREMIUM_PRICING.monthlyPriceMxn,
         launchPrice: 0, // GRATIS durante promo
         monthsFree: 3,
         spotsLeft: 4847, // De 5,000 totales
         totalSpots: 5000,
-        deadline: new Date(PROMOTIONS.PREMIUM_FREE_UNTIL).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }),
+        deadline: getPremiumPromoDeadlineLabel('es-MX'),
         isLaunchActive: true
     };
 
@@ -160,13 +162,13 @@ const UpgradePage = () => {
                 body: JSON.stringify({
                     // Use amount instead of priceId for one-time or trials
                     // Stripe minimum is $10 MXN (1000 centavos)
-                    amount: LAUNCH_CONFIG.launchPrice === 0 ? 1000 : LAUNCH_CONFIG.regularPrice * 100, // cents
+                    amount: LAUNCH_CONFIG.launchPrice === 0 ? PREMIUM_PRICING.trialChargeMxn * 100 : LAUNCH_CONFIG.regularPrice * 100, // cents
                     currency: 'mxn',
                     productName: 'Geobooker Premium - 3 meses gratis',
                     userId: session.user.id,
                     customerEmail: session.user.email,
-                    successUrl: window.location.origin + '/dashboard?success=true',
-                    cancelUrl: window.location.origin + '/dashboard/upgrade?canceled=true',
+                    successUrl: buildPaymentReturnUrl('/dashboard?success=true'),
+                    cancelUrl: buildPaymentReturnUrl('/dashboard/upgrade?canceled=true'),
                     mode: 'payment',
                     metadata: {
                         type: 'premium_subscription',
@@ -212,12 +214,17 @@ const UpgradePage = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     // Use same trial pricing as card: $10 MXN minimum for free trial
-                    amount: LAUNCH_CONFIG.launchPrice === 0 ? 10 : LAUNCH_CONFIG.regularPrice,
+                    amount: LAUNCH_CONFIG.launchPrice === 0 ? PREMIUM_PRICING.trialChargeMxn : LAUNCH_CONFIG.regularPrice,
                     email: session.user.email,
                     name: session.user.user_metadata?.full_name || 'Cliente Geobooker',
                     productName: 'Premium Geobooker (3 meses gratis)',
                     productId: 'premium_subscription',
                     userId: session.user.id,
+                    metadata: {
+                        subscription_type: 'premium_monthly',
+                        user_id: session.user.id,
+                        trial_months: LAUNCH_CONFIG.monthsFree
+                    },
                     description: 'Suscripción Premium Geobooker - 3 meses gratis incluidos'
                 }),
             });
@@ -384,7 +391,7 @@ const UpgradePage = () => {
                             {promoActive ? (
                                 <>
                                     <div className="flex items-center justify-center gap-3">
-                                        <span className="text-2xl text-white/60 line-through">{formatPrice(299)}/mes</span>
+                                        <span className="text-2xl text-white/60 line-through">{formatPrice(PREMIUM_PRICING.monthlyPriceMxn)}/mes</span>
                                         <span className="text-5xl font-bold">¡GRATIS!</span>
                                     </div>
                                     <p className="text-pink-200">hasta el {LAUNCH_CONFIG.deadline}</p>
@@ -395,7 +402,7 @@ const UpgradePage = () => {
                             ) : LAUNCH_CONFIG.isLaunchActive ? (
                                 <>
                                     <div className="flex items-center justify-center gap-3">
-                                        <span className="text-2xl text-white/60 line-through">{formatPrice(299)}/mes</span>
+                                        <span className="text-2xl text-white/60 line-through">{formatPrice(PREMIUM_PRICING.monthlyPriceMxn)}/mes</span>
                                         <span className="text-5xl font-bold">¡GRATIS!</span>
                                     </div>
                                     <p className="text-pink-200">por {LAUNCH_CONFIG.monthsFree} meses</p>
@@ -403,7 +410,7 @@ const UpgradePage = () => {
                                         🎉 OFERTA DE LANZAMIENTO
                                     </div>
                                     <p className="text-xs text-pink-200 mt-2">
-                                        Después solo {formatPrice(299)} • Quedan {LAUNCH_CONFIG.spotsLeft.toLocaleString()} lugares
+                                        Después solo {formatPrice(PREMIUM_PRICING.monthlyPriceMxn)} • Quedan {LAUNCH_CONFIG.spotsLeft.toLocaleString()} lugares
                                     </p>
                                 </>
                             ) : (
@@ -538,7 +545,7 @@ const UpgradePage = () => {
                     <div className="space-y-4">
                         <details className="bg-white rounded-lg shadow-md p-6">
                             <summary className="font-bold text-lg cursor-pointer">¿Realmente son 3 meses GRATIS?</summary>
-                            <p className="text-gray-600 mt-2">¡Sí! Los primeros {LAUNCH_CONFIG.totalSpots.toLocaleString()} negocios que se registren obtienen Premium gratis por 3 meses. Después de ese periodo, puedes continuar por {formatPrice(299)} o cancelar sin costo.</p>
+                            <p className="text-gray-600 mt-2">Sí. Durante esta etapa de lanzamiento puedes activar Premium gratis hasta el {LAUNCH_CONFIG.deadline}. Más adelante podrás decidir si deseas continuar con un plan pagado cuando termine la promo.</p>
                         </details>
                         <details className="bg-white rounded-lg shadow-md p-6">
                             <summary className="font-bold text-lg cursor-pointer">¿Cuántos negocios puedo registrar?</summary>

@@ -90,7 +90,7 @@ const Sidebar = ({ onLogout }) => {
         {
             title: 'Publicidad',
             items: [
-                { path: '/admin/ads', icon: TrendingUp, label: 'Geobooker Ads', badge: pendingCampaigns, badgeColor: 'red' },
+                { path: '/admin/ads', icon: TrendingUp, label: 'Ads y Campañas', badge: pendingCampaigns, badgeColor: 'red' },
                 { path: '/admin/ads-qa', icon: BarChart3, label: 'Ads QA Tool' },
                 { path: '/admin/inventory', icon: BarChart3, label: 'Ad Inventory' },
                 { path: '/admin/ad-reports', icon: BarChart3, label: 'Reportes Anuncios' }
@@ -119,7 +119,7 @@ const Sidebar = ({ onLogout }) => {
             items: [
                 { path: '/admin/import', icon: Database, label: 'Importar Datos' },
                 { path: '/admin/fiscal', icon: Database, label: 'Control Fiscal' },
-                { path: '/admin/settings', icon: Settings, label: 'Configuracion' }
+                { path: '/admin/settings', icon: Settings, label: 'Control Admin' }
             ]
         }
     ];
@@ -238,7 +238,7 @@ const Sidebar = ({ onLogout }) => {
 
             <div
                 className={`
-                md:hidden fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white flex flex-col
+                md:hidden fixed inset-y-0 left-0 z-50 flex w-[min(88vw,18rem)] flex-col bg-gray-900 text-white shadow-2xl
                 transform transition-transform duration-300 ease-in-out
                 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
             `}
@@ -246,7 +246,7 @@ const Sidebar = ({ onLogout }) => {
                 <SidebarContent />
             </div>
 
-            <div className="hidden md:flex h-screen w-64 bg-gray-900 text-white flex-col fixed left-0 top-0">
+            <div className="hidden md:fixed md:inset-y-0 md:left-0 md:flex md:w-64 md:flex-col md:bg-gray-900 md:text-white">
                 <SidebarContent />
             </div>
         </>

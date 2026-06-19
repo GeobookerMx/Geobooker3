@@ -49,7 +49,12 @@ const OxxoPendingPage = () => {
             const response = await fetch(`/.netlify/functions/check-payment-status?payment_intent=${paymentIntentId}`);
             if (response.ok) {
                 const data = await response.json();
-                setStatus(data.status);
+                const mappedStatus = data.status === 'succeeded'
+                    ? 'succeeded'
+                    : ['canceled', 'payment_failed', 'requires_payment_method'].includes(data.status)
+                        ? 'failed'
+                        : 'pending';
+                setStatus(mappedStatus);
             }
         } catch (error) {
             console.error('Error checking payment status:', error);

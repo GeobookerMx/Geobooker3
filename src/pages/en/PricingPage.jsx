@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import SEO from '../../components/SEO';
-import { Check, X, Star, Zap, Crown, ArrowRight, HelpCircle } from 'lucide-react';
+import { Check, X, Star, Zap, Crown, HelpCircle } from 'lucide-react';
+import { ENTERPRISE_PROMO_DISCOUNT_PERCENT } from '../../config/enterprisePricing';
 
 /**
  * English Pricing Page for international advertisers
@@ -49,7 +50,7 @@ const PricingPage = () => {
                 { text: 'Email support', included: true },
                 { text: 'Account manager', included: false }
             ],
-            cta: 'Start With 50% Off',
+            cta: 'Start Advertising',
             ctaLink: '/advertise',
             popular: true,
             gradient: 'from-blue-50 to-indigo-50'
@@ -58,8 +59,10 @@ const PricingPage = () => {
             name: 'Enterprise',
             icon: <Crown className="w-6 h-6" />,
             price: { monthly: null, annual: null },
+            originalPriceLabel: 'Regular global pricing',
+            promoPriceLabel: `${ENTERPRISE_PROMO_DISCOUNT_PERCENT}% off through Sep 1, 2026`,
             currency: 'USD',
-            description: 'For brands & agencies',
+            description: 'For brands and agencies',
             features: [
                 { text: 'Everything in Business', included: true },
                 { text: 'All ad formats (banners, interstitials)', included: true },
@@ -87,7 +90,7 @@ const PricingPage = () => {
         },
         {
             q: 'Do you offer refunds?',
-            a: 'We offer a 7-day money-back guarantee for new advertisers. If you\'re not satisfied, contact us for a full refund.'
+            a: 'We offer a 7-day money-back guarantee for new advertisers. If you are not satisfied, contact us for a full refund.'
         },
         {
             q: 'What currencies can I pay in?',
@@ -98,36 +101,34 @@ const PricingPage = () => {
     return (
         <>
             <SEO
-                title="Pricing — Geobooker Advertising Plans"
-                description="See Geobooker advertising plans and pricing. Free business listing, sponsored results from $25/mo, and enterprise packages for brands. 50% launch discount available."
+                title="Pricing - Geobooker Advertising Plans"
+                description="See Geobooker advertising plans and pricing. Free business listing, sponsored results from $25/mo, and enterprise global packages with 70% off through September 1, 2026."
             />
 
             <div className="min-h-screen bg-white">
-                {/* Header */}
                 <section className="bg-gradient-to-br from-slate-50 to-blue-50 py-16 px-4">
                     <div className="max-w-4xl mx-auto text-center">
                         <span className="inline-block px-4 py-1.5 bg-green-100 text-green-700 rounded-full text-sm font-medium mb-4">
-                            🎉 50% Launch Discount on All Plans
+                            {ENTERPRISE_PROMO_DISCOUNT_PERCENT}% Off Enterprise Global Pricing
                         </span>
                         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
                             Simple, Transparent Pricing
                         </h1>
                         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                            Start for free, upgrade when you're ready. No hidden fees, no surprises.
+                            Start free, scale locally, and unlock enterprise global campaigns with 70% off through September 1, 2026.
                         </p>
 
-                        {/* Billing Toggle */}
                         <div className="flex items-center justify-center gap-3 mt-8">
                             <span className={`text-sm font-medium ${billingPeriod === 'monthly' ? 'text-gray-900' : 'text-gray-400'}`}>
                                 Monthly
                             </span>
                             <button
                                 onClick={() => setBillingPeriod(billingPeriod === 'monthly' ? 'annual' : 'monthly')}
-                                className={`relative w-14 h-7 rounded-full transition-colors ${billingPeriod === 'annual' ? 'bg-blue-600' : 'bg-gray-300'
-                                    }`}
+                                className={`relative w-14 h-7 rounded-full transition-colors ${billingPeriod === 'annual' ? 'bg-blue-600' : 'bg-gray-300'}`}
                             >
-                                <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${billingPeriod === 'annual' ? 'translate-x-7' : 'translate-x-0.5'
-                                    }`} />
+                                <div
+                                    className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${billingPeriod === 'annual' ? 'translate-x-7' : 'translate-x-0.5'}`}
+                                />
                             </button>
                             <span className={`text-sm font-medium ${billingPeriod === 'annual' ? 'text-gray-900' : 'text-gray-400'}`}>
                                 Annual <span className="text-green-600 font-bold">Save 20%</span>
@@ -136,14 +137,12 @@ const PricingPage = () => {
                     </div>
                 </section>
 
-                {/* Pricing Cards */}
                 <section className="max-w-6xl mx-auto px-4 -mt-4 pb-20">
                     <div className="grid md:grid-cols-3 gap-8">
                         {plans.map((plan, i) => (
                             <div
                                 key={i}
-                                className={`relative bg-gradient-to-br ${plan.gradient} rounded-2xl p-8 border-2 ${plan.popular ? 'border-blue-500 shadow-xl shadow-blue-500/10' : 'border-gray-200'
-                                    }`}
+                                className={`relative bg-gradient-to-br ${plan.gradient} rounded-2xl p-8 border-2 ${plan.popular ? 'border-blue-500 shadow-xl shadow-blue-500/10' : 'border-gray-200'}`}
                             >
                                 {plan.popular && (
                                     <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-blue-600 text-white text-sm font-bold rounded-full">
@@ -152,8 +151,7 @@ const PricingPage = () => {
                                 )}
 
                                 <div className="flex items-center gap-3 mb-4">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${plan.popular ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
-                                        }`}>
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${plan.popular ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
                                         {plan.icon}
                                     </div>
                                     <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
@@ -177,30 +175,35 @@ const PricingPage = () => {
                                             </span>
                                         </>
                                     ) : (
-                                        <span className="text-2xl font-bold text-gray-900">Custom</span>
+                                        <>
+                                            <span className="block text-sm text-gray-400 line-through mb-1">
+                                                {plan.originalPriceLabel}
+                                            </span>
+                                            <span className="text-2xl font-bold text-gray-900">Custom</span>
+                                            <span className="block text-sm text-green-600 font-medium mt-1">
+                                                {plan.promoPriceLabel}
+                                            </span>
+                                        </>
                                     )}
                                 </div>
 
                                 <Link
                                     to={plan.ctaLink}
-                                    className={`block w-full text-center py-3 rounded-xl font-bold transition ${plan.popular
-                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                            : 'bg-white text-gray-700 border border-gray-300 hover:border-gray-400'
-                                        }`}
+                                    className={`block w-full text-center py-3 rounded-xl font-bold transition ${plan.popular ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-white text-gray-700 border border-gray-300 hover:border-gray-400'}`}
                                 >
                                     {plan.cta}
                                 </Link>
 
                                 <ul className="mt-6 space-y-3">
-                                    {plan.features.map((f, j) => (
+                                    {plan.features.map((feature, j) => (
                                         <li key={j} className="flex items-center gap-2 text-sm">
-                                            {f.included ? (
+                                            {feature.included ? (
                                                 <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
                                             ) : (
                                                 <X className="w-4 h-4 text-gray-300 flex-shrink-0" />
                                             )}
-                                            <span className={f.included ? 'text-gray-700' : 'text-gray-400'}>
-                                                {f.text}
+                                            <span className={feature.included ? 'text-gray-700' : 'text-gray-400'}>
+                                                {feature.text}
                                             </span>
                                         </li>
                                     ))}
@@ -210,7 +213,6 @@ const PricingPage = () => {
                     </div>
                 </section>
 
-                {/* Pricing FAQ */}
                 <section className="bg-gray-50 py-16 px-4">
                     <div className="max-w-3xl mx-auto">
                         <h2 className="text-2xl font-bold text-center text-gray-900 mb-10">

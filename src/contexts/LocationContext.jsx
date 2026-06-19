@@ -2,7 +2,7 @@
 // Apple Guideline 2.1(a) fix: prevent location permission loop
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { Capacitor } from "@capacitor/core";
-import { requestDeviceLocation } from "../services/deviceLocationService";
+import { checkDeviceLocationPermissions, requestDeviceLocation } from "../services/deviceLocationService";
 
 const LocationContext = createContext(null);
 
@@ -130,39 +130,22 @@ export const LocationProvider = ({ children }) => {
             setPermissionDenied(true);
             setPermissionGranted(false);
           }
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              const location = {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude,
-                accuracy: position.coords.accuracy,
-              };
-              setUserLocation(location);
-              saveLocationToStorage(location);
-              setPermissionGranted(true);
-              setPermissionDenied(false);
-              setLoading(false);
-              resolve(location);
-            },
-            () => {
-              const cachedLocation = getStoredLocation();
-              if (cachedLocation) {
-                setUserLocation(cachedLocation);
-                setPermissionGranted(true);
-                setPermissionDenied(false);
-                setLoading(false);
-                resolve(cachedLocation);
-                return;
-              }
-              const defaultLocation = { lat: 19.4326, lng: -99.1332, accuracy: 10000, isDefault: true };
-              setUserLocation(defaultLocation);
-              setPermissionGranted(true);
-              // Si no tiene permisos pero cargamos default, no forzamos denied a menos que lo haya bloqueado explícitamente antes
-              setLoading(false);
-              resolve(defaultLocation);
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
-          );
+          const cachedLocation = getStoredLocation();
+          if (cachedLocation) {
+            setUserLocation(cachedLocation);
+            setPermissionGranted(false);
+            setPermissionDenied(isExplicitDenied);
+            setLoading(false);
+            resolve(cachedLocation);
+            return;
+          }
+
+          const defaultLocation = { lat: 19.4326, lng: -99.1332, accuracy: 10000, isDefault: true };
+          setUserLocation(defaultLocation);
+          setPermissionGranted(false);
+          setPermissionDenied(isExplicitDenied);
+          setLoading(false);
+          resolve(defaultLocation);
         },
         { enableHighAccuracy: false, timeout: 5000, maximumAge: 600000 }
       );
@@ -228,8 +211,7 @@ export const LocationProvider = ({ children }) => {
       try {
         // Native path checks
         if (Capacitor.isNativePlatform()) {
-          const { Geolocation } = await import('@capacitor/geolocation');
-          const status = await Geolocation.checkPermissions();
+          const status = await checkDeviceLocationPermissions();
           if (status.location === 'granted') {
             setPermissionGranted(true);
             setPermissionDenied(false);

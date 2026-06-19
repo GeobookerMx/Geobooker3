@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from '../contexts/LocationContext';
-import { searchNearbyPlaces, searchByType, getPlaceType } from '../services/googlePlacesService';
+import { searchPlacesUniversal } from '../services/googlePlacesService';
+import { inferUserCountry, searchBusinessesSemantically } from '../services/businessService';
+import { isAwardSearchQuery } from '../utils/awardUtils';
 
 const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) => {
   const { t } = useTranslation();
@@ -13,70 +15,70 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
     setSearchTerm(initialValue || '');
   }, [initialValue]);
 
-  // Categorías populares para sugerencias (en español)
   const popularCategories = [
-    'Farmacia', 'Restaurante', 'Barbería', 'Supermercado',
-    'Gimnasio', 'Veterinaria', 'Taller mecánico', 'Lavandería',
-    'Cafetería', 'Panadería', 'Hospital', 'Escuela',
-    'Banco', 'Gasolinera', 'Hotel'
+    'Farmacia', 'Restaurante', 'Barberia', 'Supermercado',
+    'Gimnasio', 'Veterinaria', 'Taller mecanico', 'Lavanderia',
+    'Cafeteria', 'Panaderia', 'Hospital', 'Escuela',
+    'Michelin', 'Fine dining', 'Tasting menu', 'Hotel',
+    'Tattoo studio', 'Tatuador', 'Estetica', 'Nail salon', 'Spa'
   ];
 
-  // Búsqueda usando Google Places API
   const handleSearch = async (searchQuery = searchTerm) => {
     if (!searchQuery.trim()) return;
 
-    // Si no hay ubicación, solicitarla
-    if (!userLocation) {
-      try {
-        await requestLocationPermission();
-      } catch (error) {
-        console.error('Error obteniendo ubicación:', error);
-        // ✅ FIX Bug #3: Liberar loading antes de salir cuando falla la ubicación
-        onSearch(false);
-        return;
-      }
-    }
-
-    // ✅ FIX Bug #3: Timeout de seguridad 15s — evita spinner eterno en iOS
-    const loadingTimeout = setTimeout(() => {
-      console.warn('⏱️ SearchBar: timeout de 15s alcanzado, liberando loading');
-      onSearch(false);
-      onBusinessesFound([]);
-    }, 15000);
+    let effectiveLocation = userLocation;
+    let loadingTimeout = null;
 
     try {
       onSearch(true);
 
-      // Verificar que Google Maps esté cargado antes de buscar
-      if (!window.google || !window.google.maps) {
-        console.error('Google Maps no está disponible — verifica la API key en iOS');
-        onBusinessesFound([]);
-        onSearch(false);
-        clearTimeout(loadingTimeout);
+      const semanticResults = await searchBusinessesSemantically(
+        searchQuery,
+        inferUserCountry()
+      );
+
+      if (semanticResults.length > 0) {
+        onBusinessesFound(semanticResults, {
+          query: searchQuery,
+          source: 'semantic',
+          isAwardSearch: isAwardSearchQuery(searchQuery)
+        });
+        setShowSuggestions(false);
         return;
       }
 
-      // Verificar si el término coincide con una categoría conocida
-      const placeType = getPlaceType(searchQuery);
-
-      let businesses;
-      if (placeType) {
-        // Búsqueda por tipo específico
-        businesses = await searchByType(userLocation, placeType, 10000); // 10km radius
-      } else {
-        // Búsqueda por palabra clave
-        businesses = await searchNearbyPlaces(userLocation, searchQuery, 10000);
+      if (!effectiveLocation) {
+        try {
+          effectiveLocation = await requestLocationPermission();
+        } catch (error) {
+          console.error('Error obteniendo ubicacion:', error);
+          onBusinessesFound([], { query: searchQuery, source: 'permission_denied' });
+          return;
+        }
       }
 
-      onBusinessesFound(businesses);
+      loadingTimeout = setTimeout(() => {
+        console.warn('SearchBar timeout de 15s alcanzado, liberando loading');
+        onSearch(false);
+        onBusinessesFound([], { query: searchQuery, source: 'timeout' });
+      }, 15000);
+
+      if (!window.google || !window.google.maps) {
+        console.error('Google Maps no esta disponible');
+        onBusinessesFound([], { query: searchQuery, source: 'google_unavailable' });
+        return;
+      }
+
+      const businesses = await searchPlacesUniversal(effectiveLocation, searchQuery, 10000);
+
+      onBusinessesFound(businesses, { query: searchQuery, source: 'google' });
       setShowSuggestions(false);
     } catch (error) {
       console.error('Error buscando negocios:', error);
-      onBusinessesFound([]);
+      onBusinessesFound([], { query: searchQuery, source: 'error' });
     } finally {
-      // ✅ FIX Bug #3: finally garantiza que loading SIEMPRE se libera
       onSearch(false);
-      clearTimeout(loadingTimeout);
+      if (loadingTimeout) clearTimeout(loadingTimeout);
     }
   };
 
@@ -85,23 +87,14 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
     handleSearch(suggestion);
   };
 
-  const handleRetryLocation = async () => {
-    try {
-      await requestLocationPermission();
-    } catch (error) {
-      console.error('Error solicitando ubicación:', error);
-    }
-  };
-
   return (
-    <div className="w-full max-w-2xl mx-auto relative">
-      {/* Indicador de ubicación activa */}
+    <div className="relative mx-auto w-full max-w-2xl">
       {permissionGranted && userLocation && (
-        <div className="flex items-center justify-center mb-2 text-sm text-green-600">
-          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+        <div className="mb-2 flex items-center justify-center text-sm text-green-600">
+          <svg className="mr-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
           </svg>
-          <span>📍 Ubicación activa</span>
+          <span>Ubicacion activa</span>
         </div>
       )}
 
@@ -113,47 +106,45 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
             setSearchTerm(e.target.value);
             setShowSuggestions(true);
           }}
-          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-          placeholder="¿Qué negocio buscas? Ej: Farmacia, Restaurante..."
-          className="w-full px-6 py-4 text-lg text-gray-900 bg-white border-2 border-gray-200 rounded-full shadow-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 placeholder-gray-400"
+          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          placeholder={t('home.searchPlaceholder', { defaultValue: 'Que negocio buscas? Ej: farmacia, Michelin, tacos...' })}
+          className="w-full rounded-full border-2 border-gray-200 bg-white px-6 py-4 text-lg text-gray-900 shadow-lg outline-none transition duration-200 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
           disabled={loading}
         />
 
-        {/* Mostrar qué se está buscando */}
         {loading && searchTerm && (
-          <div className="absolute left-6 top-full mt-1 text-sm text-blue-600 font-medium">
-            🔍 Buscando "{searchTerm}" cerca de ti...
+          <div className="absolute left-6 top-full mt-1 text-sm font-medium text-blue-600">
+            Buscando "{searchTerm}"...
           </div>
         )}
 
         <button
           onClick={() => handleSearch()}
           disabled={loading || !searchTerm.trim()}
-          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-200"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-blue-600 p-3 text-white transition duration-200 hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
         >
           {loading ? (
-            <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+            <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-t-2 border-white"></div>
           ) : (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           )}
         </button>
       </div>
 
-      {/* Sugerencias */}
       {showSuggestions && searchTerm && (
-        <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-2 z-10 max-h-60 overflow-y-auto">
+        <div className="absolute left-0 right-0 top-full z-10 mt-2 max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
           {popularCategories
-            .filter(cat => cat.toLowerCase().includes(searchTerm.toLowerCase()))
+            .filter((category) => category.toLowerCase().includes(searchTerm.toLowerCase()))
             .map((category, index) => (
               <div
                 key={index}
-                className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                className="cursor-pointer border-b border-gray-100 px-4 py-3 hover:bg-gray-50 last:border-b-0"
                 onClick={() => handleSuggestionClick(category)}
               >
                 <div className="flex items-center">
-                  <svg className="w-4 h-4 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="mr-3 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   <span className="text-gray-700">{category}</span>

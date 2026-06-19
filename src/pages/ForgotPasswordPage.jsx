@@ -14,6 +14,14 @@ const ForgotPasswordPage = () => {
     const [cooldown, setCooldown] = useState(0); // Segundos restantes de espera
     const cooldownRef = React.useRef(null);
 
+    React.useEffect(() => {
+        return () => {
+            if (cooldownRef.current) {
+                clearInterval(cooldownRef.current);
+            }
+        };
+    }, []);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -31,7 +39,8 @@ const ForgotPasswordPage = () => {
         setLoading(true);
 
         try {
-            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            const normalizedEmail = email.trim().toLowerCase();
+            const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
                 redirectTo: `${window.location.origin}/reset-password`
             });
 

@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { sendWelcomeEmail, sendReferralBonusEmail } from '../services/notificationService';
 import { trackUserSignup } from '../services/analyticsService';
-import { isPremiumPromoActive, getDaysRemaining, getPromoMessage } from '../config/promotions';
+import { isPremiumPromoActive, getPromoMessage, getPremiumPromoDeadlineLabel } from '../config/promotions';
 import { Capacitor } from '@capacitor/core';
 
 const SignupPage = () => {
@@ -15,6 +15,9 @@ const SignupPage = () => {
     const isIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
     const isAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
     const [loading, setLoading] = useState(false);
+    const oauthRedirectTo = isNative
+        ? 'geobooker://auth/callback'
+        : `${window.location.origin}/auth/callback`;
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
@@ -58,11 +61,12 @@ const SignupPage = () => {
         setLoading(true);
 
         try {
+            const normalizedEmail = formData.email.trim().toLowerCase();
             // Obtener código de referido si existe
             const referralCode = localStorage.getItem('referral_code');
 
             const { data, error } = await supabase.auth.signUp({
-                email: formData.email,
+                email: normalizedEmail,
                 password: formData.password,
                 options: {
                     data: {
@@ -70,7 +74,7 @@ const SignupPage = () => {
                         referred_by: referralCode || null
                     },
                     // En iOS nativo: no redirigir a browser externo para confirmación
-                    emailRedirectTo: isNative ? undefined : `${window.location.origin}/auth/callback`
+                    emailRedirectTo: isNative ? undefined : oauthRedirectTo
                 }
             });
 
@@ -86,7 +90,7 @@ const SignupPage = () => {
 
                 await supabase.from('user_profiles').upsert({
                     id: data.user.id,
-                    email: formData.email,
+                    email: normalizedEmail,
                     full_name: formData.fullName,
                     preferred_language: preferredLanguage,
                     registration_domain: registrationDomain,
@@ -177,12 +181,13 @@ const SignupPage = () => {
                             <span className="text-3xl">🚀</span>
                             <div>
                                 <p className="font-bold text-lg">{getPromoMessage()}</p>
-                                <p className="text-sm text-purple-100">Registra tu negocio y obtén todas las funciones Premium hasta el 1 de Enero 2027</p>
+                                <p className="text-sm text-purple-100">Registra tu negocio y obtén todas las funciones Premium gratis hasta el {getPremiumPromoDeadlineLabel('es-MX')}</p>
                             </div>
                         </div>
                         <div className="mt-3 flex gap-4 text-sm">
                             <span className="bg-white/20 px-3 py-1 rounded-full">✓ Sin costo</span>
-                            <span className="bg-white/20 px-3 py-1 rounded-full">✓ Cancela cuando quieras</span>
+                            <span className="bg-white/20 px-3 py-1 rounded-full">✓ Perfil destacado</span>
+                            <span className="bg-white/20 px-3 py-1 rounded-full">✓ Hasta 1 de enero de 2027</span>
                         </div>
                     </div>
                 )}
@@ -317,14 +322,10 @@ const SignupPage = () => {
                                 onClick={async () => {
                                     try {
                                         setLoading(true);
-                                        const redirectTo = isNative
-                                            ? 'geobooker://auth/callback'
-                                            : `${window.location.origin}/auth/callback`;
-
                                         const { data, error } = await supabase.auth.signInWithOAuth({
                                             provider: 'google',
                                             options: {
-                                                redirectTo,
+                                                redirectTo: oauthRedirectTo,
                                                 skipBrowserRedirect: true,
                                                 queryParams: { access_type: 'offline', prompt: 'select_account' }
                                             }
@@ -364,14 +365,10 @@ const SignupPage = () => {
                                     onClick={async () => {
                                         try {
                                             setLoading(true);
-                                            const redirectTo = isNative
-                                                ? 'geobooker://auth/callback'
-                                                : `${window.location.origin}/auth/callback`;
-
                                             const { data, error } = await supabase.auth.signInWithOAuth({
                                                 provider: 'apple',
                                                 options: {
-                                                    redirectTo,
+                                                    redirectTo: oauthRedirectTo,
                                                     skipBrowserRedirect: true
                                                 }
                                             });
@@ -407,14 +404,10 @@ const SignupPage = () => {
                                 onClick={async () => {
                                     try {
                                         setLoading(true);
-                                        const redirectTo = isNative
-                                            ? 'com.geobooker.ios://auth/callback'
-                                            : `${window.location.origin}/auth/callback`;
-
                                         const { data, error } = await supabase.auth.signInWithOAuth({
                                             provider: 'facebook',
                                             options: {
-                                                redirectTo,
+                                                redirectTo: oauthRedirectTo,
                                                 skipBrowserRedirect: true
                                             }
                                         });

@@ -14,6 +14,9 @@ const LoginPage = () => {
 
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '', rememberMe: false });
+  const oauthRedirectTo = isNative
+    ? 'geobooker://auth/callback'
+    : `${window.location.origin}/auth/callback`;
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -24,8 +27,9 @@ const LoginPage = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      const normalizedEmail = formData.email.trim().toLowerCase();
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
+        email: normalizedEmail,
         password: formData.password
       });
       if (error) throw error;
@@ -56,14 +60,11 @@ const LoginPage = () => {
   const handleOAuth = async (provider) => {
     try {
       setLoading(true);
-      const redirectTo = isNative
-        ? 'geobooker://auth/callback'
-        : `${window.location.origin}/auth/callback`;
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo,
+          redirectTo: oauthRedirectTo,
           skipBrowserRedirect: true,
           queryParams: provider === 'google' ? { access_type: 'offline', prompt: 'select_account' } : undefined
         }

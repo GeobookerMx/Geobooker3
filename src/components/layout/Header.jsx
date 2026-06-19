@@ -10,6 +10,7 @@ import { RecommendationForm } from "../recommendations";
 // Apple Guideline 3.1.1: ocultar promos de planes pagos en iOS nativo
 import { IS_IOS_NATIVE } from "../../utils/iosStore";
 import { Capacitor } from "@capacitor/core";
+import { getPremiumPromoLongMessage, isPremiumPromoActive } from "../../config/promotions";
 
 export default function Header() {
   const { t } = useTranslation();
@@ -118,6 +119,7 @@ export default function Header() {
   };
 
   const isNative = Capacitor.isNativePlatform();
+  const showPremiumPromo = !IS_IOS_NATIVE && isPremiumPromoActive();
 
   return (
     <header 
@@ -125,6 +127,14 @@ export default function Header() {
       ref={mobileMenuRef}
       style={isNative ? { paddingTop: 'var(--safe-area-inset-top)' } : {}}
     >
+      {showPremiumPromo && (
+        <Link
+          to={user ? "/dashboard/upgrade" : "/signup"}
+          className="block bg-gradient-to-r from-emerald-600 via-green-500 to-lime-500 px-4 py-2 text-center text-sm font-bold text-white hover:brightness-105 transition"
+        >
+          ✨ {getPremiumPromoLongMessage()} • Actívalo en minutos
+        </Link>
+      )}
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
         <Link to="/" className="flex items-center space-x-3">
           <BrandLogo size={48} className="hover:scale-105 transition-transform duration-200" />

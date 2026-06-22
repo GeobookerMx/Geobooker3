@@ -100,6 +100,18 @@ const buildEmailPreviewShell = ({ html, signatureHtml = '', companyName = 'tu em
 };
 
 
+const TEMPLATE_TYPE_META = {
+    invitation: { label: 'Automatica: Invitacion', badge: 'bg-blue-100 text-blue-700' },
+    followup: { label: 'Automatica: Follow Up', badge: 'bg-amber-100 text-amber-700' },
+    reengagement: { label: 'Automatica: Re-engagement', badge: 'bg-orange-100 text-orange-700' },
+    promotional: { label: 'Manual: Promocional', badge: 'bg-emerald-100 text-emerald-700' },
+    custom: { label: 'Manual: Personalizada', badge: 'bg-slate-100 text-slate-700' }
+};
+
+const PROTECTED_TEMPLATE_TYPES = new Set(['invitation', 'followup', 'reengagement']);
+
+const getTemplateTypeMeta = (templateType) => TEMPLATE_TYPE_META[templateType] || { label: templateType || 'Sin tipo', badge: 'bg-gray-100 text-gray-700' };
+
 const UnifiedCRM = () => {
     // Active Tab
     const [activeTab, setActiveTab] = useState('contactos');
@@ -121,7 +133,7 @@ const UnifiedCRM = () => {
     const [selectedTemplate, setSelectedTemplate] = useState(null);
     const [showTemplateModal, setShowTemplateModal] = useState(false);
     const [templateForm, setTemplateForm] = useState({
-        name: '', subject: '', html_content: '', template_type: 'promotional'
+        name: '', subject: '', html_content: '', template_type: 'promotional', is_active: true
     });
 
     // Stats State
@@ -520,6 +532,7 @@ const UnifiedCRM = () => {
             const { data, error } = await supabase
                 .from('email_templates')
                 .select('*')
+                .order('template_type', { ascending: true })
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -532,6 +545,11 @@ const UnifiedCRM = () => {
     const saveTemplate = async () => {
         const toastId = toast.loading('Guardando plantilla...');
         try {
+            if (!templateForm.name?.trim() || !templateForm.subject?.trim() || !templateForm.html_content?.trim()) {
+                toast.error('Completa nombre, asunto y cuerpo HTML', { id: toastId });
+                return;
+            }
+
             if (selectedTemplate) {
                 await supabase
                     .from('email_templates')
@@ -546,14 +564,19 @@ const UnifiedCRM = () => {
             toast.success('Plantilla guardada', { id: toastId });
             setShowTemplateModal(false);
             setSelectedTemplate(null);
-            setTemplateForm({ name: '', subject: '', html_content: '', template_type: 'promotional' });
+            setTemplateForm({ name: '', subject: '', html_content: '', template_type: 'promotional', is_active: true });
             loadTemplates();
         } catch (err) {
             toast.error('Error guardando', { id: toastId });
         }
     };
 
-    const deleteTemplate = async (id) => {
+    const deleteTemplate = async (id, templateType) => {
+        if (PROTECTED_TEMPLATE_TYPES.has(templateType)) {
+            toast.error('Las plantillas automaticas criticas no se pueden eliminar desde el CRM');
+            return;
+        }
+
         if (!confirm('¿Eliminar esta plantilla?')) return;
 
         try {
@@ -565,6 +588,7 @@ const UnifiedCRM = () => {
         }
     };
 
+    // ============ STATS FUNCTIONS ============
     // ============ STATS FUNCTIONS ============
     const loadStats = async () => {
         setStatsLoading(true);
@@ -1355,7 +1379,7 @@ const UnifiedCRM = () => {
                             <button
                                 onClick={() => {
                                     setSelectedTemplate(null);
-                                    setTemplateForm({ name: '', subject: '', html_content: '', template_type: 'promotional' });
+                                    setTemplateForm({ name: '', subject: '', html_content: '', template_type: 'promotional', is_active: true });
                                     setShowTemplateModal(true);
                                 }}
                                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium"
@@ -1392,7 +1416,7 @@ const UnifiedCRM = () => {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    deleteTemplate(template.id);
+                                                    deleteTemplate(template.id, template.template_type);
                                                 }}
                                                 className="p-1 hover:bg-red-100 rounded"
                                             >
@@ -1976,6 +2000,31 @@ const UnifiedCRM = () => {
                                         placeholder="Usa {{empresa}}, {{nombre}} para personalizar"
                                     />
                                 </div>
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Tipo de plantilla</label>
+                                        <select
+                                            value={templateForm.template_type}
+                                            onChange={(e) => setTemplateForm(p => ({ ...p, template_type: e.target.value }))}
+                                            className="w-full p-3 border rounded-xl"
+                                        >
+                                            <option value="promotional">Manual: Promocional</option>
+                                            <option value="custom">Manual: Personalizada</option>
+                                            <option value="invitation">Automatica: Invitacion</option>
+                                            <option value="followup">Automatica: Follow Up</option>
+                                            <option value="reengagement">Automatica: Re-engagement</option>
+                                        </select>
+                                    </div>
+                                    <label className="flex items-center gap-3 mt-8 md:mt-0">
+                                        <input
+                                            type="checkbox"
+                                            checked={Boolean(templateForm.is_active)}
+                                            onChange={(e) => setTemplateForm(p => ({ ...p, is_active: e.target.checked }))}
+                                            className="w-4 h-4"
+                                        />
+                                        <span className="text-sm font-medium">Plantilla activa</span>
+                                    </label>
+                                </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Cuerpo (HTML)</label>
                                     <textarea
@@ -1984,6 +2033,10 @@ const UnifiedCRM = () => {
                                         className="w-full p-3 border rounded-xl h-48 font-mono text-sm"
                                         placeholder="<p>Hola {{nombre}},</p>"
                                     />
+                                </div>
+                                <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 text-xs text-slate-600">
+                                    Variables soportadas: <code>{'{contact_name}'}</code>, <code>{'{company_name}'}</code>, <code>{'{tier}'}</code>, <code>{'{{nombre}}'}</code>, <code>{'{{empresa}}'}</code>.
+                                    Las automaticas usan por ronda: <strong>invitation</strong>, <strong>followup</strong>, <strong>reengagement</strong>.
                                 </div>
                             </div>
                             <div className="p-6 border-t flex justify-end gap-3">
@@ -2312,6 +2365,11 @@ const UnifiedCRM = () => {
 };
 
 export default UnifiedCRM;
+
+
+
+
+
 
 
 

@@ -22,6 +22,8 @@ const defaultCenter = {
     lng: -99.1332,
 };
 
+const BUSINESS_IMAGES_BUCKET = 'business-images';
+
 const BusinessEditPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -201,13 +203,13 @@ const BusinessEditPage = () => {
             try {
                 const fileName = `${id}/${Date.now()}_${file.name}`;
                 const { error: uploadError } = await supabase.storage
-                    .from('business_photos')
+                    .from(BUSINESS_IMAGES_BUCKET)
                     .upload(fileName, file);
 
                 if (uploadError) throw uploadError;
 
                 const { data: { publicUrl } } = supabase.storage
-                    .from('business_photos')
+                    .from(BUSINESS_IMAGES_BUCKET)
                     .getPublicUrl(fileName);
 
                 console.log('📸 Imagen subida exitosamente:', publicUrl);
@@ -231,11 +233,14 @@ const BusinessEditPage = () => {
 
     const removeImage = async (imageUrl) => {
         try {
-            const pathMatch = imageUrl.match(/business_photos\/(.+)$/);
-            if (pathMatch) {
+            const bucketMarker = `/${BUSINESS_IMAGES_BUCKET}/`;
+            const bucketIndex = imageUrl.indexOf(bucketMarker);
+
+            if (bucketIndex >= 0) {
+                const filePath = imageUrl.slice(bucketIndex + bucketMarker.length);
                 await supabase.storage
-                    .from('business_photos')
-                    .remove([pathMatch[1]]);
+                    .from(BUSINESS_IMAGES_BUCKET)
+                    .remove([filePath]);
             }
 
             setFormData(prev => ({
@@ -765,3 +770,4 @@ const BusinessEditPage = () => {
 };
 
 export default BusinessEditPage;
+

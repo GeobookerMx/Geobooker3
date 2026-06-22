@@ -5,6 +5,7 @@ const { Resend } = require('resend');
 const { createClient } = require('@supabase/supabase-js');
 const { resolveEmailSender } = require('./_email-config');
 const { buildCampaignEmail, renderCampaignCopy } = require('./_campaign-email');
+const { ensureCronOrTrustedOrigin } = require('./_cron-auth');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const supabase = createClient(
@@ -26,6 +27,9 @@ const getMexicoDateTime = () => {
 };
 
 exports.handler = async (event, context) => {
+    const authError = ensureCronOrTrustedOrigin(event);
+    if (authError) return authError;
+
     try {
         console.log('🚀 Iniciando procesamiento de cola de emails...');
         const body = event.body ? JSON.parse(event.body) : {};
@@ -330,5 +334,6 @@ exports.handler = async (event, context) => {
         };
     }
 };
+
 
 

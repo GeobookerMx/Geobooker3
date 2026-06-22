@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { ensureCronOrTrustedOrigin } = require('./_cron-auth');
 
 const supabase = createClient(
     process.env.VITE_SUPABASE_URL,
@@ -9,6 +10,9 @@ exports.handler = async (event, context) => {
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
+
+    const authError = ensureCronOrTrustedOrigin(event);
+    if (authError) return authError
 
     try {
         const body = event.body ? JSON.parse(event.body) : {};
@@ -46,3 +50,4 @@ exports.handler = async (event, context) => {
         };
     }
 };
+

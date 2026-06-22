@@ -21,14 +21,16 @@ jobs:
           curl --fail --show-error --silent \
             -X POST "https://geobooker.com.mx/.netlify/functions/generate-email-queue" \
             -H "Content-Type: application/json" \
-            -d "{\"limit\":100}"
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -d '{"limit":100}'
 
       - name: Generate WhatsApp Queue
         run: |
           curl --fail --show-error --silent \
             -X POST "https://geobooker.com.mx/.netlify/functions/generate-whatsapp-queue" \
             -H "Content-Type: application/json" \
-            -d "{\"limit\":20}"
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -d '{"limit":20}'
 
   process-email-queue:
     if: github.event.schedule != '0 15 * * *' || github.event_name == 'workflow_dispatch'
@@ -39,4 +41,5 @@ jobs:
           curl --fail --show-error --silent \
             -X POST "https://geobooker.com.mx/.netlify/functions/process-email-queue" \
             -H "Content-Type: application/json" \
-            -d "{\"limit\":25}"
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -d '{"limit":25}'

@@ -3,6 +3,7 @@
 // Path: netlify/functions/generate-whatsapp-queue.js
 
 const { createClient } = require('@supabase/supabase-js');
+const { ensureCronOrTrustedOrigin } = require('./_cron-auth');
 
 const supabase = createClient(
     process.env.VITE_SUPABASE_URL,
@@ -17,6 +18,9 @@ exports.handler = async (event, context) => {
             body: JSON.stringify({ error: 'Method not allowed' })
         };
     }
+
+    const authError = ensureCronOrTrustedOrigin(event);
+    if (authError) return authError
 
     try {
         console.log('📱 Generando cola de WhatsApp...');
@@ -69,3 +73,4 @@ exports.handler = async (event, context) => {
         };
     }
 };
+

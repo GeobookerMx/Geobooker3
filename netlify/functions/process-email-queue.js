@@ -90,36 +90,54 @@ exports.handler = async (event, context) => {
             25
         );
 
-        const { data: queueItems, error: queueError } = await supabase
+        // ✅ FIX: Dos queries separadas en lugar de join implícito.
+        // El join con !inner requiere FK declarada en el schema cache de Supabase.
+        // Si la FK no está en el cache, lanza "Could not find a relationship".
+        // Usar dos queries evita esa dependencia completamente.
+        const { data: queueRows, error: queueError } = await supabase
             .from('email_queue')
-            .select(`
-                id,
-                contact_id,
-                email_round,
-                marketing_contacts!inner (
-                    email,
-                    company_name,
-                    contact_name,
-                    tier,
-                    assigned_email_sender,
-                    email_sent_count
-                )
-            `)
+            .select('id, contact_id, email_round, priority, created_at')
             .eq('status', 'pending')
             .order('priority', { ascending: false })
-            .order('email_round', { ascending: true })  // Priorizar ronda 1 primero
+            .order('email_round', { ascending: true })
             .order('created_at', { ascending: true })
-            // LÍMITE DE BATCH: máximo 25 emails por llamada para evitar timeout de Netlify (10s)
             .limit(batchLimit);
 
         if (queueError) throw queueError;
 
-        if (!queueItems || queueItems.length === 0) {
+        if (!queueRows || queueRows.length === 0) {
             return {
                 statusCode: 200,
                 body: JSON.stringify({
                     success: true,
                     message: 'No hay contactos pendientes en la cola',
+                    sent: 0
+                })
+            };
+        }
+
+        // Obtener contactos en una sola query usando IN
+        const contactIds = queueRows.map(r => r.contact_id).filter(Boolean);
+        const { data: contactsData, error: contactsError } = await supabase
+            .from('marketing_contacts')
+            .select('id, email, company_name, contact_name, tier, assigned_email_sender, email_sent_count')
+            .in('id', contactIds);
+
+        if (contactsError) throw contactsError;
+
+        const contactsById = Object.fromEntries((contactsData || []).map(c => [c.id, c]));
+
+        // Combinar queue + contactos y filtrar los que tengan email válido
+        const queueItems = queueRows
+            .map(row => ({ ...row, _contact: contactsById[row.contact_id] || null }))
+            .filter(item => item._contact?.email);
+
+        if (queueItems.length === 0) {
+            return {
+                statusCode: 200,
+                body: JSON.stringify({
+                    success: true,
+                    message: 'No hay contactos con email válido en la cola',
                     sent: 0
                 })
             };
@@ -170,7 +188,7 @@ exports.handler = async (event, context) => {
 
         for (const item of queueItems) {
             try {
-                const contact = item.marketing_contacts;
+                const contact = item._contact;
                 const emailRound = item.email_round || 1;
 
                 // 1. Seleccionar template por RONDA primero, luego por tier
@@ -291,10 +309,10 @@ exports.handler = async (event, context) => {
                 await new Promise(resolve => setTimeout(resolve, 100));
 
             } catch (emailError) {
-                console.error(`❌ Error enviando a ${item.marketing_contacts.email}:`, emailError);
+                console.error(`❌ Error enviando a ${item._contact?.email || 'unknown'}:`, emailError);
                 results.failed++;
                 results.errors.push({
-                    email: item.marketing_contacts?.email || 'unknown',
+                    email: item._contact?.email || 'unknown',
                     error: emailError.message
                 });
 

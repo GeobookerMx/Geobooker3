@@ -48,26 +48,29 @@ const WhatsAppCRM = () => {
     };
 
     const loadQueue = async () => {
-        const { data, error } = await supabase
+        // ✅ FIX: Dos queries separadas para evitar error de schema cache
+        // "Could not find a relationship between whatsapp_queue and marketing_contacts"
+        const { data: queueRows, error } = await supabase
             .from('whatsapp_queue')
-            .select(`
-                *,
-                marketing_contacts!inner (
-                    company_name,
-                    contact_name,
-                    phone,
-                    tier,
-                    city,
-                    source
-                )
-            `)
+            .select('*')
             .eq('status', 'pending')
             .order('priority', { ascending: false })
             .order('created_at', { ascending: true });
 
         if (error) throw error;
 
-        const safeQueue = (data || []).filter(item => item.marketing_contacts?.phone);
+        const contactIds = (queueRows || []).map(r => r.contact_id).filter(Boolean);
+        let contactsById = {};
+        if (contactIds.length > 0) {
+            const { data: contacts } = await supabase
+                .from('marketing_contacts')
+                .select('id, company_name, contact_name, phone, tier, city, source')
+                .in('id', contactIds);
+            contactsById = Object.fromEntries((contacts || []).map(c => [c.id, c]));
+        }
+
+        const enriched = (queueRows || []).map(row => ({ ...row, _contact: contactsById[row.contact_id] || null }));
+        const safeQueue = enriched.filter(item => item._contact?.phone);
         setQueue(safeQueue);
     };
 
@@ -128,7 +131,7 @@ const WhatsAppCRM = () => {
     };
 
     const openWhatsApp = async (item) => {
-        const contact = item.marketing_contacts;
+        const contact = item._contact;
 
         if (!contact?.phone) {
             toast.error('Este contacto no tiene teléfono válido');
@@ -311,7 +314,7 @@ Juan Pablo
 
     // Blacklist contacto (bloquear permanentemente) + regenerar
     const blacklistContact = async (item) => {
-        if (!confirm(`¿Bloquear permanentemente a "${item.marketing_contacts?.company_name}"?`)) return;
+        if (!confirm(`¿Bloquear permanentemente a "${item._contact?.company_name}"?`)) return;
 
         try {
             setActiveItemId(item.id);
@@ -563,7 +566,7 @@ Juan Pablo
                         </div>
                     ) : (
                         queue.map((item) => {
-                            const contact = item.marketing_contacts;
+                            const contact = item._contact;
                             const isInvalidPhone = contact?.phone?.includes('800') || contact?.phone?.startsWith('+521800');
                             const isItemBusy = activeItemId === item.id;
                             return (

@@ -24,25 +24,29 @@ const WhatsAppQueueManager = () => {
     const loadQueue = async () => {
         setIsLoading(true);
         try {
-            const { data, error } = await supabase
+            // ✅ FIX: Dos queries separadas para evitar error de schema cache
+            const { data: queueRows, error } = await supabase
                 .from('whatsapp_queue')
-                .select(`
-                    *,
-                    marketing_contacts!inner (
-                        company_name,
-                        contact_name,
-                        phone,
-                        tier,
-                        city
-                    )
-                `)
+                .select('*')
                 .eq('status', 'pending')
                 .order('priority', { ascending: false })
                 .order('created_at', { ascending: true })
                 .limit(50);
 
             if (error) throw error;
-            setQueue(data || []);
+
+            const contactIds = (queueRows || []).map(r => r.contact_id).filter(Boolean);
+            let contactsById = {};
+            if (contactIds.length > 0) {
+                const { data: contacts } = await supabase
+                    .from('marketing_contacts')
+                    .select('id, company_name, contact_name, phone, tier, city')
+                    .in('id', contactIds);
+                contactsById = Object.fromEntries((contacts || []).map(c => [c.id, c]));
+            }
+
+            const enriched = (queueRows || []).map(row => ({ ...row, _contact: contactsById[row.contact_id] || null }));
+            setQueue(enriched);
         } catch (error) {
             console.error('Error loading queue:', error);
             toast.error('Error al cargar cola');
@@ -116,7 +120,7 @@ const WhatsAppQueueManager = () => {
     };
 
     const openWhatsApp = async (queueItem) => {
-        const contact = queueItem.marketing_contacts;
+        const contact = queueItem._contact;
         const message = generateMessage(contact);
 
         // Usar servicio centralizado (Maneja Texas/EUA y Móvil)
@@ -308,7 +312,7 @@ Juan Pablo`;
                         </div>
                     ) : (
                         queue.map((item) => {
-                            const contact = item.marketing_contacts;
+                            const contact = item._contact;
                             return (
                                 <div key={item.id} className="p-4 hover:bg-gray-50 transition-colors">
                                     <div className="flex items-start justify-between gap-4">

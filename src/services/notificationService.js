@@ -5,6 +5,7 @@
  */
 
 const NOTIFICATION_ENDPOINT = '/.netlify/functions/send-notification-email';
+const ADMIN_ENDPOINT = '/.netlify/functions/notify-admin-campaign';
 
 /**
  * Send a notification email
@@ -26,21 +27,14 @@ async function sendNotification(type, data) {
         return await response.json();
     } catch (error) {
         console.error('Notification error:', error);
-        // Don't throw - notifications are non-critical
         return { success: false, error: error.message };
     }
 }
 
-/**
- * Send welcome email to new user
- */
 export async function sendWelcomeEmail(email, name) {
     return sendNotification('welcome', { email, name });
 }
 
-/**
- * Send business approved email
- */
 export async function sendBusinessApprovedEmail(email, name, businessName, businessId) {
     return sendNotification('business_approved', {
         email,
@@ -50,9 +44,6 @@ export async function sendBusinessApprovedEmail(email, name, businessName, busin
     });
 }
 
-/**
- * Send business rejected email
- */
 export async function sendBusinessRejectedEmail(email, name, businessName, reason) {
     return sendNotification('business_rejected', {
         email,
@@ -62,22 +53,31 @@ export async function sendBusinessRejectedEmail(email, name, businessName, reaso
     });
 }
 
-/**
- * Send campaign approved email
- */
-export async function sendCampaignApprovedEmail(email, name, adSpace, startDate, budget) {
+export async function sendCampaignReceivedEmail(payload) {
+    return sendNotification('campaign_received', payload);
+}
+
+export async function sendCampaignApprovedEmail(email, name, adSpace, startDate, budget, extras = {}) {
     return sendNotification('campaign_approved', {
         email,
         name,
         adSpace,
         startDate,
-        budget
+        budget,
+        ...extras
     });
 }
 
-/**
- * Send referral bonus email
- */
+export async function sendCampaignRejectedEmail(email, name, adSpace, reason, extras = {}) {
+    return sendNotification('campaign_rejected', {
+        email,
+        name,
+        adSpace,
+        reason,
+        ...extras
+    });
+}
+
 export async function sendReferralBonusEmail(email, name, referredName, reward, totalReferrals, level) {
     return sendNotification('referral_bonus', {
         email,
@@ -89,27 +89,30 @@ export async function sendReferralBonusEmail(email, name, referredName, reward, 
     });
 }
 
-/**
- * Notify admin about new business pending approval
- */
-export async function notifyAdminNewBusiness(businessData) {
-    const ADMIN_ENDPOINT = '/.netlify/functions/notify-admin-campaign';
+export async function notifyAdminNewCampaign(campaignData) {
     try {
         await fetch(ADMIN_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ campaign: businessData })
+            body: JSON.stringify({ campaign: campaignData })
         });
     } catch (error) {
         console.error('Admin notification error:', error);
     }
 }
 
+export async function notifyAdminNewBusiness(businessData) {
+    return notifyAdminNewCampaign(businessData);
+}
+
 export default {
     sendWelcomeEmail,
     sendBusinessApprovedEmail,
     sendBusinessRejectedEmail,
+    sendCampaignReceivedEmail,
     sendCampaignApprovedEmail,
+    sendCampaignRejectedEmail,
     sendReferralBonusEmail,
+    notifyAdminNewCampaign,
     notifyAdminNewBusiness
 };

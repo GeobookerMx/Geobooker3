@@ -1,4 +1,4 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+﻿const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 
 // IMPORTANTE:
@@ -6,7 +6,7 @@ const { createClient } = require('@supabase/supabase-js');
 // - STRIPE_WEBHOOK_SECRET
 // - STRIPE_SECRET_KEY
 // - SUPABASE_URL
-// - SUPABASE_SERVICE_ROLE_KEY (¡No la anon key!)
+// - SUPABASE_SERVICE_ROLE_KEY (Â¡No la anon key!)
 
 // Helper: Generate secure temporary password
 function generateRandomPassword(length = 16) {
@@ -65,6 +65,56 @@ async function updateUserProfileWithFallback(supabase, userId, fullPayload, fall
 }
 
 
+async function postInternalNotification(functionName, payload) {
+    if (!process.env.URL) {
+        console.warn('[stripe-webhook] process.env.URL is not configured; skipping internal notification', functionName);
+        return;
+    }
+
+    try {
+        await fetch(`${process.env.URL}/.netlify/functions/${functionName}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    } catch (error) {
+        console.error(`[stripe-webhook] Error calling ${functionName}:`, error);
+    }
+}
+
+async function loadCampaignForNotifications(supabase, campaignId) {
+    const { data, error } = await supabase
+        .from('ad_campaigns')
+        .select('*, ad_spaces(display_name)')
+        .eq('id', campaignId)
+        .single();
+
+    if (error) {
+        console.error('[stripe-webhook] Could not load campaign for notifications:', error);
+        return null;
+    }
+
+    return data;
+}
+
+async function notifyCampaignReceived(campaign, paymentMethod = 'card') {
+    if (!campaign?.advertiser_email) return;
+
+    await postInternalNotification('send-notification-email', {
+        type: 'campaign_received',
+        data: {
+            email: campaign.advertiser_email,
+            name: campaign.advertiser_name || 'Anunciante',
+            adSpace: campaign.ad_spaces?.display_name || 'Espacio publicitario Geobooker',
+            targetLocation: campaign.target_location || 'Segmentacion definida durante tu compra',
+            amount: campaign.total_budget || campaign.budget || 0,
+            currency: campaign.currency || (campaign.billing_country === 'MX' ? 'MXN' : 'USD'),
+            paymentMethod,
+            dashboardUrl: 'https://geobooker.com.mx/advertiser/dashboard',
+            invoiceText: 'Si necesitas factura, podras solicitarla mas tarde desde tu portal de facturacion.'
+        }
+    });
+}
 exports.handler = async (event) => {
     const headers = { 'Access-Control-Allow-Origin': '*' };
 
@@ -96,7 +146,7 @@ exports.handler = async (event) => {
                 const session = stripeEvent.data.object;
                 const metadata = session.metadata || {};
 
-                // CASO 1: Pago de Publicidad (Campaña normal)
+                // CASO 1: Pago de Publicidad (CampaÃ±a normal)
                 if (metadata.type === 'ad_payment') {
                     const campaignId = metadata.campaign_id;
                     if (campaignId) {
@@ -105,20 +155,27 @@ exports.handler = async (event) => {
                             .update({
                                 status: 'pending_review',
                                 payment_status: 'paid',
-                                stripe_payment_intent: session.payment_intent
+                                stripe_payment_intent: session.payment_intent,
+                                payment_method: 'card'
                             })
                             .eq('id', campaignId);
 
-                        console.log(`Campaña ${campaignId} pagada y enviada a revisión.`);
+                        const campaign = await loadCampaignForNotifications(supabase, campaignId);
+                        if (campaign) {
+                            await postInternalNotification('notify-admin-campaign', { campaign });
+                            await notifyCampaignReceived(campaign, 'card');
+                        }
+
+                        console.log(`CampaÃ±a ${campaignId} pagada y enviada a revisiÃ³n.`);
                     }
                 }
-                // CASO 1B: Campaña Enterprise (auto-activación para clientes verificados)
+                // CASO 1B: CampaÃ±a Enterprise (auto-activaciÃ³n para clientes verificados)
                 else if (metadata.type === 'enterprise_campaign') {
                     const campaignId = metadata.campaign_id;
                     const advertiserEmail = metadata.advertiser_email || session.customer_details?.email;
 
                     if (campaignId && advertiserEmail) {
-                        // 🆕 PASO 1: Crear cuenta de usuario si no existe
+                        // ðŸ†• PASO 1: Crear cuenta de usuario si no existe
                         let userId = null;
                         let temporaryPassword = null;
                         let isNewUser = false;
@@ -147,17 +204,17 @@ exports.handler = async (event) => {
                                 } else {
                                     userId = newUser.user.id;
                                     isNewUser = true;
-                                    console.log(`✅ New advertiser account created: ${advertiserEmail}`);
+                                    console.log(`âœ… New advertiser account created: ${advertiserEmail}`);
                                 }
                             } else {
                                 userId = existingUser.user.id;
-                                console.log(`ℹ️ Advertiser account already exists: ${advertiserEmail}`);
+                                console.log(`â„¹ï¸ Advertiser account already exists: ${advertiserEmail}`);
                             }
                         } catch (authError) {
                             console.error('Auth error:', authError);
                         }
 
-                        // 🆕 PASO 2: Actualizar campaña con fechas y payment
+                        // ðŸ†• PASO 2: Actualizar campaÃ±a con fechas y payment
                         const startDate = new Date();
                         const durationMonths = parseInt(metadata.duration_months) || 1;
                         const endDate = new Date(startDate);
@@ -181,47 +238,40 @@ exports.handler = async (event) => {
                             .select()
                             .single();
 
-                        try {
-                            await fetch(`${process.env.URL}/.netlify/functions/notify-admin-campaign`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ campaign: updatedCampaign })
-                            });
-                        } catch (notifyError) {
-                            console.error('Error notifying admin:', notifyError);
-                        }
+                        await postInternalNotification('notify-admin-campaign', { campaign: updatedCampaign });
+                        await notifyCampaignReceived(updatedCampaign, 'card');
 
-                        // 🆕 PASO 3:  Enviar email de bienvenida (solo si es nuevo usuario)
+                        // ðŸ†• PASO 3:  Enviar email de bienvenida (solo si es nuevo usuario)
                         if (isNewUser && temporaryPassword) {
                             try {
-                                // Llamar función de email (debes crear send-welcome-email.js)
+                                // Llamar funciÃ³n de email (debes crear send-welcome-email.js)
                                 await fetch(`${process.env.URL}/.netlify/functions/send-welcome-email`, {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({
                                         email: advertiserEmail,
                                         password: temporaryPassword,
-                                        campaignName: updatedCampaign?.advertiser_name || 'Tu Campaña',
+                                        campaignName: updatedCampaign?.advertiser_name || 'Tu CampaÃ±a',
                                         companyName: metadata.company || metadata.advertiser_name,
                                         dashboardUrl: `${process.env.URL}/advertiser/dashboard`
                                     })
                                 });
-                                console.log(`📧 Welcome email sent to ${advertiserEmail}`);
+                                console.log(`ðŸ“§ Welcome email sent to ${advertiserEmail}`);
                             } catch (emailError) {
                                 console.error('Error sending welcome email:', emailError);
                                 // Don't fail the webhook if email fails
                             }
                         }
 
-                        console.log(`✅ Enterprise campaign ${campaignId} paid. Plan: ${metadata.plan}, Company: ${metadata.company}, IsNew: ${isNewUser}`);
+                        console.log(`âœ… Enterprise campaign ${campaignId} paid. Plan: ${metadata.plan}, Company: ${metadata.company}, IsNew: ${isNewUser}`);
                     }
                 }
-                // CASO 2: Suscripción Premium (Usuario)
+                // CASO 2: SuscripciÃ³n Premium (Usuario)
                 else {
                     const userId = metadata.userId || session.client_reference_id;
                     if (userId) {
                         const subscriptionId = session.subscription;
-                        // Si es modo 'payment' (lifetime) no habrá subscriptionId, manejar con cuidado
+                        // Si es modo 'payment' (lifetime) no habrÃ¡ subscriptionId, manejar con cuidado
                         // Para MVP premium recurrente asumimos subscription
                         let premiumUntil = null;
 
@@ -229,7 +279,7 @@ exports.handler = async (event) => {
                             const subscription = await stripe.subscriptions.retrieve(subscriptionId);
                             premiumUntil = new Date(subscription.current_period_end * 1000).toISOString();
                         } else {
-                            // Caso pago único lifetime (ej. 1 año fijo sin recurrencia)
+                            // Caso pago Ãºnico lifetime (ej. 1 aÃ±o fijo sin recurrencia)
                             const oneYearLater = new Date();
                             oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
                             premiumUntil = oneYearLater.toISOString();
@@ -284,7 +334,7 @@ exports.handler = async (event) => {
                         }
                     );
 
-                    console.log(`Renovación exitosa para usuario ${userId}`);
+                    console.log(`RenovaciÃ³n exitosa para usuario ${userId}`);
                 }
                 break;
             }
@@ -300,7 +350,7 @@ exports.handler = async (event) => {
                     })
                     .eq('stripe_subscription_id', subscriptionId);
 
-                console.log(`Suscripción ${subscriptionId} cancelada/finalizada`);
+                console.log(`SuscripciÃ³n ${subscriptionId} cancelada/finalizada`);
                 break;
             }
 
@@ -325,10 +375,16 @@ exports.handler = async (event) => {
                             })
                             .eq('id', metadata.product_id);
 
-                        console.log(`Campaña ${metadata.product_id} pagada via OXXO`);
+                        const campaign = await loadCampaignForNotifications(supabase, metadata.product_id);
+                        if (campaign) {
+                            await postInternalNotification('notify-admin-campaign', { campaign });
+                            await notifyCampaignReceived(campaign, 'oxxo');
+                        }
+
+                        console.log(`CampaÃ±a ${metadata.product_id} pagada via OXXO`);
                     }
 
-                    // Si es pago de suscripción única (no recurrente)
+                    // Si es pago de suscripciÃ³n Ãºnica (no recurrente)
                     if (metadata.user_id && metadata.subscription_type) {
                         const premiumUntil = new Date();
                         premiumUntil.setMonth(premiumUntil.getMonth() + 1);
@@ -355,7 +411,7 @@ exports.handler = async (event) => {
                 break;
             }
 
-            // CASO: Expiración de Sesión de Checkout (Limpieza de borradores)
+            // CASO: ExpiraciÃ³n de SesiÃ³n de Checkout (Limpieza de borradores)
             case 'checkout.session.expired': {
                 const session = stripeEvent.data.object;
                 const metadata = session.metadata || {};
@@ -369,9 +425,9 @@ exports.handler = async (event) => {
                             .eq('id', campaignId);
                         
                         if (error) {
-                            console.error(`Error eliminando campaña expirada ${campaignId}:`, error);
+                            console.error(`Error eliminando campaÃ±a expirada ${campaignId}:`, error);
                         } else {
-                            console.log(`Borrador de campaña expirada ${campaignId} eliminado de la BD.`);
+                            console.log(`Borrador de campaÃ±a expirada ${campaignId} eliminado de la BD.`);
                         }
                     }
                 }
@@ -393,9 +449,9 @@ exports.handler = async (event) => {
                         .eq('id', campaignId);
                     
                     if (error) {
-                        console.error(`Error actualizando campaña fallida ${campaignId}:`, error);
+                        console.error(`Error actualizando campaÃ±a fallida ${campaignId}:`, error);
                     } else {
-                        console.log(`Pago fallido para campaña ${campaignId}. Estado de pago marcado como failed.`);
+                        console.log(`Pago fallido para campaÃ±a ${campaignId}. Estado de pago marcado como failed.`);
                     }
                 }
                 break;
@@ -408,3 +464,5 @@ exports.handler = async (event) => {
         return { statusCode: 500, body: 'Database update failed' };
     }
 };
+
+

@@ -4,6 +4,7 @@
 
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
+import { APP_LINKS } from '../config/appLinks';
 
 /**
  * Obtiene la fecha de hoy en zona horaria de México (UTC-6)
@@ -356,41 +357,44 @@ export class WhatsAppService {
         const company = contact.company || contact.company_name || contact.name || 'tu negocio';
 
         const templates = {
-            es: `Hola *${company}* 👋
-Somos el equipo de ventas de *Geobooker*.
+            es: `Hola *${company}* ??
+Soy parte del equipo comercial de *Geobooker*.
 
-Geobooker es una plataforma para que las personas encuentren negocios y servicios #cercadeti en minutos, con información clara y contacto directo.
+Hoy miles de personas buscan negocios y servicios cerca de ellos desde su celular. Con Geobooker, *${company}* puede aparecer con ubicaci?n, WhatsApp, c?mo llegar, fotos, servicios y promociones en un solo lugar.
 
 Esto te ayuda a:
-• Aumentar visibilidad local (personas cerca de tu zona)
-• Recibir clientes por WhatsApp / llamada / cómo llegar
-• Mantener tu perfil actualizado (horarios, fotos, servicios, promociones)
-• Atraer clientes de paso o personas con necesidad urgente
+? Aumentar tu visibilidad frente a clientes cercanos
+? Recibir contactos por WhatsApp, llamada y navegaci?n al negocio
+? Mantener tu perfil actualizado con horarios, fotos y promociones
+? Estar presente tanto en la web como en nuestra app para Android y iPhone
 
-📍 Puedes verlo aquí: geobooker.com.mx
+?? Con?cenos aqu?: ${APP_LINKS.web}
+?? Ya contamos con app en Google Play y App Store:
+${APP_LINKS.downloadHub}
 
-¿Te compartimos el link para subir tu negocio en pocos minutos?
+Si te interesa, te compartimos el enlace para registrar *${company}* en pocos minutos y comenzar a recibir mayor visibilidad local.
 
 _(Si no te interesa, responde NO y no te volvemos a contactar.)_`,
 
-            en: `Hi *${company}* 👋
-We're the sales team at *Geobooker*.
+            en: `Hi *${company}* ??
+I'm part of the *Geobooker* sales team.
 
-Geobooker is a platform that helps people find businesses and services #nearyou in minutes, with clear information and direct contact.
+Every day, people search for nearby businesses and services from their phones. With Geobooker, *${company}* can appear with location, WhatsApp, directions, photos, services, and promotions all in one place.
 
 This helps you:
-• Increase local visibility (people near your area)
-• Receive clients via WhatsApp / call / directions
-• Keep your profile updated (hours, photos, services, promotions)
-• Attract walk-in customers or people with urgent needs
+? Increase visibility with nearby customers
+? Receive leads through WhatsApp, phone calls, and directions
+? Keep your profile updated with hours, photos, and promotions
+? Be present on both the web and our Android/iPhone app
 
-📍 Check it out: geobooker.com.mx
+?? Learn more: ${APP_LINKS.web}
+?? Our app is already available through our download hub:
+${APP_LINKS.downloadHub}
 
-Would you like the link to register your business in just a few minutes?
+If you're interested, we can share the link to register *${company}* in just a few minutes and start increasing local visibility.
 
 _(If you're not interested, reply NO and we won't contact you again.)_`
         };
-
         return templates[language] || templates.es;
     }
 

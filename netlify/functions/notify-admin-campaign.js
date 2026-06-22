@@ -1,4 +1,4 @@
-﻿// netlify/functions/notify-admin-campaign.js
+// netlify/functions/notify-admin-campaign.js
 /**
  * Notify admin when a paid campaign enters pending review.
  * Works for both standard ad campaigns and enterprise campaigns.
@@ -77,6 +77,9 @@ exports.handler = async function handler(event) {
 </body>
 </html>`;
 
+        const { resolveEmailSender } = require('./_email-config');
+        const senderConfig = resolveEmailSender({ preferredName: 'Geobooker Ads' });
+
         const response = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
@@ -84,7 +87,7 @@ exports.handler = async function handler(event) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                from: 'Geobooker Ads <notifications@geobooker.com.mx>',
+                from: senderConfig.from,
                 to: [ADMIN_EMAIL],
                 subject: `Nueva campana pagada: ${campaign?.advertiser_name || 'Sin nombre'} (${amount.toFixed(2)} ${currency})`,
                 html: emailHtml

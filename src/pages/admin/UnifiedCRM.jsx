@@ -31,6 +31,75 @@ const FALLBACK_EMAIL_SENDER = {
     use_for: ['default', 'crm']
 };
 
+const extractEmailBodyContent = (html = '') => {
+    const input = String(html || '').trim();
+    if (!input) return '';
+
+    const bodyMatch = input.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    if (bodyMatch?.[1]) {
+        return bodyMatch[1].trim();
+    }
+
+    return input
+        .replace(/<!doctype[^>]*>/gi, '')
+        .replace(/<\/?(html|head|body)[^>]*>/gi, '')
+        .trim();
+};
+
+const applyEmailTemplateVariables = (input = '', variables = {}) => {
+    let output = String(input || '');
+    const replacements = [
+        { tokens: ['{contact_name}', '{{contact_name}}', '{nombre}', '{{nombre}}'], value: variables.contactName },
+        { tokens: ['{company_name}', '{{company_name}}', '{empresa}', '{{empresa}}'], value: variables.companyName },
+        { tokens: ['{tier}', '{{tier}}'], value: variables.tier }
+    ];
+
+    replacements.forEach(({ tokens, value }) => {
+        tokens.forEach((token) => {
+            output = output.split(token).join(value || '');
+        });
+    });
+
+    return output;
+};
+
+const buildEmailPreviewShell = ({ html, signatureHtml = '', companyName = 'tu empresa', preheader = 'Conoce Geobooker Ads y descarga la app' }) => {
+    const contentHtml = `${extractEmailBodyContent(html)}${signatureHtml ? `\n${extractEmailBodyContent(signatureHtml)}` : ''}`;
+
+    return `
+        <div style="display:none!important;visibility:hidden;opacity:0;color:transparent;height:0;width:0;overflow:hidden;">${preheader}</div>
+        <div style="margin:0;padding:24px;background:linear-gradient(180deg,#eff6ff 0%,#f8fafc 100%);font-family:Arial,Helvetica,sans-serif;">
+            <div style="max-width:680px;margin:0 auto;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 12px 40px rgba(15,23,42,.10);">
+                <div style="padding:30px 28px 24px;background:linear-gradient(135deg,#0f172a 0%,#1d4ed8 60%,#2563eb 100%);text-align:center;color:#fff;">
+                    <img src="https://geobooker.com.mx/images/geobooker-logo-horizontal-new.png" alt="Geobooker" style="width:210px;max-width:100%;height:auto;display:block;margin:0 auto 14px;" />
+                    <p style="margin:0;font-size:13px;opacity:.92;">Publicidad local, premium y enterprise para hacer crecer tu negocio</p>
+                </div>
+                <div style="padding:34px 28px 22px;color:#1f2937;line-height:1.65;font-size:16px;">
+                    ${contentHtml}
+                </div>
+                <div style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:28px;">
+                    <div style="text-align:center;margin-bottom:18px;">
+                        <img src="https://geobooker.com.mx/images/geobooker-logo-horizontal-new.png" alt="Geobooker" style="width:145px;max-width:100%;height:auto;opacity:.92;" />
+                        <p style="margin:12px 0 0;color:#475569;font-size:13px;line-height:1.6;">
+                            Geobooker Ads ayuda a negocios como <strong>${companyName}</strong> a ganar visibilidad con espacios patrocinados, mapa, busqueda y presencia premium.
+                        </p>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#dbeafe 0%,#eef2ff 100%);border:1px solid #bfdbfe;border-radius:16px;padding:18px;text-align:center;margin-bottom:18px;">
+                        <h3 style="margin:0 0 8px;color:#0f172a;font-size:18px;">Descarga Geobooker y descubre nuestros espacios publicitarios</h3>
+                        <p style="margin:0;color:#475569;font-size:13px;line-height:1.6;">Tus clientes pueden encontrarte en web, Android e iPhone.</p>
+                    </div>
+                    <div style="color:#64748b;font-size:12px;line-height:1.7;text-align:center;">
+                        <p style="margin:7px 0;"><strong>Web:</strong> <a href="https://geobooker.com.mx" style="color:#2563eb;text-decoration:none;">https://geobooker.com.mx</a></p>
+                        <p style="margin:7px 0;"><strong>Email comercial:</strong> <a href="mailto:hola@geobooker.com.mx" style="color:#2563eb;text-decoration:none;">hola@geobooker.com.mx</a></p>
+                        <p style="margin:7px 0;">Si no deseas mas mensajes corporativos, responde este correo con la palabra <strong>BAJA</strong>.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+
 const UnifiedCRM = () => {
     // Active Tab
     const [activeTab, setActiveTab] = useState('contactos');
@@ -216,7 +285,7 @@ const UnifiedCRM = () => {
             // Get tier distribution + email status metrics
             const { data: allContacts } = await supabase
                 .from('marketing_contacts')
-                .select('tier, email_status, email_sent_at');
+                .select('tier, email_status, email_sent_at, last_email_sent');
 
             const rows = allContacts || [];
 
@@ -235,7 +304,7 @@ const UnifiedCRM = () => {
                 enviados: rows.filter(r => r.email_status === 'sent').length,
                 pendientes: rows.filter(r => !r.email_status || r.email_status === 'pending').length,
                 abiertos: rows.filter(r => r.email_status === 'opened').length,
-                todayCount: rows.filter(r => r.email_sent_at && r.email_sent_at.startsWith(todayStr)).length
+                todayCount: rows.filter(r => (r.email_sent_at || r.last_email_sent) && (r.email_sent_at || r.last_email_sent).startsWith(todayStr)).length
             });
 
             // Get all contacts for robust local search
@@ -551,7 +620,8 @@ const UnifiedCRM = () => {
                             contact_name,
                             company_name,
                             email,
-                            tier
+                            tier,
+                            email_sent_count
                         )
                     `)
                     .eq('status', 'pending')
@@ -569,6 +639,7 @@ const UnifiedCRM = () => {
                     company_name: row.marketing_contacts?.company_name,
                     contact_email: row.marketing_contacts?.email,
                     contact_tier: row.marketing_contacts?.tier,
+                    email_sent_count: row.marketing_contacts?.email_sent_count || 0,
                     email_round: row.email_round,
                     priority: row.priority
                 }));
@@ -746,23 +817,14 @@ const UnifiedCRM = () => {
             for (let i = 0; i < emailQueue.length; i++) {
                 const item = emailQueue[i];
 
-                // Process template with contact data
-                let processedBody = selectedTemplate.html_content;
-                let processedSubject = selectedTemplate.subject;
-                const variables = {
-                    empresa: item.company_name || 'Negocio',
-                    nombre: item.contact_name || 'Amigo',
-                    tier: item.contact_tier
+                const templateVariables = {
+                    companyName: item.company_name || 'Negocio',
+                    contactName: item.contact_name || 'Amigo',
+                    tier: item.contact_tier || ''
                 };
 
-                Object.keys(variables).forEach(key => {
-                    const regex = new RegExp(`{{${key}}}`, 'g');
-                    processedBody = processedBody.replace(regex, variables[key]);
-                    processedSubject = processedSubject.replace(regex, variables[key]);
-                });
-
-                // Add signature
-                const finalHtml = `${processedBody} ${selectedSender.signature || ''}`;
+                const processedBody = applyEmailTemplateVariables(selectedTemplate.html_content, templateVariables);
+                const processedSubject = applyEmailTemplateVariables(selectedTemplate.subject, templateVariables);
 
                 try {
                     const response = await fetch('/.netlify/functions/send-notification-email', {
@@ -773,8 +835,11 @@ const UnifiedCRM = () => {
                             data: {
                                 email: item.contact_email,
                                 subject: processedSubject,
-                                html: finalHtml,
+                                html: processedBody,
+                                signature_html: selectedSender.signature || '',
                                 company_name: item.company_name,
+                                contact_name: item.contact_name,
+                                tier: item.contact_tier,
                                 from_name: selectedSender.name,
                                 from_email: selectedSender.email
                             }
@@ -800,6 +865,8 @@ const UnifiedCRM = () => {
                     // 1. Mark as sent in marketing_contacts (so it's not selected again)
                     await supabase.from('marketing_contacts').update({
                         email_sent_at: new Date().toISOString(),
+                        last_email_sent: new Date().toISOString(),
+                        email_sent_count: (item.email_sent_count || 0) + 1,
                         email_status: 'sent',
                         status: 'contactado'
                     }).eq('id', item.contact_id);
@@ -808,7 +875,12 @@ const UnifiedCRM = () => {
                     await supabase.from('crm_email_logs').insert({
                         recipient_email: item.contact_email,
                         subject: processedSubject,
-                        html_content: finalHtml,
+                        html_content: processedBody,
+                        rendered_html: buildEmailPreviewShell({
+                            html: processedBody,
+                            signatureHtml: selectedSender.signature || '',
+                            companyName: item.company_name || 'Negocio'
+                        }),
                         status: 'sent',
                         tier: item.contact_tier,
                         template_id: selectedTemplate.id,
@@ -884,23 +956,14 @@ const UnifiedCRM = () => {
         const toastId = toast.loading(`Enviando prueba a ${emails.length} correo(s)...`);
 
         try {
-            // Process template with sample data
-            let processedSubject = selectedTemplate.subject;
-            let processedBody = selectedTemplate.html_content;
-
             const sampleVariables = {
-                empresa: 'Mi Empresa de Prueba',
-                nombre: 'Usuario de Prueba',
+                companyName: 'Mi Empresa de Prueba',
+                contactName: 'Usuario de Prueba',
                 tier: 'AAA'
             };
 
-            Object.keys(sampleVariables).forEach(key => {
-                const regex = new RegExp(`{{${key}}}`, 'g');
-                processedSubject = processedSubject.replace(regex, sampleVariables[key]);
-                processedBody = processedBody.replace(regex, sampleVariables[key]);
-            });
-
-            const finalHtml = `${processedBody} ${selectedSender.signature || ''}`;
+            const processedSubject = applyEmailTemplateVariables(selectedTemplate.subject, sampleVariables);
+            const processedBody = applyEmailTemplateVariables(selectedTemplate.html_content, sampleVariables);
 
             let successCount = 0;
             for (const email of emails) {
@@ -913,8 +976,11 @@ const UnifiedCRM = () => {
                             data: {
                                 email: email,
                                 subject: `[PRUEBA] ${processedSubject}`,
-                                html: `<div style="background:#fff3cd;padding:10px;margin-bottom:20px;border-radius:8px;border:1px solid #ffc107;"><strong>⚠️ ESTO ES UNA PRUEBA</strong> - El correo real no tendrá este aviso.</div>${finalHtml}`,
+                                html: `<div style="background:#fff3cd;padding:10px;margin-bottom:20px;border-radius:8px;border:1px solid #ffc107;"><strong>Prueba CRM</strong> - Este correo usa el mismo layout profesional del envio real.</div>${processedBody}`,
+                                signature_html: selectedSender.signature || '',
                                 company_name: 'Mi Empresa de Prueba',
+                                contact_name: 'Usuario de Prueba',
+                                tier: 'AAA',
                                 from_name: selectedSender.name,
                                 from_email: selectedSender.email
                             }
@@ -952,31 +1018,13 @@ const UnifiedCRM = () => {
     // ============ EMAIL PREVIEW ============
     const openEmailPreview = () => {
         if (!selectedTemplate) { toast.error('Selecciona una plantilla primero'); return; }
-        const sample = { empresa: 'Empresa Ejemplo S.A.', nombre: 'Juan Contacto', tier: 'AAA' };
-        let html = selectedTemplate.html_content;
-        Object.entries(sample).forEach(([k, v]) => {
-            html = html.replace(new RegExp(`{{${k}}}`, 'g'), v);
-        });
-        const sig = selectedSender?.signature || '';
-        setEmailPreviewHtml(`
-            <div style="margin:0;padding:24px;background:linear-gradient(180deg,#eff6ff 0%,#f8fafc 100%);font-family:Arial,Helvetica,sans-serif;">
-                <div style="max-width:680px;margin:0 auto;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 12px 40px rgba(15,23,42,.10);">
-                    <div style="padding:30px 28px 24px;background:linear-gradient(135deg,#0f172a 0%,#1d4ed8 60%,#2563eb 100%);text-align:center;color:#fff;">
-                        <img src="https://geobooker.com.mx/images/geobooker-logo-horizontal-new.png" alt="Geobooker" style="width:210px;max-width:100%;height:auto;display:block;margin:0 auto 14px;" />
-                        <p style="margin:0;font-size:13px;opacity:.92;">Publicidad local, premium y enterprise para hacer crecer tu negocio</p>
-                    </div>
-                    <div style="padding:34px 28px 22px;color:#1f2937;line-height:1.65;font-size:16px;">
-                        ${html}${sig}
-                    </div>
-                    <div style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:28px;text-align:center;">
-                        <img src="https://geobooker.com.mx/images/geobooker-logo-horizontal-new.png" alt="Geobooker" style="width:145px;max-width:100%;height:auto;opacity:.92;" />
-                        <p style="margin:12px 0 0;color:#475569;font-size:13px;line-height:1.6;">
-                            El envío real incluirá footer profesional, botones de descarga y QR para App Store y Google Play.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        `);
+        const sampleVariables = { companyName: 'Empresa Ejemplo S.A.', contactName: 'Juan Contacto', tier: 'AAA' };
+        const processedHtml = applyEmailTemplateVariables(selectedTemplate.html_content, sampleVariables);
+        setEmailPreviewHtml(buildEmailPreviewShell({
+            html: processedHtml,
+            signatureHtml: selectedSender?.signature || '',
+            companyName: sampleVariables.companyName
+        }));
         setShowEmailPreview(true);
     };
 
@@ -2116,8 +2164,8 @@ const UnifiedCRM = () => {
                                         <p className="text-2xl mb-0.5">{drawerContact.email_status === 'sent' ? '✅' : '⏳'}</p>
                                         <p className="text-xs font-semibold text-gray-700">Email</p>
                                         <p className="text-xs text-gray-400">{drawerContact.email_status === 'sent' ? 'Enviado' : 'Pendiente'}</p>
-                                        {drawerContact.email_sent_at && (
-                                            <p className="text-xs text-gray-400 mt-1">{new Date(drawerContact.email_sent_at).toLocaleDateString()}</p>
+                                        {(drawerContact.email_sent_at || drawerContact.last_email_sent) && (
+                                            <p className="text-xs text-gray-400 mt-1">{new Date(drawerContact.email_sent_at || drawerContact.last_email_sent).toLocaleDateString()}</p>
                                         )}
                                     </div>
                                     <div className={`p-3 rounded-lg text-center ${drawerContact.whatsapp_status === 'sent' ? 'bg-green-50 border border-green-200' : 'bg-gray-100'}`}>
@@ -2264,3 +2312,6 @@ const UnifiedCRM = () => {
 };
 
 export default UnifiedCRM;
+
+
+

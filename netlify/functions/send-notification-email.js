@@ -5,8 +5,8 @@
  * 
  * Uses Resend (free tier: 100 emails/day)
  */
-const { wrapEmailLayout } = require('./_email-branding');
 const { resolveEmailSender } = require('./_email-config');
+const { buildCampaignEmail } = require('./_campaign-email');
 
 export async function handler(event) {
     if (event.httpMethod !== 'POST') {
@@ -305,25 +305,32 @@ function getEmailTemplate(type, data) {
         // ==================== CUSTOM EMAIL (for campaigns) ====================
         custom: {
             subject: data.subject || 'Mensaje de Geobooker',
-            html: wrapEmailLayout({
-                contentHtml: data.html || '<p>Mensaje sin contenido</p>',
-                preheader: data.preheader || 'Conoce Geobooker Ads y descarga la app',
-                title: data.subject || 'Mensaje de Geobooker',
-                companyName: data.company_name || data.companyName || 'tu empresa'
+            html: buildCampaignEmail({
+                html: data.html,
+                signatureHtml: data.signature_html || data.signatureHtml,
+                subject: data.subject || 'Mensaje de Geobooker',
+                companyName: data.company_name || data.companyName || 'tu empresa',
+                contactName: data.contact_name || data.contactName || '',
+                tier: data.tier || '',
+                preheader: data.preheader || 'Conoce Geobooker Ads y descarga la app'
             })
         },
 
         // ==================== CRM CAMPAIGN EMAIL ====================
         crm_campaign: {
             subject: data.subject || 'Mensaje de Geobooker',
-            html: wrapEmailLayout({
-                contentHtml: data.html || '<p>Mensaje sin contenido</p>',
-                preheader: data.preheader || 'CampaÃ±a CRM Geobooker Ads',
-                title: data.subject || 'CampaÃ±a CRM Geobooker',
-                companyName: data.company_name || data.companyName || 'tu empresa'
+            html: buildCampaignEmail({
+                html: data.html,
+                signatureHtml: data.signature_html || data.signatureHtml,
+                subject: data.subject || 'Campaña CRM Geobooker',
+                companyName: data.company_name || data.companyName || 'tu empresa',
+                contactName: data.contact_name || data.contactName || '',
+                tier: data.tier || '',
+                preheader: data.preheader || 'Campaña CRM Geobooker Ads'
             })
         }
     };
 
     return templates[type] || null;
 }
+

@@ -3,8 +3,8 @@
 
 const { Resend } = require('resend');
 const { createClient } = require('@supabase/supabase-js');
-const { wrapEmailLayout } = require('./_email-branding');
 const { resolveEmailSender } = require('./_email-config');
+const { buildCampaignEmail, renderCampaignCopy } = require('./_campaign-email');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const supabase = createClient(
@@ -198,21 +198,21 @@ exports.handler = async (event, context) => {
                 const greeting = contact.contact_name || 'Estimado/a';
                 const companyName = contact.company_name || 'su empresa';
 
-                let baseHtmlContent = template.html_content
-                    .replace(/{contact_name}/g, greeting)
-                    .replace(/{company_name}/g, companyName);
-
-                let finalHtml = wrapEmailLayout({
-                    contentHtml: baseHtmlContent,
-                    preheader: `${companyName} puede anunciarse en Geobooker con espacios patrocinados`,
-                    title: template.subject || 'Geobooker Ads',
-                    companyName
+                const finalHtml = buildCampaignEmail({
+                    html: template.html_content,
+                    subject: template.subject || 'Geobooker Ads',
+                    companyName,
+                    contactName: greeting,
+                    tier: contact.tier
                 });
 
-                let finalSubject = template.subject
-                    .replace(/{contact_name}/g, greeting)
-                    .replace(/{company_name}/g, companyName);
+                const finalSubject = renderCampaignCopy(template.subject || 'Geobooker Ads', {
+                    contactName: greeting,
+                    companyName,
+                    tier: contact.tier
+                });
 
+                // Enviar email con Resend
                 // Enviar email con Resend
                 const senderConfig = resolveEmailSender({
                     preferredEmail: contact.assigned_email_sender,
@@ -269,6 +269,7 @@ exports.handler = async (event, context) => {
                     .from('marketing_contacts')
                     .update({
                         email_status: 'sent',
+                        email_sent_at: new Date().toISOString(),
                         last_email_sent: new Date().toISOString(),
                         email_sent_count: (contact.email_sent_count || 0) + 1
                     })
@@ -329,3 +330,5 @@ exports.handler = async (event, context) => {
         };
     }
 };
+
+

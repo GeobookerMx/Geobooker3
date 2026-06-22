@@ -1,0 +1,42 @@
+name: Daily CRM Automation
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 09:00 America/Mexico_City aprox: preparar colas
+    - cron: '0 15 * * *'
+    # 09:10, 09:20, 09:30, 09:40 America/Mexico_City aprox: procesar hasta 25 por corrida
+    - cron: '10 15 * * *'
+    - cron: '20 15 * * *'
+    - cron: '30 15 * * *'
+    - cron: '40 15 * * *'
+
+jobs:
+  generate-queues:
+    if: github.event.schedule == '0 15 * * *' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Email Queue
+        run: |
+          curl --fail --show-error --silent \
+            -X POST "https://geobooker.com.mx/.netlify/functions/generate-email-queue" \
+            -H "Content-Type: application/json" \
+            -d "{\"limit\":100}"
+
+      - name: Generate WhatsApp Queue
+        run: |
+          curl --fail --show-error --silent \
+            -X POST "https://geobooker.com.mx/.netlify/functions/generate-whatsapp-queue" \
+            -H "Content-Type: application/json" \
+            -d "{\"limit\":20}"
+
+  process-email-queue:
+    if: github.event.schedule != '0 15 * * *' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Process Email Queue Batch
+        run: |
+          curl --fail --show-error --silent \
+            -X POST "https://geobooker.com.mx/.netlify/functions/process-email-queue" \
+            -H "Content-Type: application/json" \
+            -d "{\"limit\":25}"

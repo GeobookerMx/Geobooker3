@@ -1,7 +1,7 @@
-// src/pages/enterprise/EnterpriseCheckout.jsx
+﻿// src/pages/enterprise/EnterpriseCheckout.jsx
 /**
  * Self-Service Enterprise Checkout Wizard (English)
- * Flow: Select Plan → Target Cities → Creative Upload → Payment
+ * Flow: Select Plan â†’ Target Cities â†’ Creative Upload â†’ Payment
  * For international advertisers (Nike, Heineken, Coca-Cola, etc.)
  */
 import React, { useState, useEffect } from 'react';
@@ -17,6 +17,7 @@ import toast from 'react-hot-toast';
 import SEO from '../../components/SEO';
 import { Capacitor } from '@capacitor/core';
 import { ENTERPRISE_FALLBACK_PRICING } from '../../config/enterprisePricing';
+import { IS_IOS_NATIVE } from '../../utils/iosStore';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 const ENTERPRISE_SELF_SERVICE_ENABLED = import.meta.env.VITE_ENABLE_ENTERPRISE_CHECKOUT === 'true';
@@ -80,7 +81,7 @@ const MAJOR_CITIES = {
         // Ontario
         'Toronto', 'Ottawa', 'Mississauga', 'Brampton', 'Hamilton', 'London ON', 'Markham', 'Vaughan', 'Kitchener', 'Windsor', 'Niagara Falls', 'Kingston', 'Thunder Bay',
         // Quebec
-        'Montreal', 'Quebec City', 'Laval', 'Gatineau', 'Longueuil', 'Sherbrooke', 'Trois-Rivières', 'Saguenay',
+        'Montreal', 'Quebec City', 'Laval', 'Gatineau', 'Longueuil', 'Sherbrooke', 'Trois-RiviÃ¨res', 'Saguenay',
         // British Columbia
         'Vancouver', 'Surrey', 'Burnaby', 'Richmond', 'Victoria', 'Kelowna', 'Whistler', 'Nanaimo', 'Kamloops', 'Prince George',
         // Alberta
@@ -101,26 +102,26 @@ const MAJOR_CITIES = {
         'Yellowknife', 'Whitehorse', 'Iqaluit'
     ],
 
-    MX: ['Mexico City', 'Guadalajara', 'Monterrey', 'Cancún', 'Tijuana', 'Puebla', 'León', 'Mérida', 'Querétaro', 'San Luis Potosí', 'Aguascalientes', 'Hermosillo', 'Morelia', 'Oaxaca', 'Playa del Carmen', 'Los Cabos', 'Puerto Vallarta', 'Acapulco', 'Veracruz', 'Chihuahua', 'Toluca', 'Saltillo', 'Cuernavaca', 'Mazatlán', 'Tulum', 'Guanajuato', 'San Miguel de Allende', 'Zacatecas', 'Durango'],
+    MX: ['Mexico City', 'Guadalajara', 'Monterrey', 'CancÃºn', 'Tijuana', 'Puebla', 'LeÃ³n', 'MÃ©rida', 'QuerÃ©taro', 'San Luis PotosÃ­', 'Aguascalientes', 'Hermosillo', 'Morelia', 'Oaxaca', 'Playa del Carmen', 'Los Cabos', 'Puerto Vallarta', 'Acapulco', 'Veracruz', 'Chihuahua', 'Toluca', 'Saltillo', 'Cuernavaca', 'MazatlÃ¡n', 'Tulum', 'Guanajuato', 'San Miguel de Allende', 'Zacatecas', 'Durango'],
 
     // Central America & Caribbean
     GT: ['Guatemala City', 'Antigua Guatemala', 'Quetzaltenango'],
-    PA: ['Panama City', 'Colón', 'David'],
-    CR: ['San José', 'Limón', 'Alajuela'],
+    PA: ['Panama City', 'ColÃ³n', 'David'],
+    CR: ['San JosÃ©', 'LimÃ³n', 'Alajuela'],
     DO: ['Santo Domingo', 'Punta Cana', 'Santiago'],
-    PR: ['San Juan', 'Ponce', 'Mayagüez'],
+    PR: ['San Juan', 'Ponce', 'MayagÃ¼ez'],
     CU: ['Havana', 'Varadero', 'Santiago de Cuba'],
 
     // South America
-    BR: ['São Paulo', 'Rio de Janeiro', 'Brasília', 'Salvador', 'Fortaleza', 'Belo Horizonte', 'Manaus', 'Curitiba', 'Recife', 'Porto Alegre', 'Florianópolis'],
-    AR: ['Buenos Aires', 'Córdoba', 'Rosario', 'Mendoza', 'Mar del Plata', 'La Plata', 'San Miguel de Tucumán', 'Bariloche', 'Salta'],
-    CO: ['Bogotá', 'Medellín', 'Cali', 'Barranquilla', 'Cartagena', 'Santa Marta', 'Bucaramanga', 'Pereira'],
-    CL: ['Santiago', 'Valparaíso', 'Concepción', 'Viña del Mar', 'Antofagasta', 'La Serena'],
+    BR: ['SÃ£o Paulo', 'Rio de Janeiro', 'BrasÃ­lia', 'Salvador', 'Fortaleza', 'Belo Horizonte', 'Manaus', 'Curitiba', 'Recife', 'Porto Alegre', 'FlorianÃ³polis'],
+    AR: ['Buenos Aires', 'CÃ³rdoba', 'Rosario', 'Mendoza', 'Mar del Plata', 'La Plata', 'San Miguel de TucumÃ¡n', 'Bariloche', 'Salta'],
+    CO: ['BogotÃ¡', 'MedellÃ­n', 'Cali', 'Barranquilla', 'Cartagena', 'Santa Marta', 'Bucaramanga', 'Pereira'],
+    CL: ['Santiago', 'ValparaÃ­so', 'ConcepciÃ³n', 'ViÃ±a del Mar', 'Antofagasta', 'La Serena'],
     PE: ['Lima', 'Arequipa', 'Cusco', 'Trujillo', 'Chiclayo', 'Piura'],
-    EC: ['Quito', 'Guayaquil', 'Cuenca', 'Manta', 'Galápagos'],
+    EC: ['Quito', 'Guayaquil', 'Cuenca', 'Manta', 'GalÃ¡pagos'],
     VE: ['Caracas', 'Maracaibo', 'Valencia', 'Barquisimeto', 'Margarita Island'],
     UY: ['Montevideo', 'Punta del Este', 'Colonia del Sacramento'],
-    PY: ['Asunción', 'Ciudad del Este', 'Encarnación'],
+    PY: ['AsunciÃ³n', 'Ciudad del Este', 'EncarnaciÃ³n'],
     BO: ['La Paz', 'Santa Cruz', 'Cochabamba', 'Sucre'],
 
     // ==========================================
@@ -129,11 +130,11 @@ const MAJOR_CITIES = {
 
     // #1 GERMANY - All Major Cities & Regions
     DE: [
-        'Berlin', 'Hamburg', 'Munich', 'Cologne', 'Frankfurt', 'Stuttgart', 'Düsseldorf', 'Leipzig', 'Dortmund', 'Essen',
-        'Bremen', 'Dresden', 'Hanover', 'Nuremberg', 'Duisburg', 'Bochum', 'Wuppertal', 'Bielefeld', 'Bonn', 'Münster',
-        'Karlsruhe', 'Mannheim', 'Augsburg', 'Wiesbaden', 'Mönchengladbach', 'Gelsenkirchen', 'Braunschweig', 'Aachen',
-        'Kiel', 'Chemnitz', 'Halle', 'Magdeburg', 'Freiburg', 'Krefeld', 'Mainz', 'Lübeck', 'Erfurt', 'Rostock',
-        'Kassel', 'Hagen', 'Saarbrücken', 'Potsdam', 'Heidelberg', 'Darmstadt', 'Regensburg', 'Würzburg', 'Ingolstadt', 'Baden-Baden', 'Konstanz'
+        'Berlin', 'Hamburg', 'Munich', 'Cologne', 'Frankfurt', 'Stuttgart', 'DÃ¼sseldorf', 'Leipzig', 'Dortmund', 'Essen',
+        'Bremen', 'Dresden', 'Hanover', 'Nuremberg', 'Duisburg', 'Bochum', 'Wuppertal', 'Bielefeld', 'Bonn', 'MÃ¼nster',
+        'Karlsruhe', 'Mannheim', 'Augsburg', 'Wiesbaden', 'MÃ¶nchengladbach', 'Gelsenkirchen', 'Braunschweig', 'Aachen',
+        'Kiel', 'Chemnitz', 'Halle', 'Magdeburg', 'Freiburg', 'Krefeld', 'Mainz', 'LÃ¼beck', 'Erfurt', 'Rostock',
+        'Kassel', 'Hagen', 'SaarbrÃ¼cken', 'Potsdam', 'Heidelberg', 'Darmstadt', 'Regensburg', 'WÃ¼rzburg', 'Ingolstadt', 'Baden-Baden', 'Konstanz'
     ],
 
     // #2 UNITED KINGDOM - All Regions
@@ -153,8 +154,8 @@ const MAJOR_CITIES = {
     // #3 FRANCE - All Regions
     FR: [
         'Paris', 'Marseille', 'Lyon', 'Toulouse', 'Nice', 'Nantes', 'Strasbourg', 'Montpellier', 'Bordeaux', 'Lille',
-        'Rennes', 'Reims', 'Saint-Étienne', 'Le Havre', 'Toulon', 'Grenoble', 'Dijon', 'Angers', 'Nîmes', 'Villeurbanne',
-        'Clermont-Ferrand', 'Le Mans', 'Aix-en-Provence', 'Brest', 'Tours', 'Amiens', 'Limoges', 'Perpignan', 'Besançon', 'Orléans',
+        'Rennes', 'Reims', 'Saint-Ã‰tienne', 'Le Havre', 'Toulon', 'Grenoble', 'Dijon', 'Angers', 'NÃ®mes', 'Villeurbanne',
+        'Clermont-Ferrand', 'Le Mans', 'Aix-en-Provence', 'Brest', 'Tours', 'Amiens', 'Limoges', 'Perpignan', 'BesanÃ§on', 'OrlÃ©ans',
         'Caen', 'Rouen', 'Cannes', 'Monaco', 'Avignon', 'La Rochelle', 'Biarritz', 'Antibes', 'Saint-Tropez', 'Chamonix', 'Metz'
     ],
 
@@ -174,9 +175,9 @@ const MAJOR_CITIES = {
 
     // #6 SPAIN - All Regions
     ES: [
-        'Madrid', 'Barcelona', 'Valencia', 'Seville', 'Zaragoza', 'Málaga', 'Murcia', 'Palma de Mallorca', 'Las Palmas', 'Bilbao',
-        'Alicante', 'Córdoba', 'Valladolid', 'Vigo', 'Gijón', 'Granada', 'A Coruña', 'Vitoria-Gasteiz', 'Elche', 'Oviedo',
-        'Santa Cruz de Tenerife', 'Pamplona', 'Santander', 'Burgos', 'Salamanca', 'Albacete', 'Logroño', 'San Sebastián',
+        'Madrid', 'Barcelona', 'Valencia', 'Seville', 'Zaragoza', 'MÃ¡laga', 'Murcia', 'Palma de Mallorca', 'Las Palmas', 'Bilbao',
+        'Alicante', 'CÃ³rdoba', 'Valladolid', 'Vigo', 'GijÃ³n', 'Granada', 'A CoruÃ±a', 'Vitoria-Gasteiz', 'Elche', 'Oviedo',
+        'Santa Cruz de Tenerife', 'Pamplona', 'Santander', 'Burgos', 'Salamanca', 'Albacete', 'LogroÃ±o', 'San SebastiÃ¡n',
         'Ibiza', 'Marbella', 'Mallorca', 'Menorca', 'Formentera', 'Tenerife', 'Lanzarote', 'Fuerteventura', 'Toledo', 'Segovia'
     ],
 
@@ -190,32 +191,32 @@ const MAJOR_CITIES = {
     // #8 SWITZERLAND - All Cantons
     CH: [
         'Zurich', 'Geneva', 'Basel', 'Lausanne', 'Bern', 'Winterthur', 'Lucerne', 'St. Gallen', 'Lugano', 'Biel',
-        'Thun', 'Bellinzona', 'Köniz', 'Fribourg', 'La Chaux-de-Fonds', 'Schaffhausen', 'Chur', 'Neuchâtel', 'Vernier', 'Sion',
+        'Thun', 'Bellinzona', 'KÃ¶niz', 'Fribourg', 'La Chaux-de-Fonds', 'Schaffhausen', 'Chur', 'NeuchÃ¢tel', 'Vernier', 'Sion',
         'Zermatt', 'Interlaken', 'Davos', 'St. Moritz', 'Montreux', 'Locarno', 'Grindelwald'
     ],
 
     // #9 POLAND - All Major Cities
     PL: [
-        'Warsaw', 'Kraków', 'Łódź', 'Wrocław', 'Poznań', 'Gdańsk', 'Szczecin', 'Bydgoszcz', 'Lublin', 'Białystok',
-        'Katowice', 'Gdynia', 'Częstochowa', 'Radom', 'Sosnowiec', 'Toruń', 'Kielce', 'Rzeszów', 'Gliwice', 'Zabrze',
-        'Olsztyn', 'Bielsko-Biała', 'Bytom', 'Zielona Góra', 'Rybnik', 'Opole', 'Legnica', 'Kalisz', 'Zakopane'
+        'Warsaw', 'KrakÃ³w', 'ÅÃ³dÅº', 'WrocÅ‚aw', 'PoznaÅ„', 'GdaÅ„sk', 'Szczecin', 'Bydgoszcz', 'Lublin', 'BiaÅ‚ystok',
+        'Katowice', 'Gdynia', 'CzÄ™stochowa', 'Radom', 'Sosnowiec', 'ToruÅ„', 'Kielce', 'RzeszÃ³w', 'Gliwice', 'Zabrze',
+        'Olsztyn', 'Bielsko-BiaÅ‚a', 'Bytom', 'Zielona GÃ³ra', 'Rybnik', 'Opole', 'Legnica', 'Kalisz', 'Zakopane'
     ],
 
     // #10 BELGIUM - All Regions
     BE: [
-        'Brussels', 'Antwerp', 'Ghent', 'Charleroi', 'Liège', 'Bruges', 'Namur', 'Leuven', 'Mons', 'Aalst',
-        'Mechelen', 'La Louvière', 'Kortrijk', 'Hasselt', 'Ostend', 'Sint-Niklaas', 'Tournai', 'Genk', 'Seraing', 'Roeselare'
+        'Brussels', 'Antwerp', 'Ghent', 'Charleroi', 'LiÃ¨ge', 'Bruges', 'Namur', 'Leuven', 'Mons', 'Aalst',
+        'Mechelen', 'La LouviÃ¨re', 'Kortrijk', 'Hasselt', 'Ostend', 'Sint-Niklaas', 'Tournai', 'Genk', 'Seraing', 'Roeselare'
     ],
 
     // Other European Countries
-    PT: ['Lisbon', 'Porto', 'Vila Nova de Gaia', 'Amadora', 'Braga', 'Setúbal', 'Coimbra', 'Funchal', 'Faro', 'Évora', 'Algarve', 'Sintra', 'Cascais'],
-    AT: ['Vienna', 'Graz', 'Linz', 'Salzburg', 'Innsbruck', 'Klagenfurt', 'Villach', 'Wels', 'St. Pölten', 'Dornbirn', 'Hallstatt', 'Kitzbühel'],
+    PT: ['Lisbon', 'Porto', 'Vila Nova de Gaia', 'Amadora', 'Braga', 'SetÃºbal', 'Coimbra', 'Funchal', 'Faro', 'Ã‰vora', 'Algarve', 'Sintra', 'Cascais'],
+    AT: ['Vienna', 'Graz', 'Linz', 'Salzburg', 'Innsbruck', 'Klagenfurt', 'Villach', 'Wels', 'St. PÃ¶lten', 'Dornbirn', 'Hallstatt', 'KitzbÃ¼hel'],
     IE: ['Dublin', 'Cork', 'Limerick', 'Galway', 'Waterford', 'Drogheda', 'Kilkenny', 'Sligo', 'Wexford', 'Athlone', 'Killarney'],
-    SE: ['Stockholm', 'Gothenburg', 'Malmö', 'Uppsala', 'Västerås', 'Örebro', 'Linköping', 'Helsingborg', 'Jönköping', 'Norrköping', 'Lund', 'Umeå', 'Kiruna'],
-    NO: ['Oslo', 'Bergen', 'Trondheim', 'Stavanger', 'Drammen', 'Fredrikstad', 'Kristiansand', 'Sandnes', 'Tromsø', 'Ålesund', 'Bodø', 'Kirkenes'],
-    DK: ['Copenhagen', 'Aarhus', 'Odense', 'Aalborg', 'Esbjerg', 'Randers', 'Kolding', 'Horsens', 'Vejle', 'Roskilde', 'Helsingør'],
-    FI: ['Helsinki', 'Espoo', 'Tampere', 'Vantaa', 'Oulu', 'Turku', 'Jyväskylä', 'Lahti', 'Kuopio', 'Pori', 'Rovaniemi', 'Lapland'],
-    CZ: ['Prague', 'Brno', 'Ostrava', 'Plzeň', 'Liberec', 'Olomouc', 'Ústí nad Labem', 'Hradec Králové', 'České Budějovice', 'Pardubice', 'Karlovy Vary'],
+    SE: ['Stockholm', 'Gothenburg', 'MalmÃ¶', 'Uppsala', 'VÃ¤sterÃ¥s', 'Ã–rebro', 'LinkÃ¶ping', 'Helsingborg', 'JÃ¶nkÃ¶ping', 'NorrkÃ¶ping', 'Lund', 'UmeÃ¥', 'Kiruna'],
+    NO: ['Oslo', 'Bergen', 'Trondheim', 'Stavanger', 'Drammen', 'Fredrikstad', 'Kristiansand', 'Sandnes', 'TromsÃ¸', 'Ã…lesund', 'BodÃ¸', 'Kirkenes'],
+    DK: ['Copenhagen', 'Aarhus', 'Odense', 'Aalborg', 'Esbjerg', 'Randers', 'Kolding', 'Horsens', 'Vejle', 'Roskilde', 'HelsingÃ¸r'],
+    FI: ['Helsinki', 'Espoo', 'Tampere', 'Vantaa', 'Oulu', 'Turku', 'JyvÃ¤skylÃ¤', 'Lahti', 'Kuopio', 'Pori', 'Rovaniemi', 'Lapland'],
+    CZ: ['Prague', 'Brno', 'Ostrava', 'PlzeÅˆ', 'Liberec', 'Olomouc', 'ÃšstÃ­ nad Labem', 'Hradec KrÃ¡lovÃ©', 'ÄŒeskÃ© BudÄ›jovice', 'Pardubice', 'Karlovy Vary'],
     GR: ['Athens', 'Thessaloniki', 'Patras', 'Heraklion', 'Larissa', 'Volos', 'Rhodes', 'Ioannina', 'Chania', 'Santorini', 'Mykonos', 'Corfu', 'Crete', 'Zakynthos'],
     TR: ['Istanbul', 'Ankara', 'Izmir', 'Bursa', 'Adana', 'Gaziantep', 'Konya', 'Antalya', 'Kayseri', 'Mersin', 'Cappadocia', 'Bodrum', 'Fethiye', 'Marmaris'],
 
@@ -248,82 +249,92 @@ const MAJOR_CITIES = {
 
 const COUNTRIES = [
     // North America
-    { code: 'US', name: '🇺🇸 United States', region: 'northamerica' },
-    { code: 'CA', name: '🇨🇦 Canada', region: 'northamerica' },
-    { code: 'MX', name: '🇲🇽 Mexico', region: 'northamerica' },
+    { code: 'US', name: 'ðŸ‡ºðŸ‡¸ United States', region: 'northamerica' },
+    { code: 'CA', name: 'ðŸ‡¨ðŸ‡¦ Canada', region: 'northamerica' },
+    { code: 'MX', name: 'ðŸ‡²ðŸ‡½ Mexico', region: 'northamerica' },
 
     // Central America & Caribbean
-    { code: 'GT', name: '🇬🇹 Guatemala', region: 'centralamerica' },
-    { code: 'PA', name: '🇵🇦 Panama', region: 'centralamerica' },
-    { code: 'CR', name: '🇨🇷 Costa Rica', region: 'centralamerica' },
-    { code: 'DO', name: '🇩🇴 Dominican Republic', region: 'caribbean' },
-    { code: 'PR', name: '🇵🇷 Puerto Rico', region: 'caribbean' },
-    { code: 'CU', name: '🇨🇺 Cuba', region: 'caribbean' },
+    { code: 'GT', name: 'ðŸ‡¬ðŸ‡¹ Guatemala', region: 'centralamerica' },
+    { code: 'PA', name: 'ðŸ‡µðŸ‡¦ Panama', region: 'centralamerica' },
+    { code: 'CR', name: 'ðŸ‡¨ðŸ‡· Costa Rica', region: 'centralamerica' },
+    { code: 'DO', name: 'ðŸ‡©ðŸ‡´ Dominican Republic', region: 'caribbean' },
+    { code: 'PR', name: 'ðŸ‡µðŸ‡· Puerto Rico', region: 'caribbean' },
+    { code: 'CU', name: 'ðŸ‡¨ðŸ‡º Cuba', region: 'caribbean' },
 
     // South America
-    { code: 'BR', name: '🇧🇷 Brazil', region: 'latam' },
-    { code: 'AR', name: '🇦🇷 Argentina', region: 'latam' },
-    { code: 'CO', name: '🇨🇴 Colombia', region: 'latam' },
-    { code: 'CL', name: '🇨🇱 Chile', region: 'latam' },
-    { code: 'PE', name: '🇵🇪 Peru', region: 'latam' },
-    { code: 'EC', name: '🇪🇨 Ecuador', region: 'latam' },
-    { code: 'VE', name: '🇻🇪 Venezuela', region: 'latam' },
-    { code: 'UY', name: '🇺🇾 Uruguay', region: 'latam' },
-    { code: 'PY', name: '🇵🇾 Paraguay', region: 'latam' },
-    { code: 'BO', name: '🇧🇴 Bolivia', region: 'latam' },
+    { code: 'BR', name: 'ðŸ‡§ðŸ‡· Brazil', region: 'latam' },
+    { code: 'AR', name: 'ðŸ‡¦ðŸ‡· Argentina', region: 'latam' },
+    { code: 'CO', name: 'ðŸ‡¨ðŸ‡´ Colombia', region: 'latam' },
+    { code: 'CL', name: 'ðŸ‡¨ðŸ‡± Chile', region: 'latam' },
+    { code: 'PE', name: 'ðŸ‡µðŸ‡ª Peru', region: 'latam' },
+    { code: 'EC', name: 'ðŸ‡ªðŸ‡¨ Ecuador', region: 'latam' },
+    { code: 'VE', name: 'ðŸ‡»ðŸ‡ª Venezuela', region: 'latam' },
+    { code: 'UY', name: 'ðŸ‡ºðŸ‡¾ Uruguay', region: 'latam' },
+    { code: 'PY', name: 'ðŸ‡µðŸ‡¾ Paraguay', region: 'latam' },
+    { code: 'BO', name: 'ðŸ‡§ðŸ‡´ Bolivia', region: 'latam' },
 
     // Europe
-    { code: 'ES', name: '🇪🇸 Spain', region: 'europe' },
-    { code: 'FR', name: '🇫🇷 France', region: 'europe' },
-    { code: 'DE', name: '🇩🇪 Germany', region: 'europe' },
-    { code: 'GB', name: '🇬🇧 United Kingdom', region: 'europe' },
-    { code: 'IT', name: '🇮🇹 Italy', region: 'europe' },
-    { code: 'NL', name: '🇳🇱 Netherlands', region: 'europe' },
-    { code: 'PT', name: '🇵🇹 Portugal', region: 'europe' },
-    { code: 'BE', name: '🇧🇪 Belgium', region: 'europe' },
-    { code: 'AT', name: '🇦🇹 Austria', region: 'europe' },
-    { code: 'CH', name: '🇨🇭 Switzerland', region: 'europe' },
-    { code: 'IE', name: '🇮🇪 Ireland', region: 'europe' },
-    { code: 'SE', name: '🇸🇪 Sweden', region: 'europe' },
-    { code: 'NO', name: '🇳🇴 Norway', region: 'europe' },
-    { code: 'DK', name: '🇩🇰 Denmark', region: 'europe' },
-    { code: 'FI', name: '🇫🇮 Finland', region: 'europe' },
-    { code: 'PL', name: '🇵🇱 Poland', region: 'europe' },
-    { code: 'CZ', name: '🇨🇿 Czech Republic', region: 'europe' },
-    { code: 'GR', name: '🇬🇷 Greece', region: 'europe' },
-    { code: 'TR', name: '🇹🇷 Turkey', region: 'europe' },
-    { code: 'RU', name: '🇷🇺 Russia', region: 'europe' },
+    { code: 'ES', name: 'ðŸ‡ªðŸ‡¸ Spain', region: 'europe' },
+    { code: 'FR', name: 'ðŸ‡«ðŸ‡· France', region: 'europe' },
+    { code: 'DE', name: 'ðŸ‡©ðŸ‡ª Germany', region: 'europe' },
+    { code: 'GB', name: 'ðŸ‡¬ðŸ‡§ United Kingdom', region: 'europe' },
+    { code: 'IT', name: 'ðŸ‡®ðŸ‡¹ Italy', region: 'europe' },
+    { code: 'NL', name: 'ðŸ‡³ðŸ‡± Netherlands', region: 'europe' },
+    { code: 'PT', name: 'ðŸ‡µðŸ‡¹ Portugal', region: 'europe' },
+    { code: 'BE', name: 'ðŸ‡§ðŸ‡ª Belgium', region: 'europe' },
+    { code: 'AT', name: 'ðŸ‡¦ðŸ‡¹ Austria', region: 'europe' },
+    { code: 'CH', name: 'ðŸ‡¨ðŸ‡­ Switzerland', region: 'europe' },
+    { code: 'IE', name: 'ðŸ‡®ðŸ‡ª Ireland', region: 'europe' },
+    { code: 'SE', name: 'ðŸ‡¸ðŸ‡ª Sweden', region: 'europe' },
+    { code: 'NO', name: 'ðŸ‡³ðŸ‡´ Norway', region: 'europe' },
+    { code: 'DK', name: 'ðŸ‡©ðŸ‡° Denmark', region: 'europe' },
+    { code: 'FI', name: 'ðŸ‡«ðŸ‡® Finland', region: 'europe' },
+    { code: 'PL', name: 'ðŸ‡µðŸ‡± Poland', region: 'europe' },
+    { code: 'CZ', name: 'ðŸ‡¨ðŸ‡¿ Czech Republic', region: 'europe' },
+    { code: 'GR', name: 'ðŸ‡¬ðŸ‡· Greece', region: 'europe' },
+    { code: 'TR', name: 'ðŸ‡¹ðŸ‡· Turkey', region: 'europe' },
+    { code: 'RU', name: 'ðŸ‡·ðŸ‡º Russia', region: 'europe' },
 
     // Asia
-    { code: 'JP', name: '🇯🇵 Japan', region: 'asia' },
-    { code: 'KR', name: '🇰🇷 South Korea', region: 'asia' },
-    { code: 'CN', name: '🇨🇳 China', region: 'asia' },
-    { code: 'TW', name: '🇹🇼 Taiwan', region: 'asia' },
-    { code: 'TH', name: '🇹🇭 Thailand', region: 'asia' },
-    { code: 'VN', name: '🇻🇳 Vietnam', region: 'asia' },
-    { code: 'SG', name: '🇸🇬 Singapore', region: 'asia' },
-    { code: 'MY', name: '🇲🇾 Malaysia', region: 'asia' },
-    { code: 'ID', name: '🇮🇩 Indonesia', region: 'asia' },
-    { code: 'PH', name: '🇵🇭 Philippines', region: 'asia' },
-    { code: 'IN', name: '🇮🇳 India', region: 'asia' },
-    { code: 'AE', name: '🇦🇪 UAE', region: 'middleeast' },
-    { code: 'SA', name: '🇸🇦 Saudi Arabia', region: 'middleeast' },
-    { code: 'IL', name: '🇮🇱 Israel', region: 'middleeast' },
+    { code: 'JP', name: 'ðŸ‡¯ðŸ‡µ Japan', region: 'asia' },
+    { code: 'KR', name: 'ðŸ‡°ðŸ‡· South Korea', region: 'asia' },
+    { code: 'CN', name: 'ðŸ‡¨ðŸ‡³ China', region: 'asia' },
+    { code: 'TW', name: 'ðŸ‡¹ðŸ‡¼ Taiwan', region: 'asia' },
+    { code: 'TH', name: 'ðŸ‡¹ðŸ‡­ Thailand', region: 'asia' },
+    { code: 'VN', name: 'ðŸ‡»ðŸ‡³ Vietnam', region: 'asia' },
+    { code: 'SG', name: 'ðŸ‡¸ðŸ‡¬ Singapore', region: 'asia' },
+    { code: 'MY', name: 'ðŸ‡²ðŸ‡¾ Malaysia', region: 'asia' },
+    { code: 'ID', name: 'ðŸ‡®ðŸ‡© Indonesia', region: 'asia' },
+    { code: 'PH', name: 'ðŸ‡µðŸ‡­ Philippines', region: 'asia' },
+    { code: 'IN', name: 'ðŸ‡®ðŸ‡³ India', region: 'asia' },
+    { code: 'AE', name: 'ðŸ‡¦ðŸ‡ª UAE', region: 'middleeast' },
+    { code: 'SA', name: 'ðŸ‡¸ðŸ‡¦ Saudi Arabia', region: 'middleeast' },
+    { code: 'IL', name: 'ðŸ‡®ðŸ‡± Israel', region: 'middleeast' },
 
     // Oceania
-    { code: 'AU', name: '🇦🇺 Australia', region: 'oceania' },
-    { code: 'NZ', name: '🇳🇿 New Zealand', region: 'oceania' },
+    { code: 'AU', name: 'ðŸ‡¦ðŸ‡º Australia', region: 'oceania' },
+    { code: 'NZ', name: 'ðŸ‡³ðŸ‡¿ New Zealand', region: 'oceania' },
 
     // Africa
-    { code: 'ZA', name: '🇿🇦 South Africa', region: 'africa' },
-    { code: 'EG', name: '🇪🇬 Egypt', region: 'africa' },
-    { code: 'MA', name: '🇲🇦 Morocco', region: 'africa' },
-    { code: 'KE', name: '🇰🇪 Kenya', region: 'africa' }
+    { code: 'ZA', name: 'ðŸ‡¿ðŸ‡¦ South Africa', region: 'africa' },
+    { code: 'EG', name: 'ðŸ‡ªðŸ‡¬ Egypt', region: 'africa' },
+    { code: 'MA', name: 'ðŸ‡²ðŸ‡¦ Morocco', region: 'africa' },
+    { code: 'KE', name: 'ðŸ‡°ðŸ‡ª Kenya', region: 'africa' }
 ];
 
 export default function EnterpriseCheckout() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (IS_IOS_NATIVE) {
+            navigate('/', { replace: true });
+        }
+    }, [navigate]);
+
+    if (IS_IOS_NATIVE) {
+        return null;
+    }
     const preselectedPlan = searchParams.get('plan') || '';
 
     // Redirect to contact form as enterprise plans are now quote-only
@@ -487,7 +498,7 @@ export default function EnterpriseCheckout() {
         // Size limits: 5MB for images, 30MB for videos (15s max = less size needed)
         const maxSize = isVideo ? 30 * 1024 * 1024 : 5 * 1024 * 1024;
         if (file.size > maxSize) {
-            toast.error(`File must be under ${isVideo ? '30MB' : '5MB'}. Recommended: 1200×628px for images.`);
+            toast.error(`File must be under ${isVideo ? '30MB' : '5MB'}. Recommended: 1200Ã—628px for images.`);
             return;
         }
 
@@ -500,7 +511,7 @@ export default function EnterpriseCheckout() {
                 img.src = URL.createObjectURL(file);
             });
             if (dims.w < 600 || dims.h < 400) {
-                toast.error(`Image too small (${dims.w}×${dims.h}). Minimum: 600×400px. Recommended: 1200×628px.`);
+                toast.error(`Image too small (${dims.w}Ã—${dims.h}). Minimum: 600Ã—400px. Recommended: 1200Ã—628px.`);
                 return;
             }
         }
@@ -627,7 +638,12 @@ export default function EnterpriseCheckout() {
                         type: 'enterprise_campaign',
                         campaign_id: campaign.id,
                         plan: form.selectedPlan,
-                        company: form.companyName
+                        company: form.companyName,
+                        advertiser_email: form.contactEmail,
+                        advertiser_name: form.companyName,
+                        billing_country: form.billingCountry,
+                        duration_months: selectedPlanData?.duration_months || 1,
+                        target_summary: (form.targetCountries || []).join(', ') || 'Global'
                     }
                 })
             });
@@ -737,20 +753,20 @@ export default function EnterpriseCheckout() {
                                                     <span className="text-gray-400 text-sm"> total</span>
                                                 </div>
                                                 <span className="text-emerald-400 text-sm">
-                                                    ≈ {formatPrice(Math.round(plan.current_price_usd / plan.duration_months))} USD/month
+                                                    â‰ˆ {formatPrice(Math.round(plan.current_price_usd / plan.duration_months))} USD/month
                                                 </span>
                                             </div>
                                         </div>
 
                                         <div className="text-sm text-gray-400">
                                             {plan.countries_included === 999
-                                                ? '🌍 All countries'
-                                                : `📍 ${plan.countries_included} ${plan.countries_included === 1 ? 'country' : 'countries'}`}
-                                            {' • '}
+                                                ? 'ðŸŒ All countries'
+                                                : `ðŸ“ ${plan.countries_included} ${plan.countries_included === 1 ? 'country' : 'countries'}`}
+                                            {' â€¢ '}
                                             {plan.cities_included === 999
                                                 ? 'Unlimited cities'
                                                 : `${plan.cities_included} ${plan.cities_included === 1 ? 'city' : 'cities'}`}
-                                            {' • '}{plan.duration_months} {plan.duration_months === 1 ? 'month' : 'months'}
+                                            {' â€¢ '}{plan.duration_months} {plan.duration_months === 1 ? 'month' : 'months'}
                                         </div>
                                         {plan.description && (
                                             <div className="text-xs text-gray-500 mt-2">{plan.description}</div>
@@ -1013,7 +1029,7 @@ export default function EnterpriseCheckout() {
                                                         onClick={() => { handleChange('imageUrl', ''); handleChange('isVideo', false); }}
                                                         className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
                                                     >
-                                                        ×
+                                                        Ã—
                                                     </button>
                                                 </div>
                                             ) : uploading ? (
@@ -1023,7 +1039,7 @@ export default function EnterpriseCheckout() {
                                                     <Upload className="w-8 h-8 mx-auto text-gray-500 mb-2" />
                                                     <span className="text-amber-500 hover:underline">Upload image or video</span>
                                                     <input type="file" accept="image/*,video/mp4,video/webm,video/mov" onChange={handleImageUpload} className="hidden" />
-                                                    <p className="text-xs text-gray-500 mt-1">JPG, PNG, WebP, GIF, MP4, WebM • Max 5MB images / 50MB videos</p>
+                                                    <p className="text-xs text-gray-500 mt-1">JPG, PNG, WebP, GIF, MP4, WebM â€¢ Max 5MB images / 50MB videos</p>
                                                 </label>
                                             )}
                                         </div>
@@ -1109,8 +1125,8 @@ export default function EnterpriseCheckout() {
                                 <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
                                 <div className="text-sm text-blue-200">
                                     {form.billingCountry === 'MX'
-                                        ? '⚠️ Precios + IVA: Los clientes en México pagan 16% IVA adicional. El IVA corre por cuenta del cliente.'
-                                        : '✅ International customers: 0% VAT (software export exempt).'}
+                                        ? 'âš ï¸ Precios + IVA: Los clientes en MÃ©xico pagan 16% IVA adicional. El IVA corre por cuenta del cliente.'
+                                        : 'âœ… International customers: 0% VAT (software export exempt).'}
                                 </div>
                             </div>
 
@@ -1131,7 +1147,7 @@ export default function EnterpriseCheckout() {
                             </button>
 
                             <p className="text-center text-gray-500 text-xs">
-                                Secure payment via Stripe • Credit card or wire transfer only
+                                Secure payment via Stripe â€¢ Credit card or wire transfer only
                             </p>
                         </div>
                     )}
@@ -1172,3 +1188,4 @@ export default function EnterpriseCheckout() {
         </div>
     );
 }
+

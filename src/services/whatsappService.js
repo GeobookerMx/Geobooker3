@@ -481,6 +481,22 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
 
             if (error) throw error;
 
+            const statsSource = normalizedSource === 'scan_invite'
+                ? 'google_places'
+                : normalizedSource === 'crm_queue'
+                    ? 'csv'
+                    : normalizedSource;
+
+            const { error: statsError } = await supabase.rpc('register_campaign_send', {
+                p_channel: 'whatsapp',
+                p_source: statsSource,
+                p_contact_id: null
+            });
+
+            if (statsError) {
+                console.warn('WhatsApp stats sync warning:', statsError);
+            }
+
             // 5. Abrir WhatsApp
             this.openWhatsApp(contact.phone, message);
 
@@ -490,7 +506,7 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
             return {
                 success: true,
                 messageId: data,
-                remaining: limit.remaining - 1
+                remaining: Math.max(0, limit.remaining - 1)
             };
 
         } catch (error) {

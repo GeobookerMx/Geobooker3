@@ -504,8 +504,7 @@ const ApifyScraper = () => {
                 startCooldown();
                 checkHourlyLimit();
                 // Actualizar contador global
-                setGlobalSent(prev => prev + 1);
-                setGlobalRemaining(result.remaining ?? Math.max(0, globalLimit - (globalSent + 1)));
+                await loadGlobalStats();
                 toast.success(`WhatsApp enviado. ${result.remaining} restantes hoy`);
             }
         } catch (error) {

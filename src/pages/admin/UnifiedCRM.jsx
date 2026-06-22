@@ -100,6 +100,68 @@ const buildEmailPreviewShell = ({ html, signatureHtml = '', companyName = 'tu em
 };
 
 
+const buildN8nSequencePayload = ({ contact, customMessage = '', selectedTemplate, selectedSender }) => {
+    const templateVariables = {
+        companyName: contact.company_name || 'Negocio',
+        contactName: contact.contact_name || 'Amigo',
+        tier: contact.tier || ''
+    };
+
+    const processedSubject = selectedTemplate
+        ? applyEmailTemplateVariables(selectedTemplate.subject, templateVariables)
+        : '';
+
+    const processedBody = selectedTemplate
+        ? applyEmailTemplateVariables(selectedTemplate.html_content, templateVariables)
+        : '';
+
+    const renderedHtml = selectedTemplate && selectedSender
+        ? buildEmailPreviewShell({
+            html: processedBody,
+            signatureHtml: selectedSender.signature || '',
+            companyName: contact.company_name || 'tu empresa',
+            preheader: processedSubject || 'Conoce Geobooker Ads y descarga la app'
+        })
+        : '';
+
+    const finalMessage = String(customMessage || '')
+        .replace(/{{contact_name}}/gi, contact.contact_name || '')
+        .replace(/{{company_name}}/gi, contact.company_name || '')
+        .replace(/{{city}}/gi, contact.city || '')
+        .replace(/{{industry}}/gi, contact.industry || '');
+
+    return {
+        type: 'crm_sequence',
+        table: 'marketing_contacts',
+        schema: 'public',
+        record: {
+            contact_id: contact.id,
+            tier: contact.tier,
+            email: contact.email,
+            company_name: contact.company_name,
+            contact_name: contact.contact_name,
+            city: contact.city,
+            state: contact.state,
+            industry: contact.industry,
+            custom_message: finalMessage
+        },
+        email_payload: selectedTemplate && selectedSender ? {
+            template_id: selectedTemplate.id,
+            template_name: selectedTemplate.name,
+            template_type: selectedTemplate.template_type || 'promotional',
+            subject: processedSubject,
+            html: processedBody,
+            rendered_html: renderedHtml,
+            signature_html: selectedSender.signature || '',
+            from_name: selectedSender.name,
+            from_email: selectedSender.email,
+            company_name: contact.company_name,
+            contact_name: contact.contact_name,
+            tier: contact.tier
+        } : null
+    };
+};
+
 const TEMPLATE_TYPE_META = {
     invitation: { label: 'Automatica: Invitacion', badge: 'bg-blue-100 text-blue-700' },
     followup: { label: 'Automatica: Follow Up', badge: 'bg-amber-100 text-amber-700' },
@@ -635,19 +697,7 @@ const UnifiedCRM = () => {
 
                 const { data: queueRows, error: queueError } = await supabase
                     .from('email_queue')
-                    .select(`
-                        id,
-                        contact_id,
-                        email_round,
-                        priority,
-                        marketing_contacts!inner (
-                            contact_name,
-                            company_name,
-                            email,
-                            tier,
-                            email_sent_count
-                        )
-                    `)
+                    .select('id, contact_id, email_round, priority, created_at')
                     .eq('status', 'pending')
                     .order('priority', { ascending: false })
                     .order('email_round', { ascending: true })
@@ -656,17 +706,35 @@ const UnifiedCRM = () => {
 
                 if (queueError) throw queueError;
 
-                const mappedQueue = (queueRows || []).map(row => ({
-                    queue_id: row.id,
-                    contact_id: row.contact_id,
-                    contact_name: row.marketing_contacts?.contact_name,
-                    company_name: row.marketing_contacts?.company_name,
-                    contact_email: row.marketing_contacts?.email,
-                    contact_tier: row.marketing_contacts?.tier,
-                    email_sent_count: row.marketing_contacts?.email_sent_count || 0,
-                    email_round: row.email_round,
-                    priority: row.priority
-                }));
+                const contactIds = (queueRows || []).map(row => row.contact_id).filter(Boolean);
+                let contactsById = {};
+
+                if (contactIds.length > 0) {
+                    const { data: relatedContacts, error: contactsError } = await supabase
+                        .from('marketing_contacts')
+                        .select('id, contact_name, company_name, email, tier, email_sent_count')
+                        .in('id', contactIds);
+
+                    if (contactsError) throw contactsError;
+
+                    contactsById = Object.fromEntries((relatedContacts || []).map(contact => [contact.id, contact]));
+                }
+
+                const mappedQueue = (queueRows || []).map(row => {
+                    const contact = contactsById[row.contact_id] || {};
+
+                    return {
+                        queue_id: row.id,
+                        contact_id: row.contact_id,
+                        contact_name: contact.contact_name,
+                        company_name: contact.company_name,
+                        contact_email: contact.email,
+                        contact_tier: contact.tier,
+                        email_sent_count: contact.email_sent_count || 0,
+                        email_round: row.email_round,
+                        priority: row.priority
+                    };
+                });
 
                 setEmailQueue(mappedQueue);
                 setQueueStats(prev => ({
@@ -773,41 +841,36 @@ const UnifiedCRM = () => {
     const triggerN8NForContacts = async (contactIds, customMessage = '') => {
         const selected = contacts.filter(c => contactIds.has(c.id));
         if (selected.length === 0) { toast.error('Selecciona al menos un contacto'); return; }
+        if (!selectedTemplate) { toast.error('Selecciona una plantilla antes de enviar a N8N'); return; }
+        if (!selectedSender) { toast.error('Selecciona un remitente antes de enviar a N8N'); return; }
 
         const toastId = toast.loading(`Enviando ${selected.length} contacto(s) a N8N...`);
         const N8N_WEBHOOK = import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://n8n.geobooker.com.mx/webhook/nuevo-lead-crm';
         let ok = 0, fail = 0;
 
         for (const c of selected) {
-            // Reemplazo dinámico de variables en el texto
-            let finalMessage = customMessage
-                .replace(/{{contact_name}}/gi, c.contact_name || '')
-                .replace(/{{company_name}}/gi, c.company_name || '')
-                .replace(/{{city}}/gi, c.city || '')
-                .replace(/{{industry}}/gi, c.industry || '');
-
             try {
+                const payload = buildN8nSequencePayload({
+                    contact: c,
+                    customMessage,
+                    selectedTemplate,
+                    selectedSender
+                });
+
                 const res = await fetch(N8N_WEBHOOK, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        type: 'INSERT',
-                        table: 'marketing_contacts',
-                        schema: 'public',
-                        record: {
-                            tier: c.tier,
-                            email: c.email,
-                            company_name: c.company_name,
-                            contact_name: c.contact_name,
-                            city: c.city,
-                            state: c.state,
-                            industry: c.industry,
-                            custom_message: finalMessage
-                        }
-                    })
+                    body: JSON.stringify(payload)
                 });
-                if (res.ok) ok++; else fail++;
-            } catch { fail++; }
+
+                if (res.ok) {
+                    ok++;
+                } else {
+                    fail++;
+                }
+            } catch {
+                fail++;
+            }
             await new Promise(r => setTimeout(r, 300));
         }
         toast.success(`N8N: ${ok} enviados${fail > 0 ? `, ${fail} fallidos` : ''}`, { id: toastId });
@@ -2071,8 +2134,10 @@ const UnifiedCRM = () => {
                             </button>
                         </div>
                         <div className="p-6 space-y-4">
-                            <div className="bg-purple-100 p-3 rounded-lg text-sm text-purple-800">
-                                Escribe un correo, solicitud o mensaje especial para <strong>estas {selectedContacts.size} empresas seleccionadas</strong>. Este texto se enviará a tu flujo de N8N en la variable `custom_message`.
+                            <div className="bg-purple-100 p-3 rounded-lg text-sm text-purple-800 space-y-2">
+                                <p>Escribe un mensaje especial para <strong>estas {selectedContacts.size} empresas seleccionadas</strong>. Este texto se enviara a n8n en la variable <code>custom_message</code>.</p>
+                                <p>Ademas, el CRM enviara la <strong>plantilla activa</strong>, el <strong>remitente seleccionado</strong>, el <strong>subject procesado</strong> y el <strong>HTML real</strong> del correo.</p>
+                                <p className="text-xs text-purple-700">Plantilla: <strong>{selectedTemplate?.name || 'Sin seleccionar'}</strong> | Remitente: <strong>{selectedSender ? `${selectedSender.name} <${selectedSender.email}>` : 'Sin seleccionar'}</strong></p>
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-2">Mensaje Personalizado (Opcional)</label>
@@ -2365,11 +2430,3 @@ const UnifiedCRM = () => {
 };
 
 export default UnifiedCRM;
-
-
-
-
-
-
-
-

@@ -31,6 +31,9 @@ const FALLBACK_EMAIL_SENDER = {
     use_for: ['default', 'crm']
 };
 
+const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || '';
+const N8N_ENABLED = Boolean(N8N_WEBHOOK_URL);
+
 const extractEmailBodyContent = (html = '') => {
     const input = String(html || '').trim();
     if (!input) return '';
@@ -843,9 +846,9 @@ const UnifiedCRM = () => {
         if (selected.length === 0) { toast.error('Selecciona al menos un contacto'); return; }
         if (!selectedTemplate) { toast.error('Selecciona una plantilla antes de enviar a N8N'); return; }
         if (!selectedSender) { toast.error('Selecciona un remitente antes de enviar a N8N'); return; }
+        if (!N8N_ENABLED) { toast.error('N8N no esta configurado en esta version estable del CRM'); return; }
 
         const toastId = toast.loading(`Enviando ${selected.length} contacto(s) a N8N...`);
-        const N8N_WEBHOOK = import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://n8n.geobooker.com.mx/webhook/nuevo-lead-crm';
         let ok = 0, fail = 0;
 
         for (const c of selected) {
@@ -857,7 +860,7 @@ const UnifiedCRM = () => {
                     selectedSender
                 });
 
-                const res = await fetch(N8N_WEBHOOK, {
+                const res = await fetch(N8N_WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -1294,15 +1297,21 @@ const UnifiedCRM = () => {
                                     <span className="text-sm text-gray-600">
                                         {selectedContacts.size} seleccionados
                                     </span>
-                                    <button
-                                        onClick={() => {
-                                            setN8nMessage('');
-                                            setShowN8nModal(true);
-                                        }}
-                                        className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
-                                    >
-                                        🤖 Enviar Secuencia N8N
-                                    </button>
+                                    {N8N_ENABLED ? (
+                                        <button
+                                            onClick={() => {
+                                                setN8nMessage('');
+                                                setShowN8nModal(true);
+                                            }}
+                                            className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
+                                        >
+                                            Enviar Secuencia N8N
+                                        </button>
+                                    ) : (
+                                        <span className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium">
+                                            Automatizacion externa desactivada: usa el envio directo del CRM
+                                        </span>
+                                    )}
                                     <button
                                         onClick={deleteSelected}
                                         className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-lg text-sm"

@@ -1,4 +1,4 @@
-﻿// netlify/functions/send-notification-email.js
+// netlify/functions/send-notification-email.js
 /**
  * Generic email notification function
  * Handles: welcome, business_approved, business_rejected,
@@ -147,8 +147,10 @@ function getEmailTemplate(type, data) {
             html: `<!DOCTYPE html><html><head><style>${baseStyles}</style></head><body><div class="container"><div class="header" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;"><h1>Ajustes necesarios</h1><p style="opacity: 0.9;">Tu negocio necesita algunas correcciones</p></div><div class="content"><p>Hola <strong>${data.name}</strong>,</p><p>Tu negocio <strong>"${data.businessName}"</strong> no pudo ser aprobado en este momento.</p><div class="highlight" style="background: #fffbeb; border-color: #f59e0b;"><strong>Razon del rechazo:</strong><p>${data.reason || 'Por favor verifica que toda la informacion sea correcta y las fotos sean claras.'}</p></div><p style="text-align: center;"><a href="https://geobooker.com.mx/dashboard" class="button" style="background: #f59e0b;">Editar mi Negocio</a></p></div><div class="footer">© ${new Date().getFullYear()} Geobooker • geobooker.com.mx</div></div></body></html>`
         },
         campaign_received: {
-            subject: '✅ Recibimos tu compra publicitaria en Geobooker',
-            html: `<!DOCTYPE html><html><head><style>${baseStyles}</style></head><body><div class="container"><div class="header" style="background: linear-gradient(135deg, #0f766e, #2563eb); color: white;"><h1>Compra recibida correctamente</h1><p style="opacity: 0.9;">Tu pauta ya entro a revision comercial</p></div><div class="content"><p>Hola <strong>${data.name || 'Anunciante'}</strong>,</p><p>Confirmamos la recepcion de tu compra publicitaria en Geobooker. Tu campana ya se encuentra en <strong>revision</strong> y nuestro equipo validara creatividad, segmentacion, enlace y lineamientos antes de publicarla.</p><div class="details"><p><strong>Espacio contratado:</strong> ${campaignFacts.placement}</p><p><strong>Segmentacion:</strong> ${campaignFacts.targetLocation}</p><p><strong>Inversion:</strong> ${campaignFacts.formattedBudget}</p><p><strong>Metodo de pago:</strong> ${campaignFacts.paymentMethod}</p><p><strong>Estado actual:</strong> En revision</p></div><div class="highlight"><strong>Que incluye tu compra:</strong><ul class="list"><li>Revision editorial y comercial previa a publicacion</li><li>Activacion de tu pauta en el espacio seleccionado una vez aprobada</li><li>Acceso a KPIs cuando la campana este activa: impresiones, clics, CTR y taps a WhatsApp</li><li>Seguimiento desde tu dashboard del anunciante</li></ul></div><div class="highlight" style="background: #f8fafc; border-color: #64748b;"><strong>Que sigue ahora:</strong><ol class="list"><li>Revisamos tu campana en un plazo estimado de 24 a 48 horas habiles</li><li>Te avisamos por correo cuando quede aprobada o si requiere ajustes</li><li>Cuando este activa podras revisar resultados desde tu panel</li></ol></div><p class="muted">${campaignFacts.invoiceText}</p><p style="text-align: center;"><a href="${campaignFacts.dashboardUrl}" class="button">Ver mi dashboard publicitario</a></p></div><div class="footer">© ${new Date().getFullYear()} Geobooker Ads • geobooker.com.mx</div></div></body></html>`
+            subject: isEnglish(data)
+                ? '✅ Your advertising purchase has been received — Geobooker'
+                : '✅ Recibimos tu compra publicitaria — Geobooker',
+            html: buildCampaignReceivedEmail(data)
         },
         campaign_approved: {
             subject: '🚀 ¡Tu campaña publicitaria ha sido aprobada!',

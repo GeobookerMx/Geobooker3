@@ -2,7 +2,7 @@
 /**
  * Generic email notification function
  * Handles: welcome, business_approved, business_rejected,
- * campaign_received, campaign_approved, campaign_rejected, referral_bonus
+ * campaign_received, connect_launch_received, campaign_approved, campaign_rejected, referral_bonus
  */
 const { resolveEmailSender } = require('./_email-config');
 const { buildCampaignEmail } = require('./_campaign-email');
@@ -113,6 +113,27 @@ function getCampaignFacts(data) {
     return { formattedBudget, placement, targetLocation, paymentMethod, dashboardUrl, invoiceText };
 }
 
+
+function buildConnectLaunchReceivedEmail(data) {
+    const amount = formatCurrency(data.amount || 0, data.currency || 'MXN');
+    const batchSize = Number(data.batchSize || 1000).toLocaleString('es-MX');
+
+    return `<!DOCTYPE html><html><head><style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f4f4f5; padding: 20px; margin: 0; }
+        .container { max-width: 640px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .header { padding: 40px 30px; text-align: center; background: linear-gradient(135deg, #0f766e, #10b981); color: white; }
+        .content { padding: 30px; color: #111827; }
+        .button { display: inline-block; background: #0f766e; color: white !important; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 20px 0; }
+        .highlight { background: #ecfdf5; border-left: 4px solid #10b981; padding: 15px 20px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+        .details { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px 20px; margin: 22px 0; }
+        .details p { margin: 0 0 10px 0; }
+        .details p:last-child { margin-bottom: 0; }
+        .footer { text-align: center; padding: 20px 30px; background: #f9fafb; color: #6b7280; font-size: 12px; }
+        .list { margin: 14px 0 0 0; padding-left: 18px; }
+        .list li { margin-bottom: 8px; }
+    </style></head><body><div class="container"><div class="header"><h1>Reserva de lanzamiento recibida</h1><p style="opacity:0.92;">Tu piloto Geobooker Connect ya entro a revision</p></div><div class="content"><p>Hola <strong>${data.name || "equipo"}</strong>,</p><p>Confirmamos la recepcion de tu anticipo para activar la evaluacion de tu piloto B2B administrado.</p><div class="details"><p><strong>Empresa:</strong> ${data.companyName || "No especificada"}</p><p><strong>Paquete:</strong> ${data.packageName || "Piloto Connect 1000"}</p><p><strong>Anticipo recibido:</strong> ${amount}</p><p><strong>Lote objetivo:</strong> Hasta ${batchSize} contactos elegibles</p></div><div class="highlight"><strong>Siguiente paso:</strong><ul class="list"><li>Revisamos tu brief comercial y la audiencia solicitada</li><li>Validamos alcance, cumplimiento y viabilidad operativa</li><li>Te contactamos para kickoff antes de ejecutar cualquier envio</li></ul></div><p style="text-align:center;"><a href="mailto:hola@geobooker.com.mx" class="button">Responder al equipo Connect</a></p></div><div class="footer">&copy; ${new Date().getFullYear()} Geobooker Connect | geobooker.com.mx</div></div></body></html>`;
+}
+
 function getEmailTemplate(type, data) {
     const baseStyles = `
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f4f4f5; padding: 20px; margin: 0; }
@@ -151,6 +172,10 @@ function getEmailTemplate(type, data) {
                 ? '✅ Your advertising purchase has been received — Geobooker'
                 : '✅ Recibimos tu compra publicitaria — Geobooker',
             html: buildCampaignReceivedEmail(data)
+        },
+        connect_launch_received: {
+            subject: 'Reserva recibida para Geobooker Connect',
+            html: buildConnectLaunchReceivedEmail(data)
         },
         campaign_approved: {
             subject: '🚀 ¡Tu campaña publicitaria ha sido aprobada!',

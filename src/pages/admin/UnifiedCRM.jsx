@@ -11,7 +11,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
     Upload, Users, Mail, Send, Search, CheckSquare, Square,
     Trash2, Download, RefreshCw, X, Loader2, Plus, Edit2,
-    Building2, BarChart3, TrendingUp, Clock, FileSpreadsheet,
+    Building2, BarChart3, TrendingUp, Clock, FileSpreadsheet, BriefcaseBusiness,
     Play, MessageCircle, Filter, ChevronRight, Eye, Settings
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -22,6 +22,7 @@ import WhatsAppQueueManager from '../../components/admin/WhatsAppQueueManager';
 import WhatsAppCRM from '../../components/admin/WhatsAppCRM';
 import WhatsAppService from '../../services/whatsappService';
 import KPIsPanel from '../../components/admin/KPIsPanel';
+import ConnectOpsDashboard from '../../components/admin/ConnectOpsDashboard';
 import { matchesSemanticText } from '../../utils/semanticDictionary';
 
 const FALLBACK_EMAIL_SENDER = {
@@ -1125,6 +1126,7 @@ const UnifiedCRM = () => {
         { id: 'whatsapp', label: '💬 WhatsApp', icon: MessageCircle },
         { id: 'plantillas', label: '✉️ Templates', icon: Edit2 },
         { id: 'kpis', label: '📈 Métricas', icon: BarChart3 },
+        { id: 'connect', label: 'Connect Ops', icon: BriefcaseBusiness },
         { id: 'historial', label: '🕐 Historial', icon: Clock },
         { id: 'config', label: '⚙️ Ajustes', icon: Settings }
     ];
@@ -1544,6 +1546,11 @@ const UnifiedCRM = () => {
                 {/* ============ TAB: KPIS ============ */}
                 {activeTab === 'kpis' && (
                     <KPIsPanel />
+                )}
+
+                {/* ============ TAB: CONNECT ============ */}
+                {activeTab === 'connect' && (
+                    <ConnectOpsDashboard />
                 )}
 
                 {/* ============ TAB: LANZAR ============ */}

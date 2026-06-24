@@ -274,6 +274,74 @@ exports.handler = async (event) => {
                         console.log(`âœ… Enterprise campaign ${campaignId} paid. Plan: ${metadata.plan}, Company: ${metadata.company}, IsNew: ${isNewUser}`);
                     }
                 }
+                // CASO 1C: Geobooker Connect Launch Reservation
+                else if (metadata.type === 'connect_launch_payment') {
+                    const connectCampaignId = metadata.connect_campaign_id;
+                    const enterpriseLeadId = metadata.enterprise_lead_id;
+                    const billingEmail = metadata.billing_email || session.customer_details?.email;
+
+                    if (connectCampaignId) {
+                        const { data: connectCampaign, error: connectError } = await supabase
+                            .from('connect_campaigns')
+                            .update({
+                                payment_status: 'paid',
+                                fulfillment_status: 'brief_review',
+                                stripe_session_id: session.id,
+                                stripe_payment_intent: session.payment_intent
+                            })
+                            .eq('id', connectCampaignId)
+                            .select()
+                            .single();
+
+                        if (connectError) {
+                            console.error('[stripe-webhook] Error updating connect_campaigns:', connectError);
+                        }
+
+                        if (enterpriseLeadId) {
+                            await supabase
+                                .from('enterprise_leads')
+                                .update({
+                                    status: 'qualified',
+                                    service_line: 'geobooker_connect',
+                                    intake_source: 'connect_checkout',
+                                    launch_offer_code: metadata.package_code || metadata.type,
+                                    pricing_snapshot: {
+                                        reservation_price_mxn: Number(metadata.reservation_price_mxn || 0),
+                                        package_code: metadata.package_code || null,
+                                        package_name: metadata.package_name || null
+                                    }
+                                })
+                                .eq('id', enterpriseLeadId);
+                        }
+
+                        if (connectCampaign) {
+                            await postInternalNotification('notify-admin-connect', {
+                                campaign: {
+                                    ...connectCampaign,
+                                    company_name: metadata.company_name,
+                                    billing_email: billingEmail
+                                }
+                            });
+
+                            if (billingEmail) {
+                                await postInternalNotification('send-notification-email', {
+                                    type: 'connect_launch_received',
+                                    data: {
+                                        email: billingEmail,
+                                        name: metadata.company_name || 'equipo',
+                                        companyName: metadata.company_name || '',
+                                        packageName: metadata.package_name || 'Piloto Connect 1000',
+                                        amount: Number(metadata.reservation_price_mxn || 0),
+                                        currency: 'MXN',
+                                        batchSize: connectCampaign.batch_size || 1000
+                                    }
+                                });
+                            }
+                        }
+
+                        console.log('Connect launch reservation paid:', connectCampaignId);
+                    }
+                }
                 // CASO 2: SuscripciÃ³n Premium (Usuario)
                 else {
                     const userId = metadata.userId || session.client_reference_id;
@@ -423,19 +491,36 @@ exports.handler = async (event) => {
             case 'checkout.session.expired': {
                 const session = stripeEvent.data.object;
                 const metadata = session.metadata || {};
-                
-                if (metadata.type === 'ad_payment' || metadata.type === 'enterprise_campaign') {
+
+                if (metadata.type === 'connect_launch_payment') {
+                    const connectCampaignId = metadata.connect_campaign_id;
+                    if (connectCampaignId) {
+                        const { error } = await supabase
+                            .from('connect_campaigns')
+                            .update({
+                                payment_status: 'expired',
+                                fulfillment_status: 'intake'
+                            })
+                            .eq('id', connectCampaignId);
+
+                        if (error) {
+                            console.error(`Error actualizando reserva Connect expirada ${connectCampaignId}:`, error);
+                        } else {
+                            console.log(`Reserva Connect expirada ${connectCampaignId} marcada como expired.`);
+                        }
+                    }
+                } else if (metadata.type === 'ad_payment' || metadata.type === 'enterprise_campaign') {
                     const campaignId = metadata.campaign_id;
                     if (campaignId) {
                         const { error } = await supabase
                             .from('ad_campaigns')
                             .delete()
                             .eq('id', campaignId);
-                        
+
                         if (error) {
-                            console.error(`Error eliminando campaÃ±a expirada ${campaignId}:`, error);
+                            console.error(`Error eliminando campana expirada ${campaignId}:`, error);
                         } else {
-                            console.log(`Borrador de campaÃ±a expirada ${campaignId} eliminado de la BD.`);
+                            console.log(`Borrador de campana expirada ${campaignId} eliminado de la BD.`);
                         }
                     }
                 }
@@ -446,20 +531,34 @@ exports.handler = async (event) => {
             case 'payment_intent.payment_failed': {
                 const paymentIntent = stripeEvent.data.object;
                 const metadata = paymentIntent.metadata || {};
+                const connectCampaignId = metadata.connect_campaign_id;
                 const campaignId = metadata.campaign_id || metadata.product_id;
-                
-                if (campaignId) {
+
+                if (connectCampaignId) {
+                    const { error } = await supabase
+                        .from('connect_campaigns')
+                        .update({
+                            payment_status: 'failed'
+                        })
+                        .eq('id', connectCampaignId);
+
+                    if (error) {
+                        console.error(`Error actualizando reserva Connect fallida ${connectCampaignId}:`, error);
+                    } else {
+                        console.log(`Pago fallido para reserva Connect ${connectCampaignId}. Estado de pago marcado como failed.`);
+                    }
+                } else if (campaignId) {
                     const { error } = await supabase
                         .from('ad_campaigns')
                         .update({
                             payment_status: 'failed'
                         })
                         .eq('id', campaignId);
-                    
+
                     if (error) {
-                        console.error(`Error actualizando campaÃ±a fallida ${campaignId}:`, error);
+                        console.error(`Error actualizando campana fallida ${campaignId}:`, error);
                     } else {
-                        console.log(`Pago fallido para campaÃ±a ${campaignId}. Estado de pago marcado como failed.`);
+                        console.log(`Pago fallido para campana ${campaignId}. Estado de pago marcado como failed.`);
                     }
                 }
                 break;

@@ -101,6 +101,14 @@ exports.handler = async (event) => {
             }
         });
 
+        if (mode === 'payment') {
+            Object.entries(finalMetadata).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    formData.append(`payment_intent_data[metadata][${key}]`, String(value));
+                }
+            });
+        }
+
         // Call Stripe API directly
         const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
             method: 'POST',

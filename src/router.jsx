@@ -92,6 +92,8 @@ const EnterpriseContact = lazy(() => import("./pages/enterprise/EnterpriseContac
 const EnterpriseCheckout = lazy(() => import("./pages/enterprise/EnterpriseCheckout.jsx"));
 const EnterpriseSuccess = lazy(() => import("./pages/enterprise/EnterpriseSuccess.jsx"));
 const B2bConnect = lazy(() => import("./pages/enterprise/B2bConnect.jsx"));
+const ConnectCheckout = lazy(() => import("./pages/enterprise/ConnectCheckout.jsx"));
+const ConnectSuccess = lazy(() => import("./pages/enterprise/ConnectSuccess.jsx"));
 const EnterpriseEdit = lazy(() => import("./pages/enterprise/EnterpriseEdit.jsx"));
 const AdvertiserDashboard = lazy(() => import("./pages/advertiser/AdvertiserDashboard.jsx"));
 const OxxoPendingPage = lazy(() => import("./pages/OxxoPendingPage.jsx"));
@@ -159,6 +161,8 @@ export default function AppRouter() {
           <Route path="/enterprise/success" element={<EnterpriseSuccess />} />
           <Route path="/enterprise/edit/:id" element={<EnterpriseEdit />} />
           <Route path="/b2b-connect" element={<B2bConnect />} />
+          <Route path="/b2b-connect/checkout" element={<ConnectCheckout />} />
+          <Route path="/b2b-connect/success" element={<ConnectSuccess />} />
           <Route path="/proveedores" element={<B2bConnect />} />
           <Route path="/advertiser/dashboard" element={<AdvertiserDashboard />} />
           <Route path="/business" element={<Navigate to="/" replace />} />

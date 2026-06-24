@@ -1,4 +1,4 @@
-﻿const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 
 // IMPORTANTE:
@@ -135,10 +135,18 @@ exports.handler = async (event) => {
     }
 
     // Inicializar cliente Supabase con permisos de Admin (Service Role)
-    const supabase = createClient(
-        process.env.SUPABASE_URL,
-        process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+        console.error('[stripe-webhook] Missing Supabase credentials:', {
+            hasUrl: Boolean(supabaseUrl),
+            hasKey: Boolean(supabaseKey)
+        });
+        return { statusCode: 500, body: 'Server configuration error: missing Supabase credentials' };
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     try {
         switch (stripeEvent.type) {

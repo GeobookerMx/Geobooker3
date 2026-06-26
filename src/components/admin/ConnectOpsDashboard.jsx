@@ -10,7 +10,8 @@ import {
   Loader2,
   RefreshCw,
   Scale,
-  ShieldCheck
+  ShieldCheck,
+  Workflow
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
@@ -39,6 +40,84 @@ const formatCurrency = (amount = 0) => {
 };
 
 const formatPct = (value = 0) => `${Number(value || 0).toFixed(1)}%`;
+
+const getOperationalStep = (campaign, hasRuns) => {
+  if (!campaign) {
+    return {
+      title: 'Sin campana seleccionada',
+      description: 'Selecciona una reserva para ver el estado real del servicio.',
+      nextAction: 'Elegir una reserva del pipeline.'
+    };
+  }
+
+  const status = campaign.fulfillment_status || 'intake';
+
+  if (campaign.payment_status !== 'paid') {
+    return {
+      title: 'Confirmacion de reserva',
+      description: 'El anticipo aun no aparece como pagado o sigue en validacion.',
+      nextAction: 'Confirmar pago, registrar responsable y enviar acuse al cliente.'
+    };
+  }
+
+  if (status === 'intake' || status === 'brief_review') {
+    return {
+      title: 'Kickoff y brief',
+      description: 'Estamos validando objetivo, ICP, cobertura geografica, oferta y restricciones.',
+      nextAction: 'Cerrar brief aprobado antes de preparar audiencia o copy.'
+    };
+  }
+
+  if (status === 'audience_build') {
+    return {
+      title: 'Compliance y audiencia',
+      description: 'Se estan filtrando contactos elegibles, exclusiones, duplicados y dominios vetados.',
+      nextAction: 'Dejar aprobada la audiencia utilizable y documentar exclusiones.'
+    };
+  }
+
+  if (status === 'copy_ready' || status === 'scheduled') {
+    return {
+      title: 'Salida preparada',
+      description: 'La campana ya tiene audiencia y copy listos para programarse en lote controlado.',
+      nextAction: 'Autorizar la salida y registrar la corrida inicial en connect_campaign_runs.'
+    };
+  }
+
+  if (status === 'running') {
+    return {
+      title: 'Campana en ejecucion',
+      description: hasRuns
+        ? 'Ya existen corridas registradas y el servicio esta generando trazabilidad real.'
+        : 'El estado dice running, pero aun falta registrar corridas para dejar trazabilidad operativa.',
+      nextAction: hasRuns
+        ? 'Monitorear respuestas, rebotes y siguiente ajuste comercial.'
+        : 'Registrar la corrida activa y validar que el lote realmente este saliendo.'
+    };
+  }
+
+  if (status === 'reported' || status === 'closed') {
+    return {
+      title: 'Reporte y cierre',
+      description: 'La fase operativa principal ya concluyo y toca compartir resultados y siguiente paso.',
+      nextAction: 'Entregar resumen, aprendizajes y propuesta de continuidad o cierre.'
+    };
+  }
+
+  return {
+    title: 'Operacion Connect',
+    description: 'La campana esta en seguimiento operativo.',
+    nextAction: 'Revisar si el estado actual coincide con la realidad del servicio.'
+  };
+};
+
+const CONNECT_TIMELINE = [
+  { key: 'reservation', title: 'Reserva', description: 'Anticipo registrado y capacidad apartada.' },
+  { key: 'brief', title: 'Brief aprobado', description: 'Objetivo, ICP y restricciones validadas.' },
+  { key: 'audience', title: 'Audiencia y compliance', description: 'Segmento utilizable y exclusions documentadas.' },
+  { key: 'launch', title: 'Salida controlada', description: 'Copy, remitente y lote autorizados para ejecucion.' },
+  { key: 'report', title: 'Reporte y postventa', description: 'KPIs, respuestas y siguiente accion compartidos.' }
+];
 
 const statusBadge = (value) => {
   const palette = {
@@ -450,6 +529,10 @@ const ConnectOpsDashboard = () => {
                   <p className="font-semibold">Como se opera desde aqui</p>
                   <p className="mt-2">Selecciona una reserva del pipeline, ajusta pago o fulfillment y guarda cambios. La ejecucion real de envios y el registro de corridas vive en <code>connect_campaign_runs</code> y en las colas del CRM.</p>
                 </div>
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
+                  <p className="font-semibold">Siguiente paso recomendado</p>
+                  <p className="mt-2 text-sm">{operationalStep.nextAction}</p>
+                </div>
                 <div className="rounded-xl border bg-white p-4">
                   <p className="text-xs uppercase tracking-wide text-gray-500">Corridas registradas</p>
                   <p className="mt-2 text-xl font-black text-gray-900">{selectedRuns.length.toLocaleString('es-MX')}</p>
@@ -486,6 +569,29 @@ const ConnectOpsDashboard = () => {
 
           <div className="bg-white rounded-2xl border shadow-sm p-6">
             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <Workflow className="w-5 h-5 text-indigo-600" />
+              Timeline operativa del servicio
+            </h3>
+            <div className="mt-4 space-y-3">
+              {CONNECT_TIMELINE.map((step, index) => {
+                const isCurrent = operationalStep.title === step.title || (operationalStep.title === 'Kickoff y brief' && step.key === 'brief') || (operationalStep.title === 'Compliance y audiencia' && step.key === 'audience') || (operationalStep.title === 'Salida preparada' && step.key === 'launch') || (operationalStep.title === 'Campana en ejecucion' && step.key === 'launch') || (operationalStep.title === 'Reporte y cierre' && step.key === 'report') || (operationalStep.title === 'Confirmacion de reserva' && step.key === 'reservation');
+                return (
+                  <div key={step.key} className={`rounded-xl border p-4 ${isCurrent ? 'border-indigo-200 bg-indigo-50' : 'bg-slate-50'}`}>
+                    <div className="flex items-start gap-3">
+                      <div className={`mt-0.5 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${isCurrent ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-700'}`}>{index + 1}</div>
+                      <div>
+                        <p className="font-semibold text-gray-900">{step.title}</p>
+                        <p className="mt-1 text-sm text-gray-600">{step.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border shadow-sm p-6">
+            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-emerald-600" />
               Guardrails del servicio
             </h3>
@@ -498,6 +604,24 @@ const ConnectOpsDashboard = () => {
               </div>
               <div className="rounded-xl border bg-slate-50 p-4">
                 La reserva de lanzamiento es fee de activacion. El alcance final depende del brief aprobado.
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border shadow-sm p-6">
+            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <BadgeCheck className="w-5 h-5 text-violet-600" />
+              Resultados que debemos comunicar al cliente
+            </h3>
+            <div className="mt-4 grid gap-3 text-sm text-gray-700">
+              <div className="rounded-xl border bg-emerald-50 border-emerald-200 p-4">
+                Entregables claros: contactos aprobados, enviados, aperturas, clics, respuestas, rebotes y exclusiones aplicadas.
+              </div>
+              <div className="rounded-xl border bg-slate-50 p-4">
+                Resultado esperado: abrir conversaciones comerciales y validar mercado, no prometer cierres automaticos.
+              </div>
+              <div className="rounded-xl border bg-slate-50 p-4">
+                El cliente compra un piloto gestionado con trazabilidad, no una base descargable ni volumen indiscriminado.
               </div>
             </div>
           </div>

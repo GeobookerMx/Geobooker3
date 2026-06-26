@@ -279,6 +279,28 @@ export default function B2bConnect() {
                 </div>
             </section>
 
+            <section className="py-16 px-4 bg-black/30 border-y border-white/5">
+                <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-6">
+                    <div className="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-8">
+                        <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">Que puede esperar de Geobooker Connect</h2>
+                        <div className="space-y-3 text-sm text-emerald-50">
+                            <p>Segmentacion por nicho, zona y perfil de cliente ideal.</p>
+                            <p>Preparacion de audiencia elegible y filtros de exclusion.</p>
+                            <p>Ejecucion por lotes controlados con copy B2B y seguimiento medible.</p>
+                            <p>Reporte con enviados, aperturas, clics, respuestas, rebotes y siguiente recomendacion.</p>
+                        </div>
+                    </div>
+                    <div className="rounded-3xl border border-amber-500/20 bg-amber-500/10 p-8">
+                        <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">Lo que no debemos vender como promesa</h2>
+                        <div className="space-y-3 text-sm text-amber-50">
+                            <p>No prometemos ventas cerradas, reuniones garantizadas ni entregabilidad universal.</p>
+                            <p>No vendemos una base de datos descargable ni envios indiscriminados.</p>
+                            <p>El alcance final depende del brief aprobado, compliance y reputacion del remitente.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <section className="py-14 px-4 bg-slate-950/40 border-y border-white/5">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-10">

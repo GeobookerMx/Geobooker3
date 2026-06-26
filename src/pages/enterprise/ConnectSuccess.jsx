@@ -62,6 +62,11 @@ export default function ConnectSuccess() {
           </div>
         )}
 
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-5 mt-8 text-sm text-emerald-50">
+          <p className="font-semibold text-emerald-300">Resultados que te vamos a reportar</p>
+          <p className="mt-2">Contactos aprobados, enviados, aperturas, clics, respuestas, rebotes y observaciones para la siguiente accion comercial. No te vamos a reportar ventas como garantia contractual.</p>
+        </div>
+
         <div className="grid md:grid-cols-3 gap-4 mt-8">
           <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
             <Workflow className="w-5 h-5 text-emerald-300 mb-3" />

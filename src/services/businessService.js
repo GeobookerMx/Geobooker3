@@ -18,20 +18,43 @@ export async function searchBusinessesSemantically(searchQuery, userCountry = in
   const normalizedQuery = clean(searchQuery);
   if (!normalizedQuery) return [];
 
-  const { data: synonymMatches, error: rpcError } = await supabase.rpc(
-    "search_businesses_with_synonyms",
+  let semanticMatches = [];
+  let matchSource = 'knowledge_graph';
+
+  const { data: kgMatches, error: kgError } = await supabase.rpc(
+    "search_businesses_knowledge_graph",
     {
       search_query: normalizedQuery,
       user_country: userCountry,
+      user_language: typeof navigator !== "undefined" ? (navigator.language || "es-MX") : "es-MX",
     }
   );
 
-  if (rpcError) {
-    console.warn("Semantic search RPC unavailable:", rpcError.message);
-    return [];
+  if (!kgError && Array.isArray(kgMatches) && kgMatches.length > 0) {
+    semanticMatches = kgMatches;
+  } else {
+    if (kgError) {
+      console.warn("Knowledge graph search RPC unavailable:", kgError.message);
+    }
+
+    const { data: synonymMatches, error: rpcError } = await supabase.rpc(
+      "search_businesses_with_synonyms",
+      {
+        search_query: normalizedQuery,
+        user_country: userCountry,
+      }
+    );
+
+    if (rpcError) {
+      console.warn("Semantic search RPC unavailable:", rpcError.message);
+      return [];
+    }
+
+    semanticMatches = synonymMatches || [];
+    matchSource = 'legacy_synonyms';
   }
 
-  const orderedIds = [...new Set((synonymMatches || []).map((item) => item.business_id).filter(Boolean))];
+  const orderedIds = [...new Set((semanticMatches || []).map((item) => item.business_id).filter(Boolean))];
   if (orderedIds.length === 0) return [];
 
   const { data: businesses, error } = await supabase
@@ -46,7 +69,10 @@ export async function searchBusinessesSemantically(searchQuery, userCountry = in
     return [];
   }
 
-  const scoreMap = new Map((synonymMatches || []).map((item) => [item.business_id, item.match_score]));
+  const scoreMap = new Map((semanticMatches || []).map((item) => [item.business_id, item.match_score]));
+  const sourceMap = new Map((semanticMatches || []).map((item) => [item.business_id, item.match_source || matchSource]));
+  const termMap = new Map((semanticMatches || []).map((item) => [item.business_id, item.matched_term || normalizedQuery]));
+  const categorySlugMap = new Map((semanticMatches || []).map((item) => [item.business_id, item.category_slug || null]));
   const businessMap = new Map((businesses || []).map((item) => [item.id, item]));
 
   return orderedIds
@@ -56,6 +82,9 @@ export async function searchBusinessesSemantically(searchQuery, userCountry = in
       return {
         ...business,
         semantic_match_score: scoreMap.get(id) || 0,
+        semantic_match_source: sourceMap.get(id) || matchSource,
+        semantic_matched_term: termMap.get(id) || normalizedQuery,
+        semantic_category_slug: categorySlugMap.get(id) || null,
         isSemanticResult: true,
       };
     })

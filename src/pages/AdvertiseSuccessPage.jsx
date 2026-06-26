@@ -37,11 +37,14 @@ const AdvertiseSuccessPage = () => {
         return {
             space: campaign.ad_spaces?.display_name || 'Espacio publicitario Geobooker',
             location: campaign.target_location || 'Segmentacion definida',
+            billingCountry: campaign.billing_country || 'MX',
+            taxStatus: campaign.tax_status || ((campaign.billing_country || 'MX') === 'MX' ? 'domestic_mx' : 'export_0_iva'),
             amount: formatCurrency(
                 campaign.total_budget || campaign.budget || 0,
                 campaign.currency || (campaign.billing_country === 'MX' ? 'MXN' : 'USD')
             ),
-            payment: campaign.payment_method === 'oxxo' ? 'OXXO' : 'Tarjeta'
+            payment: campaign.payment_method === 'oxxo' ? 'OXXO' : 'Tarjeta',
+            period: `${campaign.start_date || 'Por definir'} al ${campaign.end_date || 'Sin definir'}`
         };
     }, [campaign]);
 
@@ -76,6 +79,14 @@ const AdvertiseSuccessPage = () => {
                                     <span className="font-semibold text-right">{purchaseSummary.payment}</span>
                                 </div>
                                 <div className="flex justify-between gap-4">
+                                    <span>Facturacion</span>
+                                    <span className="font-semibold text-right">{purchaseSummary.billingCountry} / {purchaseSummary.taxStatus}</span>
+                                </div>
+                                <div className="flex justify-between gap-4">
+                                    <span>Periodo contratado</span>
+                                    <span className="font-semibold text-right">{purchaseSummary.period}</span>
+                                </div>
+                                <div className="flex justify-between gap-4">
                                     <span>Inversion</span>
                                     <span className="font-bold text-green-600 text-right">{purchaseSummary.amount}</span>
                                 </div>
@@ -86,6 +97,7 @@ const AdvertiseSuccessPage = () => {
                             <h2 className="font-semibold text-gray-900 mb-3">Lo que recibiras</h2>
                             <ul className="space-y-2 text-sm text-gray-700">
                                 <li>Revision comercial y editorial antes de publicar</li>
+                                <li>Tiempo estimado de aprobacion y salida: 12 a 72 horas</li>
                                 <li>Activacion de tu pauta una vez aprobada</li>
                                 <li>Acceso a KPIs: impresiones, clics, CTR y taps a WhatsApp</li>
                                 <li>Seguimiento desde tu dashboard publicitario</li>
@@ -96,14 +108,14 @@ const AdvertiseSuccessPage = () => {
 
                 <div className="flex items-center justify-center gap-2 bg-yellow-50 text-yellow-700 px-4 py-3 rounded-lg mb-6">
                     <Clock className="w-5 h-5" />
-                    <span className="font-medium">Estado actual: En revision (24-48 hrs habiles)</span>
+                    <span className="font-medium">Estado actual: En revision (12-72 horas)</span>
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-4 mb-8">
                     <div className="bg-white border border-gray-200 rounded-xl p-4">
                         <ShieldCheck className="w-5 h-5 text-blue-600 mb-3" />
                         <h3 className="font-semibold text-gray-900 mb-2">1. Validacion</h3>
-                        <p className="text-sm text-gray-600">Revisamos creatividad, enlace, segmentacion y lineamientos de contenido.</p>
+                        <p className="text-sm text-gray-600">Revisamos creatividad, enlace, segmentacion y lineamientos de contenido. Este paso puede tomar de 12 a 72 horas.</p>
                     </div>
                     <div className="bg-white border border-gray-200 rounded-xl p-4">
                         <Mail className="w-5 h-5 text-blue-600 mb-3" />

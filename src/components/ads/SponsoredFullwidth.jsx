@@ -15,8 +15,9 @@ export default function SponsoredFullwidth({ context }) {
 
     const handleClick = () => {
         console.log('Fullwidth sponsored clicked:', currentCampaign.id);
-        if (creative.target_url) {
-            window.open(creative.target_url, '_blank');
+        const destinationUrl = creative.cta_url || creative.target_url;
+        if (destinationUrl) {
+            window.open(destinationUrl, '_blank');
         }
     };
 

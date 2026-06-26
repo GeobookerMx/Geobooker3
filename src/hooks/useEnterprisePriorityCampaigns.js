@@ -32,7 +32,7 @@ export default function useEnterprisePriorityCampaigns(localSpaceName, options =
             try {
                 const country = localStorage.getItem('userCountry') || 'unknown';
                 const city = localStorage.getItem('userCity') || 'unknown';
-                const campaigns = await loadEnterpriseCampaigns({ country, city });
+                const campaigns = await loadEnterpriseCampaigns(localSpaceName, { country, city });
 
                 // loadEnterpriseCampaigns ya transforma los datos y crea ad_creatives
                 // Solo necesitamos procesar URLs de YouTube para thumbnails

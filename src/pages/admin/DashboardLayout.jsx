@@ -94,7 +94,7 @@ const DashboardLayout = () => {
             <Sidebar onLogout={handleLogout} />
 
             {/* Main Content - responsive: sin margen en móvil, con margen en desktop */}
-            <div id="geobooker-screen" className="md:ml-64 min-h-screen min-w-0 overflow-x-hidden overflow-y-auto">
+            <div id="geobooker-screen" className="md:ml-64 min-h-screen min-w-0 overflow-y-auto">
                 {/* Header */}
                 <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10 pt-[var(--safe-area-inset-top)]">
                     <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4 px-4 py-4 md:px-6 xl:px-8">
@@ -120,8 +120,8 @@ const DashboardLayout = () => {
                 </header>
 
                 {/* Page Content - allow horizontal scroll in tables */}
-                <main className="w-full max-w-full overflow-x-hidden px-3 py-4 md:px-5 md:py-6 xl:px-8">
-                    <div className="mx-auto w-full max-w-[1600px] min-w-0 overflow-x-hidden">
+                <main className="w-full max-w-full px-3 py-4 md:px-5 md:py-6 xl:px-8">
+                    <div className="mx-auto w-full max-w-[1600px] min-w-0">
                         <Outlet />
                     </div>
                 </main>

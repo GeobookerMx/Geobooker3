@@ -158,13 +158,19 @@ exports.handler = async (event) => {
                 if (metadata.type === 'ad_payment') {
                     const campaignId = metadata.campaign_id;
                     if (campaignId) {
+                        const billingCountry = metadata.billing_country || 'MX';
+
                         await supabase
                             .from('ad_campaigns')
                             .update({
                                 status: 'pending_review',
                                 payment_status: 'paid',
                                 stripe_payment_intent: session.payment_intent,
-                                payment_method: 'card'
+                                payment_method: 'card',
+                                billing_country: billingCountry,
+                                tax_status: metadata.tax_status || (billingCountry === 'MX' ? 'domestic_mx' : 'export_0_iva'),
+                                currency: billingCountry === 'MX' ? 'MXN' : 'USD',
+                                client_tax_id: metadata.client_tax_id || null
                             })
                             .eq('id', campaignId);
 

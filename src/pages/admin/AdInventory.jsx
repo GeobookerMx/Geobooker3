@@ -18,6 +18,89 @@ import {
     ENTERPRISE_PROMO_END,
 } from '../../config/enterprisePricing';
 
+const INVENTORY_OCCUPANCY_STATUSES = ['active', 'pending_review', 'approved'];
+const ADMIN_CAMPAIGN_STATUSES = ['active', 'pending_review', 'draft', 'approved', 'paused', 'completed', 'rejected'];
+
+const normalizeLocationCode = (value) => String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/-/g, '_');
+
+const matchesSlot = (campaign, slot) => {
+    if (!campaign || !slot) return false;
+
+    if (slot.level === 'global') {
+        return !campaign.ad_level || campaign.ad_level === 'global';
+    }
+
+    if (campaign.ad_level !== slot.level) return false;
+
+    const slotCode = normalizeLocationCode(slot.location_code);
+    const countries = (campaign.target_countries || []).map(normalizeLocationCode);
+    const cities = (campaign.target_cities || []).map(normalizeLocationCode);
+    const regions = (campaign.target_regions || []).map(normalizeLocationCode);
+
+    if (slot.level === 'country') return countries.includes(slotCode);
+    if (slot.level === 'city') return cities.includes(slotCode);
+    if (slot.level === 'region') return regions.includes(slotCode);
+
+    return false;
+};
+
+const overlapsToday = (campaign, today) => {
+    if (!campaign?.start_date) return false;
+    const startsOk = campaign.start_date <= today;
+    const endsOk = !campaign.end_date || campaign.end_date >= today;
+    return startsOk && endsOk;
+};
+
+const deriveInventoryFromSlots = (slots, campaigns, today) => (slots || []).map((slot) => {
+    const occupied = (campaigns || []).filter((campaign) =>
+        INVENTORY_OCCUPANCY_STATUSES.includes(campaign.status) &&
+        overlapsToday(campaign, today) &&
+        matchesSlot(campaign, slot)
+    ).length;
+
+    const maxSlots = Number(slot.max_concurrent_ads || slot.max_slots || 0);
+
+    return {
+        level: slot.level,
+        location_code: slot.location_code,
+        location_name: slot.location_name,
+        max_slots: maxSlots,
+        active_campaigns: occupied,
+        available_slots: Math.max(maxSlots - occupied, 0),
+        price_usd: Number(slot.price_usd_per_month || slot.price_usd || 0)
+    };
+});
+
+const getRenderSurfaceLabel = (campaign) => {
+    const space = campaign?.ad_space_name || campaign?.ad_spaces?.name || campaign?.ad_space?.name || '';
+
+    const map = {
+        hero_banner: 'Home principal debajo del buscador',
+        featured_carousel: 'Carrusel de destacados en Home',
+        sponsored_results: 'Resultados patrocinados en busqueda',
+        sponsored_results_fullwidth: 'Banner full width dentro de busqueda',
+        interstitial: 'Pantalla completa ocasional',
+        recommended_section: 'Bloque de recomendados',
+        sticky_footer: 'Banner fijo inferior'
+    };
+
+    return map[space] || 'Render no identificado en frontend';
+};
+
+const getCampaignAmount = (campaign) => Number(campaign?.total_budget ?? campaign?.budget ?? 0) || 0;
+
+const getCampaignCurrency = (campaign) => String(
+    campaign?.currency || (campaign?.billing_country === 'MX' ? 'MXN' : 'USD') || 'USD'
+).toUpperCase();
+
+const isOperationalCampaign = (campaign) => {
+    const amount = getCampaignAmount(campaign);
+    return amount > 0 && ['draft', 'pending_review', 'approved', 'active', 'paused', 'completed'].includes(campaign?.status);
+};
 export default function AdInventory() {
     const [loading, setLoading] = useState(true);
     const [inventory, setInventory] = useState([]);
@@ -32,50 +115,51 @@ export default function AdInventory() {
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            // Load inventory status directly from table (fallback if RPC doesn't exist)
+            const today = new Date().toISOString().split('T')[0];
             let invData = [];
+
+            const { data: campData } = await supabase
+                .from('ad_campaigns')
+                .select('*, ad_spaces(name)')
+                .in('status', ADMIN_CAMPAIGN_STATUSES)
+                .order('created_at', { ascending: false })
+                .limit(80);
+
             try {
                 const { data: rpcData, error: rpcError } = await supabase.rpc('get_ad_inventory_status');
                 if (!rpcError && rpcData) {
                     invData = rpcData;
                 } else {
-                    // Fallback: query the table directly
-                    console.log('RPC failed, loading from table directly');
-                    const { data: tableData, error: tableError } = await supabase
+                    console.log('RPC failed, deriving inventory from slots + campaigns');
+                    const { data: tableData } = await supabase
                         .from('ad_inventory_slots')
                         .select('*')
                         .order('level', { ascending: true });
 
-                    if (!tableError && tableData) {
-                        invData = tableData.map(slot => ({
-                            level: slot.level,
-                            location_code: slot.location_code,
-                            location_name: slot.location_name,
-                            max_slots: slot.max_concurrent_ads,
-                            active_campaigns: 0,
-                            available_slots: slot.max_concurrent_ads,
-                            price_usd: slot.price_usd_per_month
-                        }));
-                    }
+                    invData = deriveInventoryFromSlots(tableData || [], campData || [], today);
                 }
             } catch (e) {
                 console.error('Both methods failed:', e);
+                const { data: tableData } = await supabase
+                    .from('ad_inventory_slots')
+                    .select('*')
+                    .order('level', { ascending: true });
+
+                invData = deriveInventoryFromSlots(tableData || [], campData || [], today);
             }
+
+            const enrichedCampaigns = (campData || []).map((campaign) => ({
+                ...campaign,
+                ad_space_name: campaign.ad_spaces?.name || null,
+                render_surface: getRenderSurfaceLabel(campaign)
+            }));
 
             setInventory(invData || []);
             console.log('Loaded inventory:', invData?.length || 0, 'slots');
-
-            // Load active/recent campaigns
-            const { data: campData, error: campError } = await supabase
-                .from('ad_campaigns')
-                .select('*')
-                .in('status', ['active', 'pending_review', 'draft', 'approved'])
-                .order('created_at', { ascending: false })
-                .limit(50);
-            if (!campError) setCampaigns(campData || []);
+            setCampaigns(enrichedCampaigns);
 
             // Calculate aggregate metrics
-            calculateMetrics(campData || []);
+            calculateMetrics(enrichedCampaigns, invData || []);
 
         } catch (error) {
             console.error('Error loading inventory:', error);
@@ -89,17 +173,30 @@ export default function AdInventory() {
         loadData();
     }, [loadData]);
 
-    const calculateMetrics = (camps) => {
-        const active = camps.filter(c => c.status === 'active');
-        const pending = camps.filter(c => c.status === 'pending_review');
-        const totalRevenue = camps.reduce((sum, c) => sum + (parseFloat(c.total_budget) || 0), 0);
+    const calculateMetrics = (camps, invData = []) => {
+        const operational = camps.filter(isOperationalCampaign);
+        const active = operational.filter(c => c.status === 'active');
+        const pending = operational.filter(c => c.status === 'pending_review');
+        const approved = operational.filter(c => c.status === 'approved');
+        const usdCampaigns = operational.filter(c => getCampaignCurrency(c) === 'USD');
+        const mxnCampaigns = operational.filter(c => getCampaignCurrency(c) === 'MXN');
+        const totalRevenueUsd = usdCampaigns.reduce((sum, c) => sum + getCampaignAmount(c), 0);
+        const totalRevenueMxn = mxnCampaigns.reduce((sum, c) => sum + getCampaignAmount(c), 0);
+        const availableSlots = (invData || []).reduce((sum, item) => sum + Number(item.available_slots || 0), 0);
+        const totalSlots = (invData || []).reduce((sum, item) => sum + Number(item.max_slots || 0), 0);
+        const occupiedSlots = Math.max(totalSlots - availableSlots, 0);
 
         setMetrics({
-            totalCampaigns: camps.length,
+            totalCampaigns: operational.length,
             activeCampaigns: active.length,
             pendingReview: pending.length,
-            totalRevenue,
-            avgCampaignValue: camps.length > 0 ? totalRevenue / camps.length : 0
+            approvedPendingPublish: approved.length,
+            totalRevenueUsd,
+            totalRevenueMxn,
+            occupiedSlots,
+            availableSlots,
+            totalSlots,
+            internalCampaigns: Math.max(camps.length - operational.length, 0)
         });
     };
 
@@ -113,8 +210,7 @@ export default function AdInventory() {
             const { error } = await supabase
                 .from('ad_campaigns')
                 .update({
-                    status: 'active',
-                    approved_at: new Date().toISOString()
+                    status: 'active'
                 })
                 .eq('id', campaignId);
 
@@ -208,7 +304,7 @@ export default function AdInventory() {
             active: 'Activa',
             pending_review: 'Pendiente',
             draft: 'Borrador',
-            approved: 'Aprobada',
+            approved: 'Aprobada sin publicar',
             rejected: 'Rechazada',
             paused: 'Pausada',
             completed: 'Completada'
@@ -221,7 +317,7 @@ export default function AdInventory() {
             active: 'bg-green-500/20 text-green-400',
             pending_review: 'bg-yellow-500/20 text-yellow-400',
             draft: 'bg-gray-500/20 text-gray-400',
-            approved: 'bg-blue-500/20 text-blue-400',
+            approved: 'bg-sky-500/20 text-sky-300',
             rejected: 'bg-red-500/20 text-red-400',
             paused: 'bg-orange-500/20 text-orange-400',
             completed: 'bg-purple-500/20 text-purple-400'
@@ -243,13 +339,16 @@ export default function AdInventory() {
         );
     };
 
-    const formatCurrency = (amount) => {
+    const formatCurrency = (amount, currency = 'USD') => {
         return new Intl.NumberFormat('es-MX', {
             style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 0
-        }).format(amount);
+            currency,
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount || 0);
     };
+
+    const operationalCampaigns = campaigns.filter(isOperationalCampaign);
 
     const levelIcons = {
         global: <Globe className="w-5 h-5" />,
@@ -355,7 +454,7 @@ export default function AdInventory() {
 
                 {/* Quick Stats */}
                 {metrics && (
-                    <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
+                    <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-4 mb-8">
                         {/* NEW: Total Slots Summary */}
                         <div className="bg-gradient-to-br from-indigo-600 to-purple-600 border border-indigo-500 rounded-xl p-4">
                             <div className="flex items-center gap-2 text-indigo-100 text-sm mb-1">
@@ -363,10 +462,10 @@ export default function AdInventory() {
                                 Total Slots Disponibles
                             </div>
                             <div className="text-2xl font-bold text-white">
-                                {inventory.reduce((sum, item) => sum + Number(item.available_slots || 0), 0)}/{inventory.reduce((sum, item) => sum + (item.max_slots || 0), 0)}
+                                {metrics.availableSlots}/{metrics.totalSlots}
                             </div>
                             <div className="text-xs text-indigo-200 mt-1">
-                                {inventory.length} ubicaciones activas
+                                {inventory.length} ubicaciones activas ? {metrics.occupiedSlots} ocupados hoy
                             </div>
                         </div>
                         <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
@@ -375,6 +474,7 @@ export default function AdInventory() {
                                 Total Campañas
                             </div>
                             <div className="text-2xl font-bold text-white">{metrics.totalCampaigns}</div>
+                            <div className="text-xs text-gray-500 mt-1">{metrics.internalCampaigns} internas/demo fuera del KPI</div>
                         </div>
                         <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
                             <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
@@ -393,20 +493,46 @@ export default function AdInventory() {
                         </div>
                         <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
                             <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
+                                <CheckCircle className="w-4 h-4 text-sky-400" />
+                                Aprobadas sin Publicar
+                            </div>
+                            <div className="text-2xl font-bold text-sky-400">{metrics.approvedPendingPublish}</div>
+                        </div>
+                        <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
+                            <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
                                 <DollarSign className="w-4 h-4 text-emerald-400" />
                                 Ingresos Totales
                             </div>
-                            <div className="text-2xl font-bold text-emerald-400">{formatCurrency(metrics.totalRevenue)}</div>
+                            <div className="text-2xl font-bold text-emerald-400">{formatCurrency(metrics.totalRevenueUsd, 'USD')}</div>
+                            <div className="text-xs text-gray-500 mt-1">Facturacion USD</div>
                         </div>
                         <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
                             <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
                                 <TrendingUp className="w-4 h-4 text-blue-400" />
                                 Promedio por Campaña
                             </div>
-                            <div className="text-2xl font-bold text-blue-400">{formatCurrency(metrics.avgCampaignValue)}</div>
+                            <div className="text-2xl font-bold text-blue-400">{formatCurrency(metrics.totalRevenueMxn, 'MXN')}</div>
                         </div>
                     </div>
                 )}
+
+                <div className="mb-6 rounded-xl border border-blue-500/20 bg-blue-500/10 p-5">
+                    <h2 className="text-lg font-bold text-white">Diagnostico rapido de publicacion</h2>
+                    <div className="mt-3 grid md:grid-cols-4 gap-3 text-sm">
+                        <div className="rounded-lg border border-blue-400/20 bg-gray-900/40 p-4 text-blue-100">
+                            <code>pending_review</code> = pagada y aun en revision.
+                        </div>
+                        <div className="rounded-lg border border-sky-400/20 bg-gray-900/40 p-4 text-sky-100">
+                            <code>approved</code> = estado legado intermedio. Aun no garantiza publicacion en PWA.
+                        </div>
+                        <div className="rounded-lg border border-green-400/20 bg-gray-900/40 p-4 text-green-100">
+                            <code>active</code> = estado que hoy si renderiza en frontend y Ads QA Tool.
+                        </div>
+                        <div className="rounded-lg border border-indigo-400/20 bg-gray-900/40 p-4 text-indigo-100">
+                            Los KPIs de este modulo ahora excluyen campanas internas/demo con presupuesto 0 para mejorar control operativo.
+                        </div>
+                    </div>
+                </div>
 
                 {/* Inventory Grid */}
                 <div className="grid lg:grid-cols-2 gap-6">
@@ -438,7 +564,7 @@ export default function AdInventory() {
                                     </button>
 
                                     {expandedLevels.includes(level) && (
-                                        <div className="p-4 space-y-2 bg-gray-900/50">
+                                        <div className="max-h-[340px] overflow-y-auto p-4 space-y-2 bg-gray-900/50">
                                             {(groupedInventory[level] || []).map(slot => {
                                                 const status = getSlotStatus(Number(slot.available_slots), slot.max_slots);
                                                 return (
@@ -475,13 +601,13 @@ export default function AdInventory() {
                             Campañas Recientes
                         </h2>
 
-                        <div className="space-y-3 max-h-[500px] overflow-y-auto">
-                            {campaigns.length === 0 ? (
+                        <div className="space-y-3 max-h-[65vh] overflow-y-auto pr-1">
+                            {operationalCampaigns.length === 0 ? (
                                 <div className="text-center text-gray-500 py-8">
                                     No hay campañas aún
                                 </div>
                             ) : (
-                                campaigns.map(campaign => (
+                                operationalCampaigns.map(campaign => (
                                     <div key={campaign.id} className="p-4 bg-gray-900 rounded-lg hover:bg-gray-900/80 transition">
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1">
@@ -501,9 +627,9 @@ export default function AdInventory() {
                                             </div>
                                             <div className="text-right ml-4">
                                                 <div className="text-lg font-bold text-emerald-400">
-                                                    {formatCurrency(campaign.total_budget || 0)}
+                                                    {formatCurrency(getCampaignAmount(campaign), getCampaignCurrency(campaign))}
                                                 </div>
-                                                <div className="text-xs text-gray-500">{campaign.currency || 'USD'}</div>
+                                                <div className="text-xs text-gray-500">{getCampaignCurrency(campaign)}</div>
                                             </div>
                                         </div>
 
@@ -531,6 +657,15 @@ export default function AdInventory() {
                                                         <X className="w-4 h-4" /> Rechazar
                                                     </button>
                                                 </>
+                                            )}
+
+                                            {campaign.status === 'approved' && (
+                                                <button
+                                                    onClick={() => handleApproveCampaign(campaign.id)}
+                                                    className="flex-1 flex items-center justify-center gap-1 bg-sky-600 hover:bg-sky-700 text-white text-sm py-2 rounded transition"
+                                                >
+                                                    <Check className="w-4 h-4" /> Publicar
+                                                </button>
                                             )}
 
                                             {campaign.status === 'active' && (
@@ -571,7 +706,7 @@ export default function AdInventory() {
                             </div>
 
                             {/* Campaign Bars */}
-                            {campaigns.filter(c => c.start_date).slice(0, 10).map(campaign => {
+                            {operationalCampaigns.filter(c => c.start_date).slice(0, 10).map(campaign => {
                                 const start = new Date(campaign.start_date);
                                 const end = campaign.end_date ? new Date(campaign.end_date) : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000);
                                 const startMonth = start.getMonth();
@@ -644,8 +779,9 @@ export default function AdInventory() {
                                 <div className="bg-gray-900 p-4 rounded-lg">
                                     <div className="text-gray-400 text-sm">Presupuesto Total</div>
                                     <div className="text-2xl font-bold text-emerald-400">
-                                        {formatCurrency(selectedCampaign.total_budget || 0)}
+                                        {formatCurrency(getCampaignAmount(selectedCampaign), getCampaignCurrency(selectedCampaign))}
                                     </div>
+                                    <div className="text-xs text-gray-500 mt-1">{getCampaignCurrency(selectedCampaign)}</div>
                                 </div>
                                 <div className="bg-gray-900 p-4 rounded-lg">
                                     <div className="text-gray-400 text-sm">Duración</div>
@@ -671,6 +807,16 @@ export default function AdInventory() {
                                             <span className="text-white text-sm">{selectedCampaign.target_cities.join(', ')}</span>
                                         </div>
                                     )}
+                                    <div className="mt-3 border-t border-gray-700 pt-3 space-y-2">
+                                        <div>
+                                            <span className="text-gray-400 text-sm">Render esperado: </span>
+                                            <span className="text-blue-300 text-sm">{selectedCampaign.render_surface || getRenderSurfaceLabel(selectedCampaign)}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-400 text-sm">Facturacion: </span>
+                                            <span className="text-white text-sm">{selectedCampaign.billing_country || 'MX'} / {selectedCampaign.tax_status || 'pending'}</span>
+                                        </div>
+                                    </div>
                                     {!selectedCampaign.target_countries?.length && !selectedCampaign.target_cities?.length && (
                                         <span className="text-gray-500">Sin ubicaciones especificadas</span>
                                     )}
@@ -704,6 +850,15 @@ export default function AdInventory() {
                                             <X className="w-5 h-5" /> Rechazar
                                         </button>
                                     </>
+                                )}
+
+                                {selectedCampaign.status === 'approved' && (
+                                    <button
+                                        onClick={() => handleApproveCampaign(selectedCampaign.id)}
+                                        className="flex-1 bg-sky-600 hover:bg-sky-700 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition"
+                                    >
+                                        <Check className="w-5 h-5" /> Publicar Campa?a
+                                    </button>
                                 )}
 
                                 {selectedCampaign.status === 'active' && (

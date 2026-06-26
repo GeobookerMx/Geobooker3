@@ -29,12 +29,32 @@ const TEST_LOCATIONS = [
 ];
 
 // Lógica de prioridad de anuncios (documentada)
+const getCreativeAsset = (campaign) => campaign.ad_creatives?.[0]?.image_url || campaign.creative_url || campaign.image_url || null;
+
 const AD_PRIORITY = [
     { level: 1, scope: 'city', label: 'Ciudad exacta', color: 'green' },
-    { level: 2, scope: 'country', label: 'País', color: 'blue' },
-    { level: 3, scope: 'region', label: 'Región', color: 'yellow' },
+    { level: 2, scope: 'country', label: 'Pa?s', color: 'blue' },
+    { level: 3, scope: 'region', label: 'Regi?n', color: 'yellow' },
     { level: 4, scope: 'global', label: 'Global', color: 'gray' },
 ];
+
+const getTodayIso = () => new Date().toISOString().split('T')[0];
+
+const getRenderSurfaceLabel = (campaign) => {
+    const space = campaign?.ad_spaces?.name || campaign?.ad_space_name || '';
+
+    const map = {
+        hero_banner: 'Home principal debajo del buscador',
+        featured_carousel: 'Carrusel de destacados en Home',
+        sponsored_results: 'Resultados patrocinados en busqueda',
+        sponsored_results_fullwidth: 'Banner full width dentro de busqueda',
+        interstitial: 'Pantalla completa ocasional',
+        recommended_section: 'Bloque de recomendados',
+        sticky_footer: 'Banner fijo inferior'
+    };
+
+    return map[space] || 'Render no identificado en frontend';
+};
 
 export default function AdsQATool() {
     const [selectedLocation, setSelectedLocation] = useState(TEST_LOCATIONS[0]);
@@ -52,6 +72,7 @@ export default function AdsQATool() {
     const [selectedCampaign, setSelectedCampaign] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [showEmailModal, setShowEmailModal] = useState(false);
+    const [simulationDate, setSimulationDate] = useState(getTodayIso());
 
     const simulateAdTargeting = async () => {
         setLoading(true);
@@ -66,15 +87,14 @@ export default function AdsQATool() {
         }
 
         try {
-            const today = new Date().toISOString().split('T')[0];
 
             // Obtener TODAS las campañas activas y filtrar en JS
             const { data: allCampaigns, error } = await supabase
                 .from('ad_campaigns')
-                .select('*')
+                .select('*, ad_creatives(*), ad_spaces(name)')
                 .eq('status', 'active')
-                .lte('start_date', today)
-                .gte('end_date', today);
+                .lte('start_date', simulationDate)
+                .or(`end_date.gte.${simulationDate},end_date.is.null`);
 
             if (error) {
                 console.error('Error fetching campaigns:', error);
@@ -94,7 +114,7 @@ export default function AdsQATool() {
                 );
 
                 if (cityMatch) {
-                    allMatches.push({ ...campaign, matchedScope: 'city', priority: 1 });
+                    allMatches.push({ ...campaign, matchedScope: 'city', priority: 1, render_surface: getRenderSurfaceLabel(campaign) });
                     return;
                 }
 
@@ -103,13 +123,13 @@ export default function AdsQATool() {
                 const countryMatch = targetCountries.includes(userCountry);
 
                 if (countryMatch) {
-                    allMatches.push({ ...campaign, matchedScope: 'country', priority: 2 });
+                    allMatches.push({ ...campaign, matchedScope: 'country', priority: 2, render_surface: getRenderSurfaceLabel(campaign) });
                     return;
                 }
 
                 // Verificar si es global (prioridad 4)
                 if (campaign.ad_level === 'global') {
-                    allMatches.push({ ...campaign, matchedScope: 'global', priority: 4 });
+                    allMatches.push({ ...campaign, matchedScope: 'global', priority: 4, render_surface: getRenderSurfaceLabel(campaign) });
                 }
             });
 
@@ -282,7 +302,7 @@ export default function AdsQATool() {
                     </div>
                 )}
 
-                <div className="mt-6 flex items-center gap-4">
+                <div className="mt-6 flex flex-wrap items-end gap-4">
                     <button
                         onClick={simulateAdTargeting}
                         disabled={loading}
@@ -296,8 +316,18 @@ export default function AdsQATool() {
                         Simular Targeting
                     </button>
 
+                    <div className="min-w-[210px]">
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Fecha de simulacion</label>
+                        <input
+                            type="date"
+                            value={simulationDate}
+                            onChange={(e) => setSimulationDate(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                        />
+                    </div>
+
                     <div className="text-sm text-gray-600">
-                        Ubicación seleccionada: <strong>{selectedLocation.country}</strong> / <strong>{selectedLocation.city}</strong>
+                        Ubicacion seleccionada: <strong>{(useCustomLocation ? customLocation.country : selectedLocation.country) || 'N/A'}</strong> / <strong>{(useCustomLocation ? customLocation.city : selectedLocation.city) || 'N/A'}</strong>
                     </div>
                 </div>
             </div>
@@ -342,20 +372,20 @@ export default function AdsQATool() {
                                 {/* Preview del Creativo */}
                                 <div className="mt-4 bg-gray-900 rounded-lg p-3">
                                     <p className="text-xs text-gray-400 mb-2">📺 Preview del Creativo:</p>
-                                    {ad.creative_url ? (
-                                        ad.creative_url.includes('youtube') ? (
+                                    {getCreativeAsset(ad) ? (
+                                        getCreativeAsset(ad).includes('youtube') ? (
                                             <a
-                                                href={ad.creative_url}
+                                                href={getCreativeAsset(ad)}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-2"
                                             >
-                                                🎬 Ver video en YouTube: {ad.creative_url}
+                                                🎬 Ver video en YouTube: {getCreativeAsset(ad)}
                                             </a>
-                                        ) : ad.creative_url.match(/\.(mp4|webm|mov)$/i) ? (
-                                            <video src={ad.creative_url} controls className="max-h-32 rounded" />
+                                        ) : getCreativeAsset(ad).match(/\.(mp4|webm|mov)$/i) ? (
+                                            <video src={getCreativeAsset(ad)} controls className="max-h-32 rounded" />
                                         ) : (
-                                            <img src={ad.creative_url} alt="Creative" className="max-h-32 rounded" />
+                                            <img src={getCreativeAsset(ad)} alt="Creative" className="max-h-32 rounded" />
                                         )
                                     ) : (
                                         <p className="text-gray-500 text-sm">Sin creativo cargado</p>
@@ -455,29 +485,29 @@ export default function AdsQATool() {
                                     <PlayCircle className="w-5 h-5 text-purple-400" />
                                     Preview del Creativo
                                 </h3>
-                                {selectedCampaign.creative_url ? (
-                                    selectedCampaign.creative_url.includes('youtube') ? (
+                                {getCreativeAsset(selectedCampaign) ? (
+                                    getCreativeAsset(selectedCampaign).includes('youtube') ? (
                                         <div className="aspect-video bg-black rounded-lg overflow-hidden">
                                             <iframe
-                                                src={selectedCampaign.creative_url.replace('youtube.com/shorts/', 'youtube.com/embed/')}
+                                                src={getCreativeAsset(selectedCampaign).replace('youtube.com/shorts/', 'youtube.com/embed/')}
                                                 className="w-full h-full"
                                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                                 allowFullScreen
                                             />
                                         </div>
-                                    ) : selectedCampaign.creative_url.match(/\.(mp4|webm|mov)$/i) ? (
-                                        <video src={selectedCampaign.creative_url} controls className="w-full rounded-lg" />
+                                    ) : getCreativeAsset(selectedCampaign).match(/\.(mp4|webm|mov)$/i) ? (
+                                        <video src={getCreativeAsset(selectedCampaign)} controls className="w-full rounded-lg" />
                                     ) : (
-                                        <img src={selectedCampaign.creative_url} alt="Creative" className="max-h-64 mx-auto rounded-lg" />
+                                        <img src={getCreativeAsset(selectedCampaign)} alt="Creative" className="max-h-64 mx-auto rounded-lg" />
                                     )
                                 ) : (
                                     <div className="text-center py-8 text-gray-500">
                                         Sin creativo cargado
                                     </div>
                                 )}
-                                {selectedCampaign.creative_url && (
+                                {getCreativeAsset(selectedCampaign) && (
                                     <a
-                                        href={selectedCampaign.creative_url}
+                                        href={getCreativeAsset(selectedCampaign)}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="mt-3 flex items-center justify-center gap-2 text-purple-400 hover:text-purple-300 text-sm"
@@ -553,6 +583,12 @@ export default function AdsQATool() {
                                                 {selectedCampaign.ad_level || 'N/A'}
                                             </span>
                                         </div>
+                                        <div>
+                                            <span className="text-gray-600 text-sm">Superficie:</span>
+                                            <span className="ml-2 text-sm font-semibold text-gray-900">
+                                                {selectedCampaign.render_surface || getRenderSurfaceLabel(selectedCampaign)}
+                                            </span>
+                                        </div>
                                         {selectedCampaign.target_countries?.length > 0 && (
                                             <div>
                                                 <span className="text-gray-600 text-sm">Países:</span>
@@ -587,7 +623,7 @@ export default function AdsQATool() {
                                     <>
                                         <button
                                             onClick={async () => {
-                                                const { error } = await supabase.from('ad_campaigns').update({ status: 'approved' }).eq('id', selectedCampaign.id);
+                                                const { error } = await supabase.from('ad_campaigns').update({ status: 'active' }).eq('id', selectedCampaign.id);
                                                 if (!error) {
                                                     toast.success('Campaña aprobada');
                                                     setShowDetailModal(false);

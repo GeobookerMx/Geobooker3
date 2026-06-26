@@ -10,8 +10,34 @@ import { Capacitor } from '@capacitor/core';
 import { buildPaymentReturnUrl } from '../../services/paymentReturnUrls';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+const MX_COUNTRY_CODE = 'MX';
+
+const getTaxScenario = (billingCountry) => {
+    if ((billingCountry || MX_COUNTRY_CODE).toUpperCase() === MX_COUNTRY_CODE) {
+        return {
+            taxStatus: 'domestic_mx',
+            currency: 'mxn',
+            chargeIva: true,
+            invoiceType: 'cfdi_ingreso'
+        };
+    }
+
+    return {
+        taxStatus: 'export_0_iva',
+        currency: 'usd',
+        chargeIva: false,
+        invoiceType: 'invoice_intl'
+    };
+};
 
 const CampaignCreateWizard = () => {
+const getIsoDateOffset = (offsetDays = 0) => {
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+    base.setDate(base.getDate() + offsetDays);
+    return base.toISOString().split('T')[0];
+};
+
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
 
@@ -97,7 +123,13 @@ const CampaignCreateWizard = () => {
         target_city: '',
         target_language: 'es',
         advertiser_name: '',
-        advertiser_email: ''
+        advertiser_email: '',
+        billing_country: MX_COUNTRY_CODE,
+        legal_name: '',
+        tax_id: '',
+        invoice_required: true,
+        start_date: getIsoDateOffset(1),
+        end_date: getIsoDateOffset(31)
     });
 
     // Cargar espacio
@@ -203,16 +235,41 @@ const CampaignCreateWizard = () => {
         }
         if (currentStep === 2) {
             if (formData.geographic_scope !== 'global' && !formData.target_country) {
-                toast.error('Selecciona un país de destino');
+                toast.error('Selecciona un pa??s de destino');
                 return false;
             }
             if (formData.geographic_scope === 'region' && !formData.target_region) {
-                toast.error('Selecciona una región');
+                toast.error('Selecciona una regi??n');
                 return false;
             }
             if (formData.geographic_scope === 'city' && !formData.target_city) {
                 toast.error('Selecciona una ciudad');
                 return false;
+            }
+            return true;
+        }
+        if (currentStep === 3) {
+            if (!formData.billing_country) {
+                toast.error('Selecciona el pais de facturacion');
+                return false;
+            }
+            if (!formData.start_date || !formData.end_date) {
+                toast.error('Define la ventana de publicacion');
+                return false;
+            }
+            if (formData.end_date < formData.start_date) {
+                toast.error('La fecha final no puede ser anterior al inicio');
+                return false;
+            }
+            if (formData.invoice_required && formData.billing_country === MX_COUNTRY_CODE) {
+                if (!formData.legal_name || formData.legal_name.trim().length < 3) {
+                    toast.error('Ingresa la razon social o nombre fiscal para facturacion');
+                    return false;
+                }
+                if (!formData.tax_id || formData.tax_id.trim().length < 10) {
+                    toast.error('Ingresa RFC o identificador fiscal valido');
+                    return false;
+                }
             }
             return true;
         }
@@ -277,10 +334,10 @@ const CampaignCreateWizard = () => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             const adPricing = getLocalAdPricing(adSpace?.price_monthly);
-            
-            // Calcular IVA y total final para cobrar lo mismo que se muestra en UI
+            const taxScenario = getTaxScenario(formData.billing_country);
+
             const subtotal = adPricing.finalPrice || 0;
-            const ivaAmount = formData.target_country === 'MX' ? subtotal * 0.16 : 0;
+            const ivaAmount = taxScenario.chargeIva ? subtotal * 0.16 : 0;
             const totalWithIva = subtotal + ivaAmount;
 
             // 1. Primero crear la campaña como draft
@@ -300,7 +357,14 @@ const CampaignCreateWizard = () => {
                 p_target_country: formData.target_country || null,
                 p_target_region: formData.target_region || null,
                 p_target_city: formData.target_city || null,
-                p_user_id: user?.id || null
+                p_user_id: user?.id || null,
+                p_start_date: formData.start_date,
+                p_end_date: formData.end_date,
+                p_billing_country: formData.billing_country,
+                p_client_tax_id: formData.tax_id || null,
+                p_client_legal_name: formData.legal_name || null,
+                p_invoice_required: formData.invoice_required,
+                p_tax_status: taxScenario.taxStatus
             });
 
             if (error) throw error;
@@ -315,7 +379,7 @@ const CampaignCreateWizard = () => {
                 }
 
                 // Determine currency based on country
-                const currency = ['US', 'CA'].includes(formData.target_country) ? 'usd' : 'mxn';
+                const currency = taxScenario.currency;
 
                 console.log('Creating checkout session...', {
                     adSpace: adSpace.name,
@@ -342,7 +406,19 @@ const CampaignCreateWizard = () => {
                             campaign_id: campaignId,
                             ad_space_id: spaceId,
                             ad_space_name: adSpace.name,
-                            billing_country: formData.target_country
+                            advertiser_email: formData.advertiser_email,
+                            advertiser_name: formData.advertiser_name,
+                            billing_country: formData.billing_country,
+                            target_country: formData.target_country,
+                            target_scope: formData.geographic_scope,
+                            tax_status: taxScenario.taxStatus,
+                            invoice_type: taxScenario.invoiceType,
+                            invoice_required: formData.invoice_required ? 'true' : 'false',
+                            legal_name: formData.legal_name || '',
+                            client_tax_id: formData.tax_id || '',
+                            subtotal_mxn: subtotal,
+                            iva_amount_mxn: ivaAmount,
+                            total_amount_mxn: totalWithIva
                         }
                     }),
                 });
@@ -378,7 +454,15 @@ const CampaignCreateWizard = () => {
                             campaign_id: campaignId,
                             ad_space_id: spaceId,
                             ad_space_name: adSpace.name,
-                            billing_country: formData.target_country,
+                            advertiser_name: formData.advertiser_name,
+                            billing_country: formData.billing_country,
+                            target_country: formData.target_country,
+                            target_scope: formData.geographic_scope,
+                            tax_status: taxScenario.taxStatus,
+                            invoice_type: taxScenario.invoiceType,
+                            invoice_required: formData.invoice_required ? 'true' : 'false',
+                            legal_name: formData.legal_name || '',
+                            client_tax_id: formData.tax_id || '',
                             advertiser_email: formData.advertiser_email,
                         },
                         description: `Publicidad Geobooker - ${adSpace.display_name}`
@@ -412,8 +496,9 @@ const CampaignCreateWizard = () => {
 
     if (!adSpace) return <div className="p-10 text-center">Cargando...</div>;
     const adPricing = getLocalAdPricing(adSpace?.price_monthly);
+    const taxScenario = getTaxScenario(formData.billing_country);
     const subtotal = adPricing.finalPrice || 0;
-    const ivaAmount = formData.target_country === 'MX' ? subtotal * 0.16 : 0;
+    const ivaAmount = taxScenario.chargeIva ? subtotal * 0.16 : 0;
     const totalAmount = subtotal + ivaAmount;
 
     const scopeOptions = [
@@ -574,12 +659,75 @@ const CampaignCreateWizard = () => {
                                     </select>
                                 </div>
                             )}
+
+                            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                                <h4 className="font-semibold text-gray-900">Programacion de la pauta</h4>
+                                <p className="mt-1 text-sm text-gray-600">Define cuando debe arrancar y terminar la publicacion del anuncio en el territorio contratado.</p>
+                                <p className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">La pauta pasa primero por revision comercial y editorial. La aprobacion y publicacion puede tardar de 12 a 72 horas, dependiendo del contenido, destino y validacion operativa.</p>
+                                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Fecha de inicio</label>
+                                        <input type="date" name="start_date" min={getIsoDateOffset(0)} value={formData.start_date} onChange={handleInputChange} className="w-full border rounded-lg p-3" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Fecha final</label>
+                                        <input type="date" name="end_date" min={formData.start_date || getIsoDateOffset(0)} value={formData.end_date} onChange={handleInputChange} className="w-full border rounded-lg p-3" />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     )}
 
                     {/* PASO 3 - Confirmar con Preview */}
                     {step === 3 && (
                         <div className="space-y-6">
+                            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+                                <h3 className="font-semibold text-blue-900">Destino y facturacion</h3>
+                                <p className="mt-2 text-sm text-blue-800">Geobooker separa el territorio donde se publica tu anuncio del territorio donde se factura el servicio.</p>
+                                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Pais de facturacion</label>
+                                        <select name="billing_country" value={formData.billing_country} onChange={handleInputChange} className="w-full border rounded-lg p-3 bg-white">
+                                            {countries.map((country) => (
+                                                <option key={country.code} value={country.code}>{country.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="rounded-lg bg-white border border-blue-100 p-3">
+                                        <div className="text-sm text-gray-500">Territorio objetivo</div>
+                                        <div className="font-semibold text-gray-900 mt-1">{getTargetLocation() || 'Pendiente'}</div>
+                                        <div className="text-sm text-gray-500 mt-3">Moneda operativa</div>
+                                        <div className="font-semibold text-gray-900 mt-1 uppercase">{taxScenario.currency}</div>
+                                        <div className="text-sm text-gray-500 mt-3">Ventana programada</div>
+                                        <div className="font-semibold text-gray-900 mt-1">{formData.start_date} al {formData.end_date}</div>
+                                    </div>
+                                </div>
+                                <label className="mt-4 flex items-start gap-3 rounded-xl border border-blue-100 bg-white p-4">
+                                    <input type="checkbox" checked={formData.invoice_required} onChange={(e) => setFormData((prev) => ({ ...prev, invoice_required: e.target.checked }))} className="mt-1" />
+                                    <div>
+                                        <div className="font-medium text-gray-900">Requiero documento fiscal</div>
+                                        <div className="text-sm text-gray-600">Para Mexico normalmente se emite CFDI. Para clientes en el extranjero se prepara invoice o soporte segun el caso operativo.</div>
+                                    </div>
+                                </label>
+                                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Razon social / nombre fiscal</label>
+                                        <input name="legal_name" value={formData.legal_name} onChange={handleInputChange} className="w-full border rounded-lg p-3 bg-white" placeholder="Empresa SA de CV" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">RFC / VAT ID / Tax ID</label>
+                                        <input name="tax_id" value={formData.tax_id} onChange={handleInputChange} className="w-full border rounded-lg p-3 bg-white" placeholder="XAXX010101000" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+                                <h3 className="font-semibold">Que estas contratando</h3>
+                                <p className="mt-2">Este pago reserva el espacio <strong>{adSpace.display_name}</strong> para el territorio <strong>{getTargetLocation() || 'seleccionado'}</strong> durante el periodo <strong>{formData.start_date} al {formData.end_date}</strong>.</p>
+                                <p className="mt-2">Geobooker entrega visibilidad dentro de la superficie contratada, metricas reales de impresiones y clics, y revision administrativa antes de publicar. No prometemos ventas garantizadas ni resultados fuera del territorio configurado.</p>
+                                <p className="mt-2 font-medium">Importante: despues del pago, la pauta entra a revision y puede tardar entre 12 y 72 horas en aprobarse y publicarse.</p>
+                            </div>
+
                             <h3 className="text-xl font-bold text-center">Vista Previa de tu Anuncio</h3>
 
                             {/* AD PREVIEW */}
@@ -619,8 +767,11 @@ const CampaignCreateWizard = () => {
                             {/* Resumen con IVA */}
                             <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                                 <div className="flex justify-between"><span className="text-gray-600">Espacio:</span><strong>{adSpace.display_name}</strong></div>
+                                <div className="flex justify-between"><span className="text-gray-600">Tipo de publicidad:</span><strong>{adSpace.type || 'display'}</strong></div>
                                 <div className="flex justify-between"><span className="text-gray-600">Alcance:</span><strong>{getTargetLocation()}</strong></div>
+                                <div className="flex justify-between"><span className="text-gray-600">Periodo:</span><strong>{formData.start_date} al {formData.end_date}</strong></div>
                                 <div className="flex justify-between"><span className="text-gray-600">URL destino:</span><span className="text-blue-600 text-sm truncate max-w-[200px]">{formData.cta_url}</span></div>
+                                <div className="flex justify-between"><span className="text-gray-600">Revision estimada:</span><strong>12 a 72 horas</strong></div>
 
                                 {/* Desglose de precios */}
                                 <div className="border-t pt-3 mt-3 space-y-1">
@@ -634,7 +785,7 @@ const CampaignCreateWizard = () => {
                                             <span>-{adPricing.discountPercent}% sobre tarifa base</span>
                                         </div>
                                     )}
-                                    {formData.target_country === 'MX' ? (
+                                    {taxScenario.chargeIva ? (
                                         <>
                                             <div className="flex justify-between text-sm">
                                                 <span className="text-gray-600">IVA (16%):</span>
@@ -738,8 +889,8 @@ const CampaignCreateWizard = () => {
                                 <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
                                     <p className="text-sm text-blue-800 font-medium mb-1">🧾 Facturación</p>
                                     <p className="text-xs text-blue-700">
-                                        Una vez que tu campaña sea aprobada y entre en pauta, recibirás tu factura por correo electrónico al email proporcionado.
-                                        {formData.target_country === 'MX' && ' Se incluirá el desglose de IVA (16%).'}
+                                        Una vez que tu campa??a sea aprobada y entre en pauta, recibiras tu comprobante fiscal o invoice segun el pais de facturacion registrado.
+                                        {taxScenario.chargeIva && ' Se incluira el desglose de IVA (16%).'}
                                     </p>
                                 </div>
                             </div>

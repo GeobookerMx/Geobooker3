@@ -27,6 +27,8 @@ exports.handler = async function handler(event) {
         const currency = (campaign?.currency || (campaign?.billing_country === 'MX' ? 'MXN' : 'USD')).toUpperCase();
         const placement = campaign?.ad_spaces?.display_name || campaign?.space_name || campaign?.ad_space_name || 'Espacio publicitario Geobooker';
         const location = campaign?.target_location || campaign?.targetLocation || 'Sin especificar';
+        const billingCountry = campaign?.billing_country || 'MX';
+        const taxStatus = campaign?.tax_status || (billingCountry === 'MX' ? 'domestic_mx' : 'export_0_iva');
         const campaignType = campaign?.ad_level === 'global' || currency === 'USD' ? 'Enterprise / Global' : 'Publicidad local';
 
         const emailHtml = `
@@ -58,12 +60,14 @@ exports.handler = async function handler(event) {
         <div class="content">
             <p style="text-align: center;"><span class="badge">PENDING REVIEW</span></p>
             <p>Una nueva compra publicitaria entro a revision y requiere validacion del equipo.</p>
+            <p style="margin-top:12px;color:#92400e;background:#fef3c7;padding:12px 14px;border-radius:8px;"><strong>SLA operativo:</strong> la pauta debe revisarse y quedar aprobada o devuelta con observaciones en una ventana estimada de 12 a 72 horas.</p>
             <div class="details">
                 <div class="detail-row"><span class="label">Anunciante</span><span class="value">${campaign?.advertiser_name || 'Unknown'}</span></div>
                 <div class="detail-row"><span class="label">Email</span><span class="value">${campaign?.advertiser_email || 'N/A'}</span></div>
                 <div class="detail-row"><span class="label">Tipo</span><span class="value">${campaignType}</span></div>
                 <div class="detail-row"><span class="label">Espacio</span><span class="value">${placement}</span></div>
                 <div class="detail-row"><span class="label">Segmentacion</span><span class="value">${location}</span></div>
+                <div class="detail-row"><span class="label">Facturacion</span><span class="value">${billingCountry} / ${taxStatus}</span></div>
                 <div class="detail-row"><span class="label">Monto</span><span class="value">${amount.toFixed(2)} ${currency}</span></div>
                 <div class="detail-row"><span class="label">Pago</span><span class="value">${campaign?.payment_method || campaign?.paymentMethod || 'card'} / ${campaign?.payment_status || 'paid'}</span></div>
                 <div class="detail-row"><span class="label">Fechas</span><span class="value">${campaign?.start_date || 'TBD'} -> ${campaign?.end_date || 'Sin definir'}</span></div>

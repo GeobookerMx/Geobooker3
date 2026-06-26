@@ -65,7 +65,7 @@ export async function loadActiveCampaigns(spaceName, context = {}) {
             .eq('ad_spaces.name', spaceName)
             .eq('status', 'active')
             .lte('start_date', today)
-            .gte('end_date', today);
+            .or(`end_date.gte.${today},end_date.is.null`);
 
         if (error) {
             console.error(`❌ [Ads] Fallback query error for ${spaceName}:`, error);
@@ -86,7 +86,7 @@ export async function loadActiveCampaigns(spaceName, context = {}) {
  * @param {Object} context - User context { country, city }
  * @returns {Promise<Array>} - Filtered campaigns sorted by priority
  */
-export async function loadEnterpriseCampaigns(context = {}) {
+export async function loadEnterpriseCampaigns(spaceName = null, context = {}) {
     try {
         const { country = null, city = null } = context;
         const today = new Date().toISOString().split('T')[0];
@@ -94,12 +94,18 @@ export async function loadEnterpriseCampaigns(context = {}) {
 
 
         // Query active Enterprise campaigns with their creatives
-        const { data, error } = await supabase
+        let query = supabase
             .from('ad_campaigns')
-            .select('*, ad_creatives(*)')
+            .select('*, ad_creatives(*), ad_spaces(name)')
             .eq('status', 'active')
             .lte('start_date', today)
             .or(`end_date.gte.${today},end_date.is.null`);
+
+        if (spaceName) {
+            query = query.eq('ad_spaces.name', spaceName);
+        }
+
+        const { data, error } = await query;
 
         if (error) {
             console.error('❌ [Enterprise Ads] Query error:', error);
@@ -153,6 +159,7 @@ export async function loadEnterpriseCampaigns(context = {}) {
                 id: campaign.id,
                 advertiser_name: campaign.advertiser_name,
                 ad_level: campaign.ad_level,
+                ad_space_name: campaign.ad_spaces?.name || null,
                 ad_creatives: [{
                     id: creative?.id || campaign.id,
                     title: creative?.title || campaign.headline || campaign.advertiser_name,

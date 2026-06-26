@@ -24,7 +24,7 @@ export default function HeroBanner() {
             const country = localStorage.getItem('userCountry') || 'unknown';
             const city = localStorage.getItem('userCity') || 'unknown';
 
-            const campaigns = await loadEnterpriseCampaigns({ country, city });
+            const campaigns = await loadEnterpriseCampaigns('hero_banner', { country, city });
             setEnterpriseCampaigns(campaigns);
         };
         loadEnterprise();

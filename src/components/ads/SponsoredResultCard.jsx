@@ -21,8 +21,9 @@ export default function SponsoredResultCard({ context, showPlaceholder = true })
     const handleClick = () => {
         // Track click event
         console.log('Sponsored result clicked:', currentCampaign.id);
-        if (creative.target_url) {
-            window.open(creative.target_url, '_blank');
+        const destinationUrl = creative.cta_url || creative.target_url;
+        if (destinationUrl) {
+            window.open(destinationUrl, '_blank');
         }
     };
 

@@ -9,10 +9,12 @@ import { Link } from 'react-router-dom';
 import { MessageCircle, X, Send, Loader2, Bot, User, Sparkles } from 'lucide-react';
 import { sendMessageToGemini } from '../../services/geminiService';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../contexts/AuthContext';
 
 
 function ChatWidget() {
     const { t } = useTranslation();
+    const { user } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState('');
@@ -20,6 +22,17 @@ function ChatWidget() {
     const [showQuickReplies, setShowQuickReplies] = useState(true);
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
+
+    // Identificador único de sesión persistente por pestaña para analytics
+    const [sessionId] = useState(() => {
+        if (typeof window === 'undefined') return 'session_ssr';
+        let sId = sessionStorage.getItem('geobot_session_id');
+        if (!sId) {
+            sId = 'session_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now();
+            sessionStorage.setItem('geobot_session_id', sId);
+        }
+        return sId;
+    });
 
     // Respuestas rápidas dinámicas
     const TRANSLATED_QUICK_REPLIES = {
@@ -87,7 +100,7 @@ function ChatWidget() {
                     content: m.content
                 }));
 
-            const result = await sendMessageToGemini(text.trim(), history);
+            const result = await sendMessageToGemini(text.trim(), history, sessionId, user?.id);
 
             const assistantMessage = {
                 id: (Date.now() + 1).toString(),

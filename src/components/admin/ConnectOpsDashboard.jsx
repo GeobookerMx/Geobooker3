@@ -67,6 +67,7 @@ const ConnectOpsDashboard = () => {
   const [runs, setRuns] = useState([]);
   const [connectLeadCount, setConnectLeadCount] = useState(0);
   const [draftStatuses, setDraftStatuses] = useState({});
+  const [selectedCampaignId, setSelectedCampaignId] = useState(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -95,6 +96,13 @@ const ConnectOpsDashboard = () => {
       setCampaigns(safeCampaigns);
       setRuns(runRows || []);
       setConnectLeadCount(leadCount || 0);
+      setSelectedCampaignId((current) => {
+        if (safeCampaigns.some((campaign) => campaign.id === current)) {
+          return current;
+        }
+
+        return safeCampaigns[0]?.id || null;
+      });
       setDraftStatuses(
         safeCampaigns.reduce((acc, campaign) => {
           acc[campaign.id] = {
@@ -153,6 +161,10 @@ const ConnectOpsDashboard = () => {
       bounceRate: totals.sent ? (totals.bounced / totals.sent) * 100 : 0
     };
   }, [campaigns, runs]);
+
+  const selectedCampaign = campaigns.find((campaign) => campaign.id === selectedCampaignId) || null;
+  const selectedRuns = runs.filter((run) => run.connect_campaign_id === selectedCampaignId);
+  const latestRun = selectedRuns[0] || null;
 
   const updateDraft = (campaignId, field, value) => {
     setDraftStatuses((prev) => ({
@@ -398,6 +410,80 @@ const ConnectOpsDashboard = () => {
         </div>
 
         <div className="space-y-6">
+          <div className="bg-white rounded-2xl border shadow-sm p-6">
+            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <Activity className="w-5 h-5 text-cyan-600" />
+              Campana seleccionada
+            </h3>
+            {selectedCampaign ? (
+              <div className="mt-4 space-y-4 text-sm text-gray-700">
+                <div className="rounded-xl border bg-slate-50 p-4">
+                  <p className="text-xs uppercase tracking-wide text-gray-500">Cuenta</p>
+                  <p className="mt-2 text-base font-semibold text-gray-900">{selectedCampaign.package_name}</p>
+                  <p className="mt-1 text-sm text-gray-600">{selectedCampaign.billing_email}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl border bg-white p-4">
+                    <p className="text-xs uppercase tracking-wide text-gray-500">Pago</p>
+                    <div className={`mt-2 inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadge(selectedCampaign.payment_status)}`}>
+                      {selectedCampaign.payment_status}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border bg-white p-4">
+                    <p className="text-xs uppercase tracking-wide text-gray-500">Fulfillment</p>
+                    <div className={`mt-2 inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadge(selectedCampaign.fulfillment_status)}`}>
+                      {selectedCampaign.fulfillment_status}
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl border bg-white p-4">
+                    <p className="text-xs uppercase tracking-wide text-gray-500">Monto reservado</p>
+                    <p className="mt-2 text-xl font-black text-gray-900">{formatCurrency(selectedCampaign.launch_price_mxn)}</p>
+                  </div>
+                  <div className="rounded-xl border bg-white p-4">
+                    <p className="text-xs uppercase tracking-wide text-gray-500">Batch solicitado</p>
+                    <p className="mt-2 text-xl font-black text-gray-900">{Number(selectedCampaign.batch_size || 0).toLocaleString('es-MX')}</p>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-blue-900">
+                  <p className="font-semibold">Como se opera desde aqui</p>
+                  <p className="mt-2">Selecciona una reserva del pipeline, ajusta pago o fulfillment y guarda cambios. La ejecucion real de envios y el registro de corridas vive en <code>connect_campaign_runs</code> y en las colas del CRM.</p>
+                </div>
+                <div className="rounded-xl border bg-white p-4">
+                  <p className="text-xs uppercase tracking-wide text-gray-500">Corridas registradas</p>
+                  <p className="mt-2 text-xl font-black text-gray-900">{selectedRuns.length.toLocaleString('es-MX')}</p>
+                  {latestRun ? (
+                    <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-gray-500">Ultima corrida</p>
+                        <p className="font-semibold text-gray-900">{new Date(latestRun.created_at).toLocaleString('es-MX')}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Enviados</p>
+                        <p className="font-semibold text-gray-900">{Number(latestRun.sent_contacts || 0).toLocaleString('es-MX')}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Aprobados</p>
+                        <p className="font-semibold text-gray-900">{Number(latestRun.approved_contacts || 0).toLocaleString('es-MX')}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Respuestas</p>
+                        <p className="font-semibold text-gray-900">{Number(latestRun.replied_contacts || 0).toLocaleString('es-MX')}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-sm text-gray-500">Aun no hay corridas registradas para esta reserva.</p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 rounded-xl border bg-slate-50 p-4 text-sm text-gray-600">
+                Aun no hay una campana seleccionada. Cuando exista una reserva Connect, aparecera aqui el contexto operativo.
+              </div>
+            )}
+          </div>
+
           <div className="bg-white rounded-2xl border shadow-sm p-6">
             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-emerald-600" />

@@ -80,8 +80,13 @@ const CampaignSender = ({ metrics, onCampaignComplete }) => {
             const batchInfo = result.processedBatch && result.requestedLimit && result.processedBatch < result.requestedLimit
                 ? `\nLote procesado ahora: ${result.processedBatch} (Netlify procesa por bloques).`
                 : '';
-
-            toast.success(`✅ ¡Campaña completada exitosamente!\nEnviados: ${result.sent}${batchInfo}`);
+            if (result.sent > 0) {
+                toast.success(`Campana completada exitosamente.\nEnviados: ${result.sent}\nFallidos: ${result.failed || 0}${batchInfo}`);
+            } else if (result.failed > 0) {
+                toast.error(`La campana no envio correos.\nEnviados: 0\nFallidos: ${result.failed}${batchInfo}`);
+            } else {
+                toast(`La campana termino sin envios.\n${result.message || 'No hubo contactos procesados en esta corrida.'}`);
+            }
             if (onCampaignComplete) onCampaignComplete();
 
         } catch (error) {

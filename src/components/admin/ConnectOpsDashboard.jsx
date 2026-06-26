@@ -324,16 +324,16 @@ const ConnectOpsDashboard = () => {
                     <th className="px-4 py-3 text-left font-semibold text-gray-600">Fulfillment</th>
                     <th className="px-4 py-3 text-right font-semibold text-gray-600">Batch</th>
                     <th className="px-4 py-3 text-right font-semibold text-gray-600">Monto</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600">Guardar</th>
+                    <th className="px-4 py-3 text-left font-semibold text-gray-600">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {campaigns.map((campaign) => {
                     const draft = draftStatuses[campaign.id] || campaign;
                     return (
-                      <tr key={campaign.id} className="hover:bg-gray-50">
+                      <tr key={campaign.id} className={selectedCampaignId === campaign.id ? 'bg-emerald-50/60 hover:bg-emerald-50' : 'hover:bg-gray-50'}>
                         <td className="px-4 py-3">
-                          <p className="font-semibold text-gray-900">{campaign.package_name}</p>
+                          <button onClick={() => setSelectedCampaignId(campaign.id)} className="text-left"><p className="font-semibold text-gray-900">{campaign.package_name}</p></button>
                           <p className="text-xs text-gray-500 mt-1">{new Date(campaign.created_at).toLocaleString('es-MX')}</p>
                         </td>
                         <td className="px-4 py-3 text-gray-700">{campaign.billing_email}</td>

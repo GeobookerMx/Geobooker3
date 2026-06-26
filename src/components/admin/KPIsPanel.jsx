@@ -50,16 +50,16 @@ const KPIsPanel = () => {
             const { data: whatsappGlobalData } = await supabase
                 .rpc('count_whatsapp_global_today_mexico');
 
-            // Get Mexico City timezone date (UTC-6)
-            const mexicoDate = new Date().toLocaleString('en-US', {
-                timeZone: 'America/Mexico_City'
-            });
-            const todayMexico = new Date(mexicoDate).toISOString().split('T')[0];
-
             // Email Stats - from campaign_history (where process-email-queue writes)
-            // Use RPC or timezone-aware query
-            const { data: emailTodayData, error: emailTodayError } = await supabase
-                .rpc('count_emails_today_mexico');
+            const start = `${today}T00:00:00-06:00`;
+            const end = `${today}T23:59:59-06:00`;
+            const { count: emailTodayCount } = await supabase
+                .from('campaign_history')
+                .select('*', { count: 'exact', head: true })
+                .eq('campaign_type', 'email')
+                .eq('status', 'sent')
+                .gte('sent_at', start)
+                .lte('sent_at', end);
 
             const { count: emailTotal } = await supabase
                 .from('campaign_history')
@@ -82,7 +82,7 @@ const KPIsPanel = () => {
                     global: whatsappGlobalData?.count || 0
                 },
                 email: {
-                    today: emailTodayData?.count || 0,
+                    today: emailTodayCount || 0,
                     total: emailTotal || 0,
                     pending: emailPending || 0
                 }

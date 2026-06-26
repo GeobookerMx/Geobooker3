@@ -7,6 +7,14 @@ import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, Cart
 import { supabase } from '../../lib/supabase';
 import CampaignSender from './CampaignSender';
 
+const getMexicoDayRange = () => {
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
+    return {
+        start: `${today}T00:00:00-06:00`,
+        end: `${today}T23:59:59-06:00`
+    };
+};
+
 const MarketingDashboard = () => {
     const [metrics, setMetrics] = useState({
         total: 0,
@@ -55,11 +63,15 @@ const MarketingDashboard = () => {
                     return { data: distribution };
                 });
 
-            // 4. Enviados hoy - usar función RPC con timezone de México
-            const { data: sentTodayData } = await supabase
-                .rpc('count_emails_today_mexico');
-
-            const sentToday = sentTodayData?.count || 0;
+            // 4. Enviados hoy - usar campaign_history como fuente unica
+            const { start, end } = getMexicoDayRange();
+            const { count: sentToday } = await supabase
+                .from('campaign_history')
+                .select('*', { count: 'exact', head: true })
+                .eq('campaign_type', 'email')
+                .eq('status', 'sent')
+                .gte('sent_at', start)
+                .lte('sent_at', end);
 
             // 5. Límite configurado: prioridad crm_settings, fallback automation_config
             let dailyLimit = 100;

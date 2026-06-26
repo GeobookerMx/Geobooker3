@@ -58,13 +58,16 @@ exports.handler = async (event, context) => {
 
         // 2. Verificar cuántos emails se han enviado hoy (HORA MÉXICO)
         const today = getMexicoDate();
+        const start = `${today}T00:00:00-06:00`;
+        const end = `${today}T23:59:59-06:00`;
         console.log(`📅 Fecha México: ${today}`);
         const { count: sentToday } = await supabase
             .from('campaign_history')
             .select('*', { count: 'exact', head: true })
             .eq('campaign_type', 'email')
-            .gte('sent_at', `${today}T00:00:00-06:00`)
-            .lte('sent_at', `${today}T23:59:59-06:00`);
+            .eq('status', 'sent')
+            .gte('sent_at', start)
+            .lte('sent_at', end);
 
         const remaining = dailyLimit - (sentToday || 0);
 

@@ -35,6 +35,15 @@ const FALLBACK_EMAIL_SENDER = {
 const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || '';
 const N8N_ENABLED = Boolean(N8N_WEBHOOK_URL);
 
+const getMexicoDayRange = () => {
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
+    return {
+        today,
+        start: `${today}T00:00:00-06:00`,
+        end: `${today}T23:59:59-06:00`
+    };
+};
+
 const extractEmailBodyContent = (html = '') => {
     const input = String(html || '').trim();
     if (!input) return '';
@@ -273,7 +282,7 @@ const UnifiedCRM = () => {
 
     const loadQueueStats = async () => {
         try {
-            const todayStr = new Date().toISOString().slice(0, 10);
+            const { start, end } = getMexicoDayRange();
             const [{ count: pendingCount }, { count: sentTodayCount }] = await Promise.all([
                 supabase
                     .from('email_queue')
@@ -283,8 +292,9 @@ const UnifiedCRM = () => {
                     .from('campaign_history')
                     .select('*', { count: 'exact', head: true })
                     .eq('campaign_type', 'email')
-                    .gte('sent_at', `${todayStr}T00:00:00`)
-                    .lte('sent_at', `${todayStr}T23:59:59`)
+                    .eq('status', 'sent')
+                    .gte('sent_at', start)
+                    .lte('sent_at', end)
             ]);
 
             setQueueStats(prev => ({
@@ -376,13 +386,21 @@ const UnifiedCRM = () => {
                 tier, total_contacts: count, with_email: count, with_phone: 0
             })));
 
+            const { start, end } = getMexicoDayRange();
+            const { count: sentTodayCount } = await supabase
+                .from('campaign_history')
+                .select('*', { count: 'exact', head: true })
+                .eq('campaign_type', 'email')
+                .eq('status', 'sent')
+                .gte('sent_at', start)
+                .lte('sent_at', end);
+
             // Email metrics
-            const todayStr = new Date().toISOString().slice(0, 10);
             setEmailMetrics({
                 enviados: rows.filter(r => r.email_status === 'sent').length,
                 pendientes: rows.filter(r => !r.email_status || r.email_status === 'pending').length,
                 abiertos: rows.filter(r => r.email_status === 'opened').length,
-                todayCount: rows.filter(r => (r.email_sent_at || r.last_email_sent) && (r.email_sent_at || r.last_email_sent).startsWith(todayStr)).length
+                todayCount: sentTodayCount || 0
             });
 
             // Get all contacts for robust local search

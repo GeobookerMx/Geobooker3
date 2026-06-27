@@ -20,6 +20,40 @@ import WhatsAppService from '../../services/whatsappService';
 
 const FUNCTIONS_BASE_URL = (import.meta.env.VITE_FUNCTIONS_BASE_URL || '/.netlify/functions').replace(/\/$/, '');
 
+const inferCountryCodeFromLocation = (value = '') => {
+    const normalized = String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+    const rules = [
+        [['mexico', 'cdmx', 'guadalajara', 'monterrey', 'jalisco', 'nuevo leon', 'puebla', 'queretaro'], 'MX'],
+        [['usa', 'united states', 'los angeles', 'california', 'texas', 'new york', 'florida', 'miami', 'houston', 'dallas', 'chicago'], 'US'],
+        [['canada', 'toronto', 'vancouver', 'montreal', 'ottawa', 'calgary'], 'CA'],
+        [['uk', 'united kingdom', 'london', 'manchester', 'birmingham', 'liverpool', 'glasgow', 'england', 'scotland'], 'GB'],
+        [['spain', 'espana', 'madrid', 'barcelona', 'valencia', 'sevilla'], 'ES'],
+        [['france', 'paris', 'lyon', 'marseille'], 'FR'],
+        [['germany', 'berlin', 'munich', 'hamburg', 'frankfurt'], 'DE'],
+        [['portugal', 'lisbon', 'porto'], 'PT'],
+        [['ireland', 'dublin'], 'IE'],
+        [['australia', 'sydney', 'melbourne', 'brisbane', 'perth'], 'AU'],
+        [['new zealand', 'auckland', 'wellington'], 'NZ'],
+        [['argentina', 'buenos aires'], 'AR'],
+        [['chile', 'santiago'], 'CL'],
+        [['colombia', 'bogota', 'medellin', 'cartagena'], 'CO'],
+        [['peru', 'lima'], 'PE'],
+        [['ecuador', 'quito'], 'EC'],
+        [['brazil', 'brasil', 'sao paulo', 'rio de janeiro'], 'BR']
+    ];
+
+    for (const [keywords, code] of rules) {
+        if (keywords.some((keyword) => normalized.includes(keyword))) {
+            return code;
+        }
+    }
+
+    return '';
+};
+
 const ApifyScraper = () => {
     const isPureLocalVite = typeof window !== 'undefined'
         && ['localhost', '127.0.0.1'].includes(window.location.hostname)
@@ -333,7 +367,8 @@ const ApifyScraper = () => {
                 search_query: searchQuery,
                 search_location: location,
                 tier: determineTier(lead),
-                source: 'apify'
+                source: 'apify',
+                country_code: inferCountryCodeFromLocation(location || lead.address || '')
             }));
 
             const { error } = await supabase
@@ -408,8 +443,9 @@ const ApifyScraper = () => {
                     phone: lead.phone || null,
                     city: extractCity(lead.address),
                     // website: lead.website || null, // website not in marketing_contacts schema
-                    source: `Apify: ${searchQuery} @ ${location}`,
-                    notes: `Web: ${lead.website || 'N/A'} | Address: ${lead.address || 'N/A'}`
+                    source: 'apify',
+                    country_code: inferCountryCodeFromLocation(location || lead.address || ''),
+                    notes: `Apify Scraping | ${searchQuery} @ ${location} | Web: ${lead.website || 'N/A'} | Address: ${lead.address || 'N/A'}`
                 }));
 
             const { data, error } = await supabase
@@ -489,7 +525,9 @@ const ApifyScraper = () => {
                 phone: lead.phone,
                 name: lead.name || lead.title,
                 company: lead.name || lead.title,
-                language: messageLanguage  // Usar idioma seleccionado
+                language: messageLanguage,
+                country_code: inferCountryCodeFromLocation(location || lead.address || ''),
+                location: location || lead.address || ''
             }, 'apify');
 
             if (result.success) {

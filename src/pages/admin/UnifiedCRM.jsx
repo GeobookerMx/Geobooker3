@@ -23,6 +23,7 @@ import WhatsAppCRM from '../../components/admin/WhatsAppCRM';
 import WhatsAppService from '../../services/whatsappService';
 import KPIsPanel from '../../components/admin/KPIsPanel';
 import ConnectOpsDashboard from '../../components/admin/ConnectOpsDashboard';
+import CommercialOpsDashboard from '../../components/admin/CommercialOpsDashboard';
 import { matchesSemanticText } from '../../utils/semanticDictionary';
 
 const FALLBACK_EMAIL_SENDER = {
@@ -1144,6 +1145,7 @@ const UnifiedCRM = () => {
         { id: 'whatsapp', label: '💬 WhatsApp', icon: MessageCircle },
         { id: 'plantillas', label: '✉️ Templates', icon: Edit2 },
         { id: 'kpis', label: '📈 Métricas', icon: BarChart3 },
+        { id: 'ventas', label: 'Ventas', icon: BriefcaseBusiness },
         { id: 'connect', label: 'Connect Ops', icon: BriefcaseBusiness },
         { id: 'historial', label: '🕐 Historial', icon: Clock },
         { id: 'config', label: '⚙️ Ajustes', icon: Settings }
@@ -1564,6 +1566,11 @@ const UnifiedCRM = () => {
                 {/* ============ TAB: KPIS ============ */}
                 {activeTab === 'kpis' && (
                     <KPIsPanel />
+                )}
+
+                {/* ============ TAB: VENTAS ============ */}
+                {activeTab === 'ventas' && (
+                    <CommercialOpsDashboard />
                 )}
 
                 {/* ============ TAB: CONNECT ============ */}

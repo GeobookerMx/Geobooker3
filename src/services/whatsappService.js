@@ -218,109 +218,185 @@ export class WhatsAppService {
      * Normalizar número de teléfono (Smart Detection for Mexico/USA/UK/Canada)
      * Mejorado para detectar números de habla inglesa automáticamente
      */
-    static normalizePhone(phone) {
-        if (!phone) return '';
+    static COUNTRY_DIAL_CODES = {
+        MX: '52',
+        US: '1',
+        CA: '1',
+        GB: '44',
+        UK: '44',
+        ES: '34',
+        FR: '33',
+        DE: '49',
+        PT: '351',
+        IE: '353',
+        AU: '61',
+        NZ: '64',
+        AR: '54',
+        CL: '56',
+        CO: '57',
+        PE: '51',
+        EC: '593',
+        GT: '502',
+        SV: '503',
+        HN: '504',
+        NI: '505',
+        CR: '506',
+        PA: '507',
+        VE: '58',
+        BR: '55',
+        IT: '39'
+    };
 
-        // Remover todo excepto números
-        const clean = phone.replace(/\D/g, '');
+    static inferCountryFromLocation(location = '') {
+        if (!location) return '';
 
-        // Códigos de área de USA y Canadá (lista expandida)
-        // Incluye: Texas, California, Florida, New York, y Canadá
-        const usaCanadaAreaCodes = [
-            // Texas
-            '214', '469', '972', '713', '281', '832', '346', '512', '737', '210', '726',
-            '956', '361', '806', '817', '915', '940', '254',
-            // California
-            '213', '310', '323', '408', '415', '510', '619', '626', '650', '707', '714',
-            '818', '831', '858', '909', '916', '925', '949', '951',
-            // Florida
-            '305', '321', '352', '386', '407', '561', '727', '754', '772', '786', '813',
-            '850', '863', '904', '941', '954',
-            // New York
-            '212', '315', '347', '516', '518', '585', '607', '631', '646', '716', '718',
-            '845', '914', '917', '929',
-            // Otros estados importantes
-            '202', '206', '215', '216', '267', '312', '330', '404', '412', '414', '425',
-            '480', '502', '503', '520', '602', '614', '617', '630', '702', '703', '704',
-            '720', '770', '773', '801', '847', '919', '971',
-            // Canadá
-            '416', '437', '647', '905', '289', '604', '778', '250', '403', '587', '780',
-            '306', '204', '514', '438', '450', '613', '343', '902', '709',
+        const value = String(location)
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
+        const rules = [
+            [['mexico', 'cdmx', 'guadalajara', 'monterrey', 'jalisco', 'nuevo leon', 'puebla', 'queretaro'], 'MX'],
+            [['usa', 'united states', 'los angeles', 'california', 'texas', 'new york', 'florida', 'miami', 'houston', 'dallas', 'chicago'], 'US'],
+            [['canada', 'toronto', 'vancouver', 'montreal', 'ottawa', 'calgary'], 'CA'],
+            [['uk', 'united kingdom', 'london', 'manchester', 'birmingham', 'liverpool', 'glasgow', 'england', 'scotland'], 'GB'],
+            [['spain', 'espana', 'madrid', 'barcelona', 'valencia', 'sevilla'], 'ES'],
+            [['france', 'paris', 'lyon', 'marseille'], 'FR'],
+            [['germany', 'deutschland', 'berlin', 'munich', 'hamburg', 'frankfurt'], 'DE'],
+            [['portugal', 'lisbon', 'porto'], 'PT'],
+            [['ireland', 'dublin'], 'IE'],
+            [['australia', 'sydney', 'melbourne', 'brisbane', 'perth'], 'AU'],
+            [['new zealand', 'auckland', 'wellington'], 'NZ'],
+            [['argentina', 'buenos aires', 'cordoba'], 'AR'],
+            [['chile', 'santiago'], 'CL'],
+            [['colombia', 'bogota', 'medellin', 'cartagena'], 'CO'],
+            [['peru', 'lima'], 'PE'],
+            [['ecuador', 'quito'], 'EC'],
+            [['brazil', 'brasil', 'sao paulo', 'rio de janeiro'], 'BR'],
+            [['italy', 'italia', 'rome', 'roma', 'milan', 'milano'], 'IT']
         ];
 
-        // 1. Caso: El número ya empieza con 1 (USA/Canada) y tiene 11 dígitos
-        if (clean.length === 11 && clean.startsWith('1')) {
-            return '+' + clean;
-        }
-
-        // 2. Caso: UK - números que empiezan con 44
-        // UK numbers: 44 + 10 digits (excluding 0) or 44 + 11 digits (including 0?) 
-        // Normalmente 44 7xxx xxxxxx (12 digits total)
-        if (clean.startsWith('44') && clean.length >= 11) {
-            return '+' + clean;
-        }
-
-        // 3. Caso: España (34), Francia (33), Alemania (49)
-        if ((clean.startsWith('34') || clean.startsWith('33') || clean.startsWith('49')) && clean.length >= 11) {
-            return '+' + clean;
-        }
-
-        // 4. Caso: El número tiene 10 dígitos (Sin código de país)
-        if (clean.length === 10) {
-            const areaCode = clean.substring(0, 3);
-
-            // Si el código de área es de USA/Canadá, asumimos +1
-            if (usaCanadaAreaCodes.includes(areaCode)) {
-                return '+1' + clean;
+        for (const [keywords, code] of rules) {
+            if (keywords.some((keyword) => value.includes(keyword))) {
+                return code;
             }
-
-            // IMPORTANTE: Si NO es código USA conocido, asumimos México (+52)
-            // Esto cubre la mayoría de casos locales
-            return '+52' + clean;
         }
 
-        // 5. Caso: Ya tiene código de país (52, 1, 44, 34, etc.)
-        if (clean.length >= 11) {
-            // México con formato completo
-            if (clean.startsWith('52') && clean.length >= 12) return '+' + clean;
+        return '';
+    }
 
-            // USA/Canadá
-            if (clean.startsWith('1') && clean.length === 11) return '+' + clean;
+    static inferCountryFromPhone(clean = '') {
+        if (!clean) return '';
 
-            // México con el 1 extra (52 1 ...)
+        if (clean.startsWith('1') && clean.length === 11) {
+            return 'US';
+        }
+
+        const prefixes = [
+            ['521', 'MX'],
+            ['52', 'MX'],
+            ['44', 'GB'],
+            ['34', 'ES'],
+            ['33', 'FR'],
+            ['49', 'DE'],
+            ['351', 'PT'],
+            ['353', 'IE'],
+            ['61', 'AU'],
+            ['64', 'NZ'],
+            ['54', 'AR'],
+            ['56', 'CL'],
+            ['57', 'CO'],
+            ['51', 'PE'],
+            ['593', 'EC'],
+            ['55', 'BR']
+        ];
+
+        for (const [prefix, country] of prefixes) {
+            if (clean.startsWith(prefix)) {
+                return country;
+            }
+        }
+
+        return '';
+    }
+
+    static normalizePhoneForCountry(clean, countryCode = '') {
+        const code = (countryCode || '').toUpperCase();
+        if (!clean) return '';
+
+        if (code === 'MX') {
             if (clean.startsWith('521') && clean.length === 13) return '+' + clean;
+            if (clean.startsWith('52') && clean.length === 12) return '+' + clean;
+            if (clean.length === 10) return '+52' + clean;
+            return '';
+        }
 
-            // UK (44)
-            if (clean.startsWith('44')) return '+' + clean;
+        if (code === 'US' || code === 'CA') {
+            if (clean.startsWith('1') && clean.length === 11) return '+' + clean;
+            if (clean.length === 10) return '+1' + clean;
+            return '';
+        }
 
-            // España (34)
-            if (clean.startsWith('34')) return '+' + clean;
+        if (code === 'GB' || code === 'UK') {
+            if (clean.startsWith('44') && clean.length >= 12 && clean.length <= 13) return '+' + clean;
+            if (clean.startsWith('0') && clean.length >= 10 && clean.length <= 11) return '+44' + clean.slice(1);
+            if (!clean.startsWith('0') && clean.length >= 10 && clean.length <= 11) return '+44' + clean;
+            return '';
+        }
 
-            // Otros Internacionales Genéricos (Longitud suficiente)
-            // Si tiene más de 11 dígitos y no empieza con 52 ni 1, probablemente es intl
-            if (!clean.startsWith('52') && !clean.startsWith('1')) {
-                return '+' + clean;
-            }
+        const dialCode = this.COUNTRY_DIAL_CODES[code];
+        if (!dialCode) return '';
 
+        if (clean.startsWith(dialCode) && clean.length >= dialCode.length + 6 && clean.length <= 15) {
             return '+' + clean;
         }
 
-        return '+' + clean;
+        const local = clean.startsWith('0') ? clean.slice(1) : clean;
+        if (local.length >= 7 && local.length <= 12) {
+            return '+' + dialCode + local;
+        }
+
+        return '';
     }
 
     /**
-     * Detectar idioma del país (mejorado)
-     * @param {string} phone - Número de teléfono
-     * @param {string} forceLanguage - Forzar un idioma específico (opcional)
-     * @returns {string} 'es' para español, 'en' para inglés
+     * Normalizar n?mero de tel?fono a formato E.164.
+     * Evita asumir M?xico para leads internacionales cuando no hay evidencia suficiente.
      */
-    static detectLanguage(phone, forceLanguage = null) {
+    static normalizePhone(phone, options = {}) {
+        if (!phone) return '';
+
+        const raw = String(phone).trim();
+        const clean = raw.replace(/\D/g, '');
+        if (!clean) return '';
+
+        if (raw.startsWith('+') && clean.length >= 10 && clean.length <= 15) {
+            return '+' + clean;
+        }
+
+        const explicitCountry = (options.countryCode || '').toUpperCase();
+        const locationCountry = this.inferCountryFromLocation(options.location || '');
+        const phoneCountry = this.inferCountryFromPhone(clean);
+        const resolvedCountry = explicitCountry || locationCountry || phoneCountry;
+
+        if (resolvedCountry) {
+            return this.normalizePhoneForCountry(clean, resolvedCountry);
+        }
+
+        if (clean.startsWith('521') && clean.length === 13) return '+' + clean;
+        if (clean.startsWith('52') && clean.length >= 12) return '+' + clean;
+        if (clean.startsWith('1') && clean.length === 11) return '+' + clean;
+        if (clean.length >= 11 && clean.length <= 15) return '+' + clean;
+
+        return '';
+    }
+
+    static detectLanguage(phone, forceLanguage = null, options = {}) {
         // Si se fuerza un idioma, usarlo directamente
         if (forceLanguage && (forceLanguage === 'es' || forceLanguage === 'en')) {
             return forceLanguage;
         }
 
-        const normalized = this.normalizePhone(phone);
+        const normalized = this.normalizePhone(phone, options);
 
         // Países de habla hispana
         if (normalized.startsWith('+52')) return 'es';  // México
@@ -353,7 +429,10 @@ export class WhatsAppService {
      * Generar mensaje personalizado
      */
     static generateMessage(contact) {
-        const language = contact.language || this.detectLanguage(contact.phone);
+        const language = contact.language || this.detectLanguage(contact.phone, null, {
+            countryCode: contact.country_code,
+            location: contact.location || contact.city || contact.search_location
+        });
         const company = contact.company || contact.company_name || contact.name || 'tu negocio';
 
         const templates = {
@@ -402,7 +481,7 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
      * Abrir WhatsApp (mobile-friendly)
      */
     static openWhatsApp(phone, message) {
-        const clean = phone.replace(/\D/g, '');
+        const clean = String(phone || '').replace(/\D/g, '');
         const encoded = encodeURIComponent(message);
 
         // Detectar si es móvil
@@ -464,7 +543,13 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
             }
 
             // 2. Verificar si ya fue contactado
-            const alreadyContacted = await this.isAlreadyContacted(contact.phone);
+            const normalizedPhone = this.normalizePhone(contact.phone, { countryCode: contact.country_code, location: contact.location || contact.city || contact.search_location });
+            if (!normalizedPhone) {
+                toast.error(`No se pudo convertir ${contact.phone} a formato internacional valido.`);
+                return { success: false, error: 'phone_normalization_failed', notCounted: true };
+            }
+
+            const alreadyContacted = await this.isAlreadyContacted(normalizedPhone);
             if (alreadyContacted) {
                 toast.error('Este contacto ya fue contactado previamente');
                 return { success: false, error: 'already_contacted' };
@@ -475,12 +560,15 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
 
             // 4. Registrar en base de datos (SOLO si el teléfono es válido)
             const { data, error } = await supabase.rpc('register_whatsapp_sent', {
-                p_phone: contact.phone,
+                p_phone: normalizedPhone,
                 p_contact_name: contact.name || contact.contact_name,
                 p_company_name: contact.company || contact.company_name,
                 p_source: normalizedSource,
                 p_message: message,
-                p_language: contact.language || this.detectLanguage(contact.phone)
+                p_language: contact.language || this.detectLanguage(normalizedPhone, contact.language, {
+                    countryCode: contact.country_code,
+                    location: contact.location || contact.city || contact.search_location
+                })
             });
 
             if (error) throw error;
@@ -502,7 +590,7 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
             }
 
             // 5. Abrir WhatsApp
-            this.openWhatsApp(contact.phone, message);
+            this.openWhatsApp(normalizedPhone, message);
 
             // 6. Success
             toast.success(`WhatsApp abierto para ${contact.company || contact.name}`);
@@ -566,7 +654,7 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
      */
     static async markAsReplied(phone, responseText = '') {
         try {
-            const normalized = this.normalizePhone(phone);
+            const normalized = this.normalizePhone(phone, { countryCode: '' });
 
             const { error } = await supabase
                 .from('unified_whatsapp_outreach')
@@ -591,7 +679,7 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
      */
     static async markAsConverted(phone, value = null) {
         try {
-            const normalized = this.normalizePhone(phone);
+            const normalized = this.normalizePhone(phone, { countryCode: '' });
 
             const { error } = await supabase
                 .from('unified_whatsapp_outreach')

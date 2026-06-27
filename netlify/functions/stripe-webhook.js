@@ -115,6 +115,46 @@ async function notifyCampaignReceived(campaign, paymentMethod = 'card') {
         }
     });
 }
+
+async function upsertCommercialEvent(supabase, payload) {
+    if (!payload?.source_type || !payload?.source_id) return;
+
+    const record = {
+        source_type: payload.source_type,
+        source_id: payload.source_id,
+        stripe_session_id: payload.stripe_session_id || null,
+        stripe_payment_intent: payload.stripe_payment_intent || null,
+        customer_email: payload.customer_email || null,
+        customer_name: payload.customer_name || null,
+        company_name: payload.company_name || payload.customer_name || null,
+        service_line: payload.service_line || null,
+        package_name: payload.package_name || null,
+        currency: payload.currency || 'MXN',
+        amount: Number(payload.amount || 0),
+        billing_country: payload.billing_country || 'MX',
+        tax_status: payload.tax_status || 'pending',
+        payment_status: payload.payment_status || 'pending',
+        payment_method: payload.payment_method || 'card',
+        operational_status: payload.operational_status || 'new',
+        crm_status: payload.crm_status || 'new',
+        notes: payload.notes || null,
+        metadata: payload.metadata || {}
+    };
+
+    const { error } = await supabase
+        .from('crm_commercial_events')
+        .upsert(record, { onConflict: 'source_type,source_id' });
+
+    if (!error) return;
+
+    const missingTable = error.code === '42P01' || String(error.message || '').toLowerCase().includes('crm_commercial_events');
+    if (missingTable) {
+        console.warn('[stripe-webhook] crm_commercial_events not available yet; skipping bridge sync');
+        return;
+    }
+
+    throw error;
+}
 exports.handler = async (event) => {
     const headers = { 'Access-Control-Allow-Origin': '*' };
 
@@ -176,6 +216,29 @@ exports.handler = async (event) => {
 
                         const campaign = await loadCampaignForNotifications(supabase, campaignId);
                         if (campaign) {
+                            await upsertCommercialEvent(supabase, {
+                                source_type: 'ad_campaign',
+                                source_id: campaign.id,
+                                stripe_payment_intent: session.payment_intent,
+                                customer_email: campaign.advertiser_email || session.customer_details?.email || metadata.advertiser_email || null,
+                                customer_name: campaign.advertiser_name || metadata.advertiser_name || null,
+                                company_name: campaign.advertiser_name || metadata.company || metadata.advertiser_name || null,
+                                service_line: 'geobooker_ads',
+                                package_name: campaign.ad_level || campaign.campaign_type || metadata.plan || 'ad_campaign',
+                                currency: campaign.currency || (billingCountry === 'MX' ? 'MXN' : 'USD'),
+                                amount: campaign.total_budget || campaign.budget || metadata.total_budget || metadata.amount || 0,
+                                billing_country: campaign.billing_country || billingCountry,
+                                tax_status: campaign.tax_status || (billingCountry === 'MX' ? 'domestic_mx' : 'export_0_iva'),
+                                payment_status: 'paid',
+                                payment_method: 'card',
+                                operational_status: campaign.status || 'pending_review',
+                                notes: 'Ads purchase | ' + (campaign.target_location || 'Sin segmentacion'),
+                                metadata: {
+                                    target_location: campaign.target_location || null,
+                                    campaign_type: campaign.campaign_type || null,
+                                    ad_level: campaign.ad_level || null
+                                }
+                            });
                             await postInternalNotification('notify-admin-campaign', { campaign });
                             await notifyCampaignReceived(campaign, 'card');
                         }
@@ -252,6 +315,33 @@ exports.handler = async (event) => {
                             .select()
                             .single();
 
+                                                if (updatedCampaign) {
+                            await upsertCommercialEvent(supabase, {
+                                source_type: 'ad_campaign',
+                                source_id: updatedCampaign.id,
+                                stripe_payment_intent: session.payment_intent,
+                                customer_email: advertiserEmail,
+                                customer_name: updatedCampaign.advertiser_name || metadata.advertiser_name || metadata.company || null,
+                                company_name: metadata.company || updatedCampaign.advertiser_name || metadata.advertiser_name || null,
+                                service_line: 'geobooker_ads',
+                                package_name: updatedCampaign.ad_level || updatedCampaign.campaign_type || metadata.plan || 'enterprise_campaign',
+                                currency: updatedCampaign.currency || (metadata.billing_country === 'MX' ? 'MXN' : 'USD'),
+                                amount: updatedCampaign.total_budget || updatedCampaign.budget || metadata.total_budget || metadata.amount || 0,
+                                billing_country: metadata.billing_country || updatedCampaign.billing_country || 'US',
+                                tax_status: updatedCampaign.tax_status || (metadata.billing_country === 'MX' ? 'domestic_mx' : 'export_0_iva'),
+                                payment_status: 'paid',
+                                payment_method: 'card',
+                                operational_status: updatedCampaign.status || 'pending_review',
+                                notes: 'Enterprise ads purchase | ' + (updatedCampaign.target_location || 'Sin segmentacion'),
+                                metadata: {
+                                    start_date: updatedCampaign.start_date || null,
+                                    end_date: updatedCampaign.end_date || null,
+                                    plan: metadata.plan || null,
+                                    company: metadata.company || null
+                                }
+                            });
+                        }
+
                         await postInternalNotification('notify-admin-campaign', { campaign: updatedCampaign });
                         await notifyCampaignReceived(updatedCampaign, 'card');
 
@@ -320,7 +410,31 @@ exports.handler = async (event) => {
                                 .eq('id', enterpriseLeadId);
                         }
 
-                        if (connectCampaign) {
+                                                if (connectCampaign) {
+                            await upsertCommercialEvent(supabase, {
+                                source_type: 'connect_campaign',
+                                source_id: connectCampaign.id,
+                                stripe_session_id: session.id,
+                                stripe_payment_intent: session.payment_intent,
+                                customer_email: billingEmail,
+                                customer_name: metadata.contact_name || metadata.company_name || null,
+                                company_name: metadata.company_name || null,
+                                service_line: 'geobooker_connect',
+                                package_name: connectCampaign.package_name || metadata.package_name || 'Piloto Connect 1000',
+                                currency: 'MXN',
+                                amount: Number(connectCampaign.launch_price_mxn || metadata.reservation_price_mxn || 0),
+                                billing_country: 'MX',
+                                tax_status: 'domestic_mx',
+                                payment_status: 'paid',
+                                payment_method: 'card',
+                                operational_status: connectCampaign.fulfillment_status || 'brief_review',
+                                notes: 'Connect reservation | Batch ' + (connectCampaign.batch_size || 1000),
+                                metadata: {
+                                    batch_size: connectCampaign.batch_size || 1000,
+                                    enterprise_lead_id: enterpriseLeadId || null,
+                                    package_code: metadata.package_code || null
+                                }
+                            });
                             await postInternalNotification('notify-admin-connect', {
                                 campaign: {
                                     ...connectCampaign,
@@ -457,8 +571,27 @@ exports.handler = async (event) => {
                             })
                             .eq('id', metadata.product_id);
 
-                        const campaign = await loadCampaignForNotifications(supabase, metadata.product_id);
+                                                const campaign = await loadCampaignForNotifications(supabase, metadata.product_id);
                         if (campaign) {
+                            await upsertCommercialEvent(supabase, {
+                                source_type: 'ad_campaign',
+                                source_id: campaign.id,
+                                stripe_payment_intent: paymentIntent.id,
+                                customer_email: campaign.advertiser_email || metadata.advertiser_email || null,
+                                customer_name: campaign.advertiser_name || metadata.advertiser_name || null,
+                                company_name: campaign.advertiser_name || metadata.company || null,
+                                service_line: 'geobooker_ads',
+                                package_name: campaign.ad_level || campaign.campaign_type || 'ad_campaign',
+                                currency: campaign.currency || 'MXN',
+                                amount: campaign.total_budget || campaign.budget || metadata.total_budget || metadata.amount || 0,
+                                billing_country: campaign.billing_country || metadata.billing_country || 'MX',
+                                tax_status: campaign.tax_status || (metadata.billing_country === 'MX' ? 'domestic_mx' : 'export_0_iva'),
+                                payment_status: 'paid',
+                                payment_method: 'oxxo',
+                                operational_status: campaign.status || 'pending_review',
+                                notes: 'Ads purchase OXXO | ' + (campaign.target_location || 'Sin segmentacion'),
+                                metadata: { payment_type: metadata.payment_type || 'oxxo', target_location: campaign.target_location || null }
+                            });
                             await postInternalNotification('notify-admin-campaign', { campaign });
                             await notifyCampaignReceived(campaign, 'oxxo');
                         }
@@ -512,12 +645,53 @@ exports.handler = async (event) => {
                         if (error) {
                             console.error(`Error actualizando reserva Connect expirada ${connectCampaignId}:`, error);
                         } else {
+                            await upsertCommercialEvent(supabase, {
+                                source_type: 'connect_campaign',
+                                source_id: connectCampaignId,
+                                stripe_session_id: session.id,
+                                stripe_payment_intent: session.payment_intent || null,
+                                customer_email: metadata.billing_email || session.customer_details?.email || null,
+                                customer_name: metadata.company_name || null,
+                                company_name: metadata.company_name || null,
+                                service_line: 'geobooker_connect',
+                                package_name: metadata.package_name || 'Piloto Connect 1000',
+                                currency: 'MXN',
+                                amount: Number(metadata.reservation_price_mxn || 0),
+                                billing_country: 'MX',
+                                tax_status: 'domestic_mx',
+                                payment_status: 'expired',
+                                payment_method: 'card',
+                                operational_status: 'intake',
+                                notes: 'Connect reservation expired',
+                                metadata: { package_code: metadata.package_code || null }
+                            });
                             console.log(`Reserva Connect expirada ${connectCampaignId} marcada como expired.`);
                         }
                     }
                 } else if (metadata.type === 'ad_payment' || metadata.type === 'enterprise_campaign') {
                     const campaignId = metadata.campaign_id;
                     if (campaignId) {
+                        await upsertCommercialEvent(supabase, {
+                            source_type: 'ad_campaign',
+                            source_id: campaignId,
+                            stripe_session_id: session.id,
+                            stripe_payment_intent: session.payment_intent || null,
+                            customer_email: metadata.advertiser_email || session.customer_details?.email || null,
+                            customer_name: metadata.advertiser_name || metadata.company || null,
+                            company_name: metadata.company || metadata.advertiser_name || null,
+                            service_line: 'geobooker_ads',
+                            package_name: metadata.plan || metadata.ad_level || metadata.campaign_type || 'ad_campaign',
+                            currency: metadata.billing_country === 'MX' ? 'MXN' : 'USD',
+                            amount: Number(metadata.total_budget || metadata.amount || 0),
+                            billing_country: metadata.billing_country || 'MX',
+                            tax_status: metadata.tax_status || (metadata.billing_country === 'MX' ? 'domestic_mx' : 'export_0_iva'),
+                            payment_status: 'expired',
+                            payment_method: 'card',
+                            operational_status: 'draft_expired',
+                            notes: 'Ads checkout session expired',
+                            metadata: { original_type: metadata.type || null }
+                        });
+
                         const { error } = await supabase
                             .from('ad_campaigns')
                             .delete()
@@ -551,6 +725,25 @@ exports.handler = async (event) => {
                     if (error) {
                         console.error(`Error actualizando reserva Connect fallida ${connectCampaignId}:`, error);
                     } else {
+                        await upsertCommercialEvent(supabase, {
+                            source_type: 'connect_campaign',
+                            source_id: connectCampaignId,
+                            stripe_payment_intent: paymentIntent.id,
+                            customer_email: metadata.billing_email || null,
+                            customer_name: metadata.company_name || null,
+                            company_name: metadata.company_name || null,
+                            service_line: 'geobooker_connect',
+                            package_name: metadata.package_name || 'Piloto Connect 1000',
+                            currency: 'MXN',
+                            amount: Number(metadata.reservation_price_mxn || 0),
+                            billing_country: 'MX',
+                            tax_status: 'domestic_mx',
+                            payment_status: 'failed',
+                            payment_method: 'card',
+                            operational_status: 'intake',
+                            notes: 'Connect payment failed',
+                            metadata: { failure_type: stripeEvent.type }
+                        });
                         console.log(`Pago fallido para reserva Connect ${connectCampaignId}. Estado de pago marcado como failed.`);
                     }
                 } else if (campaignId) {
@@ -564,6 +757,25 @@ exports.handler = async (event) => {
                     if (error) {
                         console.error(`Error actualizando campana fallida ${campaignId}:`, error);
                     } else {
+                        await upsertCommercialEvent(supabase, {
+                            source_type: 'ad_campaign',
+                            source_id: campaignId,
+                            stripe_payment_intent: paymentIntent.id,
+                            customer_email: metadata.advertiser_email || null,
+                            customer_name: metadata.advertiser_name || metadata.company || null,
+                            company_name: metadata.company || metadata.advertiser_name || null,
+                            service_line: 'geobooker_ads',
+                            package_name: metadata.plan || metadata.ad_level || metadata.campaign_type || 'ad_campaign',
+                            currency: metadata.billing_country === 'MX' ? 'MXN' : 'USD',
+                            amount: Number(metadata.total_budget || metadata.amount || 0),
+                            billing_country: metadata.billing_country || 'MX',
+                            tax_status: metadata.tax_status || (metadata.billing_country === 'MX' ? 'domestic_mx' : 'export_0_iva'),
+                            payment_status: 'failed',
+                            payment_method: metadata.payment_type === 'oxxo' ? 'oxxo' : 'card',
+                            operational_status: 'payment_failed',
+                            notes: 'Ads payment failed',
+                            metadata: { failure_type: stripeEvent.type }
+                        });
                         console.log(`Pago fallido para campana ${campaignId}. Estado de pago marcado como failed.`);
                     }
                 }
@@ -577,5 +789,8 @@ exports.handler = async (event) => {
         return { statusCode: 500, body: 'Database update failed' };
     }
 };
+
+
+
 
 

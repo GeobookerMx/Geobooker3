@@ -16,6 +16,7 @@ const FiscalManagement = () => {
     const [activeTab, setActiveTab] = useState('invoices'); // invoices | clients
     const [invoices, setInvoices] = useState([]);
     const [clients, setClients] = useState([]);
+    const [invoiceCandidates, setInvoiceCandidates] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
@@ -33,7 +34,8 @@ const FiscalManagement = () => {
         totalInvoices: 0,
         pendingInvoices: 0,
         totalRevenue: 0,
-        totalIva: 0
+        totalIva: 0,
+        pendingCandidates: 0
     });
 
     const pageSize = 20;
@@ -46,7 +48,11 @@ const FiscalManagement = () => {
         setLoading(true);
         try {
             if (activeTab === 'invoices') {
-                await loadInvoices();
+                await loadFiscalClientOptions();
+                await Promise.all([
+                    loadInvoices(),
+                    loadInvoiceCandidates()
+                ]);
             } else {
                 await loadClients();
             }
@@ -61,14 +67,40 @@ const FiscalManagement = () => {
             .from('invoices')
             .select('status, subtotal, iva_amount, total');
 
+        const { data: campaigns } = await supabase
+            .from('ad_campaigns')
+            .select('id, tax_status, billing_country, invoice_status, invoice_required, payment_status, status');
+
+        const pendingCandidates = (campaigns || []).filter((campaign) => {
+            const billingCountry = campaign.billing_country || 'MX';
+            const isDomestic = campaign.tax_status === 'domestic_mx' || billingCountry === 'MX' || !campaign.tax_status;
+            const isOperational = campaign.payment_status === 'paid' || ['pending_review', 'approved', 'active', 'completed'].includes(campaign.status);
+            const invoiceRequired = campaign.invoice_required !== false;
+            const invoiceOpen = !['sent', 'not_required'].includes(campaign.invoice_status);
+
+            return isDomestic && isOperational && invoiceRequired && invoiceOpen;
+        }).length;
+
         if (inv) {
             setStats({
                 totalInvoices: inv.length,
                 pendingInvoices: inv.filter(i => i.status === 'pending').length,
                 totalRevenue: inv.reduce((sum, i) => sum + parseFloat(i.total || 0), 0),
-                totalIva: inv.reduce((sum, i) => sum + parseFloat(i.iva_amount || 0), 0)
+                totalIva: inv.reduce((sum, i) => sum + parseFloat(i.iva_amount || 0), 0),
+                pendingCandidates
             });
         }
+    };
+
+    const loadFiscalClientOptions = async () => {
+        const { data, error } = await supabase
+            .from('fiscal_clients')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(500);
+
+        if (error) throw error;
+        setClients(data || []);
     };
 
     const loadInvoices = async () => {
@@ -114,6 +146,47 @@ const FiscalManagement = () => {
         setTotalCount(count || 0);
     };
 
+    const loadInvoiceCandidates = async () => {
+        const { data, error } = await supabase
+            .from('ad_campaigns')
+            .select(`
+                id,
+                advertiser_name,
+                advertiser_email,
+                billing_country,
+                client_tax_id,
+                client_legal_name,
+                tax_status,
+                invoice_required,
+                invoice_status,
+                payment_status,
+                status,
+                target_location,
+                currency,
+                budget,
+                total_budget,
+                total_with_iva,
+                iva_amount,
+                created_at
+            `)
+            .order('created_at', { ascending: false })
+            .limit(100);
+
+        if (error) throw error;
+
+        const filtered = (data || []).filter((campaign) => {
+            const billingCountry = campaign.billing_country || 'MX';
+            const isDomestic = campaign.tax_status === 'domestic_mx' || billingCountry === 'MX' || !campaign.tax_status;
+            const isOperational = campaign.payment_status === 'paid' || ['pending_review', 'approved', 'active', 'completed'].includes(campaign.status);
+            const invoiceRequired = campaign.invoice_required !== false;
+            const invoiceOpen = !['sent', 'not_required'].includes(campaign.invoice_status);
+
+            return isDomestic && isOperational && invoiceRequired && invoiceOpen;
+        });
+
+        setInvoiceCandidates(filtered);
+    };
+
     // Generate invoice number
     const generateInvoiceNumber = async () => {
         const { data } = await supabase.rpc('generate_invoice_number');
@@ -140,6 +213,17 @@ const FiscalManagement = () => {
                     .insert(invoiceData);
                 if (error) throw error;
                 toast.success('Factura creada');
+            }
+
+            if (invoiceData.campaign_id) {
+                const invoiceStatus = invoiceData.status === 'sent' ? 'sent' : 'generated';
+                await supabase
+                    .from('ad_campaigns')
+                    .update({
+                        invoice_status: invoiceStatus,
+                        invoice_date: new Date().toISOString()
+                    })
+                    .eq('id', invoiceData.campaign_id);
             }
 
             setShowInvoiceModal(false);
@@ -182,6 +266,8 @@ const FiscalManagement = () => {
         if (status === 'sent') updates.sent_at = new Date().toISOString();
         if (status === 'cancelled') updates.cancelled_at = new Date().toISOString();
 
+        const invoice = invoices.find((item) => item.id === id);
+
         const { error } = await supabase
             .from('invoices')
             .update(updates)
@@ -190,9 +276,71 @@ const FiscalManagement = () => {
         if (error) {
             toast.error('Error actualizando');
         } else {
+            if (invoice?.campaign_id) {
+                const campaignStatus = status === 'sent' ? 'sent' : status === 'cancelled' ? 'pending' : 'generated';
+                await supabase
+                    .from('ad_campaigns')
+                    .update({
+                        invoice_status: campaignStatus,
+                        invoice_sent_at: status === 'sent' ? new Date().toISOString() : null
+                    })
+                    .eq('id', invoice.campaign_id);
+            }
             toast.success('Estado actualizado');
             loadData();
         }
+    };
+
+    const openInvoiceFromCampaign = async (campaign) => {
+        let matchedClient = clients.find((client) => {
+            const sameEmail = client.email && campaign.advertiser_email && client.email.toLowerCase() === campaign.advertiser_email.toLowerCase();
+            const sameTaxId = client.rfc && campaign.client_tax_id && client.rfc.toUpperCase() === campaign.client_tax_id.toUpperCase();
+            return sameEmail || sameTaxId;
+        });
+
+        if (!matchedClient && campaign.advertiser_email) {
+            const payload = {
+                email: campaign.advertiser_email,
+                rfc: campaign.client_tax_id || null,
+                razon_social: campaign.client_legal_name || campaign.advertiser_name || null,
+                company_name: campaign.client_legal_name || campaign.advertiser_name || null,
+                billing_country: campaign.billing_country || 'MX',
+                notes: 'Creado autom?ticamente desde campa?a pagada'
+            };
+
+            const { data, error } = await supabase
+                .from('fiscal_clients')
+                .insert(payload)
+                .select()
+                .single();
+
+            if (error) {
+                toast.error(`No se pudo preparar el cliente fiscal: ${error.message}`);
+                return;
+            }
+
+            matchedClient = data;
+            await loadFiscalClientOptions();
+        }
+
+        const grossAmount = parseFloat(campaign.total_with_iva || campaign.total_budget || campaign.budget || 0);
+        const ivaAmount = parseFloat(campaign.iva_amount || 0);
+        const subtotalAmount = Math.max(grossAmount - ivaAmount, 0);
+
+        setSelectedInvoice({
+            campaign_id: campaign.id,
+            fiscal_client_id: matchedClient?.id || '',
+            subtotal: subtotalAmount.toFixed(2),
+            iva_rate: ivaAmount > 0 ? 16 : 0,
+            iva_amount: ivaAmount.toFixed(2),
+            total: grossAmount.toFixed(2),
+            currency: campaign.currency || 'MXN',
+            status: 'pending',
+            invoice_date: new Date().toISOString(),
+            concept: 'Servicios de publicidad digital',
+            notes: `Campa?a ${campaign.id} | ${campaign.target_location || 'Sin ubicaci?n'}`
+        });
+        setShowInvoiceModal(true);
     };
 
     // Export to Excel
@@ -282,7 +430,7 @@ const FiscalManagement = () => {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                 <div className="bg-white p-4 rounded-xl border shadow-sm">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-blue-100 rounded-lg">
@@ -324,6 +472,17 @@ const FiscalManagement = () => {
                         <div>
                             <p className="text-2xl font-bold">${stats.totalIva.toLocaleString()}</p>
                             <p className="text-xs text-gray-500">IVA Trasladado</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-white p-4 rounded-xl border shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-purple-100 rounded-lg">
+                            <CheckCircle className="w-5 h-5 text-purple-600" />
+                        </div>
+                        <div>
+                            <p className="text-2xl font-bold">{stats.pendingCandidates}</p>
+                            <p className="text-xs text-gray-500">Ventas por facturar</p>
                         </div>
                     </div>
                 </div>
@@ -387,6 +546,73 @@ const FiscalManagement = () => {
                     </button>
                 </div>
             </div>
+
+            {activeTab === 'invoices' && (
+                <div className="bg-gradient-to-r from-amber-50 to-white border border-amber-200 rounded-xl shadow-sm mb-6 overflow-hidden">
+                    <div className="p-4 border-b border-amber-100 flex items-center justify-between gap-4">
+                        <div>
+                            <h2 className="text-lg font-semibold text-gray-900">Ventas facturables pendientes</h2>
+                            <p className="text-sm text-gray-600">Campa?as cobradas o operativas en M?xico que todav?a no aterrizan en factura emitida.</p>
+                        </div>
+                        <div className="text-sm font-semibold text-amber-700">{invoiceCandidates.length} candidatas</div>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="bg-amber-50/70 border-b border-amber-100">
+                                <tr>
+                                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Cliente</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Fiscal</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Campa?a</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase text-right">Monto</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Estado</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase text-right">Acci?n</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-amber-100">
+                                {invoiceCandidates.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="6" className="px-4 py-8 text-center text-sm text-gray-500">
+                                            No hay campa?as pendientes por facturar en este momento.
+                                        </td>
+                                    </tr>
+                                ) : invoiceCandidates.slice(0, 12).map((campaign) => (
+                                    <tr key={campaign.id} className="hover:bg-amber-50/40">
+                                        <td className="px-4 py-3">
+                                            <div className="font-medium text-gray-900 text-sm">{campaign.advertiser_name || 'Cliente sin nombre'}</div>
+                                            <div className="text-xs text-blue-600 break-all">{campaign.advertiser_email || 'Sin email'}</div>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-gray-600">
+                                            <div>{campaign.client_legal_name || 'Pendiente de raz?n social'}</div>
+                                            <div className="text-xs text-gray-400 font-mono">{campaign.client_tax_id || 'Sin RFC / Tax ID'}</div>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-gray-600">
+                                            <div>{campaign.target_location || 'Sin ubicaci?n objetivo'}</div>
+                                            <div className="text-xs text-gray-400">{new Date(campaign.created_at).toLocaleDateString()}</div>
+                                        </td>
+                                        <td className="px-4 py-3 text-right">
+                                            <div className="font-bold text-gray-900">${parseFloat(campaign.total_with_iva || campaign.total_budget || campaign.budget || 0).toLocaleString()}</div>
+                                            <div className="text-xs text-gray-400">{campaign.currency || 'MXN'}</div>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-gray-600">
+                                            <div>{campaign.invoice_status || 'pending'}</div>
+                                            <div className="text-xs text-gray-400">{campaign.billing_country || 'MX'} / {campaign.tax_status || 'domestic_mx'}</div>
+                                        </td>
+                                        <td className="px-4 py-3 text-right">
+                                            <button
+                                                onClick={() => openInvoiceFromCampaign(campaign)}
+                                                className="inline-flex items-center gap-2 px-3 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 text-sm font-medium"
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                                Crear factura
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
 
             {/* Content */}
             <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
@@ -744,6 +970,7 @@ const ClientModal = ({ client, onSave, onClose }) => {
 // INVOICE FORM MODAL
 const InvoiceModal = ({ invoice, clients, onSave, onClose }) => {
     const [form, setForm] = useState({
+        campaign_id: invoice?.campaign_id || '',
         fiscal_client_id: invoice?.fiscal_client_id || '',
         invoice_number: invoice?.invoice_number || '',
         cfdi_uuid: invoice?.cfdi_uuid || '',

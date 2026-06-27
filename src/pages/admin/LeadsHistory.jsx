@@ -10,6 +10,7 @@ import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
 import { Link } from 'react-router-dom';
+import WhatsAppService from '../../services/whatsappService';
 
 const LeadsHistory = () => {
     const [leads, setLeads] = useState([]);
@@ -160,13 +161,21 @@ const LeadsHistory = () => {
     // Abrir WhatsApp con el lead
     const openWhatsApp = async (lead) => {
         if (!lead.phone) {
-            toast.error('Este lead no tiene teléfono');
+            toast.error('Este lead no tiene telefono');
             return;
         }
 
-        const phone = lead.phone.replace(/\D/g, '');
-        const message = encodeURIComponent(whatsappMessage);
-        window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+        const phone = WhatsAppService.normalizePhone(lead.phone, {
+            countryCode: WhatsAppService.inferCountryFromLocation(lead.search_location || lead.address || ''),
+            location: lead.search_location || lead.address || ''
+        });
+
+        if (!phone) {
+            toast.error('No se pudo normalizar el numero de este lead');
+            return;
+        }
+
+        WhatsAppService.openWhatsApp(phone, whatsappMessage);
 
         // Marcar como contactado
         await markAsContacted(lead.id, 'whatsapp');
@@ -277,9 +286,9 @@ const LeadsHistory = () => {
                         tier: lead.tier || 'B',
                         industry: lead.category || '',
                         city: lead.city || '',
-                        country: (lead.search_location?.includes('USA') || lead.search_location?.includes('UK')) ? 'Internacional' : 'México',
-                        source: 'apify_scraper',
-                        notes: `Scrapeado: ${lead.search_query || ''} en ${lead.search_location || ''}`
+                        country_code: WhatsAppService.inferCountryFromLocation(lead.search_location || lead.address || ''),
+                        source: 'apify',
+                        notes: `Apify Scraping | ${lead.search_query || ''} @ ${lead.search_location || ''}`
                     };
 
                     const { error: insertError } = await supabase

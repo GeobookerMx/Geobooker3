@@ -95,7 +95,7 @@ BEGIN
     )
     SELECT 
         mc.id,
-        mc.e164_phone,
+        mc.phone,
         NULL, -- Se define en UI o script de envío
         mc.tier,
         mc.source,
@@ -103,8 +103,8 @@ BEGIN
         CURRENT_DATE
     FROM public.marketing_contacts mc
     LEFT JOIN public.whatsapp_queue wq ON mc.id = wq.contact_id AND wq.scheduled_for = CURRENT_DATE
-    WHERE mc.e164_phone IS NOT NULL 
-      AND mc.e164_phone != ''
+    WHERE mc.phone IS NOT NULL 
+      AND mc.phone != ''
       -- Evitar duplicados en cola del mismo día
       AND wq.id IS NULL
       -- Regla crítica: Canal recomendado debe ser WhatsApp

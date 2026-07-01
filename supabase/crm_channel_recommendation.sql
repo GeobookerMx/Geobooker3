@@ -79,7 +79,7 @@ SELECT
     channel_recommendation,
     UPPER(COALESCE(country, 'UNKNOWN')) AS country,
     COUNT(*) AS total_leads,
-    COUNT(CASE WHEN e164_phone IS NOT NULL AND e164_phone != '' THEN 1 END) AS leads_with_phone,
+    COUNT(CASE WHEN phone IS NOT NULL AND phone != '' THEN 1 END) AS leads_with_phone,
     COUNT(CASE WHEN email IS NOT NULL AND email != '' THEN 1 END) AS leads_with_email,
     ROUND(AVG(lead_quality_score), 0) AS avg_quality_score
 FROM public.marketing_contacts

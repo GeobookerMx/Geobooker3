@@ -28,7 +28,8 @@
         "loadingReviews": "Cargando reseñas...",
         "now": "Ahora",
         "viewComments": "Ver comentarios",
-        "hideComments": "Ocultar comentarios"
+        "hideComments": "Ocultar comentarios",
+        "frequentQuestions": "Preguntas frecuentes"
     },
     "nav": {
         "home": "Inicio",
@@ -561,6 +562,16 @@
             "promo": "¿Qué incluye la promoción global enterprise 70% OFF?",
             "contact": "¿Cómo contacto un negocio?",
             "problem": "Tengo un problema"
+        },
+        "helperTitle": "Puedo ayudarte con:",
+        "helperSubtitle": "reclamar tu negocio, anunciarte, facturacion, soporte y como funciona Geobooker.",
+        "quickRepliesTitle": "Preguntas sugeridas",
+        "ctaAdvertise": "Ver publicidad",
+        "actions": {
+            "searchBusinesses": "Buscar negocios",
+            "claimBusiness": "Reclamar negocio",
+            "advertise": "Publicitar",
+            "faq": "FAQ"
         }
     },
     "recommendations": {
@@ -675,7 +686,7 @@
         "description": "Resuelve tus dudas sobre cómo registrar tu negocio, anunciarte, precios, facturación y más en Geobooker.",
         "stillHaveQuestions": "¿Aún tienes dudas?",
         "contactUs": "Nuestro equipo de soporte puede ayudarte.",
-        "emailSupport": "✉️ Escribir a soporte",
+        "emailSupport": "Escribir a hola@geobooker.com.mx",
         "items": {
             "register": {
                 "q": "¿Cómo registro mi negocio en Geobooker?",
@@ -687,7 +698,7 @@
             },
             "support": {
                 "q": "¿Cómo contacto con soporte?",
-                "a": "Puedes escribirnos a soporte@geobooker.com, usar nuestro chatbot de asistencia virtual, o contactarnos por WhatsApp. Respondemos en menos de 24 horas."
+                "a": "Puedes escribirnos a hola@geobooker.com.mx, usar nuestro chatbot de asistencia virtual o contactarnos por WhatsApp. Respondemos segun disponibilidad operativa."
             },
             "howSearch": {
                 "q": "¿Cómo busco negocios cerca de mí?",

@@ -28,7 +28,8 @@
         "loadingReviews": "Loading reviews...",
         "now": "Now",
         "viewComments": "View comments",
-        "hideComments": "Hide comments"
+        "hideComments": "Hide comments",
+        "frequentQuestions": "Frequently asked questions"
     },
     "nav": {
         "home": "Home",
@@ -561,6 +562,16 @@
             "promo": "What is the 70% off enterprise global promo?",
             "contact": "How do I contact a business?",
             "problem": "I have a problem"
+        },
+        "helperTitle": "I can help you with:",
+        "helperSubtitle": "claiming your business, advertising, invoicing, support and how Geobooker works.",
+        "quickRepliesTitle": "Suggested questions",
+        "ctaAdvertise": "See advertising",
+        "actions": {
+            "searchBusinesses": "Search businesses",
+            "claimBusiness": "Claim business",
+            "advertise": "Advertise",
+            "faq": "FAQ"
         }
     },
     "recommendations": {
@@ -675,7 +686,7 @@
         "description": "Get answers about registering your business, advertising, pricing, invoicing and more on Geobooker.",
         "stillHaveQuestions": "Still have questions?",
         "contactUs": "Our support team is happy to help.",
-        "emailSupport": "✉️ Email Support",
+        "emailSupport": "Email hola@geobooker.com.mx",
         "items": {
             "register": {
                 "q": "How do I register my business on Geobooker?",
@@ -687,7 +698,7 @@
             },
             "support": {
                 "q": "How do I contact support?",
-                "a": "You can email us at soporte@geobooker.com, use our virtual assistant chatbot, or reach us via WhatsApp. We respond within 24 hours."
+                "a": "You can email us at hola@geobooker.com.mx, use our virtual assistant chatbot or contact us by WhatsApp. Response times depend on current support availability."
             },
             "howSearch": {
                 "q": "How do I search for businesses near me?",

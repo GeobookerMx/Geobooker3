@@ -5,6 +5,10 @@
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { APP_LINKS } from '../config/appLinks';
+import pkg from 'google-libphonenumber';
+
+const { PhoneNumberUtil, PhoneNumberFormat } = pkg;
+const phoneUtil = PhoneNumberUtil.getInstance();
 
 /**
  * Obtiene la fecha de hoy en zona horaria de México (UTC-6)
@@ -366,6 +370,21 @@ export class WhatsAppService {
         if (!phone) return '';
 
         const raw = String(phone).trim();
+        try {
+            const explicitCountry = (options.countryCode || '').toUpperCase();
+            const locationCountry = this.inferCountryFromLocation(options.location || '');
+            const phoneCountry = this.inferCountryFromPhone(raw.replace(/\D/g, ''));
+            const resolvedCountry = explicitCountry || locationCountry || phoneCountry || 'MX';
+
+            const parsed = phoneUtil.parseAndKeepRawInput(raw, resolvedCountry);
+            if (phoneUtil.isValidNumber(parsed)) {
+                return phoneUtil.format(parsed, PhoneNumberFormat.E164);
+            }
+        } catch (e) {
+            // Ignorar y continuar con fallback
+        }
+
+        // Fallback robusto tradicional
         const clean = raw.replace(/\D/g, '');
         if (!clean) return '';
 
@@ -499,23 +518,19 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
     /**
      * Validar formato de teléfono
      */
-    static isValidPhone(phone) {
+    static isValidPhone(phone, defaultCountry = 'MX') {
         if (!phone) return false;
-
-        const clean = phone.replace(/\D/g, '');
-
-        // Mínimo 10 dígitos (número local mexicano)
-        // Máximo 15 dígitos (estándar E.164)
-        if (clean.length < 10 || clean.length > 15) {
-            return false;
+        try {
+            const rawPhone = String(phone).trim();
+            const country = rawPhone.startsWith('+') ? undefined : defaultCountry;
+            const parsed = phoneUtil.parseAndKeepRawInput(rawPhone, country);
+            return phoneUtil.isValidNumber(parsed);
+        } catch (e) {
+            const clean = String(phone).replace(/\D/g, '');
+            if (clean.length < 10 || clean.length > 15) return false;
+            if (/^0+$/.test(clean) || /^(\d)\1+$/.test(clean)) return false;
+            return true;
         }
-
-        // No puede ser solo ceros o números repetidos
-        if (/^0+$/.test(clean) || /^(\d)\1+$/.test(clean)) {
-            return false;
-        }
-
-        return true;
     }
 
     /**

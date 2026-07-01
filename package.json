@@ -26,6 +26,7 @@
     "@vercel/speed-insights": "^1.2.0",
     "apify-client": "^2.21.0",
     "dotenv": "^17.2.3",
+    "google-libphonenumber": "^3.2.44",
     "i18next": "^25.6.3",
     "lucide-react": "^0.544.0",
     "qrcode.react": "^4.2.0",

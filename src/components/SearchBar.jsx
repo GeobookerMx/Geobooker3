@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from '../contexts/LocationContext';
 import { searchPlacesUniversal } from '../services/googlePlacesService';
 import { inferUserCountry, searchBusinessesSemantically } from '../services/businessService';
+import { trackSearch } from '../services/analyticsService';
 import { isAwardSearchQuery } from '../utils/awardUtils';
 
 const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) => {
@@ -16,11 +17,12 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
   }, [initialValue]);
 
   const popularCategories = [
-    'Farmacia', 'Restaurante', 'Barberia', 'Supermercado',
-    'Gimnasio', 'Veterinaria', 'Taller mecanico', 'Lavanderia',
+    'Farmacia 24 horas', 'Restaurante', 'Barberia cerca', 'Supermercado',
+    'Gimnasio', 'Veterinaria', 'Taller mecanico cerca', 'Lavanderia',
     'Cafeteria', 'Panaderia', 'Hospital', 'Escuela',
     'Michelin', 'Fine dining', 'Tasting menu', 'Hotel',
-    'Tattoo studio', 'Tatuador', 'Estetica', 'Nail salon', 'Spa'
+    'Cerrajero urgente', 'Talacha o vulcanizadora', 'Mudanza o flete', 'Nail salon', 'Spa',
+    'Coffee shop near me', 'Pharmacy near me', 'Locksmith near me', 'Plumber near me'
   ];
 
   const handleSearch = async (searchQuery = searchTerm) => {
@@ -38,6 +40,12 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
       );
 
       if (semanticResults.length > 0) {
+        trackSearch(searchQuery, {
+          resultsCount: semanticResults.length,
+          userLat: effectiveLocation?.lat || null,
+          userLng: effectiveLocation?.lng || null
+        });
+
         onBusinessesFound(semanticResults, {
           query: searchQuery,
           source: 'semantic',
@@ -70,6 +78,12 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
       }
 
       const businesses = await searchPlacesUniversal(effectiveLocation, searchQuery, 10000);
+
+      trackSearch(searchQuery, {
+        resultsCount: businesses?.length || 0,
+        userLat: effectiveLocation?.lat || null,
+        userLng: effectiveLocation?.lng || null
+      });
 
       onBusinessesFound(businesses, { query: searchQuery, source: 'google' });
       setShowSuggestions(false);

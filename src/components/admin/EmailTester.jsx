@@ -6,7 +6,7 @@ import { Mail, Send, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { sendEmail } from '../../services/emailService';
 
 const EmailTester = () => {
-    const [testEmail, setTestEmail] = useState('ventasgeobooker@gmail.com');
+    const [testEmail, setTestEmail] = useState('hola@geobooker.com.mx');
     const [isSending, setIsSending] = useState(false);
     const [result, setResult] = useState(null);
 

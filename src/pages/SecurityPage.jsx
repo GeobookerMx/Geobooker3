@@ -147,7 +147,7 @@ const SecurityPage = () => {
                             </ul>
                             <div className="mt-4 flex gap-4">
                                 <a
-                                    href="mailto:ventasgeobooker@gmail.com"
+                                    href="mailto:hola@geobooker.com.mx"
                                     className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition"
                                 >
                                     Contactar a Geobooker

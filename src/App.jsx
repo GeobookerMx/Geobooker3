@@ -26,6 +26,7 @@ import ScrollLockManager from "./components/common/ScrollLockManager";
 import { Toaster } from "react-hot-toast";
 import { captureQrAttribution } from "./services/qrAttributionService";
 import { captureAttribution } from "./services/attributionService";
+import { initWebVitals } from "./services/vitalsService";
 
 const ChatWidget = lazy(() => import("./components/agent/ChatWidget"));
 const CookieConsent = lazy(() => import("./components/CookieConsent"));
@@ -164,6 +165,7 @@ function AppInitializer() {
     checkAppVersion();
     initTrackingFromConsent();
     trackSessionStart(false);
+    initWebVitals(); // Envia LCP, INP, CLS, FCP, TTFB a GA4 (sin costo operacional)
 
     flushEventQueue();
     const handleOnline = () => flushEventQueue();

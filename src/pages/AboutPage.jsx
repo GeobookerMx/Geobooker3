@@ -34,7 +34,7 @@ export default function AboutPage() {
             icon: Heart,
             title: isSpanish ? 'Lo que Nos Mueve' : 'What Drives Us',
             description: isSpanish
-                ? 'Creemos que cada negocio local tiene una historia que contar. Geobooker es el puente que une estas historias con quienes las necesitan escuchar.'
+                ? 'Creemos que cada negocio local tiene una historia que contar. Geobooker es el puente entre la necesidad inmediata del usuario y la visibilidad que necesita cada negocio para ser encontrado.'
                 : 'We believe every local business has a story to tell. Geobooker is the bridge connecting these stories with those who need to hear them.'
         },
         {
@@ -72,7 +72,7 @@ export default function AboutPage() {
 
                             <p className="text-xl md:text-2xl text-white/90 max-w-xl">
                                 {isSpanish
-                                    ? 'Somos la plataforma que conecta a tu comunidad con los mejores negocios locales'
+                                    ? 'Somos el buscador local que conecta necesidades reales con negocios cercanos y visibles'
                                     : 'We are the platform connecting your community with the best local businesses'}
                             </p>
                         </div>
@@ -100,6 +100,33 @@ export default function AboutPage() {
             </section>
 
 
+
+            <section className="py-16 bg-slate-950 text-white">
+                <div className="max-w-6xl mx-auto px-4">
+                    <div className="max-w-3xl">
+                        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-300">{isSpanish ? 'Que hace Geobooker' : 'What Geobooker does'}</p>
+                        <h2 className="mt-3 text-3xl md:text-4xl font-bold">{isSpanish ? 'No solo mostramos negocios: conectamos necesidades reales con negocios cercanos y con oportunidades de visibilidad comercial.' : 'We do more than list businesses: we connect real needs with nearby businesses and with measurable visibility opportunities.'}</h2>
+                    </div>
+
+                    <div className="mt-8 grid gap-5 md:grid-cols-3">
+                        <div className="rounded-3xl border border-cyan-400/20 bg-cyan-400/10 p-6">
+                            <Users className="h-8 w-8 text-cyan-300" />
+                            <h3 className="mt-4 text-xl font-bold">{isSpanish ? 'Para usuarios' : 'For users'}</h3>
+                            <p className="mt-2 text-sm leading-6 text-slate-200">{isSpanish ? 'Geobooker reduce el tiempo de busqueda cuando alguien necesita una farmacia, un taller, un restaurante o un servicio cerca.' : 'Geobooker reduces search time when someone needs a pharmacy, repair shop, restaurant or nearby service.'}</p>
+                        </div>
+                        <div className="rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-6">
+                            <Building2 className="h-8 w-8 text-emerald-300" />
+                            <h3 className="mt-4 text-xl font-bold">{isSpanish ? 'Para negocios' : 'For businesses'}</h3>
+                            <p className="mt-2 text-sm leading-6 text-slate-200">{isSpanish ? 'Creamos una nueva capa de visibilidad local para que los negocios aparezcan mejor por ciudad, categoria y necesidad de busqueda.' : 'We create a new layer of local visibility so businesses can appear better by city, category and real-world search need.'}</p>
+                        </div>
+                        <div className="rounded-3xl border border-amber-400/20 bg-amber-400/10 p-6">
+                            <Globe className="h-8 w-8 text-amber-300" />
+                            <h3 className="mt-4 text-xl font-bold">{isSpanish ? 'Para marcas' : 'For brands'}</h3>
+                            <p className="mt-2 text-sm leading-6 text-slate-200">{isSpanish ? 'Geobooker tambien opera espacios publicitarios y activaciones por ciudad, categoria y territorio para marcas que buscan intencion real.' : 'Geobooker also operates advertising placements and activations by city, category and territory for brands seeking real user intent.'}</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             {/* Values Section */}
             <section className="py-16">

@@ -11,7 +11,7 @@ import { supabase } from '../lib/supabase';
 import { getCachedBusinesses, isCacheValid, cacheBusinesses } from '../services/businessCacheService';
 import { getBusinessesInBounds } from '../services/denueMapService';
 import { generateCacheKey, getFromCache, searchPlacesUniversal } from '../services/googlePlacesService';
-import { MapPin, Loader2 } from 'lucide-react';
+import { MapPin, Loader2, Search, Store, Megaphone, ArrowRight, ShieldCheck, Clock3 } from 'lucide-react';
 
 // Map loading fallback component
 const MapLoadingFallback = () => {
@@ -840,9 +840,51 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* SEO Meta Tags */}
-      <SEO
+            <SEO
         title={getSEOTitle()}
         description={getSEODescription()}
+        keywords={[
+          'negocios cerca de mi',
+          'servicios cerca de mi',
+          'directorio de negocios',
+          'mapa de negocios',
+          'farmacia 24 horas',
+          'cerrajero urgente',
+          'taller mecanico cerca',
+          'coffee shop near me',
+          'locksmith near me',
+          'local business directory'
+        ]}
+        structuredData={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'ItemList',
+            name: 'Geobooker search intent examples',
+            itemListElement: [
+              'farmacia 24 horas',
+              'cerrajero urgente',
+              'talacha o vulcanizadora',
+              'taller mecanico cerca',
+              'coffee shop near me',
+              'flete o mudanza'
+            ].map((name, index) => ({
+              '@type': 'ListItem',
+              position: index + 1,
+              name
+            }))
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'Service',
+            name: 'Geobooker local business discovery',
+            provider: {
+              '@type': 'Organization',
+              name: 'Geobooker'
+            },
+            areaServed: ['MX', 'US', 'CA', 'GB'],
+            serviceType: 'Local business search, visibility and commercial activation'
+          }
+        ]}
       />
 
       {/* Banner comercial interno de temporada - visible hasta el 31 de agosto de 2026 */}
@@ -971,6 +1013,9 @@ const HomePage = () => {
       <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white">
         <div className="container mx-auto px-4 py-16">
           <div className="text-center mb-8">
+            <div className="mb-4 inline-flex items-center rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-blue-100">
+              {t('home.identity.badge')}
+            </div>
             <h1 className="text-5xl md:text-6xl font-bold mb-4 leading-tight">
               {t('home.title')}
             </h1>
@@ -1084,6 +1129,113 @@ const HomePage = () => {
                 />
               </div>
             )}
+          </div>
+        </div>
+      </div>
+      <div className="bg-slate-950 text-white">
+        <div className="container mx-auto px-4 py-10">
+          <div className="grid gap-6 lg:grid-cols-[1.3fr,1fr]">
+            <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-2xl shadow-slate-950/30 md:p-8">
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-300">
+                {t('home.identity.blockLabel')}
+              </p>
+              <h2 className="mt-3 max-w-3xl text-3xl font-black tracking-tight text-white md:text-4xl">
+                {t('home.identity.title')}
+              </h2>
+              <p className="mt-4 max-w-3xl text-base leading-7 text-slate-300 md:text-lg">
+                {t('home.identity.description')}
+              </p>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-3">
+                <div className="rounded-3xl border border-cyan-400/20 bg-cyan-400/10 p-4">
+                  <Search className="h-8 w-8 text-cyan-300" />
+                  <h3 className="mt-3 text-lg font-bold text-white">{t('home.identity.users.title')}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">{t('home.identity.users.description')}</p>
+                </div>
+                <div className="rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-4">
+                  <Store className="h-8 w-8 text-emerald-300" />
+                  <h3 className="mt-3 text-lg font-bold text-white">{t('home.identity.businesses.title')}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">{t('home.identity.businesses.description')}</p>
+                </div>
+                <div className="rounded-3xl border border-amber-400/20 bg-amber-400/10 p-4">
+                  <Megaphone className="h-8 w-8 text-amber-300" />
+                  <h3 className="mt-3 text-lg font-bold text-white">{t('home.identity.brands.title')}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">{t('home.identity.brands.description')}</p>
+                </div>
+              </div>
+
+              <div className="mt-6 rounded-[1.75rem] border border-white/10 bg-slate-900/60 p-5">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">
+                  {t('home.identity.intentTitle')}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-300">
+                  {t('home.identity.intentDescription')}
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {[
+                    t('home.identity.intentChip1'),
+                    t('home.identity.intentChip2'),
+                    t('home.identity.intentChip3'),
+                    t('home.identity.intentChip4'),
+                    t('home.identity.intentChip5'),
+                    t('home.identity.intentChip6')
+                  ].map((chip) => (
+                    <span
+                      key={chip}
+                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-200"
+                    >
+                      {chip}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div className="rounded-[2rem] border border-white/10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-200">
+                  <ShieldCheck className="h-4 w-4 text-emerald-300" />
+                  {t('home.identity.promiseLabel')}
+                </div>
+                <p className="mt-4 text-2xl font-black leading-tight text-white">
+                  {t('home.identity.promise')}
+                </p>
+                <p className="mt-4 text-sm leading-6 text-slate-300">
+                  {t('home.identity.promiseDescription')}
+                </p>
+              </div>
+
+              <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6">
+                <div className="flex items-start gap-3">
+                  <Clock3 className="mt-1 h-5 w-5 text-cyan-300" />
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">
+                      {t('home.identity.urgencyLabel')}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-300">
+                      {t('home.identity.urgencyDescription')}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                  <Link
+                    to="/claim"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-slate-900 transition hover:bg-slate-100"
+                  >
+                    {t('home.identity.ctaBusiness')}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    to="/advertise"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-transparent px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                  >
+                    {t('home.identity.ctaAdvertise')}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

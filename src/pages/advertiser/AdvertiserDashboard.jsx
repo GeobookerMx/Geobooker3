@@ -420,13 +420,13 @@ export default function AdvertiserDashboard() {
                 <div className="mt-8 bg-gradient-to-r from-gray-800 to-gray-700 rounded-xl p-6">
                     <h3 className="text-lg font-bold text-white mb-2">Need Help?</h3>
                     <p className="text-gray-400 mb-4">
-                        Contact our Enterprise support team for campaign optimization, creative assistance, or any questions.
+                        Contact the Geobooker commercial team for campaign optimization, creative assistance, billing questions or support.
                     </p>
                     <a
-                        href="mailto:ventasgeobooker@gmail.com"
+                        href="mailto:hola@geobooker.com.mx"
                         className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300"
                     >
-                        enterprise@geobooker.com.mx
+                        hola@geobooker.com.mx
                         <ChevronRight className="w-4 h-4" />
                     </a>
                 </div>

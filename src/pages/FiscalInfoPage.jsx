@@ -1,7 +1,8 @@
 // src/pages/FiscalInfoPage.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, FileText, Globe, Mail, Shield } from 'lucide-react';
+import { ArrowLeft, FileText, Globe, Mail } from 'lucide-react';
+import { CONTACT_EMAILS, getMailtoLink } from '../config/contacts';
 
 const FiscalInfoPage = () => {
     return (
@@ -49,7 +50,7 @@ const FiscalInfoPage = () => {
                         <div>
                             <h3 className="text-lg font-semibold text-gray-800 mb-3">Para solicitar tu factura:</h3>
                             <ol className="list-decimal list-inside text-gray-600 space-y-2">
-                                <li>Envía un correo a <a href="mailto:ventasgeobooker@gmail.com" className="text-blue-600 hover:underline">ventasgeobooker@gmail.com</a></li>
+                                <li>Envía un correo a <a href={getMailtoLink('ventas')} className="text-blue-600 hover:underline">{CONTACT_EMAILS.ventas}</a></li>
                                 <li>Incluye tu RFC, razón social, régimen fiscal y código postal</li>
                                 <li>Indica el servicio contratado y fecha de pago</li>
                             </ol>
@@ -118,11 +119,11 @@ const FiscalInfoPage = () => {
                         Para cualquier información sobre facturación o consultas generales, contáctanos:
                     </p>
                     <a
-                        href="mailto:ventasgeobooker@gmail.com"
+                        href={getMailtoLink('ventas') }
                         className="inline-flex items-center gap-2 bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition"
                     >
                         <Mail className="w-5 h-5" />
-                        ventasgeobooker@gmail.com
+                        {CONTACT_EMAILS.ventas}
                     </a>
                 </section>
 

@@ -6,6 +6,7 @@ import SafetyBanner from '../SafetyBanner';
 import AppQRCode from '../common/AppQRCode';
 import { APP_LINKS, buildTrackedDownloadUrl } from '../../config/appLinks';
 import { IS_IOS_NATIVE } from '../../utils/iosStore';
+import { CONTACT_EMAILS, getMailtoLink } from '../../config/contacts';
 
 const Footer = () => {
   const { t } = useTranslation();
@@ -109,7 +110,7 @@ const Footer = () => {
                 <h4 className="font-semibold mb-3 text-blue-400">{t('footer.contact')}</h4>
                 <div className="space-y-2">
                   <a
-                    href="https://wa.me/5255267023368"
+                    href="https://wa.me/525526702368"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center text-gray-300 hover:text-green-400 transition-colors group"
@@ -120,24 +121,24 @@ const Footer = () => {
                     <span>+52 55 2670 2368</span>
                   </a>
                   <a
-                    href="mailto:geobookerr@gmail.com"
+                    href={getMailtoLink('soporte')}
                     className="flex items-center text-gray-300 hover:text-blue-400 transition-colors group"
                   >
                     <svg className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
-                    <span>geobookerr@gmail.com</span>
+                    <span>{CONTACT_EMAILS.soporte}</span>
                     <span className="ml-2 text-xs text-gray-500">({t('footer.support')})</span>
                   </a>
                   {!IS_IOS_NATIVE && (
                     <a
-                      href="mailto:ventasgeobooker@gmail.com"
+                      href={getMailtoLink('ventas')}
                       className="flex items-center text-gray-300 hover:text-purple-400 transition-colors group"
                     >
                       <svg className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
-                      <span>ventasgeobooker@gmail.com</span>
+                      <span>{CONTACT_EMAILS.ventas}</span>
                       <span className="ml-2 text-xs text-gray-500">({t('nav.moreSales')})</span>
                     </a>
                   )}
@@ -224,7 +225,7 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
-                  <a href="mailto:ventasgeobooker@gmail.com" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
+                  <a href={getMailtoLink('soporte')} className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
                     → {t('footer.support')}
                   </a>
                 </li>
@@ -252,10 +253,10 @@ const Footer = () => {
                   📝 {t('footer.requestQuote')}
                 </Link>
                 <a
-                  href="mailto:geobookerr@gmail.com?subject=Cotización desarrollo de app"
+                  href={getMailtoLink('ventas', 'Cotizaci?n desarrollo de app')}
                   className="text-gray-400 hover:text-white text-sm text-center transition-colors"
                 >
-                  {t('footer.orWriteUs')} geobookerr@gmail.com
+                  {t('footer.orWriteUs')} {CONTACT_EMAILS.ventas}
                 </a>
               </div>
             </div>

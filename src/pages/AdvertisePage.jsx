@@ -17,6 +17,7 @@ import { IS_IOS_NATIVE } from "../utils/iosStore";
 import { HOUSE_AD_CAMPAIGNS } from "../config/houseAds";
 import { CROSS_PLATFORM_PACKAGES } from "../config/crossPlatformPackages";
 import GeobookerPromoPlaceholder from "../components/ads/GeobookerPromoPlaceholder";
+import { CONTACT_EMAILS, getMailtoLink } from '../config/contacts';
 
 /**
  * Metadatos adicionales por espacio publicitario.
@@ -1268,7 +1269,7 @@ const AdvertisePage = () => {
       {/* CTA FINAL */}
       <div className="bg-white py-10 px-4 text-center border-t border-gray-200">
         <p className="text-gray-500 text-sm">
-          ¿Dudas? Escríbenos a <a href="mailto:ventasgeobooker@gmail.com" className="text-blue-600 hover:underline">ventasgeobooker@gmail.com</a>
+          ¿Dudas? Escríbenos a <a href="mailto:hola@geobooker.com.mx" className="text-blue-600 hover:underline">hola@geobooker.com.mx</a>
         </p>
       </div>
     </div>

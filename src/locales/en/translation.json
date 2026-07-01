@@ -51,8 +51,8 @@
         "viewDashboard": "View your dashboard"
     },
     "home": {
-        "title": "Find Businesses Near You",
-        "subtitle": "Discover the best establishments in your area",
+        "title": "Find nearby businesses and services",
+        "subtitle": "Geobooker connects real needs with nearby businesses at the right moment.",
         "searchPlaceholder": "What business or service are you looking for?",
         "locationActive": "Location active",
         "locationDefault": "Using default location",
@@ -151,7 +151,40 @@
             "subtitle": "Join thousands of users who already find what they need in seconds",
             "button": "Start Now →"
         },
-        "searchCleared": "Search cleared"
+        "searchCleared": "Search cleared",
+        "identity": {
+            "badge": "Local search, visibility and commercial activation",
+            "blockLabel": "What Geobooker solves",
+            "title": "Geobooker helps users, businesses and brands connect at the right moment.",
+            "description": "For users, Geobooker saves time when finding useful nearby businesses. For businesses, it creates a new layer of local visibility. For brands, it opens advertising and activation opportunities by city, territory and category.",
+            "users": {
+                "title": "For users",
+                "description": "Find pharmacies, restaurants, repair shops, barbers, clinics and local services with map, contact and directions."
+            },
+            "businesses": {
+                "title": "For businesses",
+                "description": "Help your business appear when nearby customers are searching for what you offer by category, city or real-world need."
+            },
+            "brands": {
+                "title": "For brands",
+                "description": "Launch local or international advertising in a context where the user already has intent to search, visit or contact."
+            },
+            "promiseLabel": "Brand promise",
+            "promise": "More local visibility. More contact opportunities. More chances to sell.",
+            "promiseDescription": "Geobooker does not promise guaranteed sales. It helps you appear better, organize your digital presence and turn high-intent discovery into real opportunities.",
+            "urgencyLabel": "Why it matters",
+            "urgencyDescription": "Every local search where a business does not appear is an opportunity that can end up with a competitor. Geobooker exists so no good business stays invisible and no user wastes time searching for what can be found nearby.",
+            "ctaBusiness": "Claim or register business",
+            "ctaAdvertise": "Explore Geobooker advertising",
+            "intentTitle": "What people search in real life",
+            "intentDescription": "Geobooker should understand formal categories, slang, urgent needs and real-world intent. That is why we search by intent, territory and context, not only by exact names.",
+            "intentChip1": "24 hour pharmacy",
+            "intentChip2": "tire repair or flat tire",
+            "intentChip3": "emergency locksmith",
+            "intentChip4": "auto repair near me",
+            "intentChip5": "coffee shop near me",
+            "intentChip6": "moving service"
+        }
     },
     "globalPromo": {
         "badge": "Global Advertising",
@@ -564,15 +597,19 @@
             "problem": "I have a problem"
         },
         "helperTitle": "I can help you with:",
-        "helperSubtitle": "claiming your business, advertising, invoicing, support and how Geobooker works.",
+        "helperSubtitle": "search nearby businesses, claim your listing, advertise, understand Geobooker Connect, invoicing and support.",
         "quickRepliesTitle": "Suggested questions",
         "ctaAdvertise": "See advertising",
         "actions": {
             "searchBusinesses": "Search businesses",
             "claimBusiness": "Claim business",
             "advertise": "Advertise",
-            "faq": "FAQ"
-        }
+            "faq": "FAQ",
+            "connect": "Geobooker Connect",
+            "support": "Support"
+        },
+        "helperFootnote": "This assistant explains public flows and helps you reach the correct section or team.",
+        "footerNote": "Geobooker does not promise guaranteed results from the assistant. It guides you to the correct next step."
     },
     "recommendations": {
         "title": "Geobookers recommend",
@@ -685,7 +722,7 @@
         "subtitle": "Find answers to the most common questions about Geobooker",
         "description": "Get answers about registering your business, advertising, pricing, invoicing and more on Geobooker.",
         "stillHaveQuestions": "Still have questions?",
-        "contactUs": "Our support team is happy to help.",
+        "contactUs": "Email hola@geobooker.com.mx if you need commercial support, technical help or invoicing assistance.",
         "emailSupport": "Email hola@geobooker.com.mx",
         "items": {
             "register": {

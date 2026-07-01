@@ -59,8 +59,8 @@ function buildSensitiveRefusal(currentLang = 'es') {
 
 function buildFallbackMessage(language = 'es') {
     return String(language || '').toLowerCase().startsWith('en')
-        ? 'The assistant is temporarily offline. You can contact our support team directly at hola@geobooker.com.mx for assistance.'
-        : 'El asistente no esta disponible en este momento. Puedes escribir directamente a nuestro equipo de soporte en hola@geobooker.com.mx y con gusto te ayudaremos.';
+        ? 'The assistant is temporarily offline. Geobooker can still help you with business discovery, listing claims, advertising, Geobooker Connect, invoicing and support through hola@geobooker.com.mx.'
+        : 'El asistente esta temporalmente fuera de linea. Aun asi, Geobooker puede ayudarte con busqueda de negocios, reclamo de perfiles, publicidad, Geobooker Connect, facturacion y soporte desde hola@geobooker.com.mx.';
 }
 
 function normalizeText(value = '') {
@@ -75,6 +75,12 @@ function buildLocalAnswer(userMessage = '', language = 'es') {
     const text = normalizeText(userMessage);
 
     const hasAny = (patterns = []) => patterns.some((pattern) => text.includes(pattern));
+
+    if (hasAny(['que es geobooker', 'que hace geobooker', 'como funciona geobooker', 'what is geobooker', 'how geobooker works'])) {
+        return isEnglish
+            ? 'Geobooker is a local search, visibility and commercial activation platform. It helps users find nearby businesses, helps businesses appear when customers are searching, and helps brands launch territory-based advertising and outreach services.\n\nNext step: tell me if you need Geobooker as a user, a business, or a brand and I will guide you.'
+            : 'Geobooker es una plataforma de busqueda local, visibilidad y activacion comercial. Ayuda a los usuarios a encontrar negocios cercanos, ayuda a los negocios a aparecer cuando los buscan y ayuda a las marcas a activar publicidad y servicios comerciales por territorio.\n\nSiguiente paso: dime si necesitas Geobooker como usuario, negocio o marca y te guio.';
+    }
 
     if (hasAny(['hola', 'buenas', 'hello', 'hi', 'hey'])) {
         return isEnglish
@@ -118,6 +124,12 @@ function buildLocalAnswer(userMessage = '', language = 'es') {
             : 'Para soporte tecnico, dudas comerciales o solicitudes especiales, puedes contactar al equipo de Geobooker en hola@geobooker.com.mx. Si me dices el tema, tambien puedo orientarte a la ruta correcta dentro de la plataforma.\n\nSiguiente paso: dime si necesitas soporte, publicidad, facturacion o gestion de negocio.';
     }
 
+    if (hasAny(['contactar negocio', 'telefono negocio', 'whatsapp negocio', 'horario negocio', 'contact business', 'business phone', 'business hours'])) {
+        return isEnglish
+            ? 'Inside each Geobooker business profile you can usually review contact details, directions, schedules, website, WhatsApp or direct call actions when that information is available.\n\nNext step: open the business profile from the map and use the contact, call or directions buttons.'
+            : 'Dentro de cada perfil de negocio en Geobooker normalmente puedes revisar contacto, rutas, horarios, sitio web, WhatsApp o llamada directa cuando esa informacion esta disponible.\n\nSiguiente paso: abre el perfil del negocio desde el mapa y usa los botones de contacto, llamada o como llegar.';
+    }
+
     if (hasAny(['buscar', 'negocios cerca', 'servicios cerca', 'near me', 'search', 'find business', 'buscar negocio'])) {
         return isEnglish
             ? 'You can use Geobooker to search nearby businesses and services by category, city or need. The platform works best when you search with the type of business or service you need, for example restaurant, mechanic, locksmith or pharmacy.\n\nNext step: go to the main map and search by category, city or what you need right now.'
@@ -140,7 +152,7 @@ function buildSystemContext({ hostname, language, pathname }) {
     const localeInstruction = isEnglish ? 'Respond in English.' : 'Responde en espanol.';
 
     return `Eres GeoBot, el asistente de IA oficial de Geobooker.
-Geobooker es el mapa y directorio de negocios mas completo de Mexico, que conecta a usuarios con comercios locales.
+Geobooker es una plataforma de busqueda local, visibilidad y activacion comercial que conecta usuarios, negocios y marcas.
 
 Tu rol:
 - Responder preguntas de forma clara, directa, amable y concisa.

@@ -61,10 +61,22 @@ function ChatWidget() {
             tone: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
         },
         {
-            to: '/faq',
+            to: '/b2b-connect',
+            icon: Sparkles,
+            label: t('chat.actions.connect', { defaultValue: isEnglish ? 'Geobooker Connect' : 'Geobooker Connect' }),
+            tone: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 hover:bg-fuchsia-100'
+        },
+        {
+            to: '/support',
             icon: LifeBuoy,
-            label: t('chat.actions.faq', { defaultValue: 'FAQ' }),
+            label: t('chat.actions.support', { defaultValue: isEnglish ? 'Support' : 'Soporte' }),
             tone: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+        },
+        {
+            to: '/faq',
+            icon: ArrowRight,
+            label: t('chat.actions.faq', { defaultValue: 'FAQ' }),
+            tone: 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
         }
     ];
 
@@ -188,8 +200,15 @@ function ChatWidget() {
                             <p className="mt-1 text-xs leading-5 text-blue-100/90">
                                 {t('chat.helperSubtitle', {
                                     defaultValue: isEnglish
-                                        ? 'Claiming your business, advertising, invoicing, support and how Geobooker works.'
-                                        : 'Reclamar tu negocio, anunciarte, facturacion, soporte y como funciona Geobooker.'
+                                        ? 'Search nearby businesses, claim your listing, advertise, understand Geobooker Connect, invoicing and support.'
+                                        : 'Buscar negocios cercanos, reclamar tu perfil, anunciarte, entender Geobooker Connect, facturacion y soporte.'
+                                })}
+                            </p>
+                            <p className="mt-2 text-[11px] leading-5 text-cyan-100/80">
+                                {t('chat.helperFootnote', {
+                                    defaultValue: isEnglish
+                                        ? 'This assistant explains public flows and helps you reach the correct team or section.'
+                                        : 'Este asistente explica flujos publicos y te lleva a la seccion o equipo correcto.'
                                 })}
                             </p>
                         </div>
@@ -197,7 +216,7 @@ function ChatWidget() {
 
                     <div className="flex-1 overflow-y-auto bg-slate-50 px-3 py-3 md:px-4">
                         {messages.length <= 1 && (
-                            <div className="mb-3 grid grid-cols-2 gap-2">
+                            <div className="mb-3 grid grid-cols-2 gap-2 md:grid-cols-3">
                                 {actionLinks.map((action) => {
                                     const Icon = action.icon;
                                     return (
@@ -312,6 +331,13 @@ function ChatWidget() {
                         </div>
                         <p className="mt-2 text-center text-[11px] text-slate-400">
                             {t('chat.poweredBy')}
+                        </p>
+                        <p className="mt-1 text-center text-[11px] text-slate-400">
+                            {t('chat.footerNote', {
+                                defaultValue: isEnglish
+                                    ? 'Geobooker does not promise guaranteed results from the assistant. It guides you to the correct next step.'
+                                    : 'Geobooker no promete resultados garantizados desde el asistente. Te guia al siguiente paso correcto.'
+                            })}
                         </p>
                     </div>
                 </div>

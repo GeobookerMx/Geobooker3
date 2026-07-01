@@ -1,4 +1,4 @@
-# https://www.robotstxt.org/robotstxt.html
+﻿# https://www.robotstxt.org/robotstxt.html
 
 # Geobooker.com.mx - Robots.txt
 # Optimizado para SEO global
@@ -6,7 +6,7 @@
 User-agent: *
 Allow: /
 
-# Bloquear páginas privadas
+# Bloquear paginas privadas
 Disallow: /admin/*
 Disallow: /dashboard/*
 Disallow: /api/*
@@ -16,17 +16,16 @@ Disallow: /*?debug=*
 
 # Sitemaps
 Sitemap: https://geobooker.com.mx/sitemap.xml
-Host: https://geobooker.com.mx
 
-# Crawl-delay para ser amigable con el servidor
+# Crawl-delay general
 Crawl-delay: 1
 
-# Google específico
+# Google - sin crawl-delay (Google no lo honra de todas formas)
 User-agent: Googlebot
 Allow: /
 Crawl-delay: 0
 
-# Bing específico
+# Bing
 User-agent: Bingbot
 Allow: /
 Crawl-delay: 1
@@ -36,13 +35,22 @@ User-agent: Googlebot-Image
 Allow: /images/
 Allow: /public/images/
 
-# Bloquear bots de scrapers conocidos
+# Bots de monitoreo SEO - solo rutas publicas, privadas bloqueadas
 User-agent: AhrefsBot
-Disallow: /
+Allow: /
+Disallow: /admin/*
+Disallow: /dashboard/*
+Disallow: /api/*
+Disallow: /auth/*
 
 User-agent: SemrushBot
-Disallow: /
+Allow: /
+Disallow: /admin/*
+Disallow: /dashboard/*
+Disallow: /api/*
+Disallow: /auth/*
 
+# Bots agresivos sin valor SEO - bloqueados completamente
 User-agent: DotBot
 Disallow: /
 

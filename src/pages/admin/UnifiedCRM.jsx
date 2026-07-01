@@ -1051,7 +1051,7 @@ const UnifiedCRM = () => {
 
         const testEmails = window.prompt(
             'Ingresa los emails de prueba (separados por coma):',
-            'juan.pablo.pg@hotmail.com, geobookerr@gmail.com'
+            'juan.pablo.pg@hotmail.com, hola@geobooker.com.mx'
         );
 
         if (!testEmails) return;

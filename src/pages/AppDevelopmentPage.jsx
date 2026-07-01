@@ -71,7 +71,7 @@ export default function AppDevelopmentPage() {
 
         try {
             // Enviar por email usando mailto (simple) o webhook
-            const mailtoLink = `mailto:geobookerr@gmail.com?subject=${encodeURIComponent(
+            const mailtoLink = `mailto:${CONTACT_EMAILS.ventas}?subject=${encodeURIComponent(
                 `Cotización: ${PROJECT_TYPES.find(p => p.id === form.projectType)?.label || form.projectType}`
             )}&body=${encodeURIComponent(
                 `📱 SOLICITUD DE COTIZACIÓN DE APP\n\n` +
@@ -332,8 +332,8 @@ export default function AppDevelopmentPage() {
 
                         <p className="text-center text-gray-500 text-sm">
                             ¿Prefieres contacto directo? Escríbenos a{' '}
-                            <a href="mailto:geobookerr@gmail.com" className="text-purple-600 hover:underline">
-                                geobookerr@gmail.com
+                            <a href="mailto:hola@geobooker.com.mx" className="text-purple-600 hover:underline">
+                                {CONTACT_EMAILS.ventas}
                             </a>
                         </p>
                     </form>

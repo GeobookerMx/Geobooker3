@@ -5,6 +5,18 @@ import { useLocation } from '../contexts/LocationContext';
 import SearchBar from '../components/SearchBar';
 // Lazy load the map component for faster initial load
 const BusinessMap = lazy(() => import('../components/BusinessMap'));
+const HeroBanner = lazy(() => import('../components/ads/HeroBanner'));
+const CarouselAd = lazy(() => import('../components/ads/CarouselAd'));
+const StickyBanner = lazy(() => import('../components/ads/StickyBanner'));
+const InterstitialAd = lazy(() => import('../components/ads/InterstitialAd'));
+const RecommendedSection = lazy(() => import('../components/ads/RecommendedSection'));
+const SponsoredResultCard = lazy(() => import('../components/ads/SponsoredResultCard'));
+const SponsoredFullwidth = lazy(() => import('../components/ads/SponsoredFullwidth'));
+const ReferralFloatingWidget = lazy(() => import('../components/referral/ReferralFloatingWidget'));
+const ChristmasPromoModal = lazy(() => import('../components/referral/ChristmasPromoModal'));
+const AIRecommendations = lazy(() => import('../components/recommendations/AIRecommendations'));
+const GeobookersRecommend = lazy(() => import('../components/recommendations/GeobookersRecommend'));
+const GuestLoginPromptModal = lazy(() => import('../components/modals/GuestLoginPromptModal'));
 import LocationPermissionModal from '../components/LocationPermissionModal';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
@@ -26,25 +38,18 @@ const MapLoadingFallback = () => {
     </div>
   );
 };
-// Componentes de Publicidad
-import {
-  HeroBanner,
-  CarouselAd,
-  StickyBanner,
-  InterstitialAd,
-  useInterstitialTrigger
-} from '../components/ads';
-import RecommendedSection from '../components/ads/RecommendedSection';
-import SponsoredResultCard from '../components/ads/SponsoredResultCard';
-import SponsoredFullwidth from '../components/ads/SponsoredFullwidth';
+
+const DeferredSectionFallback = ({ minHeight = '180px' }) => (
+  <div
+    className="w-full animate-pulse rounded-2xl border border-slate-200 bg-slate-100/80"
+    style={{ minHeight }}
+    aria-hidden="true"
+  />
+);
+import useInterstitialTrigger from '../components/ads/useInterstitialTrigger';
 import SEO from '../components/SEO';
-import ReferralFloatingWidget from '../components/referral/ReferralFloatingWidget';
-import ChristmasPromoModal from '../components/referral/ChristmasPromoModal';
-import AIRecommendations from '../components/recommendations/AIRecommendations';
-import { GeobookersRecommend } from '../components/recommendations';
 // Guest search limit
 import { useGuestSearchLimit } from '../hooks/useGuestSearchLimit';
-import GuestLoginPromptModal from '../components/modals/GuestLoginPromptModal';
 // Apple Guideline 3.1.1: ocultar promos de paquetes pagos en iOS nativo
 import { IS_IOS_NATIVE } from '../utils/iosStore';
 import OpenNowFilter from '../components/common/OpenNowFilter';
@@ -250,6 +255,9 @@ const HomePage = () => {
   const [awardFilter, setAwardFilter] = useState('all');
   const [showAwardsPrompt, setShowAwardsPrompt] = useState(false);
   const [nearbyAwardCount, setNearbyAwardCount] = useState(0);
+  const [showDeferredModules, setShowDeferredModules] = useState(false);
+  const [showDeferredAds, setShowDeferredAds] = useState(false);
+  const [showDeferredFloatingUi, setShowDeferredFloatingUi] = useState(false);
   const mapIdleTimerRef = useRef(null);
   const awardFilterRef = useRef('all');
   const viewportRequestSeqRef = useRef(0);
@@ -292,6 +300,35 @@ const HomePage = () => {
     closeLoginPrompt,
     isGuest
   } = useGuestSearchLimit();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const schedule = (delay, setter) => {
+      const fallbackTimer = window.setTimeout(() => {
+        if (!cancelled) setter(true);
+      }, delay);
+
+      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+        window.requestIdleCallback(() => {
+          if (!cancelled) setter(true);
+        }, { timeout: delay + 600 });
+      }
+
+      return fallbackTimer;
+    };
+
+    const modulesTimer = schedule(900, setShowDeferredModules);
+    const adsTimer = schedule(1400, setShowDeferredAds);
+    const floatingTimer = schedule(2200, setShowDeferredFloatingUi);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(modulesTimer);
+      clearTimeout(adsTimer);
+      clearTimeout(floatingTimer);
+    };
+  }, []);
 
   // ==========================================
   // PERSISTENCIA DE ESTADO DE BÚSQUEDA
@@ -1241,7 +1278,11 @@ const HomePage = () => {
       </div>
 
       {/* Hero Banner Publicitario (Primera Plana) */}
-      <HeroBanner />
+      {showDeferredAds && (
+        <Suspense fallback={<DeferredSectionFallback minHeight="120px" />}>
+          <HeroBanner />
+        </Suspense>
+      )}
 
       {/* 🤖 La IA de Geobooker te recomienda */}
       <div className="container mx-auto px-4 py-4">
@@ -1357,7 +1398,11 @@ const HomePage = () => {
       </div>
 
       {/* Carrusel de Negocios Destacados (Primera Plana) */}
-      <CarouselAd />
+      {showDeferredAds && (
+        <Suspense fallback={<DeferredSectionFallback minHeight="180px" />}>
+          <CarouselAd />
+        </Suspense>
+      )}
 
       {/* Sección: Cómo Funciona */}
       <div className="container mx-auto px-4 py-16">
@@ -1724,7 +1769,11 @@ const HomePage = () => {
       </div>
 
       {/* Banner Inferior Sticky (Segunda Plana) */}
-      <StickyBanner />
+      {showDeferredAds && (
+        <Suspense fallback={null}>
+          <StickyBanner />
+        </Suspense>
+      )}
 
       {/* Interstitial Ad (Pantalla Completa) - Aparece después de 5 búsquedas */}
       {
@@ -1733,15 +1782,27 @@ const HomePage = () => {
         )
       }
 
-      {/* Floating Referral Widget - Gamified */}
-      <ReferralFloatingWidget />
+      {/* Floating / deferred UI */}
+      {showDeferredFloatingUi && (
+        <Suspense fallback={null}>
+          <ReferralFloatingWidget />
+        </Suspense>
+      )}
 
       {/* Prompt flotante para recomendar negocios (Geobookers recomiendan) */}
-      <GeobookersRecommend userLocation={userLocation} />
+      {showDeferredFloatingUi && (
+        <Suspense fallback={null}>
+          <GeobookersRecommend userLocation={userLocation} />
+        </Suspense>
+      )}
 
       {/* Christmas Promo Modal - Seasonal */}
-      <ChristmasPromoModal />
-    </div >
+      {showDeferredFloatingUi && (
+        <Suspense fallback={null}>
+          <ChristmasPromoModal />
+        </Suspense>
+      )}
+    </div>
   );
 };
 

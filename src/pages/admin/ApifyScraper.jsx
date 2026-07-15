@@ -353,23 +353,26 @@ const ApifyScraper = () => {
     // Auto-save results to scraping_history table
     const saveToHistory = async (businesses) => {
         try {
-            const historyRecords = businesses.map(lead => ({
-                name: lead.name || '',
-                phone: lead.phone || null,
-                email: lead.email || null,
-                website: lead.website || null,
-                address: lead.address || null,
-                city: extractCity(lead.address),
-                category: lead.category || searchQuery,
-                rating: lead.rating || null,
-                review_count: lead.reviewCount || 0,
-                google_maps_url: lead.googleMapsUrl || null,
-                search_query: searchQuery,
-                search_location: location,
-                tier: determineTier(lead),
-                source: 'apify',
-                country_code: inferCountryCodeFromLocation(location || lead.address || '')
-            }));
+            const historyRecords = businesses.map(lead => {
+                const { inferredCountry, normalizedPhone } = normalizeLeadPhone(lead, location);
+                return {
+                    name: lead.name || '',
+                    phone: normalizedPhone,
+                    email: lead.email || null,
+                    website: lead.website || null,
+                    address: lead.address || null,
+                    city: extractCity(lead.address),
+                    category: lead.category || searchQuery,
+                    rating: lead.rating || null,
+                    review_count: lead.reviewCount || 0,
+                    google_maps_url: lead.googleMapsUrl || null,
+                    search_query: searchQuery,
+                    search_location: location,
+                    tier: determineTier(lead),
+                    source: 'apify',
+                    country_code: inferredCountry
+                };
+            });
 
             const { error } = await supabase
                 .from('scraping_history')
@@ -434,19 +437,20 @@ const ApifyScraper = () => {
         try {
             const leadsToImport = results
                 .filter((_, i) => selectedLeads.has(i))
-                .map(lead => ({
-                    contact_name: lead.name,
-                    email: lead.email || null,
-                    company_name: lead.name, // Use name as company name fallback
-                    // position: null, // Removed as it's not in marketing_contacts schema
-                    tier: determineTier(lead),
-                    phone: lead.phone || null,
-                    city: extractCity(lead.address),
-                    // website: lead.website || null, // website not in marketing_contacts schema
-                    source: 'apify',
-                    country_code: inferCountryCodeFromLocation(location || lead.address || ''),
-                    notes: `Apify Scraping | ${searchQuery} @ ${location} | Web: ${lead.website || 'N/A'} | Address: ${lead.address || 'N/A'}`
-                }));
+                .map(lead => {
+                    const { inferredCountry, normalizedPhone } = normalizeLeadPhone(lead, location);
+                    return {
+                        contact_name: lead.name,
+                        email: lead.email || null,
+                        company_name: lead.name,
+                        tier: determineTier(lead),
+                        phone: normalizedPhone,
+                        city: extractCity(lead.address),
+                        source: 'apify',
+                        country_code: inferredCountry,
+                        notes: `Apify Scraping | ${searchQuery} @ ${location} | Web: ${lead.website || 'N/A'} | Address: ${lead.address || 'N/A'}`
+                    };
+                });
 
             const { data, error } = await supabase
                 .from('marketing_contacts')
@@ -477,6 +481,19 @@ const ApifyScraper = () => {
         if (lead.reviewCount > 100) return 'AA';
         if (lead.reviewCount > 20) return 'A';
         return 'B';
+    };
+
+    const normalizeLeadPhone = (lead, fallbackLocation = location) => {
+        const inferredCountry = inferCountryCodeFromLocation(fallbackLocation || lead.address || '');
+        const normalized = WhatsAppService.normalizePhone(lead.phone, {
+            countryCode: inferredCountry,
+            location: fallbackLocation || lead.address || ''
+        });
+
+        return {
+            inferredCountry,
+            normalizedPhone: normalized || lead.phone || null
+        };
     };
 
     // Extract city from address
@@ -536,7 +553,8 @@ const ApifyScraper = () => {
                 setResults(newResults);
                 setSelectedLeads(new Set()); // Clear selections
                 setWhatsappSent(prev => prev + 1);
-                setContactedPhones(prev => new Set(prev).add(String(lead.phone).replace(/\D/g, '')));
+                const { normalizedPhone } = normalizeLeadPhone(lead, location);
+                setContactedPhones(prev => new Set(prev).add(String(normalizedPhone || lead.phone).replace(/\D/g, '')));
                 setHourlyCount(prev => prev + 1);
                 setHourlyResetTime(prev => prev || (Date.now() + 60 * 60 * 1000));
                 startCooldown();
@@ -554,10 +572,12 @@ const ApifyScraper = () => {
     const removeDuplicates = () => {
         const seenPhones = new Set();
         const uniqueResults = results.filter(lead => {
-            if (!lead.phone) return true; // Keep leads without phone
-            const phone = lead.phone.replace(/\D/g, '');
+            if (!lead.phone) return true;
+            const { normalizedPhone } = normalizeLeadPhone(lead, location);
+            const phone = String(normalizedPhone || lead.phone).replace(/\D/g, '');
+            if (!phone) return true;
             if (seenPhones.has(phone) || contactedPhones.has(phone)) {
-                return false; // Duplicate or already contacted
+                return false;
             }
             seenPhones.add(phone);
             return true;

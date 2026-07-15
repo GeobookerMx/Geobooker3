@@ -518,14 +518,21 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
     /**
      * Validar formato de teléfono
      */
-    static isValidPhone(phone, defaultCountry = 'MX') {
+    static isValidPhone(phone, options = {}) {
         if (!phone) return false;
         try {
             const rawPhone = String(phone).trim();
-            const country = rawPhone.startsWith('+') ? undefined : defaultCountry;
+            const explicitCountry = (options.countryCode || '').toUpperCase();
+            const locationCountry = this.inferCountryFromLocation(options.location || '');
+            const phoneCountry = this.inferCountryFromPhone(rawPhone.replace(/\D/g, ''));
+            const resolvedCountry = explicitCountry || locationCountry || phoneCountry || 'MX';
+            const country = rawPhone.startsWith('+') ? undefined : resolvedCountry;
             const parsed = phoneUtil.parseAndKeepRawInput(rawPhone, country);
             return phoneUtil.isValidNumber(parsed);
         } catch (e) {
+            const normalized = this.normalizePhone(phone, options);
+            if (normalized) return true;
+
             const clean = String(phone).replace(/\D/g, '');
             if (clean.length < 10 || clean.length > 15) return false;
             if (/^0+$/.test(clean) || /^(\d)\1+$/.test(clean)) return false;
@@ -538,27 +545,32 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
      */
     static async sendMessage(contact, source = 'manual') {
         try {
-            // 0. VALIDAR TELÉFONO PRIMERO (antes de contar)
-            if (!this.isValidPhone(contact.phone)) {
-                toast.error(`Número inválido: ${contact.phone}. No se contó como enviado.`);
+            const phoneContext = {
+                countryCode: contact.country_code,
+                location: contact.location || contact.city || contact.search_location
+            };
+
+            // 0. VALIDAR TELEFONO PRIMERO (antes de contar)
+            if (!this.isValidPhone(contact.phone, phoneContext)) {
+                toast.error(`Numero invalido: ${contact.phone}. No se conto como enviado.`);
                 return { success: false, error: 'invalid_phone', notCounted: true };
             }
 
-            // 1. Verificar límite diario POR FUENTE
+            // 1. Verificar limite diario POR FUENTE
             const normalizedSource = this.normalizeSource(source);
             const limit = await this.canSendToday(normalizedSource);
             if (limit.error) {
-                toast.error(`WhatsApp no está listo: ${limit.error}`);
+                toast.error(`WhatsApp no esta listo: ${limit.error}`);
                 return { success: false, error: 'limit_check_failed', details: limit.error };
             }
             if (!limit.canSend) {
                 const sourceLabel = normalizedSource === 'scan_invite' ? 'Nacional' : normalizedSource === 'apify' ? 'Global' : normalizedSource;
-                toast.error(`Límite ${sourceLabel} alcanzado (${limit.sent}/${limit.dailyLimit})`);
+                toast.error(`Limite ${sourceLabel} alcanzado (${limit.sent}/${limit.dailyLimit})`);
                 return { success: false, error: 'daily_limit', limit };
             }
 
             // 2. Verificar si ya fue contactado
-            const normalizedPhone = this.normalizePhone(contact.phone, { countryCode: contact.country_code, location: contact.location || contact.city || contact.search_location });
+            const normalizedPhone = this.normalizePhone(contact.phone, phoneContext);
             if (!normalizedPhone) {
                 toast.error(`No se pudo convertir ${contact.phone} a formato internacional valido.`);
                 return { success: false, error: 'phone_normalization_failed', notCounted: true };
@@ -573,17 +585,14 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
             // 3. Generar mensaje
             const message = this.generateMessage(contact);
 
-            // 4. Registrar en base de datos (SOLO si el teléfono es válido)
+            // 4. Registrar en base de datos (SOLO si el telefono es valido)
             const { data, error } = await supabase.rpc('register_whatsapp_sent', {
                 p_phone: normalizedPhone,
                 p_contact_name: contact.name || contact.contact_name,
                 p_company_name: contact.company || contact.company_name,
                 p_source: normalizedSource,
                 p_message: message,
-                p_language: contact.language || this.detectLanguage(normalizedPhone, contact.language, {
-                    countryCode: contact.country_code,
-                    location: contact.location || contact.city || contact.search_location
-                })
+                p_language: contact.language || this.detectLanguage(normalizedPhone, contact.language, phoneContext)
             });
 
             if (error) throw error;

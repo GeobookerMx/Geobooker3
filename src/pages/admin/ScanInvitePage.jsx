@@ -328,6 +328,8 @@ const ScanInvitePage = () => {
             let scannedCount = 0;
             let newCount = 0;
             let duplicateCount = 0;
+            let resurfacedCount = 0;
+            const idsToUnhide = new Set();
 
             for (const type of types) {
 
@@ -355,12 +357,25 @@ const ScanInvitePage = () => {
                         // Verificar si ya existe
                         const { data: existing } = await supabase
                             .from('scan_leads')
-                            .select('id')
+                            .select('id, status')
                             .eq('place_id', place.place_id)
                             .maybeSingle();
 
                         if (existing) {
                             duplicateCount++;
+
+                            if (!['contacted', 'blacklisted', 'converted'].includes(existing.status)) {
+                                resurfacedCount++;
+                                idsToUnhide.add(normalizeLeadId(existing.id));
+                                await supabase
+                                    .from('scan_leads')
+                                    .update({
+                                        scan_run_id: scanRun.id,
+                                        updated_at: new Date().toISOString()
+                                    })
+                                    .eq('id', existing.id);
+                            }
+
                             continue;
                         }
 
@@ -484,9 +499,17 @@ const ScanInvitePage = () => {
                 })
                 .eq('id', scanRun.id);
 
+            if (idsToUnhide.size > 0) {
+                setHiddenLeadIds(prev => {
+                    const next = new Set(prev);
+                    idsToUnhide.forEach(id => next.delete(id));
+                    return next;
+                });
+            }
+
             setScanStatus('done');
             setScanning(false);
-            toast.success(`✅ Escaneo completado: ${newCount} nuevos leads, ${duplicateCount} duplicados`);
+            toast.success(`Escaneo completado: ${newCount} nuevos, ${duplicateCount} duplicados, ${resurfacedCount} reactivados`);
             loadLeads();
             loadStats();
 
@@ -498,12 +521,9 @@ const ScanInvitePage = () => {
         }
     };
 
-    // Normalizar teléfono mexicano
+    // Normalizar telefono para almacenamiento y WhatsApp
     const normalizePhone = (phone) => {
-        const clean = phone.replace(/\D/g, '');
-        if (clean.length === 10) return '+52' + clean;
-        if (clean.length === 12 && clean.startsWith('52')) return '+' + clean;
-        return phone;
+        return WhatsAppService.normalizePhone(phone, { countryCode: 'MX', location: 'Mexico' }) || phone;
     };
 
     // Calcular distancia en km
@@ -532,7 +552,9 @@ const ScanInvitePage = () => {
                 phone: contact.value,
                 name: lead.name,
                 company: lead.name,
-                language: 'es'
+                language: 'es',
+                country_code: 'MX',
+                location: lead.address || 'Mexico'
             }, 'scan_invite');
 
             if (result.success) {
@@ -1042,7 +1064,7 @@ const ScanInvitePage = () => {
                                 ) : filteredLeads.length === 0 ? (
                                     <tr>
                                         <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
-                                            No hay leads aún. ¡Inicia un escaneo!
+                                            {hiddenLeadIds.size > 0 ? `No hay leads visibles ahora mismo. Tienes ${hiddenLeadIds.size} ocultos en esta sesion; usa "Mostrar ocultos" para recuperarlos.` : 'No hay leads aun. Inicia un escaneo!'}
                                         </td>
                                     </tr>
                                 ) : (

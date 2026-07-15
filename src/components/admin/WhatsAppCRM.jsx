@@ -64,7 +64,7 @@ const WhatsAppCRM = () => {
         if (contactIds.length > 0) {
             const { data: contacts } = await supabase
                 .from('marketing_contacts')
-                .select('id, company_name, contact_name, phone, tier, city, source')
+                .select('id, company_name, contact_name, phone, tier, city, source, country_code, notes')
                 .in('id', contactIds);
             contactsById = Object.fromEntries((contacts || []).map(c => [c.id, c]));
         }
@@ -138,7 +138,7 @@ const WhatsAppCRM = () => {
             return;
         }
 
-        const normalizedPhone = WhatsAppService.normalizePhone(contact.phone);
+        const normalizedPhone = WhatsAppService.normalizePhone(contact.phone, { countryCode: contact.country_code, location: contact.notes || contact.city || '' });
         if (!normalizedPhone) {
             toast.error('No se pudo normalizar el teléfono');
             return;

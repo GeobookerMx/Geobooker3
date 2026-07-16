@@ -1,10 +1,208 @@
 import { supabase } from "../lib/supabase";
 import { getAttributionSummary } from "./attributionService";
+import { matchesSemanticText } from "../utils/semanticDictionary";
+
+const TT_INTENT_TERMS = [
+  'todo transporte',
+  'tt',
+  'logistica',
+  'logístico',
+  'logistico',
+  'proveedor logistico',
+  'proveedor logístico',
+  'bodega',
+  'storage',
+  'warehouse',
+  'patio',
+  'patio logistico',
+  'patio logístico',
+  'almacen',
+  'almacén',
+  'flete',
+  'freight',
+  'grua',
+  'grúa',
+  'arrastre',
+  'carga pesada',
+  'carga',
+  'mudanza',
+  'operador logistico',
+  'operador logístico',
+  'refacciones',
+  'refaccionaria',
+  'servicio industrial',
+  'industrial',
+  'taller pesado',
+  'transporte'
+];
+
+const TT_ROW_LIMIT = 120;
+const TT_RESULT_LIMIT = 16;
 
 function clean(value) {
   if (value === undefined || value === null) return null;
   if (typeof value === "string") return value.trim() || null;
   return value;
+}
+
+function normalizeText(value = '') {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function pickFirst(row, keys = []) {
+  for (const key of keys) {
+    const value = clean(row?.[key]);
+    if (value !== null && value !== undefined && value !== '') return value;
+  }
+  return null;
+}
+
+function pickNumber(row, keys = []) {
+  for (const key of keys) {
+    const value = Number(row?.[key]);
+    if (!Number.isNaN(value) && Number.isFinite(value)) return value;
+  }
+  return null;
+}
+
+function buildAddress(row) {
+  const direct = pickFirst(row, ['address', 'full_address', 'direccion', 'formatted_address']);
+  if (direct) return direct;
+
+  const parts = [
+    pickFirst(row, ['street', 'calle']),
+    pickFirst(row, ['neighborhood', 'colonia']),
+    pickFirst(row, ['city', 'ciudad']),
+    pickFirst(row, ['state', 'estado']),
+    pickFirst(row, ['country', 'pais'])
+  ].filter(Boolean);
+
+  return parts.length > 0 ? parts.join(', ') : 'Cobertura logistica por validar';
+}
+
+function buildTTSearchText(row) {
+  return [
+    pickFirst(row, ['name', 'company_name', 'provider_name', 'title']),
+    pickFirst(row, ['description', 'summary', 'notes', 'service_description']),
+    pickFirst(row, ['service_type', 'provider_type', 'category', 'subcategory']),
+    pickFirst(row, ['specialties', 'services', 'materials']),
+    pickFirst(row, ['city', 'ciudad']),
+    pickFirst(row, ['state', 'estado']),
+    pickFirst(row, ['country', 'pais'])
+  ].filter(Boolean);
+}
+
+function hasLogisticsIntent(searchQuery = '') {
+  const normalizedQuery = normalizeText(searchQuery);
+  if (!normalizedQuery) return false;
+  return TT_INTENT_TERMS.some((term) => normalizedQuery.includes(normalizeText(term))) || matchesSemanticText(searchQuery, TT_INTENT_TERMS);
+}
+
+function normalizeTTEntity(row, entityType) {
+  const latitude = pickNumber(row, ['latitude', 'lat', 'location_lat', 'y']);
+  const longitude = pickNumber(row, ['longitude', 'lng', 'lon', 'location_lng', 'x']);
+  if (latitude === null || longitude === null) return null;
+
+  const name = pickFirst(row, ['name', 'company_name', 'provider_name', 'title']) || (entityType === 'storage' ? 'Bodega / Storage' : 'Proveedor logistico');
+  const phone = pickFirst(row, ['phone', 'contact_phone', 'mobile', 'telephone']);
+  const whatsapp = pickFirst(row, ['whatsapp', 'whatsapp_phone', 'phone']);
+  const website = pickFirst(row, ['website', 'url', 'company_website']);
+  const category = entityType === 'storage' ? 'Bodega y storage' : 'Proveedor logistico';
+  const subcategory = pickFirst(row, ['service_type', 'provider_type', 'category', 'subcategory']) || (entityType === 'storage' ? 'Storage y patio logistico' : 'Logistica y transporte');
+  const description = pickFirst(row, ['description', 'summary', 'notes', 'service_description']) || subcategory;
+  const city = pickFirst(row, ['city', 'ciudad']);
+  const state = pickFirst(row, ['state', 'estado']);
+  const country = pickFirst(row, ['country', 'pais']) || 'MX';
+  const address = buildAddress(row);
+  const rawId = pickFirst(row, ['id', 'provider_id', 'storage_id']) || `${name}-${latitude}-${longitude}`;
+  const entityLabel = entityType === 'storage' ? 'tt_storage' : 'tt_provider';
+
+  return {
+    id: `${entityLabel}-${rawId}`,
+    original_id: rawId,
+    name,
+    address,
+    latitude,
+    longitude,
+    lat: latitude,
+    lng: longitude,
+    phone,
+    whatsapp,
+    website,
+    category,
+    subcategory,
+    description,
+    city,
+    state,
+    country,
+    rating: null,
+    source_type: entityLabel,
+    source_name: 'todo_transporte',
+    source_label: entityType === 'storage' ? 'TT Storage' : 'TT Proveedor',
+    tt_entity_type: entityType,
+    isSyntheticProfile: true,
+    isSemanticResult: true,
+    status: pickFirst(row, ['status']) || 'active'
+  };
+}
+
+async function fetchTTMatchesFromTable(tableName, entityType, searchQuery, limit = TT_RESULT_LIMIT) {
+  try {
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .limit(TT_ROW_LIMIT);
+
+    if (error) {
+      const message = String(error.message || '').toLowerCase();
+      if (error.code === '42P01' || message.includes('does not exist') || message.includes('schema cache')) {
+        return [];
+      }
+      console.warn(`[TT] Error reading ${tableName}:`, error.message);
+      return [];
+    }
+
+    const rows = (data || [])
+      .filter((row) => {
+        const status = normalizeText(pickFirst(row, ['status']) || 'active');
+        if (status && ['inactive', 'archived', 'draft', 'deleted'].includes(status)) return false;
+        return matchesSemanticText(searchQuery, buildTTSearchText(row));
+      })
+      .map((row) => normalizeTTEntity(row, entityType))
+      .filter(Boolean)
+      .slice(0, limit);
+
+    return rows;
+  } catch (error) {
+    console.warn(`[TT] Exception reading ${tableName}:`, error.message || error);
+    return [];
+  }
+}
+
+export async function searchTodoTransporteMatches(searchQuery) {
+  const normalizedQuery = clean(searchQuery);
+  if (!normalizedQuery || !hasLogisticsIntent(normalizedQuery)) return [];
+
+  const [providerMatches, storageMatches] = await Promise.all([
+    fetchTTMatchesFromTable('providers', 'provider', normalizedQuery, TT_RESULT_LIMIT),
+    fetchTTMatchesFromTable('storage_spaces', 'storage', normalizedQuery, TT_RESULT_LIMIT)
+  ]);
+
+  const deduped = [];
+  const seen = new Set();
+
+  [...providerMatches, ...storageMatches].forEach((item) => {
+    const key = `${normalizeText(item.name)}|${normalizeText(item.address)}|${item.latitude}|${item.longitude}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    deduped.push(item);
+  });
+
+  return deduped;
 }
 
 export function inferUserCountry() {
@@ -47,15 +245,20 @@ export async function searchBusinessesSemantically(searchQuery, userCountry = in
 
     if (rpcError) {
       console.warn("Semantic search RPC unavailable:", rpcError.message);
-      return [];
+      const ttOnlyMatches = await searchTodoTransporteMatches(normalizedQuery);
+      return ttOnlyMatches;
     }
 
     semanticMatches = synonymMatches || [];
     matchSource = 'legacy_synonyms';
   }
 
+  const ttMatches = await searchTodoTransporteMatches(normalizedQuery);
   const orderedIds = [...new Set((semanticMatches || []).map((item) => item.business_id).filter(Boolean))];
-  if (orderedIds.length === 0) return [];
+
+  if (orderedIds.length === 0) {
+    return ttMatches;
+  }
 
   const { data: businesses, error } = await supabase
     .from("businesses")
@@ -66,7 +269,7 @@ export async function searchBusinessesSemantically(searchQuery, userCountry = in
 
   if (error) {
     console.warn("Semantic search business lookup failed:", error.message);
-    return [];
+    return ttMatches;
   }
 
   const scoreMap = new Map((semanticMatches || []).map((item) => [item.business_id, item.match_score]));
@@ -75,7 +278,7 @@ export async function searchBusinessesSemantically(searchQuery, userCountry = in
   const categorySlugMap = new Map((semanticMatches || []).map((item) => [item.business_id, item.category_slug || null]));
   const businessMap = new Map((businesses || []).map((item) => [item.id, item]));
 
-  return orderedIds
+  const nativeResults = orderedIds
     .map((id) => {
       const business = businessMap.get(id);
       if (!business) return null;
@@ -89,6 +292,23 @@ export async function searchBusinessesSemantically(searchQuery, userCountry = in
       };
     })
     .filter(Boolean);
+
+  if (ttMatches.length === 0) return nativeResults;
+
+  const seen = new Set();
+  const merged = [];
+  const prioritizedResults = hasLogisticsIntent(normalizedQuery)
+    ? [...ttMatches, ...nativeResults]
+    : [...nativeResults, ...ttMatches];
+
+  prioritizedResults.forEach((item) => {
+    const key = `${normalizeText(item.name)}|${normalizeText(item.address)}|${item.latitude ?? item.lat}|${item.longitude ?? item.lng}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    merged.push(item);
+  });
+
+  return merged;
 }
 
 export async function createBusiness(form, user) {

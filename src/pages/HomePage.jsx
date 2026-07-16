@@ -54,6 +54,7 @@ import { useGuestSearchLimit } from '../hooks/useGuestSearchLimit';
 import { IS_IOS_NATIVE } from '../utils/iosStore';
 import OpenNowFilter from '../components/common/OpenNowFilter';
 import LocationRefreshButton from '../components/common/LocationRefreshButton';
+import AppStoresLaunchBanner from '../components/common/AppStoresLaunchBanner';
 import { isBusinessOpen } from '../utils/businessHours';
 import { getAwardMeta, getAwardSearchFilter, isAwardSearchQuery, isAwardedBusiness, matchesAwardFilter } from '../utils/awardUtils';
 import michelinSeed2026 from '../../data/seed/awards/michelin_mexico_2026.json';
@@ -860,12 +861,32 @@ const HomePage = () => {
       return;
     }
 
-    // Si es de Google Places (tiene placeId o isFromGoogle)
+    const sourceType = String(business.source_type || '').toLowerCase();
+    const isTTResult = sourceType.startsWith('tt_') || business.isSyntheticProfile;
+
+    if (isTTResult) {
+      const preferredPhone = String(business.whatsapp || business.phone || '').replace(/\D/g, '');
+
+      if (business.website) {
+        window.open(business.website, '_blank', 'noopener,noreferrer');
+        toast.success('Abriendo contacto o sitio del proveedor TT.');
+        return;
+      }
+
+      if (preferredPhone) {
+        window.open(`https://wa.me/${preferredPhone}`, '_blank', 'noopener,noreferrer');
+        toast.success('Abriendo contacto del proveedor TT.');
+        return;
+      }
+
+      toast('Este resultado de TT aun no tiene perfil publico. Usa como llegar o revisa el contacto visible.');
+      return;
+    }
+
     if (business.isFromGoogle || (business.placeId && !business.owner_id)) {
       const placeId = business.placeId || business.id;
       navigate(`/place/${placeId}`);
     }
-    // Si es negocio nativo de Geobooker (tiene owner_id o id válido de Supabase)
     else if (business.id) {
       navigate(`/business/${business.id}`);
     }
@@ -1276,6 +1297,8 @@ const HomePage = () => {
           </div>
         </div>
       </div>
+
+      <AppStoresLaunchBanner />
 
       {/* Hero Banner Publicitario (Primera Plana) */}
       {showDeferredAds && (

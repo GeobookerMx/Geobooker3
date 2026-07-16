@@ -22,6 +22,8 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
     'Cafeteria', 'Panaderia', 'Hospital', 'Escuela',
     'Michelin', 'Fine dining', 'Tasting menu', 'Hotel',
     'Cerrajero urgente', 'Talacha o vulcanizadora', 'Mudanza o flete', 'Nail salon', 'Spa',
+    'Bodega y storage', 'Proveedor logistico', 'Grua para carga pesada', 'Refacciones industriales',
+    'Patio logistico', 'Fletes en Monterrey', 'Taller pesado',
     'Coffee shop near me', 'Pharmacy near me', 'Locksmith near me', 'Plumber near me'
   ];
 

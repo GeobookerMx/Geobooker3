@@ -338,6 +338,8 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
   const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLocation?.lat},${userLocation?.lng}&destination=${business.latitude},${business.longitude}&travelmode=driving`;
   const isGeobooker = !!business.owner_id;
   const awardMeta = getAwardMeta(business);
+  const sourceType = String(business.source_type || '').toLowerCase();
+  const isTTResult = sourceType.startsWith('tt_') || business.isSyntheticProfile;
 
   return (
     <InfoWindowF
@@ -358,7 +360,12 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
           ) : null}
           {business.source_type === 'seed_denue' && (
             <span className="bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0.5 rounded border border-blue-200 font-bold ml-1">
-              🏛️ INEGI
+              INEGI
+            </span>
+          )}
+          {isTTResult && (
+            <span className="bg-cyan-100 text-cyan-800 text-[10px] px-1.5 py-0.5 rounded border border-cyan-200 font-bold ml-1">
+              TT / Logistica
             </span>
           )}
           {business.has_job_openings && (
@@ -418,7 +425,7 @@ const BusinessInfoWindow = memo(({ business, userLocation, onCloseClick, onViewP
             onClick={() => onViewProfile(business)}
             className="flex-1 bg-blue-600 text-white py-2 rounded text-sm hover:bg-blue-700 transition duration-200 font-semibold"
           >
-            {t('business.viewProfile')}
+            {isTTResult ? 'Abrir contacto' : t('business.viewProfile')}
           </button>
         </div>
       </div>

@@ -154,7 +154,7 @@ const ConnectOpsDashboard = () => {
       const [{ data: campaignRows, error: campaignError }, { data: runRows, error: runError }, { count: leadCount, error: leadError }] = await Promise.all([
         supabase
           .from('connect_campaigns')
-          .select('id, package_name, billing_email, payment_status, fulfillment_status, batch_size, launch_price_mxn, created_at, updated_at')
+          .select('id, package_name, billing_email, payment_status, fulfillment_status, batch_size, launch_price_mxn, created_at, updated_at, client_account_id, enterprise_lead_id, connect_client_accounts(company_name, primary_contact_email, country, status), enterprise_leads(company_name, contact_name, country, target_cities)')
           .order('created_at', { ascending: false })
           .limit(20),
         supabase
@@ -242,6 +242,8 @@ const ConnectOpsDashboard = () => {
   }, [campaigns, runs]);
 
   const selectedCampaign = campaigns.find((campaign) => campaign.id === selectedCampaignId) || null;
+  const selectedCampaignCompanyName = selectedCampaign?.connect_client_accounts?.company_name || selectedCampaign?.enterprise_leads?.company_name || 'Empresa por confirmar';
+  const selectedCampaignCountry = selectedCampaign?.connect_client_accounts?.country || selectedCampaign?.enterprise_leads?.country || 'Mexico';
   const selectedRuns = runs.filter((run) => run.connect_campaign_id === selectedCampaignId);
   const latestRun = selectedRuns[0] || null;
 
@@ -424,7 +426,12 @@ const ConnectOpsDashboard = () => {
                     return (
                       <tr key={campaign.id} className={selectedCampaignId === campaign.id ? 'bg-emerald-50/60 hover:bg-emerald-50' : 'hover:bg-gray-50'}>
                         <td className="px-4 py-3">
-                          <button onClick={() => setSelectedCampaignId(campaign.id)} className="text-left"><p className="font-semibold text-gray-900">{campaign.package_name}</p></button>
+                          <button onClick={() => setSelectedCampaignId(campaign.id)} className="text-left">
+                            <p className="font-semibold text-gray-900">{campaign.package_name}</p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              {campaign.connect_client_accounts?.company_name || campaign.enterprise_leads?.company_name || 'Empresa por confirmar'}
+                            </p>
+                          </button>
                           <p className="text-xs text-gray-500 mt-1">{new Date(campaign.created_at).toLocaleString('es-MX')}</p>
                         </td>
                         <td className="px-4 py-3 text-gray-700">{campaign.billing_email}</td>
@@ -499,7 +506,9 @@ const ConnectOpsDashboard = () => {
                 <div className="rounded-xl border bg-slate-50 p-4">
                   <p className="text-xs uppercase tracking-wide text-gray-500">Cuenta</p>
                   <p className="mt-2 text-base font-semibold text-gray-900">{selectedCampaign.package_name}</p>
+                  <p className="mt-1 text-sm font-medium text-gray-700">{selectedCampaignCompanyName}</p>
                   <p className="mt-1 text-sm text-gray-600">{selectedCampaign.billing_email}</p>
+                  <p className="mt-1 text-xs text-gray-500">Pais / mercado: {selectedCampaignCountry}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-xl border bg-white p-4">
@@ -528,6 +537,9 @@ const ConnectOpsDashboard = () => {
                 <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-blue-900">
                   <p className="font-semibold">Como se opera desde aqui</p>
                   <p className="mt-2">Selecciona una reserva del pipeline, ajusta pago o fulfillment y guarda cambios. La ejecucion real de envios y el registro de corridas vive en <code>connect_campaign_runs</code> y en las colas del CRM.</p>
+                  <p className="mt-2 text-sm">
+                    Cuenta cliente vinculada: {selectedCampaign.connect_client_accounts?.primary_contact_email || 'Pendiente de vincular o backfill'}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
                   <p className="font-semibold">Siguiente paso recomendado</p>

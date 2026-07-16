@@ -155,6 +155,40 @@ async function upsertCommercialEvent(supabase, payload) {
 
     throw error;
 }
+
+async function upsertConnectClientAccount(supabase, payload = {}) {
+    const primaryContactEmail = payload.primary_contact_email || payload.billing_email || payload.contact_email;
+    if (!primaryContactEmail) return null;
+
+    const record = {
+        company_name: payload.company_name || payload.primary_contact_name || 'Cliente Connect',
+        primary_contact_name: payload.primary_contact_name || null,
+        primary_contact_email: primaryContactEmail,
+        primary_contact_phone: payload.primary_contact_phone || null,
+        company_website: payload.company_website || null,
+        country: payload.country || 'Mexico',
+        status: payload.status || 'active',
+        notes: payload.notes || null
+    };
+
+    const { data, error } = await supabase
+        .from('connect_client_accounts')
+        .upsert(record, { onConflict: 'primary_contact_email' })
+        .select('*')
+        .single();
+
+    if (!error) {
+        return data;
+    }
+
+    const missingTable = error.code === '42P01' || String(error.message || '').toLowerCase().includes('connect_client_accounts');
+    if (missingTable) {
+        console.warn('[stripe-webhook] connect_client_accounts not available yet; skipping client account sync');
+        return null;
+    }
+
+    throw error;
+}
 exports.handler = async (event) => {
     const headers = { 'Access-Control-Allow-Origin': '*' };
 
@@ -410,36 +444,75 @@ exports.handler = async (event) => {
                                 .eq('id', enterpriseLeadId);
                         }
 
-                                                if (connectCampaign) {
+                        let clientAccount = null;
+                        try {
+                            clientAccount = await upsertConnectClientAccount(supabase, {
+                                company_name: metadata.company_name || 'Cliente Connect',
+                                primary_contact_name: metadata.contact_name || null,
+                                primary_contact_email: billingEmail,
+                                primary_contact_phone: metadata.contact_phone || null,
+                                company_website: metadata.company_website || null,
+                                country: metadata.billing_country || 'Mexico',
+                                status: 'active',
+                                notes: metadata.target_audience
+                                    ? 'Connect lead | ' + metadata.target_audience
+                                    : 'Connect lead'
+                            });
+                        } catch (clientError) {
+                            console.error('[stripe-webhook] Error syncing connect client account:', clientError);
+                        }
+
+                        let hydratedConnectCampaign = connectCampaign;
+
+                        if (connectCampaign && clientAccount?.id) {
+                            const { data: linkedCampaign, error: linkError } = await supabase
+                                .from('connect_campaigns')
+                                .update({ client_account_id: clientAccount.id })
+                                .eq('id', connectCampaignId)
+                                .select()
+                                .single();
+
+                            if (linkError) {
+                                console.error('[stripe-webhook] Error linking connect campaign to client account:', linkError);
+                            } else {
+                                hydratedConnectCampaign = linkedCampaign;
+                            }
+                        }
+
+                        if (hydratedConnectCampaign) {
                             await upsertCommercialEvent(supabase, {
                                 source_type: 'connect_campaign',
-                                source_id: connectCampaign.id,
+                                source_id: hydratedConnectCampaign.id,
                                 stripe_session_id: session.id,
                                 stripe_payment_intent: session.payment_intent,
                                 customer_email: billingEmail,
                                 customer_name: metadata.contact_name || metadata.company_name || null,
                                 company_name: metadata.company_name || null,
                                 service_line: 'geobooker_connect',
-                                package_name: connectCampaign.package_name || metadata.package_name || 'Piloto Connect 1000',
+                                package_name: hydratedConnectCampaign.package_name || metadata.package_name || 'Piloto Connect 1000',
                                 currency: 'MXN',
-                                amount: Number(connectCampaign.launch_price_mxn || metadata.reservation_price_mxn || 0),
+                                amount: Number(hydratedConnectCampaign.launch_price_mxn || metadata.reservation_price_mxn || 0),
                                 billing_country: 'MX',
                                 tax_status: 'domestic_mx',
                                 payment_status: 'paid',
                                 payment_method: 'card',
-                                operational_status: connectCampaign.fulfillment_status || 'brief_review',
-                                notes: 'Connect reservation | Batch ' + (connectCampaign.batch_size || 1000),
+                                operational_status: hydratedConnectCampaign.fulfillment_status || 'brief_review',
+                                notes: 'Connect reservation | Batch ' + (hydratedConnectCampaign.batch_size || 1000),
                                 metadata: {
-                                    batch_size: connectCampaign.batch_size || 1000,
+                                    batch_size: hydratedConnectCampaign.batch_size || 1000,
                                     enterprise_lead_id: enterpriseLeadId || null,
-                                    package_code: metadata.package_code || null
+                                    package_code: metadata.package_code || null,
+                                    client_account_id: clientAccount?.id || null,
+                                    target_audience: metadata.target_audience || null,
+                                    objective: metadata.objective || null
                                 }
                             });
                             await postInternalNotification('notify-admin-connect', {
                                 campaign: {
-                                    ...connectCampaign,
+                                    ...hydratedConnectCampaign,
                                     company_name: metadata.company_name,
-                                    billing_email: billingEmail
+                                    billing_email: billingEmail,
+                                    client_account_id: clientAccount?.id || null
                                 }
                             });
 
@@ -453,7 +526,7 @@ exports.handler = async (event) => {
                                         packageName: metadata.package_name || 'Piloto Connect 1000',
                                         amount: Number(metadata.reservation_price_mxn || 0),
                                         currency: 'MXN',
-                                        batchSize: connectCampaign.batch_size || 1000
+                                        batchSize: hydratedConnectCampaign.batch_size || 1000
                                     }
                                 });
                             }

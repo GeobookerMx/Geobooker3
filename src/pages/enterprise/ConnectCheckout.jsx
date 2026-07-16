@@ -134,7 +134,13 @@ export default function ConnectCheckout() {
             package_code: selectedPackage.code,
             package_name: selectedPackage.name,
             company_name: form.company_name,
+            contact_name: form.contact_name || '',
+            contact_phone: form.contact_phone || '',
+            company_website: form.company_website || '',
+            target_audience: form.target_audience,
+            objective: form.objective,
             billing_email: form.contact_email,
+            billing_country: form.country || 'Mexico',
             reservation_price_mxn: selectedPackage.reservationPriceMxn
           }
         })

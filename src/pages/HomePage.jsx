@@ -968,7 +968,7 @@ const HomePage = () => {
               <span className="text-3xl">🚀</span>
               <div>
                 <span className="font-extrabold text-lg block text-amber-500">
-                  Impulsa tu Negocio: <span className="text-white">70% OFF en Publicidad Global</span>
+                  Impulsa tu Negocio: <span className="text-white">50% OFF en Publicidad Global</span>
                 </span>
                 <span className="text-amber-500/80 text-sm">
                   Descuento exclusivo en todos los paquetes de Geobooker Enterprise Ads

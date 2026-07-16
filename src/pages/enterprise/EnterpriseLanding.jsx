@@ -1,7 +1,7 @@
 // src/pages/enterprise/EnterpriseLanding.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import {
     Globe, TrendingUp, Users, MapPin, Star, ArrowRight,
     CheckCircle, Clock, Zap, Shield, BarChart3, Target,
@@ -154,7 +154,7 @@ export default function EnterpriseLanding() {
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                         <Sparkles className="w-5 h-5 animate-pulse" />
-                        <span className="font-bold">🚀 {ENTERPRISE_PROMO_DISCOUNT_PERCENT}% OFF global hasta el 1 de septiembre de 2026</span>
+                        <span className="font-bold">🚀 {ENTERPRISE_PROMO_DISCOUNT_PERCENT}% OFF global hasta el 31 de diciembre de 2026</span>
                         <Sparkles className="w-5 h-5 animate-pulse" />
                     </div>
                     <div className="flex items-center gap-4 text-sm">
@@ -327,7 +327,7 @@ export default function EnterpriseLanding() {
                                         {formatPrice(plan.current_price_usd)}
                                     </div>
                                     <div className="text-gray-400 text-sm">
-                                        {plan.discount_percent}% OFF global hasta el 1 de septiembre de 2026
+                                        {plan.discount_percent}% OFF global hasta el 31 de diciembre de 2026
                                     </div>
                                 </div>
 
@@ -357,10 +357,10 @@ export default function EnterpriseLanding() {
                     <div className="text-center mt-8 space-y-2">
                         <p className="text-gray-400 text-sm">
                             <Shield className="w-4 h-4 inline-block mr-1" />
-                            Precios antes de impuestos. IVA aplicable según país de facturación y territorio de campaña.
+                            Precios base antes de impuestos. El cliente ve promo de lanzamiento del 50% durante 2026 y el IVA aplica según país de facturación y territorio de campaña.
                         </p>
                         <p className="text-gray-500 text-xs">
-                            Pagos seguros vía tarjeta o transferencia. No se acepta efectivo para mantener trazabilidad fiscal.
+                            Revisión editorial, territorial y fiscal antes de publicar: 12 a 72 horas. Pagos seguros vía tarjeta o transferencia; no se acepta efectivo para mantener trazabilidad fiscal.
                         </p>
                     </div>
                 </div>

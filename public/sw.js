@@ -4,8 +4,8 @@
  * Proporciona funcionalidad offline y caché de assets
  */
 
-const CACHE_NAME = 'geobooker-v2.0.0';
-const RUNTIME_CACHE = 'geobooker-runtime';
+const CACHE_NAME = 'geobooker-v2.1.0';
+const RUNTIME_CACHE = 'geobooker-runtime-v2.1.0';
 
 // Assets críticos para cachear durante instalación
 const PRECACHE_ASSETS = [
@@ -67,6 +67,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
+    const isDocumentRequest = request.mode === 'navigate' || request.destination === 'document';
+    const isBuildAsset = url.pathname.startsWith('/assets/');
 
     // Solo cachear requests GET
     if (request.method !== 'GET') {
@@ -93,6 +95,34 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    if (isDocumentRequest) {
+        event.respondWith(
+            fetch(request, { cache: 'no-store' })
+                .catch(() => caches.match('/index.html').then((cachedIndex) => cachedIndex || caches.match('/')))
+        );
+        return;
+    }
+
+    if (isBuildAsset) {
+        event.respondWith(
+            fetch(request)
+                .then((response) => {
+                    if (response && response.status === 200) {
+                        const responseClone = response.clone();
+                        caches.open(RUNTIME_CACHE).then((cache) => {
+                            cache.put(request, responseClone);
+                        });
+                    }
+
+                    return response;
+                })
+                .catch(() => caches.match(request).then((cachedResponse) => (
+                    cachedResponse || new Response('', { status: 404, statusText: 'Asset Not Found' })
+                )))
+        );
+        return;
+    }
+
     // ESTRATEGIA: Network First con Cache Fallback
     event.respondWith(
         fetch(request)
@@ -114,11 +144,6 @@ self.addEventListener('fetch', (event) => {
                     if (cachedResponse) {
                         console.log('[SW] Serving from cache:', request.url);
                         return cachedResponse;
-                    }
-
-                    // Si no hay caché y es una navegación, servir página offline
-                    if (request.destination === 'document') {
-                        return caches.match('/');
                     }
 
                     // Fallback para evitar TypeError: Failed to convert value to 'Response'

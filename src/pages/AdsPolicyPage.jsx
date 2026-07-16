@@ -56,10 +56,10 @@ const AdsPolicyPage = () => {
                     <section>
                         <h2 className="text-xl font-bold text-gray-900 border-b pb-2 mb-4">4. Garantia de Servicio (Promocion Enterprise Global)</h2>
                         <p>
-                            Durante nuestra promocion enterprise global de <strong>70% OFF hasta el 1 de septiembre de 2026</strong>, Geobooker <strong>no garantiza metricas especificas</strong> de impresiones, clics o conversiones.
+                            Durante nuestra promocion enterprise global de <strong>50% OFF vigente hasta el 31 de diciembre de 2026</strong>, Geobooker <strong>no garantiza metricas especificas</strong> de impresiones, clics o conversiones.
                         </p>
                         <p className="mt-3">
-                            <strong>Extension por fallas tecnicas:</strong> Si tu campana experimenta fallas tecnicas atribuibles a nuestra plataforma
+                            <strong>Revision previa y extension por fallas tecnicas:</strong> Toda pauta pasa por validacion editorial, territorial y fiscal con una ventana estimada de 12 a 72 horas antes de publicarse.  Si tu campana experimenta fallas tecnicas atribuibles a nuestra plataforma
                             (anuncio no visible, errores de carga, interrupciones del servicio), te ofreceremos una <strong>extension gratuita de hasta 15 dias</strong> proporcional al tiempo afectado.
                         </p>
                         <p className="mt-3">

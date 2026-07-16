@@ -1,8 +1,9 @@
 // src/services/cacheVersionService.js
 
-const APP_VERSION = '1.3.3'; // Incrementa esto para forzar limpieza de caché
+const APP_VERSION = '1.3.4';
 const VERSION_KEY = 'gb_app_version';
 const DB_NAMES = ['business-cache', 'google-places-cache'];
+const AUTH_KEYS = ['supabase.auth.token', 'sb-access-token', 'sb-refresh_token'];
 
 /**
  * Función auxiliar para eliminar una base de datos usando la API nativa
@@ -19,6 +20,14 @@ const deleteDatabase = (dbName) => {
     });
 };
 
+const deleteRuntimeCaches = async () => {
+    if (typeof caches === 'undefined') return;
+
+    const cacheNames = await caches.keys();
+    await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+    console.log('🧹 Caches del Service Worker eliminados.');
+};
+
 /**
  * Verifica si la versión de la app ha cambiado y limpia el caché si es necesario.
  * Esto asegura que los usuarios siempre tengan datos frescos tras un nuevo despliegue.
@@ -31,10 +40,9 @@ export const checkAppVersion = async () => {
             console.log(`🚀 Nueva versión detectada (${APP_VERSION}). Limpiando caché...`);
 
             // 1. Limpiar localStorage (excepto la versión y tokens de auth si los hubiera)
-            const authKeys = ['supabase.auth.token', 'sb-access-token', 'sb-refresh_token'];
             const preservedData = {};
 
-            authKeys.forEach(key => {
+            AUTH_KEYS.forEach(key => {
                 const val = localStorage.getItem(key);
                 if (val) preservedData[key] = val;
             });
@@ -46,7 +54,10 @@ export const checkAppVersion = async () => {
                 localStorage.setItem(key, val);
             });
 
-            // 2. Limpiar IndexedDB
+            // 2. Limpiar CacheStorage / Service Worker
+            await deleteRuntimeCaches();
+
+            // 3. Limpiar IndexedDB
             for (const dbName of DB_NAMES) {
                 try {
                     await deleteDatabase(dbName);
@@ -56,7 +67,7 @@ export const checkAppVersion = async () => {
                 }
             }
 
-            // 3. Guardar nueva versión
+            // 4. Guardar nueva versión
             localStorage.setItem(VERSION_KEY, APP_VERSION);
             console.log('✨ Caché purgado con éxito.');
 

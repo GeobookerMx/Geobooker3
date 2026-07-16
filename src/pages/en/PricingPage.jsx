@@ -60,7 +60,7 @@ const PricingPage = () => {
             icon: <Crown className="w-6 h-6" />,
             price: { monthly: null, annual: null },
             originalPriceLabel: 'Regular global pricing',
-            promoPriceLabel: `${ENTERPRISE_PROMO_DISCOUNT_PERCENT}% off through Sep 1, 2026`,
+            promoPriceLabel: `${ENTERPRISE_PROMO_DISCOUNT_PERCENT}% off through Dec 31, 2026`,
             currency: 'USD',
             description: 'For brands and agencies',
             features: [
@@ -102,7 +102,7 @@ const PricingPage = () => {
         <>
             <SEO
                 title="Pricing - Geobooker Advertising Plans"
-                description="See Geobooker advertising plans and pricing. Free business listing, sponsored results from $25/mo, and enterprise global packages with 70% off through September 1, 2026."
+                description="See Geobooker advertising plans and pricing. Free business listing, sponsored results from $25/mo, and enterprise global packages with 50% off through December 31, 2026."
             />
 
             <div className="min-h-screen bg-white">
@@ -115,7 +115,7 @@ const PricingPage = () => {
                             Simple, Transparent Pricing
                         </h1>
                         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                            Start free, scale locally, and unlock enterprise global campaigns with 70% off through September 1, 2026.
+                            Start free, scale locally, and unlock enterprise global campaigns with 50% off through December 31, 2026.
                         </p>
 
                         <div className="flex items-center justify-center gap-3 mt-8">

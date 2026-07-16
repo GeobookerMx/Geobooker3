@@ -53,7 +53,7 @@ const AdvertiseInMexicoPage = () => {
         { name: 'Hero Banner', position: 'Homepage top section', reach: 'Maximum visibility', price: 'From $45 USD/mo' },
         { name: 'Featured Carousel', position: 'Homepage discovery feed', reach: 'High engagement', price: 'From $30 USD/mo' },
         { name: 'Sponsored Results', position: 'Search results', reach: 'Intent-driven traffic', price: 'From $25 USD/mo' },
-        { name: 'Enterprise Global', position: 'Multi-city and cross-border', reach: 'Custom scale', price: '70% off through Sep 1, 2026' }
+        { name: 'Enterprise Global', position: 'Multi-city and cross-border', reach: 'Custom scale', price: 'From $1,000 promo / $2,000 list' }
     ];
 
     const stats = [
@@ -67,7 +67,7 @@ const AdvertiseInMexicoPage = () => {
         <>
             <SEO
                 title="Advertise in Mexico - Reach Local Customers with Geobooker"
-                description="Promote your brand to customers actively searching for local businesses in Mexico. Geo-targeted ads, multilingual campaigns, and enterprise global pricing with 70% off through September 1, 2026."
+                description="Promote your brand to customers actively searching for local businesses in Mexico. Geo-targeted ads, multilingual campaigns, and enterprise global pricing with 50% off through December 31, 2026."
                 type="website"
             />
 
@@ -99,7 +99,7 @@ const AdvertiseInMexicoPage = () => {
                     <div className="relative max-w-6xl mx-auto px-4 py-20 md:py-28">
                         <div className="text-center">
                             <span className="inline-block px-4 py-1.5 bg-blue-500/20 border border-blue-400/30 rounded-full text-blue-100 text-sm font-medium mb-6">
-                                70% Off Global Enterprise Pricing - Through Sep 1, 2026
+                                50% Off Global Enterprise Pricing - Through Dec 31, 2026
                             </span>
                             <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
                                 Advertise in <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Mexico</span>
@@ -189,7 +189,7 @@ const AdvertiseInMexicoPage = () => {
                         <TrendingUp className="w-12 h-12 mx-auto mb-4 text-cyan-300" />
                         <h2 className="text-3xl font-bold mb-4">Ready to grow in Mexico?</h2>
                         <p className="text-slate-300 max-w-2xl mx-auto mb-8">
-                            Start with local placements or request an enterprise global proposal with 70% off pricing through September 1, 2026.
+                            Start with local placements or request an enterprise global proposal with 50% off pricing through December 31, 2026.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <Link

@@ -482,9 +482,36 @@ const FiscalManagement = () => {
                         </div>
                         <div>
                             <p className="text-2xl font-bold">{stats.pendingCandidates}</p>
-                            <p className="text-xs text-gray-500">Ventas por facturar</p>
+                            <p className="text-xs text-gray-500">CFDI MX por emitir</p>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+                <div className="rounded-xl border bg-white p-4 shadow-sm">
+                    <div className="text-sm font-semibold text-gray-900">Como leer este modulo</div>
+                    <p className="mt-2 text-xs text-gray-600">
+                        Aqui separas facturas emitidas, clientes fiscales y campanas nacionales que todavia requieren aterrizarse en documento.
+                    </p>
+                </div>
+                <div className="rounded-xl border bg-white p-4 shadow-sm">
+                    <div className="text-sm font-semibold text-gray-900">Flujo Mexico</div>
+                    <p className="mt-2 text-xs text-gray-600">
+                        Si el cobro es MX o la operacion tributa en Mexico, conviene controlar RFC, razon social, uso fiscal y CFDI emitido.
+                    </p>
+                </div>
+                <div className="rounded-xl border bg-white p-4 shadow-sm">
+                    <div className="text-sm font-semibold text-gray-900">Flujo internacional</div>
+                    <p className="mt-2 text-xs text-gray-600">
+                        Si el anunciante factura fuera de Mexico, lo correcto es soporte de exportacion o invoice comercial, no mezclarlo con CFDI local.
+                    </p>
+                </div>
+                <div className="rounded-xl border bg-white p-4 shadow-sm">
+                    <div className="text-sm font-semibold text-gray-900">Portal del cliente</div>
+                    <p className="mt-2 text-xs text-gray-600">
+                        Este modulo es interno; el cliente debe ver una experiencia mas simple con estatus de pago, pauta y documentos listos para compartir.
+                    </p>
                 </div>
             </div>
 
@@ -552,7 +579,7 @@ const FiscalManagement = () => {
                     <div className="p-4 border-b border-amber-100 flex items-center justify-between gap-4">
                         <div>
                             <h2 className="text-lg font-semibold text-gray-900">Ventas facturables pendientes</h2>
-                            <p className="text-sm text-gray-600">Campa?as cobradas o operativas en M?xico que todav?a no aterrizan en factura emitida.</p>
+                            <p className="text-sm text-gray-600">Campanas cobradas u operativas en Mexico que aun requieren CFDI o control fiscal emitido.</p>
                         </div>
                         <div className="text-sm font-semibold text-amber-700">{invoiceCandidates.length} candidatas</div>
                     </div>

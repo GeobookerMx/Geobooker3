@@ -56,6 +56,55 @@ const getRenderSurfaceLabel = (campaign) => {
     return map[space] || 'Render no identificado en frontend';
 };
 
+const getCampaignAmount = (campaign) => Number(campaign?.total_budget ?? campaign?.budget ?? 0) || 0;
+
+const getInvoiceRouteLabel = (campaign) => {
+    const billingCountry = String(campaign?.billing_country || 'MX').toUpperCase();
+    const taxStatus = campaign?.tax_status || '';
+    const isDomestic = taxStatus === 'domestic_mx' || billingCountry === 'MX' || !taxStatus;
+
+    return isDomestic ? 'CFDI MX / control fiscal local' : 'Invoice exportacion / soporte internacional';
+};
+
+const getDeliveryReadiness = (campaign, simulationDate) => {
+    const amount = getCampaignAmount(campaign);
+    const hasSurface = Boolean(campaign?.ad_spaces?.name || campaign?.ad_space_name);
+    const startsOk = !campaign?.start_date || campaign.start_date <= simulationDate;
+    const endsOk = !campaign?.end_date || campaign.end_date >= simulationDate;
+    const isPaid = campaign?.payment_status === 'paid' || amount > 0;
+    const isRenderableStatus = campaign?.status === 'active';
+
+    return {
+        startsOk,
+        endsOk,
+        hasSurface,
+        isPaid,
+        isRenderableStatus,
+        canRenderNow: startsOk && endsOk && hasSurface && isPaid && isRenderableStatus
+    };
+};
+
+const buildQaSummary = (campaigns, simulationDate) => campaigns.reduce((acc, campaign) => {
+    const readiness = getDeliveryReadiness(campaign, simulationDate);
+    const billingCountry = String(campaign?.billing_country || 'MX').toUpperCase();
+    const taxStatus = campaign?.tax_status || '';
+    const isDomestic = taxStatus === 'domestic_mx' || billingCountry === 'MX' || !taxStatus;
+
+    if (readiness.canRenderNow) acc.renderReady += 1;
+    if (campaign?.status === 'pending_review') acc.pendingReview += 1;
+    if (campaign?.status === 'approved') acc.approvedPending += 1;
+    if (isDomestic) acc.domesticFiscal += 1;
+    if (!isDomestic) acc.exportFiscal += 1;
+
+    return acc;
+}, {
+    renderReady: 0,
+    pendingReview: 0,
+    approvedPending: 0,
+    domesticFiscal: 0,
+    exportFiscal: 0
+});
+
 export default function AdsQATool() {
     const [selectedLocation, setSelectedLocation] = useState(TEST_LOCATIONS[0]);
     const [matchedAds, setMatchedAds] = useState([]);
@@ -73,6 +122,8 @@ export default function AdsQATool() {
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [showEmailModal, setShowEmailModal] = useState(false);
     const [simulationDate, setSimulationDate] = useState(getTodayIso());
+    const activeLocation = useCustomLocation ? customLocation : selectedLocation;
+    const qaSummary = buildQaSummary(matchedAds, simulationDate);
 
     const simulateAdTargeting = async () => {
         setLoading(true);
@@ -212,6 +263,25 @@ export default function AdsQATool() {
                     Selecciona ubicación a simular
                 </h2>
 
+                <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
+                    <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+                        <div className="text-sm font-semibold text-blue-900">Que valida este QA</div>
+                        <p className="mt-2 text-xs text-blue-800">Cruza territorio, fechas, estado operativo y superficie real para estimar si una pauta deberia renderizar en la PWA.</p>
+                    </div>
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                        <div className="text-sm font-semibold text-emerald-900">Cuando si publica</div>
+                        <p className="mt-2 text-xs text-emerald-800">Solo consideramos lista para salir una campana con slot detectado, fecha vigente, monto cobrado y estado <code>active</code>.</p>
+                    </div>
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                        <div className="text-sm font-semibold text-amber-900">Cobro y fiscal</div>
+                        <p className="mt-2 text-xs text-amber-800">Aqui tambien puedes distinguir rapido entre ruta CFDI MX y operacion internacional para no mezclar postventa ni facturacion.</p>
+                    </div>
+                    <div className="rounded-xl border border-purple-200 bg-purple-50 p-4">
+                        <div className="text-sm font-semibold text-purple-900">Lectura correcta de KPIs</div>
+                        <p className="mt-2 text-xs text-purple-800">El QA no promete ventas; confirma elegibilidad de publicacion y ayuda a detectar por que una campana aun no aparece.</p>
+                    </div>
+                </div>
+
                 {/* Toggle Custom Location */}
                 <div className="flex items-center gap-3 mb-4">
                     <label className="flex items-center cursor-pointer">
@@ -327,7 +397,7 @@ export default function AdsQATool() {
                     </div>
 
                     <div className="text-sm text-gray-600">
-                        Ubicacion seleccionada: <strong>{(useCustomLocation ? customLocation.country : selectedLocation.country) || 'N/A'}</strong> / <strong>{(useCustomLocation ? customLocation.city : selectedLocation.city) || 'N/A'}</strong>
+                        Ubicacion seleccionada: <strong>{activeLocation.country || 'N/A'}</strong> / <strong>{activeLocation.city || 'N/A'}</strong>
                     </div>
                 </div>
             </div>
@@ -346,7 +416,34 @@ export default function AdsQATool() {
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {matchedAds.map((ad, index) => (
+                        <div className="grid sm:grid-cols-2 xl:grid-cols-5 gap-3">
+                            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                                <div className="text-xs uppercase tracking-wide text-emerald-700">Render listo</div>
+                                <div className="mt-1 text-2xl font-bold text-emerald-900">{qaSummary.renderReady}</div>
+                            </div>
+                            <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4">
+                                <div className="text-xs uppercase tracking-wide text-yellow-700">Pendiente revision</div>
+                                <div className="mt-1 text-2xl font-bold text-yellow-900">{qaSummary.pendingReview}</div>
+                            </div>
+                            <div className="rounded-xl border border-sky-200 bg-sky-50 p-4">
+                                <div className="text-xs uppercase tracking-wide text-sky-700">Aprobada sin publicar</div>
+                                <div className="mt-1 text-2xl font-bold text-sky-900">{qaSummary.approvedPending}</div>
+                            </div>
+                            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+                                <div className="text-xs uppercase tracking-wide text-blue-700">Fiscal MX</div>
+                                <div className="mt-1 text-2xl font-bold text-blue-900">{qaSummary.domesticFiscal}</div>
+                            </div>
+                            <div className="rounded-xl border border-purple-200 bg-purple-50 p-4">
+                                <div className="text-xs uppercase tracking-wide text-purple-700">Exportacion</div>
+                                <div className="mt-1 text-2xl font-bold text-purple-900">{qaSummary.exportFiscal}</div>
+                            </div>
+                        </div>
+
+                        {matchedAds.map((ad, index) => {
+                            const readiness = getDeliveryReadiness(ad, simulationDate);
+                            const locationName = useCustomLocation ? activeLocation.city : selectedLocation.city;
+
+                            return (
                             <div
                                 key={ad.id}
                                 className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
@@ -417,11 +514,26 @@ export default function AdsQATool() {
                                 {/* Razón del match */}
                                 <div className="mt-3 text-xs text-gray-500 bg-gray-50 p-2 rounded">
                                     <strong>Razón del match:</strong> {
-                                        ad.matchedScope === 'city' ? `Ciudad "${ad.target_cities?.join(', ')}" coincide con ${selectedLocation.city}` :
-                                            ad.matchedScope === 'country' ? `País "${ad.target_countries?.join(', ')}" coincide con ${selectedLocation.country}` :
+                                        ad.matchedScope === 'city' ? `Ciudad "${ad.target_cities?.join(', ')}" coincide con ${locationName}` :
+                                            ad.matchedScope === 'country' ? `País "${ad.target_countries?.join(', ')}" coincide con ${activeLocation.country}` :
                                                 ad.matchedScope === 'global' ? 'Anuncio global (sin restricción geográfica)' :
                                                     'Coincidencia por región'
                                     }
+                                </div>
+
+                                <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                                    <span className={`px-2.5 py-1 rounded-full border ${readiness.canRenderNow ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                                        {readiness.canRenderNow ? 'Render listo' : 'Render no listo'}
+                                    </span>
+                                    <span className={`px-2.5 py-1 rounded-full border ${readiness.isPaid ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
+                                        {readiness.isPaid ? 'Pago registrado' : 'Pago pendiente'}
+                                    </span>
+                                    <span className={`px-2.5 py-1 rounded-full border ${readiness.hasSurface ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+                                        {readiness.hasSurface ? 'Slot detectado' : 'Sin superficie'}
+                                    </span>
+                                    <span className="px-2.5 py-1 rounded-full border bg-slate-50 text-slate-700 border-slate-200">
+                                        {getInvoiceRouteLabel(ad)}
+                                    </span>
                                 </div>
 
                                 {/* Advertencia si fue modificado recientemente */}
@@ -444,7 +556,7 @@ export default function AdsQATool() {
                                     Ver Detalles Completos
                                 </button>
                             </div>
-                        ))}
+                        )})}
                     </div>
                 )}
             </div>
@@ -479,6 +591,38 @@ export default function AdsQATool() {
                         </div>
 
                         <div className="p-6 space-y-6">
+                            <div className="grid md:grid-cols-5 gap-3">
+                                {(() => {
+                                    const readiness = getDeliveryReadiness(selectedCampaign, simulationDate);
+                                    const amount = getCampaignAmount(selectedCampaign);
+
+                                    return (
+                                        <>
+                                            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                                                <div className="text-xs uppercase tracking-wide text-emerald-700">Estado</div>
+                                                <div className="mt-1 font-bold text-emerald-900">{readiness.canRenderNow ? 'Lista para publicar' : 'No lista aun'}</div>
+                                            </div>
+                                            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+                                                <div className="text-xs uppercase tracking-wide text-blue-700">Slot detectado</div>
+                                                <div className="mt-1 font-bold text-blue-900">{readiness.hasSurface ? 'Si' : 'No'}</div>
+                                            </div>
+                                            <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4">
+                                                <div className="text-xs uppercase tracking-wide text-yellow-700">Pago</div>
+                                                <div className="mt-1 font-bold text-yellow-900">{readiness.isPaid ? 'Registrado' : 'Pendiente'}</div>
+                                            </div>
+                                            <div className="rounded-xl border border-purple-200 bg-purple-50 p-4">
+                                                <div className="text-xs uppercase tracking-wide text-purple-700">Ruta fiscal</div>
+                                                <div className="mt-1 font-bold text-purple-900">{getInvoiceRouteLabel(selectedCampaign)}</div>
+                                            </div>
+                                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                                <div className="text-xs uppercase tracking-wide text-slate-700">Monto</div>
+                                                <div className="mt-1 font-bold text-slate-900">{amount.toLocaleString()} {selectedCampaign.currency || 'MXN'}</div>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
+                            </div>
+
                             {/* Creative Preview */}
                             <div className="bg-gray-900 rounded-xl p-6">
                                 <h3 className="text-white font-bold mb-4 flex items-center gap-2">
@@ -675,3 +819,8 @@ export default function AdsQATool() {
         </div>
     );
 }
+
+
+
+
+

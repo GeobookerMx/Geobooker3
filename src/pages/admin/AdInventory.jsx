@@ -101,6 +101,19 @@ const isOperationalCampaign = (campaign) => {
     const amount = getCampaignAmount(campaign);
     return amount > 0 && ['draft', 'pending_review', 'approved', 'active', 'paused', 'completed'].includes(campaign?.status);
 };
+
+const getInvoiceRouteLabel = (campaign) => {
+    const billingCountry = String(campaign?.billing_country || 'MX').toUpperCase();
+    const taxStatus = campaign?.tax_status || '';
+    const isDomestic = taxStatus === 'domestic_mx' || billingCountry === 'MX' || !taxStatus;
+
+    return isDomestic ? 'CFDI MX / control fiscal local' : 'Invoice exportacion / soporte internacional';
+};
+
+const getClientKpiWindowLabel = (campaign) => {
+    if (campaign?.status === 'active') return 'Dashboard cliente con KPIs reales habilitado';
+    return 'KPIs reales visibles cuando la pauta quede active';
+};
 export default function AdInventory() {
     const [loading, setLoading] = useState(true);
     const [inventory, setInventory] = useState([]);
@@ -534,6 +547,33 @@ export default function AdInventory() {
                     </div>
                 </div>
 
+                <div className="mb-6 grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <div className="rounded-xl border border-indigo-500/20 bg-gray-800/80 p-4">
+                        <div className="text-sm font-semibold text-white">Cuando un slot si aparece</div>
+                        <p className="mt-2 text-xs text-gray-300">
+                            La campana debe estar en territorio correcto, fechas vigentes, pago registrado, creative listo y estado <code>active</code>.
+                        </p>
+                    </div>
+                    <div className="rounded-xl border border-emerald-500/20 bg-gray-800/80 p-4">
+                        <div className="text-sm font-semibold text-white">Cobro validado</div>
+                        <p className="mt-2 text-xs text-gray-300">
+                            El presupuesto mostrado aqui es el que se usa para control comercial; conviene alinearlo con el monto final cobrado en Stripe y la promo vigente.
+                        </p>
+                    </div>
+                    <div className="rounded-xl border border-amber-500/20 bg-gray-800/80 p-4">
+                        <div className="text-sm font-semibold text-white">Ruta fiscal</div>
+                        <p className="mt-2 text-xs text-gray-300">
+                            Mexico opera con CFDI y el extranjero con invoice de exportacion o soporte internacional, segun pais de facturacion.
+                        </p>
+                    </div>
+                    <div className="rounded-xl border border-sky-500/20 bg-gray-800/80 p-4">
+                        <div className="text-sm font-semibold text-white">Ventana KPI cliente</div>
+                        <p className="mt-2 text-xs text-gray-300">
+                            El anunciante debe ver metricas reales cuando su pauta ya esta corriendo; antes de eso solo existe pipeline comercial, no performance confirmado.
+                        </p>
+                    </div>
+                </div>
+
                 {/* Inventory Grid */}
                 <div className="grid lg:grid-cols-2 gap-6">
                     {/* Slot Availability */}
@@ -815,6 +855,14 @@ export default function AdInventory() {
                                         <div>
                                             <span className="text-gray-400 text-sm">Facturacion: </span>
                                             <span className="text-white text-sm">{selectedCampaign.billing_country || 'MX'} / {selectedCampaign.tax_status || 'pending'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-400 text-sm">Ruta fiscal: </span>
+                                            <span className="text-white text-sm">{getInvoiceRouteLabel(selectedCampaign)}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-400 text-sm">Ventana KPI: </span>
+                                            <span className="text-white text-sm">{getClientKpiWindowLabel(selectedCampaign)}</span>
                                         </div>
                                     </div>
                                     {!selectedCampaign.target_countries?.length && !selectedCampaign.target_cities?.length && (

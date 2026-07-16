@@ -8,6 +8,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import SEO from '../../components/SEO';
+import { ENTERPRISE_FALLBACK_PRICING } from '../../config/enterprisePricing';
 import { IS_IOS_NATIVE } from '../../utils/iosStore';
 
 const INDUSTRIES = [
@@ -24,9 +25,27 @@ const INDUSTRIES = [
 ];
 
 const COUNTRIES = [
-    'México', 'Estados Unidos', 'Canadá', 'España',
+    'Mexico', 'Estados Unidos', 'Canada', 'Espana',
     'Francia', 'Alemania', 'Reino Unido', 'Brasil',
     'Argentina', 'Colombia', 'Chile', 'Otro'
+];
+
+const PLAN_OPTIONS = ENTERPRISE_FALLBACK_PRICING.map((plan) => ({
+    value: plan.code,
+    label: `${plan.name} (${new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(plan.current_price_usd)} USD)`
+}));
+
+const BUDGET_OPTIONS = [
+    { value: '200-500', label: '$200 - $500 USD' },
+    { value: '500-1000', label: '$500 - $1,000 USD' },
+    { value: '1000-2000', label: '$1,000 - $2,000 USD' },
+    { value: '2000+', label: '$2,000+ USD' },
+    { value: 'custom', label: 'Custom / Enterprise quote' }
 ];
 
 export default function EnterpriseContact() {
@@ -303,10 +322,9 @@ export default function EnterpriseContact() {
                                     className="w-full bg-gray-900 border border-gray-700 text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500"
                                 >
                                     <option value="">Selecciona un paquete</option>
-                                    <option value="city_pack">City Pack ($1,250 USD)</option>
-                                    <option value="regional">Regional Pack ($7,500 USD)</option>
-                                    <option value="national">National Coverage ($17,500 USD)</option>
-                                    <option value="global_event">Global Event (Cotización)</option>
+                                    {PLAN_OPTIONS.map((option) => (
+                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>
@@ -318,10 +336,9 @@ export default function EnterpriseContact() {
                                     className="w-full bg-gray-900 border border-gray-700 text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500"
                                 >
                                     <option value="">Selecciona rango</option>
-                                    <option value="1k-5k">$1,000 - $5,000 USD</option>
-                                    <option value="5k-15k">$5,000 - $15,000 USD</option>
-                                    <option value="15k-50k">$15,000 - $50,000 USD</option>
-                                    <option value="50k+">$50,000+ USD</option>
+                                    {BUDGET_OPTIONS.map((option) => (
+                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>
@@ -364,6 +381,16 @@ export default function EnterpriseContact() {
                         />
                     </div>
 
+                    <div className="mb-8 bg-blue-900/20 border border-blue-700/40 rounded-2xl p-5">
+                        <h3 className="text-white font-semibold mb-2">Como operamos esta pauta</h3>
+                        <ul className="space-y-2 text-sm text-blue-100">
+                            <li>1. Todos los precios base de esta linea se cotizan en USD.</li>
+                            <li>2. La pauta queda sujeta a revision editorial, territorial y fiscal antes de activarse.</li>
+                            <li>3. El pago o anticipo no sustituye la validacion de inventario ni la aprobacion comercial final.</li>
+                            <li>4. La activacion normal tarda entre 12 y 72 horas despues de recibir brief y materiales completos.</li>
+                        </ul>
+                    </div>
+
                     {/* Submit */}
                     <button
                         type="submit"
@@ -384,8 +411,7 @@ export default function EnterpriseContact() {
                     </button>
 
                     <p className="text-center text-gray-500 text-sm mt-4">
-                        Solo aceptamos pagos digitales (tarjeta o transferencia) para garantizar
-                        facturación fiscal correcta.
+                        Solo aceptamos pagos digitales (tarjeta o transferencia) para garantizar trazabilidad, facturacion correcta y validacion comercial/fiscal del servicio.
                     </p>
                 </form>
             </div>

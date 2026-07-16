@@ -107,6 +107,24 @@ export default function EnterpriseLanding() {
         }).format(price);
     };
 
+    const serviceFlow = [
+        {
+            title: '1. Brief comercial',
+            description: 'Definimos pais de facturacion, territorios de pauta, fechas, creativos y objetivo de negocio.'
+        },
+        {
+            title: '2. Revision 12-72h',
+            description: 'Geobooker valida inventario, cumplimiento editorial, coherencia territorial y criterio fiscal antes de publicar.'
+        },
+        {
+            title: '3. Activacion programada',
+            description: 'La campana se programa por ciudad, pais, idioma o temporada segun el alcance contratado.'
+        },
+        {
+            title: '4. Reporte y optimizacion',
+            description: 'Entregamos trazabilidad operativa, seguimiento de slots y ajustes incluidos segun el paquete.'
+        }
+    ];
     const enterpriseStructuredData = [
         {
             "@context": "https://schema.org",
@@ -291,6 +309,9 @@ export default function EnterpriseLanding() {
                         <p className="text-gray-400 max-w-2xl mx-auto">
                             {t('enterprise.pricingSubtitle')}
                         </p>
+                        <p className="text-gray-500 text-sm mt-3">
+                            Todos los precios mostrados en esta seccion estan expresados en dolares estadounidenses (USD).
+                        </p>
                     </div>
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
@@ -321,10 +342,10 @@ export default function EnterpriseLanding() {
 
                                 <div className="mb-6">
                                     <div className="text-sm text-gray-400 line-through">
-                                        {formatPrice(plan.regular_price_usd)}
+                                        {formatPrice(plan.regular_price_usd)} USD
                                     </div>
                                     <div className="text-3xl font-bold text-amber-400">
-                                        {formatPrice(plan.current_price_usd)}
+                                        {formatPrice(plan.current_price_usd)} <span className="text-base font-medium text-amber-200">USD</span>
                                     </div>
                                     <div className="text-gray-400 text-sm">
                                         {plan.discount_percent}% OFF global hasta el 31 de diciembre de 2026
@@ -362,6 +383,31 @@ export default function EnterpriseLanding() {
                         <p className="text-gray-500 text-xs">
                             Revisión editorial, territorial y fiscal antes de publicar: 12 a 72 horas. Pagos seguros vía tarjeta o transferencia; no se acepta efectivo para mantener trazabilidad fiscal.
                         </p>
+                    </div>
+                </div>
+            </section>
+
+            <section className="py-16 px-4">
+                <div className="max-w-7xl mx-auto">
+                    <div className="text-center mb-10">
+                        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                            Como funciona la campana Enterprise
+                        </h2>
+                        <p className="text-gray-400 max-w-3xl mx-auto">
+                            Esta oferta opera como servicio gestionado. El pago o la solicitud no publica automaticamente la pauta: primero se valida inventario, creatividad, territorio, fechas y tratamiento fiscal.
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
+                        {serviceFlow.map((step) => (
+                            <div
+                                key={step.title}
+                                className="bg-gray-800/50 backdrop-blur border border-gray-700/50 rounded-2xl p-6"
+                            >
+                                <h3 className="text-lg font-semibold text-white mb-3">{step.title}</h3>
+                                <p className="text-gray-400 text-sm leading-relaxed">{step.description}</p>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </section>

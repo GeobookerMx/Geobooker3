@@ -447,7 +447,20 @@ const SEARCH_VARIANTS = {
     barberia: ['barbershop', 'hair salon', 'peluqueria'],
     peluqueria: ['hair salon', 'beauty salon', 'barbershop'],
     michelin: ['fine dining', 'tasting menu', 'chef table'],
-    'fine dining': ['chef table', 'tasting menu', 'michelin restaurant']
+    'fine dining': ['chef table', 'tasting menu', 'michelin restaurant'],
+    cemento: ['materiales de construccion', 'cemento y concreto', 'casa de materiales'],
+    concreto: ['cemento y concreto', 'materiales de construccion', 'concrete supplier'],
+    acero: ['acero y perfiles', 'steel supplier', 'materiales industriales'],
+    varilla: ['acero y perfiles', 'materiales de construccion', 'steel supplier'],
+    tarimas: ['tarimas y empaque', 'pallet supplier', 'packaging supplies'],
+    pallets: ['tarimas y empaque', 'pallet supplier', 'packaging supplies'],
+    empaque: ['tarimas y empaque', 'packaging supplies', 'cajas carton'],
+    componentes: ['componentes industriales', 'industrial supplies', 'refacciones industriales'],
+    refacciones: ['refacciones industriales', 'auto parts', 'spare parts'],
+    quimicos: ['productos quimicos', 'chemical supplier', 'limpieza industrial'],
+    alimentos: ['proveedor de alimentos', 'alimentos mayoreo', 'restaurant supplies'],
+    mayoreo: ['proveedor mayoreo', 'wholesale supplier', 'distribuidor'],
+    proveedor: ['distribuidor', 'supplier', 'mayoreo']
 };
 
 export const getSearchVariants = (searchTerm = '') => {

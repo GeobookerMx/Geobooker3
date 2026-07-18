@@ -5,6 +5,7 @@ import { searchPlacesUniversal } from '../services/googlePlacesService';
 import { inferUserCountry, searchBusinessesSemantically } from '../services/businessService';
 import { trackSearch } from '../services/analyticsService';
 import { isAwardSearchQuery } from '../utils/awardUtils';
+import { matchesSemanticText } from '../utils/semanticDictionary';
 
 const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) => {
   const { t } = useTranslation();
@@ -24,6 +25,9 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
     'Cerrajero urgente', 'Talacha o vulcanizadora', 'Mudanza o flete', 'Nail salon', 'Spa',
     'Bodega y storage', 'Proveedor logistico', 'Grua para carga pesada', 'Refacciones industriales',
     'Patio logistico', 'Fletes en Monterrey', 'Taller pesado',
+    'Cemento y concreto', 'Acero y perfiles', 'Materiales de construccion',
+    'Tarimas y empaque', 'Proveedor de alimentos', 'Insumos para restaurante',
+    'Componentes industriales', 'Productos quimicos', 'Maquinaria industrial',
     'Coffee shop near me', 'Pharmacy near me', 'Locksmith near me', 'Plumber near me'
   ];
 
@@ -123,7 +127,7 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
             setShowSuggestions(true);
           }}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          placeholder={t('home.searchPlaceholder', { defaultValue: 'Que negocio buscas? Ej: farmacia, Michelin, tacos...' })}
+          placeholder={t('home.searchPlaceholder', { defaultValue: 'Que buscas? Ej: farmacia, cemento, flete, tacos...' })}
           className="w-full rounded-full border-2 border-gray-200 bg-white px-6 py-4 text-lg text-gray-900 shadow-lg outline-none transition duration-200 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
           disabled={loading}
         />
@@ -152,7 +156,12 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
       {showSuggestions && searchTerm && (
         <div className="absolute left-0 right-0 top-full z-10 mt-2 max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
           {popularCategories
-            .filter((category) => category.toLowerCase().includes(searchTerm.toLowerCase()))
+            .filter((category) => {
+              const normalizedCategory = category.toLowerCase();
+              const normalizedTerm = searchTerm.toLowerCase();
+              return normalizedCategory.includes(normalizedTerm) || matchesSemanticText(searchTerm, [category]);
+            })
+            .slice(0, 12)
             .map((category, index) => (
               <div
                 key={index}

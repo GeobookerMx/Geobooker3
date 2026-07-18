@@ -6,34 +6,59 @@ const TT_INTENT_TERMS = [
   'todo transporte',
   'tt',
   'logistica',
-  'logístico',
+  'logï¿½stico',
   'logistico',
   'proveedor logistico',
-  'proveedor logístico',
+  'proveedor logï¿½stico',
   'bodega',
   'storage',
   'warehouse',
   'patio',
   'patio logistico',
-  'patio logístico',
+  'patio logï¿½stico',
   'almacen',
-  'almacén',
+  'almacï¿½n',
   'flete',
   'freight',
   'grua',
-  'grúa',
+  'grï¿½a',
   'arrastre',
   'carga pesada',
   'carga',
   'mudanza',
   'operador logistico',
-  'operador logístico',
+  'operador logï¿½stico',
   'refacciones',
   'refaccionaria',
   'servicio industrial',
   'industrial',
   'taller pesado',
-  'transporte'
+  'transporte',
+  'material',
+  'materiales',
+  'materiales de construccion',
+  'cemento',
+  'concreto',
+  'block',
+  'varilla',
+  'acero',
+  'lamina',
+  'placa',
+  'perfil',
+  'tarimas',
+  'pallets',
+  'empaque',
+  'embalaje',
+  'componentes',
+  'componentes industriales',
+  'insumos industriales',
+  'proveedor de alimentos',
+  'alimentos mayoreo',
+  'insumos para restaurante',
+  'quimicos',
+  'productos quimicos',
+  'maquinaria',
+  'equipo industrial'
 ];
 
 const TT_ROW_LIMIT = 120;
@@ -90,6 +115,8 @@ function buildTTSearchText(row) {
     pickFirst(row, ['description', 'summary', 'notes', 'service_description']),
     pickFirst(row, ['service_type', 'provider_type', 'category', 'subcategory']),
     pickFirst(row, ['specialties', 'services', 'materials']),
+    pickFirst(row, ['products', 'product', 'inventory', 'items', 'cargo_types', 'equipment', 'vehicle_types']),
+    pickFirst(row, ['industries_served', 'served_industries', 'coverage_notes']),
     pickFirst(row, ['city', 'ciudad']),
     pickFirst(row, ['state', 'estado']),
     pickFirst(row, ['country', 'pais'])
@@ -113,7 +140,7 @@ function normalizeTTEntity(row, entityType) {
   const website = pickFirst(row, ['website', 'url', 'company_website']);
   const category = entityType === 'storage' ? 'Bodega y storage' : 'Proveedor logistico';
   const subcategory = pickFirst(row, ['service_type', 'provider_type', 'category', 'subcategory']) || (entityType === 'storage' ? 'Storage y patio logistico' : 'Logistica y transporte');
-  const description = pickFirst(row, ['description', 'summary', 'notes', 'service_description']) || subcategory;
+  const description = pickFirst(row, ['description', 'summary', 'notes', 'service_description', 'products', 'inventory', 'materials']) || subcategory;
   const city = pickFirst(row, ['city', 'ciudad']);
   const state = pickFirst(row, ['state', 'estado']);
   const country = pickFirst(row, ['country', 'pais']) || 'MX';

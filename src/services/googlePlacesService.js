@@ -349,6 +349,14 @@ export const CATEGORY_MAPPING = {
     'clinica': 'hospital',
     'veterinaria': 'veterinary_care',
     'veterinarias': 'veterinary_care',
+    'medicina': 'pharmacy',
+    'medicamento': 'pharmacy',
+    'medicamentos': 'pharmacy',
+    'omeprazol': 'pharmacy',
+    'paracetamol': 'pharmacy',
+    'ibuprofeno': 'pharmacy',
+    'loratadina': 'pharmacy',
+    'suero oral': 'pharmacy',
 
     // Comida
     'restaurante': 'restaurant',
@@ -378,6 +386,12 @@ export const CATEGORY_MAPPING = {
     'peluqueria': 'hair_care',
     'salón de belleza': 'beauty_salon',
     'salon de belleza': 'beauty_salon',
+    'maquillaje': 'beauty_salon',
+    'maquillista': 'beauty_salon',
+    'makeup artist': 'beauty_salon',
+    'peinado': 'beauty_salon',
+    'pestanas': 'beauty_salon',
+    'cejas': 'beauty_salon',
     'spa': 'spa',
     'gimnasio': 'gym',
     'gimnasios': 'gym',
@@ -460,7 +474,21 @@ const SEARCH_VARIANTS = {
     quimicos: ['productos quimicos', 'chemical supplier', 'limpieza industrial'],
     alimentos: ['proveedor de alimentos', 'alimentos mayoreo', 'restaurant supplies'],
     mayoreo: ['proveedor mayoreo', 'wholesale supplier', 'distribuidor'],
-    proveedor: ['distribuidor', 'supplier', 'mayoreo']
+    proveedor: ['distribuidor', 'supplier', 'mayoreo'],
+    omeprazol: ['farmacia', 'medicamento', 'pharmacy'],
+    paracetamol: ['farmacia', 'medicamento', 'pharmacy'],
+    ibuprofeno: ['farmacia', 'medicamento', 'pharmacy'],
+    loratadina: ['farmacia', 'medicamento', 'pharmacy'],
+    antigripal: ['farmacia', 'medicamento', 'pharmacy'],
+    'suero oral': ['farmacia', 'medicamento', 'pharmacy'],
+    medicamento: ['farmacia', 'pharmacy', 'drugstore'],
+    medicamentos: ['farmacia', 'pharmacy', 'drugstore'],
+    maquillaje: ['maquillista', 'beauty salon', 'makeup artist'],
+    maquillista: ['maquillaje', 'beauty salon', 'makeup artist'],
+    'maquillaje de novia': ['maquillista', 'beauty salon', 'makeup artist'],
+    peinado: ['salon de belleza', 'hair salon', 'beauty salon'],
+    pestanas: ['salon de belleza', 'beauty salon', 'lash studio'],
+    cejas: ['salon de belleza', 'beauty salon', 'brow studio']
 };
 
 export const getSearchVariants = (searchTerm = '') => {

@@ -1,33 +1,28 @@
 import { supabase } from "../lib/supabase";
 import { getAttributionSummary } from "./attributionService";
 import { matchesSemanticText } from "../utils/semanticDictionary";
+import { analyzeSearchIntent, getIntentSearchHaystack } from "../utils/searchIntentEngine";
 
 const TT_INTENT_TERMS = [
   'todo transporte',
   'tt',
   'logistica',
-  'log�stico',
   'logistico',
   'proveedor logistico',
-  'proveedor log�stico',
   'bodega',
   'storage',
   'warehouse',
   'patio',
   'patio logistico',
-  'patio log�stico',
   'almacen',
-  'almac�n',
   'flete',
   'freight',
   'grua',
-  'gr�a',
   'arrastre',
   'carga pesada',
   'carga',
   'mudanza',
   'operador logistico',
-  'operador log�stico',
   'refacciones',
   'refaccionaria',
   'servicio industrial',
@@ -58,7 +53,26 @@ const TT_INTENT_TERMS = [
   'quimicos',
   'productos quimicos',
   'maquinaria',
-  'equipo industrial'
+  'equipo industrial',
+  'tornilleria',
+  'tornillo',
+  'tornillos',
+  'tuerca',
+  'rondana',
+  'fasteners',
+  'screws',
+  'bolts',
+  'truck parking',
+  'truck yard',
+  'drop yard',
+  'secure yard',
+  'pension para tracto',
+  'pension para tractocamion',
+  'patio para mercancia',
+  'resguardo de mercancia',
+  'estacionamiento de trailer',
+  'tractocamion',
+  'trailer parking',
 ];
 
 const TT_ROW_LIMIT = 120;
@@ -115,7 +129,7 @@ function buildTTSearchText(row) {
     pickFirst(row, ['description', 'summary', 'notes', 'service_description']),
     pickFirst(row, ['service_type', 'provider_type', 'category', 'subcategory']),
     pickFirst(row, ['specialties', 'services', 'materials']),
-    pickFirst(row, ['products', 'product', 'inventory', 'items', 'cargo_types', 'equipment', 'vehicle_types']),
+    pickFirst(row, ['products', 'product', 'inventory', 'items', 'cargo_types', 'equipment', 'vehicle_types', 'yard_type', 'security_features', 'access_hours']),
     pickFirst(row, ['industries_served', 'served_industries', 'coverage_notes']),
     pickFirst(row, ['city', 'ciudad']),
     pickFirst(row, ['state', 'estado']),
@@ -126,7 +140,84 @@ function buildTTSearchText(row) {
 function hasLogisticsIntent(searchQuery = '') {
   const normalizedQuery = normalizeText(searchQuery);
   if (!normalizedQuery) return false;
-  return TT_INTENT_TERMS.some((term) => normalizedQuery.includes(normalizeText(term))) || matchesSemanticText(searchQuery, TT_INTENT_TERMS);
+  const intent = analyzeSearchIntent(searchQuery);
+  return Boolean(intent?.isLogistics) || TT_INTENT_TERMS.some((term) => normalizedQuery.includes(normalizeText(term))) || matchesSemanticText(searchQuery, TT_INTENT_TERMS);
+}
+
+function distanceKm(userLocation, business) {
+  if (!userLocation?.lat || !userLocation?.lng) return null;
+
+  const lat = Number(business?.latitude ?? business?.lat);
+  const lng = Number(business?.longitude ?? business?.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+  const toRad = (value) => (value * Math.PI) / 180;
+  const earthKm = 6371;
+  const dLat = toRad(lat - userLocation.lat);
+  const dLng = toRad(lng - userLocation.lng);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(userLocation.lat)) * Math.cos(toRad(lat)) * Math.sin(dLng / 2) ** 2;
+
+  return earthKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function getBusinessTrustScore(business) {
+  let score = 0;
+  if (business?.is_verified || business?.verification_status === 'verified') score += 18;
+  if (business?.is_premium || business?.premium_status === 'active') score += 12;
+  if (business?.phone || business?.whatsapp) score += 8;
+  if (business?.website) score += 5;
+  if (Number(business?.rating) >= 4.5) score += 8;
+  if (Number(business?.rating) >= 4) score += 4;
+  if (Number(business?.review_count || business?.reviews_count) >= 10) score += 5;
+  if (business?.source_type?.startsWith?.('tt_')) score += 6;
+  return score;
+}
+
+function getIntentMatchScore(searchQuery, business) {
+  const haystack = [
+    business?.name,
+    business?.category,
+    business?.subcategory,
+    business?.description,
+    business?.address,
+    business?.source_label,
+    business?.semantic_matched_term,
+    business?.semantic_category_slug,
+    ...(Array.isArray(business?.tags) ? business.tags : []),
+    ...(Array.isArray(business?.search_aliases) ? business.search_aliases : [])
+  ];
+
+  const intentHaystack = getIntentSearchHaystack(searchQuery);
+  const normalizedBusiness = haystack.filter(Boolean).map(normalizeText).join(' | ');
+  const matchedTerms = intentHaystack.filter((term) => normalizedBusiness.includes(normalizeText(term)));
+  return Math.min(35, matchedTerms.length * 7);
+}
+
+function rankSearchResults(results = [], searchQuery = '', userLocation = null) {
+  const intent = analyzeSearchIntent(searchQuery);
+
+  return [...results]
+    .map((business, index) => {
+      const distance = distanceKm(userLocation, business);
+      const distanceScore = distance === null ? 0 : Math.max(0, 35 - Math.min(distance, 35));
+      const semanticScore = Number(business?.semantic_match_score || 0) * 30;
+      const intentScore = getIntentMatchScore(searchQuery, business);
+      const trustScore = getBusinessTrustScore(business);
+      const sourceBoost = intent?.isLogistics && business?.source_type?.startsWith?.('tt_') ? 20 : 0;
+      const rankScore = semanticScore + intentScore + trustScore + distanceScore + sourceBoost - (index * 0.05);
+
+      return {
+        ...business,
+        search_intent_id: intent?.id || null,
+        search_intent_label: intent?.label || null,
+        search_rank_score: Number(rankScore.toFixed(2)),
+        distance_km: distance === null ? business?.distance_km : Number(distance.toFixed(2)),
+        availability_note: intent ? 'Resultado relacionado por categoria/intencion. Confirma precio, stock y disponibilidad con el negocio.' : business?.availability_note
+      };
+    })
+    .sort((a, b) => (b.search_rank_score || 0) - (a.search_rank_score || 0));
 }
 
 function normalizeTTEntity(row, entityType) {
@@ -177,6 +268,24 @@ function normalizeTTEntity(row, entityType) {
   };
 }
 
+function matchesTTIntent(searchQuery, row) {
+  const rowText = buildTTSearchText(row);
+  if (matchesSemanticText(searchQuery, rowText)) return true;
+
+  const intent = analyzeSearchIntent(searchQuery);
+  if (!intent) return false;
+
+  const intentTerms = [
+    intent.label,
+    intent.googleQuery,
+    ...(intent.fallbackQueries || []),
+    ...(intent.categoryHints || []),
+    ...(intent.trustSignals || [])
+  ].filter(Boolean);
+
+  return intentTerms.some((term) => matchesSemanticText(term, rowText));
+}
+
 async function fetchTTMatchesFromTable(tableName, entityType, searchQuery, limit = TT_RESULT_LIMIT) {
   try {
     const { data, error } = await supabase
@@ -197,7 +306,7 @@ async function fetchTTMatchesFromTable(tableName, entityType, searchQuery, limit
       .filter((row) => {
         const status = normalizeText(pickFirst(row, ['status']) || 'active');
         if (status && ['inactive', 'archived', 'draft', 'deleted'].includes(status)) return false;
-        return matchesSemanticText(searchQuery, buildTTSearchText(row));
+        return matchesTTIntent(searchQuery, row);
       })
       .map((row) => normalizeTTEntity(row, entityType))
       .filter(Boolean)
@@ -239,17 +348,19 @@ export function inferUserCountry() {
   return region && region.length === 2 ? region.toUpperCase() : "MX";
 }
 
-export async function searchBusinessesSemantically(searchQuery, userCountry = inferUserCountry()) {
+export async function searchBusinessesSemantically(searchQuery, userCountry = inferUserCountry(), userLocation = null) {
   const normalizedQuery = clean(searchQuery);
   if (!normalizedQuery) return [];
 
+  const intentAnalysis = analyzeSearchIntent(normalizedQuery);
+  const rpcSearchQuery = intentAnalysis?.expandedQuery || normalizedQuery;
   let semanticMatches = [];
   let matchSource = 'knowledge_graph';
 
   const { data: kgMatches, error: kgError } = await supabase.rpc(
     "search_businesses_knowledge_graph",
     {
-      search_query: normalizedQuery,
+      search_query: rpcSearchQuery,
       user_country: userCountry,
       user_language: typeof navigator !== "undefined" ? (navigator.language || "es-MX") : "es-MX",
     }
@@ -265,7 +376,7 @@ export async function searchBusinessesSemantically(searchQuery, userCountry = in
     const { data: synonymMatches, error: rpcError } = await supabase.rpc(
       "search_businesses_with_synonyms",
       {
-        search_query: normalizedQuery,
+        search_query: rpcSearchQuery,
         user_country: userCountry,
       }
     );
@@ -273,7 +384,7 @@ export async function searchBusinessesSemantically(searchQuery, userCountry = in
     if (rpcError) {
       console.warn("Semantic search RPC unavailable:", rpcError.message);
       const ttOnlyMatches = await searchTodoTransporteMatches(normalizedQuery);
-      return ttOnlyMatches;
+      return rankSearchResults(ttOnlyMatches, normalizedQuery, userLocation);
     }
 
     semanticMatches = synonymMatches || [];
@@ -284,7 +395,7 @@ export async function searchBusinessesSemantically(searchQuery, userCountry = in
   const orderedIds = [...new Set((semanticMatches || []).map((item) => item.business_id).filter(Boolean))];
 
   if (orderedIds.length === 0) {
-    return ttMatches;
+    return rankSearchResults(ttMatches, normalizedQuery, userLocation);
   }
 
   const { data: businesses, error } = await supabase
@@ -296,7 +407,7 @@ export async function searchBusinessesSemantically(searchQuery, userCountry = in
 
   if (error) {
     console.warn("Semantic search business lookup failed:", error.message);
-    return ttMatches;
+    return rankSearchResults(ttMatches, normalizedQuery, userLocation);
   }
 
   const scoreMap = new Map((semanticMatches || []).map((item) => [item.business_id, item.match_score]));
@@ -320,7 +431,7 @@ export async function searchBusinessesSemantically(searchQuery, userCountry = in
     })
     .filter(Boolean);
 
-  if (ttMatches.length === 0) return nativeResults;
+  if (ttMatches.length === 0) return rankSearchResults(nativeResults, normalizedQuery, userLocation);
 
   const seen = new Set();
   const merged = [];
@@ -335,7 +446,7 @@ export async function searchBusinessesSemantically(searchQuery, userCountry = in
     merged.push(item);
   });
 
-  return merged;
+  return rankSearchResults(merged, normalizedQuery, userLocation);
 }
 
 export async function createBusiness(form, user) {

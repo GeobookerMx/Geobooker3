@@ -6,6 +6,7 @@ import { inferUserCountry, searchBusinessesSemantically } from '../services/busi
 import { trackSearch } from '../services/analyticsService';
 import { isAwardSearchQuery } from '../utils/awardUtils';
 import { matchesSemanticText } from '../utils/semanticDictionary';
+import { analyzeSearchIntent, buildIntentSearchQueries } from '../utils/searchIntentEngine';
 
 const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) => {
   const { t } = useTranslation();
@@ -24,8 +25,8 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
     'Michelin', 'Fine dining', 'Tasting menu', 'Hotel',
     'Cerrajero urgente', 'Talacha o vulcanizadora', 'Mudanza o flete', 'Nail salon', 'Spa',
     'Bodega y storage', 'Proveedor logistico', 'Grua para carga pesada', 'Refacciones industriales',
-    'Patio logistico', 'Fletes en Monterrey', 'Taller pesado',
-    'Cemento y concreto', 'Acero y perfiles', 'Materiales de construccion',
+    'Patio logistico', 'Pension para tractocamion', 'Patio para tracto con mercancia', 'Fletes en Monterrey', 'Taller pesado',
+    'Tornillo de cuerda 3/8 cerca de mi', 'Tornilleria cerca', 'Cemento y concreto', 'Acero y perfiles', 'Materiales de construccion',
     'Tarimas y empaque', 'Proveedor de alimentos', 'Insumos para restaurante',
     'Componentes industriales', 'Productos quimicos', 'Maquinaria industrial',
     'Coffee shop near me', 'Pharmacy near me', 'Locksmith near me', 'Plumber near me'
@@ -36,13 +37,23 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
 
     let effectiveLocation = userLocation;
     let loadingTimeout = null;
+    const intentAnalysis = analyzeSearchIntent(searchQuery);
 
     try {
       onSearch(true);
 
+      if (!effectiveLocation && intentAnalysis?.confidence >= 0.85) {
+        try {
+          effectiveLocation = await requestLocationPermission();
+        } catch (error) {
+          console.warn('Busqueda por intencion sin ubicacion activa:', error);
+        }
+      }
+
       const semanticResults = await searchBusinessesSemantically(
         searchQuery,
-        inferUserCountry()
+        inferUserCountry(),
+        effectiveLocation
       );
 
       if (semanticResults.length > 0) {
@@ -55,6 +66,7 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
         onBusinessesFound(semanticResults, {
           query: searchQuery,
           source: 'semantic',
+          intent: intentAnalysis,
           isAwardSearch: isAwardSearchQuery(searchQuery)
         });
         setShowSuggestions(false);
@@ -83,15 +95,35 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
         return;
       }
 
-      const businesses = await searchPlacesUniversal(effectiveLocation, searchQuery, 10000);
+      let businesses = [];
+      let resolvedGoogleQuery = searchQuery;
+      const googleQueries = buildIntentSearchQueries(searchQuery);
+
+      for (const queryCandidate of googleQueries) {
+        resolvedGoogleQuery = queryCandidate;
+        businesses = await searchPlacesUniversal(effectiveLocation, queryCandidate, 10000);
+        if (businesses?.length > 0) break;
+      }
+
+      const enrichedBusinesses = (businesses || []).map((business) => ({
+        ...business,
+        search_intent_id: intentAnalysis?.id || null,
+        search_intent_label: intentAnalysis?.label || null,
+        search_query_used: resolvedGoogleQuery,
+        availability_note: intentAnalysis
+          ? 'Resultado relacionado por categoria/intencion. Confirma precio, stock y disponibilidad con el negocio.'
+          : business.availability_note
+      }));
 
       trackSearch(searchQuery, {
-        resultsCount: businesses?.length || 0,
+        resultsCount: enrichedBusinesses?.length || 0,
         userLat: effectiveLocation?.lat || null,
-        userLng: effectiveLocation?.lng || null
+        userLng: effectiveLocation?.lng || null,
+        intentId: intentAnalysis?.id || null,
+        resolvedQuery: resolvedGoogleQuery
       });
 
-      onBusinessesFound(businesses, { query: searchQuery, source: 'google' });
+      onBusinessesFound(enrichedBusinesses, { query: searchQuery, source: 'google', resolvedQuery: resolvedGoogleQuery, intent: intentAnalysis });
       setShowSuggestions(false);
     } catch (error) {
       console.error('Error buscando negocios:', error);
@@ -161,7 +193,7 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
               const normalizedTerm = searchTerm.toLowerCase();
               return normalizedCategory.includes(normalizedTerm) || matchesSemanticText(searchTerm, [category]);
             })
-            .slice(0, 12)
+            .slice(0, 14)
             .map((category, index) => (
               <div
                 key={index}

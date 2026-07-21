@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense, useRef, useCallback } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useRef, useCallback, useDeferredValue, useMemo, startTransition } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { useLocation } from '../contexts/LocationContext';
@@ -45,6 +45,108 @@ const DeferredSectionFallback = ({ minHeight = '180px' }) => (
     style={{ minHeight }}
     aria-hidden="true"
   />
+);
+
+const SEARCH_RESULT_RENDER_LIMIT = 60;
+const NATIVE_MAP_RENDER_LIMIT = 250;
+const DENUE_MAP_RENDER_LIMIT = 450;
+const RECOMMENDED_MAP_RENDER_LIMIT = 80;
+
+const hasRenderableCoordinates = (business) => {
+  const lat = Number(business?.latitude ?? business?.lat);
+  const lng = Number(business?.longitude ?? business?.lng);
+  return Number.isFinite(lat) && Number.isFinite(lng);
+};
+
+const getDistanceScore = (business, origin) => {
+  if (!origin || !hasRenderableCoordinates(business)) return Number.POSITIVE_INFINITY;
+
+  const lat = Number(business.latitude ?? business.lat);
+  const lng = Number(business.longitude ?? business.lng);
+  const dLat = lat - origin.lat;
+  const dLng = lng - origin.lng;
+  return (dLat * dLat) + (dLng * dLng);
+};
+
+const prepareMapResults = (items = [], origin = null, limit = 100) => {
+  const list = Array.isArray(items) ? items.filter(hasRenderableCoordinates) : [];
+  const unique = new Map();
+
+  list.forEach((item) => {
+    const fallbackKey = [item.name || item.nombre, item.latitude ?? item.lat, item.longitude ?? item.lng].join('-');
+    const key = item.id || item.place_id || item.denue_id || item.id_denue || fallbackKey;
+    if (!key || unique.has(key)) return;
+    unique.set(key, item);
+  });
+
+  return Array.from(unique.values())
+    .sort((a, b) => getDistanceScore(a, origin) - getDistanceScore(b, origin))
+    .slice(0, limit);
+};
+
+const GEOBOOKER_USE_CASES = [
+  {
+    title: 'Emprendedora de belleza',
+    location: 'CDMX / busquedas de ocasion',
+    image: '/images/community/maquillista.jpg',
+    query: 'maquillista, beauty salon, maquillaje de novia',
+    result: 'Geobooker conecta la necesidad con negocios y profesionales cercanos, mostrando contacto, ruta y contexto de servicio.'
+  },
+  {
+    title: 'Taller y refacciones',
+    location: 'Monterrey / urgencias locales',
+    image: '/images/community/mecanico-taller.jpg',
+    query: 'taller mecanico cerca, grua, refaccionaria',
+    result: 'El usuario no necesita saber el nombre exacto del negocio: puede buscar por problema, categoria o intencion real.'
+  },
+  {
+    title: 'Cafeteria o panaderia local',
+    location: 'Guadalajara / consumo diario',
+    image: '/images/barista.jpg',
+    query: 'coffee shop near me, desayunos, panaderia cerca',
+    result: 'La visibilidad por ciudad, horario y categoria ayuda a convertir busquedas cotidianas en visitas y oportunidades.'
+  }
+];
+
+const GeobookerUseCases = () => (
+  <section className="container mx-auto px-4 py-8">
+    <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl md:p-8">
+      <div className="mx-auto max-w-3xl text-center">
+        <p className="text-sm font-bold uppercase tracking-[0.24em] text-blue-600">Casos de uso</p>
+        <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+          Geobooker convierte busquedas reales en oportunidades locales
+        </h2>
+        <p className="mt-4 text-base leading-7 text-slate-600">
+          Estos escenarios muestran como la plataforma puede ayudar a usuarios de distinto origen a encontrar negocios, servicios y proveedores sin depender de nombres exactos.
+        </p>
+      </div>
+
+      <div className="mt-8 grid gap-5 lg:grid-cols-3">
+        {GEOBOOKER_USE_CASES.map((useCase) => (
+          <article key={useCase.title} className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+            <div className="relative h-48 overflow-hidden bg-slate-200">
+              <img
+                src={useCase.image}
+                alt={useCase.title}
+                className="h-full w-full object-cover transition duration-500 hover:scale-105"
+                loading="lazy"
+              />
+              <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-slate-900 shadow">
+                {useCase.location}
+              </div>
+            </div>
+            <div className="p-5">
+              <h3 className="text-xl font-black text-slate-950">{useCase.title}</h3>
+              <p className="mt-3 rounded-2xl bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-800">
+                Busca: {useCase.query}
+              </p>
+              <p className="mt-4 text-sm leading-6 text-slate-600">{useCase.result}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
 );
 import useInterstitialTrigger from '../components/ads/useInterstitialTrigger';
 import SEO from '../components/SEO';
@@ -343,7 +445,7 @@ const HomePage = () => {
         const state = JSON.parse(savedState);
         // Restaurar negocios de Places si hay guardados
         if (state.businesses && state.businesses.length > 0) {
-          setBusinesses(state.businesses);
+          setBusinesses(prepareMapResults(state.businesses, null, SEARCH_RESULT_RENDER_LIMIT));
         }
         // Restaurar query
         if (state.lastQuery) {
@@ -513,7 +615,7 @@ const HomePage = () => {
         const cachedResults = getFromCache(cacheKey);
 
         if (cachedResults && cachedResults.length > 0) {
-          setBusinesses(cachedResults);
+          setBusinesses(prepareMapResults(cachedResults, userLocation, SEARCH_RESULT_RENDER_LIMIT));
           toast.success(`💾 ${cachedResults.length} negocios (caché instantáneo)`, { duration: 2000 });
         } else {
           setSearchLoading(true);
@@ -523,7 +625,7 @@ const HomePage = () => {
         const results = await searchPlacesUniversal(userLocation, searchTerm, 10000);
 
         if (results && results.length > 0) {
-          setBusinesses(results);
+          startTransition(() => setBusinesses(prepareMapResults(results, userLocation, SEARCH_RESULT_RENDER_LIMIT)));
           // Si no había caché, mostrar mensaje de éxito
           if (!cachedResults || cachedResults.length === 0) {
             toast.success(`🔍 ${results.length} negocios encontrados para "${searchTerm}"`, { duration: 3000 });
@@ -573,22 +675,26 @@ const HomePage = () => {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
 
-  const handleBusinessesFound = (foundBusinesses, meta = {}) => {
-    setBusinesses(foundBusinesses);
+  const handleBusinessesFound = (foundBusinesses = [], meta = {}) => {
+    const renderableBusinesses = prepareMapResults(foundBusinesses, userLocation, SEARCH_RESULT_RENDER_LIMIT);
 
-    if (meta.query) {
-      setLastSearchQuery(meta.query);
-    }
+    startTransition(() => {
+      setBusinesses(renderableBusinesses);
+
+      if (meta.query) {
+        setLastSearchQuery(meta.query);
+      }
+    });
 
     if (meta.query && isAwardSearchQuery(meta.query)) {
       setAwardFilter(getAwardSearchFilter(meta.query) || 'michelin');
     } else if (meta.source === 'google' && awardFilter !== 'all') {
       setAwardFilter('all');
     }
-    // Incrementar contador de búsquedas para trigger de interstitial
+    // Incrementar contador de busquedas para trigger de interstitial
     incrementSearchCount();
 
-    // Registrar búsqueda de invitado (mostrará modal si excede límite)
+    // Registrar busqueda de invitado (mostrara modal si excede limite)
     if (isGuest) {
       recordGuestSearch();
     }
@@ -600,21 +706,58 @@ const HomePage = () => {
     }
   };
 
-  // 📍 Handler para consultar DENUE + Recomendaciones en background cuando el mapa se mueve
-  const awardBusinesses = [...geobookerBusinesses, ...denueBusinesses].filter(isAwardedBusiness);
-  const filteredBusinesses = awardFilter === 'all'
-    ? businesses
-    : businesses.filter((business) => matchesAwardFilter(business, awardFilter));
-  const filteredGeobookerBusinesses = awardFilter === 'all'
-    ? geobookerBusinesses
-    : geobookerBusinesses.filter((business) => matchesAwardFilter(business, awardFilter));
-  const filteredRecommendedBusinesses = awardFilter === 'all'
-    ? recommendedBusinesses
-    : recommendedBusinesses.filter((business) => matchesAwardFilter(business, awardFilter));
-  const filteredDenueBusinesses = awardFilter === 'all'
-    ? denueBusinesses
-    : denueBusinesses.filter((business) => matchesAwardFilter(business, awardFilter));
+  // Handler para consultar DENUE + Recomendaciones en background cuando el mapa se mueve
+  const awardBusinesses = useMemo(
+    () => [...geobookerBusinesses, ...denueBusinesses].filter(isAwardedBusiness),
+    [geobookerBusinesses, denueBusinesses]
+  );
+  const filteredBusinesses = useMemo(
+    () => awardFilter === 'all'
+      ? businesses
+      : businesses.filter((business) => matchesAwardFilter(business, awardFilter)),
+    [awardFilter, businesses]
+  );
+  const filteredGeobookerBusinesses = useMemo(
+    () => awardFilter === 'all'
+      ? geobookerBusinesses
+      : geobookerBusinesses.filter((business) => matchesAwardFilter(business, awardFilter)),
+    [awardFilter, geobookerBusinesses]
+  );
+  const filteredRecommendedBusinesses = useMemo(
+    () => awardFilter === 'all'
+      ? recommendedBusinesses
+      : recommendedBusinesses.filter((business) => matchesAwardFilter(business, awardFilter)),
+    [awardFilter, recommendedBusinesses]
+  );
+  const filteredDenueBusinesses = useMemo(
+    () => awardFilter === 'all'
+      ? denueBusinesses
+      : denueBusinesses.filter((business) => matchesAwardFilter(business, awardFilter)),
+    [awardFilter, denueBusinesses]
+  );
+  const visibleSearchBusinesses = useMemo(
+    () => prepareMapResults(filteredBusinesses, userLocation, SEARCH_RESULT_RENDER_LIMIT),
+    [filteredBusinesses, userLocation]
+  );
+  const visibleGeobookerBusinesses = useMemo(() => {
+    const openBusinesses = openNowFilter
+      ? filteredGeobookerBusinesses.filter((business) => isBusinessOpen(business.opening_hours).isOpen === true)
+      : filteredGeobookerBusinesses;
 
+    return prepareMapResults(openBusinesses, userLocation, NATIVE_MAP_RENDER_LIMIT);
+  }, [filteredGeobookerBusinesses, openNowFilter, userLocation]);
+  const visibleDenueBusinesses = useMemo(
+    () => prepareMapResults(filteredDenueBusinesses, userLocation, DENUE_MAP_RENDER_LIMIT),
+    [filteredDenueBusinesses, userLocation]
+  );
+  const visibleRecommendedBusinesses = useMemo(
+    () => prepareMapResults(filteredRecommendedBusinesses, userLocation, RECOMMENDED_MAP_RENDER_LIMIT),
+    [filteredRecommendedBusinesses, userLocation]
+  );
+  const mapSearchBusinesses = useDeferredValue(visibleSearchBusinesses);
+  const mapGeobookerBusinesses = useDeferredValue(visibleGeobookerBusinesses);
+  const mapDenueBusinesses = useDeferredValue(visibleDenueBusinesses);
+  const mapRecommendedBusinesses = useDeferredValue(visibleRecommendedBusinesses);
   useEffect(() => {
     awardFilterRef.current = awardFilter;
   }, [awardFilter]);
@@ -1190,6 +1333,77 @@ const HomePage = () => {
           </div>
         </div>
       </div>
+
+
+      {/* Hero Banner Publicitario (Primera Plana) */}
+      {showDeferredAds && (
+        <Suspense fallback={<DeferredSectionFallback minHeight="120px" />}>
+          <HeroBanner />
+        </Suspense>
+      )}
+
+      {/* 🤖 La IA de Geobooker te recomienda */}
+      <div className="container mx-auto px-4 py-4">
+        <AIRecommendations />
+      </div>
+
+      {/* Resultados Patrocinados - Solo si hay búsqueda activa */}
+      {
+        businesses.length > 0 && (
+          <div className="container mx-auto px-4 py-6">
+            <div className="max-w-4xl mx-auto space-y-4">
+              {/* Primer resultado patrocinado */}
+              <SponsoredResultCard context={{ search: true, location: userLocation }} />
+
+              {/* Anuncio fullwidth después del 3er resultado */}
+              <SponsoredFullwidth context={{ search: true, location: userLocation }} />
+
+              {/* Segundo resultado patrocinado */}
+              <SponsoredResultCard context={{ search: true, location: userLocation }} />
+            </div>
+          </div>
+        )
+      }
+
+      {/* Mapa - Siempre visible */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+          <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800">
+                {businesses.length > 0
+                  ? `${businesses.length} ${t('home.businessesFound')}`
+                  : t('home.businessMap')}
+              </h2>
+              {searchLoading && (
+                <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Actualizando mapa y resultados cercanos
+                </div>
+              )}
+            </div>
+            {/* Boton flotante para actualizar ubicacion */}
+            <LocationRefreshButton />
+          </div>
+
+          <Suspense fallback={<MapLoadingFallback />}>
+            <BusinessMap
+              userLocation={userLocation}
+              center={getMapCenter()}
+              businesses={mapSearchBusinesses} // Google Places o resultados semanticos priorizados
+              geobookerBusinesses={mapGeobookerBusinesses}
+              denueBusinesses={mapDenueBusinesses}
+              recommendedBusinesses={mapRecommendedBusinesses}
+              selectedBusiness={selectedBusiness}
+              onBusinessSelect={setSelectedBusiness}
+              onViewBusinessProfile={handleViewBusinessProfile}
+              onMapIdle={handleMapIdle}
+              zoom={mapSearchBusinesses.length > 0 ? 13 : 12}
+            />
+          </Suspense>
+        </div>
+      </div>
+
       <div className="bg-slate-950 text-white">
         <div className="container mx-auto px-4 py-10">
           <div className="grid gap-6 lg:grid-cols-[1.3fr,1fr]">
@@ -1300,78 +1514,7 @@ const HomePage = () => {
 
       <AppStoresLaunchBanner />
 
-      {/* Hero Banner Publicitario (Primera Plana) */}
-      {showDeferredAds && (
-        <Suspense fallback={<DeferredSectionFallback minHeight="120px" />}>
-          <HeroBanner />
-        </Suspense>
-      )}
-
-      {/* 🤖 La IA de Geobooker te recomienda */}
-      <div className="container mx-auto px-4 py-4">
-        <AIRecommendations />
-      </div>
-
-      {/* Resultados Patrocinados - Solo si hay búsqueda activa */}
-      {
-        businesses.length > 0 && (
-          <div className="container mx-auto px-4 py-6">
-            <div className="max-w-4xl mx-auto space-y-4">
-              {/* Primer resultado patrocinado */}
-              <SponsoredResultCard context={{ search: true, location: userLocation }} />
-
-              {/* Anuncio fullwidth después del 3er resultado */}
-              <SponsoredFullwidth context={{ search: true, location: userLocation }} />
-
-              {/* Segundo resultado patrocinado */}
-              <SponsoredResultCard context={{ search: true, location: userLocation }} />
-            </div>
-          </div>
-        )
-      }
-
-      {/* Mapa - Siempre visible */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">
-              {businesses.length > 0
-                ? `${businesses.length} ${t('home.businessesFound')}`
-                : t('home.businessMap')}
-            </h2>
-            {/* Botón flotante para actualizar ubicación */}
-            <LocationRefreshButton />
-          </div>
-
-          <Suspense fallback={<MapLoadingFallback />}>
-            <BusinessMap
-              userLocation={userLocation}
-              center={getMapCenter()}
-              businesses={filteredBusinesses} // Google Places o resultados semanticos
-              geobookerBusinesses={
-                // Aplicar filtro "Abierto ahora" si está activo
-                openNowFilter
-                  ? filteredGeobookerBusinesses.filter(b => {
-                      const result = isBusinessOpen(b.opening_hours);
-                      return result.isOpen === true;
-                    })
-                  : filteredGeobookerBusinesses
-              }
-              denueBusinesses={
-                openNowFilter
-                  ? filteredDenueBusinesses
-                  : filteredDenueBusinesses
-              }
-              recommendedBusinesses={filteredRecommendedBusinesses}
-              selectedBusiness={selectedBusiness}
-              onBusinessSelect={setSelectedBusiness}
-              onViewBusinessProfile={handleViewBusinessProfile}
-              onMapIdle={handleMapIdle}
-              zoom={filteredBusinesses.length > 0 ? 13 : 12}
-            />
-          </Suspense>
-        </div>
-      </div>
+      <GeobookerUseCases />
 
       {/* CEO Quote / Pitch Section */}
       <div className="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-16">

@@ -17,6 +17,7 @@ import { usePageTracking } from "./hooks/usePageTracking";
 // ✅ FIX Apple Guideline 2.1: ATT permission request
 import { AppTrackingTransparency } from "@capgo/capacitor-app-tracking-transparency";
 import i18n from "./i18n";
+import { getLanguageForCountry, markAutoLanguage, shouldRespectManualLanguage } from "./utils/languagePreference";
 
 import AppRouter from "./router";
 import { checkAppVersion } from "./services/cacheVersionService";
@@ -251,19 +252,12 @@ function AppInitializer() {
         localStorage.setItem("userCountryName", geoData.countryName);
         localStorage.setItem("userCity", geoData.city);
 
-        const isComMx = window.location.hostname.endsWith("geobooker.com.mx");
-        const isCapacitor = window.Capacitor?.isNativePlatform?.();
-        const savedLang = localStorage.getItem("language");
-        if (!savedLang && !isComMx && !isCapacitor) {
-          const country = geoData.country;
-          let newLang = null;
-          if (country === "FR") newLang = "fr";
-          else if (["CN", "HK", "TW"].includes(country)) newLang = "zh";
-          else if (["ES", "MX", "CO", "AR", "CL", "PE", "EC", "GT", "PR"].includes(country)) newLang = "es";
-          else if (["US", "GB", "CA", "AU", "NZ", "IE", "DE", "IT", "NL", "BE", "SE", "NO", "FI", "DK"].includes(country)) newLang = "en";
-          if (newLang && i18n.language !== newLang) {
-            i18n.changeLanguage(newLang);
-          }
+        const countryLanguage = getLanguageForCountry(geoData.country);
+        const hasManualLanguage = shouldRespectManualLanguage();
+
+        if (countryLanguage && !hasManualLanguage && i18n.language !== countryLanguage) {
+          markAutoLanguage(countryLanguage);
+          i18n.changeLanguage(countryLanguage);
         }
       }
     };

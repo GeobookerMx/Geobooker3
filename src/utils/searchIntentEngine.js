@@ -92,6 +92,117 @@ export const SEARCH_INTENT_RULES = [
     trustSignals: ['mayoreo', 'entrega programada', 'cobertura local'],
     keywords: ['insumos para restaurante', 'proveedor de alimentos', 'alimentos mayoreo', 'abarrotes mayoreo', 'restaurant supplies', 'food supplier']
   },
+
+  {
+    id: 'medical_supplies',
+    label: 'Insumos medicos y equipo de salud',
+    confidence: 0.88,
+    categoryHints: ['medical-supplies', 'pharmacy', 'doctor'],
+    googleQuery: 'insumos medicos equipo medico proveedor salud',
+    fallbackQueries: ['insumos medicos cerca', 'equipo medico cerca', 'medical supplies near me', 'surgical supplies'],
+    trustSignals: ['proveedor especializado', 'facturacion', 'stock validable', 'atencion profesional'],
+    keywords: ['jeringa', 'jeringas', 'guantes nitrilo', 'guantes latex', 'cubrebocas', 'gasas', 'vendas', 'oximetro', 'baumanometro', 'silla de ruedas', 'material de curacion', 'equipo medico', 'insumos medicos', 'medical supplies', 'surgical supplies']
+  },
+  {
+    id: 'beauty_supplies',
+    label: 'Belleza, cosmeticos y servicios esteticos',
+    confidence: 0.87,
+    categoryHints: ['beauty-salon', 'beauty-supplies', 'nail-salon'],
+    googleQuery: 'cosmeticos belleza salon makeup nails',
+    fallbackQueries: ['cosmeticos cerca', 'maquillista cerca', 'nail supply', 'beauty supply store'],
+    trustSignals: ['portafolio', 'citas', 'productos profesionales', 'resenas'],
+    keywords: ['maquillista', 'maquillaje', 'base maquillaje', 'pestanas', 'unas acrilicas', 'gelish', 'tinte cabello', 'cosmeticos', 'beauty supply', 'makeup artist', 'nail supplies']
+  },
+  {
+    id: 'office_print_supplies',
+    label: 'Papeleria, oficina e impresion',
+    confidence: 0.86,
+    categoryHints: ['stationery-store', 'print-shop', 'office-supplies'],
+    googleQuery: 'papeleria impresiones copias office supplies print shop',
+    fallbackQueries: ['papeleria cerca', 'copias cerca', 'imprenta cerca', 'office supplies near me'],
+    trustSignals: ['entrega rapida', 'impresion local', 'facturacion', 'mayoreo'],
+    keywords: ['hojas carta', 'toner', 'cartucho', 'impresiones', 'copias', 'engargolado', 'papeleria', 'utiles oficina', 'office supplies', 'printing', 'copy center']
+  },
+  {
+    id: 'pet_supplies_vet',
+    label: 'Mascotas, alimento y veterinaria',
+    confidence: 0.87,
+    categoryHints: ['pet-supplies', 'veterinarian'],
+    googleQuery: 'veterinaria alimento mascotas pet supplies',
+    fallbackQueries: ['alimento para perro cerca', 'veterinaria cerca', 'pet supplies near me', 'animal hospital'],
+    trustSignals: ['horario', 'urgencias', 'stock de alimento', 'servicio veterinario'],
+    keywords: ['croquetas', 'alimento para perro', 'alimento para gato', 'arena para gato', 'vacunas mascotas', 'veterinaria', 'veterinario', 'pet food', 'pet supplies', 'animal hospital']
+  },
+  {
+    id: 'auto_parts_general',
+    label: 'Refacciones automotrices y autopartes',
+    confidence: 0.88,
+    categoryHints: ['auto-parts', 'mechanic', 'tire-service'],
+    googleQuery: 'refaccionaria autopartes auto parts',
+    fallbackQueries: ['refaccionaria cerca', 'autopartes cerca', 'auto parts near me', 'taller mecanico cerca'],
+    trustSignals: ['compatibilidad', 'modelo del vehiculo', 'garantia', 'stock'],
+    keywords: ['balatas', 'bujias', 'filtro de aceite', 'amortiguador', 'bateria auto', 'refaccionaria', 'autopartes', 'auto parts', 'brake pads', 'car battery']
+  },
+  {
+    id: 'electronics_repair_parts',
+    label: 'Electronica, celulares y reparacion',
+    confidence: 0.86,
+    categoryHints: ['electronics-repair', 'electronics-store'],
+    googleQuery: 'reparacion celulares electronica accesorios',
+    fallbackQueries: ['reparacion de celulares cerca', 'electronica cerca', 'phone repair near me', 'electronics store'],
+    trustSignals: ['garantia', 'diagnostico', 'refacciones', 'tiempo de entrega'],
+    keywords: ['pantalla iphone', 'display celular', 'cargador', 'cable usb', 'reparacion celular', 'electronica', 'componentes electronicos', 'phone repair', 'electronics repair']
+  },
+  {
+    id: 'cleaning_janitorial_supplies',
+    label: 'Limpieza, sanitizacion e insumos',
+    confidence: 0.86,
+    categoryHints: ['cleaning-service', 'cleaning-supplies', 'chemical-supplies'],
+    googleQuery: 'productos de limpieza sanitizacion janitorial supplies',
+    fallbackQueries: ['productos de limpieza cerca', 'limpieza industrial', 'janitorial supplies', 'cleaning service near me'],
+    trustSignals: ['mayoreo', 'ficha tecnica', 'entrega local', 'servicio programado'],
+    keywords: ['cloro', 'desinfectante', 'detergente industrial', 'sanitizante', 'limpieza profunda', 'limpieza industrial', 'janitorial supplies', 'cleaning chemicals']
+  },
+  {
+    id: 'safety_ppe_supplies',
+    label: 'Equipo de seguridad industrial',
+    confidence: 0.87,
+    categoryHints: ['safety-equipment', 'industrial-supplies'],
+    googleQuery: 'equipo de seguridad industrial epp ppe',
+    fallbackQueries: ['equipo de seguridad cerca', 'botas industriales', 'ppe supplier', 'industrial safety equipment'],
+    trustSignals: ['normas', 'tallas', 'mayoreo', 'ficha tecnica'],
+    keywords: ['casco seguridad', 'chaleco reflejante', 'botas industriales', 'guantes seguridad', 'lentes seguridad', 'arnes', 'epp', 'ppe', 'safety equipment']
+  },
+  {
+    id: 'restaurant_equipment',
+    label: 'Equipo e insumos para cocina/restaurante',
+    confidence: 0.87,
+    categoryHints: ['restaurant-equipment', 'food-suppliers', 'restaurant-supplies'],
+    googleQuery: 'equipo para restaurante cocina industrial',
+    fallbackQueries: ['equipo para restaurante cerca', 'cocina industrial', 'restaurant equipment', 'commercial kitchen supplies'],
+    trustSignals: ['instalacion', 'garantia', 'mayoreo', 'servicio tecnico'],
+    keywords: ['freidora industrial', 'refrigerador comercial', 'mesa acero inoxidable', 'campana cocina', 'equipo restaurante', 'cocina industrial', 'restaurant equipment', 'commercial kitchen']
+  },
+  {
+    id: 'event_supplies_services',
+    label: 'Eventos, mobiliario y produccion',
+    confidence: 0.84,
+    categoryHints: ['event-services', 'party-supplies'],
+    googleQuery: 'renta mobiliario eventos sonido iluminacion',
+    fallbackQueries: ['renta de mesas y sillas cerca', 'sonido para eventos', 'party rentals near me', 'event production'],
+    trustSignals: ['disponibilidad por fecha', 'montaje', 'paquetes', 'cobertura'],
+    keywords: ['renta mesas', 'renta sillas', 'carpa', 'inflables', 'sonido eventos', 'iluminacion eventos', 'mobiliario eventos', 'party rental', 'event production']
+  },
+  {
+    id: 'agro_supplies',
+    label: 'Agroinsumos y suministros rurales',
+    confidence: 0.85,
+    categoryHints: ['agro-supplies', 'hardware-store', 'chemical-supplies'],
+    googleQuery: 'agroinsumos fertilizantes semillas veterinaria rural',
+    fallbackQueries: ['agroinsumos cerca', 'fertilizantes cerca', 'farm supplies near me', 'agricultural supplies'],
+    trustSignals: ['temporada', 'asesoria tecnica', 'mayoreo', 'entrega regional'],
+    keywords: ['fertilizante', 'semillas', 'herbicida', 'insecticida agricola', 'riego agricola', 'forraje', 'agroinsumos', 'agricultural supplies', 'farm supplies']
+  },
   {
     id: 'pharmacy_product',
     label: 'Farmacia y medicamento',

@@ -32,6 +32,18 @@ const SEMANTIC_GROUPS = [
   ['truck_parking_logistics', ['patio logistico', 'pension para tracto', 'pension para tractocamion', 'pension para trailer', 'patio para mercancia', 'resguardo de mercancia', 'estacionamiento de trailer', 'estacionamiento para tractocamion', 'drop yard', 'truck yard', 'secure yard', 'truck parking', 'yard storage']],
   ['warehouse_storage', ['bodega', 'bodegas', 'storage', 'warehouse', 'almacen', 'almacenaje', 'mini bodega', 'mini storage', 'renta de bodega', 'logistics warehouse']],
   ['heavy_truck_parts', ['refacciones diesel', 'refaccionaria diesel', 'refacciones tractocamion', 'taller pesado', 'taller diesel', 'truck parts', 'diesel repair', 'heavy truck repair']],
+
+  ['medical_supplies', ['insumos medicos', 'equipo medico', 'material de curacion', 'jeringas', 'guantes nitrilo', 'gasas', 'vendas', 'oximetro', 'baumanometro', 'silla de ruedas', 'medical supplies', 'surgical supplies']],
+  ['beauty_supplies', ['cosmeticos', 'productos de belleza', 'maquillaje profesional', 'pestanas', 'tinte cabello', 'beauty supply', 'makeup supplies', 'nail supplies']],
+  ['office_supplies', ['papeleria oficina', 'hojas carta', 'toner', 'cartuchos', 'engargolado', 'copias', 'impresiones', 'office supplies', 'copy center', 'print shop']],
+  ['pet_supplies', ['croquetas', 'alimento para perro', 'alimento para gato', 'arena para gato', 'pet food', 'pet supplies', 'veterinary supplies']],
+  ['auto_parts', ['autopartes', 'refaccionaria', 'balatas', 'bujias', 'bateria auto', 'filtro de aceite', 'amortiguadores', 'auto parts', 'brake pads', 'car battery']],
+  ['electronics_repair', ['reparacion celular', 'pantalla iphone', 'display celular', 'cargador', 'componentes electronicos', 'phone repair', 'electronics repair', 'electronics store']],
+  ['cleaning_supplies', ['productos de limpieza', 'cloro', 'desinfectante', 'detergente industrial', 'sanitizante', 'janitorial supplies', 'cleaning chemicals']],
+  ['safety_equipment', ['equipo de seguridad', 'epp', 'casco seguridad', 'botas industriales', 'chaleco reflejante', 'lentes seguridad', 'arnes', 'ppe', 'safety equipment']],
+  ['restaurant_equipment', ['equipo para restaurante', 'cocina industrial', 'freidora industrial', 'refrigerador comercial', 'mesa acero inoxidable', 'restaurant equipment', 'commercial kitchen supplies']],
+  ['event_services', ['renta mesas', 'renta sillas', 'carpa', 'sonido para eventos', 'iluminacion eventos', 'mobiliario eventos', 'party rentals', 'event production']],
+  ['agro_supplies', ['agroinsumos', 'fertilizantes', 'semillas', 'herbicida', 'insecticida agricola', 'riego agricola', 'forraje', 'agricultural supplies', 'farm supplies']],
   ['iron_works', ['herreria', 'portones', 'rejas', 'soldadura', 'iron works', 'welding', 'metal gate']],
   ['aluminum_works', ['aluminio', 'ventanas de aluminio', 'canceleria', 'puertas de aluminio', 'aluminum works', 'aluminum fabrication']],
   ['carpenter', ['carpinteria', 'muebles a medida', 'puertas de madera', 'carpintero', 'woodwork', 'carpenter']],
@@ -66,7 +78,7 @@ const SEMANTIC_GROUPS = [
   ['dumplings', ['dumplings', 'gyoza', 'momo', 'mandu', 'pierogi', 'wonton']],
   ['grill_house', ['parrilla', 'asado', 'churrasco', 'steakhouse', 'barbecue', 'bbq']],
   ['street_food', ['street food', 'food truck', 'warung', 'hawker stall', 'puesto de comida']],
-  ['voice_search', ['negocios cerca de mi', 'servicios cerca de mi', 'que hay cerca de mi', 'donde encuentro un plomero', 'donde hay una farmacia abierta', 'necesito una vulcanizadora', 'busco un cerrajero urgente', 'comida cerca de mi', 'barberia cerca de mi', 'taller mecanico cerca', 'tornillo de cuerda 3/8 cerca de mi', 'patio para tracto con mercancia', 'pension para tractocamion', 'businesses near me', 'services near me', 'restaurants near me', 'tire repair near me', 'plumber near me', 'locksmith near me', 'pharmacy near me', 'coffee shop near me', 'truck parking near me', 'fasteners near me']],
+  ['voice_search', ['negocios cerca de mi', 'servicios cerca de mi', 'que hay cerca de mi', 'donde encuentro un plomero', 'donde hay una farmacia abierta', 'necesito una vulcanizadora', 'busco un cerrajero urgente', 'comida cerca de mi', 'barberia cerca de mi', 'taller mecanico cerca', 'tornillo de cuerda 3/8 cerca de mi', 'patio para tracto con mercancia', 'pension para tractocamion', 'businesses near me', 'services near me', 'restaurants near me', 'tire repair near me', 'plumber near me', 'locksmith near me', 'pharmacy near me', 'coffee shop near me', 'truck parking near me', 'fasteners near me', 'insumos medicos cerca', 'beauty supply near me', 'auto parts near me', 'equipo de seguridad industrial', 'restaurant equipment near me', 'agroinsumos cerca']],
   ['regional_search', ['mexicano', 'mexicana', 'mexico', 'cdmx', 'chilango', 'tapatio', 'regio', 'poblano', 'yucateco', 'mexiquense', 'colombiano', 'bogotano', 'paisa', 'argentino', 'porteno', 'chileno', 'peruano', 'limeno', 'espanol', 'madrileno', 'barcelones', 'estadounidense', 'latino', 'hispano', 'local', 'nearby', 'near me']]
 ];
 

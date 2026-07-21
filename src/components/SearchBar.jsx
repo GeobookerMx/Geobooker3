@@ -29,6 +29,8 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
     'Tornillo de cuerda 3/8 cerca de mi', 'Tornilleria cerca', 'Cemento y concreto', 'Acero y perfiles', 'Materiales de construccion',
     'Tarimas y empaque', 'Proveedor de alimentos', 'Insumos para restaurante',
     'Componentes industriales', 'Productos quimicos', 'Maquinaria industrial',
+    'Insumos medicos cerca', 'Equipo de seguridad industrial', 'Autopartes cerca', 'Reparacion celular cerca',
+    'Beauty supply near me', 'Restaurant equipment near me', 'Agroinsumos cerca', 'Renta mesas y sillas',
     'Coffee shop near me', 'Pharmacy near me', 'Locksmith near me', 'Plumber near me'
   ];
 

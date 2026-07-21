@@ -13,7 +13,7 @@ import { Capacitor } from "@capacitor/core";
 import { getPremiumPromoLongMessage, isPremiumPromoActive } from "../../config/promotions";
 
 export default function Header() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   // ✅ Fuente única de verdad de auth — antes había un onAuthStateChange duplicado
   // que disparaba race conditions con AuthContext y forzaba re-renders extras.
@@ -120,6 +120,7 @@ export default function Header() {
 
   const isNative = Capacitor.isNativePlatform();
   const showPremiumPromo = !IS_IOS_NATIVE && isPremiumPromoActive();
+  const currentLocale = i18n.language?.startsWith('en') ? 'en-US' : 'es-MX';
 
   return (
     <header 
@@ -132,7 +133,7 @@ export default function Header() {
           to={user ? "/dashboard/upgrade" : "/signup"}
           className="block bg-gradient-to-r from-emerald-600 via-green-500 to-lime-500 px-4 py-2 text-center text-sm font-bold text-white hover:brightness-105 transition"
         >
-          ✨ {getPremiumPromoLongMessage()} • Actívalo en minutos
+          ✨ {getPremiumPromoLongMessage(currentLocale)} - {t('nav.premiumActivate')}
         </Link>
       )}
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
@@ -176,14 +177,14 @@ export default function Header() {
             {t("nav.community")}
           </Link>
           <Link to="/b2b-connect" className="text-geoPurple font-bold hover:text-geoPink transition-colors flex items-center gap-1">
-            💼 Proveedores B2B
+            {t('nav.b2bProviders')}
           </Link>
 
           <Link
             to="/claim"
             className="border-2 border-amber-600 text-amber-700 px-4 py-1.5 rounded-full font-bold hover:bg-amber-600 hover:text-white transition-all flex items-center gap-1 shadow-sm hover:-translate-y-0.5"
           >
-            🏪 {t("nav.claimBusiness", "Reclamar Negocio")}
+            🏪 {t('nav.claimBusiness')}
           </Link>
 
           {user && (
@@ -191,7 +192,7 @@ export default function Header() {
               onClick={() => setShowRecommendForm(true)}
               className="border-2 border-geoPurple text-geoPurple px-4 py-1.5 rounded-full font-bold hover:bg-geoPurple hover:text-white transition-all flex items-center gap-1 shadow-sm hover:-translate-y-0.5"
             >
-              ⭐ {t("nav.recommend", "Recomendar Negocio")}
+              ⭐ {t('nav.recommend')}
             </button>
           )}
 
@@ -276,7 +277,7 @@ export default function Header() {
                     onClick={() => setShowUserMenu(false)}
                     className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                   >
-                    🗑️ Eliminar cuenta
+                    {t('nav.deleteAccount')}
                   </Link>
 
                   <button
@@ -330,7 +331,7 @@ export default function Header() {
             onClick={() => setIsOpen(false)}
             className="block text-geoPurple font-bold hover:text-geoPink py-1"
           >
-            💼 Proveedores B2B
+            {t('nav.b2bProviders')}
           </Link>
 
           <Link
@@ -338,7 +339,7 @@ export default function Header() {
             onClick={() => setIsOpen(false)}
             className="block text-center border-2 border-amber-600 text-amber-700 hover:bg-amber-600 hover:text-white px-4 py-2 rounded-full w-full font-bold transition-all mb-2"
           >
-            🏪 {t("nav.claimBusiness", "Reclamar Negocio")}
+            🏪 {t('nav.claimBusiness')}
           </Link>
 
           {user && (
@@ -349,7 +350,7 @@ export default function Header() {
               }}
               className="block text-center border-2 border-geoPurple text-geoPurple hover:bg-geoPurple hover:text-white px-4 py-2 rounded-full w-full font-bold transition-all"
             >
-              ⭐ {t("nav.recommend", "Recomendar Negocio")}
+              ⭐ {t('nav.recommend')}
             </button>
           )}
 
@@ -399,8 +400,8 @@ export default function Header() {
                 onClick={() => setIsOpen(false)}
                 className="block text-red-600 hover:text-red-700 mb-2"
               >
-                🗑️ Eliminar cuenta
-              </Link>
+                    {t('nav.deleteAccount')}
+                  </Link>
 
               <button
                 onClick={() => {

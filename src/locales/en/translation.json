@@ -1,790 +1,820 @@
 {
-    "common": {
-        "loading": "Loading...",
-        "error": "Error",
-        "success": "Success",
-        "cancel": "Cancel",
-        "save": "Save",
-        "delete": "Delete",
-        "edit": "Edit",
-        "search": "Search",
-        "close": "Close",
-        "back": "Back",
-        "next": "Next",
-        "previous": "Previous",
-        "submit": "Submit",
-        "confirm": "Confirm",
-        "title": "Title",
-        "titlePlaceholder": "Enter a title...",
-        "commentPlaceholder": "Write a comment...",
-        "verified": "Verified",
-        "notVerified": "Not verified",
-        "allRatings": "All ratings",
-        "stars": "stars",
-        "star": "star",
-        "mostRecent": "Most recent",
-        "mostHelpful": "Most helpful",
-        "bestRated": "Best rated",
-        "loadingReviews": "Loading reviews...",
-        "now": "Now",
-        "viewComments": "View comments",
-        "hideComments": "Hide comments",
-        "frequentQuestions": "Frequently asked questions"
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "title": "Title",
+    "titlePlaceholder": "Enter a title...",
+    "commentPlaceholder": "Write a comment...",
+    "verified": "Verified",
+    "notVerified": "Not verified",
+    "allRatings": "All ratings",
+    "stars": "stars",
+    "star": "star",
+    "mostRecent": "Most recent",
+    "mostHelpful": "Most helpful",
+    "bestRated": "Best rated",
+    "loadingReviews": "Loading reviews...",
+    "now": "Now",
+    "viewComments": "View comments",
+    "hideComments": "Hide comments",
+    "frequentQuestions": "Frequently asked questions"
+  },
+  "nav": {
+    "home": "Home",
+    "businesses": "Businesses",
+    "categories": "Categories",
+    "login": "Login",
+    "register": "Sign Up",
+    "profile": "Profile",
+    "dashboard": "Dashboard",
+    "logout": "Logout",
+    "addBusiness": "Add Business",
+    "about": "About Us",
+    "community": "Community",
+    "moreSales": "More sales?",
+    "user": "User",
+    "logoutSuccess": "Logged out successfully",
+    "logoutError": "Error logging out",
+    "openMenu": "Open menu",
+    "viewDashboard": "View your dashboard",
+    "b2bProviders": "B2B Providers",
+    "claimBusiness": "Claim Business",
+    "recommend": "Recommend Business",
+    "deleteAccount": "Delete account",
+    "premiumActivate": "Activate it in minutes"
+  },
+  "home": {
+    "title": "Find nearby businesses and services",
+    "subtitle": "Geobooker connects real needs with nearby businesses at the right moment.",
+    "searchPlaceholder": "What business or service are you looking for?",
+    "locationActive": "Location active",
+    "locationDefault": "Using default location",
+    "enableLocation": "Enable location to find businesses near you",
+    "needLocation": "We need your location to show you nearby businesses",
+    "allowLocation": "Allow Location",
+    "gettingLocation": "Getting your location...",
+    "locationObtained": "Location obtained successfully",
+    "businessesFound": "Businesses Found",
+    "businessMap": "Business Map",
+    "noBusinessesFound": "No businesses found with those criteria",
+    "foundBusinesses": "We found {{count}} businesses near you",
+    "businessList": "Business List",
+    "promo": {
+      "launch": "ENTERPRISE GLOBAL PROMO: 50% OFF on global pricing",
+      "validUntil": "Valid until:",
+      "seeOffers": "See offers →",
+      "march1": "March 1st, 2026"
     },
-    "nav": {
-        "home": "Home",
-        "businesses": "Businesses",
-        "categories": "Categories",
-        "login": "Login",
-        "register": "Sign Up",
-        "profile": "Profile",
-        "dashboard": "Dashboard",
-        "logout": "Logout",
-        "addBusiness": "Add Business",
-        "about": "About Us",
-        "community": "Community",
-        "moreSales": "More sales?",
-        "user": "User",
-        "logoutSuccess": "Logged out successfully",
-        "logoutError": "Error logging out",
-        "openMenu": "Open menu",
-        "viewDashboard": "View your dashboard"
+    "loadingMap": "Loading map...",
+    "locatingBusinesses": "Locating nearby businesses",
+    "filterActive": "Filtering:",
+    "removeFilter": "Remove filter",
+    "updateLocation": "Update my location",
+    "ceo": {
+      "quote": "Today millions search for businesses 'near me' but many searches fail due to outdated information. Geobooker solves that with verifiable profiles, simple updates, and real geolocation.",
+      "author": "GEOBOOKER TEAM",
+      "footer": "For advertisers: location-based advertising with limited slots and clear metrics."
     },
-    "home": {
-        "title": "Find nearby businesses and services",
-        "subtitle": "Geobooker connects real needs with nearby businesses at the right moment.",
-        "searchPlaceholder": "What business or service are you looking for?",
-        "locationActive": "Location active",
-        "locationDefault": "Using default location",
-        "enableLocation": "Enable location to find businesses near you",
-        "needLocation": "We need your location to show you nearby businesses",
-        "allowLocation": "Allow Location",
-        "gettingLocation": "Getting your location...",
-        "locationObtained": "Location obtained successfully",
-        "businessesFound": "Businesses Found",
-        "businessMap": "Business Map",
-        "noBusinessesFound": "No businesses found with those criteria",
-        "foundBusinesses": "We found {{count}} businesses near you",
-        "businessList": "Business List",
-        "promo": {
-            "launch": "ENTERPRISE GLOBAL PROMO: 50% OFF on global pricing",
-            "validUntil": "Valid until:",
-            "seeOffers": "See offers →",
-            "march1": "March 1st, 2026"
-        },
-        "loadingMap": "Loading map...",
-        "locatingBusinesses": "Locating nearby businesses",
-        "filterActive": "Filtering:",
-        "removeFilter": "Remove filter",
-        "updateLocation": "Update my location",
-        "ceo": {
-            "quote": "Today millions search for businesses 'near me' but many searches fail due to outdated information. Geobooker solves that with verifiable profiles, simple updates, and real geolocation.",
-            "author": "GEOBOOKER TEAM",
-            "footer": "For advertisers: location-based advertising with limited slots and clear metrics."
-        },
-        "howItWorks": {
-            "title": "How It Works?",
-            "subtitle": "Find businesses near you in 3 simple steps",
-            "step1": {
-                "title": "1. Search",
-                "desc": "Type what you need: pharmacies, restaurants, workshops, and more"
-            },
-            "step2": {
-                "title": "2. Find",
-                "desc": "See the closest businesses to your location in real time"
-            },
-            "step3": {
-                "title": "3. Arrive",
-                "desc": "Get directions and arrive quickly at your destination"
-            }
-        },
-        "video": {
-            "title": "Watch how it works",
-            "subtitle": "Discover how to find businesses near you",
-            "subscribe": "Subscribe to our channel"
-        },
-        "stats": {
-            "registered": "Registered Businesses",
-            "activeUsers": "Active Users",
-            "searches": "Searches Performed",
-            "rating": "Average Rating"
-        },
-        "businessSection": {
-            "title": "Do You Have a Business?",
-            "subtitle": "Register your business on Geobooker and reach thousands of potential customers near you",
-            "benefit1": {
-                "title": "Immediate Visibility:",
-                "desc": "Appear in local searches instantly"
-            },
-            "benefit2": {
-                "title": "Free up to 2 businesses:",
-                "desc": "No cost to start"
-            },
-            "benefit3": {
-                "title": "Real-Time Statistics:",
-                "desc": "See how many people are looking for you"
-            },
-            "benefit4": {
-                "title": "Targeted Advertising:",
-                "desc": "Reach your ideal audience"
-            },
-            "cta": "Register My Business →",
-            "nearby": "{{distance}} from you"
-        },
-        "verifiedBusinesses": "Verified Businesses",
-        "trust": {
-            "title": "They already trust Geobooker 💼",
-            "subtitle": "Join hundreds of businesses that have already found more customers"
-        },
-        "testimonials": {
-            "vet": {
-                "name": "Veterinarian",
-                "desc": "Professional care"
-            },
-            "rest": {
-                "name": "Restaurant",
-                "desc": "Mexican cuisine"
-            }
-        },
-        "finalCta": {
-            "title": "Ready to Discover Businesses Near You?",
-            "subtitle": "Join thousands of users who already find what they need in seconds",
-            "button": "Start Now →"
-        },
-        "searchCleared": "Search cleared",
-        "identity": {
-            "badge": "Local search, visibility and commercial activation",
-            "blockLabel": "What Geobooker solves",
-            "title": "Geobooker helps users, businesses and brands connect at the right moment.",
-            "description": "For users, Geobooker saves time when finding useful nearby businesses. For businesses, it creates a new layer of local visibility. For brands, it opens advertising and activation opportunities by city, territory and category.",
-            "users": {
-                "title": "For users",
-                "description": "Find pharmacies, restaurants, repair shops, barbers, clinics and local services with map, contact and directions."
-            },
-            "businesses": {
-                "title": "For businesses",
-                "description": "Help your business appear when nearby customers are searching for what you offer by category, city or real-world need."
-            },
-            "brands": {
-                "title": "For brands",
-                "description": "Launch local or international advertising in a context where the user already has intent to search, visit or contact."
-            },
-            "promiseLabel": "Brand promise",
-            "promise": "More local visibility. More contact opportunities. More chances to sell.",
-            "promiseDescription": "Geobooker does not promise guaranteed sales. It helps you appear better, organize your digital presence and turn high-intent discovery into real opportunities.",
-            "urgencyLabel": "Why it matters",
-            "urgencyDescription": "Every local search where a business does not appear is an opportunity that can end up with a competitor. Geobooker exists so no good business stays invisible and no user wastes time searching for what can be found nearby.",
-            "ctaBusiness": "Claim or register business",
-            "ctaAdvertise": "Explore Geobooker advertising",
-            "intentTitle": "What people search in real life",
-            "intentDescription": "Geobooker should understand formal categories, slang, urgent needs and real-world intent. That is why we search by intent, territory and context, not only by exact names.",
-            "intentChip1": "24 hour pharmacy",
-            "intentChip2": "tire repair or flat tire",
-            "intentChip3": "emergency locksmith",
-            "intentChip4": "auto repair near me",
-            "intentChip5": "coffee shop near me",
-            "intentChip6": "moving service"
-        }
+    "howItWorks": {
+      "title": "How It Works?",
+      "subtitle": "Find businesses near you in 3 simple steps",
+      "step1": {
+        "title": "1. Search",
+        "desc": "Type what you need: pharmacies, restaurants, workshops, and more"
+      },
+      "step2": {
+        "title": "2. Find",
+        "desc": "See the closest businesses to your location in real time"
+      },
+      "step3": {
+        "title": "3. Arrive",
+        "desc": "Get directions and arrive quickly at your destination"
+      }
     },
-    "globalPromo": {
-        "badge": "Global Advertising",
-        "homeTitle": "Want your brand to appear on the other side of the world?",
-        "homeSubtitle": "Launch or expand your brand in a specific city with Geobooker Global. Targeting by country, language and category.",
-        "local": {
-            "title": "Geobooker Local",
-            "desc": "Perfect for local businesses and SMEs who want to appear in their city. Starting from $900 MXN/month."
-        },
-        "global": {
-            "title": "Geobooker Global",
-            "desc": "For international brands: FIFA 2026, Super Bowl, Olympics. 30-day free pilot."
-        },
-        "ctaLearnMore": "Learn how to do it"
+    "video": {
+      "title": "Watch how it works",
+      "subtitle": "Discover how to find businesses near you",
+      "subscribe": "Subscribe to our channel"
     },
-    "seo": {
-        "cityCategoryTitle": "Best {{category}} in {{city}}",
-        "categoryTitle": "{{category}} near me",
-        "cityTitle": "Businesses and services in {{city}}",
-        "cityDescription": "Explore the interactive map of {{city}}. Find restaurants, pharmacies, stores and more on Geobooker."
+    "stats": {
+      "registered": "Registered Businesses",
+      "activeUsers": "Active Users",
+      "searches": "Searches Performed",
+      "rating": "Average Rating"
     },
-    "search": {
-        "placeholder": "What business or service are you looking for?",
-        "searching": "Searching...",
-        "noResults": "No results found",
-        "categories": {
-            "barbershop": "Barbershop",
-            "restaurant": "Restaurant",
-            "pharmacy": "Pharmacy",
-            "supermarket": "Supermarket",
-            "gym": "Gym",
-            "veterinary": "Veterinary",
-            "mechanic": "Auto Repair",
-            "laundry": "Laundry",
-            "cafe": "Cafe",
-            "bakery": "Bakery",
-            "hospital": "Hospital",
-            "school": "School"
-        }
+    "businessSection": {
+      "title": "Do You Have a Business?",
+      "subtitle": "Register your business on Geobooker and reach thousands of potential customers near you",
+      "benefit1": {
+        "title": "Immediate Visibility:",
+        "desc": "Appear in local searches instantly"
+      },
+      "benefit2": {
+        "title": "Free up to 2 businesses:",
+        "desc": "No cost to start"
+      },
+      "benefit3": {
+        "title": "Real-Time Statistics:",
+        "desc": "See how many people are looking for you"
+      },
+      "benefit4": {
+        "title": "Targeted Advertising:",
+        "desc": "Reach your ideal audience"
+      },
+      "cta": "Register My Business →",
+      "nearby": "{{distance}} from you"
     },
-    "business": {
-        "category": "Category",
-        "address": "Address",
-        "phone": "Phone",
-        "website": "Website",
-        "hours": "Hours",
-        "rating": "Rating",
-        "reviews": "Reviews",
-        "distance": "{{distance}} km away",
-        "viewProfile": "View Profile",
-        "getDirections": "Go",
-        "call": "Call",
-        "share": "Share"
+    "verifiedBusinesses": "Verified Businesses",
+    "trust": {
+      "title": "They already trust Geobooker 💼",
+      "subtitle": "Join hundreds of businesses that have already found more customers"
     },
-    "businessForm": {
-        "title": "Add Your Business to Geobooker",
-        "subtitle": "Complete your business information. Registration is currently <1>100% free</1>.",
-        "businessName": "Business name",
-        "businessNamePlaceholder": "E.g. The Good Cut Barbershop",
-        "managerName": "Business manager",
-        "managerNameOptional": "(optional)",
-        "managerNamePlaceholder": "Manager's name",
-        "category": "Category",
-        "categoryPlaceholder": "E.g. Barbershop, Auto Repair, Pharmacy...",
-        "subcategory": "Subcategory",
-        "subcategoryPlaceholder": "E.g. Classic Barbershop, 24h Tire Shop...",
-        "description": "Brief description",
-        "descriptionPlaceholder": "Briefly describe what your business offers.",
-        "address": "Address",
-        "addressPlaceholder": "Street and number",
-        "city": "City",
-        "cityPlaceholder": "City",
-        "state": "State",
-        "statePlaceholder": "State",
-        "postalCode": "Postal code",
-        "postalCodePlaceholder": "ZIP",
-        "country": "Country",
-        "phoneLabel": "Phone",
-        "phonePlaceholder": "Business phone",
-        "whatsapp": "WhatsApp",
-        "whatsappPlaceholder": "WhatsApp number",
-        "website": "Website",
-        "websitePlaceholder": "https://yoursite.com",
-        "facebook": "Facebook",
-        "facebookPlaceholder": "URL or username",
-        "instagram": "Instagram",
-        "instagramPlaceholder": "@username or URL",
-        "offersInvoicing": "Does your business issue invoices?",
-        "invoicingDetails": "Important invoicing information (Tax ID, hours, etc.)",
-        "hasJobOpenings": "Do you currently have job openings?",
-        "jobOpeningsNote": "We'll be able to show businesses that are hiring soon.",
-        "submitButton": "Submit business",
-        "submitting": "Submitting...",
-        "successTitle": "Your business has been registered!",
-        "successMessage": "We've received your business information. It will be reviewed shortly and, once approved, will appear on Geobooker.",
-        "backToHome": "Back to home",
-        "registerAnother": "Register another business",
-        "requiredField": "*",
-        "validationError": "Please complete at least the business name and category.",
-        "submitError": "There was an error submitting your business. Check the console.",
-        "submitSuccess": "🎉 Your business has been submitted. We'll review the information.",
-        "termsAccept": "By submitting your business you accept our <1>terms of service</1> and <3>privacy policy</3>."
+    "testimonials": {
+      "vet": {
+        "name": "Veterinarian",
+        "desc": "Professional care"
+      },
+      "rest": {
+        "name": "Restaurant",
+        "desc": "Mexican cuisine"
+      }
     },
-    "login": {
-        "title": "Login",
-        "subtitle": "Welcome back to Geobooker",
-        "email": "Email",
-        "emailPlaceholder": "your@email.com",
-        "password": "Password",
-        "passwordPlaceholder": "Your password",
-        "loginButton": "Login",
-        "loggingIn": "Logging in...",
-        "rememberMe": "Remember me",
-        "forgotPassword": "Forgot your password?",
-        "noAccount": "Don't have an account?",
-        "signUp": "Sign up",
-        "signUpFree": "Sign Up Free",
-        "orContinueWith": "or continue with",
-        "continueWithGoogle": "Continue with Google",
-        "continueWithApple": "Continue with Apple",
-        "welcomeBack": "Welcome back!",
-        "invalidCredentials": "Invalid email or password",
-        "error": "Error logging in",
-        "googleError": "Error signing in with Google",
-        "appleError": "Error signing in with Apple"
+    "finalCta": {
+      "title": "Ready to Discover Businesses Near You?",
+      "subtitle": "Join thousands of users who already find what they need in seconds",
+      "button": "Start Now →"
     },
-    "signup": {
-        "title": "Create Account",
-        "subtitle": "Join Geobooker today",
-        "fullName": "Full Name",
-        "fullNamePlaceholder": "John Doe",
-        "email": "Email",
-        "emailPlaceholder": "your@email.com",
-        "password": "Password",
-        "passwordPlaceholder": "Minimum 8 characters",
-        "confirmPassword": "Confirm Password",
-        "confirmPasswordPlaceholder": "Repeat your password",
-        "acceptTerms": "I accept the",
-        "termsOfService": "Terms of Service",
-        "and": "and the",
-        "privacyPolicy": "Privacy Policy",
-        "createAccountButton": "Create Account",
-        "creatingAccount": "Creating account...",
-        "orSignUpWith": "or sign up with",
-        "signUpWithGoogle": "Sign up with Google",
-        "signUpWithApple": "Sign up with Apple",
-        "alreadyHaveAccount": "Already have an account?",
-        "loginLink": "Login",
-        "success": "Account created successfully! Check your email to confirm.",
-        "errorFullName": "Please enter your full name",
-        "errorPasswordLength": "Password must be at least 8 characters",
-        "errorPasswordMatch": "Passwords do not match",
-        "errorTerms": "You must accept the terms and conditions",
-        "errorAlreadyRegistered": "This email is already registered",
-        "error": "Error creating account",
-        "googleError": "Error signing up with Google",
-        "appleError": "Error signing up with Apple"
+    "searchCleared": "Search cleared",
+    "identity": {
+      "badge": "Local search, visibility and commercial activation",
+      "blockLabel": "What Geobooker solves",
+      "title": "Geobooker helps users, businesses and brands connect at the right moment.",
+      "description": "For users, Geobooker saves time when finding useful nearby businesses. For businesses, it creates a new layer of local visibility. For brands, it opens advertising and activation opportunities by city, territory and category.",
+      "users": {
+        "title": "For users",
+        "description": "Find pharmacies, restaurants, repair shops, barbers, clinics and local services with map, contact and directions."
+      },
+      "businesses": {
+        "title": "For businesses",
+        "description": "Help your business appear when nearby customers are searching for what you offer by category, city or real-world need."
+      },
+      "brands": {
+        "title": "For brands",
+        "description": "Launch local or international advertising in a context where the user already has intent to search, visit or contact."
+      },
+      "promiseLabel": "Brand promise",
+      "promise": "More local visibility. More contact opportunities. More chances to sell.",
+      "promiseDescription": "Geobooker does not promise guaranteed sales. It helps you appear better, organize your digital presence and turn high-intent discovery into real opportunities.",
+      "urgencyLabel": "Why it matters",
+      "urgencyDescription": "Every local search where a business does not appear is an opportunity that can end up with a competitor. Geobooker exists so no good business stays invisible and no user wastes time searching for what can be found nearby.",
+      "ctaBusiness": "Claim or register business",
+      "ctaAdvertise": "Explore Geobooker advertising",
+      "intentTitle": "What people search in real life",
+      "intentDescription": "Geobooker should understand formal categories, slang, urgent needs and real-world intent. That is why we search by intent, territory and context, not only by exact names.",
+      "intentChip1": "24 hour pharmacy",
+      "intentChip2": "tire repair or flat tire",
+      "intentChip3": "emergency locksmith",
+      "intentChip4": "auto repair near me",
+      "intentChip5": "coffee shop near me",
+      "intentChip6": "moving service"
     },
-    "enterprise": {
-        "seoTitle": "Geobooker Enterprise - Global Advertising for International Brands",
-        "seoDescription": "Reach millions of users at events like FIFA 2026. Enterprise global pricing is 50% off through December 31, 2026.",
-        "promoBanner": "ENTERPRISE GLOBAL PROMOTION: 50% OFF",
-        "offerEnds": "Offer ends in",
-        "days": "days",
-        "hours": "hrs",
-        "badge": "Geolocated Global Advertising",
-        "heroTitle1": "Reach",
-        "heroHighlight": "Millions",
-        "heroTitle2": "at World Events",
-        "heroSubtitle": "Your brand, where your customers are, with 70% off enterprise global pricing.",
-        "ctaGetStarted": "Get Started",
-        "ctaViewPricing": "View Pricing",
-        "idealFor": "Ideal for",
-        "beverages": "Beverages",
-        "automotive": "Automotive",
-        "statsImpressions": "Impressions/month",
-        "statsCities": "Cities",
-        "statsSatisfaction": "Satisfaction",
-        "statsRoi": "Average ROI",
-        "whyGeobooker": "Why Geobooker Enterprise?",
-        "whySubtitle": "State-of-the-art geographic targeting technology",
-        "featurePrecise": "Precise Targeting",
-        "featurePreciseDesc": "Reach users in specific cities: Los Angeles, Miami, New York...",
-        "featureMultilingual": "Multilingual Creatives",
-        "featureMultilingualDesc": "Your message in English, Spanish, French or your audience's language.",
-        "featureEvents": "Special Events",
-        "featureEventsDesc": "Sync campaigns with FIFA 2026, Super Bowl, festivals and more.",
-        "featureAnalytics": "Real-Time Analytics",
-        "featureAnalyticsDesc": "Dashboard with metrics by city, device and time.",
-        "featureSafety": "Brand Safety",
-        "featureSafetyDesc": "Your brand in safe contexts aligned with your values.",
-        "featureManager": "Account Manager",
-        "featureManagerDesc": "A dedicated expert to optimize your campaign.",
-        "launchPromo": "ENTERPRISE GLOBAL PROMOTION",
-        "pricingTitle": "50% Off Global Pricing",
-        "pricingSubtitle": "Promotional enterprise global pricing is available through December 31, 2026 for brands, agencies, and cross-border campaigns, subject to editorial and fiscal review.",
-        "mostPopular": "MOST POPULAR",
-        "fullCoverage": "Full coverage",
-        "cities": "cities",
-        "city": "city",
-        "months": "months",
-        "month": "month",
-        "featureAllSpaces": "All ad spaces",
-        "featureAnalyticsIncluded": "Analytics included",
-        "featurePrioritySupport": "Priority support",
-        "getStarted": "Get Started",
-        "securePayments": "Secure payments via credit card or bank transfer.",
-        "noCashNote": "We don't accept cash to ensure proper tax invoicing.",
-        "useCasesTitle": "Ideal Use Cases",
-        "useCaseFifa": "French wine brand promoting in Los Angeles, Dallas and Miami during the World Cup.",
-        "useCaseFifaResult": "5M+ estimated impressions",
-        "useCaseSuperbowl": "Mexican craft brewery reaching Hispanic audience in Phoenix.",
-        "useCaseSuperbowlResult": "2M+ estimated impressions",
-        "useCaseF1": "European luxury brand promoting during the Las Vegas Grand Prix.",
-        "useCaseF1Result": "3M+ estimated impressions",
-        "ctaFinalTitle": "Ready to scale your brand globally?",
-        "ctaFinalSubtitle": "Our enterprise sales team will contact you within 24 hours to design a personalized strategy.",
-        "ctaTalkToSales": "Talk to Sales",
-        "featureHours": "Digital Opening/Closing",
-        "featureHoursDesc": "Control your business hours from any device. Your customers will always know if you're available.",
-        "featureAlwaysMap": "Always on the Map",
-        "featureAlwaysMapDesc": "Your business visible 24/7 on Geobooker's interactive map. Never miss a potential customer.",
-        "featureMultiLocation": "Multi-Location",
-        "featureMultiLocationDesc": "Manage multiple branches from a single dashboard. Unified reports and centralized control.",
-        "featureReferralProg": "Referral Program",
-        "featureReferralProgDesc": "Integrated referral system: your customers invite, you win. Automatic rewards and real-time tracking.",
-        "useCasePharmacy": "Pharmacy chain announces opening of 10 new branches in Monterrey with geolocated campaign.",
-        "useCasePharmacyResult": "1.5M+ local impressions",
-        "useCaseBeverage": "Energy drink brand activates exclusive promotions during music festival in Guadalajara.",
-        "useCaseBeverageResult": "800K+ interactions",
-        "useCaseBank": "Digital bank launches credit card for millennials with ads in university areas of CDMX.",
-        "useCaseBankResult": "2M+ youth reach",
-        "kpisTitle": "Live Data & KPIs",
-        "kpisSubtitle": "Data Included in your Enterprise Contract",
-        "kpisDesc": "Total transparency. You will receive access to real-time metrics and personalized reports to optimize your campaigns.",
-        "kpiRealTime": "Real-Time Data",
-        "kpiRealTimeItems": [
-            "Dashboard with live metrics",
-            "Updates every 24 hours",
-            "Performance alerts"
-        ],
-        "kpiMeasured": "KPIs We Measure",
-        "kpiMeasuredItems": [
-            "Total impressions",
-            "Unique clicks (CTR)",
-            "Reach by region/city",
-            "Engagement rate"
-        ],
-        "kpiOptimization": "Campaign Optimization",
-        "kpiOptimizationItems": [
-            "AI suggestions for creatives",
-            "Best posting times",
-            "Automated A/B testing"
-        ],
-        "kpiReports": "Weekly Reports",
-        "kpiReportsItems": [
-            "PDF report every Monday",
-            "Comparisons vs previous week",
-            "Top cities and audiences"
-        ],
-        "kpiSegmentation": "Global Segmentation",
-        "kpiSegmentationItems": [
-            "Data by country and city",
-            "Audience language",
-            "Device (mobile/desktop)"
-        ],
-        "kpiSupport": "Dedicated Account Manager",
-        "kpiSupportItems": [
-            "Assigned executive 24/7",
-            "Follow-up calls",
-            "Priority support"
-        ],
-        "guaranteeTitle": "Transparency Guarantee",
-        "guaranteeDesc": "If at any point you don't have access to your metrics or reports, we'll extend your campaign <1>+15 days for free</1>."
-    },
-    "map": {
-        "loadingMap": "Loading map...",
-        "mapError": "Error loading Google Maps. Check your API Key.",
-        "yourLocation": "Your current location"
-    },
-    "adReport": {
-        "reportAd": "Report this ad",
-        "reportReason": "Why are you reporting this ad?",
-        "inappropriate": "Inappropriate content",
-        "misleading": "Misleading advertising",
-        "offensive": "Offensive content",
-        "spam": "Spam / Repetitive",
-        "illegal": "Illegal product",
-        "wrongLocation": "Wrong location",
-        "other": "Other issue",
-        "details": "Additional details (optional)",
-        "submit": "Submit Report",
-        "thankYou": "Thank you for your report"
-    },
-    "appDev": {
-        "title": "Get Your Custom App Quote",
-        "subtitle": "We develop custom web and mobile apps for your business.",
-        "name": "Full name",
-        "email": "Email",
-        "phone": "Phone / WhatsApp",
-        "company": "Company / Business",
-        "projectType": "What type of project?",
-        "description": "Describe your project",
-        "budget": "Approximate budget",
-        "timeline": "When do you need it?",
-        "submit": "Submit Quote Request"
-    },
-    "footer": {
-        "description": "The best local business directory. Find and discover businesses near you quickly and easily.",
-        "followUs": "Follow Us",
-        "contact": "Contact",
-        "quickLinks": "Quick Links",
-        "legalSupport": "Legal & Support",
-        "needApp": "Need your own App?",
-        "needAppDesc": "We also develop custom web and mobile applications for your business. PWA, websites, systems, and more.",
-        "requestQuote": "Request a quote",
-        "orWriteUs": "or write us:",
-        "payments": "Payment methods",
-        "share": "Share Geobooker!",
-        "shareDesc": "Scan the QR with your phone to open the app",
-        "copyright": "© {{year}} Geobooker. All rights reserved.",
-        "madeIn": "Made with ❤️ in Mexico 🇲🇽",
-        "about": "About Us",
-        "privacy": "Privacy Policy",
-        "terms": "Terms of Service",
-        "faq": "FAQ",
-        "security": "Security & Emergencies",
-        "fiscal": "Fiscal Information",
-        "support": "Technical Support",
-        "adsPolicy": "Ad Policies",
-        "guiaResico": "SAT Registration Guide (RESICO)"
-    },
-    "ads_placeholder": {
-        "badge": "Ad",
-        "msg1_title": "⚽ Experience the Soccer Season! ⚽",
-        "msg1_subtitle": "Find local businesses, food, and services near you during international matches.",
-        "msg1_cta": "View Map",
-        "msg2_title": "📢 List your business 100% free",
-        "msg2_subtitle": "Have a restaurant, barber shop, or store? Register on Geobooker today.",
-        "msg2_cta": "Add Business",
-        "msg3_title": "🌎 Mexico, USA & Canada welcome the world",
-        "msg3_subtitle": "Tourism 2026: find pharmacies, transit, and food near your location.",
-        "msg3_cta": "Search Nearby",
-        "msg4_title": "💡 Your business can appear here",
-        "msg4_subtitle": "Promote your brand from just $199 MXN (~$10 USD)/month and reach visitors.",
-        "msg4_cta": "Advertise From $199"
-    },
-    "ads": {
-        "sponsored": "Sponsored",
-        "adBy": "Ad by",
-        "viewMore": "View more",
-        "reportAd": "Report ad",
-        "discoverBusinesses": "Discover Local Businesses",
-        "specialOffer": "Special Offer",
-        "learnMore": "Learn more",
-        "shopNow": "Shop now",
-        "getStarted": "Get Started"
-    },
-    "internationalCategories": {
-        "usa": {
-            "barbershop": "Barbershop",
-            "pharmacy": "Pharmacy",
-            "grocery": "Grocery Store",
-            "gas_station": "Gas Station",
-            "auto_repair": "Auto Repair",
-            "laundromat": "Laundromat",
-            "nail_salon": "Nail Salon",
-            "dentist": "Dentist",
-            "urgent_care": "Urgent Care",
-            "pizza": "Pizza",
-            "taco_shop": "Taco Shop",
-            "coffee_shop": "Coffee Shop"
-        },
-        "uk": {
-            "chemist": "Chemist",
-            "takeaway": "Takeaway",
-            "off_licence": "Off-Licence",
-            "chippy": "Fish and Chips",
-            "newsagent": "Newsagent",
-            "estate_agent": "Estate Agent",
-            "surgery": "GP Surgery"
-        },
-        "canada": {
-            "depanneur": "Dépanneur",
-            "lcbo": "Liquor Store",
-            "tim_hortons": "Coffee Shop",
-            "poutine": "Poutine",
-            "dispensary": "Cannabis Dispensary"
-        }
-    },
-    "chat": {
-        "welcome": "Hello! 👋 I am the Geobooker virtual assistant. How can I help you today?",
-        "placeholder": "Type your message...",
-        "title": "Geobooker Assistant",
-        "online": "Online",
-        "poweredBy": "AI Powered 🤖",
-        "error": "Sorry, there was an error. Please try again.",
-        "connError": "Sorry, there was a connection problem. Please try again.",
-        "openAssistant": "Open assistant",
-        "qr": {
-            "register": "How do I register my business?",
-            "premium": "How much does Premium cost?",
-            "advertise": "How can I advertise my brand?",
-            "invoicing": "Do you provide invoices?",
-            "oxxo": "Can I pay with cash?",
-            "search": "How do I search for businesses?",
-            "howItWorks": "How does Geobooker work?",
-            "promo": "What is the 50% off enterprise global promo?",
-            "contact": "How do I contact a business?",
-            "problem": "I have a problem"
-        },
-        "helperTitle": "I can help you with:",
-        "helperSubtitle": "search nearby businesses, claim your listing, advertise, understand Geobooker Connect, invoicing and support.",
-        "quickRepliesTitle": "Suggested questions",
-        "ctaAdvertise": "See advertising",
-        "actions": {
-            "searchBusinesses": "Search businesses",
-            "claimBusiness": "Claim business",
-            "advertise": "Advertise",
-            "faq": "FAQ",
-            "connect": "Geobooker Connect",
-            "support": "Support"
-        },
-        "helperFootnote": "This assistant explains public flows and helps you reach the correct section or team.",
-        "footerNote": "Geobooker does not promise guaranteed results from the assistant. It guides you to the correct next step."
-    },
-    "recommendations": {
-        "title": "Geobookers recommend",
-        "prompt": "Would you like to recommend a business?",
-        "subtitle": "Share your favorite places with the community",
-        "cta": "Recommend now",
-        "tooltip": "Recommend a business you visited",
-        "success": "Thank you for your recommendation! It will be reviewed soon.",
-        "limitReached": "You have reached the limit of recommendations for today."
-    },
-    "deleteAccount": {
-        "title": "Delete Account",
-        "description": "Request deletion of your Geobooker account",
-        "mustLogin": "You must log in to delete your account.",
-        "permanentAction": "This action cannot be undone",
-        "whatWillHappen": "What will happen?",
-        "gracePeriodTitle": "Grace period",
-        "gracePeriodDesc": "Your account will be deleted in 30 days. During this period you can contact us to cancel the request.",
-        "confirmKeyword": "DELETE",
-        "confirmToastError": "Please type DELETE to confirm",
-        "successToast": "Deletion request sent. Your account will be deleted in 30 days.",
-        "errorToast": "Error processing request. Please try again.",
-        "reasonLabel": "Why are you leaving us? (optional)",
-        "reasonPlaceholder": "Select a reason",
-        "reasons": {
-            "no_use": "I no longer use the service",
-            "other_platform": "I use another platform",
-            "privacy": "Privacy concerns",
-            "bad_service": "Poor service",
-            "other": "Other"
-        },
-        "confirmLabel": "Type DELETE to confirm",
-        "deleteButton": "🗑️ Delete my account permanently",
-        "processing": "Processing...",
-        "bullet1": "Your registered businesses will be deleted",
-        "bullet2": "Your reviews and comments will be anonymized",
-        "bullet3": "You will lose your referral history",
-        "bullet4": "This action is permanent",
-        "back": "Back",
-        "cancelToDashboard": "Cancel and return to Dashboard",
-        "continue": "Continue with deletion"
-    },
-    "reviews": {
-        "title": "Reviews",
-        "writeReview": "Write a Review",
-        "noReviews": "No reviews yet. Be the first to leave one!",
-        "helpful": "Helpful",
-        "report": "Report",
-        "service": "Service",
-        "quality": "Quality",
-        "price": "Price",
-        "ownerResponse": "Business Response",
-        "submit": "Submit Review",
-        "cancel": "Cancel",
-        "rating": "Rating",
-        "optional": "optional",
-        "reviewText": "Your experience",
-        "reviewPlaceholder": "Tell us what you thought about this business...",
-        "success": "Review published successfully",
-        "helpfulSuccess": "Marked as helpful",
-        "alreadyHelpful": "You already marked this review as helpful"
-    },
-    "report": {
-        "title": "Report Content",
-        "reason": "Reason for reporting",
-        "details": "Additional details",
-        "placeholder": "Briefly explain why you are reporting this content...",
-        "submit": "Send Report",
-        "cancel": "Cancel",
-        "success": "Thank you. The report has been sent and will be reviewed.",
-        "error": "Error sending the report. Please try again.",
-        "reasons": {
-            "spam": "Spam / Advertising",
-            "offensive": "Offensive content / Hate speech",
-            "inappropriate": "Inappropriate content",
-            "misleading": "Misleading information",
-            "other": "Other"
-        }
-    },
-    "admin": {
-        "reports": {
-            "title": "Reports Moderation",
-            "adTitle": "Ad Reports",
-            "description": "Review and resolve reports of incorrect content or information",
-            "adDescription": "Review and moderate reports of inappropriate ads",
-            "stats": {
-                "pending": "Pending",
-                "reviewed": "Under review",
-                "resolved": "Resolved",
-                "rejected": "Rejected",
-                "all": "All"
-            },
-            "detail": "Report Detail",
-            "actions": {
-                "resolve": "Resolve",
-                "reject": "Reject",
-                "update": "Update",
-                "noAction": "No action",
-                "warning": "Warning sent",
-                "pauseAd": "Ad paused",
-                "rejectAd": "Ad rejected",
-                "banUser": "User banned"
-            },
-            "notes": "Resolution notes",
-            "notesPlaceholder": "Describe what action you took..."
-        }
-    },
-    "faq": {
-        "title": "Frequently Asked Questions",
-        "subtitle": "Find answers to the most common questions about Geobooker",
-        "description": "Get answers about registering your business, advertising, pricing, invoicing and more on Geobooker.",
-        "stillHaveQuestions": "Still have questions?",
-        "contactUs": "Email hola@geobooker.com.mx if you need commercial support, technical help or invoicing assistance.",
-        "emailSupport": "Email hola@geobooker.com.mx",
-        "items": {
-            "register": {
-                "q": "How do I register my business on Geobooker?",
-                "a": "Create a free account, click 'Add Business' in the main menu, and fill out the form with your business name, address, category, and contact details. Your business will appear on the map after a brief review."
-            },
-            "cost": {
-                "q": "Is Geobooker free to use?",
-                "a": "Yes, registering up to 2 businesses is completely free. We offer premium advertising spaces for businesses that want more visibility, starting from $900 MXN/month (~$50 USD)."
-            },
-            "support": {
-                "q": "How do I contact support?",
-                "a": "You can email us at hola@geobooker.com.mx, use our virtual assistant chatbot or contact us by WhatsApp. Response times depend on current support availability."
-            },
-            "howSearch": {
-                "q": "How do I search for businesses near me?",
-                "a": "From the main page, allow location access and type what you're looking for (pharmacy, restaurant, auto repair, etc.). Geobooker will show you the closest businesses on an interactive map."
-            },
-            "location": {
-                "q": "Do I need to enable my location?",
-                "a": "For the best results, yes. However, you can also search for businesses by city or postal code if you prefer not to share your exact location."
-            },
-            "advertise": {
-                "q": "How can I advertise my brand on Geobooker?",
-                "a": "Visit our advertising page or the Enterprise section. We offer banners, carousels, sponsored results, and interstitials. Enterprise global pricing is currently 50% off through December 31, 2026."
-            },
-            "premium": {
-                "q": "What does premium advertising include?",
-                "a": "It includes your ad on the interactive map, a dashboard with real-time metrics (impressions, clicks, CTR), geographic zone targeting, and dedicated support."
-            },
-            "invoice": {
-                "q": "Do you provide invoices?",
-                "a": "Yes, all advertising payments include a fiscal invoice (CFDI). For invoicing we need your tax ID and fiscal information. We don't accept cash to ensure proper invoicing."
-            },
-            "deleteAccount": {
-                "q": "Can I delete my account?",
-                "a": "Yes. Go to your profile and select 'Delete Account'. There's a 30-day grace period during which you can cancel the deletion by contacting support."
-            },
-            "security": {
-                "q": "Is Geobooker secure?",
-                "a": "Absolutely. We use SSL encryption, secure storage with Supabase, and OAuth authentication. We never share your personal information with third parties without your consent."
-            },
-            "international": {
-                "q": "Does Geobooker work outside of Mexico?",
-                "a": "Yes. Geobooker is available in multiple languages (Spanish, English, French, Chinese, Japanese, and Korean) and we have international city pages for the USA, UK, and Canada."
-            },
-            "reviews": {
-                "q": "How do reviews work?",
-                "a": "Authenticated users can leave reviews with ratings from 1 to 5 stars across service, quality, and price dimensions. Business owners can respond to reviews."
-            },
-            "oxxo": {
-                "q": "Can I pay at OXXO?",
-                "a": "Yes, we accept OXXO payments through our payment processor. We also accept credit/debit cards and bank transfers."
-            },
-            "referral": {
-                "q": "Do you have a referral program?",
-                "a": "Yes! Share your referral link and earn benefits when someone registers or purchases advertising through your link. Find your referral code in your user profile."
-            },
-            "languages": {
-                "q": "What languages is Geobooker available in?",
-                "a": "Geobooker is available in Spanish, English, French, Mandarin Chinese, Japanese, and Korean. The language is automatically detected based on your location, but you can change it manually."
-            }
-        }
+    "mapUpdating": "Updating map and nearby results",
+    "useCases": {
+      "label": "Use cases",
+      "title": "Geobooker turns real searches into local opportunities",
+      "description": "These scenarios show how the platform helps users from different backgrounds find businesses, services and providers without knowing exact business names.",
+      "searchPrefix": "Searches:",
+      "beauty": {
+        "title": "Beauty entrepreneur",
+        "location": "Mexico City / occasion searches",
+        "query": "makeup artist, beauty salon, bridal makeup",
+        "result": "Geobooker connects a real need with nearby businesses and professionals, showing contact, directions and service context."
+      },
+      "workshop": {
+        "title": "Workshop and auto parts",
+        "location": "Monterrey / local urgency",
+        "query": "auto repair near me, tow truck, auto parts",
+        "result": "The user does not need to know the exact business name: they can search by problem, category or real intent."
+      },
+      "cafe": {
+        "title": "Local cafe or bakery",
+        "location": "Guadalajara / daily consumption",
+        "query": "coffee shop near me, breakfast, bakery nearby",
+        "result": "Visibility by city, schedule and category helps turn everyday searches into visits and business opportunities."
+      }
     }
+  },
+  "globalPromo": {
+    "badge": "Global Advertising",
+    "homeTitle": "Want your brand to appear on the other side of the world?",
+    "homeSubtitle": "Launch or expand your brand in a specific city with Geobooker Global. Targeting by country, language and category.",
+    "local": {
+      "title": "Geobooker Local",
+      "desc": "Perfect for local businesses and SMEs who want to appear in their city. Starting from $900 MXN/month."
+    },
+    "global": {
+      "title": "Geobooker Global",
+      "desc": "For international brands: FIFA 2026, Super Bowl, Olympics. 30-day free pilot."
+    },
+    "ctaLearnMore": "Learn how to do it"
+  },
+  "seo": {
+    "cityCategoryTitle": "Best {{category}} in {{city}}",
+    "categoryTitle": "{{category}} near me",
+    "cityTitle": "Businesses and services in {{city}}",
+    "cityDescription": "Explore the interactive map of {{city}}. Find restaurants, pharmacies, stores and more on Geobooker."
+  },
+  "search": {
+    "placeholder": "What business or service are you looking for?",
+    "searching": "Searching...",
+    "noResults": "No results found",
+    "categories": {
+      "barbershop": "Barbershop",
+      "restaurant": "Restaurant",
+      "pharmacy": "Pharmacy",
+      "supermarket": "Supermarket",
+      "gym": "Gym",
+      "veterinary": "Veterinary",
+      "mechanic": "Auto Repair",
+      "laundry": "Laundry",
+      "cafe": "Cafe",
+      "bakery": "Bakery",
+      "hospital": "Hospital",
+      "school": "School"
+    }
+  },
+  "business": {
+    "category": "Category",
+    "address": "Address",
+    "phone": "Phone",
+    "website": "Website",
+    "hours": "Hours",
+    "rating": "Rating",
+    "reviews": "Reviews",
+    "distance": "{{distance}} km away",
+    "viewProfile": "View Profile",
+    "getDirections": "Go",
+    "call": "Call",
+    "share": "Share"
+  },
+  "businessForm": {
+    "title": "Add Your Business to Geobooker",
+    "subtitle": "Complete your business information. Registration is currently <1>100% free</1>.",
+    "businessName": "Business name",
+    "businessNamePlaceholder": "E.g. The Good Cut Barbershop",
+    "managerName": "Business manager",
+    "managerNameOptional": "(optional)",
+    "managerNamePlaceholder": "Manager's name",
+    "category": "Category",
+    "categoryPlaceholder": "E.g. Barbershop, Auto Repair, Pharmacy...",
+    "subcategory": "Subcategory",
+    "subcategoryPlaceholder": "E.g. Classic Barbershop, 24h Tire Shop...",
+    "description": "Brief description",
+    "descriptionPlaceholder": "Briefly describe what your business offers.",
+    "address": "Address",
+    "addressPlaceholder": "Street and number",
+    "city": "City",
+    "cityPlaceholder": "City",
+    "state": "State",
+    "statePlaceholder": "State",
+    "postalCode": "Postal code",
+    "postalCodePlaceholder": "ZIP",
+    "country": "Country",
+    "phoneLabel": "Phone",
+    "phonePlaceholder": "Business phone",
+    "whatsapp": "WhatsApp",
+    "whatsappPlaceholder": "WhatsApp number",
+    "website": "Website",
+    "websitePlaceholder": "https://yoursite.com",
+    "facebook": "Facebook",
+    "facebookPlaceholder": "URL or username",
+    "instagram": "Instagram",
+    "instagramPlaceholder": "@username or URL",
+    "offersInvoicing": "Does your business issue invoices?",
+    "invoicingDetails": "Important invoicing information (Tax ID, hours, etc.)",
+    "hasJobOpenings": "Do you currently have job openings?",
+    "jobOpeningsNote": "We'll be able to show businesses that are hiring soon.",
+    "submitButton": "Submit business",
+    "submitting": "Submitting...",
+    "successTitle": "Your business has been registered!",
+    "successMessage": "We've received your business information. It will be reviewed shortly and, once approved, will appear on Geobooker.",
+    "backToHome": "Back to home",
+    "registerAnother": "Register another business",
+    "requiredField": "*",
+    "validationError": "Please complete at least the business name and category.",
+    "submitError": "There was an error submitting your business. Check the console.",
+    "submitSuccess": "🎉 Your business has been submitted. We'll review the information.",
+    "termsAccept": "By submitting your business you accept our <1>terms of service</1> and <3>privacy policy</3>."
+  },
+  "login": {
+    "title": "Login",
+    "subtitle": "Welcome back to Geobooker",
+    "email": "Email",
+    "emailPlaceholder": "your@email.com",
+    "password": "Password",
+    "passwordPlaceholder": "Your password",
+    "loginButton": "Login",
+    "loggingIn": "Logging in...",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot your password?",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign up",
+    "signUpFree": "Sign Up Free",
+    "orContinueWith": "or continue with",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithApple": "Continue with Apple",
+    "welcomeBack": "Welcome back!",
+    "invalidCredentials": "Invalid email or password",
+    "error": "Error logging in",
+    "googleError": "Error signing in with Google",
+    "appleError": "Error signing in with Apple"
+  },
+  "signup": {
+    "title": "Create Account",
+    "subtitle": "Join Geobooker today",
+    "fullName": "Full Name",
+    "fullNamePlaceholder": "John Doe",
+    "email": "Email",
+    "emailPlaceholder": "your@email.com",
+    "password": "Password",
+    "passwordPlaceholder": "Minimum 8 characters",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Repeat your password",
+    "acceptTerms": "I accept the",
+    "termsOfService": "Terms of Service",
+    "and": "and the",
+    "privacyPolicy": "Privacy Policy",
+    "createAccountButton": "Create Account",
+    "creatingAccount": "Creating account...",
+    "orSignUpWith": "or sign up with",
+    "signUpWithGoogle": "Sign up with Google",
+    "signUpWithApple": "Sign up with Apple",
+    "alreadyHaveAccount": "Already have an account?",
+    "loginLink": "Login",
+    "success": "Account created successfully! Check your email to confirm.",
+    "errorFullName": "Please enter your full name",
+    "errorPasswordLength": "Password must be at least 8 characters",
+    "errorPasswordMatch": "Passwords do not match",
+    "errorTerms": "You must accept the terms and conditions",
+    "errorAlreadyRegistered": "This email is already registered",
+    "error": "Error creating account",
+    "googleError": "Error signing up with Google",
+    "appleError": "Error signing up with Apple"
+  },
+  "enterprise": {
+    "seoTitle": "Geobooker Enterprise - Global Advertising for International Brands",
+    "seoDescription": "Reach millions of users at events like FIFA 2026. Enterprise global pricing is 50% off through December 31, 2026.",
+    "promoBanner": "ENTERPRISE GLOBAL PROMOTION: 50% OFF",
+    "offerEnds": "Offer ends in",
+    "days": "days",
+    "hours": "hrs",
+    "badge": "Geolocated Global Advertising",
+    "heroTitle1": "Reach",
+    "heroHighlight": "Millions",
+    "heroTitle2": "at World Events",
+    "heroSubtitle": "Your brand, where your customers are, with 70% off enterprise global pricing.",
+    "ctaGetStarted": "Get Started",
+    "ctaViewPricing": "View Pricing",
+    "idealFor": "Ideal for",
+    "beverages": "Beverages",
+    "automotive": "Automotive",
+    "statsImpressions": "Impressions/month",
+    "statsCities": "Cities",
+    "statsSatisfaction": "Satisfaction",
+    "statsRoi": "Average ROI",
+    "whyGeobooker": "Why Geobooker Enterprise?",
+    "whySubtitle": "State-of-the-art geographic targeting technology",
+    "featurePrecise": "Precise Targeting",
+    "featurePreciseDesc": "Reach users in specific cities: Los Angeles, Miami, New York...",
+    "featureMultilingual": "Multilingual Creatives",
+    "featureMultilingualDesc": "Your message in English, Spanish, French or your audience's language.",
+    "featureEvents": "Special Events",
+    "featureEventsDesc": "Sync campaigns with FIFA 2026, Super Bowl, festivals and more.",
+    "featureAnalytics": "Real-Time Analytics",
+    "featureAnalyticsDesc": "Dashboard with metrics by city, device and time.",
+    "featureSafety": "Brand Safety",
+    "featureSafetyDesc": "Your brand in safe contexts aligned with your values.",
+    "featureManager": "Account Manager",
+    "featureManagerDesc": "A dedicated expert to optimize your campaign.",
+    "launchPromo": "ENTERPRISE GLOBAL PROMOTION",
+    "pricingTitle": "50% Off Global Pricing",
+    "pricingSubtitle": "Promotional enterprise global pricing is available through December 31, 2026 for brands, agencies, and cross-border campaigns, subject to editorial and fiscal review.",
+    "mostPopular": "MOST POPULAR",
+    "fullCoverage": "Full coverage",
+    "cities": "cities",
+    "city": "city",
+    "months": "months",
+    "month": "month",
+    "featureAllSpaces": "All ad spaces",
+    "featureAnalyticsIncluded": "Analytics included",
+    "featurePrioritySupport": "Priority support",
+    "getStarted": "Get Started",
+    "securePayments": "Secure payments via credit card or bank transfer.",
+    "noCashNote": "We don't accept cash to ensure proper tax invoicing.",
+    "useCasesTitle": "Ideal Use Cases",
+    "useCaseFifa": "French wine brand promoting in Los Angeles, Dallas and Miami during the World Cup.",
+    "useCaseFifaResult": "5M+ estimated impressions",
+    "useCaseSuperbowl": "Mexican craft brewery reaching Hispanic audience in Phoenix.",
+    "useCaseSuperbowlResult": "2M+ estimated impressions",
+    "useCaseF1": "European luxury brand promoting during the Las Vegas Grand Prix.",
+    "useCaseF1Result": "3M+ estimated impressions",
+    "ctaFinalTitle": "Ready to scale your brand globally?",
+    "ctaFinalSubtitle": "Our enterprise sales team will contact you within 24 hours to design a personalized strategy.",
+    "ctaTalkToSales": "Talk to Sales",
+    "featureHours": "Digital Opening/Closing",
+    "featureHoursDesc": "Control your business hours from any device. Your customers will always know if you're available.",
+    "featureAlwaysMap": "Always on the Map",
+    "featureAlwaysMapDesc": "Your business visible 24/7 on Geobooker's interactive map. Never miss a potential customer.",
+    "featureMultiLocation": "Multi-Location",
+    "featureMultiLocationDesc": "Manage multiple branches from a single dashboard. Unified reports and centralized control.",
+    "featureReferralProg": "Referral Program",
+    "featureReferralProgDesc": "Integrated referral system: your customers invite, you win. Automatic rewards and real-time tracking.",
+    "useCasePharmacy": "Pharmacy chain announces opening of 10 new branches in Monterrey with geolocated campaign.",
+    "useCasePharmacyResult": "1.5M+ local impressions",
+    "useCaseBeverage": "Energy drink brand activates exclusive promotions during music festival in Guadalajara.",
+    "useCaseBeverageResult": "800K+ interactions",
+    "useCaseBank": "Digital bank launches credit card for millennials with ads in university areas of CDMX.",
+    "useCaseBankResult": "2M+ youth reach",
+    "kpisTitle": "Live Data & KPIs",
+    "kpisSubtitle": "Data Included in your Enterprise Contract",
+    "kpisDesc": "Total transparency. You will receive access to real-time metrics and personalized reports to optimize your campaigns.",
+    "kpiRealTime": "Real-Time Data",
+    "kpiRealTimeItems": [
+      "Dashboard with live metrics",
+      "Updates every 24 hours",
+      "Performance alerts"
+    ],
+    "kpiMeasured": "KPIs We Measure",
+    "kpiMeasuredItems": [
+      "Total impressions",
+      "Unique clicks (CTR)",
+      "Reach by region/city",
+      "Engagement rate"
+    ],
+    "kpiOptimization": "Campaign Optimization",
+    "kpiOptimizationItems": [
+      "AI suggestions for creatives",
+      "Best posting times",
+      "Automated A/B testing"
+    ],
+    "kpiReports": "Weekly Reports",
+    "kpiReportsItems": [
+      "PDF report every Monday",
+      "Comparisons vs previous week",
+      "Top cities and audiences"
+    ],
+    "kpiSegmentation": "Global Segmentation",
+    "kpiSegmentationItems": [
+      "Data by country and city",
+      "Audience language",
+      "Device (mobile/desktop)"
+    ],
+    "kpiSupport": "Dedicated Account Manager",
+    "kpiSupportItems": [
+      "Assigned executive 24/7",
+      "Follow-up calls",
+      "Priority support"
+    ],
+    "guaranteeTitle": "Transparency Guarantee",
+    "guaranteeDesc": "If at any point you don't have access to your metrics or reports, we'll extend your campaign <1>+15 days for free</1>."
+  },
+  "map": {
+    "loadingMap": "Loading map...",
+    "mapError": "Error loading Google Maps. Check your API Key.",
+    "yourLocation": "Your current location"
+  },
+  "adReport": {
+    "reportAd": "Report this ad",
+    "reportReason": "Why are you reporting this ad?",
+    "inappropriate": "Inappropriate content",
+    "misleading": "Misleading advertising",
+    "offensive": "Offensive content",
+    "spam": "Spam / Repetitive",
+    "illegal": "Illegal product",
+    "wrongLocation": "Wrong location",
+    "other": "Other issue",
+    "details": "Additional details (optional)",
+    "submit": "Submit Report",
+    "thankYou": "Thank you for your report"
+  },
+  "appDev": {
+    "title": "Get Your Custom App Quote",
+    "subtitle": "We develop custom web and mobile apps for your business.",
+    "name": "Full name",
+    "email": "Email",
+    "phone": "Phone / WhatsApp",
+    "company": "Company / Business",
+    "projectType": "What type of project?",
+    "description": "Describe your project",
+    "budget": "Approximate budget",
+    "timeline": "When do you need it?",
+    "submit": "Submit Quote Request"
+  },
+  "footer": {
+    "description": "The best local business directory. Find and discover businesses near you quickly and easily.",
+    "followUs": "Follow Us",
+    "contact": "Contact",
+    "quickLinks": "Quick Links",
+    "legalSupport": "Legal & Support",
+    "needApp": "Need your own App?",
+    "needAppDesc": "We also develop custom web and mobile applications for your business. PWA, websites, systems, and more.",
+    "requestQuote": "Request a quote",
+    "orWriteUs": "or write us:",
+    "payments": "Payment methods",
+    "share": "Share Geobooker!",
+    "shareDesc": "Scan the QR with your phone to open the app",
+    "copyright": "© {{year}} Geobooker. All rights reserved.",
+    "madeIn": "Made with ❤️ in Mexico 🇲🇽",
+    "about": "About Us",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "faq": "FAQ",
+    "security": "Security & Emergencies",
+    "fiscal": "Fiscal Information",
+    "support": "Technical Support",
+    "adsPolicy": "Ad Policies",
+    "guiaResico": "SAT Registration Guide (RESICO)"
+  },
+  "ads_placeholder": {
+    "badge": "Ad",
+    "msg1_title": "⚽ Experience the Soccer Season! ⚽",
+    "msg1_subtitle": "Find local businesses, food, and services near you during international matches.",
+    "msg1_cta": "View Map",
+    "msg2_title": "📢 List your business 100% free",
+    "msg2_subtitle": "Have a restaurant, barber shop, or store? Register on Geobooker today.",
+    "msg2_cta": "Add Business",
+    "msg3_title": "🌎 Mexico, USA & Canada welcome the world",
+    "msg3_subtitle": "Tourism 2026: find pharmacies, transit, and food near your location.",
+    "msg3_cta": "Search Nearby",
+    "msg4_title": "💡 Your business can appear here",
+    "msg4_subtitle": "Promote your brand from just $199 MXN (~$10 USD)/month and reach visitors.",
+    "msg4_cta": "Advertise From $199"
+  },
+  "ads": {
+    "sponsored": "Sponsored",
+    "adBy": "Ad by",
+    "viewMore": "View more",
+    "reportAd": "Report ad",
+    "discoverBusinesses": "Discover Local Businesses",
+    "specialOffer": "Special Offer",
+    "learnMore": "Learn more",
+    "shopNow": "Shop now",
+    "getStarted": "Get Started"
+  },
+  "internationalCategories": {
+    "usa": {
+      "barbershop": "Barbershop",
+      "pharmacy": "Pharmacy",
+      "grocery": "Grocery Store",
+      "gas_station": "Gas Station",
+      "auto_repair": "Auto Repair",
+      "laundromat": "Laundromat",
+      "nail_salon": "Nail Salon",
+      "dentist": "Dentist",
+      "urgent_care": "Urgent Care",
+      "pizza": "Pizza",
+      "taco_shop": "Taco Shop",
+      "coffee_shop": "Coffee Shop"
+    },
+    "uk": {
+      "chemist": "Chemist",
+      "takeaway": "Takeaway",
+      "off_licence": "Off-Licence",
+      "chippy": "Fish and Chips",
+      "newsagent": "Newsagent",
+      "estate_agent": "Estate Agent",
+      "surgery": "GP Surgery"
+    },
+    "canada": {
+      "depanneur": "Dépanneur",
+      "lcbo": "Liquor Store",
+      "tim_hortons": "Coffee Shop",
+      "poutine": "Poutine",
+      "dispensary": "Cannabis Dispensary"
+    }
+  },
+  "chat": {
+    "welcome": "Hello! 👋 I am the Geobooker virtual assistant. How can I help you today?",
+    "placeholder": "Type your message...",
+    "title": "Geobooker Assistant",
+    "online": "Online",
+    "poweredBy": "AI Powered 🤖",
+    "error": "Sorry, there was an error. Please try again.",
+    "connError": "Sorry, there was a connection problem. Please try again.",
+    "openAssistant": "Open assistant",
+    "qr": {
+      "register": "How do I register my business?",
+      "premium": "How much does Premium cost?",
+      "advertise": "How can I advertise my brand?",
+      "invoicing": "Do you provide invoices?",
+      "oxxo": "Can I pay with cash?",
+      "search": "How do I search for businesses?",
+      "howItWorks": "How does Geobooker work?",
+      "promo": "What is the 50% off enterprise global promo?",
+      "contact": "How do I contact a business?",
+      "problem": "I have a problem"
+    },
+    "helperTitle": "I can help you with:",
+    "helperSubtitle": "search nearby businesses, claim your listing, advertise, understand Geobooker Connect, invoicing and support.",
+    "quickRepliesTitle": "Suggested questions",
+    "ctaAdvertise": "See advertising",
+    "actions": {
+      "searchBusinesses": "Search businesses",
+      "claimBusiness": "Claim business",
+      "advertise": "Advertise",
+      "faq": "FAQ",
+      "connect": "Geobooker Connect",
+      "support": "Support"
+    },
+    "helperFootnote": "This assistant explains public flows and helps you reach the correct section or team.",
+    "footerNote": "Geobooker does not promise guaranteed results from the assistant. It guides you to the correct next step."
+  },
+  "recommendations": {
+    "title": "Geobookers recommend",
+    "prompt": "Would you like to recommend a business?",
+    "subtitle": "Share your favorite places with the community",
+    "cta": "Recommend now",
+    "tooltip": "Recommend a business you visited",
+    "success": "Thank you for your recommendation! It will be reviewed soon.",
+    "limitReached": "You have reached the limit of recommendations for today."
+  },
+  "deleteAccount": {
+    "title": "Delete Account",
+    "description": "Request deletion of your Geobooker account",
+    "mustLogin": "You must log in to delete your account.",
+    "permanentAction": "This action cannot be undone",
+    "whatWillHappen": "What will happen?",
+    "gracePeriodTitle": "Grace period",
+    "gracePeriodDesc": "Your account will be deleted in 30 days. During this period you can contact us to cancel the request.",
+    "confirmKeyword": "DELETE",
+    "confirmToastError": "Please type DELETE to confirm",
+    "successToast": "Deletion request sent. Your account will be deleted in 30 days.",
+    "errorToast": "Error processing request. Please try again.",
+    "reasonLabel": "Why are you leaving us? (optional)",
+    "reasonPlaceholder": "Select a reason",
+    "reasons": {
+      "no_use": "I no longer use the service",
+      "other_platform": "I use another platform",
+      "privacy": "Privacy concerns",
+      "bad_service": "Poor service",
+      "other": "Other"
+    },
+    "confirmLabel": "Type DELETE to confirm",
+    "deleteButton": "🗑️ Delete my account permanently",
+    "processing": "Processing...",
+    "bullet1": "Your registered businesses will be deleted",
+    "bullet2": "Your reviews and comments will be anonymized",
+    "bullet3": "You will lose your referral history",
+    "bullet4": "This action is permanent",
+    "back": "Back",
+    "cancelToDashboard": "Cancel and return to Dashboard",
+    "continue": "Continue with deletion"
+  },
+  "reviews": {
+    "title": "Reviews",
+    "writeReview": "Write a Review",
+    "noReviews": "No reviews yet. Be the first to leave one!",
+    "helpful": "Helpful",
+    "report": "Report",
+    "service": "Service",
+    "quality": "Quality",
+    "price": "Price",
+    "ownerResponse": "Business Response",
+    "submit": "Submit Review",
+    "cancel": "Cancel",
+    "rating": "Rating",
+    "optional": "optional",
+    "reviewText": "Your experience",
+    "reviewPlaceholder": "Tell us what you thought about this business...",
+    "success": "Review published successfully",
+    "helpfulSuccess": "Marked as helpful",
+    "alreadyHelpful": "You already marked this review as helpful"
+  },
+  "report": {
+    "title": "Report Content",
+    "reason": "Reason for reporting",
+    "details": "Additional details",
+    "placeholder": "Briefly explain why you are reporting this content...",
+    "submit": "Send Report",
+    "cancel": "Cancel",
+    "success": "Thank you. The report has been sent and will be reviewed.",
+    "error": "Error sending the report. Please try again.",
+    "reasons": {
+      "spam": "Spam / Advertising",
+      "offensive": "Offensive content / Hate speech",
+      "inappropriate": "Inappropriate content",
+      "misleading": "Misleading information",
+      "other": "Other"
+    }
+  },
+  "admin": {
+    "reports": {
+      "title": "Reports Moderation",
+      "adTitle": "Ad Reports",
+      "description": "Review and resolve reports of incorrect content or information",
+      "adDescription": "Review and moderate reports of inappropriate ads",
+      "stats": {
+        "pending": "Pending",
+        "reviewed": "Under review",
+        "resolved": "Resolved",
+        "rejected": "Rejected",
+        "all": "All"
+      },
+      "detail": "Report Detail",
+      "actions": {
+        "resolve": "Resolve",
+        "reject": "Reject",
+        "update": "Update",
+        "noAction": "No action",
+        "warning": "Warning sent",
+        "pauseAd": "Ad paused",
+        "rejectAd": "Ad rejected",
+        "banUser": "User banned"
+      },
+      "notes": "Resolution notes",
+      "notesPlaceholder": "Describe what action you took..."
+    }
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "subtitle": "Find answers to the most common questions about Geobooker",
+    "description": "Get answers about registering your business, advertising, pricing, invoicing and more on Geobooker.",
+    "stillHaveQuestions": "Still have questions?",
+    "contactUs": "Email hola@geobooker.com.mx if you need commercial support, technical help or invoicing assistance.",
+    "emailSupport": "Email hola@geobooker.com.mx",
+    "items": {
+      "register": {
+        "q": "How do I register my business on Geobooker?",
+        "a": "Create a free account, click 'Add Business' in the main menu, and fill out the form with your business name, address, category, and contact details. Your business will appear on the map after a brief review."
+      },
+      "cost": {
+        "q": "Is Geobooker free to use?",
+        "a": "Yes, registering up to 2 businesses is completely free. We offer premium advertising spaces for businesses that want more visibility, starting from $900 MXN/month (~$50 USD)."
+      },
+      "support": {
+        "q": "How do I contact support?",
+        "a": "You can email us at hola@geobooker.com.mx, use our virtual assistant chatbot or contact us by WhatsApp. Response times depend on current support availability."
+      },
+      "howSearch": {
+        "q": "How do I search for businesses near me?",
+        "a": "From the main page, allow location access and type what you're looking for (pharmacy, restaurant, auto repair, etc.). Geobooker will show you the closest businesses on an interactive map."
+      },
+      "location": {
+        "q": "Do I need to enable my location?",
+        "a": "For the best results, yes. However, you can also search for businesses by city or postal code if you prefer not to share your exact location."
+      },
+      "advertise": {
+        "q": "How can I advertise my brand on Geobooker?",
+        "a": "Visit our advertising page or the Enterprise section. We offer banners, carousels, sponsored results, and interstitials. Enterprise global pricing is currently 50% off through December 31, 2026."
+      },
+      "premium": {
+        "q": "What does premium advertising include?",
+        "a": "It includes your ad on the interactive map, a dashboard with real-time metrics (impressions, clicks, CTR), geographic zone targeting, and dedicated support."
+      },
+      "invoice": {
+        "q": "Do you provide invoices?",
+        "a": "Yes, all advertising payments include a fiscal invoice (CFDI). For invoicing we need your tax ID and fiscal information. We don't accept cash to ensure proper invoicing."
+      },
+      "deleteAccount": {
+        "q": "Can I delete my account?",
+        "a": "Yes. Go to your profile and select 'Delete Account'. There's a 30-day grace period during which you can cancel the deletion by contacting support."
+      },
+      "security": {
+        "q": "Is Geobooker secure?",
+        "a": "Absolutely. We use SSL encryption, secure storage with Supabase, and OAuth authentication. We never share your personal information with third parties without your consent."
+      },
+      "international": {
+        "q": "Does Geobooker work outside of Mexico?",
+        "a": "Yes. Geobooker is available in multiple languages (Spanish, English, French, Chinese, Japanese, and Korean) and we have international city pages for the USA, UK, and Canada."
+      },
+      "reviews": {
+        "q": "How do reviews work?",
+        "a": "Authenticated users can leave reviews with ratings from 1 to 5 stars across service, quality, and price dimensions. Business owners can respond to reviews."
+      },
+      "oxxo": {
+        "q": "Can I pay at OXXO?",
+        "a": "Yes, we accept OXXO payments through our payment processor. We also accept credit/debit cards and bank transfers."
+      },
+      "referral": {
+        "q": "Do you have a referral program?",
+        "a": "Yes! Share your referral link and earn benefits when someone registers or purchases advertising through your link. Find your referral code in your user profile."
+      },
+      "languages": {
+        "q": "What languages is Geobooker available in?",
+        "a": "Geobooker is available in Spanish, English, French, Mandarin Chinese, Japanese, and Korean. The language is automatically detected based on your location, but you can change it manually."
+      }
+    }
+  }
 }

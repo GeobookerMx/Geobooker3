@@ -21,8 +21,14 @@ export const PROMOTIONS = {
 };
 
 export const PREMIUM_PROMO_COPY = {
-    headline: 'Premium GRATIS por lanzamiento',
-    cta: 'Activar Premium GRATIS',
+    es: {
+        headline: 'Premium GRATIS por lanzamiento',
+        cta: 'Activar Premium GRATIS',
+    },
+    en: {
+        headline: 'Free Premium launch offer',
+        cta: 'Activate Free Premium',
+    }
 };
 
 /**
@@ -49,12 +55,18 @@ export const getDaysRemaining = () => {
  * Mensaje de promoción para mostrar en UI
  * @returns {string}
  */
-export const getPromoMessage = () => {
+export const getPromoMessage = (locale = 'es-MX') => {
     const days = getDaysRemaining();
+    const isEnglish = String(locale).toLowerCase().startsWith('en');
     if (days <= 0) return null;
-    if (days <= 7) return `¡Solo ${days} días para Premium GRATIS!`;
-    if (days <= 30) return `🎉 Premium GRATIS por ${days} días más`;
-    return '🚀 ¡Regístrate y activa Premium GRATIS!';
+    if (isEnglish) {
+        if (days <= 7) return `Only ${days} days left for Free Premium!`;
+        if (days <= 30) return `Free Premium for ${days} more days`;
+        return 'Register and activate Free Premium!';
+    }
+    if (days <= 7) return `Solo ${days} dias para Premium GRATIS!`;
+    if (days <= 30) return `Premium GRATIS por ${days} dias mas`;
+    return 'Registrate y activa Premium GRATIS!';
 };
 
 export const getPremiumPromoDeadlineLabel = (locale = 'es-MX') =>
@@ -64,8 +76,12 @@ export const getPremiumPromoDeadlineLabel = (locale = 'es-MX') =>
         year: 'numeric'
     });
 
-export const getPremiumPromoLongMessage = (locale = 'es-MX') =>
-    `${PREMIUM_PROMO_COPY.headline} hasta el ${getPremiumPromoDeadlineLabel(locale)}`;
+export const getPremiumPromoLongMessage = (locale = 'es-MX') => {
+    const isEnglish = String(locale).toLowerCase().startsWith('en');
+    const copy = isEnglish ? PREMIUM_PROMO_COPY.en : PREMIUM_PROMO_COPY.es;
+    const connector = isEnglish ? 'until' : 'hasta el';
+    return `${copy.headline} ${connector} ${getPremiumPromoDeadlineLabel(locale)}`;
+};
 
 /**
  * Verifica si un usuario califica para negocios extra por referidos

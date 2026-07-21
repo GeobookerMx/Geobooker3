@@ -85,69 +85,55 @@ const prepareMapResults = (items = [], origin = null, limit = 100) => {
 };
 
 const GEOBOOKER_USE_CASES = [
-  {
-    title: 'Emprendedora de belleza',
-    location: 'CDMX / busquedas de ocasion',
-    image: '/images/community/maquillista.jpg',
-    query: 'maquillista, beauty salon, maquillaje de novia',
-    result: 'Geobooker conecta la necesidad con negocios y profesionales cercanos, mostrando contacto, ruta y contexto de servicio.'
-  },
-  {
-    title: 'Taller y refacciones',
-    location: 'Monterrey / urgencias locales',
-    image: '/images/community/mecanico-taller.jpg',
-    query: 'taller mecanico cerca, grua, refaccionaria',
-    result: 'El usuario no necesita saber el nombre exacto del negocio: puede buscar por problema, categoria o intencion real.'
-  },
-  {
-    title: 'Cafeteria o panaderia local',
-    location: 'Guadalajara / consumo diario',
-    image: '/images/barista.jpg',
-    query: 'coffee shop near me, desayunos, panaderia cerca',
-    result: 'La visibilidad por ciudad, horario y categoria ayuda a convertir busquedas cotidianas en visitas y oportunidades.'
-  }
+  { id: 'beauty', image: '/images/community/maquillista.jpg' },
+  { id: 'workshop', image: '/images/community/mecanico-taller.jpg' },
+  { id: 'cafe', image: '/images/barista.jpg' }
 ];
 
-const GeobookerUseCases = () => (
-  <section className="container mx-auto px-4 py-8">
-    <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl md:p-8">
-      <div className="mx-auto max-w-3xl text-center">
-        <p className="text-sm font-bold uppercase tracking-[0.24em] text-blue-600">Casos de uso</p>
-        <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
-          Geobooker convierte busquedas reales en oportunidades locales
-        </h2>
-        <p className="mt-4 text-base leading-7 text-slate-600">
-          Estos escenarios muestran como la plataforma puede ayudar a usuarios de distinto origen a encontrar negocios, servicios y proveedores sin depender de nombres exactos.
-        </p>
-      </div>
+const GeobookerUseCases = () => {
+  const { t } = useTranslation();
 
-      <div className="mt-8 grid gap-5 lg:grid-cols-3">
-        {GEOBOOKER_USE_CASES.map((useCase) => (
-          <article key={useCase.title} className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-            <div className="relative h-48 overflow-hidden bg-slate-200">
-              <img
-                src={useCase.image}
-                alt={useCase.title}
-                className="h-full w-full object-cover transition duration-500 hover:scale-105"
-                loading="lazy"
-              />
-              <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-slate-900 shadow">
-                {useCase.location}
+  return (
+    <section className="container mx-auto px-4 py-8">
+      <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl md:p-8">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-sm font-bold uppercase tracking-[0.24em] text-blue-600">{t('home.useCases.label')}</p>
+          <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+            {t('home.useCases.title')}
+          </h2>
+          <p className="mt-4 text-base leading-7 text-slate-600">
+            {t('home.useCases.description')}
+          </p>
+        </div>
+
+        <div className="mt-8 grid gap-5 lg:grid-cols-3">
+          {GEOBOOKER_USE_CASES.map((useCase) => (
+            <article key={useCase.id} className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+              <div className="relative h-48 overflow-hidden bg-slate-200">
+                <img
+                  src={useCase.image}
+                  alt={t(`home.useCases.${useCase.id}.title`)}
+                  className="h-full w-full object-cover transition duration-500 hover:scale-105"
+                  loading="lazy"
+                />
+                <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-slate-900 shadow">
+                  {t(`home.useCases.${useCase.id}.location`)}
+                </div>
               </div>
-            </div>
-            <div className="p-5">
-              <h3 className="text-xl font-black text-slate-950">{useCase.title}</h3>
-              <p className="mt-3 rounded-2xl bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-800">
-                Busca: {useCase.query}
-              </p>
-              <p className="mt-4 text-sm leading-6 text-slate-600">{useCase.result}</p>
-            </div>
-          </article>
-        ))}
+              <div className="p-5">
+                <h3 className="text-xl font-black text-slate-950">{t(`home.useCases.${useCase.id}.title`)}</h3>
+                <p className="mt-3 rounded-2xl bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-800">
+                  {t('home.useCases.searchPrefix')} {t(`home.useCases.${useCase.id}.query`)}
+                </p>
+                <p className="mt-4 text-sm leading-6 text-slate-600">{t(`home.useCases.${useCase.id}.result`)}</p>
+              </div>
+            </article>
+          ))}
+        </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 import useInterstitialTrigger from '../components/ads/useInterstitialTrigger';
 import SEO from '../components/SEO';
 // Guest search limit
@@ -1378,7 +1364,7 @@ const HomePage = () => {
               {searchLoading && (
                 <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Actualizando mapa y resultados cercanos
+                  {t('home.mapUpdating')}
                 </div>
               )}
             </div>

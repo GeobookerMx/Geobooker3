@@ -335,7 +335,7 @@ export default function EnterpriseLanding() {
                                 <h3 className="text-lg font-bold text-white mb-2">{plan.name}</h3>
                                 <p className="text-gray-400 text-sm mb-4">
                                     {plan.is_custom
-                                        ? 'Multi-país · Cotización'
+                                        ? 'Multi-pais - Pago + revision'
                                         : `${plan.cities_included > 12 ? 'Hasta 30' : plan.cities_included > 1 ? `Hasta ${plan.cities_included}` : plan.cities_included} ${plan.cities_included > 1 ? t('enterprise.cities') : t('enterprise.city')}
                                          • ${plan.duration_months} ${plan.duration_months > 1 ? t('enterprise.months') : t('enterprise.month')}`}
                                 </p>
@@ -394,7 +394,7 @@ export default function EnterpriseLanding() {
                             Como funciona la campana Enterprise
                         </h2>
                         <p className="text-gray-400 max-w-3xl mx-auto">
-                            Esta oferta opera como servicio gestionado. El pago o la solicitud no publica automaticamente la pauta: primero se valida inventario, creatividad, territorio, fechas y tratamiento fiscal.
+                            Esta oferta opera como pauta programada con revision previa. El pago no publica automaticamente: primero se valida inventario, creatividad, territorio, fechas y tratamiento fiscal.
                         </p>
                     </div>
 

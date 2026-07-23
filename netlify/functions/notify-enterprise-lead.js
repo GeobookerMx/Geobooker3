@@ -105,10 +105,10 @@ exports.handler = async function handler(event) {
   <div style="max-width:680px;margin:0 auto;padding:24px;">
     <div style="background:#0f172a;color:#fff;border-radius:18px 18px 0 0;padding:24px;">
       <p style="margin:0;color:#f59e0b;font-size:12px;font-weight:700;letter-spacing:.08em;">GEOBOOKER ENTERPRISE</p>
-      <h1 style="margin:8px 0 0;font-size:24px;">Nueva solicitud / lead Enterprise</h1>
+      <h1 style="margin:8px 0 0;font-size:24px;">Nuevo pre-registro Enterprise</h1>
     </div>
     <div style="background:#fff;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 18px 18px;padding:24px;">
-      <p>Un prospecto completo el formulario Enterprise. Revisa si conviene venta directa, contrato asistido o validacion fiscal previa.</p>
+      <p>Un prospecto completo el pre-registro Enterprise. Si ya eligio paquete, el flujo debe continuar a checkout y revision de arte/territorio/fiscalidad.</p>
       <table style="width:100%;border-collapse:collapse;margin-top:16px;">${leadRows}</table>
       <p style="margin-top:20px;padding:12px 14px;background:#fef3c7;color:#92400e;border-radius:10px;"><strong>Siguiente accion:</strong> validar territorio, fechas, creative, inventario y tratamiento fiscal. Revision estimada antes de publicar: 12 a 72 horas.</p>
       <p style="text-align:center;margin-top:24px;"><a href="${checkoutUrl}" style="display:inline-block;background:#f59e0b;color:#111827;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:12px;">Abrir checkout del plan</a></p>
@@ -121,12 +121,12 @@ exports.handler = async function handler(event) {
 <html><body style="margin:0;background:#f8fafc;font-family:Arial,sans-serif;color:#0f172a;">
   <div style="max-width:640px;margin:0 auto;padding:24px;">
     <div style="background:#0f172a;color:#fff;border-radius:18px;padding:28px;text-align:center;">
-      <h1 style="margin:0;font-size:24px;">Solicitud Enterprise recibida</h1>
+      <h1 style="margin:0;font-size:24px;">Pre-registro Enterprise recibido</h1>
       <p style="margin:12px 0 0;color:#cbd5e1;">Gracias por contactar a Geobooker. Registramos tu interes en publicidad territorial y global.</p>
     </div>
     <div style="background:#fff;border:1px solid #e5e7eb;border-radius:18px;margin-top:14px;padding:24px;">
       <p>Hola${lead.contact_name ? ` ${escapeHtml(lead.contact_name)}` : ''},</p>
-      <p>Tu solicitud quedo registrada. Si elegiste un paquete estandar, puedes continuar al checkout seguro. La publicacion no es automatica: primero revisamos creatividad, territorio, inventario disponible y cumplimiento fiscal/editorial.</p>
+      <p>Tu pre-registro quedo registrado. Si elegiste un paquete estandar, puedes continuar al checkout seguro. La publicacion no es automatica: primero revisamos creatividad, territorio, inventario disponible y cumplimiento fiscal/editorial.</p>
       <p style="padding:12px 14px;background:#ecfeff;color:#155e75;border-radius:10px;"><strong>Tiempo de revision:</strong> 12 a 72 horas antes de aprobar o solicitar ajustes.</p>
       <p style="text-align:center;margin-top:24px;"><a href="${checkoutUrl}" style="display:inline-block;background:#f59e0b;color:#111827;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:12px;">Continuar con mi campana</a></p>
       <p style="font-size:13px;color:#64748b;margin-top:22px;">Para soporte o facturacion escribe a hola@geobooker.com.mx.</p>
@@ -149,7 +149,7 @@ exports.handler = async function handler(event) {
                 from: senderConfig.from,
                 replyTo: senderConfig.replyTo || 'hola@geobooker.com.mx',
                 to: lead.contact_email,
-                subject: 'Recibimos tu solicitud Enterprise en Geobooker',
+                subject: 'Recibimos tu pre-registro Enterprise en Geobooker',
                 html: customerHtml,
                 apiKey: RESEND_API_KEY
             });

@@ -378,6 +378,48 @@ exports.handler = async (event) => {
                             .single();
 
                                                 if (updatedCampaign) {
+                            try {
+                                const contractLanguage = (billingCountry || '').toUpperCase() === 'MX' ? 'es' : 'en';
+                                const { error: contractError } = await supabase.from('ad_campaign_contracts').upsert({
+                                    campaign_id: updatedCampaign.id,
+                                    contract_type: 'enterprise_ads',
+                                    language: contractLanguage,
+                                    legal_version: 'ads_terms_2026_v1',
+                                    status: 'draft',
+                                    advertiser_name: updatedCampaign.advertiser_name || metadata.advertiser_name || metadata.company || null,
+                                    advertiser_email: advertiserEmail,
+                                    billing_country: billingCountry,
+                                    campaign_scope: {
+                                        plan: metadata.plan || null,
+                                        start_date: updatedCampaign.start_date || null,
+                                        end_date: updatedCampaign.end_date || null,
+                                        target_countries: updatedCampaign.target_countries || [],
+                                        target_cities: updatedCampaign.target_cities || [],
+                                        ad_level: updatedCampaign.ad_level || null
+                                    },
+                                    fiscal_snapshot: {
+                                        billing_country: billingCountry,
+                                        tax_status: updatedCampaign.tax_status || null,
+                                        currency: updatedCampaign.currency || 'USD',
+                                        subtotal: updatedCampaign.total_budget || updatedCampaign.budget || 0,
+                                        iva_amount: updatedCampaign.iva_amount || 0,
+                                        total_with_iva: updatedCampaign.total_with_iva || 0
+                                    },
+                                    terms_snapshot: {
+                                        review_sla: '12-72h',
+                                        publication_requires_approval: true,
+                                        no_guaranteed_sales: true,
+                                        digital_payment_required: true
+                                    }
+                                }, { onConflict: 'campaign_id,contract_type,language,legal_version' });
+
+                                if (contractError) {
+                                    console.warn('[stripe-webhook] Contract draft not created:', contractError.message);
+                                }
+                            } catch (contractError) {
+                                console.warn('[stripe-webhook] Contract draft skipped:', contractError.message);
+                            }
+
                             await upsertCommercialEvent(supabase, {
                                 source_type: 'ad_campaign',
                                 source_id: updatedCampaign.id,

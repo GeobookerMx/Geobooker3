@@ -45,7 +45,7 @@ const BUDGET_OPTIONS = [
     { value: '500-1000', label: '$500 - $1,000 USD' },
     { value: '1000-2000', label: '$1,000 - $2,000 USD' },
     { value: '2000+', label: '$2,000+ USD' },
-    { value: 'custom', label: 'Custom / Enterprise quote' }
+    { value: 'custom', label: 'Custom / managed enterprise review' }
 ];
 
 export default function EnterpriseContact() {
@@ -87,11 +87,10 @@ export default function EnterpriseContact() {
     };
 
     const saveEnterpriseLead = async (leadPayload) => {
-        const insertLead = (payload) => supabase
-            .from('enterprise_leads')
-            .insert(payload)
-            .select()
-            .single();
+        const insertLead = async (payload) => {
+            const { error } = await supabase.from('enterprise_leads').insert(payload);
+            return { data: payload, error };
+        };
 
         const result = await insertLead(leadPayload);
         if (!result.error) return result;
@@ -116,7 +115,10 @@ export default function EnterpriseContact() {
         try {
             setSubmitting(true);
 
+            const leadId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : undefined;
+
             const leadPayload = {
+                ...(leadId ? { id: leadId } : {}),
                 company_name: form.company_name,
                 contact_name: form.contact_name,
                 contact_email: form.contact_email,
@@ -158,8 +160,14 @@ export default function EnterpriseContact() {
                 toast('Solicitud guardada. Revisaremos manualmente la notificacion interna.');
             }
 
+            toast.success(form.selected_plan ? 'Pre-registro guardado. Continuando al pago seguro...' : 'Pre-registro recibido. Elige un paquete para continuar.');
+
+            if (form.selected_plan) {
+                navigate(`/enterprise/checkout?plan=${form.selected_plan}${lead?.id ? `&lead=${lead.id}` : ''}`);
+                return;
+            }
+
             setSubmitted(true);
-            toast.success('Solicitud recibida y registrada.');
 
         } catch (error) {
             console.error('Error submitting form:', error);
@@ -180,7 +188,7 @@ export default function EnterpriseContact() {
                         ¡Gracias por tu interés!
                     </h1>
                     <p className="text-gray-300 mb-8">
-                        Registramos tu solicitud. Puedes continuar directo al pago si el paquete seleccionado es estandar, o nuestro equipo revisara tu caso si requiere una propuesta a medida.
+                        Registramos el pre-registro de tu campana. El siguiente paso es elegir paquete, completar checkout seguro y subir materiales para revision editorial, territorial y fiscal.
                     </p>
                     <div className="space-y-3">
                         {form.selected_plan && (
@@ -188,7 +196,7 @@ export default function EnterpriseContact() {
                                 to={`/enterprise/checkout?plan=${form.selected_plan}${savedLead?.id ? `&lead=${savedLead.id}` : ''}`}
                                 className="block bg-amber-500 text-slate-950 py-3 px-6 rounded-xl font-semibold hover:bg-amber-400 transition"
                             >
-                                Pagar paquete seleccionado
+                                Continuar a pago seguro
                             </Link>
                         )}
                         <Link
@@ -212,7 +220,7 @@ export default function EnterpriseContact() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 py-12 px-4">
             <SEO
-                title="Contacto Enterprise - Geobooker Ads"
+                title="Programar Campana Enterprise - Geobooker Ads"
                 description="Solicita una cotización para campañas publicitarias globales."
             />
 
@@ -414,7 +422,7 @@ export default function EnterpriseContact() {
                     {/* Message */}
                     <div className="mb-8">
                         <label className="block text-sm text-gray-400 mb-1">
-                            Mensaje adicional
+                            Notas para revision de pauta
                         </label>
                         <textarea
                             name="message"
@@ -429,9 +437,9 @@ export default function EnterpriseContact() {
                     <div className="mb-8 bg-blue-900/20 border border-blue-700/40 rounded-2xl p-5">
                         <h3 className="text-white font-semibold mb-2">Como operamos esta pauta</h3>
                         <ul className="space-y-2 text-sm text-blue-100">
-                            <li>1. Todos los precios base de esta linea se cotizan en USD.</li>
+                            <li>1. Todos los precios base de esta linea estan expresados en USD.</li>
                             <li>2. La pauta queda sujeta a revision editorial, territorial y fiscal antes de activarse.</li>
-                            <li>3. El pago o anticipo no sustituye la validacion de inventario ni la aprobacion comercial final.</li>
+                            <li>3. El pago programa la campana y reserva revision; la publicacion requiere aprobacion de arte, territorio, inventario y cumplimiento.</li>
                             <li>4. La activacion normal tarda entre 12 y 72 horas despues de recibir brief y materiales completos.</li>
                         </ul>
                     </div>
@@ -445,12 +453,12 @@ export default function EnterpriseContact() {
                         {submitting ? (
                             <>
                                 <Loader2 className="w-5 h-5 animate-spin" />
-                                Enviando...
+                                Procesando...
                             </>
                         ) : (
                             <>
                                 <Send className="w-5 h-5" />
-                                Enviar Solicitud
+                                {form.selected_plan ? 'Continuar al pago seguro' : 'Guardar pre-registro'}
                             </>
                         )}
                     </button>

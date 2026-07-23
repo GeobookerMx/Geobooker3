@@ -484,6 +484,65 @@ export async function getDeviceBreakdown(days = 30) {
  * Trackear signup de usuario
  * CRÍTICO: Registra cuando un usuario se registra (email, Google, Apple)
  */
+
+/**
+ * Track app download intent from QR/download hub/store buttons.
+ * Stored internally when app_download_events exists; always mirrored to GA4.
+ */
+export async function trackAppDownloadIntent({ target = 'hub', platformHint = 'unknown', source = 'download_page', campaign = 'download_hub' } = {}) {
+    const eventPayload = {
+        target,
+        platform_hint: platformHint,
+        source,
+        campaign
+    };
+
+    trackEvent('app_download_intent', eventPayload);
+
+    try {
+        const attribution = getCurrentAttribution();
+        const fullPayload = {
+            event_type: 'download_intent',
+            target,
+            platform_hint: platformHint,
+            source,
+            campaign,
+            user_id: (await supabase.auth.getUser())?.data?.user?.id || null,
+            session_id: getSessionId(),
+            country: localStorage.getItem('userCountry') || null,
+            country_code: localStorage.getItem('userCountryCode') || null,
+            city: localStorage.getItem('userCity') || null,
+            platform: getRuntimePlatform(),
+            app_version: getAppVersion(),
+            os: getOS(),
+            device_type: getDeviceType(),
+            traffic_source: attribution?.utm_source || source || null,
+            traffic_medium: attribution?.utm_medium || null,
+            traffic_campaign: attribution?.utm_campaign || campaign || null,
+            language: localStorage.getItem('language') || document.documentElement.lang || navigator.language || 'es',
+            attribution_snapshot: {
+                current: attribution,
+                first_touch: getFirstTouchAttribution()
+            }
+        };
+
+        const fallbackPayload = {
+            event_type: fullPayload.event_type,
+            target: fullPayload.target,
+            platform_hint: fullPayload.platform_hint,
+            source: fullPayload.source,
+            campaign: fullPayload.campaign,
+            user_id: fullPayload.user_id,
+            session_id: fullPayload.session_id
+        };
+
+        const { error } = await insertWithOptionalColumns('app_download_events', fullPayload, fallbackPayload);
+        if (error) logger.warn('[Analytics] Failed to track app download intent:', error);
+    } catch (err) {
+        logger.warn('[Analytics] Failed to track app download intent:', err);
+    }
+}
+
 export async function trackUserSignup(userId, method = 'email', metadata = {}) {
     // GA4 tracking
     trackEvent('sign_up', {

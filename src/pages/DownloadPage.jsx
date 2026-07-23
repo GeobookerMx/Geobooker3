@@ -12,6 +12,7 @@ import {
   hasIosStoreLink,
 } from '../config/appLinks';
 import { captureQrAttribution, getStoredQrAttribution } from '../services/qrAttributionService';
+import { trackAppDownloadIntent } from '../services/analyticsService';
 
 const DownloadPage = () => {
   const [platform, setPlatform] = useState('unknown');
@@ -78,6 +79,15 @@ const DownloadPage = () => {
     campaign: 'download_hub',
     target: 'hub',
   });
+
+  const handleDownloadClick = async (card) => {
+    await trackAppDownloadIntent({
+      target: card.id === 'android' ? 'android_store' : card.id === 'ios' ? 'ios_store' : 'hub',
+      platformHint: card.id,
+      source: attribution?.utm_source || 'download_page',
+      campaign: attribution?.utm_campaign || `${card.id}_store`,
+    });
+  };
 
   const platformCards = [
     {
@@ -270,6 +280,7 @@ const DownloadPage = () => {
                   <p className="text-slate-600 mt-3">{card.description}</p>
                   <a
                     href={card.actionHref}
+                    onClick={() => handleDownloadClick(card)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex mt-5 text-sm text-slate-700 underline underline-offset-4 hover:text-slate-900 transition"

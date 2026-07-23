@@ -203,6 +203,87 @@ export const SEARCH_INTENT_RULES = [
     trustSignals: ['temporada', 'asesoria tecnica', 'mayoreo', 'entrega regional'],
     keywords: ['fertilizante', 'semillas', 'herbicida', 'insecticida agricola', 'riego agricola', 'forraje', 'agroinsumos', 'agricultural supplies', 'farm supplies']
   },
+
+  {
+    id: 'industrial_components_power_transmission',
+    label: 'Componentes industriales y transmision de potencia',
+    confidence: 0.89,
+    categoryHints: ['industrial-supplies', 'hardware-store', 'auto-parts-heavy'],
+    googleQuery: 'rodamientos bandas industriales mangueras hidraulicas proveedor industrial',
+    fallbackQueries: ['rodamientos cerca', 'mangueras hidraulicas cerca', 'bandas industriales', 'industrial components near me'],
+    trustSignals: ['medidas tecnicas', 'stock especializado', 'compatibilidad', 'venta industrial'],
+    keywords: ['balero', 'baleros', 'rodamiento', 'rodamientos', 'chumacera', 'chumaceras', 'banda industrial', 'bandas industriales', 'polea', 'poleas', 'engrane', 'engranes', 'reten', 'retenes', 'manguera hidraulica', 'mangueras hidraulicas', 'conexiones hidraulicas', 'valvula hidraulica', 'hydraulic hose', 'bearings', 'power transmission', 'industrial belt']
+  },
+  {
+    id: 'electrical_supplies',
+    label: 'Material electrico y componentes',
+    confidence: 0.88,
+    categoryHints: ['hardware-store', 'industrial-supplies', 'electrician'],
+    googleQuery: 'material electrico proveedor electrico ferreteria electrica',
+    fallbackQueries: ['material electrico cerca', 'cable electrico cerca', 'electric supplies near me', 'electricista cerca'],
+    trustSignals: ['calibre correcto', 'norma electrica', 'stock por medida', 'asesoria tecnica'],
+    keywords: ['cable electrico', 'cable calibre', 'apagador', 'contacto', 'breaker', 'centro de carga', 'pastilla termica', 'conduit', 'tubo conduit', 'caja registro', 'material electrico', 'electric supplies', 'electrical supply', 'wire', 'circuit breaker']
+  },
+  {
+    id: 'plumbing_supplies',
+    label: 'Plomeria, tuberia y conexiones',
+    confidence: 0.88,
+    categoryHints: ['hardware-store', 'plumber', 'construction-supplies'],
+    googleQuery: 'plomeria tuberia conexiones valvulas ferreteria',
+    fallbackQueries: ['material de plomeria cerca', 'tuberia pvc cerca', 'plumbing supplies near me', 'plomero cerca'],
+    trustSignals: ['medida correcta', 'tipo de conexion', 'presion/uso', 'stock local'],
+    keywords: ['tuberia pvc', 'cpvc', 'pex', 'cobre', 'valvula', 'valvulas', 'cople', 'codos', 'tinaco', 'bomba de agua', 'flotador', 'llave mezcladora', 'material de plomeria', 'plumbing supplies', 'pipe fittings', 'water pump']
+  },
+  {
+    id: 'hvac_refrigeration',
+    label: 'Aire acondicionado y refrigeracion',
+    confidence: 0.87,
+    categoryHints: ['industrial-supplies', 'electronics-repair', 'restaurant-equipment'],
+    googleQuery: 'aire acondicionado refrigeracion comercial refacciones hvac',
+    fallbackQueries: ['refrigeracion comercial cerca', 'minisplit cerca', 'hvac supplies near me', 'tecnico aire acondicionado'],
+    trustSignals: ['instalacion', 'garantia', 'refacciones', 'diagnostico tecnico'],
+    keywords: ['minisplit', 'aire acondicionado', 'clima', 'compresor refrigeracion', 'gas refrigerante', 'refrigeracion comercial', 'camara fria', 'evaporador', 'condensador', 'hvac', 'air conditioning', 'commercial refrigeration']
+  },
+  {
+    id: 'lab_dental_supplies',
+    label: 'Laboratorio, dental e insumos clinicos',
+    confidence: 0.86,
+    categoryHints: ['medical-supplies', 'doctor', 'dentist'],
+    googleQuery: 'insumos laboratorio dental material clinico proveedor medico',
+    fallbackQueries: ['material dental cerca', 'insumos laboratorio cerca', 'dental supplies near me', 'medical supplies near me'],
+    trustSignals: ['uso profesional', 'lote/caducidad', 'facturacion', 'stock validable'],
+    keywords: ['material dental', 'resina dental', 'guantes nitrilo', 'reactivos laboratorio', 'tubos vacutainer', 'material clinico', 'instrumental dental', 'dental supplies', 'laboratory supplies', 'clinical supplies']
+  },
+  {
+    id: 'uniforms_textiles',
+    label: 'Uniformes, textiles y bordado',
+    confidence: 0.84,
+    categoryHints: ['office-supplies', 'print-shop', 'business-services'],
+    googleQuery: 'uniformes bordados serigrafia textiles',
+    fallbackQueries: ['uniformes cerca', 'bordados cerca', 'serigrafia cerca', 'custom uniforms near me'],
+    trustSignals: ['tallas', 'bordado/logo', 'volumen minimo', 'tiempo de entrega'],
+    keywords: ['uniforme', 'uniformes', 'bordado', 'bordados', 'serigrafia', 'sublimacion', 'playeras personalizadas', 'textiles', 'telas', 'mandiles', 'uniformes industriales', 'custom uniforms', 'embroidery', 'screen printing']
+  },
+  {
+    id: 'solar_energy_supplies',
+    label: 'Paneles solares y energia',
+    confidence: 0.84,
+    categoryHints: ['industrial-supplies', 'electrical-supplies'],
+    googleQuery: 'paneles solares inversores baterias instalacion solar',
+    fallbackQueries: ['paneles solares cerca', 'instalacion solar cerca', 'solar panels near me', 'solar installer near me'],
+    trustSignals: ['dimensionamiento', 'garantia', 'instalacion certificada', 'ahorro estimado'],
+    keywords: ['panel solar', 'paneles solares', 'inversor solar', 'bateria solar', 'microinversor', 'estructura solar', 'energia solar', 'solar panels', 'solar installer', 'solar battery']
+  },
+  {
+    id: 'professional_services',
+    label: 'Servicios profesionales y administrativos',
+    confidence: 0.83,
+    categoryHints: ['accounting', 'legal-services', 'business-services'],
+    googleQuery: 'contador abogado asesoria fiscal servicios profesionales',
+    fallbackQueries: ['contador cerca', 'abogado cerca', 'asesoria fiscal cerca', 'accountant near me'],
+    trustSignals: ['cedula/experiencia', 'especialidad', 'confidencialidad', 'cotizacion clara'],
+    keywords: ['contador', 'contadora', 'resico', 'facturacion', 'declaracion anual', 'abogado', 'notaria', 'contrato', 'asesoria fiscal', 'accountant', 'lawyer', 'tax advisor', 'legal services']
+  },
   {
     id: 'pharmacy_product',
     label: 'Farmacia y medicamento',

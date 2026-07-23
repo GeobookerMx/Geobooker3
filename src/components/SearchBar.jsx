@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from '../contexts/LocationContext';
 import { searchPlacesUniversal } from '../services/googlePlacesService';
@@ -13,6 +13,14 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
   const [searchTerm, setSearchTerm] = useState(initialValue);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const { userLocation, permissionGranted, requestLocationPermission } = useLocation();
+
+  const intentPreview = useMemo(() => {
+    const trimmed = searchTerm.trim();
+    if (trimmed.length < 3) return null;
+    const analysis = analyzeSearchIntent(trimmed);
+    if (!analysis || analysis.confidence < 0.83) return null;
+    return analysis;
+  }, [searchTerm]);
 
   useEffect(() => {
     setSearchTerm(initialValue || '');
@@ -31,7 +39,22 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
     'Componentes industriales', 'Productos quimicos', 'Maquinaria industrial',
     'Insumos medicos cerca', 'Equipo de seguridad industrial', 'Autopartes cerca', 'Reparacion celular cerca',
     'Beauty supply near me', 'Restaurant equipment near me', 'Agroinsumos cerca', 'Renta mesas y sillas',
-    'Coffee shop near me', 'Pharmacy near me', 'Locksmith near me', 'Plumber near me'
+    'Coffee shop near me', 'Pharmacy near me', 'Locksmith near me', 'Plumber near me',
+    'Solar installer near me',
+    'HVAC supplies near me',
+    'Dental supplies near me',
+    'Abogado contratos',
+    'Contador RESICO',
+    'Paneles solares cerca',
+    'Uniformes bordados',
+    'Reactivos laboratorio',
+    'Material dental cerca',
+    'Minisplit instalacion',
+    'Refrigeracion comercial',
+    'Tuberia PVC y conexiones',
+    'Material electrico cerca',
+    'Rodamientos industriales',
+    'Manguera hidraulica cerca'
   ];
 
   const handleSearch = async (searchQuery = searchTerm) => {
@@ -186,6 +209,43 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
           )}
         </button>
       </div>
+
+      {intentPreview && (
+        <div className="mt-3 rounded-2xl border border-cyan-200 bg-gradient-to-r from-cyan-50 to-blue-50 p-4 text-left shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-700">La IA te recomienda</p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">
+                Buscar como <span className="text-blue-700">{intentPreview.label}</span> para encontrar negocios relacionados cerca de ti.
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Geobooker sugiere negocios probables; confirma precio, stock y disponibilidad directamente con el proveedor.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleSearch(intentPreview.googleQuery || searchTerm)}
+              className="shrink-0 rounded-full bg-slate-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-blue-700"
+            >
+              Buscar recomendado
+            </button>
+          </div>
+          {intentPreview.fallbackQueries?.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {intentPreview.fallbackQueries.slice(0, 3).map((query) => (
+                <button
+                  key={query}
+                  type="button"
+                  onClick={() => handleSuggestionClick(query)}
+                  className="rounded-full border border-cyan-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700"
+                >
+                  {query}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {showSuggestions && searchTerm && (
         <div className="absolute left-0 right-0 top-full z-10 mt-2 max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">

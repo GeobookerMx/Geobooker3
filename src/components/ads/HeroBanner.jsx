@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import useActiveCampaigns from '../../hooks/useActiveCampaigns';
 import useAdTracking from '../../hooks/useAdTracking';
-import { loadEnterpriseCampaigns } from '../../services/adService';
+import { getStoredUserCountryCode, loadEnterpriseCampaigns } from '../../services/adService';
 import GeobookerPromoPlaceholder from './GeobookerPromoPlaceholder';
 import ReportAdButton from './ReportAdButton';
 
@@ -21,7 +21,7 @@ export default function HeroBanner() {
     // Load Enterprise campaigns with geo-targeting
     useEffect(() => {
         const loadEnterprise = async () => {
-            const country = localStorage.getItem('userCountry') || 'unknown';
+            const country = getStoredUserCountryCode();
             const city = localStorage.getItem('userCity') || 'unknown';
 
             const campaigns = await loadEnterpriseCampaigns('hero_banner', { country, city });

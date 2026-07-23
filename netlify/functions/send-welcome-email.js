@@ -55,7 +55,7 @@ exports.handler = async (event) => {
                     <p><strong>⚠️ Importante:</strong> Por seguridad, te recomendamos cambiar tu contraseña después del primer inicio de sesión.</p>
                     
                     <h2>Tu Campaña</h2>
-                    <p>Tu campaña "<strong>${campaignName}</strong>" está siendo revisada por nuestro equipo. Recibirás una notificación cuando esté activa (usualmente en 24-48 horas).</p>
+                    <p>Tu campaña "<strong>${campaignName}</strong>" está siendo revisada por nuestro equipo. Recibirás una notificación cuando esté activa (normalmente dentro de 12 a 72 horas).</p>
                     
                     <div style="margin: 30px 0;">
                         <a href="${dashboardUrl}" style="background: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block;">

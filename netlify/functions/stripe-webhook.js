@@ -233,6 +233,10 @@ exports.handler = async (event) => {
                     const campaignId = metadata.campaign_id;
                     if (campaignId) {
                         const billingCountry = metadata.billing_country || 'MX';
+                        const stripeAmount = typeof session.amount_total === 'number' ? session.amount_total / 100 : 0;
+                        const ivaAmount = Number(metadata.iva_amount_mxn || metadata.iva_amount_usd || metadata.iva_amount || 0);
+                        const totalWithIva = Number(metadata.total_amount_mxn || metadata.total_amount_usd || metadata.total_with_iva || 0) || stripeAmount;
+                        const invoiceRequired = metadata.invoice_required !== 'false';
 
                         await supabase
                             .from('ad_campaigns')
@@ -241,10 +245,15 @@ exports.handler = async (event) => {
                                 payment_status: 'paid',
                                 stripe_payment_intent: session.payment_intent,
                                 payment_method: 'card',
+                                stripe_session_id: session.id,
                                 billing_country: billingCountry,
                                 tax_status: metadata.tax_status || (billingCountry === 'MX' ? 'domestic_mx' : 'export_0_iva'),
                                 currency: billingCountry === 'MX' ? 'MXN' : 'USD',
-                                client_tax_id: metadata.client_tax_id || null
+                                client_tax_id: metadata.client_tax_id || null,
+                                invoice_required: invoiceRequired,
+                                invoice_status: invoiceRequired ? 'pending' : 'not_required',
+                                iva_amount: ivaAmount,
+                                total_with_iva: totalWithIva
                             })
                             .eq('id', campaignId);
 
@@ -325,11 +334,24 @@ exports.handler = async (event) => {
                             console.error('Auth error:', authError);
                         }
 
-                        // ðŸ†• PASO 2: Actualizar campaÃ±a con fechas y payment
-                        const startDate = new Date();
+                        // PASO 2: actualizar pago conservando fechas elegidas en checkout
+                        const { data: existingCampaign } = await supabase
+                            .from('ad_campaigns')
+                            .select('start_date, end_date, total_budget, budget')
+                            .eq('id', campaignId)
+                            .single();
+
+                        const fallbackStartDate = new Date();
                         const durationMonths = parseInt(metadata.duration_months) || 1;
-                        const endDate = new Date(startDate);
-                        endDate.setMonth(endDate.getMonth() + durationMonths);
+                        const fallbackEndDate = new Date(fallbackStartDate);
+                        fallbackEndDate.setMonth(fallbackEndDate.getMonth() + durationMonths);
+                        const billingCountry = metadata.billing_country || 'US';
+                        const stripeAmount = typeof session.amount_total === 'number' ? session.amount_total / 100 : 0;
+                        const ivaAmount = Number(metadata.iva_amount_usd || metadata.iva_amount_mxn || 0);
+                        const totalWithIva = Number(metadata.total_amount_usd || metadata.total_amount_mxn || 0) || stripeAmount;
+                        const invoiceRequired = billingCountry === 'MX';
+                        const preservedStartDate = existingCampaign?.start_date || fallbackStartDate.toISOString().split('T')[0];
+                        const preservedEndDate = existingCampaign?.end_date || fallbackEndDate.toISOString().split('T')[0];
 
                         const { data: updatedCampaign } = await supabase
                             .from('ad_campaigns')
@@ -337,10 +359,16 @@ exports.handler = async (event) => {
                                 status: 'pending_review',
                                 payment_status: 'paid',
                                 stripe_payment_intent: session.payment_intent,
-                                start_date: startDate.toISOString().split('T')[0],
-                                end_date: endDate.toISOString().split('T')[0],
+                                stripe_session_id: session.id,
+                                start_date: preservedStartDate,
+                                end_date: preservedEndDate,
                                 currency: 'USD',
-                                tax_status: metadata.billing_country === 'MX' ? 'domestic_mx' : 'export_0_iva',
+                                billing_country: billingCountry,
+                                tax_status: billingCountry === 'MX' ? 'domestic_mx' : 'export_0_iva',
+                                invoice_required: invoiceRequired,
+                                invoice_status: invoiceRequired ? 'pending' : 'not_required',
+                                iva_amount: ivaAmount,
+                                total_with_iva: totalWithIva || existingCampaign?.total_budget || existingCampaign?.budget || 0,
                                 advertiser_email: advertiserEmail,
                                 // Set user_id if we created the account
                                 ...(userId && { user_id: userId })
@@ -634,13 +662,26 @@ exports.handler = async (event) => {
 
                     // Si es pago de publicidad
                     if (metadata.product_id) {
+                        const billingCountry = metadata.billing_country || 'MX';
+                        const ivaAmount = Number(metadata.iva_amount_mxn || metadata.iva_amount || 0);
+                        const totalWithIva = Number(metadata.total_amount_mxn || metadata.total_with_iva || 0) || (paymentIntent.amount_received ? paymentIntent.amount_received / 100 : 0);
+                        const invoiceRequired = metadata.invoice_required !== 'false';
+
                         await supabase
                             .from('ad_campaigns')
                             .update({
                                 status: 'pending_review',
                                 payment_status: 'paid',
                                 stripe_payment_intent: paymentIntent.id,
-                                payment_method: 'oxxo'
+                                payment_method: 'oxxo',
+                                billing_country: billingCountry,
+                                tax_status: metadata.tax_status || (billingCountry === 'MX' ? 'domestic_mx' : 'export_0_iva'),
+                                currency: 'MXN',
+                                client_tax_id: metadata.client_tax_id || null,
+                                invoice_required: invoiceRequired,
+                                invoice_status: invoiceRequired ? 'pending' : 'not_required',
+                                iva_amount: ivaAmount,
+                                total_with_iva: totalWithIva
                             })
                             .eq('id', metadata.product_id);
 

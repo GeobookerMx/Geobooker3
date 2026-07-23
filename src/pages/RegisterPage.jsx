@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { trackUserSignup } from '../services/analyticsService';
+import { getPlatform } from '../utils/platformDetection';
 
 const RegisterPage = () => {
   const navigate = useNavigate();

@@ -5,6 +5,7 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
+import { getStoredUserCountryCode, matchesCampaignLocation } from '../services/adService';
 
 const AD_CACHE_KEY = 'geobooker_active_ads_cache';
 const AD_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
@@ -37,7 +38,7 @@ export function useActiveAds() {
 
     useEffect(() => {
         const storedCity = localStorage.getItem('userCity') || 'unknown';
-        const storedCountry = localStorage.getItem('userCountry') || 'unknown';
+        const storedCountry = getStoredUserCountryCode();
 
         setUserLocation({ city: storedCity, country: storedCountry });
 
@@ -75,19 +76,13 @@ export function useActiveAds() {
             if (abortRef.current?.signal.aborted) return; // Componente desmontado
 
             // Filtrar por ubicación
-            const relevantAds = (data || []).filter(campaign => {
-                if (campaign.ad_level === 'global') return true;
-                if (campaign.target_countries?.includes(userCountry)) return true;
-                if (campaign.target_cities?.some(city =>
-                    city.toLowerCase().includes(userCity?.toLowerCase() || '') ||
-                    userCity?.toLowerCase()?.includes(city.toLowerCase())
-                )) return true;
-                return false;
-            });
+            const relevantAds = (data || []).filter(campaign =>
+                matchesCampaignLocation(campaign, { country: userCountry, city: userCity })
+            );
 
             // Ordenar por prioridad
             const sortedAds = relevantAds.sort((a, b) => {
-                const priority = { global: 1, country: 2, city: 3 };
+                const priority = { city: 1, country: 2, region: 3, global: 4 };
                 return (priority[a.ad_level] || 4) - (priority[b.ad_level] || 4);
             });
 
@@ -123,7 +118,7 @@ export function useActiveAds() {
     const refresh = () => {
         localStorage.removeItem(AD_CACHE_KEY); // Limpiar caché al refrescar manualmente
         const city = localStorage.getItem('userCity') || 'unknown';
-        const country = localStorage.getItem('userCountry') || 'unknown';
+        const country = getStoredUserCountryCode();
         loadActiveAds(city, country);
     };
 

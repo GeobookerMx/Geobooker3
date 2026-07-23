@@ -55,6 +55,7 @@ export default function EnterpriseContact() {
 
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [savedLead, setSavedLead] = useState(null);
     const [form, setForm] = useState({
         company_name: '',
         contact_name: '',
@@ -85,6 +86,25 @@ export default function EnterpriseContact() {
         setForm(prev => ({ ...prev, [name]: value }));
     };
 
+    const saveEnterpriseLead = async (leadPayload) => {
+        const insertLead = (payload) => supabase
+            .from('enterprise_leads')
+            .insert(payload)
+            .select()
+            .single();
+
+        const result = await insertLead(leadPayload);
+        if (!result.error) return result;
+
+        const message = String((result.error.message || '') + ' ' + (result.error.details || '')).toLowerCase();
+        if (!message.includes('column') && !message.includes('schema cache') && !message.includes('could not find')) {
+            return result;
+        }
+
+        const { lead_source, platform, ...fallbackPayload } = leadPayload;
+        return insertLead(fallbackPayload);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -96,8 +116,7 @@ export default function EnterpriseContact() {
         try {
             setSubmitting(true);
 
-            // Guardar en Supabase (tabla de leads enterprise)
-            const { error } = await supabase.from('enterprise_leads').insert({
+            const leadPayload = {
                 company_name: form.company_name,
                 contact_name: form.contact_name,
                 contact_email: form.contact_email,
@@ -110,22 +129,41 @@ export default function EnterpriseContact() {
                 campaign_dates: form.campaign_dates,
                 budget_range: form.budget_range,
                 message: form.message,
-                status: 'new'
-            });
+                status: 'new',
+                lead_source: 'enterprise_contact_form',
+                platform: typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.()
+                    ? window.Capacitor.getPlatform()
+                    : 'web'
+            };
 
-            if (error) {
-                // Si la tabla no existe, mostrar éxito de todos modos (para demo)
-                console.warn('Enterprise leads table may not exist:', error);
+            const { data: lead, error } = await saveEnterpriseLead(leadPayload);
+
+            if (error) throw error;
+
+            setSavedLead(lead);
+
+            try {
+                const notifyResponse = await fetch('/.netlify/functions/notify-enterprise-lead', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lead })
+                });
+
+                if (!notifyResponse.ok) {
+                    console.warn('Enterprise notification failed:', await notifyResponse.text());
+                    toast('Solicitud guardada. Revisaremos manualmente la notificacion interna.');
+                }
+            } catch (notifyError) {
+                console.warn('Enterprise notification unavailable:', notifyError);
+                toast('Solicitud guardada. Revisaremos manualmente la notificacion interna.');
             }
 
             setSubmitted(true);
-            toast.success('¡Solicitud enviada! Te contactaremos pronto.');
+            toast.success('Solicitud recibida y registrada.');
 
         } catch (error) {
             console.error('Error submitting form:', error);
-            // Mostrar éxito para demo incluso si falla
-            setSubmitted(true);
-            toast.success('¡Solicitud recibida!');
+            toast.error(error.message || 'No se pudo registrar la solicitud. Intenta de nuevo.');
         } finally {
             setSubmitting(false);
         }
@@ -142,10 +180,17 @@ export default function EnterpriseContact() {
                         ¡Gracias por tu interés!
                     </h1>
                     <p className="text-gray-300 mb-8">
-                        Nuestro equipo de ventas enterprise te contactará en menos de 24 horas
-                        para diseñar una estrategia personalizada para tu marca.
+                        Registramos tu solicitud. Puedes continuar directo al pago si el paquete seleccionado es estandar, o nuestro equipo revisara tu caso si requiere una propuesta a medida.
                     </p>
                     <div className="space-y-3">
+                        {form.selected_plan && (
+                            <Link
+                                to={`/enterprise/checkout?plan=${form.selected_plan}${savedLead?.id ? `&lead=${savedLead.id}` : ''}`}
+                                className="block bg-amber-500 text-slate-950 py-3 px-6 rounded-xl font-semibold hover:bg-amber-400 transition"
+                            >
+                                Pagar paquete seleccionado
+                            </Link>
+                        )}
                         <Link
                             to="/enterprise"
                             className="block bg-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-700 transition"

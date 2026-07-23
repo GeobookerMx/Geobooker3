@@ -5,6 +5,7 @@
  */
 import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { matchesCampaignLocation } from '../../services/adService';
 import { toast } from 'react-hot-toast';
 import {
     Globe, MapPin, PlayCircle, Eye, RefreshCw,
@@ -157,31 +158,29 @@ export default function AdsQATool() {
             const userCity = locationToUse.city.toLowerCase();
 
             (allCampaigns || []).forEach(campaign => {
-                // Verificar match por ciudad (prioridad 1)
+                if (!matchesCampaignLocation(campaign, { country: userCountry, city: userCity })) {
+                    return;
+                }
+
                 const targetCities = campaign.target_cities || [];
                 const cityMatch = targetCities.some(city =>
                     city.toLowerCase().includes(userCity) ||
                     userCity.includes(city.toLowerCase())
                 );
+                const targetCountries = campaign.target_countries || [];
+                const countryMatch = targetCountries.includes(userCountry);
 
                 if (cityMatch) {
                     allMatches.push({ ...campaign, matchedScope: 'city', priority: 1, render_surface: getRenderSurfaceLabel(campaign) });
                     return;
                 }
 
-                // Verificar match por país (prioridad 2)
-                const targetCountries = campaign.target_countries || [];
-                const countryMatch = targetCountries.includes(userCountry);
-
-                if (countryMatch) {
+                if (countryMatch || campaign.target_country === userCountry) {
                     allMatches.push({ ...campaign, matchedScope: 'country', priority: 2, render_surface: getRenderSurfaceLabel(campaign) });
                     return;
                 }
 
-                // Verificar si es global (prioridad 4)
-                if (campaign.ad_level === 'global') {
-                    allMatches.push({ ...campaign, matchedScope: 'global', priority: 4, render_surface: getRenderSurfaceLabel(campaign) });
-                }
+                allMatches.push({ ...campaign, matchedScope: 'global', priority: 4, render_surface: getRenderSurfaceLabel(campaign) });
             });
 
             // Ordenar por prioridad
@@ -516,7 +515,7 @@ export default function AdsQATool() {
                                     <strong>Razón del match:</strong> {
                                         ad.matchedScope === 'city' ? `Ciudad "${ad.target_cities?.join(', ')}" coincide con ${locationName}` :
                                             ad.matchedScope === 'country' ? `País "${ad.target_countries?.join(', ')}" coincide con ${activeLocation.country}` :
-                                                ad.matchedScope === 'global' ? 'Anuncio global (sin restricción geográfica)' :
+                                                ad.matchedScope === 'global' ? 'Anuncio global sin territorio especifico; si trae pais/ciudad, debe respetarlo' :
                                                     'Coincidencia por región'
                                     }
                                 </div>

@@ -249,6 +249,7 @@ function AppInitializer() {
       const geoData = await detectUserCountry();
       if (geoData) {
         localStorage.setItem("userCountryCode", geoData.country);
+        localStorage.setItem("userCountry", geoData.country);
         localStorage.setItem("userCountryName", geoData.countryName);
         localStorage.setItem("userCity", geoData.city);
 

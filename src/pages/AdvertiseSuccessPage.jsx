@@ -40,7 +40,7 @@ const AdvertiseSuccessPage = () => {
             billingCountry: campaign.billing_country || 'MX',
             taxStatus: campaign.tax_status || ((campaign.billing_country || 'MX') === 'MX' ? 'domestic_mx' : 'export_0_iva'),
             amount: formatCurrency(
-                campaign.total_budget || campaign.budget || 0,
+                campaign.total_with_iva || campaign.total_budget || campaign.budget || 0,
                 campaign.currency || (campaign.billing_country === 'MX' ? 'MXN' : 'USD')
             ),
             payment: campaign.payment_method === 'oxxo' ? 'OXXO' : 'Tarjeta',

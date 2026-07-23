@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { sendWelcomeEmail, sendReferralBonusEmail } from '../services/notificationService';
 import { trackUserSignup } from '../services/analyticsService';
+import { getPlatform } from '../utils/platformDetection';
 import { isPremiumPromoActive, getPromoMessage, getPremiumPromoDeadlineLabel } from '../config/promotions';
 import { Capacitor } from '@capacitor/core';
 

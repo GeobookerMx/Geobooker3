@@ -12,6 +12,7 @@
 import { supabase } from '../lib/supabase';
 import { logger } from '../utils/logger';
 import { appendAttributionToEvent, getAttributionSummary, getCurrentAttribution, getFirstTouchAttribution } from './attributionService';
+import { getPlatform } from '../utils/platformDetection';
 
 // ============================================
 // FUNCIONES DE COMPATIBILIDAD CON GA4
@@ -162,6 +163,22 @@ const getBrowser = () => {
 };
 
 // Detectar OS
+const getAppVersion = () => {
+    try {
+        return localStorage.getItem('gb_app_version') || 'unknown';
+    } catch {
+        return 'unknown';
+    }
+};
+
+const getRuntimePlatform = () => {
+    try {
+        return getPlatform();
+    } catch {
+        return 'web';
+    }
+};
+
 const getOS = () => {
     const ua = navigator.userAgent;
     if (ua.includes('Windows')) return 'Windows';
@@ -191,6 +208,8 @@ export async function trackPageView(pagePath, pageTitle = document.title) {
             device_type: getDeviceType(),
             browser: getBrowser(),
             os: getOS(),
+            platform: getRuntimePlatform(),
+            app_version: getAppVersion(),
             traffic_source: attribution?.utm_source || null,
             traffic_medium: attribution?.utm_medium || null,
             traffic_campaign: attribution?.utm_campaign || null,
@@ -485,6 +504,10 @@ export async function trackUserSignup(userId, method = 'email', metadata = {}) {
             traffic_source: attribution?.utm_source || null,
             traffic_medium: attribution?.utm_medium || null,
             traffic_campaign: attribution?.utm_campaign || null,
+            platform: getRuntimePlatform(),
+            app_version: getAppVersion(),
+            os: getOS(),
+            device_type: getDeviceType(),
             attribution_snapshot: {
                 current: attribution,
                 first_touch: getFirstTouchAttribution()
@@ -500,6 +523,7 @@ export async function trackUserSignup(userId, method = 'email', metadata = {}) {
         };
 
         await insertWithOptionalColumns('user_sessions', fullPayload, fallbackPayload);
+        await updateUserGrowthProfile(userId, 'signup');
         logger.success(`✅ User signup tracked: ${userId} (${method})`);
     } catch (err) {
         logger.warn('[Analytics] Failed to track signup:', err);
@@ -509,6 +533,42 @@ export async function trackUserSignup(userId, method = 'email', metadata = {}) {
 /**
  * Trackear login de usuario
  * CRÍTICO: Registra cuando un usuario inicia sesión
+ */
+export async function updateUserGrowthProfile(userId, eventType = 'login') {
+    if (!userId) return;
+
+    try {
+        const attribution = getCurrentAttribution();
+        const platform = getRuntimePlatform();
+        const payload = {
+            id: userId,
+            last_seen_at: new Date().toISOString(),
+            last_seen_platform: platform,
+            last_seen_source: attribution?.utm_source || getAttributionSummary() || 'direct',
+            updated_at: new Date().toISOString()
+        };
+
+        if (eventType === 'signup') {
+            payload.registration_platform = platform;
+            payload.registration_source = attribution?.utm_source || getAttributionSummary() || 'direct';
+            payload.registration_app_version = getAppVersion();
+        }
+
+        if (eventType === 'login') {
+            payload.last_login_at = new Date().toISOString();
+            payload.last_login_platform = platform;
+            payload.last_login_source = attribution?.utm_source || getAttributionSummary() || 'direct';
+        }
+
+        await supabase.from('user_profiles').upsert(payload, { onConflict: 'id', ignoreDuplicates: false });
+    } catch (err) {
+        logger.warn('[Analytics] Failed to update growth profile:', err);
+    }
+}
+
+/**
+ * Trackear login de usuario
+ * CRITICO: Registra cuando un usuario inicia sesion
  */
 export async function trackUserLogin(userId, method = 'email') {
     // GA4 tracking
@@ -530,6 +590,10 @@ export async function trackUserLogin(userId, method = 'email') {
             traffic_source: attribution?.utm_source || null,
             traffic_medium: attribution?.utm_medium || null,
             traffic_campaign: attribution?.utm_campaign || null,
+            platform: getRuntimePlatform(),
+            app_version: getAppVersion(),
+            os: getOS(),
+            device_type: getDeviceType(),
             attribution_snapshot: {
                 current: attribution,
                 first_touch: getFirstTouchAttribution()
@@ -545,6 +609,7 @@ export async function trackUserLogin(userId, method = 'email') {
         };
 
         await insertWithOptionalColumns('user_sessions', fullPayload, fallbackPayload);
+        await updateUserGrowthProfile(userId, 'login');
         logger.success(`✅ User login tracked: ${userId} (${method})`);
     } catch (err) {
         logger.warn('[Analytics] Failed to track login:', err);

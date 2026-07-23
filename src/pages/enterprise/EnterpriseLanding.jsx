@@ -147,7 +147,7 @@ export default function EnterpriseLanding() {
                             priceCurrency: "USD",
                             price: 0,
                             availability: "https://schema.org/InStock",
-                            url: `https://geobooker.com.mx/enterprise/contact?plan=${plan.code}`,
+                            url: `https://geobooker.com.mx/enterprise/checkout?plan=${plan.code}`,
                         },
                     },
                 })),
@@ -215,7 +215,7 @@ export default function EnterpriseLanding() {
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
                         <Link
-                            to="/enterprise/contact"
+                            to="#pricing"
                             className="group bg-gradient-to-r from-amber-500 to-orange-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 transition-all flex items-center gap-2"
                         >
                             {t('enterprise.ctaGetStarted')}
@@ -366,10 +366,10 @@ export default function EnterpriseLanding() {
                                 </ul>
 
                                 <Link
-                                    to={`/enterprise/contact?plan=${plan.code}`}
-                                    className="block text-center py-3 px-4 rounded-xl font-semibold bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg hover:shadow-purple-500/30 transition-all"
+                                    to={`/enterprise/checkout?plan=${plan.code}`}
+                                    className="block text-center py-3 px-4 rounded-xl font-semibold bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 hover:shadow-lg hover:shadow-amber-500/30 transition-all"
                                 >
-                                    Solicitar Propuesta
+                                    Comprar / programar campana
                                 </Link>
                             </div>
                         ))}

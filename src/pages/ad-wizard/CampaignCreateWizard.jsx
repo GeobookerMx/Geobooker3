@@ -464,6 +464,9 @@ const getIsoDateOffset = (offsetDays = 0) => {
                             legal_name: formData.legal_name || '',
                             client_tax_id: formData.tax_id || '',
                             advertiser_email: formData.advertiser_email,
+                            subtotal_mxn: subtotal,
+                            iva_amount_mxn: ivaAmount,
+                            total_amount_mxn: totalWithIva,
                         },
                         description: `Publicidad Geobooker - ${adSpace.display_name}`
                     }),
@@ -882,7 +885,7 @@ const getIsoDateOffset = (offsetDays = 0) => {
                             {/* Avisos importantes */}
                             <div className="space-y-3 mt-4">
                                 <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
-                                    <p className="text-sm text-amber-800 font-medium mb-1">⏳ Tiempo de revisión: 24-48 horas</p>
+                                    <p className="text-sm text-amber-800 font-medium mb-1">⏳ Tiempo de revision: 12-72 horas</p>
                                     <p className="text-xs text-amber-700">Tu campaña será revisada por nuestro equipo antes de activarse para asegurar que cumple con las políticas de contenido.</p>
                                 </div>
 

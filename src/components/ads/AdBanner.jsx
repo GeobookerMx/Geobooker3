@@ -10,6 +10,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Volume2, VolumeX, ExternalLink } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { getStoredUserCountryCode } from '../../services/adService';
 
 // Ad display rules
 const AD_RULES = {
@@ -97,7 +98,7 @@ export default function AdBanner({
     const recordImpression = async (campaignId) => {
         try {
             // Get user location for analytics
-            const country = localStorage.getItem('userCountry') || 'unknown';
+            const country = getStoredUserCountryCode();
             const city = localStorage.getItem('userCity') || 'unknown';
             const device = window.innerWidth < 768 ? 'mobile' : 'desktop';
 

@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { trackUserLogin } from '../services/analyticsService';
+import { getPlatform } from '../utils/platformDetection';
 
 const MAX_WAIT_MS = 8000;
 
@@ -35,6 +36,10 @@ const AuthCallback = () => {
                     full_name: sessionUser.user_metadata?.full_name || sessionUser.email?.split('@')[0],
                     preferred_language: preferredLanguage,
                     registration_domain: registrationDomain,
+                    last_login_at: new Date().toISOString(),
+                    last_login_platform: getPlatform(),
+                    last_seen_at: new Date().toISOString(),
+                    last_seen_platform: getPlatform(),
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'id', ignoreDuplicates: false });
             } catch (e) {

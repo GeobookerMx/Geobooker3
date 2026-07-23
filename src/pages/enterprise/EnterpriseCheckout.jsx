@@ -20,7 +20,7 @@ import { ENTERPRISE_FALLBACK_PRICING } from '../../config/enterprisePricing';
 import { IS_IOS_NATIVE } from '../../utils/iosStore';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-const ENTERPRISE_SELF_SERVICE_ENABLED = import.meta.env.VITE_ENABLE_ENTERPRISE_CHECKOUT === 'true';
+const ENTERPRISE_SELF_SERVICE_ENABLED = import.meta.env.VITE_ENABLE_ENTERPRISE_CHECKOUT !== 'false';
 
 // Major cities for targeting (COMPREHENSIVE - All US States, Canada Provinces, Europe Top 10)
 const MAJOR_CITIES = {
@@ -336,11 +336,7 @@ export default function EnterpriseCheckout() {
         return null;
     }
     const preselectedPlan = searchParams.get('plan') || '';
-
-    // Redirect to contact form as enterprise plans are now quote-only
-    useEffect(() => {
-        navigate(`/enterprise/contact${preselectedPlan ? `?plan=${preselectedPlan}` : ''}`, { replace: true });
-    }, [navigate, preselectedPlan]);
+    const linkedLeadId = searchParams.get('lead') || '';
 
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -422,6 +418,10 @@ export default function EnterpriseCheckout() {
     }
 
     const selectedPlanData = pricing.find(p => p.code === form.selectedPlan);
+    const isMexicoBilling = (form.billingCountry || '').toUpperCase() === 'MX';
+    const enterpriseSubtotalUsd = selectedPlanData?.current_price_usd || 0;
+    const enterpriseIvaUsd = isMexicoBilling ? Math.round(enterpriseSubtotalUsd * 0.16) : 0;
+    const enterpriseTotalUsd = enterpriseSubtotalUsd + enterpriseIvaUsd;
 
     // Plan limits - use countries_included from plan data
     const getMaxCountries = () => {
@@ -593,7 +593,11 @@ export default function EnterpriseCheckout() {
                     billing_country: form.billingCountry,
                     client_tax_id: form.taxId,
                     tax_status: form.billingCountry === 'MX' ? 'domestic_mx' : 'export_0_iva',
-                    total_budget: selectedPlanData?.current_price_usd || 0,
+                    total_budget: enterpriseSubtotalUsd,
+                    total_with_iva: enterpriseTotalUsd,
+                    iva_amount: enterpriseIvaUsd,
+                    invoice_required: true,
+                    invoice_status: isMexicoBilling ? 'pending' : 'not_required',
                     currency: 'USD',
                     status: 'draft',
                     start_date: startDate,
@@ -627,7 +631,7 @@ export default function EnterpriseCheckout() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    amount: Math.round((selectedPlanData?.current_price_usd || 50) * 100),
+                    amount: Math.round((enterpriseTotalUsd || 50) * 100),
                     currency: 'usd',
                     productName: `Geobooker Enterprise - ${selectedPlanData?.name || form.selectedPlan}`,
                     customerEmail: form.contactEmail,
@@ -643,7 +647,11 @@ export default function EnterpriseCheckout() {
                         advertiser_name: form.companyName,
                         billing_country: form.billingCountry,
                         duration_months: selectedPlanData?.duration_months || 1,
-                        target_summary: (form.targetCountries || []).join(', ') || 'Global'
+                        subtotal_usd: enterpriseSubtotalUsd,
+                        iva_amount_usd: enterpriseIvaUsd,
+                        total_amount_usd: enterpriseTotalUsd,
+                        target_summary: (form.targetCountries || []).join(', ') || 'Global',
+                        enterprise_lead_id: linkedLeadId || ''
                     }
                 })
             });
@@ -1114,7 +1122,7 @@ export default function EnterpriseCheckout() {
                                     <div className="flex justify-between text-lg mt-2">
                                         <span className="text-white font-semibold">Total</span>
                                         <span className="text-green-400 font-bold text-2xl">
-                                            {formatPrice(selectedPlanData?.current_price_usd || 0)} USD
+                                            {formatPrice(enterpriseTotalUsd)} USD
                                         </span>
                                     </div>
                                 </div>
@@ -1125,8 +1133,8 @@ export default function EnterpriseCheckout() {
                                 <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
                                 <div className="text-sm text-blue-200">
                                     {form.billingCountry === 'MX'
-                                        ? 'âš ï¸ Precios + IVA: Los clientes en MÃ©xico pagan 16% IVA adicional. El IVA corre por cuenta del cliente.'
-                                        : 'âœ… International customers: 0% VAT (software export exempt).'}
+                                        ? 'Precios en USD + IVA: clientes con facturacion en Mexico pagan 16% IVA adicional antes de Stripe.'
+                                        : 'International customers: 0% VAT export treatment, subject to fiscal validation.'}
                                 </div>
                             </div>
 
@@ -1141,7 +1149,7 @@ export default function EnterpriseCheckout() {
                                 ) : (
                                     <>
                                         <CreditCard className="w-5 h-5" />
-                                        Pay {formatPrice(selectedPlanData?.current_price_usd || 0)} USD
+                                        Pay {formatPrice(enterpriseTotalUsd)} USD
                                     </>
                                 )}
                             </button>

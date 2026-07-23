@@ -1,6 +1,67 @@
 // src/services/adService.js
 import { supabase } from '../lib/supabase';
 
+export const normalizeCountryCode = (value) => String(value || '').trim().toUpperCase();
+
+const normalizeCityName = (value) => String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+const normalizeTargetList = (value) => {
+    if (Array.isArray(value)) return value.filter(Boolean);
+    if (typeof value === 'string' && value.trim()) return [value.trim()];
+    return [];
+};
+
+export const getStoredUserCountryCode = () => (
+    normalizeCountryCode(localStorage.getItem('userCountryCode')) ||
+    normalizeCountryCode(localStorage.getItem('userCountry')) ||
+    'unknown'
+);
+
+export function matchesCampaignLocation(campaign, context = {}) {
+    const country = normalizeCountryCode(context.country);
+    const city = normalizeCityName(context.city);
+    const targetCountries = normalizeTargetList(campaign?.target_countries)
+        .map(normalizeCountryCode)
+        .filter(Boolean);
+    const targetCities = normalizeTargetList(campaign?.target_cities)
+        .map(normalizeCityName)
+        .filter(Boolean);
+    const audienceCountries = normalizeTargetList(campaign?.audience_targeting?.countries)
+        .map(normalizeCountryCode)
+        .filter(Boolean);
+    const explicitCountry = normalizeCountryCode(campaign?.target_country);
+    const explicitTargets = [
+        ...targetCountries,
+        ...targetCities,
+        ...audienceCountries,
+        explicitCountry
+    ].filter(Boolean);
+
+    if (campaign?.is_demo === true) return true;
+
+    if (targetCities.some((targetCity) => (
+        city && (targetCity.includes(city) || city.includes(targetCity))
+    ))) {
+        return true;
+    }
+
+    if (
+        country &&
+        (targetCountries.includes(country) ||
+            audienceCountries.includes(country) ||
+            explicitCountry === country)
+    ) {
+        return true;
+    }
+
+    // Global means unrestricted only when no explicit territory was configured.
+    return explicitTargets.length === 0;
+}
+
 /**
  * Servicio para gestionar anuncios publicitarios
  * Maneja campañas activas, tracking de impresiones y clicks
@@ -21,6 +82,7 @@ export async function loadActiveCampaigns(spaceName, context = {}) {
     try {
         const {
             country = null,
+            city = null,
             language = navigator.language.split('-')[0],
             deviceType = window.innerWidth < 768 ? 'mobile' : 'desktop'
         } = context;
@@ -30,7 +92,8 @@ export async function loadActiveCampaigns(spaceName, context = {}) {
             p_space_name: spaceName,
             p_user_country: country,
             p_user_language: language,
-            p_device_type: deviceType
+            p_device_type: deviceType,
+            p_user_city: city
         });
 
         if (!rpcError && smartData) {
@@ -73,7 +136,7 @@ export async function loadActiveCampaigns(spaceName, context = {}) {
         }
 
 
-        return data || [];
+        return (data || []).filter(campaign => matchesCampaignLocation(campaign, { country, city }));
 
     } catch (error) {
         console.error('Error loading campaigns:', error);
@@ -115,24 +178,9 @@ export async function loadEnterpriseCampaigns(spaceName = null, context = {}) {
 
 
         // Filter by user location
-        const filtered = (data || []).filter(campaign => {
-            // DEMO campaigns always show (regardless of location)
-            if (campaign.is_demo === true) return true;
-
-            // Global ads show everywhere (ALWAYS pass)
-            if (!campaign.ad_level || campaign.ad_level === 'global') return true;
-
-            // Country-level ads
-            if (country && campaign.target_countries?.includes(country)) return true;
-
-            // City-level ads (fuzzy match)
-            if (city && campaign.target_cities?.some(targetCity =>
-                targetCity.toLowerCase().includes(city.toLowerCase()) ||
-                city.toLowerCase().includes(targetCity.toLowerCase())
-            )) return true;
-
-            return false;
-        });
+        const filtered = (data || []).filter(campaign =>
+            matchesCampaignLocation(campaign, { country, city })
+        );
 
 
 

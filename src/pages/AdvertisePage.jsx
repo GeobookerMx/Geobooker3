@@ -973,9 +973,9 @@ const AdvertisePage = () => {
             <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <TrendingUp className="w-8 h-8 text-purple-600" />
             </div>
-            <h3 className="text-4xl font-bold text-gray-900 mb-1">3X</h3>
+            <h3 className="text-4xl font-bold text-gray-900 mb-1">KPIs</h3>
             <p className="text-gray-500 font-medium text-sm">
-              Retorno promedio estimado
+              Reportes reales de pauta
             </p>
           </div>
         </div>
@@ -1075,7 +1075,7 @@ const AdvertisePage = () => {
             <div className="flex items-start gap-3">
               <span className="text-2xl">⏳</span>
               <div>
-                <h4 className="font-semibold text-amber-800 text-sm">Revisión: 24-48 hrs</h4>
+                <h4 className="font-semibold text-amber-800 text-sm">Revision: 12-72 hrs</h4>
                 <p className="text-xs text-amber-700 mt-1">Tu campaña será revisada antes de publicarse para asegurar que cumple con nuestras políticas.</p>
               </div>
             </div>

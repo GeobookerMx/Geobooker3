@@ -11,7 +11,7 @@
  * - Local ads only show when no Enterprise competition
  */
 import { useState, useEffect } from 'react';
-import { loadEnterpriseCampaigns } from '../services/adService';
+import { getStoredUserCountryCode, loadEnterpriseCampaigns } from '../services/adService';
 import useActiveCampaigns from './useActiveCampaigns';
 
 export default function useEnterprisePriorityCampaigns(localSpaceName, options = {}) {
@@ -30,7 +30,7 @@ export default function useEnterprisePriorityCampaigns(localSpaceName, options =
         const loadEnterprise = async () => {
             setEnterpriseLoading(true);
             try {
-                const country = localStorage.getItem('userCountry') || 'unknown';
+                const country = getStoredUserCountryCode();
                 const city = localStorage.getItem('userCity') || 'unknown';
                 const campaigns = await loadEnterpriseCampaigns(localSpaceName, { country, city });
 

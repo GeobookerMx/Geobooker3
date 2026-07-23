@@ -7,7 +7,7 @@ import {
   Calendar, CheckCircle2, AlertCircle, Clock,
   ChevronRight, Filter, Search, Plus, Eye,
   Settings, Trash2, Edit2, Play, Pause, X,
-  TrendingUp, DollarSign, Info, RefreshCw
+  TrendingUp, DollarSign, Info, RefreshCw, FileText
 } from 'lucide-react';
 import { sendCampaignApprovedEmail, sendCampaignRejectedEmail } from '../../services/notificationService';
 import CampaignDetailsModal from '../../components/admin/CampaignDetailsModal';
@@ -22,6 +22,7 @@ const AdsManagement = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null); // ID de la campaÃ±a siendo procesada
+  const [contractLoading, setContractLoading] = useState(null);
   const [activeTab, setActiveTab] = useState('campaigns');
   const [statusFilter, setStatusFilter] = useState('active'); // filtro controlado
   const [selectedCampaign, setSelectedCampaign] = useState(null); // Para el modal de detalles
@@ -175,6 +176,51 @@ const AdsManagement = () => {
       toast.error('Error al cargar datos. Verifica tu conexiÃ³n.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenerateContract = async (campaign) => {
+    if (!campaign?.id) return;
+
+    setContractLoading(campaign.id);
+    const toastId = toast.loading('Generando contrato revisable...');
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+
+      if (!token) {
+        throw new Error('No hay sesion de administrador activa.');
+      }
+
+      const response = await fetch('/.netlify/functions/generate-ad-contract', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          campaignId: campaign.id,
+          language: campaign.billing_country === 'MX' ? 'es' : 'en'
+        })
+      });
+
+      const result = await response.json();
+      if (!response.ok || result.error) {
+        throw new Error(result.error || 'No se pudo generar el contrato.');
+      }
+
+      toast.success('Contrato generado. Se abrira en una nueva pestana.', { id: toastId });
+      if (result.signedUrl) {
+        window.open(result.signedUrl, '_blank', 'noopener,noreferrer');
+      }
+
+      await loadData(statusFilter, spaceFilter);
+    } catch (error) {
+      console.error('Error generando contrato:', error);
+      toast.error(error.message || 'Error al generar contrato', { id: toastId });
+    } finally {
+      setContractLoading(null);
     }
   };
 
@@ -609,6 +655,15 @@ const AdsManagement = () => {
                             </>
                           )}
                           {/* BotÃ³n Vista Previa */}
+                          <button
+                            disabled={contractLoading === campaign.id}
+                            onClick={() => handleGenerateContract(campaign)}
+                            className="text-amber-700 hover:text-amber-900 bg-amber-50 px-3 py-1 rounded hover:bg-amber-100 transition flex items-center gap-1 disabled:opacity-60"
+                            title="Generar contrato revisable con alcance, fiscalidad y clausulas base"
+                          >
+                            <FileText className="w-4 h-4" />
+                            {contractLoading === campaign.id ? 'Generando...' : 'Contrato'}
+                          </button>
                           <button
                             onClick={async () => {
                               const { data: creatives } = await supabase

@@ -62,7 +62,9 @@ export default function B2bConnect() {
             setSubmitting(true);
             const qrAttribution = getStoredQrAttribution();
 
+            const leadId = crypto.randomUUID();
             const payload = {
+                id: leadId,
                 company_name: form.company_name,
                 contact_name: form.contact_name,
                 contact_email: form.contact_email,
@@ -96,6 +98,7 @@ export default function B2bConnect() {
             if (error) {
                 console.warn('B2B insert with extended payload failed, retrying minimal payload:', error);
                 const fallback = {
+                    id: leadId,
                     company_name: form.company_name,
                     contact_name: form.contact_name,
                     contact_email: form.contact_email,
@@ -110,6 +113,27 @@ export default function B2bConnect() {
             }
 
             if (error) throw error;
+
+            try {
+                const notifyResponse = await fetch('/.netlify/functions/notify-connect-brief', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        lead: {
+                            ...payload,
+                            id: leadId,
+                            message: payload.message
+                        }
+                    })
+                });
+
+                const notifyPayload = await notifyResponse.json().catch(() => ({}));
+                if (!notifyResponse.ok || notifyPayload.error) {
+                    console.warn('[B2bConnect] Brief notification failed:', notifyPayload.error || notifyPayload);
+                }
+            } catch (notifyError) {
+                console.warn('[B2bConnect] Brief notification skipped:', notifyError);
+            }
 
             setSubmitted(true);
             toast.success('Solicitud inicial recibida con exito');

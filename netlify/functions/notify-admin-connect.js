@@ -5,7 +5,7 @@ exports.handler = async function handler(event) {
 
     try {
         const { campaign } = JSON.parse(event.body);
-        const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'hola@geobooker.com.mx';
+        const adminRecipients = [...new Set([process.env.CONNECT_ADMIN_EMAIL, process.env.ADMIN_EMAIL, 'hola@geobooker.com.mx'].map((email) => String(email || '').trim().toLowerCase()).filter(Boolean))];
         const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
         if (!RESEND_API_KEY) {
@@ -52,7 +52,7 @@ exports.handler = async function handler(event) {
             },
             body: JSON.stringify({
                 from: senderConfig.from,
-                to: [ADMIN_EMAIL],
+                to: adminRecipients,
                 subject: `Nueva reserva Connect: ${campaign.company_name || 'Sin nombre'}`,
                 html
             })

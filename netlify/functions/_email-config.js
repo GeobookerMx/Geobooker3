@@ -1,7 +1,7 @@
 const VERIFIED_SENDER_DOMAIN = process.env.RESEND_VERIFIED_DOMAIN || 'geobooker.com.mx';
 const DEFAULT_FROM_NAME = process.env.CRM_DEFAULT_FROM_NAME || 'Geobooker Ads';
-const DEFAULT_FROM_ADDRESS = process.env.CRM_DEFAULT_FROM_ADDRESS || `hola@${VERIFIED_SENDER_DOMAIN}`;
-const DEFAULT_REPLY_TO = process.env.CRM_REPLY_TO_EMAIL || 'ventasgeobooker@gmail.com';
+const DEFAULT_FROM_ADDRESS = process.env.CRM_DEFAULT_FROM_ADDRESS || process.env.CRM_DEFAULT_FROM_ADRESS || `hola@${VERIFIED_SENDER_DOMAIN}`;
+const DEFAULT_REPLY_TO = process.env.CRM_REPLY_TO_EMAIL || process.env.CRM_REPLY_TO_MAIL || process.env.CMR_REPLY_TO_MAIL || 'hola@geobooker.com.mx';
 
 function extractEmailAddress(value = '') {
     const match = String(value).match(/<([^>]+)>/);

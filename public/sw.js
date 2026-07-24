@@ -4,8 +4,8 @@
  * Proporciona funcionalidad offline y caché de assets
  */
 
-const CACHE_NAME = 'geobooker-v2.1.0';
-const RUNTIME_CACHE = 'geobooker-runtime-v2.1.0';
+const CACHE_NAME = 'geobooker-v2.1.1';
+const RUNTIME_CACHE = 'geobooker-runtime-v2.1.1';
 
 // Assets críticos para cachear durante instalación
 const PRECACHE_ASSETS = [

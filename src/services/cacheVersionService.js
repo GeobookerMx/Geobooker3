@@ -1,6 +1,6 @@
 // src/services/cacheVersionService.js
 
-const APP_VERSION = '1.3.4';
+const APP_VERSION = '1.3.6';
 const VERSION_KEY = 'gb_app_version';
 const DB_NAMES = ['business-cache', 'google-places-cache'];
 const AUTH_KEYS = ['supabase.auth.token', 'sb-access-token', 'sb-refresh_token'];

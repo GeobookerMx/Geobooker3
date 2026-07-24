@@ -1,7 +1,7 @@
 ﻿// src/pages/enterprise/EnterpriseCheckout.jsx
 /**
  * Self-Service Enterprise Checkout Wizard (English)
- * Flow: Select Plan â†’ Target Cities â†’ Creative Upload â†’ Payment
+ * Flow: Select Plan -> Target Cities -> Creative Upload -> Payment
  * For international advertisers (Nike, Heineken, Coca-Cola, etc.)
  */
 import React, { useState, useEffect } from 'react';
@@ -21,6 +21,39 @@ import { IS_IOS_NATIVE } from '../../utils/iosStore';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 const ENTERPRISE_SELF_SERVICE_ENABLED = import.meta.env.VITE_ENABLE_ENTERPRISE_CHECKOUT !== 'false';
+
+const CREATIVE_LIMITS = {
+    image: {
+        maxBytes: 8 * 1024 * 1024,
+        minWidth: 600,
+        minHeight: 400,
+        formats: 'JPG, PNG, WebP',
+        accept: ['image/jpeg', 'image/png', 'image/webp'],
+        recommended: '1200 x 628 px or 1080 x 1080 px'
+    },
+    video: {
+        maxBytes: 50 * 1024 * 1024,
+        maxDurationSeconds: 15,
+        formats: 'MP4, WebM, MOV',
+        accept: ['video/mp4', 'video/webm', 'video/quicktime'],
+        recommended: '1080p, 16:9 or 1:1, with optional audio'
+    }
+};
+
+const COUNTRY_DISPLAY_NAMES = {
+    US: 'United States', CA: 'Canada', MX: 'Mexico', GT: 'Guatemala', PA: 'Panama', CR: 'Costa Rica',
+    DO: 'Dominican Republic', PR: 'Puerto Rico', CU: 'Cuba', BR: 'Brazil', AR: 'Argentina', CO: 'Colombia',
+    CL: 'Chile', PE: 'Peru', EC: 'Ecuador', VE: 'Venezuela', UY: 'Uruguay', PY: 'Paraguay', BO: 'Bolivia',
+    ES: 'Spain', FR: 'France', DE: 'Germany', GB: 'United Kingdom', IT: 'Italy', NL: 'Netherlands', PT: 'Portugal',
+    BE: 'Belgium', AT: 'Austria', CH: 'Switzerland', IE: 'Ireland', SE: 'Sweden', NO: 'Norway', DK: 'Denmark',
+    FI: 'Finland', PL: 'Poland', CZ: 'Czech Republic', GR: 'Greece', TR: 'Turkey', RU: 'Russia',
+    JP: 'Japan', KR: 'South Korea', CN: 'China', TW: 'Taiwan', TH: 'Thailand', VN: 'Vietnam', SG: 'Singapore',
+    MY: 'Malaysia', ID: 'Indonesia', PH: 'Philippines', IN: 'India', AE: 'UAE', SA: 'Saudi Arabia', IL: 'Israel',
+    AU: 'Australia', NZ: 'New Zealand', ZA: 'South Africa', EG: 'Egypt', MA: 'Morocco', KE: 'Kenya'
+};
+
+const formatCountryName = (code) => COUNTRY_DISPLAY_NAMES[code] || code;
+const formatCountryLabel = (country) => `${country.code} - ${formatCountryName(country.code)}`;
 
 // Major cities for targeting (COMPREHENSIVE - All US States, Canada Provinces, Europe Top 10)
 const MAJOR_CITIES = {
@@ -249,77 +282,77 @@ const MAJOR_CITIES = {
 
 const COUNTRIES = [
     // North America
-    { code: 'US', name: 'ðŸ‡ºðŸ‡¸ United States', region: 'northamerica' },
-    { code: 'CA', name: 'ðŸ‡¨ðŸ‡¦ Canada', region: 'northamerica' },
-    { code: 'MX', name: 'ðŸ‡²ðŸ‡½ Mexico', region: 'northamerica' },
+    { code: 'US', name: 'United States', region: 'northamerica' },
+    { code: 'CA', name: 'Canada', region: 'northamerica' },
+    { code: 'MX', name: 'Mexico', region: 'northamerica' },
 
     // Central America & Caribbean
-    { code: 'GT', name: 'ðŸ‡¬ðŸ‡¹ Guatemala', region: 'centralamerica' },
-    { code: 'PA', name: 'ðŸ‡µðŸ‡¦ Panama', region: 'centralamerica' },
-    { code: 'CR', name: 'ðŸ‡¨ðŸ‡· Costa Rica', region: 'centralamerica' },
-    { code: 'DO', name: 'ðŸ‡©ðŸ‡´ Dominican Republic', region: 'caribbean' },
-    { code: 'PR', name: 'ðŸ‡µðŸ‡· Puerto Rico', region: 'caribbean' },
-    { code: 'CU', name: 'ðŸ‡¨ðŸ‡º Cuba', region: 'caribbean' },
+    { code: 'GT', name: 'Guatemala', region: 'centralamerica' },
+    { code: 'PA', name: 'Panama', region: 'centralamerica' },
+    { code: 'CR', name: 'Costa Rica', region: 'centralamerica' },
+    { code: 'DO', name: 'Dominican Republic', region: 'caribbean' },
+    { code: 'PR', name: 'Puerto Rico', region: 'caribbean' },
+    { code: 'CU', name: 'Cuba', region: 'caribbean' },
 
     // South America
-    { code: 'BR', name: 'ðŸ‡§ðŸ‡· Brazil', region: 'latam' },
-    { code: 'AR', name: 'ðŸ‡¦ðŸ‡· Argentina', region: 'latam' },
-    { code: 'CO', name: 'ðŸ‡¨ðŸ‡´ Colombia', region: 'latam' },
-    { code: 'CL', name: 'ðŸ‡¨ðŸ‡± Chile', region: 'latam' },
-    { code: 'PE', name: 'ðŸ‡µðŸ‡ª Peru', region: 'latam' },
-    { code: 'EC', name: 'ðŸ‡ªðŸ‡¨ Ecuador', region: 'latam' },
-    { code: 'VE', name: 'ðŸ‡»ðŸ‡ª Venezuela', region: 'latam' },
-    { code: 'UY', name: 'ðŸ‡ºðŸ‡¾ Uruguay', region: 'latam' },
-    { code: 'PY', name: 'ðŸ‡µðŸ‡¾ Paraguay', region: 'latam' },
-    { code: 'BO', name: 'ðŸ‡§ðŸ‡´ Bolivia', region: 'latam' },
+    { code: 'BR', name: 'Brazil', region: 'latam' },
+    { code: 'AR', name: 'Argentina', region: 'latam' },
+    { code: 'CO', name: 'Colombia', region: 'latam' },
+    { code: 'CL', name: 'Chile', region: 'latam' },
+    { code: 'PE', name: 'Peru', region: 'latam' },
+    { code: 'EC', name: 'Ecuador', region: 'latam' },
+    { code: 'VE', name: 'Venezuela', region: 'latam' },
+    { code: 'UY', name: 'Uruguay', region: 'latam' },
+    { code: 'PY', name: 'Paraguay', region: 'latam' },
+    { code: 'BO', name: 'Bolivia', region: 'latam' },
 
     // Europe
-    { code: 'ES', name: 'ðŸ‡ªðŸ‡¸ Spain', region: 'europe' },
-    { code: 'FR', name: 'ðŸ‡«ðŸ‡· France', region: 'europe' },
-    { code: 'DE', name: 'ðŸ‡©ðŸ‡ª Germany', region: 'europe' },
-    { code: 'GB', name: 'ðŸ‡¬ðŸ‡§ United Kingdom', region: 'europe' },
-    { code: 'IT', name: 'ðŸ‡®ðŸ‡¹ Italy', region: 'europe' },
-    { code: 'NL', name: 'ðŸ‡³ðŸ‡± Netherlands', region: 'europe' },
-    { code: 'PT', name: 'ðŸ‡µðŸ‡¹ Portugal', region: 'europe' },
-    { code: 'BE', name: 'ðŸ‡§ðŸ‡ª Belgium', region: 'europe' },
-    { code: 'AT', name: 'ðŸ‡¦ðŸ‡¹ Austria', region: 'europe' },
-    { code: 'CH', name: 'ðŸ‡¨ðŸ‡­ Switzerland', region: 'europe' },
-    { code: 'IE', name: 'ðŸ‡®ðŸ‡ª Ireland', region: 'europe' },
-    { code: 'SE', name: 'ðŸ‡¸ðŸ‡ª Sweden', region: 'europe' },
-    { code: 'NO', name: 'ðŸ‡³ðŸ‡´ Norway', region: 'europe' },
-    { code: 'DK', name: 'ðŸ‡©ðŸ‡° Denmark', region: 'europe' },
-    { code: 'FI', name: 'ðŸ‡«ðŸ‡® Finland', region: 'europe' },
-    { code: 'PL', name: 'ðŸ‡µðŸ‡± Poland', region: 'europe' },
-    { code: 'CZ', name: 'ðŸ‡¨ðŸ‡¿ Czech Republic', region: 'europe' },
-    { code: 'GR', name: 'ðŸ‡¬ðŸ‡· Greece', region: 'europe' },
-    { code: 'TR', name: 'ðŸ‡¹ðŸ‡· Turkey', region: 'europe' },
-    { code: 'RU', name: 'ðŸ‡·ðŸ‡º Russia', region: 'europe' },
+    { code: 'ES', name: 'Spain', region: 'europe' },
+    { code: 'FR', name: 'France', region: 'europe' },
+    { code: 'DE', name: 'Germany', region: 'europe' },
+    { code: 'GB', name: 'United Kingdom', region: 'europe' },
+    { code: 'IT', name: 'Italy', region: 'europe' },
+    { code: 'NL', name: 'Netherlands', region: 'europe' },
+    { code: 'PT', name: 'Portugal', region: 'europe' },
+    { code: 'BE', name: 'Belgium', region: 'europe' },
+    { code: 'AT', name: 'Austria', region: 'europe' },
+    { code: 'CH', name: 'Switzerland', region: 'europe' },
+    { code: 'IE', name: 'Ireland', region: 'europe' },
+    { code: 'SE', name: 'Sweden', region: 'europe' },
+    { code: 'NO', name: 'Norway', region: 'europe' },
+    { code: 'DK', name: 'Denmark', region: 'europe' },
+    { code: 'FI', name: 'Finland', region: 'europe' },
+    { code: 'PL', name: 'Poland', region: 'europe' },
+    { code: 'CZ', name: 'Czech Republic', region: 'europe' },
+    { code: 'GR', name: 'Greece', region: 'europe' },
+    { code: 'TR', name: 'Turkey', region: 'europe' },
+    { code: 'RU', name: 'Russia', region: 'europe' },
 
     // Asia
-    { code: 'JP', name: 'ðŸ‡¯ðŸ‡µ Japan', region: 'asia' },
-    { code: 'KR', name: 'ðŸ‡°ðŸ‡· South Korea', region: 'asia' },
-    { code: 'CN', name: 'ðŸ‡¨ðŸ‡³ China', region: 'asia' },
-    { code: 'TW', name: 'ðŸ‡¹ðŸ‡¼ Taiwan', region: 'asia' },
-    { code: 'TH', name: 'ðŸ‡¹ðŸ‡­ Thailand', region: 'asia' },
-    { code: 'VN', name: 'ðŸ‡»ðŸ‡³ Vietnam', region: 'asia' },
-    { code: 'SG', name: 'ðŸ‡¸ðŸ‡¬ Singapore', region: 'asia' },
-    { code: 'MY', name: 'ðŸ‡²ðŸ‡¾ Malaysia', region: 'asia' },
-    { code: 'ID', name: 'ðŸ‡®ðŸ‡© Indonesia', region: 'asia' },
-    { code: 'PH', name: 'ðŸ‡µðŸ‡­ Philippines', region: 'asia' },
-    { code: 'IN', name: 'ðŸ‡®ðŸ‡³ India', region: 'asia' },
-    { code: 'AE', name: 'ðŸ‡¦ðŸ‡ª UAE', region: 'middleeast' },
-    { code: 'SA', name: 'ðŸ‡¸ðŸ‡¦ Saudi Arabia', region: 'middleeast' },
-    { code: 'IL', name: 'ðŸ‡®ðŸ‡± Israel', region: 'middleeast' },
+    { code: 'JP', name: 'Japan', region: 'asia' },
+    { code: 'KR', name: 'South Korea', region: 'asia' },
+    { code: 'CN', name: 'China', region: 'asia' },
+    { code: 'TW', name: 'Taiwan', region: 'asia' },
+    { code: 'TH', name: 'Thailand', region: 'asia' },
+    { code: 'VN', name: 'Vietnam', region: 'asia' },
+    { code: 'SG', name: 'Singapore', region: 'asia' },
+    { code: 'MY', name: 'Malaysia', region: 'asia' },
+    { code: 'ID', name: 'Indonesia', region: 'asia' },
+    { code: 'PH', name: 'Philippines', region: 'asia' },
+    { code: 'IN', name: 'India', region: 'asia' },
+    { code: 'AE', name: 'UAE', region: 'middleeast' },
+    { code: 'SA', name: 'Saudi Arabia', region: 'middleeast' },
+    { code: 'IL', name: 'Israel', region: 'middleeast' },
 
     // Oceania
-    { code: 'AU', name: 'ðŸ‡¦ðŸ‡º Australia', region: 'oceania' },
-    { code: 'NZ', name: 'ðŸ‡³ðŸ‡¿ New Zealand', region: 'oceania' },
+    { code: 'AU', name: 'Australia', region: 'oceania' },
+    { code: 'NZ', name: 'New Zealand', region: 'oceania' },
 
     // Africa
-    { code: 'ZA', name: 'ðŸ‡¿ðŸ‡¦ South Africa', region: 'africa' },
-    { code: 'EG', name: 'ðŸ‡ªðŸ‡¬ Egypt', region: 'africa' },
-    { code: 'MA', name: 'ðŸ‡²ðŸ‡¦ Morocco', region: 'africa' },
-    { code: 'KE', name: 'ðŸ‡°ðŸ‡ª Kenya', region: 'africa' }
+    { code: 'ZA', name: 'South Africa', region: 'africa' },
+    { code: 'EG', name: 'Egypt', region: 'africa' },
+    { code: 'MA', name: 'Morocco', region: 'africa' },
+    { code: 'KE', name: 'Kenya', region: 'africa' }
 ];
 
 export default function EnterpriseCheckout() {
@@ -419,7 +452,10 @@ export default function EnterpriseCheckout() {
 
     const selectedPlanData = pricing.find(p => p.code === form.selectedPlan);
     const isMexicoBilling = (form.billingCountry || '').toUpperCase() === 'MX';
-    const enterpriseSubtotalUsd = selectedPlanData?.current_price_usd || 0;
+    const selectedDurationMonths = Number(form.durationMonths || selectedPlanData?.duration_months || 1);
+    const planDurationMonths = Number(selectedPlanData?.duration_months || 1);
+    const basePlanUsd = Number(selectedPlanData?.current_price_usd || 0);
+    const enterpriseSubtotalUsd = selectedPlanData ? Math.round((basePlanUsd / planDurationMonths) * selectedDurationMonths) : 0;
     const enterpriseIvaUsd = isMexicoBilling ? Math.round(enterpriseSubtotalUsd * 0.16) : 0;
     const enterpriseTotalUsd = enterpriseSubtotalUsd + enterpriseIvaUsd;
 
@@ -430,6 +466,14 @@ export default function EnterpriseCheckout() {
 
     const handleChange = (field, value) => {
         setForm(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handlePlanSelect = (plan) => {
+        setForm(prev => ({
+            ...prev,
+            selectedPlan: plan.code,
+            durationMonths: Number(plan.duration_months || prev.durationMonths || 1)
+        }));
     };
 
     // Helper: Get video duration before upload
@@ -482,45 +526,55 @@ export default function EnterpriseCheckout() {
         });
     };
 
+    const formatBytes = (bytes) => `${Math.round(bytes / (1024 * 1024))}MB`;
+
+    const getFileExtension = (fileName = '') => fileName.split('.').pop()?.toLowerCase() || '';
+
     const handleImageUpload = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Check file type
-        const isVideo = file.type.startsWith('video/');
-        const isImage = file.type.startsWith('image/');
+        const extension = getFileExtension(file.name);
+        const isVideo = file.type.startsWith('video/') || ['mp4', 'webm', 'mov'].includes(extension);
+        const isImage = file.type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'webp'].includes(extension);
+        const isAllowedImage = isImage && (CREATIVE_LIMITS.image.accept.includes(file.type) || ['jpg', 'jpeg', 'png', 'webp'].includes(extension));
+        const isAllowedVideo = isVideo && (CREATIVE_LIMITS.video.accept.includes(file.type) || ['mp4', 'webm', 'mov'].includes(extension));
 
-        if (!isImage && !isVideo) {
-            toast.error('Please upload an image or video file');
+        if (!isAllowedImage && !isAllowedVideo) {
+            toast.error('Unsupported creative format. Use JPG, PNG, WebP, MP4, WebM or MOV. Audio-only files are not accepted for visual ad slots.');
+            e.target.value = '';
             return;
         }
 
-        // Size limits: 5MB for images, 30MB for videos (15s max = less size needed)
-        const maxSize = isVideo ? 30 * 1024 * 1024 : 5 * 1024 * 1024;
-        if (file.size > maxSize) {
-            toast.error(`File must be under ${isVideo ? '30MB' : '5MB'}. Recommended: 1200Ã—628px for images.`);
+        const limits = isAllowedVideo ? CREATIVE_LIMITS.video : CREATIVE_LIMITS.image;
+        if (file.size > limits.maxBytes) {
+            toast.error(`File too large. Max ${formatBytes(limits.maxBytes)} for ${isAllowedVideo ? 'video' : 'image'} creatives.`);
+            e.target.value = '';
             return;
         }
 
-        // For images: check minimum dimensions (600x400)
-        if (isImage) {
+        if (isAllowedImage) {
+            const objectUrl = URL.createObjectURL(file);
             const dims = await new Promise((resolve) => {
                 const img = new Image();
                 img.onload = () => resolve({ w: img.width, h: img.height });
                 img.onerror = () => resolve({ w: 0, h: 0 });
-                img.src = URL.createObjectURL(file);
+                img.src = objectUrl;
             });
-            if (dims.w < 600 || dims.h < 400) {
-                toast.error(`Image too small (${dims.w}Ã—${dims.h}). Minimum: 600Ã—400px. Recommended: 1200Ã—628px.`);
+            URL.revokeObjectURL(objectUrl);
+
+            if (dims.w < CREATIVE_LIMITS.image.minWidth || dims.h < CREATIVE_LIMITS.image.minHeight) {
+                toast.error(`Image too small (${dims.w} x ${dims.h}). Minimum: ${CREATIVE_LIMITS.image.minWidth} x ${CREATIVE_LIMITS.image.minHeight}px.`);
+                e.target.value = '';
                 return;
             }
         }
 
-        // For video: check duration (max 15 seconds)
-        if (isVideo) {
+        if (isAllowedVideo) {
             const duration = await getVideoDuration(file);
-            if (duration > 15) {
-                toast.error('Video must be 15 seconds or less. Users can skip after 7 seconds.');
+            if (duration > CREATIVE_LIMITS.video.maxDurationSeconds) {
+                toast.error(`Video must be ${CREATIVE_LIMITS.video.maxDurationSeconds} seconds or less. Please trim it before uploading.`);
+                e.target.value = '';
                 return;
             }
             handleChange('videoDuration', duration);
@@ -528,7 +582,6 @@ export default function EnterpriseCheckout() {
 
         setUploading(true);
         try {
-            // Clean filename and create path
             const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
             const filePath = `enterprise/${Date.now()}_${cleanName}`;
 
@@ -536,6 +589,7 @@ export default function EnterpriseCheckout() {
                 .from('ad-creatives')
                 .upload(filePath, file, {
                     cacheControl: '3600',
+                    contentType: file.type || undefined,
                     upsert: false
                 });
 
@@ -543,13 +597,16 @@ export default function EnterpriseCheckout() {
 
             const { data: { publicUrl } } = supabase.storage.from('ad-creatives').getPublicUrl(filePath);
             handleChange('imageUrl', publicUrl);
-            handleChange('isVideo', isVideo);
-            toast.success(`${isVideo ? 'Video' : 'Image'} uploaded successfully`);
+            handleChange('isVideo', isAllowedVideo);
+            handleChange('creativeFit', isAllowedVideo ? 'cover' : form.creativeFit || 'cover');
+            handleChange('creativePosition', form.creativePosition || 'center');
+            toast.success(`${isAllowedVideo ? 'Video' : 'Image'} uploaded successfully`);
         } catch (error) {
             console.error('Upload error:', error);
             toast.error('Upload failed. Please try again or use a different file.');
         } finally {
             setUploading(false);
+            e.target.value = '';
         }
     };
 
@@ -569,7 +626,7 @@ export default function EnterpriseCheckout() {
 
             const startDate = form.startDate || new Date().toISOString().split('T')[0];
             const endDate = new Date(new Date(startDate).setMonth(
-                new Date(startDate).getMonth() + (selectedPlanData?.duration_months || 1)
+                new Date(startDate).getMonth() + (selectedDurationMonths)
             )).toISOString().split('T')[0];
 
             // DISABLED: Availability check temporarily removed due to RPC issues
@@ -579,49 +636,50 @@ export default function EnterpriseCheckout() {
 
             toast.loading('Creating your campaign...', { id: toastId });
 
-            // 1. Create enterprise campaign in database
-            const { data: campaign, error: campaignError } = await supabase
-                .from('ad_campaigns')
-                .insert({
-                    advertiser_name: form.companyName,
-                    advertiser_email: form.contactEmail,
-                    campaign_type: selectedPlanData?.cities_included > 5 ? 'global' : 'regional',
-                    ad_level: adLevel,
-                    category_code: form.category || 'other',
-                    target_cities: form.targetCities,
-                    target_countries: form.targetCountries,
-                    billing_country: form.billingCountry,
-                    client_tax_id: form.taxId,
-                    tax_status: form.billingCountry === 'MX' ? 'domestic_mx' : 'export_0_iva',
-                    total_budget: enterpriseSubtotalUsd,
-                    total_with_iva: enterpriseTotalUsd,
-                    iva_amount: enterpriseIvaUsd,
-                    invoice_required: true,
-                    invoice_status: isMexicoBilling ? 'pending' : 'not_required',
-                    currency: 'USD',
-                    status: 'draft',
-                    start_date: startDate,
-                    end_date: endDate,
-                    // Creative fields
+            // 1. Create enterprise campaign draft server-side so RLS stays strict for the public app.
+            const campaignResponse = await fetch('/.netlify/functions/create-enterprise-campaign-draft', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    companyName: form.companyName,
+                    contactEmail: form.contactEmail,
+                    selectedPlan: form.selectedPlan,
+                    selectedPlanName: selectedPlanData?.name || form.selectedPlan,
+                    campaignType: selectedPlanData?.cities_included > 5 ? 'global' : 'regional',
+                    adLevel,
+                    categoryCode: form.category || 'other',
+                    targetCities: form.targetCities,
+                    targetCountries: form.targetCountries,
+                    billingCountry: form.billingCountry,
+                    taxId: form.taxId,
+                    subtotalUsd: enterpriseSubtotalUsd,
+                    totalUsd: enterpriseTotalUsd,
+                    ivaUsd: enterpriseIvaUsd,
+                    startDate,
+                    endDate,
+                    durationMonths: selectedDurationMonths,
                     headline: form.headline,
                     description: form.description,
-                    cta_text: form.ctaText,
-                    cta_url: form.ctaUrl,
-                    creative_url: form.imageUrl,
-                    multi_language_creatives: {
-                        [form.creativeLanguage]: {
-                            headline: form.headline,
-                            description: form.description,
-                            cta_text: form.ctaText,
-                            cta_url: form.ctaUrl,
-                            image_url: form.imageUrl
-                        }
-                    }
+                    ctaText: form.ctaText,
+                    ctaUrl: form.ctaUrl,
+                    creativeUrl: form.imageUrl,
+                    isVideo: form.isVideo,
+                    creativeLanguage: form.creativeLanguage,
+                    creativeFit: form.creativeFit,
+                    creativePosition: form.creativePosition,
+                    linkedLeadId
                 })
-                .select()
-                .single();
+            });
 
-            if (campaignError) throw campaignError;
+            const campaignPayload = await campaignResponse.json().catch(() => ({}));
+            if (!campaignResponse.ok || campaignPayload.error) {
+                throw new Error(campaignPayload.error || 'Campaign draft could not be created');
+            }
+
+            const campaign = campaignPayload.campaign;
+            if (!campaign?.id) {
+                throw new Error('Campaign draft was created without an ID');
+            }
 
             // 2. Create Stripe checkout session
             const stripe = await stripePromise;
@@ -646,7 +704,7 @@ export default function EnterpriseCheckout() {
                         advertiser_email: form.contactEmail,
                         advertiser_name: form.companyName,
                         billing_country: form.billingCountry,
-                        duration_months: selectedPlanData?.duration_months || 1,
+                        duration_months: selectedDurationMonths,
                         subtotal_usd: enterpriseSubtotalUsd,
                         iva_amount_usd: enterpriseIvaUsd,
                         total_amount_usd: enterpriseTotalUsd,
@@ -734,7 +792,7 @@ export default function EnterpriseCheckout() {
                                 {pricing.map(plan => (
                                     <button
                                         key={plan.code}
-                                        onClick={() => handleChange('selectedPlan', plan.code)}
+                                        onClick={() => handlePlanSelect(plan)}
                                         className={`p-5 rounded-xl border-2 text-left transition-all ${form.selectedPlan === plan.code
                                             ? 'border-amber-500 bg-amber-500/10'
                                             : 'border-gray-700 hover:border-gray-600'
@@ -761,20 +819,20 @@ export default function EnterpriseCheckout() {
                                                     <span className="text-gray-400 text-sm"> total</span>
                                                 </div>
                                                 <span className="text-emerald-400 text-sm">
-                                                    â‰ˆ {formatPrice(Math.round(plan.current_price_usd / plan.duration_months))} USD/month
+                                                    Approx. {formatPrice(Math.round(plan.current_price_usd / plan.duration_months))} USD/month
                                                 </span>
                                             </div>
                                         </div>
 
                                         <div className="text-sm text-gray-400">
                                             {plan.countries_included === 999
-                                                ? 'ðŸŒ All countries'
-                                                : `ðŸ“ ${plan.countries_included} ${plan.countries_included === 1 ? 'country' : 'countries'}`}
-                                            {' â€¢ '}
+                                                ? 'All countries'
+                                                : `${plan.countries_included} ${plan.countries_included === 1 ? 'country' : 'countries'}`}
+                                            {' - '}
                                             {plan.cities_included === 999
                                                 ? 'Unlimited cities'
                                                 : `${plan.cities_included} ${plan.cities_included === 1 ? 'city' : 'cities'}`}
-                                            {' â€¢ '}{plan.duration_months} {plan.duration_months === 1 ? 'month' : 'months'}
+                                            {' - '}{plan.duration_months} {plan.duration_months === 1 ? 'month' : 'months'}
                                         </div>
                                         {plan.description && (
                                             <div className="text-xs text-gray-500 mt-2">{plan.description}</div>
@@ -818,7 +876,7 @@ export default function EnterpriseCheckout() {
                                             className="w-full bg-gray-900 border border-gray-700 text-white px-4 py-3 rounded-lg"
                                         >
                                             {COUNTRIES.map(c => (
-                                                <option key={c.code} value={c.code}>{c.name}</option>
+                                                <option key={c.code} value={c.code}>{formatCountryLabel(c)}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -866,7 +924,7 @@ export default function EnterpriseCheckout() {
                                                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                                                 }`}
                                         >
-                                            {country.name}
+                                            {formatCountryLabel(country)}
                                         </button>
                                     ))}
                                 </div>
@@ -885,7 +943,7 @@ export default function EnterpriseCheckout() {
                                         {form.targetCountries.map(countryCode => (
                                             <div key={countryCode}>
                                                 <p className="text-xs text-gray-500 mb-2 uppercase">
-                                                    {COUNTRIES.find(c => c.code === countryCode)?.name}
+                                                    {formatCountryName(countryCode)}
                                                 </p>
                                                 <div className="flex flex-wrap gap-2">
                                                     {(MAJOR_CITIES[countryCode] || []).map(city => (
@@ -1027,18 +1085,59 @@ export default function EnterpriseCheckout() {
                                         <label className="block text-sm text-gray-400 mb-1">Image or Video</label>
                                         <div className="border-2 border-dashed border-gray-700 rounded-lg p-6 text-center">
                                             {form.imageUrl ? (
-                                                <div className="relative">
-                                                    {form.isVideo ? (
-                                                        <video src={form.imageUrl} className="max-h-32 mx-auto rounded" controls muted />
+                                                <div className="space-y-4">
+                                                    <div className="relative overflow-hidden rounded-lg bg-black">
+                                                        {form.isVideo ? (
+                                                            <video src={form.imageUrl} className="mx-auto max-h-40 rounded" controls muted />
+                                                        ) : (
+                                                            <img
+                                                                src={form.imageUrl}
+                                                                alt="Creative preview"
+                                                                className="mx-auto h-40 w-full rounded"
+                                                                style={{ objectFit: form.creativeFit, objectPosition: form.creativePosition }}
+                                                            />
+                                                        )}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => { handleChange('imageUrl', ''); handleChange('isVideo', false); }}
+                                                            className="absolute right-2 top-2 rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white shadow"
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    </div>
+
+                                                    {!form.isVideo ? (
+                                                        <div className="rounded-lg border border-gray-700 bg-gray-900/70 p-3 text-left">
+                                                            <p className="text-xs font-semibold text-gray-300">Simple image framing</p>
+                                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                                {[{ value: 'cover', label: 'Fill / crop' }, { value: 'contain', label: 'Fit full image' }].map(option => (
+                                                                    <button
+                                                                        key={option.value}
+                                                                        type="button"
+                                                                        onClick={() => handleChange('creativeFit', option.value)}
+                                                                        className={`rounded-full px-3 py-1 text-xs ${form.creativeFit === option.value ? 'bg-amber-500 text-white' : 'bg-gray-800 text-gray-300'}`}
+                                                                    >
+                                                                        {option.label}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                            <select
+                                                                value={form.creativePosition}
+                                                                onChange={(e) => handleChange('creativePosition', e.target.value)}
+                                                                className="mt-3 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white"
+                                                            >
+                                                                <option value="center">Focus: center</option>
+                                                                <option value="top">Focus: top</option>
+                                                                <option value="bottom">Focus: bottom</option>
+                                                                <option value="left">Focus: left</option>
+                                                                <option value="right">Focus: right</option>
+                                                            </select>
+                                                        </div>
                                                     ) : (
-                                                        <img src={form.imageUrl} alt="Preview" className="max-h-32 mx-auto rounded" />
+                                                        <p className="rounded-lg border border-blue-800 bg-blue-950/40 p-3 text-left text-xs text-blue-200">
+                                                            Video preview is validated here. If the file needs trimming or cropping, please edit it before upload and keep it under {CREATIVE_LIMITS.video.maxDurationSeconds} seconds.
+                                                        </p>
                                                     )}
-                                                    <button
-                                                        onClick={() => { handleChange('imageUrl', ''); handleChange('isVideo', false); }}
-                                                        className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                                                    >
-                                                        Ã—
-                                                    </button>
                                                 </div>
                                             ) : uploading ? (
                                                 <Loader2 className="w-8 h-8 animate-spin mx-auto text-amber-500" />
@@ -1046,10 +1145,15 @@ export default function EnterpriseCheckout() {
                                                 <label className="cursor-pointer">
                                                     <Upload className="w-8 h-8 mx-auto text-gray-500 mb-2" />
                                                     <span className="text-amber-500 hover:underline">Upload image or video</span>
-                                                    <input type="file" accept="image/*,video/mp4,video/webm,video/mov" onChange={handleImageUpload} className="hidden" />
-                                                    <p className="text-xs text-gray-500 mt-1">JPG, PNG, WebP, GIF, MP4, WebM â€¢ Max 5MB images / 50MB videos</p>
+                                                    <input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime,.mov" onChange={handleImageUpload} className="hidden" />
                                                 </label>
                                             )}
+                                            <div className="mt-4 grid gap-2 text-left text-xs text-gray-400 sm:grid-cols-2">
+                                                <p><span className="font-semibold text-gray-300">Images:</span> {CREATIVE_LIMITS.image.formats}, max {formatBytes(CREATIVE_LIMITS.image.maxBytes)}, minimum {CREATIVE_LIMITS.image.minWidth} x {CREATIVE_LIMITS.image.minHeight}px.</p>
+                                                <p><span className="font-semibold text-gray-300">Videos:</span> {CREATIVE_LIMITS.video.formats}, max {formatBytes(CREATIVE_LIMITS.video.maxBytes)}, max {CREATIVE_LIMITS.video.maxDurationSeconds}s.</p>
+                                                <p><span className="font-semibold text-gray-300">Recommended:</span> {CREATIVE_LIMITS.image.recommended}; video {CREATIVE_LIMITS.video.recommended}.</p>
+                                                <p><span className="font-semibold text-gray-300">Audio:</span> audio-only files are not accepted; video may include audio.</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1062,7 +1166,7 @@ export default function EnterpriseCheckout() {
                                             form.isVideo ? (
                                                 <video src={form.imageUrl} className="w-full h-40 object-cover" muted loop autoPlay />
                                             ) : (
-                                                <img src={form.imageUrl} alt="Preview" className="w-full h-40 object-cover" />
+                                                <img src={form.imageUrl} alt="Preview" className="w-full h-40" style={{ objectFit: form.creativeFit, objectPosition: form.creativePosition }} />
                                             )
                                         ) : (
                                             <div className="w-full h-40 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
@@ -1109,7 +1213,7 @@ export default function EnterpriseCheckout() {
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-gray-400">Duration</span>
-                                    <span className="text-white">{form.durationMonths} month(s)</span>
+                                    <span className="text-white">{selectedDurationMonths} month(s)</span>
                                 </div>
 
                                 <div className="border-t border-gray-700 pt-4">
@@ -1155,7 +1259,7 @@ export default function EnterpriseCheckout() {
                             </button>
 
                             <p className="text-center text-gray-500 text-xs">
-                                Secure payment via Stripe â€¢ Credit card or wire transfer only
+                                Secure payment via Stripe - credit card for USD checkout. Assisted wire transfer available on request.
                             </p>
                         </div>
                     )}

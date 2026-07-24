@@ -106,6 +106,7 @@ exports.handler = async function handler(event) {
             <tr><td style="padding:10px;border-bottom:1px solid #e5e7eb;color:#64748b;">Reserva</td><td style="padding:10px;border-bottom:1px solid #e5e7eb;font-weight:700;">${reservationPrice ? escapeHtml(reservationPrice) + ' MXN' : 'Pendiente'}</td></tr>
           </table>
           <p style="margin-top:18px;padding:12px 14px;background:#ecfdf5;color:#065f46;border-radius:10px;"><strong>Siguiente accion:</strong> validar audiencia, compliance, copy, remitente y recomendar pago de reserva si el piloto es viable.</p>
+          <p style="margin-top:12px;padding:12px 14px;background:#fff7ed;color:#9a3412;border-radius:10px;font-size:13px;"><strong>Marco comercial:</strong> el brief inicial no es contrato ni inicia envios. La reserva requiere aceptacion digital de terminos; la campana aprobada puede documentarse con anexo operativo. Si el cliente requiere CFDI o invoice, solicitar datos fiscales antes de ejecutar.</p>
           <p style="text-align:center;margin-top:22px;"><a href="${checkoutUrl}" style="display:inline-block;background:#0f766e;color:white;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:12px;">Abrir reserva Connect</a></p>
         </div>
       </div>
@@ -128,7 +129,7 @@ exports.handler = async function handler(event) {
               <li>Si el piloto es viable, te guiamos para reservar/continuar con pago seguro.</li>
             </ul>
           </div>
-          <p style="font-size:13px;color:#64748b;">Si ya quieres apartar operacion, puedes reservar desde Geobooker. Para dudas responde a hola@geobooker.com.mx.</p>
+          <p style="font-size:13px;color:#64748b;">Este brief no constituye contratacion ni inicio automatico de envios. Si decides reservar, aceptaras los terminos de reserva y, si la campana es aprobada, podremos documentar el alcance con un anexo operativo. Si requieres CFDI o invoice comercial, responde este correo con tus datos fiscales antes de la ejecucion. Para dudas responde a hola@geobooker.com.mx.</p>
         </div>
       </div>
     </body></html>`;

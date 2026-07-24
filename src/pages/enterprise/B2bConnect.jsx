@@ -71,6 +71,16 @@ export default function B2bConnect() {
                 contact_phone: form.contact_phone || null,
                 country: form.country || 'Mexico',
                 company_website: form.company_website || null,
+                industry: 'Geobooker Connect',
+                service_line: 'geobooker_connect',
+                intake_source: 'b2b_connect_landing',
+                launch_offer_code: GBOOKER_CONNECT_LAUNCH.code,
+                pricing_snapshot: {
+                    reservation_price_mxn: connectPackage.reservationPriceMxn,
+                    package_code: connectPackage.code,
+                    package_name: connectPackage.name,
+                    batch_size: connectPackage.batchSize
+                },
                 target_cities: form.target_audience,
                 selected_plan: connectPackage.name,
                 budget_range: `${connectPackage.reservationPriceMxn} MXN launch reservation`,
@@ -104,6 +114,9 @@ export default function B2bConnect() {
                     contact_email: form.contact_email,
                     country: form.country || 'Mexico',
                     target_cities: form.target_audience,
+                    service_line: 'geobooker_connect',
+                    intake_source: 'b2b_connect_landing',
+                    launch_offer_code: GBOOKER_CONNECT_LAUNCH.code,
                     message: form.message || `Lead B2B desde Geobooker Connect. Paquete: ${connectPackage.name}`,
                     status: 'new'
                 };
@@ -472,6 +485,9 @@ export default function B2bConnect() {
                                 <h3 className="text-2xl font-bold text-white mb-2">Recibimos tu brief inicial</h3>
                                 <p className="text-gray-300">
                                     Nuestra mesa de analisis validara audiencia, copy y viabilidad operativa antes de enviarte el siguiente paso o pedirte el anticipo del piloto.
+                                </p>
+                                <p className="mt-4 text-sm text-emerald-100">
+                                    Este brief no constituye contrato ni inicia envios automaticos. Si avanzas, la reserva se documenta con aceptacion digital de terminos y, si requieres CFDI o invoice, podras responder el correo con tus datos fiscales.
                                 </p>
                             </div>
                         )}

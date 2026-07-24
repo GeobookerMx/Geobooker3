@@ -39,7 +39,8 @@ exports.handler = async (event) => {
             customerEmail,
             currency = 'mxn', // Default to MXN, but can be 'usd' for Enterprise
             mode = 'payment',
-            metadata = {}
+            metadata = {},
+            allowOxxo = true
         } = JSON.parse(event.body);
 
         // Validate currency
@@ -69,9 +70,10 @@ exports.handler = async (event) => {
         // Session config
         formData.append('mode', mode);
         
-        // Payment methods: card always, OXXO + SPEI for MXN only
+        // Payment methods: card always. OXXO can be disabled for flows where async payment
+        // would complicate fulfillment, such as Connect reservations.
         formData.append('payment_method_types[0]', 'card');
-        if (finalCurrency === 'mxn') {
+        if (finalCurrency === 'mxn' && allowOxxo !== false) {
             formData.append('payment_method_types[1]', 'oxxo');
             // SPEI requires customer_creation for delayed payment
         }

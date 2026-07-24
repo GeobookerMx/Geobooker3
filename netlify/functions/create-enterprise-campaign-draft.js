@@ -57,6 +57,9 @@ exports.handler = async (event) => {
     const ctaUrl = cleanUrl(payload.ctaUrl);
     const creativeFit = ['cover', 'contain'].includes(payload.creativeFit) ? payload.creativeFit : 'cover';
     const creativePosition = ['center', 'top', 'bottom', 'left', 'right'].includes(payload.creativePosition) ? payload.creativePosition : 'center';
+    const termsVersion = String(payload.termsVersion || 'geobooker_commercial_terms_2026_v1').trim();
+    const termsAcceptedAt = String(payload.termsAcceptedAt || '').trim();
+    const reviewNotice = String(payload.reviewNotice || 'Review SLA: 12-72h.').trim();
 
     if (!companyName || !contactEmail || !selectedPlan) {
       return json(400, { error: 'Company, email and plan are required' });
@@ -116,7 +119,7 @@ exports.handler = async (event) => {
           display_position: creativePosition
         }
       },
-      notes: `Enterprise self-service draft. Plan: ${payload.selectedPlanName || selectedPlan}. Review SLA: 12-72h.`
+      notes: `Enterprise self-service draft. Plan: ${payload.selectedPlanName || selectedPlan}. ${reviewNotice} Terms: ${termsVersion}${termsAcceptedAt ? ` accepted_at=${termsAcceptedAt}` : ''}. No guaranteed commercial results. Fiscal documentation subject to billing country.`
     };
 
     const { data: campaign, error: campaignError } = await supabase

@@ -151,7 +151,7 @@ const ConnectOpsDashboard = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [{ data: campaignRows, error: campaignError }, { data: runRows, error: runError }, { count: leadCount, error: leadError }] = await Promise.all([
+      const [{ data: campaignRows, error: campaignError }, { data: runRows, error: runError }, { data: leadRows, count: leadCount, error: leadError }] = await Promise.all([
         supabase
           .from('connect_campaigns')
           .select('id, package_name, billing_email, payment_status, fulfillment_status, batch_size, launch_price_mxn, created_at, updated_at, client_account_id, enterprise_lead_id, connect_client_accounts(company_name, primary_contact_email, country, status), enterprise_leads(company_name, contact_name, country, target_cities)')
@@ -399,6 +399,45 @@ const ConnectOpsDashboard = () => {
                 <p className="font-semibold text-gray-900">3. Salida y reporte</p>
                 <p className="mt-2">Ejecutar lote controlado, registrar corridas y compartir reporte con siguientes acciones.</p>
               </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+            <div className="p-6 border-b">
+              <h3 className="text-lg font-bold text-gray-900">Briefs iniciales sin reserva</h3>
+              <p className="text-sm text-gray-500 mt-1">Prospectos Connect que pidieron evaluacion antes de pagar. Sirven para precalificar y llevarlos a reserva.</p>
+            </div>
+            <div className="divide-y">
+              {connectLeads.map((lead) => {
+                let meta = {};
+                try { meta = JSON.parse(lead.message || '{}'); } catch (_error) { meta = {}; }
+                return (
+                  <div key={lead.id} className="p-5 grid lg:grid-cols-[1fr_0.85fr_auto] gap-4 items-start">
+                    <div>
+                      <p className="font-bold text-gray-900">{lead.company_name || 'Empresa sin nombre'}</p>
+                      <p className="text-sm text-gray-600 mt-1">{lead.contact_name || 'Contacto por confirmar'} - {lead.contact_email}</p>
+                      <p className="text-xs text-gray-500 mt-1">{new Date(lead.created_at).toLocaleString('es-MX')}</p>
+                    </div>
+                    <div className="text-sm text-gray-700">
+                      <p><span className="font-semibold">Audiencia:</span> {meta.target_audience || lead.target_cities || 'Pendiente'}</p>
+                      <p className="mt-1"><span className="font-semibold">Paquete:</span> {meta.package_name || lead.selected_plan || 'Piloto Connect'}</p>
+                      <p className="mt-1 text-xs text-gray-500">{meta.notes || 'Sin objetivo detallado todavia.'}</p>
+                    </div>
+                    <div className="flex flex-col gap-2 lg:items-end">
+                      <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">brief inicial</span>
+                      <a
+                        href={`mailto:${lead.contact_email}?subject=Geobooker Connect - siguiente paso&body=Hola, recibimos tu brief de Geobooker Connect y queremos validar audiencia, copy y viabilidad operativa.`}
+                        className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
+                      >
+                        Responder
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
+              {!loading && connectLeads.length === 0 && (
+                <div className="p-8 text-center text-sm text-gray-500">Aun no hay briefs iniciales Connect registrados.</div>
+              )}
             </div>
           </div>
 

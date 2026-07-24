@@ -17,7 +17,14 @@ import toast from 'react-hot-toast';
 import SEO from '../../components/SEO';
 import { Capacitor } from '@capacitor/core';
 import { ENTERPRISE_FALLBACK_PRICING } from '../../config/enterprisePricing';
-import { IS_IOS_NATIVE } from '../../utils/iosStore';
+import { APP_LINKS } from '../../config/appLinks';
+import {
+    ADS_REVIEW_NOTICE,
+    COMMERCIAL_FISCAL_NOTICE,
+    COMMERCIAL_NO_GUARANTEE_NOTICE,
+    COMMERCIAL_TERMS_VERSION,
+    buildTermsSnapshot
+} from '../../config/commercialCompliance';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 const ENTERPRISE_SELF_SERVICE_ENABLED = import.meta.env.VITE_ENABLE_ENTERPRISE_CHECKOUT !== 'false';
@@ -358,16 +365,9 @@ const COUNTRIES = [
 export default function EnterpriseCheckout() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-
-    useEffect(() => {
-        if (IS_IOS_NATIVE) {
-            navigate('/', { replace: true });
-        }
-    }, [navigate]);
-
-    if (IS_IOS_NATIVE) {
-        return null;
-    }
+    const nativePlatform = Capacitor.getPlatform();
+    const isNativeMobile = Capacitor.isNativePlatform() && ['ios', 'android'].includes(nativePlatform);
+    const isNativeIOS = Capacitor.isNativePlatform() && nativePlatform === 'ios';
     const preselectedPlan = searchParams.get('plan') || '';
     const linkedLeadId = searchParams.get('lead') || '';
 
@@ -404,7 +404,10 @@ export default function EnterpriseCheckout() {
         isVideo: false,
 
         // Language for creative
-        creativeLanguage: 'en'
+        creativeLanguage: 'en',
+
+        // Compliance
+        termsAccepted: false
     });
 
     // Load pricing
@@ -458,6 +461,7 @@ export default function EnterpriseCheckout() {
     const enterpriseSubtotalUsd = selectedPlanData ? Math.round((basePlanUsd / planDurationMonths) * selectedDurationMonths) : 0;
     const enterpriseIvaUsd = isMexicoBilling ? Math.round(enterpriseSubtotalUsd * 0.16) : 0;
     const enterpriseTotalUsd = enterpriseSubtotalUsd + enterpriseIvaUsd;
+    const nativeWebCheckoutUrl = `${APP_LINKS.web}/enterprise/checkout${form.selectedPlan ? `?plan=${encodeURIComponent(form.selectedPlan)}` : ''}`;
 
     // Plan limits - use countries_included from plan data
     const getMaxCountries = () => {
@@ -611,8 +615,18 @@ export default function EnterpriseCheckout() {
     };
 
     const handleCheckout = async () => {
+        if (isNativeMobile) {
+            toast.error('Please complete Enterprise payment from geobooker.com.mx to keep store compliance clear.');
+            return;
+        }
+
         if (!form.companyName || !form.contactEmail || !form.selectedPlan) {
             toast.error('Please fill in all required fields');
+            return;
+        }
+
+        if (!form.termsAccepted) {
+            toast.error('Please accept the advertising, fiscal and review terms before payment.');
             return;
         }
 
@@ -628,6 +642,7 @@ export default function EnterpriseCheckout() {
             const endDate = new Date(new Date(startDate).setMonth(
                 new Date(startDate).getMonth() + (selectedDurationMonths)
             )).toISOString().split('T')[0];
+            const termsSnapshot = buildTermsSnapshot('enterprise_ads_checkout');
 
             // DISABLED: Availability check temporarily removed due to RPC issues
             // Will be re-enabled once database function is properly configured
@@ -667,6 +682,11 @@ export default function EnterpriseCheckout() {
                     creativeLanguage: form.creativeLanguage,
                     creativeFit: form.creativeFit,
                     creativePosition: form.creativePosition,
+                    termsVersion: COMMERCIAL_TERMS_VERSION,
+                    termsAcceptedAt: termsSnapshot.accepted_at,
+                    fiscalNotice: COMMERCIAL_FISCAL_NOTICE,
+                    noGuaranteeNotice: COMMERCIAL_NO_GUARANTEE_NOTICE,
+                    reviewNotice: ADS_REVIEW_NOTICE,
                     linkedLeadId
                 })
             });
@@ -709,6 +729,12 @@ export default function EnterpriseCheckout() {
                         iva_amount_usd: enterpriseIvaUsd,
                         total_amount_usd: enterpriseTotalUsd,
                         target_summary: (form.targetCountries || []).join(', ') || 'Global',
+                        terms_version: COMMERCIAL_TERMS_VERSION,
+                        terms_accepted_at: termsSnapshot.accepted_at,
+                        invoice_required: isMexicoBilling ? 'true' : 'false',
+                        fiscal_notice_version: 'cfdi_invoice_notice_2026_v1',
+                        no_guaranteed_results: 'true',
+                        review_sla: '12-72h',
                         enterprise_lead_id: linkedLeadId || ''
                     }
                 })
@@ -1237,15 +1263,61 @@ export default function EnterpriseCheckout() {
                                 <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
                                 <div className="text-sm text-blue-200">
                                     {form.billingCountry === 'MX'
-                                        ? 'Precios en USD + IVA: clientes con facturacion en Mexico pagan 16% IVA adicional antes de Stripe.'
-                                        : 'International customers: 0% VAT export treatment, subject to fiscal validation.'}
+                                        ? 'Prices are shown in USD + IVA: customers with Mexico billing pay 16% IVA before Stripe. If you need CFDI, provide fiscal data before campaign execution.'
+                                        : 'International customers: commercial invoice / export support may apply, subject to fiscal validation.'}
                                 </div>
                             </div>
 
+                            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+                                <p className="font-semibold text-amber-200">Review, contract and delivery limits</p>
+                                <p className="mt-2">{ADS_REVIEW_NOTICE}</p>
+                                <p className="mt-2">{COMMERCIAL_NO_GUARANTEE_NOTICE}</p>
+                                <p className="mt-2">{COMMERCIAL_FISCAL_NOTICE}</p>
+                            </div>
+
+                            <label className="flex items-start gap-3 rounded-xl border border-gray-700 bg-gray-900 p-4 text-sm text-gray-200">
+                                <input
+                                    type="checkbox"
+                                    checked={form.termsAccepted}
+                                    onChange={(event) => handleChange('termsAccepted', event.target.checked)}
+                                    className="mt-1"
+                                />
+                                <span>
+                                    I accept Geobooker advertising terms: paid campaigns are subject to creative, territory, inventory, fiscal and compliance review; contracts/annexes may be generated for Enterprise campaigns; results are not guaranteed.
+                                </span>
+                            </label>
+
                             {/* Payment button */}
+                            {isNativeMobile ? (
+                                <div className="rounded-xl border border-blue-700/50 bg-blue-900/30 p-5 text-center">
+                                    <p className="text-sm text-blue-100">
+                                        {isNativeIOS
+                                            ? 'To keep App Store review simple, Enterprise campaigns are handled as assisted proposals inside iOS. Our team will review scope, contract, fiscal data and next steps.'
+                                            : 'To keep Play Store compliance clean, complete Enterprise payment from the official Geobooker web checkout.'}
+                                    </p>
+                                    {isNativeIOS ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => navigate(`/enterprise/contact${form.selectedPlan ? `?plan=${form.selectedPlan}` : ''}`)}
+                                            className="mt-4 inline-flex items-center justify-center rounded-xl bg-blue-500 px-5 py-3 font-bold text-white hover:bg-blue-400 transition"
+                                        >
+                                            Request assisted proposal
+                                        </button>
+                                    ) : (
+                                        <a
+                                            href={nativeWebCheckoutUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="mt-4 inline-flex items-center justify-center rounded-xl bg-blue-500 px-5 py-3 font-bold text-white hover:bg-blue-400 transition"
+                                        >
+                                            Open secure web checkout
+                                        </a>
+                                    )}
+                                </div>
+                            ) : (
                             <button
                                 onClick={handleCheckout}
-                                disabled={loading}
+                                disabled={loading || !form.termsAccepted}
                                 className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white py-4 px-6 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                             >
                                 {loading ? (
@@ -1257,6 +1329,7 @@ export default function EnterpriseCheckout() {
                                     </>
                                 )}
                             </button>
+                            )}
 
                             <p className="text-center text-gray-500 text-xs">
                                 Secure payment via Stripe - credit card for USD checkout. Assisted wire transfer available on request.

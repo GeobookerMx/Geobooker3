@@ -1,14 +1,23 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, BadgeCheck, CreditCard, Loader2, ShieldCheck } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import toast from 'react-hot-toast';
 import SEO from '../../components/SEO';
 import { supabase } from '../../lib/supabase';
+import { APP_LINKS } from '../../config/appLinks';
 import { buildPaymentReturnUrl } from '../../services/paymentReturnUrls';
 import {
   GBOOKER_CONNECT_LAUNCH,
   getGeobookerConnectPackage
 } from '../../config/geobookerConnect';
+import {
+  COMMERCIAL_FISCAL_NOTICE,
+  COMMERCIAL_NO_GUARANTEE_NOTICE,
+  COMMERCIAL_TERMS_VERSION,
+  CONNECT_RESERVATION_NOTICE,
+  buildTermsSnapshot
+} from '../../config/commercialCompliance';
 
 const formatCurrency = (amount = 0, currency = 'MXN') => {
   try {
@@ -23,12 +32,16 @@ const formatCurrency = (amount = 0, currency = 'MXN') => {
 
 export default function ConnectCheckout() {
   const [searchParams] = useSearchParams();
+  const nativePlatform = Capacitor.getPlatform();
+  const isNativeMobile = Capacitor.isNativePlatform() && ['ios', 'android'].includes(nativePlatform);
+  const isNativeIOS = Capacitor.isNativePlatform() && nativePlatform === 'ios';
   const selectedPackage = useMemo(
     () => getGeobookerConnectPackage(searchParams.get('package')),
     [searchParams]
   );
 
   const [loading, setLoading] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [form, setForm] = useState({
     company_name: '',
     contact_name: '',
@@ -48,8 +61,18 @@ export default function ConnectCheckout() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    if (isNativeMobile) {
+      toast.error('Para proteger la publicacion en tiendas, completa la reserva desde la web oficial.');
+      return;
+    }
+
     if (!form.company_name || !form.contact_email || !form.target_audience || !form.objective) {
       toast.error('Completa empresa, email, audiencia y objetivo para reservar el piloto.');
+      return;
+    }
+
+    if (!termsAccepted) {
+      toast.error('Acepta los terminos de reserva, facturacion y alcance antes de continuar.');
       return;
     }
 
@@ -58,6 +81,7 @@ export default function ConnectCheckout() {
     try {
       const leadId = crypto.randomUUID();
       const campaignId = crypto.randomUUID();
+      const termsSnapshot = buildTermsSnapshot('geobooker_connect_reservation');
 
       const metadataPayload = {
         service_line: 'geobooker_connect',
@@ -69,7 +93,12 @@ export default function ConnectCheckout() {
         objective: form.objective,
         company_website: form.company_website || null,
         reservation_price_mxn: selectedPackage.reservationPriceMxn,
-        batch_size: selectedPackage.batchSize
+        batch_size: selectedPackage.batchSize,
+        terms_version: COMMERCIAL_TERMS_VERSION,
+        terms_accepted_at: termsSnapshot.accepted_at,
+        invoice_required: true,
+        fiscal_notice: COMMERCIAL_FISCAL_NOTICE,
+        no_guarantee_notice: COMMERCIAL_NO_GUARANTEE_NOTICE
       };
 
       const { error: leadError } = await supabase
@@ -123,6 +152,7 @@ export default function ConnectCheckout() {
         body: JSON.stringify({
           amount: selectedPackage.reservationPriceMxn * 100,
           currency: 'mxn',
+          allowOxxo: false,
           productName: `${selectedPackage.name} - Reserva de lanzamiento`,
           customerEmail: form.contact_email,
           successUrl: buildPaymentReturnUrl(`/b2b-connect/success?campaign=${campaignId}`),
@@ -141,7 +171,11 @@ export default function ConnectCheckout() {
             objective: form.objective,
             billing_email: form.contact_email,
             billing_country: form.country || 'Mexico',
-            reservation_price_mxn: selectedPackage.reservationPriceMxn
+            reservation_price_mxn: selectedPackage.reservationPriceMxn,
+            terms_version: COMMERCIAL_TERMS_VERSION,
+            terms_accepted_at: termsSnapshot.accepted_at,
+            invoice_required: 'true',
+            payment_method_policy: 'card_only_connect_reservation'
           }
         })
       });
@@ -177,6 +211,42 @@ export default function ConnectCheckout() {
         </Link>
 
         <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-8 items-start">
+          {isNativeMobile ? (
+            <section className="lg:col-span-2 rounded-3xl border border-amber-400/30 bg-amber-400/10 p-6 md:p-8 text-center">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-400/20 text-amber-200">
+                <ShieldCheck className="h-7 w-7" />
+              </div>
+              <h1 className="text-3xl font-bold">{isNativeIOS ? 'Connect con seguimiento asistido' : 'Reserva Connect desde la web oficial'}</h1>
+              <p className="mx-auto mt-3 max-w-2xl text-slate-200">
+                {isNativeIOS
+                  ? 'En iPhone puedes enviar el brief y nuestro equipo te guiara con propuesta, revision fiscal y terminos, sin pago directo dentro de la app.'
+                  : 'En la app movil puedes revisar Geobooker Connect y enviar brief. Para cuidar el cumplimiento de tiendas, pagos, factura y contrato, la reserva se completa en geobooker.com.mx.'}
+              </p>
+              <div className="mt-6 rounded-2xl border border-white/10 bg-slate-900/80 p-4 text-left text-sm text-slate-200">
+                <p>{CONNECT_RESERVATION_NOTICE}</p>
+                <p className="mt-2">{COMMERCIAL_FISCAL_NOTICE}</p>
+                <p className="mt-2">{COMMERCIAL_NO_GUARANTEE_NOTICE}</p>
+              </div>
+              {isNativeIOS ? (
+                <Link
+                  to="/b2b-connect"
+                  className="mt-6 inline-flex items-center justify-center rounded-2xl bg-emerald-400 px-6 py-4 font-bold text-slate-950 hover:bg-emerald-300 transition"
+                >
+                  Enviar brief asistido
+                </Link>
+              ) : (
+                <a
+                  href={`${APP_LINKS.web}/b2b-connect/checkout?package=${selectedPackage.code}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-6 inline-flex items-center justify-center rounded-2xl bg-emerald-400 px-6 py-4 font-bold text-slate-950 hover:bg-emerald-300 transition"
+                >
+                  Abrir checkout web seguro
+                </a>
+              )}
+            </section>
+          ) : (
+          <>
           <section className="rounded-3xl border border-white/10 bg-white/5 p-6 md:p-8">
             <div className="inline-flex items-center gap-2 rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300">
               <BadgeCheck className="w-4 h-4" />
@@ -273,9 +343,22 @@ export default function ConnectCheckout() {
                 />
               </label>
 
+              <label className="flex items-start gap-3 rounded-2xl border border-white/10 bg-slate-900/80 p-4 text-sm text-slate-200">
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(event) => setTermsAccepted(event.target.checked)}
+                  className="mt-1"
+                />
+                <span>
+                  Acepto que esta reserva es un anticipo operativo sujeto a validacion de brief, audiencia,
+                  cumplimiento y alcance. {COMMERCIAL_FISCAL_NOTICE} {COMMERCIAL_NO_GUARANTEE_NOTICE}
+                </span>
+              </label>
+
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !termsAccepted}
                 className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 font-bold text-slate-950 hover:bg-emerald-400 transition disabled:opacity-60"
               >
                 {loading ? (
@@ -319,6 +402,8 @@ export default function ConnectCheckout() {
               ))}
             </div>
           </aside>
+          </>
+          )}
         </div>
       </div>
     </div>

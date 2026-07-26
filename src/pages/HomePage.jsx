@@ -22,6 +22,8 @@ import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { getCachedBusinesses, isCacheValid, cacheBusinesses } from '../services/businessCacheService';
 import { getBusinessesInBounds } from '../services/denueMapService';
+import { trackEvent } from '../services/analyticsService';
+import { isGlobalHost } from '../config/domainStrategy';
 import { generateCacheKey, getFromCache, searchPlacesUniversal } from '../services/googlePlacesService';
 import { MapPin, Loader2, Search, Store, Megaphone, ArrowRight, ShieldCheck, Clock3 } from 'lucide-react';
 
@@ -129,6 +131,169 @@ const GeobookerUseCases = () => {
               </div>
             </article>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+
+const GlobalAcquisitionPanel = () => {
+  const shouldShow = typeof window !== 'undefined' && isGlobalHost(window.location.hostname);
+  if (!shouldShow) return null;
+
+  const handleClick = (cta) => {
+    trackEvent('global_home_cta_click', {
+      cta,
+      source: 'www_geobooker_home'
+    });
+  };
+
+  const cards = [
+    {
+      id: 'download',
+      to: '/download?utm_source=global_home&utm_medium=cta&utm_campaign=app_download',
+      icon: MapPin,
+      title: 'Download Geobooker',
+      text: 'Open local discovery from Android, iPhone or the web with one official download hub.'
+    },
+    {
+      id: 'advertise',
+      to: '/enterprise?utm_source=global_home&utm_medium=cta&utm_campaign=global_ads',
+      icon: Megaphone,
+      title: 'Advertise by city or country',
+      text: 'Launch sponsored visibility in selected territories with editorial review and measurable reporting.'
+    },
+    {
+      id: 'list_business',
+      to: '/business/register?utm_source=global_home&utm_medium=cta&utm_campaign=list_business',
+      icon: Store,
+      title: 'List or claim a business',
+      text: 'Help customers find accurate contact, routes and services when they search locally.'
+    }
+  ];
+
+  return (
+    <section className="container mx-auto px-4 py-8">
+      <div className="overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-2xl">
+        <div className="grid gap-8 p-6 md:p-8 lg:grid-cols-[1fr,1.35fr]">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.26em] text-cyan-300">Geobooker Global</p>
+            <h2 className="mt-3 text-3xl font-black leading-tight tracking-tight md:text-5xl">
+              Find places, services and business opportunities worldwide.
+            </h2>
+            <p className="mt-4 text-base leading-7 text-slate-300">
+              Geobooker connects local intent with real businesses, app downloads and sponsored visibility by city, country and category.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2 text-xs font-bold text-slate-200">
+              {['Local search', 'Business listings', 'Global ads', 'App downloads', 'B2B leads'].map((chip) => (
+                <span key={chip} className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5">{chip}</span>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {cards.map((card) => {
+              const Icon = card.icon;
+              return (
+                <Link
+                  key={card.id}
+                  to={card.to}
+                  onClick={() => handleClick(card.id)}
+                  className="group rounded-3xl border border-white/10 bg-white/8 p-5 transition hover:-translate-y-1 hover:bg-white/12"
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950 shadow-lg shadow-cyan-950/30">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="mt-4 text-lg font-black">{card.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">{card.text}</p>
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-cyan-300">
+                    Start here
+                    <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const HomeGrowthPrompt = () => {
+  const { t } = useTranslation();
+
+  const handleClick = (cta) => {
+    trackEvent('home_growth_cta_click', {
+      cta,
+      source: 'home_below_map'
+    });
+  };
+
+  const actions = [
+    {
+      id: 'signup',
+      to: '/signup?source=home_below_map',
+      icon: Search,
+      label: t('home.growthPrompt.signupLabel', 'Crear cuenta gratis'),
+      text: t('home.growthPrompt.signupText', 'Guarda favoritos, consulta mejor y vuelve rapido a tus busquedas.')
+    },
+    {
+      id: 'register',
+      to: '/business/register?source=home_below_map',
+      icon: Store,
+      label: t('home.growthPrompt.registerLabel', 'Registrar mi negocio'),
+      text: t('home.growthPrompt.registerText', 'Publica tu negocio para que clientes cercanos te encuentren por categoria, producto o necesidad.')
+    },
+    {
+      id: 'claim',
+      to: '/claim?source=home_below_map',
+      icon: ShieldCheck,
+      label: t('home.growthPrompt.claimLabel', 'Reclamar negocio existente'),
+      text: t('home.growthPrompt.claimText', 'Si tu negocio ya aparece, solicita control para actualizar datos, contacto y visibilidad.')
+    }
+  ];
+
+  return (
+    <section className="container mx-auto px-4 pb-8">
+      <div className="overflow-hidden rounded-[2rem] border border-blue-100 bg-gradient-to-br from-white via-blue-50 to-cyan-50 shadow-xl">
+        <div className="grid gap-6 p-6 md:p-8 lg:grid-cols-[0.95fr,1.45fr]">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-blue-700">
+              {t('home.growthPrompt.kicker', 'Siguiente paso')}
+            </p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+              {t('home.growthPrompt.title', 'Convierte busquedas en oportunidades reales')}
+            </h2>
+            <p className="mt-4 text-base leading-7 text-slate-600">
+              {t('home.growthPrompt.description', 'Puedes explorar Geobooker sin cuenta. Cuando quieras guardar, registrar o reclamar un negocio, te guiamos con un flujo simple y medible.')}
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {actions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <Link
+                  key={action.id}
+                  to={action.to}
+                  onClick={() => handleClick(action.id)}
+                  className="group rounded-3xl border border-white bg-white/85 p-5 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg"
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-200 transition group-hover:bg-slate-950">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="mt-4 text-lg font-black text-slate-950">{action.label}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{action.text}</p>
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-blue-700">
+                    {t('home.growthPrompt.startNow', 'Empezar ahora')}
+                    <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
@@ -1389,6 +1554,8 @@ const HomePage = () => {
           </Suspense>
         </div>
       </div>
+
+      <HomeGrowthPrompt />
 
       <div className="bg-slate-950 text-white">
         <div className="container mx-auto px-4 py-10">

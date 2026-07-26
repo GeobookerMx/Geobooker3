@@ -1,6 +1,7 @@
 // src/components/SEO.jsx
 import { useEffect } from 'react';
 import { COMPANY_INFO, CONTACT_EMAILS, SOCIAL_LINKS } from '../config/contacts';
+import { DOMAIN_STRATEGY, buildCanonicalUrl, getAlternateUrls, getCanonicalOrigin, getMarketLanguage } from '../config/domainStrategy';
 
 const SEO = ({
     title = 'Geobooker - Busqueda local, negocios y servicios cerca de ti',
@@ -15,9 +16,11 @@ const SEO = ({
     structuredData = null
 }) => {
     useEffect(() => {
-        const canonicalUrl = url || window.location.href;
-        const ogImage = image.startsWith('http') ? image : `${window.location.origin}${image}`;
-        const currentLang = localStorage.getItem('language') || 'es';
+        const currentPath = `${window.location.pathname || '/'}${window.location.pathname ? '' : ''}`;
+        const canonicalUrl = url || buildCanonicalUrl(currentPath);
+        const canonicalOrigin = getCanonicalOrigin();
+        const ogImage = image.startsWith('http') ? image : `${canonicalOrigin}${image}`;
+        const currentLang = localStorage.getItem('language') || getMarketLanguage();
 
         document.title = title.includes('Geobooker') ? title : `${title} | Geobooker`;
         document.documentElement.lang = currentLang;
@@ -44,14 +47,8 @@ const SEO = ({
 
         updateLinkTag('canonical', canonicalUrl);
 
-        const path = window.location.pathname;
-        const mxUrl = `https://geobooker.com.mx${path}`;
-        const globalUrl = `https://geobooker.com${path}`;
-        updateHreflangTag('es-MX', mxUrl);
-        updateHreflangTag('es', mxUrl);
-        updateHreflangTag('en', globalUrl);
-        updateHreflangTag('en-US', globalUrl);
-        updateHreflangTag('x-default', globalUrl);
+        const alternates = getAlternateUrls(window.location.pathname);
+        Object.entries(alternates).forEach(([lang, href]) => updateHreflangTag(lang, href));
 
         addWebAppSchema(currentLang);
         addOrganizationSchema();
@@ -124,7 +121,7 @@ const addBusinessSchema = (business) => {
             addressCountry: business.country || 'MX'
         },
         telephone: business.phone || '',
-        url: business.website || window.location.href,
+        url: business.website || buildCanonicalUrl(window.location.pathname),
         image: business.image_url || '',
         priceRange: business.price_range || '$$'
     };
@@ -134,14 +131,6 @@ const addBusinessSchema = (business) => {
             '@type': 'GeoCoordinates',
             latitude: business.latitude,
             longitude: business.longitude
-        };
-    }
-
-    if (business.rating) {
-        schema.aggregateRating = {
-            '@type': 'AggregateRating',
-            ratingValue: business.rating,
-            reviewCount: business.review_count || 1
         };
     }
 
@@ -163,7 +152,7 @@ const addBreadcrumbSchema = (breadcrumbs) => {
             '@type': 'ListItem',
             position: index + 1,
             name: crumb.name,
-            item: crumb.item.startsWith('http') ? crumb.item : `${window.location.origin}${crumb.item}`
+            item: crumb.item.startsWith('http') ? crumb.item : `${getCanonicalOrigin()}${crumb.item}`
         }))
     };
 
@@ -194,7 +183,7 @@ const addWebAppSchema = (currentLang) => {
         applicationCategory: 'BusinessApplication',
         operatingSystem: 'Any',
         browserRequirements: 'Requires JavaScript. Requires HTML5.',
-        url: 'https://geobooker.com',
+        url: DOMAIN_STRATEGY.globalOrigin,
         inLanguage: ['en', 'es', 'zh', 'ja', 'ko'],
         areaServed: [
             { '@type': 'Country', name: 'Mexico' },
@@ -232,7 +221,7 @@ const addOrganizationSchema = () => {
         name: COMPANY_INFO.name,
         alternateName: COMPANY_INFO.legalName,
         url: COMPANY_INFO.website,
-        logo: 'https://geobooker.com.mx/images/logo-main.png',
+        logo: `${DOMAIN_STRATEGY.globalOrigin}/images/logo-main.png`,
         description: 'Geobooker connects users, businesses and brands through local search, visibility and measurable commercial activation.',
         foundingDate: String(COMPANY_INFO.founded),
         sameAs: [
@@ -276,13 +265,13 @@ const addWebsiteSchema = (currentLang = 'es') => {
         name: 'Geobooker',
         alternateName: 'Geobooker Mexico',
         description: 'Local search, business discovery and commercial activation for users, businesses and brands.',
-        url: 'https://geobooker.com.mx',
+        url: getCanonicalOrigin(),
         inLanguage: currentLang,
         potentialAction: {
             '@type': 'SearchAction',
             target: {
                 '@type': 'EntryPoint',
-                urlTemplate: 'https://geobooker.com.mx/?q={search_term_string}'
+                urlTemplate: `${getCanonicalOrigin()}/?q={search_term_string}`
             },
             'query-input': 'required name=search_term_string'
         },

@@ -81,15 +81,15 @@ export const getInitialLanguage = () => {
   const manualLang = getStoredManualLanguage();
   if (manualLang) return manualLang;
 
+  const hostname = window.location.hostname;
+  if (hostname.endsWith('geobooker.com.mx')) return 'es';
+  if (hostname.endsWith('geobooker.com') && !hostname.endsWith('geobooker.com.mx')) return 'en';
+
   const cachedCountryLang = getLanguageForCountry(getCachedCountryCode());
   if (cachedCountryLang) return cachedCountryLang;
 
   const browserLang = normalizeLanguage(navigator.language);
   if (browserLang) return browserLang;
-
-  const hostname = window.location.hostname;
-  if (hostname.endsWith('geobooker.com')) return 'en';
-  if (hostname.endsWith('geobooker.com.mx')) return 'es';
 
   return 'en';
 };

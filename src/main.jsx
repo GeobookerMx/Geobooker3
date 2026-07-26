@@ -19,6 +19,42 @@ import './index.css'
 import './styles/ios-android-viewport-fix.css'
 import './i18n' // Importar configuración de i18n
 
+const CHUNK_RECOVERY_KEY = 'geobooker_chunk_recovery_attempted';
+
+const recoverFromStaleChunk = async (reason = 'unknown') => {
+  if (typeof window === 'undefined') return;
+  if (sessionStorage.getItem(CHUNK_RECOVERY_KEY) === '1') return;
+
+  sessionStorage.setItem(CHUNK_RECOVERY_KEY, '1');
+  try {
+    window.gtag?.('event', 'stale_chunk_recovery', { reason });
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.update().catch(() => null)));
+    }
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((key) => key.includes('geobooker')).map((key) => caches.delete(key)));
+    }
+  } catch (error) {
+    console.warn('[Geobooker] Chunk recovery cleanup failed:', error);
+  } finally {
+    window.location.reload();
+  }
+};
+
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault();
+  recoverFromStaleChunk('vite_preload_error');
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  const message = String(event.reason?.message || event.reason || '');
+  if (message.includes('Failed to fetch dynamically imported module') || message.includes('Importing a module script failed')) {
+    recoverFromStaleChunk('dynamic_import_failed');
+  }
+});
+
 if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_SCROLL_SPY === 'true') {
   import('./debug/scrollSpy').then(({ installScrollSpy }) => installScrollSpy());
 }

@@ -1,163 +1,125 @@
 const { createClient } = require('@supabase/supabase-js');
 
-// Configuración de Supabase
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+const GLOBAL_ORIGIN = 'https://www.geobooker.com';
+const MX_ORIGIN = 'https://geobooker.com.mx';
+const MAX_URLS = 49000;
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
-const MAX_URLS = 49000; // Margen de seguridad (Google permite 50k)
+const isGlobalHost = (host = '') => host.includes('geobooker.com') && !host.includes('geobooker.com.mx');
+const xmlEscape = (value = '') => String(value)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&apos;');
 
-exports.handler = async (event, context) => {
+const normalizePath = (path = '') => {
+  const clean = String(path || '').split('?')[0].split('#')[0];
+  if (!clean || clean === '/') return '';
+  return clean.startsWith('/') ? clean : '/' + clean;
+};
+
+const today = () => new Date().toISOString().split('T')[0];
+const toDate = (value) => value ? new Date(value).toISOString().split('T')[0] : today();
+
+exports.handler = async (event) => {
+  const host = String(event.headers.host || event.headers.Host || '').toLowerCase();
+  const globalMode = isGlobalHost(host);
+  const origin = globalMode ? GLOBAL_ORIGIN : MX_ORIGIN;
+  const alternateOrigin = globalMode ? MX_ORIGIN : GLOBAL_ORIGIN;
+  const primaryLang = globalMode ? 'en' : 'es-MX';
+  const alternateLang = globalMode ? 'es-MX' : 'en';
+
+  const routes = new Map();
+  const addRoute = (path, lastmod, priority = '0.8', changefreq = 'weekly') => {
+    if (routes.size >= MAX_URLS) return;
+    const normalizedPath = normalizePath(path);
+    routes.set(normalizedPath, { path: normalizedPath, lastmod: toDate(lastmod), priority, changefreq });
+  };
+
+  const staticRoutes = [
+    ['', '1.0', 'daily'],
+    ['/categories', '0.9', 'weekly'],
+    ['/download', '0.9', 'weekly'],
+    ['/advertise', '0.9', 'weekly'],
+    ['/enterprise', '0.9', 'weekly'],
+    ['/b2b-connect', '0.8', 'weekly'],
+    ['/claim', '0.8', 'weekly'],
+    ['/about', '0.7', 'monthly'],
+    ['/faq', '0.6', 'monthly'],
+    ['/privacy', '0.4', 'monthly'],
+    ['/terms', '0.4', 'monthly'],
+  ];
+  staticRoutes.forEach(([path, priority, changefreq]) => addRoute(path, null, priority, changefreq));
+
+  const globalCityRoutes = [
+    '/cities/los-angeles', '/cities/new-york', '/cities/houston', '/cities/miami',
+    '/cities/london', '/cities/manchester', '/cities/toronto', '/cities/vancouver'
+  ];
+  const mexicoCityRoutes = [
+    '/ciudad/cdmx', '/ciudad/guadalajara', '/ciudad/monterrey', '/ciudad/puebla',
+    '/ciudad/tijuana', '/ciudad/merida', '/ciudad/queretaro', '/ciudad/leon'
+  ];
+  (globalMode ? globalCityRoutes : mexicoCityRoutes).forEach((route) => addRoute(route, null, '0.8', 'weekly'));
+
+  const categoryRoutes = [
+    '/c/restaurantes', '/c/bares', '/c/tiendas', '/c/servicios', '/c/hogar_autos',
+    '/c/salud', '/c/entretenimiento', '/c/educacion', '/c/alojamiento',
+    '/c/inmobiliarias', '/c/finanzas', '/c/tecnologia', '/c/eventos'
+  ];
+  categoryRoutes.forEach((route) => addRoute(route, null, '0.8', 'weekly'));
+
+  if (globalMode) {
+    ['/en/advertise-in-mexico', '/en/pricing', '/en/industries'].forEach((route) => addRoute(route, null, '0.7', 'monthly'));
+  }
+
+  if (supabase) {
     try {
-        // 1. Obtener datos de Supabase
-        // Negocios
-        const { data: businesses, error: businessError } = await supabase
-            .from('businesses')
-            .select('id, slug, updated_at, name')
-            .eq('status', 'approved') // Solo negocios aprobados
-            .order('updated_at', { ascending: false })
-            .limit(10000);
-
-        // Novedad: Traer candidatos del DENUE para asegurar presencia masiva
-        const { data: candidates, error: candidateError } = await supabase
-            .from('business_candidates')
-            .select('id, slug, updated_at')
-            .order('updated_at', { ascending: false })
-            .limit(30000);
-
-        // Posts de Comunidad
-        const { data: posts, error: postsError } = await supabase
-            .from('community_posts') 
-            .select('id, created_at')
-            .order('created_at', { ascending: false })
-            .limit(2000);
-
-        if (businessError) throw businessError;
-
-        // 2. Definir rutas estáticas (incluye páginas públicas y B2B)
-        const staticRoutes = [
-            '', '/categories', '/community', '/advertise', '/global',
-            '/seguridad', '/login', '/signup', '/about', '/faq',
-            '/enterprise', '/privacy', '/terms', '/quienes-somos',
-            '/download', '/legal/ads-policy',
-            '/en/advertise-in-mexico', '/en/pricing', '/en/industries'
-        ];
-
-        const categoryRoutes = [
-            '/c/restaurantes',
-            '/c/bares',
-            '/c/tiendas',
-            '/c/servicios',
-            '/c/hogar_autos',
-            '/c/salud',
-            '/c/entretenimiento',
-            '/c/educacion',
-            '/c/alojamiento',
-            '/c/inmobiliarias',
-            '/c/finanzas',
-            '/c/tecnologia',
-            '/c/eventos'
-        ];
-
-        const mexicoCityRoutes = [
-            '/ciudad/cdmx',
-            '/ciudad/guadalajara',
-            '/ciudad/monterrey',
-            '/ciudad/puebla',
-            '/ciudad/tijuana',
-            '/ciudad/merida',
-            '/ciudad/queretaro',
-            '/ciudad/leon'
-        ];
-
-        // Ciudades internacionales para SEO
-        const cityRoutes = [
-            '/cities/los-angeles', '/cities/new-york', '/cities/houston',
-            '/cities/london', '/cities/manchester',
-            '/cities/toronto', '/cities/vancouver'
-        ];
-
-        // 3. Generar XML
-        let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml">`;
-
-        // Función helper para agregar URL
-        const addUrl = (path, lastmod) => {
-            const mxUrl = `https://geobooker.com.mx${path}`;
-            const globalUrl = `https://geobooker.com${path}`;
-            const date = lastmod ? new Date(lastmod).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-
-            // Entradas cruzadas (Cross-Domain)
-            // Entrada para .MX
-            xml += `
-  <url>
-    <loc>${mxUrl}</loc>
-    <lastmod>${date}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="${mxUrl}"/>
-    <xhtml:link rel="alternate" hreflang="en" href="${globalUrl}"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="${globalUrl}"/>
-  </url>`;
-
-            // Entrada para .COM (Global)
-            xml += `
-  <url>
-    <loc>${globalUrl}</loc>
-    <lastmod>${date}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="${mxUrl}"/>
-    <xhtml:link rel="alternate" hreflang="en" href="${globalUrl}"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="${globalUrl}"/>
-  </url>`;
-        };
-
-        // Agregar estáticas
-        staticRoutes.forEach(route => addUrl(route));
-
-        // Agregar ciudades internacionales (prioridad más alta para SEO)
-        cityRoutes.forEach(route => addUrl(route));
-        categoryRoutes.forEach(route => addUrl(route));
-        mexicoCityRoutes.forEach(route => addUrl(route));
-
-        // Agregar Negocios Verificados
-        businesses.forEach(biz => {
-            addUrl(`/business/${biz.slug || biz.id}`, biz.updated_at);
-        });
-
-        // Agregar Negocios del DENUE (Candidatos)
-        if (candidates) {
-            candidates.forEach(cand => {
-                addUrl(`/business/${cand.slug || cand.id}`, cand.updated_at);
-            });
-        }
-
-        // Agregar Posts (si existen)
-        if (posts) {
-            posts.forEach(post => {
-                addUrl(`/community/post/${post.id}`, post.created_at);
-            });
-        }
-
-        xml += `\n</urlset>`;
-
-        return {
-            statusCode: 200,
-            headers: {
-                'Content-Type': 'application/xml',
-                'Cache-Control': 'public, max-age=3600' // Cache por 1 hora
-            },
-            body: xml
-        };
-
-    } catch (error) {
-        console.error('Error generando sitemap:', error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ error: 'Failed to generate sitemap', details: error.message })
-        };
+      const { data: businesses, error } = await supabase
+        .from('businesses')
+        .select('id, slug, updated_at, country')
+        .eq('status', 'approved')
+        .order('updated_at', { ascending: false })
+        .limit(globalMode ? 8000 : 10000);
+      if (!error && businesses) {
+        businesses
+          .filter((biz) => globalMode ? String(biz.country || '').toUpperCase() !== 'MX' : String(biz.country || 'MX').toUpperCase() === 'MX')
+          .forEach((biz) => addRoute('/business/' + (biz.slug || biz.id), biz.updated_at, '0.7', 'weekly'));
+      }
+    } catch (err) {
+      console.warn('[sitemap-generator] businesses skipped:', err.message);
     }
+  }
+
+  const urls = Array.from(routes.values());
+  const body = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">']
+    .concat(urls.map((entry) => {
+      const loc = origin + entry.path;
+      const alternate = alternateOrigin + entry.path;
+      return [
+        '  <url>',
+        '    <loc>' + xmlEscape(loc) + '</loc>',
+        '    <lastmod>' + entry.lastmod + '</lastmod>',
+        '    <changefreq>' + entry.changefreq + '</changefreq>',
+        '    <priority>' + entry.priority + '</priority>',
+        '    <xhtml:link rel="alternate" hreflang="' + primaryLang + '" href="' + xmlEscape(loc) + '"/>',
+        '    <xhtml:link rel="alternate" hreflang="' + alternateLang + '" href="' + xmlEscape(alternate) + '"/>',
+        '    <xhtml:link rel="alternate" hreflang="x-default" href="' + xmlEscape(GLOBAL_ORIGIN + entry.path) + '"/>',
+        '  </url>'
+      ].join('\n');
+    }))
+    .concat(['</urlset>', ''])
+    .join('\n');
+
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600'
+    },
+    body
+  };
 };

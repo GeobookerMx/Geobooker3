@@ -35,6 +35,31 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/auth/callback" />
             </intent-filter>
+
+            <!-- Global App Links HTTPS: rutas publicas equivalentes en web/app -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/business" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/cities" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/city" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/category" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/c" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/claim" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/advertise" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/enterprise" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/b2b-connect" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/download" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/business" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/ciudad" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/c" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/claim" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/advertise" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/enterprise" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/b2b-connect" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/download" />
+            </intent-filter>
         </activity>
 
 

@@ -64,6 +64,7 @@ export default function DashboardHome() {
   });
 
   const [topSearches, setTopSearches] = useState([]);
+  const [appFunnel, setAppFunnel] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
   const [intlStats, setIntlStats] = useState({
     byCountry: [],
@@ -216,7 +217,25 @@ export default function DashboardHome() {
         console.warn('Error loading international stats:', intlError);
       }
 
-      // Cargar métricas de intención de negocio
+      // Embudo de app: descargas, sesiones, registros y logins
+      try {
+        const { data: funnelData, error: funnelError } = await supabase
+          .from('admin_app_user_funnel_v1')
+          .select('*')
+          .order('download_clicks_30d', { ascending: false });
+
+        if (funnelError) {
+          console.warn('App funnel view not available yet:', funnelError);
+          setAppFunnel([]);
+        } else {
+          setAppFunnel(funnelData || []);
+        }
+      } catch (funnelErr) {
+        console.warn('Error loading app user funnel:', funnelErr);
+        setAppFunnel([]);
+      }
+
+      // Cargar m?tricas de intenci?n de negocio
       try {
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
         const { data: intentData } = await supabase
@@ -292,6 +311,28 @@ export default function DashboardHome() {
     };
     return labels[status] || status;
   };
+
+  const appFunnelTotals = appFunnel.reduce((totals, row) => ({
+    downloadClicks: totals.downloadClicks + Number(row.download_clicks_30d || 0),
+    storeClicks: totals.storeClicks + Number(row.download_store_clicks_30d || 0),
+    hubClicks: totals.hubClicks + Number(row.download_hub_clicks_30d || 0),
+    sessions: totals.sessions + Number(row.app_or_web_sessions_30d || 0),
+    profileSignups: totals.profileSignups + Number(row.profile_signups_30d || 0),
+    trackedSignups: totals.trackedSignups + Number(row.tracked_signups_30d || 0),
+    trackedLogins: totals.trackedLogins + Number(row.tracked_logins_30d || 0)
+  }), {
+    downloadClicks: 0,
+    storeClicks: 0,
+    hubClicks: 0,
+    sessions: 0,
+    profileSignups: 0,
+    trackedSignups: 0,
+    trackedLogins: 0
+  });
+
+  const appSignupRate = appFunnelTotals.downloadClicks > 0
+    ? ((appFunnelTotals.profileSignups / appFunnelTotals.downloadClicks) * 100).toFixed(1)
+    : '0.0';
 
   if (stats.loading) {
     return (
@@ -410,7 +451,85 @@ export default function DashboardHome() {
         </div>
       </div>
 
-      {/* Intent Metrics - Intención de Negocio */}
+      {/* App funnel: descargas -> sesiones -> cuentas */}
+      <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <Smartphone className="w-5 h-5 text-blue-600" />
+              Embudo App: descargas, login y negocios
+            </h3>
+            <p className="mt-1 text-sm text-gray-600">
+              Cruza clicks de descarga, sesiones y registros para entender si Android, iOS y PWA estan convirtiendo a usuarios reales.
+            </p>
+          </div>
+          <Link
+            to="/admin/users"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100"
+          >
+            Ver usuarios
+            <ArrowUpRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-5">
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">Clicks descarga</p>
+            <p className="mt-1 text-2xl font-black text-slate-950">{appFunnelTotals.downloadClicks.toLocaleString()}</p>
+          </div>
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">Store clicks</p>
+            <p className="mt-1 text-2xl font-black text-slate-950">{appFunnelTotals.storeClicks.toLocaleString()}</p>
+          </div>
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">Sesiones</p>
+            <p className="mt-1 text-2xl font-black text-slate-950">{appFunnelTotals.sessions.toLocaleString()}</p>
+          </div>
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">Registros</p>
+            <p className="mt-1 text-2xl font-black text-slate-950">{appFunnelTotals.profileSignups.toLocaleString()}</p>
+          </div>
+          <div className="rounded-2xl bg-blue-50 p-4">
+            <p className="text-xs font-semibold uppercase text-blue-600">Conversion</p>
+            <p className="mt-1 text-2xl font-black text-blue-900">{appSignupRate}%</p>
+          </div>
+        </div>
+
+        <div className="mt-5 overflow-x-auto">
+          {appFunnel.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
+              Sin datos del embudo aun. Verifica que este aplicado el SQL de <code>admin_app_user_funnel_v1</code> y que los botones de descarga/login esten recibiendo trafico.
+            </div>
+          ) : (
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-left text-xs font-bold uppercase text-slate-500">
+                  <th className="py-3 pr-4">Plataforma</th>
+                  <th className="py-3 pr-4">Descargas</th>
+                  <th className="py-3 pr-4">Sesiones</th>
+                  <th className="py-3 pr-4">Registros</th>
+                  <th className="py-3 pr-4">Logins</th>
+                  <th className="py-3 pr-4">Tasa</th>
+                </tr>
+              </thead>
+              <tbody>
+                {appFunnel.map((row) => (
+                  <tr key={row.platform || 'unknown'} className="border-b border-slate-100 text-slate-700">
+                    <td className="py-3 pr-4 font-bold text-slate-950">{row.platform || 'unknown'}</td>
+                    <td className="py-3 pr-4">{Number(row.download_clicks_30d || 0).toLocaleString()}</td>
+                    <td className="py-3 pr-4">{Number(row.app_or_web_sessions_30d || 0).toLocaleString()}</td>
+                    <td className="py-3 pr-4">{Number(row.profile_signups_30d || 0).toLocaleString()}</td>
+                    <td className="py-3 pr-4">{Number(row.tracked_logins_30d || 0).toLocaleString()}</td>
+                    <td className="py-3 pr-4 font-bold text-blue-700">{Number(row.signup_rate_from_download_clicks || 0).toFixed(1)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
+      {/* Intent Metrics - Intenci?n de Negocio */}
       <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl shadow-lg p-6 text-white">
         <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
           🎯 Intención de Negocio (últimos 30 días)

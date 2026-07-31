@@ -17,6 +17,7 @@ const ChristmasPromoModal = lazy(() => import('../components/referral/ChristmasP
 const AIRecommendations = lazy(() => import('../components/recommendations/AIRecommendations'));
 const GeobookersRecommend = lazy(() => import('../components/recommendations/GeobookersRecommend'));
 const GuestLoginPromptModal = lazy(() => import('../components/modals/GuestLoginPromptModal'));
+const EmprendeHomeCard = lazy(() => import('../components/emprende/EmprendeHomeCard'));
 import LocationPermissionModal from '../components/LocationPermissionModal';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
@@ -1556,6 +1557,10 @@ const HomePage = () => {
       </div>
 
       <HomeGrowthPrompt />
+
+      <Suspense fallback={<DeferredSectionFallback minHeight="220px" />}>
+        <EmprendeHomeCard />
+      </Suspense>
 
       <div className="bg-slate-950 text-white">
         <div className="container mx-auto px-4 py-10">

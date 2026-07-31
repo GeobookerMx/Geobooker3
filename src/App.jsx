@@ -37,6 +37,45 @@ const CookieConsent = lazy(() => import("./components/CookieConsent"));
 const isNative = Capacitor.isNativePlatform();
 const Router = isNative ? HashRouter : BrowserRouter;
 
+const PUBLIC_NATIVE_PATH_PREFIXES = [
+  '/business',
+  '/cities',
+  '/city',
+  '/ciudad',
+  '/category',
+  '/c',
+  '/claim',
+  '/advertise',
+  '/enterprise',
+  '/b2b-connect',
+  '/download',
+  '/emprende'
+];
+
+function routeNativeDeepLinkToApp(url) {
+  if (!url || typeof window === 'undefined') return false;
+
+  try {
+    const urlObj = new URL(url);
+    if (urlObj.href.includes('auth/callback')) return false;
+
+    const isKnownHost = ['geobooker.com.mx', 'www.geobooker.com', 'geobooker.com'].includes(urlObj.hostname);
+    const isCustomScheme = urlObj.protocol === 'geobooker:';
+    const customPath = isCustomScheme ? `/${urlObj.hostname}${urlObj.pathname}` : urlObj.pathname;
+    const targetPath = customPath.replace(/\/+/g, '/');
+    const isAllowedPath = PUBLIC_NATIVE_PATH_PREFIXES.some((prefix) => targetPath === prefix || targetPath.startsWith(`${prefix}/`));
+
+    if ((!isKnownHost && !isCustomScheme) || !isAllowedPath) return false;
+
+    window.location.hash = `${targetPath}${urlObj.search || ''}${urlObj.hash || ''}`;
+    return true;
+  } catch (error) {
+    console.warn('[App Global] Could not parse native deep link:', error);
+    return false;
+  }
+}
+
+
 // ✅ FIX OAuth iOS Global Listener: Registrar a nivel de módulo lo antes posible
 // Captura el deep link de inmediato al reanudar la app, evitando race conditions con React.
 if (isNative) {
@@ -96,6 +135,8 @@ if (isNative) {
           console.error('[Auth Global] Error crítico procesando deep link:', err);
           window.location.hash = '/login?error=auth_failed';
         }
+      } else if (routeNativeDeepLinkToApp(data?.url)) {
+        console.log('[App Global] Public deep link routed inside app');
       }
     });
     console.log('[App Global] Listener appUrlOpen registrado exitosamente a nivel raíz');
@@ -193,6 +234,13 @@ function AppInitializer() {
         }
       };
       setupNativeListeners();
+      CapApp.getLaunchUrl()
+        .then((launchData) => {
+          if (launchData?.url && routeNativeDeepLinkToApp(launchData.url)) {
+            console.log('[App] Initial public deep link routed inside app');
+          }
+        })
+        .catch((err) => console.warn('[App] Could not read launch URL:', err));
     }
 
     // ✅ FIX Apple Guideline 2.1 (build 19): Solicitar permiso ATT en iOS

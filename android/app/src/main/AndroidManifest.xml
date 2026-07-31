@@ -51,6 +51,7 @@
                 <data android:scheme="https" android:host="www.geobooker.com" android:path="/enterprise" />
                 <data android:scheme="https" android:host="www.geobooker.com" android:path="/b2b-connect" />
                 <data android:scheme="https" android:host="www.geobooker.com" android:path="/download" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/emprende" />
                 <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/business" />
                 <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/ciudad" />
                 <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/c" />
@@ -59,6 +60,7 @@
                 <data android:scheme="https" android:host="geobooker.com.mx" android:path="/enterprise" />
                 <data android:scheme="https" android:host="geobooker.com.mx" android:path="/b2b-connect" />
                 <data android:scheme="https" android:host="geobooker.com.mx" android:path="/download" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/emprende" />
             </intent-filter>
         </activity>
 

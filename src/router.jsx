@@ -106,6 +106,9 @@ const AdvertiseInMexicoPage = lazy(() => import("./pages/en/AdvertiseInMexicoPag
 const EnPricingPage = lazy(() => import("./pages/en/PricingPage.jsx"));
 const IndustriesPage = lazy(() => import("./pages/en/IndustriesPage.jsx"));
 
+// Geobooker Emprende - Lazy Loaded
+const EmprendePage = lazy(() => import("./pages/emprende/EmprendePage.jsx"));
+
 export default function AppRouter() {
   return (
     <Suspense fallback={<PageLoader />}>
@@ -139,6 +142,9 @@ export default function AppRouter() {
           <Route path="/advertise" element={<AdvertisePage />} />
           <Route path="/r/:code" element={<ReferralLanding />} />
           <Route path="/download" element={<DownloadPage />} />
+          <Route path="/emprende" element={<EmprendePage />} />
+          <Route path="/emprende/reto/:challengeSlug" element={<EmprendePage />} />
+          <Route path="/emprende/resultado/:publicToken" element={<EmprendePage />} />
 
           <Route path="/claim" element={<ClaimBusinessPage />} />
 

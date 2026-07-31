@@ -108,6 +108,7 @@ const IndustriesPage = lazy(() => import("./pages/en/IndustriesPage.jsx"));
 
 // Geobooker Emprende - Lazy Loaded
 const EmprendePage = lazy(() => import("./pages/emprende/EmprendePage.jsx"));
+const BibliotecaPage = lazy(() => import("./pages/biblioteca/BibliotecaPage.jsx"));
 
 export default function AppRouter() {
   return (
@@ -142,6 +143,7 @@ export default function AppRouter() {
           <Route path="/advertise" element={<AdvertisePage />} />
           <Route path="/r/:code" element={<ReferralLanding />} />
           <Route path="/download" element={<DownloadPage />} />
+          <Route path="/biblioteca" element={<BibliotecaPage />} />
           <Route path="/emprende" element={<EmprendePage />} />
           <Route path="/emprende/reto/:challengeSlug" element={<EmprendePage />} />
           <Route path="/emprende/resultado/:publicToken" element={<EmprendePage />} />

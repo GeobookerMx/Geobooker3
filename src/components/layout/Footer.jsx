@@ -171,6 +171,11 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/biblioteca" data-nav-id="biblioteca_footer_link" className="text-emerald-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block font-bold">
+                    Biblioteca Geobooker
+                  </Link>
+                </li>
+                <li>
                   <Link to="/dashboard" className="text-gray-300 hover:text-green-400 hover:pl-2 transition-all duration-200 inline-block">
                     ⭐ {t('nav.recommend', 'Recomendar un negocio')}
                   </Link>

@@ -121,6 +121,16 @@
     <priority>0.8</priority>
   </url>
 
+
+  <!-- Biblioteca Geobooker -->
+  <url>
+    <loc>https://geobooker.com/biblioteca</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/biblioteca"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/biblioteca"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
   <!-- Legal Pages -->
   <url>
     <loc>https://geobooker.com/privacy</loc>

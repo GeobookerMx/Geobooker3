@@ -122,6 +122,7 @@ export default function Header() {
   const showPremiumPromo = !IS_IOS_NATIVE && isPremiumPromoActive();
   const currentLocale = i18n.language?.startsWith('en') ? 'en-US' : 'es-MX';
   const emprendeLabel = currentLocale.startsWith('en') ? 'Learn' : 'Emprende';
+  const bibliotecaLabel = currentLocale.startsWith('en') ? 'Library' : 'Biblioteca';
 
   return (
     <header 
@@ -183,6 +184,13 @@ export default function Header() {
             className="text-geoPurple font-black hover:text-geoPink transition-colors rounded-full bg-white/40 px-3 py-1.5 shadow-sm"
           >
             {emprendeLabel}
+          </Link>
+          <Link
+            to="/biblioteca"
+            data-nav-id="biblioteca_desktop_nav"
+            className="text-geoPurple font-black hover:text-geoPink transition-colors rounded-full bg-white/40 px-3 py-1.5 shadow-sm"
+          >
+            {bibliotecaLabel}
           </Link>
           <Link to="/b2b-connect" className="text-geoPurple font-bold hover:text-geoPink transition-colors flex items-center gap-1">
             {t('nav.b2bProviders')}
@@ -290,6 +298,15 @@ export default function Header() {
                   </Link>
 
                   <Link
+                    to="/biblioteca"
+                    data-nav-id="biblioteca_user_menu"
+                    onClick={() => setShowUserMenu(false)}
+                    className="block px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-50"
+                  >
+                    {bibliotecaLabel}
+                  </Link>
+
+                  <Link
                     to="/account/delete"
                     onClick={() => setShowUserMenu(false)}
                     className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"
@@ -358,6 +375,15 @@ export default function Header() {
             className="block rounded-2xl bg-slate-950 px-4 py-3 text-center text-white font-black shadow-lg"
           >
             {emprendeLabel}
+          </Link>
+
+          <Link
+            to="/biblioteca"
+            data-nav-id="biblioteca_mobile_nav"
+            onClick={() => setIsOpen(false)}
+            className="block rounded-2xl border-2 border-slate-950 bg-white px-4 py-3 text-center text-slate-950 font-black shadow-sm"
+          >
+            {bibliotecaLabel}
           </Link>
 
           <Link

@@ -121,6 +121,7 @@ export default function Header() {
   const isNative = Capacitor.isNativePlatform();
   const showPremiumPromo = !IS_IOS_NATIVE && isPremiumPromoActive();
   const currentLocale = i18n.language?.startsWith('en') ? 'en-US' : 'es-MX';
+  const emprendeLabel = currentLocale.startsWith('en') ? 'Learn' : 'Emprende';
 
   return (
     <header 
@@ -175,6 +176,13 @@ export default function Header() {
           </Link>
           <Link to="/comunidad" className="text-geoPurple hover:text-geoPink transition-colors">
             {t("nav.community")}
+          </Link>
+          <Link
+            to="/emprende"
+            data-nav-id="emprende_desktop_nav"
+            className="text-geoPurple font-black hover:text-geoPink transition-colors rounded-full bg-white/40 px-3 py-1.5 shadow-sm"
+          >
+            {emprendeLabel}
           </Link>
           <Link to="/b2b-connect" className="text-geoPurple font-bold hover:text-geoPink transition-colors flex items-center gap-1">
             {t('nav.b2bProviders')}
@@ -273,6 +281,15 @@ export default function Header() {
                   </Link>
 
                   <Link
+                    to="/emprende"
+                    data-nav-id="emprende_user_menu"
+                    onClick={() => setShowUserMenu(false)}
+                    className="block px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-50"
+                  >
+                    {emprendeLabel}
+                  </Link>
+
+                  <Link
                     to="/account/delete"
                     onClick={() => setShowUserMenu(false)}
                     className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"
@@ -332,6 +349,15 @@ export default function Header() {
             className="block text-geoPurple font-bold hover:text-geoPink py-1"
           >
             {t('nav.b2bProviders')}
+          </Link>
+
+          <Link
+            to="/emprende"
+            data-nav-id="emprende_mobile_nav"
+            onClick={() => setIsOpen(false)}
+            className="block rounded-2xl bg-slate-950 px-4 py-3 text-center text-white font-black shadow-lg"
+          >
+            {emprendeLabel}
           </Link>
 
           <Link

@@ -1,4 +1,4 @@
-﻿import React, { useEffect } from 'react';
+﻿import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -15,6 +15,7 @@ import {
   PenTool,
   Sparkles
 } from 'lucide-react';
+import SEO from '../../components/SEO';
 import BrandLogo from '../../components/common/BrandLogo';
 import {
   downloadLinks,
@@ -52,11 +53,6 @@ export default function BibliotecaPage() {
   const { i18n } = useTranslation();
   const isEnglish = i18n.language?.startsWith('en');
 
-  useEffect(() => {
-    document.title = isEnglish
-      ? 'Geobooker Library 2026 | Business guides'
-      : 'Biblioteca Geobooker 2026 | Guias de negocio';
-  }, [isEnglish]);
 
   const copy = {
     heroBadge: isEnglish ? 'Editorial business knowledge center' : 'Centro editorial de conocimiento para negocios',
@@ -84,8 +80,40 @@ export default function BibliotecaPage() {
     claim: isEnglish ? 'Claim a business' : 'Reclamar negocio'
   };
 
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'CreativeWorkSeries',
+    name: 'Biblioteca Geobooker 2026',
+    description: copy.heroText,
+    inLanguage: ['es-MX', 'en-US'],
+    publisher: {
+      '@type': 'Organization',
+      name: 'Geobooker',
+      url: 'https://geobooker.com'
+    },
+    hasPart: libraryDocuments.map((doc) => ({
+      '@type': 'CreativeWork',
+      name: doc.editorialName,
+      headline: doc.title,
+      description: doc.summary,
+      url: 'https://geobooker.com/biblioteca/' + doc.slug
+    }))
+  };
+
   return (
     <div className="min-h-screen bg-[#f6f1e6] text-slate-950">
+      <SEO
+        title={isEnglish ? 'Geobooker Library 2026 | Business guides' : 'Biblioteca Geobooker 2026 | Guias de negocio'}
+        description={copy.heroText}
+        image="/images/geobooker-og-image.png"
+        url="/biblioteca"
+        keywords="biblioteca geobooker, abrir negocio, guia de negocios, emprendimiento, negocio local, marketing local, sostenibilidad, CRM"
+        breadcrumbs={[
+          { name: 'Geobooker', item: '/' },
+          { name: 'Biblioteca Geobooker', item: '/biblioteca' }
+        ]}
+        structuredData={structuredData}
+      />
       <section className="relative overflow-hidden border-b border-slate-900/10 bg-[radial-gradient(circle_at_top_left,#f4d32a_0,#f4d32a_18%,transparent_38%),linear-gradient(135deg,#fff7d1_0%,#f6f1e6_45%,#dff7ef_100%)]">
         <div className="absolute inset-y-0 right-0 hidden w-1/2 opacity-40 md:block">
           <div className="absolute right-16 top-14 h-64 w-64 rounded-full border-[28px] border-geoPurple/20" />
@@ -248,6 +276,13 @@ export default function BibliotecaPage() {
                   <CheckCircle2 className="h-4 w-4" />
                   Checklist, preguntas y respuestas de trabajo
                 </div>
+                <Link
+                  to={`/biblioteca/${doc.slug}`}
+                  className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black uppercase tracking-[0.14em] text-white transition hover:bg-geoPurple"
+                >
+                  {isEnglish ? 'Open chapter' : 'Ver capitulo'}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
               </article>
             );
           })}

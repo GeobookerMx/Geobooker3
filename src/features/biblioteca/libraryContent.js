@@ -51,6 +51,8 @@ export const libraryAudiences = [
 export const libraryDocuments = [
   {
     no: '00',
+    slug: 'punto-de-partida-geobooker',
+    fileName: '00-presentacion-editorial-biblioteca-geobooker-2026.md',
     icon: BookOpen,
     title: 'Presentacion Editorial de la Biblioteca Geobooker 2026',
     editorialName: 'El Punto De Partida Geobooker',
@@ -62,6 +64,8 @@ export const libraryDocuments = [
   },
   {
     no: '01',
+    slug: 'liderar-sin-cargo',
+    fileName: '01-liderazgo-en-pequena-escala.md',
     icon: HeartHandshake,
     title: 'Liderazgo en Pequena Escala',
     editorialName: 'Liderar Sin Cargo',
@@ -73,6 +77,8 @@ export const libraryDocuments = [
   },
   {
     no: '02',
+    slug: 'radiografia-del-negocio',
+    fileName: '02-como-diagnosticar-el-estado-actual-de-un-negocio.md',
     icon: BarChart3,
     title: 'Como Diagnosticar el Estado Actual de un Negocio',
     editorialName: 'Radiografia Del Negocio',
@@ -84,6 +90,8 @@ export const libraryDocuments = [
   },
   {
     no: '03',
+    slug: 'abrir-con-criterio',
+    fileName: '03-antes-de-abrir-un-negocio-decisiones-que-debes-tomar.md',
     icon: Compass,
     title: 'Antes de Abrir un Negocio: Decisiones que Debes Tomar',
     editorialName: 'Abrir Con Criterio',
@@ -95,6 +103,8 @@ export const libraryDocuments = [
   },
   {
     no: '04',
+    slug: 'encontrar-al-cliente-correcto',
+    fileName: '04-cliente-ideal-ubicacion-y-demanda-local.md',
     icon: Target,
     title: 'Cliente Ideal, Ubicacion y Demanda Local',
     editorialName: 'Encontrar Al Cliente Correcto',
@@ -106,6 +116,8 @@ export const libraryDocuments = [
   },
   {
     no: '05',
+    slug: 'numeros-que-sostienen',
+    fileName: '05-finanzas-basicas-para-negocios-locales.md',
     icon: LineChart,
     title: 'Finanzas Basicas para Negocios Locales',
     editorialName: 'Numeros Que Sostienen',
@@ -117,6 +129,8 @@ export const libraryDocuments = [
   },
   {
     no: '06',
+    slug: 'ordenar-la-operacion',
+    fileName: '06-operacion-diaria-procesos-y-control.md',
     icon: Wrench,
     title: 'Operacion Diaria, Procesos y Control',
     editorialName: 'Ordenar La Operacion',
@@ -128,6 +142,8 @@ export const libraryDocuments = [
   },
   {
     no: '07',
+    slug: 'vender-atender-y-regresar',
+    fileName: '07-ventas-atencion-y-seguimiento-al-cliente.md',
     icon: Users,
     title: 'Ventas, Atencion y Seguimiento al Cliente',
     editorialName: 'Vender, Atender Y Regresar',
@@ -139,6 +155,8 @@ export const libraryDocuments = [
   },
   {
     no: '08',
+    slug: 'aparecer-donde-el-cliente-busca',
+    fileName: '08-marketing-local-y-visibilidad-digital.md',
     icon: MapPinned,
     title: 'Marketing Local y Visibilidad Digital',
     editorialName: 'Aparecer Donde El Cliente Busca',
@@ -150,6 +168,8 @@ export const libraryDocuments = [
   },
   {
     no: '09',
+    slug: 'confianza-que-se-puede-ver',
+    fileName: '09-reputacion-resenas-y-confianza.md',
     icon: ShieldCheck,
     title: 'Reputacion, Resenas y Confianza',
     editorialName: 'Confianza Que Se Puede Ver',
@@ -161,6 +181,8 @@ export const libraryDocuments = [
   },
   {
     no: '10',
+    slug: 'negocio-que-puede-durar',
+    fileName: '10-sostenibilidad-del-negocio-local.md',
     icon: CheckCircle2,
     title: 'Sostenibilidad Del Negocio Local',
     editorialName: 'Negocio Que Puede Durar',
@@ -172,6 +194,8 @@ export const libraryDocuments = [
   },
   {
     no: '11',
+    slug: 'construir-sin-romperse',
+    fileName: '11-psicologia-del-constructor-de-negocios.md',
     icon: Brain,
     title: 'Psicologia Del Constructor De Negocios',
     editorialName: 'Construir Sin Romperse',
@@ -217,3 +241,10 @@ export const downloadLinks = {
   markdown: '/biblioteca/biblioteca-geobooker-2026-compilado-para-word-v3.md',
   text: '/biblioteca/biblioteca-geobooker-2026-compilado-para-word-v3.txt'
 };
+
+
+export const getLibraryDocumentBySlug = (slug) =>
+  libraryDocuments.find((doc) => doc.slug === slug);
+
+export const getLibraryDocumentDownloadPath = (doc) =>
+  doc?.fileName ? `/biblioteca/documentos/${doc.fileName}` : '';

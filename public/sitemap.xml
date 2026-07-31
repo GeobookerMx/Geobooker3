@@ -131,6 +131,92 @@
     <priority>0.8</priority>
   </url>
 
+  <!-- Biblioteca Geobooker Documents -->
+  <url>
+    <loc>https://geobooker.com/biblioteca/punto-de-partida-geobooker</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/biblioteca/punto-de-partida-geobooker"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/biblioteca/punto-de-partida-geobooker"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geobooker.com/biblioteca/liderar-sin-cargo</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/biblioteca/liderar-sin-cargo"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/biblioteca/liderar-sin-cargo"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geobooker.com/biblioteca/radiografia-del-negocio</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/biblioteca/radiografia-del-negocio"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/biblioteca/radiografia-del-negocio"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geobooker.com/biblioteca/abrir-con-criterio</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/biblioteca/abrir-con-criterio"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/biblioteca/abrir-con-criterio"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geobooker.com/biblioteca/encontrar-al-cliente-correcto</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/biblioteca/encontrar-al-cliente-correcto"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/biblioteca/encontrar-al-cliente-correcto"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geobooker.com/biblioteca/numeros-que-sostienen</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/biblioteca/numeros-que-sostienen"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/biblioteca/numeros-que-sostienen"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geobooker.com/biblioteca/ordenar-la-operacion</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/biblioteca/ordenar-la-operacion"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/biblioteca/ordenar-la-operacion"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geobooker.com/biblioteca/vender-atender-y-regresar</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/biblioteca/vender-atender-y-regresar"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/biblioteca/vender-atender-y-regresar"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geobooker.com/biblioteca/aparecer-donde-el-cliente-busca</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/biblioteca/aparecer-donde-el-cliente-busca"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/biblioteca/aparecer-donde-el-cliente-busca"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geobooker.com/biblioteca/confianza-que-se-puede-ver</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/biblioteca/confianza-que-se-puede-ver"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/biblioteca/confianza-que-se-puede-ver"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geobooker.com/biblioteca/negocio-que-puede-durar</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/biblioteca/negocio-que-puede-durar"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/biblioteca/negocio-que-puede-durar"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geobooker.com/biblioteca/construir-sin-romperse</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geobooker.com/biblioteca/construir-sin-romperse"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://geobooker.com.mx/biblioteca/construir-sin-romperse"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
   <!-- Legal Pages -->
   <url>
     <loc>https://geobooker.com/privacy</loc>

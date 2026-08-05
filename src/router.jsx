@@ -85,6 +85,7 @@ const DeleteAccountPage = lazy(() => import("./pages/DeleteAccountPage.jsx"));
 const AboutPage = lazy(() => import("./pages/AboutPage.jsx"));
 const CommunityPage = lazy(() => import("./pages/CommunityPage.jsx"));
 const AppDevelopmentPage = lazy(() => import("./pages/AppDevelopmentPage.jsx"));
+const AuthorityPage = lazy(() => import("./pages/AuthorityPage.jsx"));
 
 // Enterprise / Global Ads - Lazy Loaded
 const EnterpriseLanding = lazy(() => import("./pages/enterprise/EnterpriseLanding.jsx"));
@@ -162,6 +163,18 @@ export default function AppRouter() {
           <Route path="/comunidad" element={<CommunityPage />} />
           <Route path="/community" element={<CommunityPage />} />
           <Route path="/desarrollo-apps" element={<AppDevelopmentPage />} />
+          <Route path="/what-is-geobooker" element={<AuthorityPage />} />
+          <Route path="/que-es-geobooker" element={<AuthorityPage />} />
+          <Route path="/local-business-search" element={<AuthorityPage />} />
+          <Route path="/buscar-negocios-cerca" element={<AuthorityPage />} />
+          <Route path="/products-services-near-me" element={<AuthorityPage />} />
+          <Route path="/productos-y-servicios-cerca" element={<AuthorityPage />} />
+          <Route path="/logistics-providers" element={<AuthorityPage />} />
+          <Route path="/proveedores-logisticos" element={<AuthorityPage />} />
+          <Route path="/local-advertising" element={<AuthorityPage />} />
+          <Route path="/publicidad-local" element={<AuthorityPage />} />
+          <Route path="/ai-business-search" element={<AuthorityPage />} />
+          <Route path="/busqueda-con-ia-negocios" element={<AuthorityPage />} />
           <Route path="/legal/fiscal" element={<FiscalInfoPage />} />
           <Route path="/guia-resico" element={<GuiaResicoPage />} />
           <Route path="/payment/oxxo-pending" element={<OxxoPendingPage />} />

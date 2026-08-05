@@ -73,6 +73,12 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/llms.txt"
+  to = "/.netlify/functions/llms-generator"
+  status = 200
+  force = true
+
 # SPA: Redirigir todas las rutas al index.html
 [[redirects]]
   from = "/*"

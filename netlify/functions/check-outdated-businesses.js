@@ -4,15 +4,19 @@
 
 import { createClient } from '@supabase/supabase-js';
 
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+
 export async function handler(event, context) {
     console.log('Running check-outdated-businesses cron job...');
 
     try {
-        // Inicializar Supabase con service key para bypass RLS
-        const supabase = createClient(
-            process.env.SUPABASE_URL,
-            process.env.SUPABASE_SERVICE_KEY
-        );
+        if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+            throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY for check-outdated-businesses');
+        }
+
+        // Inicializar Supabase con service role para bypass RLS
+        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
         // Ejecutar función SQL
         const { data: outdatedBusinesses, error } = await supabase
@@ -23,7 +27,8 @@ export async function handler(event, context) {
             throw error;
         }
 
-        console.log(`Found ${outdatedBusinesses.length} businesses requiring action`);
+        const businessesToProcess = Array.isArray(outdatedBusinesses) ? outdatedBusinesses : [];
+        console.log(`Found ${businessesToProcess.length} businesses requiring action`);
 
         // Procesar cada negocio según su acción
         const emailsSent = {
@@ -33,7 +38,7 @@ export async function handler(event, context) {
             deactivate: 0
         };
 
-        for (const business of outdatedBusinesses) {
+        for (const business of businessesToProcess) {
             const { action, business_id, business_name, owner_email, days_old } = business;
 
             console.log(`Processing: ${business_name} (${action}, ${days_old} days)`);
@@ -73,7 +78,7 @@ export async function handler(event, context) {
             statusCode: 200,
             body: JSON.stringify({
                 success: true,
-                processed: outdatedBusinesses.length,
+                processed: businessesToProcess.length,
                 emailsSent
             })
         };

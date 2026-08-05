@@ -176,6 +176,21 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/que-es-geobooker" className="text-gray-300 hover:text-cyan-300 hover:pl-2 transition-all duration-200 inline-block">
+                    Geobooker como buscador
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/productos-y-servicios-cerca" className="text-gray-300 hover:text-cyan-300 hover:pl-2 transition-all duration-200 inline-block">
+                    Productos y servicios cerca
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/busqueda-con-ia-negocios" className="text-gray-300 hover:text-cyan-300 hover:pl-2 transition-all duration-200 inline-block">
+                    Busqueda preparada para IA
+                  </Link>
+                </li>
+                <li>
                   <Link to="/dashboard" className="text-gray-300 hover:text-green-400 hover:pl-2 transition-all duration-200 inline-block">
                     ⭐ {t('nav.recommend', 'Recomendar un negocio')}
                   </Link>

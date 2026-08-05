@@ -15,12 +15,14 @@ import {
 } from 'lucide-react';
 import SEO from '../../components/SEO';
 import BrandLogo from '../../components/common/BrandLogo';
+import AppQRCode from '../../components/common/AppQRCode';
 import {
   downloadLinks,
   getLibraryDocumentBySlug,
   getLibraryDocumentDownloadPath,
   libraryDocuments
 } from '../../features/biblioteca/libraryContent';
+import { APP_LINKS, buildTrackedDownloadUrl } from '../../config/appLinks';
 
 const renderInline = (text) => {
   const parts = String(text).split(/(\*\*[^*]+\*\*)/g);
@@ -72,12 +74,12 @@ function MarkdownReader({ sourcePath }) {
   if (status === 'error') {
     return (
       <div className="rounded-[1.75rem] border border-red-200 bg-red-50 p-8 text-center text-sm font-bold text-red-700 shadow-sm">
-        No se pudo cargar la lectura interna. Usa el boton de abrir documento fuente.
+        No se pudo cargar la lectura interna. Usa el boton de abrir el documento completo.
       </div>
     );
   }
 
-  return <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm md:p-8">{renderMarkdown(content)}</div>;
+  return <div className="biblioteca-reader rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm md:p-8">{renderMarkdown(content)}</div>;
 }
 
 const renderMarkdown = (markdown) => {
@@ -151,11 +153,11 @@ const renderMarkdown = (markdown) => {
       continue;
     }
 
-    if (/^- [ ]/.test(trimmed)) {
+    if (/^- \[ \]/.test(trimmed)) {
       nodes.push(
         <div key={i} className="my-2 flex items-start gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700">
           <span className="mt-0.5 h-5 w-5 shrink-0 rounded-md border-2 border-slate-400 bg-white" />
-          <span>{renderInline(trimmed.replace(/^- [ ]s*/, ''))}</span>
+          <span>{renderInline(trimmed.replace(/^- \[ \]\s*/, ''))}</span>
         </div>
       );
       continue;
@@ -171,7 +173,7 @@ const renderMarkdown = (markdown) => {
       continue;
     }
 
-    if (/^\d+\.s/.test(trimmed)) {
+    if (/^\d+\.\s/.test(trimmed)) {
       nodes.push(<p key={i} className="my-2 text-sm font-bold leading-7 text-slate-700">{renderInline(trimmed)}</p>);
       continue;
     }
@@ -306,7 +308,7 @@ export default function BibliotecaDocumentPage() {
                   className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 font-black text-white transition hover:bg-geoPurple"
                 >
                   <ExternalLink className="h-5 w-5" />
-                  {isEnglish ? 'Open source document' : 'Abrir documento fuente'}
+                  {isEnglish ? 'Open complete document' : 'Abrir documento completo'}
                 </a>
                 <a
                   href={sourcePath}
@@ -352,7 +354,58 @@ export default function BibliotecaDocumentPage() {
             {isEnglish ? 'Print or save PDF' : 'Imprimir o guardar PDF'}
           </button>
         </div>
+        <div className="mb-6 rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm biblioteca-print-cover md:p-7">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-geoPurple">Biblioteca Geobooker 2026</p>
+              <h3 className="mt-2 text-2xl font-black text-slate-950">{doc.editorialName}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{doc.title}</p>
+            </div>
+            <BrandLogo size={64} />
+          </div>
+          <p className="mt-5 border-t border-slate-100 pt-4 text-xs leading-5 text-slate-500">
+            {isEnglish
+              ? 'Educational material for entrepreneurs and local businesses. It does not replace specialized legal, tax, financial or professional advice.'
+              : 'Material educativo para emprendedores y negocios locales. No sustituye asesoria legal, fiscal, financiera o profesional especializada.'}
+          </p>
+        </div>
         <MarkdownReader sourcePath={sourcePath} />
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 pb-14 md:px-8 print:hidden">
+        <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+          <div className="grid gap-8 md:grid-cols-[0.9fr_1.1fr] md:items-center">
+            <div>
+              <div className="inline-flex rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-emerald-900">
+                Geobooker App
+              </div>
+              <h2 className="mt-4 text-3xl font-black text-slate-950">{isEnglish ? 'Download Geobooker and keep learning.' : 'Descarga Geobooker y continua aprendiendo.'}</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                {isEnglish
+                  ? 'Use the app to explore businesses, claim listings, practice with Emprende and return to the Library from your phone.'
+                  : 'Usa la app para explorar negocios, reclamar perfiles, practicar con Emprende y volver a la Biblioteca desde tu celular.'}
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3 text-sm font-black">
+                <a href={APP_LINKS.androidStoreUrl} target="_blank" rel="noopener noreferrer" className="rounded-2xl bg-slate-950 px-5 py-3 text-white transition hover:bg-geoPurple">Google Play</a>
+                <a href={APP_LINKS.iosStoreUrl} target="_blank" rel="noopener noreferrer" className="rounded-2xl border-2 border-slate-950 px-5 py-3 text-slate-950 transition hover:bg-slate-100">App Store</a>
+              </div>
+            </div>
+            <div className="flex flex-col items-center justify-center gap-4 rounded-[1.5rem] bg-slate-50 p-6">
+              <AppQRCode
+                size={148}
+                value={buildTrackedDownloadUrl({
+                  platform: 'generic',
+                  source: 'qr',
+                  medium: 'biblioteca_documento',
+                  campaign: 'biblioteca_2026',
+                  target: 'hub',
+                })}
+                label={isEnglish ? 'Scan to download' : 'Escanea para descargar'}
+                subtitle={isEnglish ? 'Android, iPhone and PWA' : 'Android, iPhone y PWA'}
+              />
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="bg-slate-950 px-4 py-14 text-white">

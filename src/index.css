@@ -192,7 +192,7 @@ iframe {
   }
 }
 
-/* ✅ Fix: quitar bordes y outline de foco en Google Maps */
+/* Fix: quitar bordes y outline de foco en Google Maps */
 #map {
   outline: none;
   -webkit-tap-highlight-color: transparent;
@@ -206,3 +206,47 @@ iframe {
 .gm-style [tabindex]:focus {
   outline: none !important;
 }
+
+/* ========================================= */
+/* Biblioteca Geobooker print polish */
+/* ========================================= */
+@media print {
+  @page {
+    size: letter;
+    margin: 1in 0.85in 0.9in 0.85in;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #111827 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  header,
+  footer,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .biblioteca-reader {
+    box-shadow: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+  }
+
+  .biblioteca-reader h1,
+  .biblioteca-reader h2,
+  .biblioteca-reader h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .biblioteca-reader table,
+  .biblioteca-reader blockquote {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+

@@ -13,12 +13,15 @@ const SEO = ({
     breadcrumbs = [],
     noindex = false,
     keywords = '',
-    structuredData = null
+    structuredData = null,
+    alternateUrls = null
 }) => {
     useEffect(() => {
         const currentPath = `${window.location.pathname || '/'}${window.location.pathname ? '' : ''}`;
-        const canonicalUrl = url || buildCanonicalUrl(currentPath);
         const canonicalOrigin = getCanonicalOrigin();
+        const canonicalUrl = url
+            ? (url.startsWith('http') ? url : buildCanonicalUrl(url))
+            : buildCanonicalUrl(currentPath);
         const ogImage = image.startsWith('http') ? image : `${canonicalOrigin}${image}`;
         const currentLang = localStorage.getItem('language') || getMarketLanguage();
 
@@ -47,7 +50,8 @@ const SEO = ({
 
         updateLinkTag('canonical', canonicalUrl);
 
-        const alternates = getAlternateUrls(window.location.pathname);
+        const alternates = alternateUrls || getAlternateUrls(window.location.pathname);
+        document.querySelectorAll('link[rel="alternate"][hreflang]').forEach((link) => link.remove());
         Object.entries(alternates).forEach(([lang, href]) => updateHreflangTag(lang, href));
 
         addWebAppSchema(currentLang);
@@ -68,7 +72,7 @@ const SEO = ({
             const customSchemas = document.querySelectorAll('script[data-schema^="custom"]');
             customSchemas.forEach((node) => node.remove());
         };
-    }, [title, description, image, url, type, business, breadcrumbs, noindex, keywords, structuredData]);
+    }, [title, description, image, url, type, business, breadcrumbs, noindex, keywords, structuredData, alternateUrls]);
 
     return null;
 };

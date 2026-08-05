@@ -6,7 +6,6 @@ import {
   BookOpen,
   CheckCircle2,
   Download,
-  ExternalLink,
   FileText,
   HelpCircle,
   Layers3,
@@ -20,6 +19,7 @@ import {
   downloadLinks,
   getLibraryDocumentBySlug,
   getLibraryDocumentDownloadPath,
+  getLibraryDocumentPdfPath,
   libraryDocuments
 } from '../../features/biblioteca/libraryContent';
 import { APP_LINKS, buildTrackedDownloadUrl } from '../../config/appLinks';
@@ -33,6 +33,27 @@ const renderInline = (text) => {
 
     return <React.Fragment key={index}>{part}</React.Fragment>;
   });
+};
+
+const cleanMarkdownForReading = (source) => {
+  const lines = String(source || '').replace(/^\uFEFF/, '').split(/\r?\n/);
+  const firstSeparator = lines.findIndex((line) => /^---+$/.test(line.trim()));
+  const start = firstSeparator >= 0 && firstSeparator < 16 ? firstSeparator + 1 : 0;
+  const cleaned = [];
+  let skippedTitle = false;
+  let skippedSubtitle = false;
+
+  for (let index = start; index < lines.length; index += 1) {
+    const line = lines[index];
+    const trimmed = line.trim();
+    if (/^##\s+Portada Editorial\s*$/i.test(trimmed)) continue;
+    if (!skippedTitle && /^#\s+/.test(line)) { skippedTitle = true; continue; }
+    if (skippedTitle && !skippedSubtitle && /^##\s+/.test(line)) { skippedSubtitle = true; continue; }
+    if (/^---+$/.test(trimmed)) continue;
+    cleaned.push(line);
+  }
+
+  return cleaned.join('\n').replace(/^\s+/, '');
 };
 
 function MarkdownReader({ sourcePath }) {
@@ -50,7 +71,7 @@ function MarkdownReader({ sourcePath }) {
       })
       .then((text) => {
         if (!cancelled) {
-          setContent(text);
+          setContent(cleanMarkdownForReading(text));
           setStatus('ready');
         }
       })
@@ -66,7 +87,7 @@ function MarkdownReader({ sourcePath }) {
   if (status === 'loading') {
     return (
       <div className="rounded-[1.75rem] border border-slate-200 bg-white p-8 text-center text-sm font-bold text-slate-500 shadow-sm">
-        Cargando capitulo...
+        Cargando capítulo...
       </div>
     );
   }
@@ -188,11 +209,11 @@ const qualityBlocks = [
   {
     icon: CheckCircle2,
     title: 'Checklist accionable',
-    text: 'Cada documento incluye listas de revision para pasar de lectura a accion.'
+    text: 'Cada documento incluye listas de revisión para pasar de lectura a acción.'
   },
   {
     icon: HelpCircle,
-    title: 'Preguntas de reflexion',
+    title: 'Preguntas de reflexión',
     text: 'El lector puede revisar decisiones, riesgos, prioridades y siguientes pasos.'
   },
   {
@@ -203,7 +224,7 @@ const qualityBlocks = [
   {
     icon: ShieldCheck,
     title: 'Aviso responsable',
-    text: 'El contenido informa y orienta, sin sustituir asesoria profesional especializada.'
+    text: 'El contenido informa y orienta, sin sustituir asesoría profesional especializada.'
   }
 ];
 
@@ -220,6 +241,7 @@ export default function BibliotecaDocumentPage() {
   const previous = currentIndex > 0 ? libraryDocuments[currentIndex - 1] : null;
   const next = currentIndex < libraryDocuments.length - 1 ? libraryDocuments[currentIndex + 1] : null;
   const sourcePath = getLibraryDocumentDownloadPath(doc);
+  const pdfPath = getLibraryDocumentPdfPath(doc);
 
   const structuredData = {
     '@context': 'https://schema.org',
@@ -231,15 +253,22 @@ export default function BibliotecaDocumentPage() {
     isPartOf: {
       '@type': 'CreativeWorkSeries',
       name: 'Biblioteca Geobooker 2026',
-      url: 'https://geobooker.com/biblioteca'
+      url: 'https://geobooker.com.mx/biblioteca'
     },
     publisher: {
       '@type': 'Organization',
       name: 'Geobooker',
-      url: 'https://geobooker.com'
+      url: 'https://geobooker.com.mx'
     },
     educationalUse: ['business education', 'entrepreneurship', 'local business guidance'],
-    learningResourceType: ['guide', 'checklist', 'workbook']
+    learningResourceType: ['guide', 'checklist', 'workbook'],
+    url: 'https://geobooker.com.mx/biblioteca/' + doc.slug,
+    mainEntityOfPage: 'https://geobooker.com.mx/biblioteca/' + doc.slug,
+    encoding: {
+      '@type': 'MediaObject',
+      contentUrl: 'https://geobooker.com.mx' + pdfPath,
+      encodingFormat: 'application/pdf'
+    }
   };
 
   return (
@@ -249,6 +278,10 @@ export default function BibliotecaDocumentPage() {
         description={doc.summary}
         image="/images/geobooker-og-image.png"
         url={`/biblioteca/${doc.slug}`}
+        alternateUrls={{
+          'es-MX': 'https://geobooker.com.mx/biblioteca/' + doc.slug,
+          'x-default': 'https://geobooker.com.mx/biblioteca/' + doc.slug
+        }}
         keywords={[doc.title, doc.editorialName, doc.collection, ...doc.tags, 'Geobooker Biblioteca 2026']}
         breadcrumbs={[
           { name: 'Geobooker', item: '/' },
@@ -302,21 +335,13 @@ export default function BibliotecaDocumentPage() {
               </div>
               <div className="mt-6 grid gap-3">
                 <a
-                  href={sourcePath}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 font-black text-white transition hover:bg-geoPurple"
-                >
-                  <ExternalLink className="h-5 w-5" />
-                  {isEnglish ? 'Open complete document' : 'Abrir documento completo'}
-                </a>
-                <a
-                  href={sourcePath}
+                  href={pdfPath}
                   download
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-950 px-5 py-3 font-black text-slate-950 transition hover:bg-slate-100"
+                  type="application/pdf"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-geoPurple px-5 py-3 font-black text-white shadow-lg transition hover:bg-slate-950"
                 >
                   <Download className="h-5 w-5" />
-                  {isEnglish ? 'Download chapter' : 'Descargar capitulo'}
+                  {isEnglish ? 'Download professional PDF' : 'Descargar PDF profesional'}
                 </a>
               </div>
             </div>
@@ -342,17 +367,9 @@ export default function BibliotecaDocumentPage() {
       <section className="mx-auto max-w-6xl px-4 pb-14 md:px-8">
         <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-sm font-black uppercase tracking-[0.22em] text-geoPurple">Lectura interna del capitulo</p>
+            <p className="text-sm font-black uppercase tracking-[0.22em] text-geoPurple">Lectura interna del capítulo</p>
             <h2 className="mt-2 text-3xl font-black text-slate-950 md:text-4xl">{doc.editorialName}</h2>
           </div>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-950 bg-white px-5 py-3 text-sm font-black text-slate-950 transition hover:bg-slate-100"
-          >
-            <FileText className="h-5 w-5" />
-            {isEnglish ? 'Print or save PDF' : 'Imprimir o guardar PDF'}
-          </button>
         </div>
         <div className="mb-6 rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm biblioteca-print-cover md:p-7">
           <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
@@ -366,7 +383,7 @@ export default function BibliotecaDocumentPage() {
           <p className="mt-5 border-t border-slate-100 pt-4 text-xs leading-5 text-slate-500">
             {isEnglish
               ? 'Educational material for entrepreneurs and local businesses. It does not replace specialized legal, tax, financial or professional advice.'
-              : 'Material educativo para emprendedores y negocios locales. No sustituye asesoria legal, fiscal, financiera o profesional especializada.'}
+              : 'Material educativo para emprendedores y negocios locales. No sustituye asesoría legal, fiscal, financiera o profesional especializada.'}
           </p>
         </div>
         <MarkdownReader sourcePath={sourcePath} />
@@ -379,7 +396,7 @@ export default function BibliotecaDocumentPage() {
               <div className="inline-flex rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-emerald-900">
                 Geobooker App
               </div>
-              <h2 className="mt-4 text-3xl font-black text-slate-950">{isEnglish ? 'Download Geobooker and keep learning.' : 'Descarga Geobooker y continua aprendiendo.'}</h2>
+              <h2 className="mt-4 text-3xl font-black text-slate-950">{isEnglish ? 'Download Geobooker and keep learning.' : 'Descarga Geobooker y continúa aprendiendo.'}</h2>
               <p className="mt-3 text-sm leading-7 text-slate-600">
                 {isEnglish
                   ? 'Use the app to explore businesses, claim listings, practice with Emprende and return to the Library from your phone.'
@@ -415,29 +432,25 @@ export default function BibliotecaDocumentPage() {
               {isEnglish ? 'Professional reading mode' : 'Modo lectura profesional'}
             </div>
             <h2 className="mt-5 text-3xl font-black md:text-5xl">
-              {isEnglish ? 'Designed to be used, not only read.' : 'Disenado para usarse, no solo para leerse.'}
+              {isEnglish ? 'A professional edition ready to use.' : 'Una edición profesional lista para usarse.'}
             </h2>
             <p className="mt-4 text-base leading-7 text-slate-300">
               {isEnglish
-                ? 'The final PDF stage will add cover, page numbering, logo system, iconography and non-editable export.'
-                : 'La etapa final de PDF agregara portada, numeracion, sistema de logotipo, iconografia y exportacion no editable.'}
+                ? 'Each chapter includes brand typography, vector iconography, an editorial footer and a final app download invitation.'
+                : 'Cada capítulo incluye tipografía de marca, iconografía vectorial, footer editorial y una invitación final para descargar la app.'}
             </p>
           </div>
           <div className="rounded-[1.75rem] border border-white/10 bg-white/10 p-6">
-            <h3 className="text-xl font-black">{isEnglish ? 'Complete edition downloads' : 'Descargas de edicion completa'}</h3>
+            <h3 className="text-xl font-black">{isEnglish ? 'Complete edition downloads' : 'Descarga de edición completa'}</h3>
             <p className="mt-2 text-sm leading-6 text-slate-300">
               {isEnglish
-                ? 'Use these files to review the whole library in Word before PDF layout.'
-                : 'Usa estos archivos para revisar toda la Biblioteca en Word antes de maquetar PDFs.'}
+                ? 'One clear download: the complete professional PDF edition.'
+                : 'Una sola descarga clara: la edición profesional completa en PDF.'}
             </p>
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-              <a href={downloadLinks.text} download className="inline-flex items-center justify-center gap-2 rounded-2xl bg-geoYellow px-5 py-3 font-black text-slate-950">
+            <div className="mt-5">
+              <a href={downloadLinks.pdf} download type="application/pdf" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-geoYellow px-5 py-3 font-black text-slate-950">
                 <Download className="h-5 w-5" />
-                TXT Word
-              </a>
-              <a href={downloadLinks.markdown} download className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 px-5 py-3 font-black text-white">
-                <FileText className="h-5 w-5" />
-                Markdown
+                {isEnglish ? 'Download complete PDF' : 'Descargar PDF completo'}
               </a>
             </div>
           </div>
@@ -452,7 +465,7 @@ export default function BibliotecaDocumentPage() {
               {isEnglish ? 'Continue reading' : 'Continuar lectura'}
             </div>
             <h2 className="mt-2 text-2xl font-black">
-              {next ? next.editorialName : isEnglish ? 'You reached the end of this edition.' : 'Llegaste al final de esta edicion.'}
+              {next ? next.editorialName : isEnglish ? 'You reached the end of this edition.' : 'Llegaste al final de esta edición.'}
             </h2>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">

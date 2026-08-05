@@ -89,7 +89,9 @@ exports.handler = async (event) => {
     '/biblioteca/negocio-que-puede-durar',
     '/biblioteca/construir-sin-romperse'
   ];
-  libraryDocumentRoutes.forEach((route) => addRoute(route, null, '0.7', 'monthly'));
+  if (!globalMode) {
+    libraryDocumentRoutes.forEach((route) => addRoute(route, null, '0.7', 'monthly'));
+  }
 
   const emprendeChallengeRoutes = [
     '/emprende/reto/primera-decision-negocio-local',

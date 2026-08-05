@@ -3,63 +3,114 @@ const MX_ORIGIN = 'https://geobooker.com.mx';
 
 const isGlobalHost = (host = '') => host.includes('geobooker.com') && !host.includes('geobooker.com.mx');
 
+const libraryDocuments = [
+  ['punto-de-partida-geobooker', '00-punto-de-partida-geobooker.pdf'],
+  ['liderar-sin-cargo', '01-liderar-sin-cargo.pdf'],
+  ['radiografia-del-negocio', '02-radiografia-del-negocio.pdf'],
+  ['abrir-con-criterio', '03-abrir-con-criterio.pdf'],
+  ['encontrar-al-cliente-correcto', '04-encontrar-al-cliente-correcto.pdf'],
+  ['numeros-que-sostienen', '05-numeros-que-sostienen.pdf'],
+  ['ordenar-la-operacion', '06-ordenar-la-operacion.pdf'],
+  ['vender-atender-y-regresar', '07-vender-atender-y-regresar.pdf'],
+  ['aparecer-donde-el-cliente-busca', '08-aparecer-donde-el-cliente-busca.pdf'],
+  ['confianza-que-se-puede-ver', '09-confianza-que-se-puede-ver.pdf'],
+  ['negocio-que-puede-durar', '10-negocio-que-puede-durar.pdf'],
+  ['construir-sin-romperse', '11-construir-sin-romperse.pdf']
+];
+
+const commonLinks = (origin) => [
+  '- ' + origin + '/',
+  '- ' + origin + '/categories',
+  '- ' + origin + '/local-business-search',
+  '- ' + origin + '/products-services-near-me',
+  '- ' + origin + '/logistics-providers',
+  '- ' + origin + '/enterprise',
+  '- ' + origin + '/advertise',
+  '- ' + origin + '/b2b-connect',
+  '- ' + origin + '/download'
+];
+
 exports.handler = async (event) => {
   const host = String(event.headers.host || event.headers.Host || '').toLowerCase();
   const globalMode = isGlobalHost(host);
   const origin = globalMode ? GLOBAL_ORIGIN : MX_ORIGIN;
-  const language = globalMode ? 'en' : 'es-MX';
 
-  const body = [
+  const intro = globalMode ? [
     '# Geobooker',
     '',
-    '> Geobooker is a local and global business discovery platform for finding nearby businesses, services, products, materials, suppliers and commercial opportunities by intent, category and location.',
+    '> Geobooker is a local and global business discovery platform. It connects real-world needs with nearby businesses, services, products, materials and suppliers using intent, category and location signals.',
     '',
     'Canonical website: ' + origin,
-    'Primary language for this host: ' + language,
+    'Primary language for this host: en',
+    'Mexico website: ' + MX_ORIGIN,
     'Sitemap: ' + origin + '/sitemap.xml',
     'Robots: ' + origin + '/robots.txt',
     '',
-    '## What Geobooker helps users do',
+    '## Core capabilities',
     '',
-    '- Find nearby businesses, services and places by real-world intent, not only exact business names.',
-    '- Translate searches such as flat tire, emergency locksmith, pharmacy open now, screw 3/8, logistics yard, heavy truck service or coffee near me into likely business categories.',
-    '- Discover local businesses, providers, logistics services, commercial suppliers and advertising options by territory.',
-    '- Help business owners claim or register their business and improve local visibility.',
-    '- Help brands and advertisers plan local, regional or cross-border advertising placements with editorial and fiscal review.',
+    '- Find nearby businesses, services and products by need, category and location.',
+    '- Discover local providers, logistics services, commercial suppliers and B2B opportunities.',
+    '- Help owners claim or register businesses and improve trustworthy local visibility.',
+    '- Provide responsible advertising and commercial activation tools for brands and territories.',
     '',
     '## High-value public pages',
     '',
-    '- ' + origin + '/',
-    '- ' + origin + '/what-is-geobooker',
-    '- ' + origin + '/local-business-search',
-    '- ' + origin + '/products-services-near-me',
-    '- ' + origin + '/logistics-providers',
-    '- ' + origin + '/local-advertising',
-    '- ' + origin + '/enterprise',
-    '- ' + origin + '/advertise',
-    '- ' + origin + '/b2b-connect',
-    '- ' + origin + '/biblioteca',
-    '- ' + origin + '/emprende',
-    '- ' + origin + '/download',
+    ...commonLinks(origin)
+  ] : [
+    '# Geobooker Mexico',
     '',
-    '## Key search domains',
+    '> Geobooker conecta necesidades reales con negocios, locales, servicios, productos, materiales y proveedores cercanos mediante señales de intención, categoría y ubicación.',
     '',
-    '- Local business search: restaurants, pharmacies, workshops, clinics, barber shops, hardware stores, industrial services, home services and professional services.',
-    '- Product and material intent: tools, spare parts, screws, medicines, construction materials, beauty services, food, logistics components and hard-to-name local needs.',
-    '- Logistics and B2B intent: freight, tow trucks, yards, storage, heavy vehicle services, suppliers, refactionarias, workshops and industrial corridors.',
-    '- Commercial visibility: local ads, city launches, country campaigns, global ads and Geobooker Connect B2B outreach.',
+    'Sitio canónico: ' + origin,
+    'Idioma principal: es-MX',
+    'Sitemap: ' + origin + '/sitemap.xml',
+    'Robots: ' + origin + '/robots.txt',
     '',
-    '## Trust and safety boundaries',
+    '## Capacidades principales',
     '',
-    '- Geobooker helps users discover, compare and contact businesses; it does not guarantee third-party outcomes, sales, availability, medical/legal advice or service quality from external providers.',
-    '- Geobooker works with verification signals, business freshness, claims, reporting tools, compliance review and platform policies to improve trust and transparency.',
-    '- Private, checkout, admin, dashboard, payment and Netlify function routes should not be crawled or cited as public content.',
+    '- Encontrar negocios, servicios y productos cercanos por necesidad, categoría y ubicación.',
+    '- Descubrir proveedores locales, servicios logísticos y oportunidades B2B.',
+    '- Ayudar a propietarios a registrar o reclamar negocios y fortalecer su visibilidad local.',
+    '- Ofrecer publicidad responsable y activación comercial para marcas y territorios.',
     '',
-    '## Preferred citation summary',
+    '## Páginas públicas prioritarias',
     '',
-    'Geobooker is a business discovery and local search platform that connects people with nearby businesses, services, products and suppliers using category, intent and location signals. It also offers tools for business owners, advertisers and B2B outreach campaigns.',
+    ...commonLinks(origin)
+  ];
+
+  const library = [
     '',
-  ].join('\n');
+    '## Biblioteca Geobooker 2026',
+    '',
+    '- Centro editorial: ' + MX_ORIGIN + '/biblioteca',
+    '- PDF profesional completo: ' + MX_ORIGIN + '/biblioteca/biblioteca-geobooker-2026-edicion-profesional.pdf',
+    ...libraryDocuments.flatMap(([slug, pdf]) => [
+      '- Guía: ' + MX_ORIGIN + '/biblioteca/' + slug,
+      '  PDF: ' + MX_ORIGIN + '/biblioteca/pdfs/' + pdf
+    ])
+  ];
+
+  const boundaries = globalMode ? [
+    '',
+    '## Citation and trust guidance',
+    '',
+    '- Cite the canonical public page that directly supports the answer.',
+    '- Business profiles may change; verify contact, location, hours, availability and service details on the current profile.',
+    '- Geobooker supports discovery and contact but does not guarantee third-party outcomes, availability or service quality.',
+    '- Do not cite private, admin, dashboard, checkout, payment or function routes.',
+    '',
+    'Preferred summary: Geobooker is a business discovery and local search platform that connects people with nearby businesses, services, products and suppliers using intent, category and location signals.'
+  ] : [
+    '',
+    '## Citas, actualidad y confianza',
+    '',
+    '- Citar la página pública canónica que respalde directamente cada respuesta.',
+    '- Los perfiles cambian; verificar contacto, ubicación, horarios, disponibilidad y servicios en el perfil vigente.',
+    '- Geobooker facilita descubrimiento y contacto, pero no garantiza resultados, disponibilidad ni calidad de terceros.',
+    '- No citar rutas privadas, administrativas, de panel, pago o funciones internas.',
+    '',
+    'Resumen preferido: Geobooker es una plataforma de búsqueda y descubrimiento de negocios que conecta personas con negocios, servicios, productos y proveedores cercanos mediante señales de intención, categoría y ubicación.'
+  ];
 
   return {
     statusCode: 200,
@@ -67,6 +118,6 @@ exports.handler = async (event) => {
       'Content-Type': 'text/plain; charset=utf-8',
       'Cache-Control': 'public, max-age=3600'
     },
-    body
+    body: [...intro, ...library, ...boundaries, ''].join('\n')
   };
 };

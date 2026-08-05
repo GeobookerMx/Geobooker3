@@ -93,6 +93,18 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/biblioteca/biblioteca-geobooker-2026-compilado-para-word-v3.txt"
+  to = "/biblioteca/biblioteca-geobooker-2026-edicion-profesional.pdf"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/biblioteca/biblioteca-geobooker-2026-compilado-para-word-v3.md"
+  to = "/biblioteca/biblioteca-geobooker-2026-edicion-profesional.pdf"
+  status = 301
+  force = true
+
 # SPA: Redirigir todas las rutas al index.html
 [[redirects]]
   from = "/*"

@@ -1,20 +1,20 @@
 # Sostenibilidad Del Negocio Local
 
-## Como construir un negocio que pueda durar, adaptarse y generar valor responsablemente
+## Cómo construir un negocio que pueda durar, adaptarse y generar valor responsablemente
 
-**Biblioteca Geobooker 2026**  
-**Coleccion:** Estrategia, Riesgo y Futuro  
-**Documento:** 10  
-**Nombre editorial:** Negocio Que Puede Durar  
-**Version:** 0.1 editorial  
-**Fecha:** Julio 2026  
-**Uso:** Consulta, capacitacion, diagnostico y futura descarga en PDF
+**Biblioteca Geobooker 2026**
+**Colección:** Estrategia, Riesgo y Futuro
+**Documento:** 10
+**Nombre editorial:** Negocio Que Puede Durar
+**Versión:** 0.1 editorial
+**Fecha:** Julio 2026
+**Uso:** Consulta, capacitación, diagnóstico y futura descarga en PDF
 
 ---
 
 ## Aviso De Uso
 
-Este documento es educativo e informativo. No sustituye asesoria legal, fiscal, ambiental, contable, financiera, laboral o tecnica. Cada negocio debe validar sus obligaciones con especialistas y autoridades competentes segun su pais, ciudad, actividad economica y modelo operativo.
+Este documento es educativo e informativo. No sustituye asesoría legal, fiscal, ambiental, contable, financiera, laboral o técnica. Cada negocio debe validar sus obligaciones con especialistas y autoridades competentes según su país, ciudad, actividad económica y modelo operativo.
 
 ---
 
@@ -22,35 +22,35 @@ Este documento es educativo e informativo. No sustituye asesoria legal, fiscal, 
 
 Un negocio sostenible no es solamente un negocio que cuida el medio ambiente.
 
-Un negocio sostenible es un negocio que puede mantenerse vivo en el tiempo sin destruir sus finanzas, su reputacion, su equipo, su capacidad operativa, su relacion con clientes ni su entorno.
+Un negocio sostenible es un negocio que puede mantenerse vivo en el tiempo sin destruir sus finanzas, su reputación, su equipo, su capacidad operativa, su relación con clientes ni su entorno.
 
-La sostenibilidad de un negocio local se construye todos los dias en decisiones pequenas:
+La sostenibilidad de un negocio local se construye todos los días en decisiones pequeñas:
 
-- Como se cobra.
-- Como se compra.
-- Como se atiende.
-- Como se contrata.
-- Como se cumple.
-- Como se mide.
-- Como se corrige.
-- Como se crece sin romper lo que ya funciona.
+- Cómo se cobra.
+- Cómo se compra.
+- Cómo se atiende.
+- Cómo se contrata.
+- Cómo se cumple.
+- Cómo se mide.
+- Cómo se corrige.
+- Cómo se crece sin romper lo que ya funciona.
 
-Un negocio puede vender mucho y aun asi no ser sostenible. Puede tener clientes y aun asi perder dinero. Puede crecer rapido y aun asi quemar a su equipo. Puede anunciarse bien y aun asi destruir confianza si promete mas de lo que puede cumplir.
+Un negocio puede vender mucho y aun así no ser sostenible. Puede tener clientes y aun así perder dinero. Puede crecer rápido y aun así quemar a su equipo. Puede anunciarse bien y aun así destruir confianza si promete más de lo que puede cumplir.
 
 Por eso la sostenibilidad debe estar en el centro de la Biblioteca Geobooker.
 
 ---
 
-## Para Quien Sirve
+## Para quién Sirve
 
 Este documento sirve para:
 
 - Personas que quieren abrir un negocio con mayor criterio.
-- Duenos de negocios locales que sienten que trabajan mucho pero avanzan poco.
-- Equipos pequenos que necesitan ordenar prioridades.
+- Dueños de negocios locales que sienten que trabajan mucho pero avanzan poco.
+- Equipos pequeños que necesitan ordenar prioridades.
 - Emprendedores que quieren crecer sin improvisar.
 - Marcas que desean operar en nuevas ciudades o territorios.
-- Negocios que desean anunciarse, vender mas o usar CRM sin dañar su reputacion.
+- Negocios que desean anunciarse, vender más o usar CRM sin dañar su reputación.
 
 ---
 
@@ -69,13 +69,13 @@ Algunos errores frecuentes:
 - Gastar en publicidad sin capacidad de atender la demanda.
 - Usar promociones que atraen volumen pero destruyen utilidad.
 - Ignorar temas fiscales o legales hasta que ya existe un problema.
-- No cuidar reseñas, datos, privacidad o reputacion digital.
+- No cuidar reseñas, datos, privacidad o reputación digital.
 
-La sostenibilidad ayuda a hacer una pregunta mas inteligente:
+La sostenibilidad ayuda a hacer una pregunta más inteligente:
 
 **No solo: "puedo vender esto?"**
 
-Tambien:
+También:
 
 **"puedo sostener esto de forma rentable, legal, humana y confiable?"**
 
@@ -90,12 +90,12 @@ Un negocio sostenible puede:
 - Soportar meses bajos.
 - Ajustar precios sin perder identidad.
 - Capacitar gente nueva.
-- Medir sus numeros principales.
+- Medir sus números principales.
 - Resolver quejas sin crisis.
-- Cumplir obligaciones basicas.
+- Cumplir obligaciones básicas.
 - Mejorar su presencia digital.
 - Atender mejor a los clientes recurrentes.
-- Adaptarse a cambios en costos, demanda, tecnologia o competencia.
+- Adaptarse a cambios en costos, demanda, tecnología o competencia.
 
 La sostenibilidad no se logra con un discurso bonito. Se logra con disciplina.
 
@@ -109,18 +109,18 @@ Un negocio es financieramente sostenible cuando genera ingresos suficientes para
 
 Preguntas clave:
 
-- Cuanto cuesta realmente entregar mi producto o servicio?
-- Mi precio cubre costos, impuestos, comisiones, errores y tiempo?
-- Tengo margen suficiente?
-- Tengo flujo para sobrevivir meses lentos?
-- Mis promociones ayudan o destruyen utilidad?
+- ¿Cuánto cuesta realmente entregar mi producto o servicio?
+- ¿Mi precio cubre costos, impuestos, comisiones, errores y tiempo?
+- ¿Tengo margen suficiente?
+- ¿Tengo flujo para sobrevivir meses lentos?
+- ¿Mis promociones ayudan o destruyen utilidad?
 
 Senales de alerta:
 
 - Vender mucho y no tener dinero.
 - Depender de deuda para operar cada mes.
 - No separar dinero personal y dinero del negocio.
-- No saber cual producto deja mas utilidad.
+- No saber cuál producto deja más utilidad.
 - Medir ventas pero no margen.
 
 Principio Geobooker:
@@ -131,23 +131,23 @@ Principio Geobooker:
 
 ### 2. Sostenibilidad Operativa
 
-Un negocio es operativamente sostenible cuando puede entregar de forma consistente sin depender de improvisacion permanente.
+Un negocio es operativamente sostenible cuando puede entregar de forma consistente sin depender de improvisación permanente.
 
 Preguntas clave:
 
-- Que procesos deben repetirse todos los dias?
-- Quien abre, cobra, entrega, limpia, responde, compra y verifica?
-- Que pasa si falta la persona clave?
-- Que errores se repiten cada semana?
-- Que tareas deberian tener checklist?
+- ¿Qué procesos deben repetirse todos los días?
+- ¿Quién abre, cobra, entrega, limpia, responde, compra y verifica?
+- ¿Qué pasa si falta la persona clave?
+- ¿Qué errores se repiten cada semana?
+- ¿Qué tareas deberían tener checklist?
 
 Senales de alerta:
 
 - Todo se resuelve con urgencias.
-- Nadie sabe donde esta la informacion.
-- Los clientes reciben experiencias distintas segun quien atienda.
-- El dueño no puede ausentarse un solo dia.
-- No hay estandares claros de calidad.
+- Nadie sabe dónde está la información.
+- Los clientes reciben experiencias distintas según quien atienda.
+- El dueño no puede ausentarse un solo día.
+- No hay estándares claros de calidad.
 
 Principio Geobooker:
 
@@ -161,15 +161,15 @@ Un negocio es humanamente sostenible cuando la carga de trabajo no destruye a la
 
 Preguntas clave:
 
-- El equipo entiende que se espera de el?
-- Hay horarios razonables?
-- Se reconoce el buen trabajo?
-- Hay espacio para aprender?
-- El liderazgo reduce caos o lo multiplica?
+- ¿El equipo entiende qué se espera de él?
+- ¿Hay horarios razonables?
+- ¿Se reconoce el buen trabajo?
+- ¿Hay espacio para aprender?
+- ¿El liderazgo reduce caos o lo multiplica?
 
 Senales de alerta:
 
-- Rotacion constante.
+- Rotación constante.
 - Cansancio cronico.
 - Conflictos no resueltos.
 - Nadie da ideas porque siente que no vale la pena.
@@ -183,23 +183,23 @@ Principio Geobooker:
 
 ### 4. Sostenibilidad Comercial
 
-Un negocio es comercialmente sostenible cuando no depende solo de suerte, paso peatonal o una promocion aislada.
+Un negocio es comercialmente sostenible cuando no depende solo de suerte, paso peatonal o una promoción aislada.
 
 Preguntas clave:
 
-- Quienes son mis clientes ideales?
-- Por que me eligen?
-- Que problema resuelvo mejor que otros?
-- Tengo clientes recurrentes?
-- Como doy seguimiento?
-- Como convierto una busqueda en una visita, llamada o mensaje?
+- ¿Quiénes son mis clientes ideales?
+- ¿Por qué me eligen?
+- ¿Qué problema resuelvo mejor que otros?
+- ¿Tengo clientes recurrentes?
+- ¿Cómo doy seguimiento?
+- ¿Cómo convierto una búsqueda en una visita, llamada o mensaje?
 
 Senales de alerta:
 
 - Nadie sabe explicar la propuesta de valor.
-- No hay seguimiento despues de una compra.
+- No hay seguimiento después de una compra.
 - Las redes sociales publican, pero no convierten.
-- El negocio no aparece en busquedas locales relevantes.
+- El negocio no aparece en búsquedas locales relevantes.
 - Se invierte en publicidad sin medir resultados.
 
 Principio Geobooker:
@@ -210,25 +210,25 @@ Principio Geobooker:
 
 ### 5. Sostenibilidad Digital
 
-Un negocio es digitalmente sostenible cuando su presencia en linea es clara, actualizada, segura y util para el cliente.
+Un negocio es digitalmente sostenible cuando su presencia en línea es clara, actualizada, segura y útil para el cliente.
 
 Preguntas clave:
 
-- Mi negocio aparece con datos correctos?
-- El cliente puede saber donde estoy, que vendo y como contactarme?
-- Mis horarios estan actualizados?
-- Tengo fotos reales y confiables?
-- Protejo datos de clientes?
-- Mis canales digitales tienen respaldo?
+- ¿Mi negocio aparece con datos correctos?
+- ¿El cliente puede saber dónde estoy, que vendo y cómo contactarme?
+- ¿Mis horarios están actualizados?
+- ¿Tengo fotos reales y confiables?
+- ¿Protejo datos de clientes?
+- ¿Mis canales digitales tienen respaldo?
 
 Senales de alerta:
 
 - Direcciones incorrectas.
-- Telefonos que no contestan.
+- Teléfonos que no contestan.
 - Fotos viejas o confusas.
 - Perfiles abandonados.
 - Dependencia total de una sola red social.
-- No saber de donde llegan los clientes.
+- No saber de dónde llegan los clientes.
 
 Principio Geobooker:
 
@@ -238,28 +238,28 @@ Principio Geobooker:
 
 ### 6. Sostenibilidad Legal Y Fiscal
 
-Un negocio es legal y fiscalmente sostenible cuando entiende sus obligaciones basicas y evita operar en zonas grises innecesarias.
+Un negocio es legal y fiscalmente sostenible cuando entiende sus obligaciones básicas y evita operar en zonas grises innecesarias.
 
 Preguntas clave:
 
-- Tengo claro mi regimen fiscal?
-- Se cuando debo emitir factura?
-- Tengo permisos, licencias o avisos requeridos?
-- Manejo datos personales de forma responsable?
-- Mis contratos, cotizaciones o terminos estan claros?
-- Mis colaboradores estan bajo una relacion adecuada?
+- ¿Tengo claro mi régimen fiscal?
+- ¿Se cuándo debo emitir factura?
+- ¿Tengo permisos, licencias o avisos requeridos?
+- ¿Manejo datos personales de forma responsable?
+- ¿Mis contratos, cotizaciones o términos están claros?
+- ¿Mis colaboradores están bajo una relación adecuada?
 
 Senales de alerta:
 
 - Cobrar servicios sin respaldo documental.
 - Prometer resultados garantizados sin base.
 - Usar datos de clientes sin aviso o trazabilidad.
-- No saber que impuestos aplican.
-- Copiar contratos de internet sin revision.
+- No saber qué impuestos aplican.
+- Copiar contratos de internet sin revisión.
 
 Principio Geobooker:
 
-**La confianza comercial tambien se construye con claridad legal.**
+**La confianza comercial también se construye con claridad legal.**
 
 ---
 
@@ -269,23 +269,23 @@ Un negocio es ambiental y socialmente sostenible cuando reduce desperdicios, usa
 
 Preguntas clave:
 
-- Que desperdicio genero?
-- Puedo reducir consumo de agua, energia, papel o empaques?
-- Mis proveedores cumplen condiciones minimas aceptables?
-- Mi negocio mejora o deteriora la zona donde opera?
-- Puedo comunicar practicas responsables sin exagerar?
+- ¿Qué desperdicio genero?
+- ¿Puedo reducir consumo de agua, energía, papel o empaques?
+- ¿Mis proveedores cumplen condiciones mínimas aceptables?
+- ¿Mi negocio mejora o deteriora la zona dónde opera?
+- ¿Puedo comunicar prácticas responsables sin exagerar?
 
 Senales de alerta:
 
 - Desperdicio recurrente sin control.
-- Costos altos de energia por descuido.
+- Costos altos de energía por descuido.
 - Quejas vecinales frecuentes.
 - Proveedores poco confiables.
 - Usar sostenibilidad solo como etiqueta de marketing.
 
 Principio Geobooker:
 
-**La sostenibilidad real se demuestra en practicas, no en frases.**
+**La sostenibilidad real se demuestra en prácticas, no en frases.**
 
 ---
 
@@ -295,11 +295,11 @@ Un negocio es estrategicamente sostenible cuando puede aprender, adaptarse y tom
 
 Preguntas clave:
 
-- Que cambios pueden afectar mi negocio en los proximos 12 meses?
-- Que parte de mi modelo es mas vulnerable?
-- Que puedo probar con bajo riesgo?
-- Que indicador reviso cada semana?
-- Que debo dejar de hacer?
+- ¿Qué cambios pueden afectar mi negocio en los próximos 12 meses?
+- ¿Qué parte de mi modelo es más vulnerable?
+- ¿Qué puedo probar con bajo riesgo?
+- ¿Qué indicador reviso cada semana?
+- ¿Qué debo dejar de hacer?
 
 Senales de alerta:
 
@@ -319,20 +319,20 @@ Principio Geobooker:
 
 Usa este semaforo para diagnosticar tu negocio o idea.
 
-Marca cada dimension como verde, amarillo o rojo.
+Marca cada dimensión como verde, amarillo o rojo.
 
-| Dimension | Verde | Amarillo | Rojo | Mi Estado |
+| Dimensión | Verde | Amarillo | Rojo | Mi Estado |
 | --- | --- | --- | --- | --- |
 | Financiera | Conozco costos, margen y flujo | Tengo datos parciales | No se si gano o pierdo | ____ |
 | Operativa | Hay procesos repetibles | Dependo de varias improvisaciones | Todo depende de urgencias | ____ |
-| Humana | Equipo claro y carga razonable | Hay cansancio o confusion | Conflicto, rotacion o agotamiento | ____ |
+| Humana | Equipo claro y carga razonable | Hay cansancio o confusión | Conflicto, rotación o agotamiento | ____ |
 | Comercial | Clientes definidos y seguimiento | Vendo pero sin sistema | Dependo de suerte o descuentos | ____ |
 | Digital | Datos correctos y canales activos | Presencia incompleta | No aparezco o aparezco mal | ____ |
 | Legal/Fiscal | Obligaciones identificadas | Temas pendientes | Riesgos ignorados | ____ |
-| Ambiental/Social | Practicas responsables basicas | Oportunidades sin ordenar | Desperdicio o quejas frecuentes | ____ |
+| Ambiental/Social | Prácticas responsables básicas | Oportunidades sin ordenar | Desperdicio o quejas frecuentes | ____ |
 | Estrategica | Mido, aprendo y ajusto | Ajusto de forma reactiva | No tengo rumbo claro | ____ |
 
-Interpretacion:
+Interpretación:
 
 - Mayoría verde: el negocio tiene bases sanas.
 - Mayoría amarilla: hay oportunidad clara de mejora.
@@ -340,11 +340,11 @@ Interpretacion:
 
 ---
 
-## Herramienta: Plan De Sostenibilidad A 90 Dias
+## Herramienta: Plan De Sostenibilidad A 90 Días
 
-No intentes corregir todo al mismo tiempo. Elige una accion por dimension.
+No intentes corregir todo al mismo tiempo. Elige una acción por dimensión.
 
-| Dimension | Accion de 90 dias | Responsable | Indicador | Fecha |
+| Dimensión | Acción de 90 días | Responsable | Indicador | Fecha |
 | --- | --- | --- | --- | --- |
 | Financiera | __________________________ | ________ | ________ | ________ |
 | Operativa | __________________________ | ________ | ________ | ________ |
@@ -355,9 +355,9 @@ No intentes corregir todo al mismo tiempo. Elige una accion por dimension.
 | Ambiental/Social | __________________________ | ________ | ________ | ________ |
 | Estrategica | __________________________ | ________ | ________ | ________ |
 
-Regla practica:
+Regla práctica:
 
-**Si una accion no tiene responsable, indicador y fecha, todavia no es plan. Es intencion.**
+**Si una acción no tiene responsable, indicador y fecha, todavía no es plan. Es intención.**
 
 ---
 
@@ -373,21 +373,21 @@ Sostenibilidad aplicada:
 
 - Financiera: medir margen por platillo.
 - Operativa: checklist de inventario diario.
-- Humana: horarios mas claros para evitar agotamiento.
+- Humana: horarios más claros para evitar agotamiento.
 - Digital: actualizar horarios, fotos y menu.
-- Ambiental: reducir desperdicio con compras por rotacion real.
+- Ambiental: reducir desperdicio con compras por rotación real.
 
 Resultado esperado:
 
-Menos desperdicio, mejor margen y una experiencia mas consistente.
+Menos desperdicio, mejor margen y una experiencia más consistente.
 
 ---
 
-### Caso 2: Taller Mecanico
+### Caso 2: Taller Mecánico
 
 Problema:
 
-El taller recibe clientes por recomendacion, pero no da seguimiento y muchos clientes no regresan.
+El taller recibe clientes por recomendación, pero no da seguimiento y muchos clientes no regresan.
 
 Sostenibilidad aplicada:
 
@@ -395,15 +395,15 @@ Sostenibilidad aplicada:
 - Operativa: ordenes de trabajo claras.
 - Digital: perfil actualizado y fotos reales.
 - Legal/Fiscal: cotizaciones y comprobantes claros.
-- Humana: asignar responsable de recepcion y seguimiento.
+- Humana: asignar responsable de recepción y seguimiento.
 
 Resultado esperado:
 
-Mas recurrencia, menos reclamos y mayor confianza.
+Más recurrencia, menos reclamos y mayor confianza.
 
 ---
 
-### Caso 3: Proveedor Logistico O Patio De Transporte
+### Caso 3: Proveedor Logístico O Patio De Transporte
 
 Problema:
 
@@ -412,10 +412,10 @@ El proveedor tiene capacidad disponible, pero pocos clientes saben que existe o 
 Sostenibilidad aplicada:
 
 - Comercial: definir cliente ideal por tipo de carga.
-- Digital: aparecer en busquedas de transporte, patio, pension y almacenamiento.
+- Digital: aparecer en búsquedas de transporte, patio, pensión y almacenamiento.
 - Operativa: reglas de entrada, seguridad y horarios.
-- Legal: contratos basicos, limites de responsabilidad y evidencia de servicio.
-- Estrategica: medir ocupacion por semana.
+- Legal: contratos básicos, límites de responsabilidad y evidencia de servicio.
+- Estrategica: medir ocupación por semana.
 
 Resultado esperado:
 
@@ -423,11 +423,11 @@ Mayor visibilidad sin vender capacidad que no se puede cumplir.
 
 ---
 
-### Caso 4: Barberia O Servicio De Belleza
+### Caso 4: Barbería O Servicio De Belleza
 
 Problema:
 
-La barberia tiene clientes fieles, pero depende demasiado del dueño y no registra preferencias.
+La barbería tiene clientes fieles, pero depende demasiado del dueño y no registra preferencias.
 
 Sostenibilidad aplicada:
 
@@ -435,7 +435,7 @@ Sostenibilidad aplicada:
 - Comercial: registrar preferencias y frecuencia.
 - Digital: agenda, fotos y reseñas actualizadas.
 - Financiera: diferenciar servicios con mayor margen.
-- Operativa: estandarizar limpieza, tiempos y atencion.
+- Operativa: estandarizar limpieza, tiempos y atención.
 
 Resultado esperado:
 
@@ -443,21 +443,21 @@ Menos dependencia de una persona y mejor recurrencia.
 
 ---
 
-## Sostenibilidad Antes De Publicidad, CRM O Expansion
+## Sostenibilidad Antes De Publicidad, CRM O Expansión
 
-Antes de invertir en anuncios, CRM, campañas B2B o expansion territorial, revisa estas preguntas:
+Antes de invertir en anuncios, CRM, campañas B2B o expansión territorial, revisa estas preguntas:
 
-- Puedo atender mas clientes sin bajar calidad?
-- Tengo una oferta clara?
-- Tengo precios que soportan descuento, comision o impuestos?
-- Tengo alguien que responda leads?
-- Tengo materiales, fotos, landing o mensajes adecuados?
-- Tengo terminos claros para evitar malentendidos?
-- Se que resultado voy a medir?
+- ¿Puedo atender más clientes sin bajar calidad?
+- ¿Tengo una oferta clara?
+- ¿Tengo precios que soportan descuento, comisión o impuestos?
+- ¿Tengo alguien que responda leads?
+- ¿Tengo materiales, fotos, landing o mensajes adecuados?
+- ¿Tengo términos claros para evitar malentendidos?
+- ¿Se que resultado voy a medir?
 
 Si la respuesta es no, la publicidad puede acelerar el problema.
 
-La funcion correcta de Geobooker no es empujar negocios a gastar mas sin criterio. Es ayudarles a aparecer mejor, medir mejor y convertir mejor cuando ya existe una base defendible.
+La función correcta de Geobooker no es empujar negocios a gastar más sin criterio. Es ayudarles a aparecer mejor, medir mejor y convertir mejor cuando ya existe una base defendible.
 
 ---
 
@@ -466,47 +466,47 @@ La funcion correcta de Geobooker no es empujar negocios a gastar mas sin criteri
 Marca lo que ya tienes:
 
 - [ ] Conozco mis costos principales.
-- [ ] Se cual producto o servicio deja mejor margen.
-- [ ] Tengo flujo minimo para cubrir semanas lentas.
-- [ ] Mis procesos clave estan escritos o son repetibles.
-- [ ] El cliente recibe informacion clara antes de comprar.
-- [ ] Tengo seguimiento despues de la venta.
-- [ ] Mis datos digitales estan actualizados.
-- [ ] Mis horarios, telefono, direccion y servicios son correctos.
-- [ ] Tengo politicas basicas de cancelacion, garantia o alcance.
-- [ ] Se cuando debo emitir factura o comprobante.
+- [ ] Sé cuál producto o servicio deja mejor margen.
+- [ ] Tengo flujo mínimo para cubrir semanas lentas.
+- [ ] Mis procesos clave están escritos o son repetibles.
+- [ ] El cliente recibe información clara antes de comprar.
+- [ ] Tengo seguimiento después de la venta.
+- [ ] Mis datos digitales están actualizados.
+- [ ] Mis horarios, teléfono, dirección y servicios son correctos.
+- [ ] Tengo políticas básicas de cancelación, garantía o alcance.
+- [ ] Sé cuándo debo emitir factura o comprobante.
 - [ ] Identifico riesgos legales o fiscales que debo revisar.
 - [ ] Mi equipo entiende prioridades.
 - [ ] Tengo al menos un indicador semanal.
 - [ ] Puedo explicar mi propuesta de valor en una frase.
-- [ ] Tengo una accion concreta para mejorar en los proximos 90 dias.
+- [ ] Tengo una acción concreta para mejorar en los próximos 90 días.
 
 ---
 
 ## Preguntas De Reflexion
 
-1. Que parte de mi negocio se ve bien por fuera pero esta fragil por dentro?
-2. Que decision estoy posponiendo porque incomoda?
-3. Que cliente, producto o proceso me genera mas desgaste que valor?
-4. Que indicador necesito revisar cada semana?
-5. Que debo dejar de prometer?
-6. Que debo documentar antes de crecer?
-7. Que practica responsable puedo implementar sin aumentar demasiado mis costos?
-8. Si duplicara clientes el proximo mes, que se romperia primero?
+1. ¿Qué parte de mi negocio se ve bien por fuera pero está frágil por dentro?
+2. ¿Qué decisión estoy posponiendo porque incomoda?
+3. ¿Qué cliente, producto o proceso me genera más desgaste que valor?
+4. ¿Qué indicador necesito revisar cada semana?
+5. ¿Qué debo dejar de prometer?
+6. ¿Qué debo documentar antes de crecer?
+7. ¿Qué práctica responsable puedo implementar sin aumentar demasiado mis costos?
+8. ¿Si duplicara clientes el próximo mes, que se rompería primero?
 
 ---
 
-## Accion Recomendada En Geobooker
+## Acción Recomendada En Geobooker
 
 Para aplicar este documento dentro del ecosistema Geobooker:
 
-- Revisar si el negocio aparece correctamente en busquedas locales.
-- Completar datos basicos, categoria, ubicacion, contacto y horarios.
+- Revisar si el negocio aparece correctamente en búsquedas locales.
+- Completar datos básicos, categoría, ubicación, contacto y horarios.
 - Identificar palabras reales que usa el cliente para buscar el servicio.
 - Usar Geobooker Emprende para practicar decisiones antes de ejecutarlas.
 - Usar publicidad solo cuando el negocio tenga oferta, capacidad y seguimiento.
 - Usar CRM o campañas B2B con expectativas medibles, no con promesas absolutas.
-- Documentar contratos, facturacion y alcances cuando el servicio lo requiera.
+- Documentar contratos, facturación y alcances cuando el servicio lo requiera.
 
 ---
 
@@ -514,9 +514,9 @@ Para aplicar este documento dentro del ecosistema Geobooker:
 
 Sostenibilidad no significa crecer lento. Significa crecer con estructura.
 
-Un negocio local puede ser pequeno y aun asi ser serio. Puede ser familiar y aun asi tener procesos. Puede empezar con poco y aun asi tomar decisiones profesionales.
+Un negocio local puede ser pequeño y aun así ser serio. Puede ser familiar y aun así tener procesos. Puede empezar con poco y aun así tomar decisiones profesionales.
 
-La sostenibilidad convierte una idea en una operacion. Convierte ventas en continuidad. Convierte esfuerzo en aprendizaje. Convierte visibilidad en confianza.
+La sostenibilidad convierte una idea en una operación. Convierte ventas en continuidad. Convierte esfuerzo en aprendizaje. Convierte visibilidad en confianza.
 
 Un negocio sostenible no busca solamente sobrevivir al mes siguiente.
 
@@ -524,11 +524,11 @@ Busca volverse necesario, confiable y capaz de mejorar.
 
 ---
 
-## Ficha De Version
+## Ficha De Versión
 
-**Documento:** Sostenibilidad Del Negocio Local  
-**Version:** 0.1 editorial  
-**Fecha:** Julio 2026  
-**Preparado para:** Biblioteca Geobooker 2026  
-**Estado:** Borrador completo para revision editorial  
+**Documento:** Sostenibilidad Del Negocio Local
+**Versión:** 0.1 editorial
+**Fecha:** Julio 2026
+**Preparado para:** Biblioteca Geobooker 2026
+**Estado:** Borrador completo para revisión editorial
 **Uso futuro:** PDF descargable, consulta PWA, material educativo y soporte para Geobooker Emprende

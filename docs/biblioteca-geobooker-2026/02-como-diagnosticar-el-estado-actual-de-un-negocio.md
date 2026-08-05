@@ -1,26 +1,26 @@
-# Como Diagnosticar El Estado Actual De Un Negocio
+# Cómo Diagnosticar El Estado Actual De Un Negocio
 
-## Una guia practica para saber que mejorar primero
+## Una guía práctica para saber qué mejorar primero
 
-**Documento:** 02  
-**Nombre editorial:** Radiografia Del Negocio  
-**Coleccion:** Biblioteca Geobooker 2026 / Diagnostico De Negocios Existentes  
-**Estado:** Borrador editorial para revision  
-**Version:** 0.1  
-**Fecha:** Julio 2026  
-**Nivel:** Inicial a intermedio  
-**Tiempo estimado de lectura:** 15 a 20 minutos  
-**Uso previsto:** PDF descargable, lectura tipo docs, herramienta de diagnostico y material de apoyo para negocios registrados
+**Documento:** 02
+**Nombre editorial:** Radiografía Del Negocio
+**Colección:** Biblioteca Geobooker 2026 / Diagnóstico De Negocios Existentes
+**Estado:** Borrador editorial para revisión
+**Versión:** 0.1
+**Fecha:** Julio 2026
+**Nivel:** Inicial a intermedio
+**Tiempo estimado de lectura:** 15 a 20 minutos
+**Uso previsto:** PDF descargable, lectura tipo docs, herramienta de diagnóstico y material de apoyo para negocios registrados
 
 ---
 
 ## Portada Editorial
 
-# Como Diagnosticar El Estado Actual De Un Negocio
+# Cómo Diagnosticar El Estado Actual De Un Negocio
 
-## Una guia practica para saber que mejorar primero
+## Una guía práctica para saber qué mejorar primero
 
-Muchos negocios quieren vender mas, pero no siempre saben que problema deben resolver primero. A veces el problema no es publicidad. A veces es precio, servicio, reputacion, procesos, ubicacion, inventario, margen, atencion, seguimiento o falta de claridad en la oferta.
+Muchos negocios quieren vender más, pero no siempre saben que problema deben resolver primero. A veces el problema no es publicidad. A veces es precio, servicio, reputación, procesos, ubicación, inventario, margen, atención, seguimiento o falta de claridad en la oferta.
 
 Este documento ayuda a revisar el estado actual de un negocio antes de tomar decisiones costosas o improvisadas.
 
@@ -28,24 +28,24 @@ Este documento ayuda a revisar el estado actual de un negocio antes de tomar dec
 
 ## 1. Idea Central
 
-Diagnosticar un negocio significa observarlo con orden para entender que esta funcionando, que esta fallando y que debe atenderse primero.
+Diagnosticar un negocio significa observarlo con orden para entender que está funcionando, que está fallando y que debe atenderse primero.
 
-Un diagnostico no busca culpar. Busca claridad.
+Un diagnóstico no busca culpar. Busca claridad.
 
-Antes de invertir en publicidad, abrir otra sucursal, contratar personal, bajar precios o cambiar de giro, conviene responder una pregunta basica:
+Antes de invertir en publicidad, abrir otra sucursal, contratar personal, bajar precios o cambiar de giro, conviene responder una pregunta básica:
 
-> Que parte del negocio necesita mejorar con mayor urgencia y que evidencia tengo para saberlo?
+> ¿Qué parte del negocio necesita mejorar con mayor urgencia y que evidencia tengo para saberlo?
 
-Sin diagnostico, el negocio puede gastar energia en sintomas y no en causas.
+Sin diagnóstico, el negocio puede gastar energía en síntomas y no en causas.
 
 ---
 
-## 2. Para Quien Sirve
+## 2. Para quién Sirve
 
 Este documento sirve para:
 
-- Duenos de negocios locales.
-- Encargados de operacion.
+- Dueños de negocios locales.
+- Encargados de operación.
 - Emprendedores que ya empezaron a vender.
 - Negocios familiares.
 - Profesionistas independientes.
@@ -53,13 +53,13 @@ Este documento sirve para:
 - Negocios que quieren contratar publicidad.
 - Equipos que sienten que trabajan mucho pero avanzan poco.
 
-Tambien sirve para personas que desean evaluar si su negocio esta listo para crecer.
+También sirve para personas que desean evaluar si su negocio está listo para crecer.
 
 ---
 
-## 3. El Error Mas Comun
+## 3. El Error Más Común
 
-El error mas comun es diagnosticar con emociones y no con evidencia.
+El error más común es diagnosticar con emociones y no con evidencia.
 
 Ejemplos:
 
@@ -67,39 +67,39 @@ Ejemplos:
 - "Necesitamos publicidad."
 - "El equipo no quiere trabajar."
 - "La competencia nos copio."
-- "El problema es la ubicacion."
+- "El problema es la ubicación."
 - "Hay que bajar precios."
 
-Estas frases pueden tener algo de verdad, pero no son diagnostico. Son interpretaciones iniciales.
+Estas frases pueden tener algo de verdad, pero no son diagnóstico. Son interpretaciones iniciales.
 
-Un diagnostico profesional pregunta:
+Un diagnóstico profesional pregunta:
 
-- Que datos tenemos?
-- Que ha cambiado?
-- Que dicen los clientes?
-- Que parte del proceso falla?
-- Donde se pierde dinero?
-- Donde se pierde confianza?
-- Donde se pierde tiempo?
-- Que podemos comprobar?
+- ¿Qué datos tenemos?
+- ¿Qué ha cambiado?
+- ¿Qué dicen los clientes?
+- ¿Qué parte del proceso falla?
+- ¿Dónde se pierde dinero?
+- ¿Dónde se pierde confianza?
+- ¿Dónde se pierde tiempo?
+- ¿Qué podemos comprobar?
 
 ---
 
-## 4. Las Seis Areas Del Diagnostico Geobooker
+## 4. Las Seis Áreas Del Diagnóstico Geobooker
 
-Para revisar un negocio de forma simple, proponemos seis areas.
+Para revisar un negocio de forma simple, proponemos seis áreas.
 
 ### 1. Oferta
 
-Que vendes, a quien, por que te eligen y que tan clara es tu propuesta.
+Que vendes, a quién, por qué te eligen y qué tan clara es tu propuesta.
 
 ### 2. Cliente
 
 Quien compra, quien pregunta, quien vuelve, quien se pierde y quien recomienda.
 
-### 3. Operacion
+### 3. Operación
 
-Como funciona el negocio por dentro: procesos, tiempos, personal, inventario, entregas y calidad.
+Cómo funciona el negocio por dentro: procesos, tiempos, personal, inventario, entregas y calidad.
 
 ### 4. Finanzas
 
@@ -107,76 +107,76 @@ Ingresos, costos, margen, flujo, precios y gastos.
 
 ### 5. Visibilidad
 
-Como te encuentran: buscadores, mapas, redes, recomendaciones, anuncios y presencia local.
+Cómo te encuentran: buscadores, mapas, redes, recomendaciones, anuncios y presencia local.
 
-### 6. Reputacion
+### 6. Reputación
 
-Que confianza genera el negocio: resenas, quejas, cumplimiento, atencion y postventa.
+Que confianza genera el negocio: reseñas, quejas, cumplimiento, atención y postventa.
 
-Estas seis areas permiten ordenar la conversacion. Un negocio puede tener ventas, pero mala operacion. Puede tener buena reputacion, pero baja visibilidad. Puede tener muchos clientes, pero mal margen.
+Estas seis áreas permiten ordenar la conversación. Un negocio puede tener ventas, pero mala operación. Puede tener buena reputación, pero baja visibilidad. Puede tener muchos clientes, pero mal margen.
 
 ---
 
-## 5. Diagnostico Rapido En Una Pagina
+## 5. Diagnóstico Rápido En Una Página
 
-Califica cada area del 1 al 5.
+Califica cada área del 1 al 5.
 
-1 significa: area critica.  
-3 significa: funciona, pero necesita mejora.  
-5 significa: area fuerte y controlada.
+1 significa: área crítica.
+3 significa: funciona, pero necesita mejora.
+5 significa: área fuerte y controlada.
 
-| Area | Pregunta guia | Calificacion |
+| Área | Pregunta guía | Calificación |
 | --- | --- | --- |
-| Oferta | El cliente entiende rapidamente que vendemos y por que elegirnos? | ___ / 5 |
-| Cliente | Sabemos quienes son nuestros mejores clientes y por que compran? | ___ / 5 |
-| Operacion | Entregamos con calidad, tiempo y consistencia? | ___ / 5 |
-| Finanzas | Conocemos costos, margen y flujo de efectivo? | ___ / 5 |
-| Visibilidad | Nos encuentran facilmente en busquedas locales? | ___ / 5 |
-| Reputacion | Generamos confianza antes, durante y despues de vender? | ___ / 5 |
+| Oferta | ¿El cliente entiende rápidamente que vendemos y por qué elegirnos? | ___ / 5 |
+| Cliente | ¿Sabemos quienes son nuestros mejores clientes y por qué compran? | ___ / 5 |
+| Operación | ¿Entregamos con calidad, tiempo y consistencia? | ___ / 5 |
+| Finanzas | ¿Conocemos costos, margen y flujo de efectivo? | ___ / 5 |
+| Visibilidad | ¿Nos encuentran fácilmente en búsquedas locales? | ___ / 5 |
+| Reputación | ¿Generamos confianza antes, durante y después de vender? | ___ / 5 |
 
 ### Resultado
 
 Suma total: ______ / 30
 
-Interpretacion:
+Interpretación:
 
 - 6 a 12 puntos: el negocio necesita orden urgente antes de crecer.
-- 13 a 20 puntos: el negocio funciona, pero tiene areas debiles claras.
+- 13 a 20 puntos: el negocio funciona, pero tiene áreas débiles claras.
 - 21 a 26 puntos: el negocio tiene base saludable y puede optimizar.
-- 27 a 30 puntos: el negocio esta fuerte, pero debe mantener seguimiento.
+- 27 a 30 puntos: el negocio está fuerte, pero debe mantener seguimiento.
 
-Esta herramienta no sustituye un diagnostico profesional. Sirve para iniciar una conversacion ordenada.
+Esta herramienta no sustituye un diagnóstico profesional. Sirve para iniciar una conversación ordenada.
 
 ---
 
-## 6. Area 1: Oferta
+## 6. Área 1: Oferta
 
 La oferta responde tres preguntas:
 
-1. Que vendes?
-2. A quien le sirve?
-3. Por que deberian elegirte?
+1. ¿Qué vendes?
+2. ¿A quién le sirve?
+3. ¿Por qué deberían elegirte?
 
-Un negocio puede fallar no porque su producto sea malo, sino porque su oferta no esta clara.
+Un negocio puede fallar no porque su producto sea malo, sino porque su oferta no está clara.
 
 ### Senales De Problema
 
 - Los clientes preguntan lo mismo una y otra vez.
-- La descripcion del negocio es generica.
-- El menu, catalogo o servicio no se entiende rapido.
+- La descripción del negocio es genérica.
+- El menu, catalogo o servicio no se entiende rápido.
 - El negocio ofrece demasiadas cosas sin prioridad.
 - El cliente no percibe diferencia frente a la competencia.
 
-### Preguntas De Diagnostico
+### Preguntas De Diagnóstico
 
-- Cual es nuestro producto o servicio principal?
-- Cual es el producto o servicio mas rentable?
-- Cual atrae mas clientes?
-- Cual genera mas quejas?
-- Que frase explica mejor lo que hacemos?
-- Si un cliente nos encuentra en Geobooker, entendera nuestra oferta en menos de 10 segundos?
+- ¿Cuál es nuestro producto o servicio principal?
+- ¿Cuál es el producto o servicio más rentable?
+- ¿Cuál atrae más clientes?
+- ¿Cuál genera más quejas?
+- ¿Qué frase explica mejor lo que hacemos?
+- ¿Si un cliente nos encuentra en Geobooker, entenderá nuestra oferta en menos de 10 segundos?
 
-### Accion Recomendada
+### Acción Recomendada
 
 Escribe una frase simple:
 
@@ -184,11 +184,11 @@ Escribe una frase simple:
 
 Ejemplo:
 
-> Ayudamos a conductores de la zona a resolver fallas mecanicas comunes mediante diagnostico rapido, servicio preventivo y reparaciones claras.
+> Ayudamos a conductores de la zona a resolver fallas mecanicas comunes mediante diagnóstico rápido, servicio preventivo y reparaciones claras.
 
 ---
 
-## 7. Area 2: Cliente
+## 7. Área 2: Cliente
 
 No todos los clientes tienen el mismo valor para el negocio. Algunos compran una vez, otros vuelven, otros recomiendan y otros consumen muchos recursos.
 
@@ -196,42 +196,42 @@ Diagnosticar clientes significa entender quienes sostienen realmente el negocio.
 
 ### Senales De Problema
 
-- No sabes de donde vienen tus mejores clientes.
-- No sabes que servicio compran mas.
-- No sabes por que algunos no vuelven.
+- No sabes de dónde vienen tus mejores clientes.
+- No sabes que servicio compran más.
+- No sabes por qué algunos no vuelven.
 - No tienes registro de contactos.
 - No haces seguimiento.
 - Confundes seguidores con clientes.
 
-### Preguntas De Diagnostico
+### Preguntas De Diagnóstico
 
-- Quienes son nuestros mejores clientes?
-- Que tienen en comun?
-- De que colonia, ciudad o zona vienen?
-- Que problema buscan resolver?
-- Como nos encontraron?
-- Por que vuelven?
-- Por que dejan de comprar?
+- ¿Quiénes son nuestros mejores clientes?
+- ¿Qué tienen en común?
+- ¿De que colonia, ciudad o zona vienen?
+- ¿Qué problema buscan resolver?
+- ¿Cómo nos encontraron?
+- ¿Por qué vuelven?
+- ¿Por qué dejan de comprar?
 
-### Accion Recomendada
+### Acción Recomendada
 
-Haz una lista de tus ultimos 20 clientes y marca:
+Haz una lista de tus últimos 20 clientes y marca:
 
 - Que compraron.
-- Como llegaron.
-- Si volverian.
-- Si recomendarian.
+- Cómo llegaron.
+- Si volverían.
+- Si recomendarían.
 - Que problema resolvieron.
 
-Esto vale mas que muchas suposiciones.
+Esto vale más que muchas suposiciones.
 
 ---
 
-## 8. Area 3: Operacion
+## 8. Área 3: Operación
 
-La operacion es la forma en que el negocio cumple lo que promete.
+La operación es la forma en que el negocio cumple lo que promete.
 
-Publicidad sin buena operacion puede aumentar problemas. Si llegan mas clientes pero el negocio no puede atenderlos bien, crecen las quejas.
+Publicidad sin buena operación puede aumentar problemas. Si llegan más clientes pero el negocio no puede atenderlos bien, crecen las quejas.
 
 ### Senales De Problema
 
@@ -240,21 +240,21 @@ Publicidad sin buena operacion puede aumentar problemas. Si llegan mas clientes 
 - Inventario desordenado.
 - Falta de responsables.
 - Calidad inconsistente.
-- El dueno resuelve todo.
+- El dueño resuelve todo.
 - El equipo no sabe prioridades.
 
-### Preguntas De Diagnostico
+### Preguntas De Diagnóstico
 
-- Que proceso falla mas seguido?
-- Donde se pierde mas tiempo?
-- Que tarea depende demasiado de una sola persona?
-- Que errores se repiten?
-- Que parte del servicio genera mas quejas?
-- Que promesa hacemos al cliente que no siempre cumplimos?
+- ¿Qué proceso falla más seguido?
+- ¿Dónde se pierde más tiempo?
+- ¿Qué tarea depende demasiado de una sola persona?
+- ¿Qué errores se repiten?
+- ¿Qué parte del servicio genera más quejas?
+- ¿Qué promesa hacemos al cliente que no siempre cumplimos?
 
-### Accion Recomendada
+### Acción Recomendada
 
-Elige un proceso critico y dibujalo en pasos.
+Elige un proceso crítico y dibújalo en pasos.
 
 Ejemplo para pedido:
 
@@ -266,36 +266,36 @@ Ejemplo para pedido:
 6. Se entrega.
 7. Se da seguimiento.
 
-Despues marca en que paso se pierden tiempo, dinero o confianza.
+Después marca en qué paso se pierden tiempo, dinero o confianza.
 
 ---
 
-## 9. Area 4: Finanzas
+## 9. Área 4: Finanzas
 
-Un negocio puede vender y aun asi estar en riesgo si no entiende sus costos.
+Un negocio puede vender y aun así estar en riesgo si no entiende sus costos.
 
-Las finanzas basicas no son solo contabilidad. Son la capacidad de saber si lo que vendes deja suficiente margen para sostener el negocio.
+Las finanzas básicas no son solo contabilidad. Son la capacidad de saber si lo que vendes deja suficiente margen para sostener el negocio.
 
 ### Senales De Problema
 
-- No sabes cuanto cuesta realmente entregar tu producto o servicio.
+- No sabes cuánto cuesta realmente entregar tu producto o servicio.
 - Mezclas dinero personal y dinero del negocio.
 - No sabes margen por producto.
 - Vendes mucho, pero no queda efectivo.
 - Das descuentos sin calcular impacto.
-- No separas impuestos, renta, nomina, inventario o reinversion.
+- No separas impuestos, renta, nomina, inventario o reinversión.
 
-### Preguntas De Diagnostico
+### Preguntas De Diagnóstico
 
-- Cuanto vendimos este mes?
-- Cuanto costo vender eso?
-- Cuanto quedo realmente?
-- Que producto deja mejor margen?
-- Que gasto crecio sin control?
-- Que deuda o compromiso viene pronto?
-- Tenemos flujo para operar el siguiente mes?
+- ¿Cuánto vendimos este mes?
+- ¿Cuánto costo vender eso?
+- ¿Cuánto quedo realmente?
+- ¿Qué producto deja mejor margen?
+- ¿Qué gasto crecio sin control?
+- ¿Qué deuda o compromiso viene pronto?
+- ¿Tenemos flujo para operar el siguiente mes?
 
-### Accion Recomendada
+### Acción Recomendada
 
 Haz una tabla mensual simple:
 
@@ -312,82 +312,82 @@ No necesitas empezar perfecto. Necesitas empezar a ver.
 
 ---
 
-## 10. Area 5: Visibilidad
+## 10. Área 5: Visibilidad
 
 La visibilidad responde a una pregunta:
 
-> Cuando alguien cercano necesita lo que vendo, tengo posibilidad real de aparecer?
+> ¿cuando alguien cercano necesita lo que vendo, tengo posibilidad real de aparecer?
 
 Muchos negocios dependen solo de conocidos, redes sociales o paso peatonal. Eso puede funcionar, pero limita crecimiento.
 
 ### Senales De Problema
 
 - El negocio no aparece en mapas o directorios.
-- Los datos estan incompletos.
+- Los datos están incompletos.
 - No hay fotos claras.
-- La categoria es incorrecta.
-- El telefono o horario no estan actualizados.
+- La categoría es incorrecta.
+- El teléfono o horario no están actualizados.
 - No se sabe que productos o servicios ofrece.
-- No se mide cuantos clientes llegan por busqueda.
+- No se mide cuantos clientes llegan por búsqueda.
 
-### Preguntas De Diagnostico
+### Preguntas De Diagnóstico
 
-- Si busco mi categoria cerca de mi zona, aparezco?
-- Mi ficha tiene nombre, categoria, horario, telefono y ubicacion correctos?
-- Mis fotos generan confianza?
-- Mi descripcion explica que vendo?
-- Tengo palabras que coinciden con como busca la gente?
-- Estoy usando Geobooker para mejorar mi presencia local?
+- ¿Si busco mi categoría cerca de mi zona, aparezco?
+- ¿Mi ficha tiene nombre, categoría, horario, teléfono y ubicación correctos?
+- ¿Mis fotos generan confianza?
+- ¿Mi descripción explica que vendo?
+- ¿Tengo palabras que coinciden con cómo busca la gente?
+- ¿Estoy usando Geobooker para mejorar mi presencia local?
 
-### Accion Recomendada En Geobooker
+### Acción Recomendada En Geobooker
 
 1. Busca tu negocio.
 2. Revisa si aparece.
 3. Reclama o registra el negocio.
 4. Actualiza datos.
-5. Elige categoria correcta.
-6. Agrega descripcion clara.
-7. Revisa oportunidades de publicidad si la operacion ya puede responder.
+5. Elige categoría correcta.
+6. Agrega descripción clara.
+7. Revisa oportunidades de publicidad si la operación ya puede responder.
 
 ---
 
-## 11. Area 6: Reputacion
+## 11. Área 6: Reputación
 
-La reputacion es confianza acumulada.
+La reputación es confianza acumulada.
 
-No se construye solo con publicidad. Se construye con cumplimiento, atencion, claridad, respuesta a problemas y consistencia.
+No se construye solo con publicidad. Se construye con cumplimiento, atención, claridad, respuesta a problemas y consistencia.
 
 ### Senales De Problema
 
 - Quejas repetidas.
-- Resenas sin responder.
+- Reseñas sin responder.
 - Promesas incumplidas.
-- Mala comunicacion.
+- Mala comunicación.
 - Clientes que no vuelven.
 - Equipo que no sabe manejar reclamos.
 - Falta de postventa.
 
-### Preguntas De Diagnostico
+### Preguntas De Diagnóstico
 
-- Que quejas se repiten?
-- Respondemos con claridad?
-- Pedimos retroalimentacion?
-- Sabemos por que se pierde un cliente?
-- Hay seguimiento despues de vender?
-- Que tan facil es confiar en nosotros antes de comprar?
+- ¿Qué quejas se repiten?
+- ¿Respondemos con claridad?
+- ¿Pedimos retroalimentación?
+- ¿Sabemos por qué se pierde un cliente?
+- ¿Hay seguimiento después de vender?
+- ¿Qué tan fácil es confiar en nosotros antes de comprar?
 
-### Accion Recomendada
+### Acción Recomendada
 
-Toma las ultimas cinco quejas o molestias y clasificalas:
+Toma las últimas cinco quejas o molestias y clasificalas:
 
 - Problema de producto.
 - Problema de tiempo.
-- Problema de atencion.
+- Problema de atención.
 - Problema de precio.
-- Problema de comunicacion.
+- Problema de comunicación.
 - Problema de expectativa.
 
-Despues define una accion concreta para la categoria mas repetida.
+Después define una acción concreta para la categoría más repetida.
 
 ---
 
@@ -415,7 +415,7 @@ Empieza por problemas de alto impacto, alta urgencia y alta facilidad.
 
 ## 13. Errores Comunes Al Diagnosticar
 
-- Diagnosticar solo desde la opinion del dueno.
+- Diagnosticar solo desde la opinion del dueño.
 - Confundir ventas con utilidad.
 - Creer que publicidad resuelve cualquier problema.
 - No escuchar al cliente.
@@ -427,46 +427,46 @@ Empieza por problemas de alto impacto, alta urgencia y alta facilidad.
 
 ---
 
-## 14. Checklist De Diagnostico
+## 14. Checklist De Diagnóstico
 
-- La oferta principal esta clara.
+- La oferta principal está clara.
 - El negocio sabe quienes son sus mejores clientes.
-- Hay datos basicos de ventas y costos.
-- Los procesos principales estan identificados.
-- Los datos publicos del negocio estan actualizados.
-- El negocio aparece correctamente en busquedas locales.
+- Hay datos básicos de ventas y costos.
+- Los procesos principales están identificados.
+- Los datos públicos del negocio están actualizados.
+- El negocio aparece correctamente en búsquedas locales.
 - Las quejas se revisan y clasifican.
 - Hay responsables para acciones de mejora.
 - Se revisa avance cada semana.
-- Se evita comprar publicidad antes de corregir fallas graves de operacion.
+- Se evita comprar publicidad antes de corregir fallas graves de operación.
 
 ---
 
 ## 15. Preguntas De Reflexion
 
-1. Que problema se repite mas en mi negocio?
-2. Que evidencia tengo de ese problema?
-3. Que area esta mas debil: oferta, cliente, operacion, finanzas, visibilidad o reputacion?
-4. Que cambio pequeno podria mejorar el negocio esta semana?
-5. Que decision he postergado por falta de datos?
-6. Que dice el cliente que yo no estoy escuchando?
-7. Que promesa hago que no siempre puedo cumplir?
-8. Que informacion publica de mi negocio debo actualizar hoy?
+1. ¿Qué problema se repite más en mi negocio?
+2. ¿Qué evidencia tengo de ese problema?
+3. ¿Qué área está más débil: oferta, cliente, operación, finanzas, visibilidad o reputación?
+4. ¿Qué cambio pequeño podría mejorar el negocio esta semana?
+5. ¿Qué decisión he postergado por falta de datos?
+6. ¿Qué dice el cliente que yo no estoy escuchando?
+7. ¿Qué promesa hago que no siempre puedo cumplir?
+8. ¿Qué información pública de mi negocio debo actualizar hoy?
 
 ---
 
-## 16. Accion Recomendada En Geobooker
+## 16. Acción Recomendada En Geobooker
 
-Antes de contratar publicidad o iniciar una campana, revisa si tu negocio esta preparado para recibir mas atencion.
+Antes de contratar publicidad o iniciar una campaña, revisa si tu negocio está preparado para recibir más atención.
 
 Acciones sugeridas:
 
 1. Busca tu negocio en Geobooker.
 2. Reclama o registra tu ficha.
-3. Actualiza nombre, categoria, telefono, horario y ubicacion.
-4. Revisa si tu descripcion responde que vendes y para quien.
-5. Identifica que busquedas deberian encontrarte.
-6. Si tu operacion esta lista, explora opciones de visibilidad local.
+3. Actualiza nombre, categoría, teléfono, horario y ubicación.
+4. Revisa si tu descripción responde qué vendes y para quién.
+5. Identifica que búsquedas deberían encontrarte.
+6. Si tu operación está lista, explora opciones de visibilidad local.
 
 La visibilidad funciona mejor cuando el negocio ya puede cumplir lo que promete.
 
@@ -476,28 +476,28 @@ La visibilidad funciona mejor cuando el negocio ya puede cumplir lo que promete.
 
 Diagnosticar no es criticar. Diagnosticar es cuidar el negocio con inteligencia.
 
-Un diagnostico simple puede evitar gastos innecesarios, decisiones impulsivas y frustracion. Tambien puede mostrar oportunidades que estaban escondidas.
+Un diagnóstico simple puede evitar gastos innecesarios, decisiones impulsivas y frustración. También puede mostrar oportunidades que estaban escondidas.
 
-El negocio que aprende a observarse con honestidad tiene mas posibilidades de mejorar que el negocio que solo reacciona a la urgencia.
+El negocio que aprende a observarse con honestidad tiene más posibilidades de mejorar que el negocio que solo reacciona a la urgencia.
 
 ---
 
 ## 18. Aviso Editorial Y Legal
 
-Este documento es educativo e informativo. No constituye asesoria legal, fiscal, contable, financiera, laboral ni profesional personalizada.
+Este documento es educativo e informativo. No constituye asesoría legal, fiscal, contable, financiera, laboral ni profesional personalizada.
 
-Las decisiones especificas deben revisarse con especialistas calificados segun el pais, industria, regulacion y condiciones particulares del negocio.
+Las decisiones especificas deben revisarse con especialistas calificados según el país, industria, regulación y condiciones particulares del negocio.
 
-El contenido podra consultarse dentro de la PWA de Geobooker y descargarse en PDF cuando exista version publicada. Su modificacion, venta, redistribucion comercial o uso como obra derivada requiere autorizacion expresa de Geobooker.
+El contenido podrá consultarse dentro de la PWA de Geobooker y descargarse en PDF cuando exista versión publicada. Su modificación, venta, redistribución comercial o uso como obra derivada requiere autorización expresa de Geobooker.
 
 ---
 
-## 19. Ficha De Version
+## 19. Ficha De Versión
 
-**Titulo:** Como Diagnosticar El Estado Actual De Un Negocio  
-**Subtitulo:** Una guia practica para saber que mejorar primero  
-**Coleccion:** Biblioteca Geobooker 2026 / Diagnostico De Negocios Existentes  
-**Version:** 0.1  
-**Estado:** Borrador editorial para revision  
-**Fecha:** Julio 2026  
-**Preparado para:** Revision editorial, diseno PDF y futura publicacion PWA
+**Título:** Cómo Diagnosticar El Estado Actual De Un Negocio
+**Subtítulo:** Una guía práctica para saber qué mejorar primero
+**Colección:** Biblioteca Geobooker 2026 / Diagnóstico De Negocios Existentes
+**Versión:** 0.1
+**Estado:** Borrador editorial para revisión
+**Fecha:** Julio 2026
+**Preparado para:** Revisión editorial, diseño PDF y futura publicación PWA

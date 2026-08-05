@@ -20,6 +20,20 @@
   for = "/fonts/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/biblioteca/*.pdf"
+  [headers.values]
+    Content-Type = "application/pdf"
+    X-Robots-Tag = "index, follow"
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/biblioteca/pdfs/*.pdf"
+  [headers.values]
+    Content-Type = "application/pdf"
+    X-Robots-Tag = "index, follow"
+    Cache-Control = "public, max-age=86400"
     
 [[headers]]
   for = "/*.jpg"
@@ -132,3 +146,11 @@
 [[edge_functions]]
   function = "seo-business"
   path = "/business/*"
+
+[[edge_functions]]
+  function = "seo-library"
+  path = "/biblioteca"
+
+[[edge_functions]]
+  function = "seo-library"
+  path = "/biblioteca/*"

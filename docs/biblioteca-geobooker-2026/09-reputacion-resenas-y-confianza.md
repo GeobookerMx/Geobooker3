@@ -1,32 +1,32 @@
-# Reputacion, Resenas Y Confianza
+# Reputación, Reseñas Y Confianza
 
-## Como convertir experiencia, evidencia y seguimiento en una ventaja local
+## Cómo convertir experiencia, evidencia y seguimiento en una ventaja local
 
-**Biblioteca Geobooker 2026**  
-**Coleccion:** Marketing Local y Confianza  
-**Documento:** 09  
-**Nombre editorial:** Confianza Que Se Puede Ver  
-**Version:** 0.1 editorial  
-**Fecha:** Julio 2026  
-**Uso:** Consulta, capacitacion, diagnostico y futura descarga en PDF
+**Biblioteca Geobooker 2026**
+**Colección:** Marketing Local y Confianza
+**Documento:** 09
+**Nombre editorial:** Confianza Que Se Puede Ver
+**Versión:** 0.1 editorial
+**Fecha:** Julio 2026
+**Uso:** Consulta, capacitación, diagnóstico y futura descarga en PDF
 
 ---
 
 ## Aviso De Uso
 
-Este documento es educativo e informativo. No sustituye asesoria legal, de comunicacion, proteccion al consumidor, privacidad o gestion de crisis. Las reseñas, testimonios, calificaciones y contenidos publicos deben gestionarse con honestidad, consentimiento cuando aplique y respeto a las reglas de cada plataforma.
+Este documento es educativo e informativo. No sustituye asesoría legal, de comunicación, protección al consumidor, privacidad o gestion de crisis. Las reseñas, testimonios, calificaciones y contenidos públicos deben gestionarse con honestidad, consentimiento cuando aplique y respeto a las reglas de cada plataforma.
 
 ---
 
 ## Idea Central
 
-La reputacion no es lo que un negocio dice de si mismo.
+La reputación no es lo que un negocio dice de sí mismo.
 
-Es lo que el mercado cree despues de verlo operar.
+Es lo que el mercado cree después de verlo operar.
 
-En negocios locales, la reputacion vive en muchos lugares:
+En negocios locales, la reputación vive en muchos lugares:
 
-- La atencion al cliente.
+- La atención al cliente.
 - La limpieza.
 - La puntualidad.
 - La forma de resolver errores.
@@ -35,39 +35,39 @@ En negocios locales, la reputacion vive en muchos lugares:
 - Las reseñas.
 - Las fotos.
 - Las recomendaciones.
-- La experiencia despues de la venta.
+- La experiencia después de la venta.
 
-Una buena reputacion reduce friccion. Hace que el cliente tenga menos miedo de probar. Una mala reputacion, en cambio, puede destruir una oportunidad antes de que el negocio se entere.
+Una buena reputación reduce fricción. Hace que el cliente tenga menos miedo de probar. Una mala reputación, en cambio, puede destruir una oportunidad antes de que el negocio se entere.
 
 ---
 
-## Para Quien Sirve
+## Para quién Sirve
 
 Este documento sirve para:
 
 - Negocios que quieren mejorar confianza local.
-- Emprendedores que desean iniciar con buenas practicas.
-- Equipos de atencion al cliente.
-- Marcas que desean anunciarse sin arriesgar reputacion.
-- Negocios que reciben reseñas pero no saben como responder.
+- Emprendedores que desean iniciar con buenas prácticas.
+- Equipos de atención al cliente.
+- Marcas que desean anunciarse sin arriesgar reputación.
+- Negocios que reciben reseñas pero no saben cómo responder.
 - Administradores que necesitan ordenar quejas, evidencia y seguimiento.
 
 ---
 
 ## El Problema Que Resuelve
 
-Muchos negocios tratan la reputacion como algo decorativo.
+Muchos negocios tratan la reputación como algo decorativo.
 
 La realidad es distinta:
 
 - Un cliente revisa reseñas antes de visitar.
-- Una mala respuesta publica puede alejar mas que la reseña original.
+- Una mala respuesta pública puede alejar más que la reseña original.
 - Una promesa poco clara genera reclamos.
 - Una foto descuidada comunica desorden.
-- Un telefono sin respuesta genera desconfianza.
+- Un teléfono sin respuesta genera desconfianza.
 - Una queja ignorada puede convertirse en crisis.
 
-La reputacion se debe gestionar como activo comercial.
+La reputación se debe gestionar como activo comercial.
 
 ---
 
@@ -75,15 +75,15 @@ La reputacion se debe gestionar como activo comercial.
 
 Antes de comprar, el cliente se pregunta:
 
-- Esto existe?
-- Esta abierto?
-- Es confiable?
-- Me responderan?
-- El precio sera claro?
-- Me trataran bien?
-- Si algo sale mal, alguien se hara responsable?
+- ¿Esto existe?
+- ¿Está abierto?
+- ¿Es confiable?
+- ¿Me responderan?
+- ¿El precio será claro?
+- ¿Me trataran bien?
+- ¿Si algo sale mal, alguien se hará responsable?
 
-La funcion de la reputacion es responder esas preguntas antes de que el cliente las diga.
+La función de la reputación es responder esas preguntas antes de que el cliente las diga.
 
 ---
 
@@ -91,7 +91,7 @@ La funcion de la reputacion es responder esas preguntas antes de que el cliente 
 
 ### 1. Claridad
 
-El cliente debe entender que haces, para quien y bajo que condiciones.
+El cliente debe entender que haces, para quién y bajo qué condiciones.
 
 Ejemplos:
 
@@ -99,9 +99,9 @@ Ejemplos:
 - Precios orientativos cuando sea posible.
 - Horarios reales.
 - Zona de cobertura.
-- Politicas basicas.
+- Políticas básicas.
 
-La confusion reduce conversion.
+La confusión reduce conversión.
 
 ---
 
@@ -112,9 +112,9 @@ La experiencia debe parecerse cada vez que el cliente interactua.
 Consistencia significa:
 
 - Mismo nivel de trato.
-- Misma claridad de informacion.
+- Misma claridad de información.
 - Mismo cumplimiento de horarios.
-- Misma calidad minima.
+- Misma calidad mínima.
 - Mismo proceso para resolver dudas.
 
 Un negocio inconsistente obliga al cliente a apostar.
@@ -128,12 +128,12 @@ La confianza necesita pruebas.
 Ejemplos:
 
 - Fotos reales.
-- Reseñas autenticas.
+- Reseñas auténticas.
 - Casos atendidos.
-- Antes y despues cuando aplique.
+- Antes y después cuando aplique.
 - Certificados o permisos cuando sean relevantes.
-- Tiempo de operacion.
-- Respuestas publicas profesionales.
+- Tiempo de operación.
+- Respuestas públicas profesionales.
 
 No se trata de presumir. Se trata de reducir incertidumbre.
 
@@ -141,7 +141,7 @@ No se trata de presumir. Se trata de reducir incertidumbre.
 
 ### 4. Respuesta
 
-La velocidad y calidad de respuesta son parte de la reputacion.
+La velocidad y calidad de respuesta son parte de la reputación.
 
 Un negocio puede perder clientes por:
 
@@ -151,7 +151,7 @@ Un negocio puede perder clientes por:
 - No cerrar el seguimiento.
 - No registrar acuerdos.
 
-La respuesta debe ser amable, concreta y util.
+La respuesta debe ser amable, concreta y útil.
 
 ---
 
@@ -159,24 +159,24 @@ La respuesta debe ser amable, concreta y util.
 
 Todos los negocios cometen errores.
 
-La diferencia esta en como los manejan.
+La diferencia está en cómo los manejan.
 
 Una respuesta responsable:
 
-- Reconoce la situacion.
+- Reconoce la situación.
 - Evita insultos o defensas agresivas.
 - Pide datos si hace falta.
 - Propone un siguiente paso.
 - Documenta internamente.
 - Aprende del caso.
 
-La reputacion mejora cuando el cliente ve que el negocio no se esconde.
+La reputación mejora cuando el cliente ve que el negocio no se esconde.
 
 ---
 
 ### 6. Memoria
 
-La confianza tambien depende de recordar.
+La confianza también depende de recordar.
 
 Ejemplos:
 
@@ -186,51 +186,51 @@ Ejemplos:
 - Que problema tuvo.
 - Que preferencia tiene.
 
-La memoria comercial convierte una venta aislada en relacion.
+La memoria comercial convierte una venta aislada en relación.
 
 ---
 
-## Herramienta: Matriz De Reputacion
+## Herramienta: Matriz De Reputación
 
 Evalua tu negocio:
 
-| Elemento | Estado Actual | Riesgo | Accion |
+| Elemento | Estado Actual | Riesgo | Acción |
 | --- | --- | --- | --- |
-| Datos publicos correctos | Bueno / Medio / Bajo | Alto / Medio / Bajo | __________ |
+| Datos públicos correctos | Bueno / Medio / Bajo | Alto / Medio / Bajo | __________ |
 | Fotos reales | Bueno / Medio / Bajo | Alto / Medio / Bajo | __________ |
 | Respuestas a mensajes | Bueno / Medio / Bajo | Alto / Medio / Bajo | __________ |
 | Reseñas recientes | Bueno / Medio / Bajo | Alto / Medio / Bajo | __________ |
 | Manejo de quejas | Bueno / Medio / Bajo | Alto / Medio / Bajo | __________ |
 | Seguimiento postventa | Bueno / Medio / Bajo | Alto / Medio / Bajo | __________ |
-| Politicas claras | Bueno / Medio / Bajo | Alto / Medio / Bajo | __________ |
+| Políticas claras | Bueno / Medio / Bajo | Alto / Medio / Bajo | __________ |
 | Evidencia de calidad | Bueno / Medio / Bajo | Alto / Medio / Bajo | __________ |
 
 Prioriza primero los elementos con estado bajo y riesgo alto.
 
 ---
 
-## Como Pedir Reseñas Sin Presionar
+## Cómo Pedir Reseñas Sin Presionar
 
-Una reseña debe solicitarse con naturalidad, no con manipulacion.
+Una reseña debe solicitarse con naturalidad, no con manipulación.
 
 Formato sugerido:
 
-"Gracias por visitarnos. Si tu experiencia fue buena, nos ayudaria mucho que nos dejaras una reseña. Eso permite que mas personas de la zona nos encuentren con confianza."
+"Gracias por visitarnos. Si tu experiencia fue buena, nos ayudaría mucho que nos dejaras una reseña. Eso permite que más personas de la zona nos encuentren con confianza."
 
-Buenas practicas:
+Buenas prácticas:
 
-- Pedir reseñas despues de una experiencia real.
+- Pedir reseñas después de una experiencia real.
 - No comprar reseñas.
 - No inventar testimonios.
 - No condicionar descuentos a calificaciones perfectas.
 - No presionar al cliente.
 - Responder agradeciendo.
 
-La reputacion falsa se vuelve riesgo.
+La reputación falsa se vuelve riesgo.
 
 ---
 
-## Como Responder Una Reseña Positiva
+## Cómo Responder Una Reseña Positiva
 
 Estructura:
 
@@ -240,11 +240,11 @@ Estructura:
 
 Ejemplo:
 
-"Gracias por visitarnos. Nos alegra saber que la atencion y el servicio te fueron utiles. Sera un gusto recibirte nuevamente."
+"Gracias por visitarnos. Nos alegra saber que la atención y el servicio te fueron útiles. Será un gusto recibirte nuevamente."
 
 ---
 
-## Como Responder Una Reseña Negativa
+## Cómo Responder Una Reseña Negativa
 
 Estructura:
 
@@ -252,11 +252,11 @@ Estructura:
 2. Reconocer la molestia sin discutir.
 3. Pedir datos para revisar.
 4. Ofrecer canal de seguimiento.
-5. No exponer informacion sensible.
+5. No exponer información sensible.
 
 Ejemplo:
 
-"Lamentamos que tu experiencia no haya sido la esperada. Queremos revisar lo ocurrido con seriedad. Por favor escribenos por mensaje directo o al canal de atencion para ubicar tu caso y darte seguimiento."
+"Lamentamos que tu experiencia no haya sido la esperada. Queremos revisar lo ocurrido con seriedad. Por favor escribenos por mensaje directo o al canal de atención para ubicar tu caso y darte seguimiento."
 
 Regla:
 
@@ -266,11 +266,11 @@ Regla:
 
 ## Casos Aplicados
 
-### Caso 1: Clinica Local
+### Caso 1: Clínica Local
 
 Problema:
 
-La clinica tiene buenos profesionales, pero pocas reseñas y poca claridad sobre horarios.
+La clínica tiene buenos profesionales, pero pocas reseñas y poca claridad sobre horarios.
 
 Acciones:
 
@@ -278,7 +278,7 @@ Acciones:
 - Publicar servicios principales.
 - Pedir reseñas a pacientes satisfechos.
 - Responder dudas frecuentes.
-- Cuidar privacidad en cualquier respuesta publica.
+- Cuidar privacidad en cualquier respuesta pública.
 
 Resultado esperado:
 
@@ -294,15 +294,15 @@ Los clientes desconfian por experiencias pasadas con otros talleres.
 
 Acciones:
 
-- Documentar diagnosticos.
+- Documentar diagnósticos.
 - Entregar cotizaciones claras.
 - Mostrar fotos reales de trabajos.
-- Dar seguimiento despues del servicio.
+- Dar seguimiento después del servicio.
 - Registrar acuerdos por escrito.
 
 Resultado esperado:
 
-Menos reclamos, mas confianza y mayor recurrencia.
+Menos reclamos, más confianza y mayor recurrencia.
 
 ---
 
@@ -310,7 +310,7 @@ Menos reclamos, mas confianza y mayor recurrencia.
 
 Problema:
 
-El restaurante quiere anunciarse, pero aun tiene poca evidencia social.
+El restaurante quiere anunciarse, pero aún tiene poca evidencia social.
 
 Acciones:
 
@@ -322,17 +322,17 @@ Acciones:
 
 Resultado esperado:
 
-La publicidad trabaja sobre una base mas creible.
+La publicidad trabaja sobre una base más creible.
 
 ---
 
-## Reputacion Y Publicidad
+## Reputación Y Publicidad
 
 La publicidad amplifica.
 
-Si el negocio esta bien preparado, amplifica confianza.
+Si el negocio está bien preparado, amplifica confianza.
 
-Si el negocio esta desordenado, amplifica problemas.
+Si el negocio está desordenado, amplifica problemas.
 
 Antes de pagar publicidad, conviene revisar:
 
@@ -341,20 +341,20 @@ Antes de pagar publicidad, conviene revisar:
 - Respuesta a mensajes.
 - Oferta clara.
 - Capacidad operativa.
-- Politicas basicas.
+- Políticas básicas.
 - Manejo de quejas.
 
-No toda falta de resultados es culpa del anuncio. A veces el anuncio llevo al cliente a un negocio que aun no estaba listo para convertir.
+No toda falta de resultados es culpa del anuncio. A veces el anuncio llevo al cliente a un negocio que aún no estaba listo para convertir.
 
 ---
 
-## Reputacion Y CRM
+## Reputación Y CRM
 
 El CRM no debe usarse solo para enviar mensajes.
 
 Debe usarse para recordar, segmentar y dar seguimiento con respeto.
 
-Buenas practicas:
+Buenas prácticas:
 
 - Registrar origen del contacto.
 - No saturar mensajes.
@@ -364,70 +364,70 @@ Buenas practicas:
 - No prometer resultados garantizados.
 - Usar tonos profesionales y claros.
 
-Una campaña puede generar oportunidades, pero el seguimiento determina si se convierten en relacion.
+Una campaña puede generar oportunidades, pero el seguimiento determina si se convierten en relación.
 
 ---
 
-## Checklist De Reputacion
+## Checklist De Reputación
 
-- [ ] Mis datos publicos son correctos.
+- [ ] Mis datos públicos son correctos.
 - [ ] Mis fotos reflejan la realidad del negocio.
 - [ ] Respondo mensajes en tiempos razonables.
 - [ ] Tengo un proceso para pedir reseñas.
 - [ ] Respondo reseñas positivas.
 - [ ] Respondo reseñas negativas con profesionalismo.
-- [ ] Tengo politicas claras para dudas o reclamos.
+- [ ] Tengo políticas claras para dudas o reclamos.
 - [ ] Registro compromisos importantes.
 - [ ] No prometo resultados que no controlo.
-- [ ] Mi equipo sabe como responder al cliente.
+- [ ] Mi equipo sabe cómo responder al cliente.
 - [ ] Uso seguimiento postventa.
-- [ ] Reviso periodicamente mi presencia digital.
+- [ ] Reviso periódicamente mi presencia digital.
 
 ---
 
 ## Preguntas De Reflexion
 
-1. Que dice mi reputacion actual antes de que yo hable?
-2. Que parte de mi experiencia genera mas confianza?
-3. Que parte genera mas duda?
-4. Como respondo cuando un cliente se queja?
-5. Que evidencia necesito mostrar mejor?
-6. Estoy preparado para recibir mas clientes si hago publicidad?
-7. Que debo corregir antes de pedir mas visibilidad?
+1. ¿Qué dice mi reputación actual antes de que yo hable?
+2. ¿Qué parte de mi experiencia genera más confianza?
+3. ¿Qué parte genera más duda?
+4. ¿Cómo respondo cuando un cliente se queja?
+5. ¿Qué evidencia necesito mostrar mejor?
+6. ¿Estoy preparado para recibir más clientes si hago publicidad?
+7. ¿Qué debo corregir antes de pedir más visibilidad?
 
 ---
 
-## Accion Recomendada En Geobooker
+## Acción Recomendada En Geobooker
 
 Para aplicar este documento:
 
-- Revisar como aparece el negocio.
-- Completar datos, fotos y categorias.
-- Agregar servicios o palabras de busqueda reales.
+- Revisar cómo aparece el negocio.
+- Completar datos, fotos y categorías.
+- Agregar servicios o palabras de búsqueda reales.
 - Reclamar negocio si corresponde.
 - Promover reseñas honestas y seguimiento.
-- Usar publicidad solo cuando la presencia basica sea confiable.
+- Usar publicidad solo cuando la presencia básica sea confiable.
 - Usar CRM con trazabilidad, respeto y expectativas claras.
 
 ---
 
 ## Cierre Editorial
 
-La reputacion es una forma de capital.
+La reputación es una forma de capital.
 
 No siempre aparece en la contabilidad, pero afecta ventas, confianza, recomendaciones, precio, permanencia y crecimiento.
 
-Un negocio con buena reputacion no necesita gritar para ser escuchado. Necesita operar bien, mostrar evidencia, responder con seriedad y aprender de cada contacto.
+Un negocio con buena reputación no necesita gritar para ser escuchado. Necesita operar bien, mostrar evidencia, responder con seriedad y aprender de cada contacto.
 
 Geobooker debe ayudar a que los negocios no solo aparezcan, sino aparezcan mejor.
 
 ---
 
-## Ficha De Version
+## Ficha De Versión
 
-**Documento:** Reputacion, Resenas Y Confianza  
-**Version:** 0.1 editorial  
-**Fecha:** Julio 2026  
-**Preparado para:** Biblioteca Geobooker 2026  
-**Estado:** Borrador completo para revision editorial  
+**Documento:** Reputación, Reseñas Y Confianza
+**Versión:** 0.1 editorial
+**Fecha:** Julio 2026
+**Preparado para:** Biblioteca Geobooker 2026
+**Estado:** Borrador completo para revisión editorial
 **Uso futuro:** PDF descargable, consulta PWA, material educativo y soporte para perfiles, Ads, CRM y postventa

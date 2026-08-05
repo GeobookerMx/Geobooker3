@@ -1,32 +1,32 @@
-# Psicologia Del Constructor De Negocios
+# Psicología Del Constructor De Negocios
 
-## Paciencia, criterio, energia y estrategia para construir sin romperse
+## Paciencia, criterio, energía y estrategia para construir sin romperse
 
-**Biblioteca Geobooker 2026**  
-**Coleccion:** Capital Humano Evolutivo  
-**Documento:** 11  
-**Nombre editorial:** Construir Sin Romperse  
-**Version:** 0.1 editorial  
-**Fecha:** Julio 2026  
-**Uso:** Consulta, capacitacion, diagnostico y futura descarga en PDF
+**Biblioteca Geobooker 2026**
+**Colección:** Capital Humano Evolutivo
+**Documento:** 11
+**Nombre editorial:** Construir Sin Romperse
+**Versión:** 0.1 editorial
+**Fecha:** Julio 2026
+**Uso:** Consulta, capacitación, diagnóstico y futura descarga en PDF
 
 ---
 
 ## Aviso De Uso
 
-Este documento es educativo e informativo. No sustituye atencion psicologica, medica, legal, financiera o profesional especializada. Si una persona vive ansiedad intensa, agotamiento severo, depresion, crisis, violencia, adicciones o afectaciones graves, debe buscar apoyo profesional y redes de soporte confiables.
+Este documento es educativo e informativo. No sustituye atención psicologica, medica, legal, financiera o profesional especializada. Si una persona vive ansiedad intensa, agotamiento severo, depresión, crisis, violencia, adicciones o afectaciones graves, debe buscar apoyo profesional y redes de soporte confiables.
 
 ---
 
 ## Idea Central
 
-Abrir o sostener un negocio no es solamente resolver dinero, producto, ubicacion, proveedores y clientes.
+Abrir o sostener un negocio no es solamente resolver dinero, producto, ubicación, proveedores y clientes.
 
-Tambien es sostener una mente capaz de decidir con incertidumbre.
+También es sostener una mente capaz de decidir con incertidumbre.
 
-Un negocio presiona la identidad de quien lo construye. Obliga a enfrentar rechazo, espera, errores, pagos, quejas, competencia, cansancio, comparacion, soledad y cambios constantes.
+Un negocio presiona la identidad de quién lo construye. Obliga a enfrentar rechazo, espera, errores, pagos, quejas, competencia, cansancio, comparación, soledad y cambios constantes.
 
-Por eso la Biblioteca Geobooker no puede hablar solo de tecnica. Debe hablar tambien del constructor.
+Por eso la Biblioteca Geobooker no puede hablar solo de técnica. Debe hablar también del constructor.
 
 El constructor de negocios necesita:
 
@@ -35,26 +35,26 @@ El constructor de negocios necesita:
 - Estrategia para elegir batallas.
 - Disciplina para repetir lo importante.
 - Humildad para corregir.
-- Energia para sostener el proceso.
-- Limites para no romper su salud ni sus relaciones.
+- Energía para sostener el proceso.
+- Límites para no romper su salud ni sus relaciones.
 
-Un negocio fragil muchas veces nace de una mente agotada, impulsiva o desordenada.
+Un negocio frágil muchas veces nace de una mente agotada, impulsiva o desordenada.
 
-Un negocio mas fuerte empieza con una persona que aprende a construir con calma, datos y responsabilidad.
+Un negocio más fuerte empieza con una persona que aprende a construir con calma, datos y responsabilidad.
 
 ---
 
-## Para Quien Sirve
+## Para quién Sirve
 
 Este documento sirve para:
 
 - Personas que quieren abrir un negocio desde cero.
-- Duenos de negocios que se sienten cansados o estancados.
+- Dueños de negocios que se sienten cansados o estancados.
 - Emprendedores que cambian de idea cada semana.
-- Personas que sienten presion por vender rapido.
-- Lideres de equipos pequenos.
+- Personas que sienten presión por vender rápido.
+- Lideres de equipos pequeños.
 - Profesionistas que quieren independizarse.
-- Familias que estan construyendo un negocio juntas.
+- Familias que están construyendo un negocio juntas.
 - Usuarios de Geobooker Emprende que quieren aprender a decidir mejor.
 
 ---
@@ -68,15 +68,15 @@ Fallan por:
 - Impaciencia.
 - Falta de foco.
 - Expectativas irreales.
-- Comparacion constante.
+- Comparación constante.
 - Mala gestion del estres.
 - Decisiones tomadas por miedo.
 - Decisiones tomadas por ego.
 - Confundir ventas iniciales con modelo probado.
 - Confundir una mala semana con fracaso total.
-- Confundir una buena semana con garantia permanente.
+- Confundir una buena semana con garantía permanente.
 
-La psicologia del constructor ayuda a observar el negocio y a la persona que lo dirige.
+La psicología del constructor ayuda a observar el negocio y a la persona que lo dirige.
 
 ---
 
@@ -88,7 +88,7 @@ Una idea peligrosa es creer:
 
 Eso no es cierto.
 
-Un negocio es un sistema. Puede fallar por ubicacion, precio, mercado, costos, equipo, timing, errores operativos, mala estrategia o falta de demanda.
+Un negocio es un sistema. Puede fallar por ubicación, precio, mercado, costos, equipo, timing, errores operativos, mala estrategia o falta de demanda.
 
 La persona debe asumir responsabilidad sin destruir su identidad.
 
@@ -106,7 +106,7 @@ Culpa destructiva:
 - Nada me sale.
 - Todos avanzan menos yo.
 - Ya no vale la pena intentar.
-- Si pido ayuda, soy debil.
+- Si pido ayuda, soy débil.
 
 La responsabilidad construye. La culpa paraliza.
 
@@ -116,7 +116,7 @@ La responsabilidad construye. La culpa paraliza.
 
 La paciencia no es esperar sin hacer nada.
 
-La paciencia estrategica es seguir trabajando con direccion aunque los resultados tarden.
+La paciencia estrategica es seguir trabajando con dirección aunque los resultados tarden.
 
 Incluye:
 
@@ -125,11 +125,11 @@ Incluye:
 - Corregir.
 - Repetir.
 - Aprender.
-- Sostener acciones utiles.
+- Sostener acciones útiles.
 
 La impaciencia hace que muchos negocios abandonen justo antes de entender su mercado.
 
-Pero tambien existe el extremo contrario: aguantar demasiado una idea que ya mostro señales claras de no funcionar.
+Pero también existe el extremo contrario: aguantar demasiado una idea que ya mostro señales claras de no funcionar.
 
 Por eso la paciencia necesita datos.
 
@@ -143,30 +143,30 @@ Pregunta clave:
 
 Trabajar mucho no siempre significa avanzar.
 
-Un negocio puede tener mucha actividad y poca direccion.
+Un negocio puede tener mucha actividad y poca dirección.
 
 Ejemplos de falsa intensidad:
 
-- Publicar todos los dias sin saber a quien se habla.
+- Publicar todos los días sin saber a quién se habla.
 - Comprar inventario sin validar demanda.
-- Abrir mas horarios sin medir rentabilidad.
+- Abrir más horarios sin medir rentabilidad.
 - Hacer descuentos sin calcular margen.
-- Aceptar todos los clientes aunque algunos destruyan energia.
-- Cambiar logo, colores o redes antes de resolver producto, precio o atencion.
+- Aceptar todos los clientes aunque algunos destruyan energía.
+- Cambiar logo, colores o redes antes de resolver producto, precio o atención.
 
 La estrategia pregunta:
 
-- Que problema resolvemos?
-- Para quien?
-- Con que margen?
-- En que zona?
-- Con que capacidad?
-- Que mediremos?
-- Que dejaremos de hacer?
+- ¿Qué problema resolvemos?
+- ¿Para quién?
+- ¿Con qué margen?
+- ¿En que zona?
+- ¿Con qué capacidad?
+- ¿Qué mediremos?
+- ¿Qué dejaremos de hacer?
 
 La intensidad sin estrategia agota.
 
-La estrategia convierte esfuerzo en direccion.
+La estrategia convierte esfuerzo en dirección.
 
 ---
 
@@ -203,44 +203,44 @@ La incertidumbre baja cuando el negocio tiene estructura.
 
 ## El Ego Del Constructor
 
-El ego puede ayudar a empezar, pero tambien puede impedir aprender.
+El ego puede ayudar a empezar, pero también puede impedir aprender.
 
-Ego util:
+Ego útil:
 
 - Confianza para iniciar.
-- Energia para vender.
+- Energía para vender.
 - Valor para tocar puertas.
-- Ambicion para mejorar.
+- Ambición para mejorar.
 
 Ego peligroso:
 
 - No escuchar clientes.
 - No aceptar errores.
 - Gastar para aparentar.
-- Prometer mas de lo que se puede cumplir.
+- Prometer más de lo que se puede cumplir.
 - Confundir opinion propia con demanda real.
-- Tomar toda critica como ataque personal.
+- Tomar toda crítica como ataque personal.
 
 La pregunta no es si el constructor tiene ego. Todos tenemos.
 
-La pregunta es si el ego esta al servicio del negocio o el negocio al servicio del ego.
+La pregunta es si el ego está al servicio del negocio o el negocio al servicio del ego.
 
 ---
 
-## Energia Y Ritmo
+## Energía Y Ritmo
 
-Un negocio necesita energia sostenida.
+Un negocio necesita energía sostenida.
 
-No se construye solo con picos de motivacion.
+No se construye solo con picos de motivación.
 
 Senales de ritmo sano:
 
 - Horarios razonables.
-- Revision semanal.
+- Revisión semanal.
 - Prioridades claras.
-- Descanso minimo.
-- Alimentacion y salud basica.
-- Conversaciones dificiles a tiempo.
+- Descanso mínimo.
+- Alimentación y salud básica.
+- Conversaciones difíciles a tiempo.
 - Espacios para aprender.
 
 Senales de ritmo peligroso:
@@ -258,7 +258,7 @@ Un negocio que exige destruir a la persona que lo sostiene debe redisenarse.
 
 ## La Soledad Del Constructor
 
-Muchas personas que abren un negocio se sienten solas aunque esten rodeadas de gente.
+Muchas personas que abren un negocio se sienten solas aunque estén rodeadas de gente.
 
 Porque hay decisiones que solo quien dirige siente con toda su carga.
 
@@ -268,12 +268,12 @@ Por eso es importante construir una red:
 - Mentor.
 - Proveedor confiable.
 - Cliente honesto.
-- Familiar que entienda limites.
+- Familiar que entienda límites.
 - Equipo interno.
 - Comunidad de aprendizaje.
 - Herramientas como Geobooker Emprende.
 
-La soledad no siempre se resuelve con mas ruido. A veces se resuelve con mejores conversaciones.
+La soledad no siempre se resuelve con más ruido. A veces se resuelve con mejores conversaciones.
 
 ---
 
@@ -283,15 +283,15 @@ Usa esta herramienta una vez por semana.
 
 | Pregunta | Respuesta |
 | --- | --- |
-| Que decision importante tome esta semana? | __________________ |
-| Que hice por miedo? | __________________ |
-| Que hice por estrategia? | __________________ |
-| Que aprendi del cliente? | __________________ |
-| Que debo dejar de hacer? | __________________ |
-| Que debo repetir? | __________________ |
-| Que me esta desgastando? | __________________ |
-| A quien debo pedir ayuda? | __________________ |
-| Que indicador revisare la proxima semana? | __________________ |
+| ¿Qué decisión importante tomé esta semana? | __________________ |
+| ¿Qué hice por miedo? | __________________ |
+| ¿Qué hice por estrategia? | __________________ |
+| ¿Qué aprendi del cliente? | __________________ |
+| ¿Qué debo dejar de hacer? | __________________ |
+| ¿Qué debo repetir? | __________________ |
+| ¿Qué me está desgastando? | __________________ |
+| ¿A quién debo pedir ayuda? | __________________ |
+| ¿Qué indicador revisare la próxima semana? | __________________ |
 
 Este diario no es para juzgarte. Es para observar mejor.
 
@@ -299,15 +299,15 @@ Este diario no es para juzgarte. Es para observar mejor.
 
 ## Herramienta: Semaforo Personal Del Constructor
 
-| Area | Verde | Amarillo | Rojo | Mi Estado |
+| Área | Verde | Amarillo | Rojo | Mi Estado |
 | --- | --- | --- | --- | --- |
-| Energia | Tengo ritmo sostenible | Estoy cansado pero funcional | Estoy agotado | ____ |
+| Energía | Tengo ritmo sostenible | Estoy cansado pero funcional | Estoy agotado | ____ |
 | Claridad | Se que sigue | Tengo dudas manejables | Estoy confundido | ____ |
-| Finanzas personales | Tengo control minimo | Hay presion | Estoy en crisis | ____ |
+| Finanzas personales | Tengo control mínimo | Hay presión | Estoy en crisis | ____ |
 | Apoyo | Tengo con quien hablar | Apoyo limitado | Estoy solo | ____ |
 | Aprendizaje | Estoy corrigiendo | Me cuesta escuchar | Repito errores | ____ |
 | Paciencia | Sigo estrategia con datos | Me impaciento | Cambio todo por ansiedad | ____ |
-| Limites | Protejo salud y relaciones | Los descuido a veces | Todo gira en el negocio | ____ |
+| Límites | Protejo salud y relaciones | Los descuido a veces | Todo gira en el negocio | ____ |
 
 Si aparecen varios rojos, no significa abandonar. Significa ajustar antes de romperse.
 
@@ -315,36 +315,36 @@ Si aparecen varios rojos, no significa abandonar. Significa ajustar antes de rom
 
 ## Casos Aplicados
 
-### Caso 1: Persona Que Quiere Abrir Una Cafeteria
+### Caso 1: Persona Que Quiere Abrir Una Cafetería
 
 Riesgo:
 
-Abrir por amor al cafe sin validar zona, costos, ticket promedio o operacion.
+Abrir por amor al café sin validar zona, costos, ticket promedio o operación.
 
-Psicologia aplicada:
+Psicología aplicada:
 
 - Separar gusto personal de demanda.
-- Probar concepto pequeno.
+- Probar concepto pequeño.
 - Medir flujo peatonal.
 - No endeudarse solo por entusiasmo.
 - Aceptar que la idea debe adaptarse.
 
 Aprendizaje:
 
-La pasion ayuda a iniciar, pero el criterio sostiene.
+La pasión ayuda a iniciar, pero el criterio sostiene.
 
 ---
 
-### Caso 2: Taller Que Quiere Crecer Rapido
+### Caso 2: Taller Que Quiere Crecer Rápido
 
 Riesgo:
 
-Aceptar mas clientes de los que puede atender y deteriorar reputacion.
+Aceptar más clientes de los que puede atender y deteriorar reputación.
 
-Psicologia aplicada:
+Psicología aplicada:
 
 - No confundir oportunidad con capacidad.
-- Decir no a trabajos que rompen operacion.
+- Decir no a trabajos que rompen operación.
 - Medir tiempos reales.
 - Delegar con proceso.
 - Crecer por etapas.
@@ -361,7 +361,7 @@ Riesgo:
 
 Mezclar afecto, dinero, decisiones y autoridad sin acuerdos.
 
-Psicologia aplicada:
+Psicología aplicada:
 
 - Definir roles.
 - Separar conversaciones familiares de conversaciones de negocio.
@@ -381,7 +381,7 @@ No todo debe hacerse lento.
 
 Pero no todo debe hacerse ya.
 
-Decisiones que conviene hacer rapido:
+Decisiones que conviene hacer rápido:
 
 - Corregir datos incorrectos.
 - Responder clientes.
@@ -404,15 +404,15 @@ Es oportuno.
 
 ---
 
-## Relacion Con Geobooker
+## Relación Con Geobooker
 
 Geobooker puede ayudar al constructor a:
 
 - Entender si su negocio aparece.
 - Ordenar su presencia local.
-- Validar categorias, ubicacion y demanda.
+- Validar categorías, ubicación y demanda.
 - Practicar decisiones en Geobooker Emprende.
-- Medir interes mediante visibilidad, busquedas y contactos.
+- Medir interés mediante visibilidad, búsquedas y contactos.
 - Publicitar con expectativas claras.
 - Usar CRM con seguimiento responsable.
 
@@ -420,23 +420,23 @@ Pero Geobooker no debe vender una fantasia:
 
 - No elimina la incertidumbre.
 - No garantiza ventas.
-- No sustituye operacion.
-- No corrige una oferta debil por si solo.
+- No sustituye operación.
+- No corrige una oferta débil por si solo.
 
-Geobooker potencia lo que el constructor esta dispuesto a ordenar.
+Geobooker potencia lo que el constructor está dispuesto a ordenar.
 
 ---
 
 ## Checklist Del Constructor
 
-- [ ] Puedo explicar por que quiero abrir o mejorar este negocio.
-- [ ] Distingo pasion de demanda.
+- [ ] Puedo explicar por qué quiero abrir o mejorar este negocio.
+- [ ] Distingo pasión de demanda.
 - [ ] Tengo paciencia con datos, no terquedad.
 - [ ] Se que indicador revisare cada semana.
-- [ ] Tengo un limite de perdida o riesgo definido.
-- [ ] Tengo una persona o especialista a quien consultar.
+- [ ] Tengo un limite de pérdida o riesgo definido.
+- [ ] Tengo una persona o especialista a quién consultar.
 - [ ] Se que debo dejar de hacer.
-- [ ] Cuido mi energia minima.
+- [ ] Cuido mi energía mínima.
 - [ ] No prometo para alimentar mi ego.
 - [ ] Escucho al cliente aunque incomode.
 - [ ] Aprendo antes de expandirme.
@@ -446,36 +446,36 @@ Geobooker potencia lo que el constructor esta dispuesto a ordenar.
 
 ## Preguntas De Reflexion
 
-1. Que parte de mi deseo de emprender viene de vision y que parte viene de ansiedad?
-2. Que estoy intentando demostrar?
-3. Que dato necesito aceptar aunque no me guste?
-4. Que decision estoy posponiendo por miedo?
-5. Que decision estoy apresurando por impaciencia?
-6. Que cliente, socio o proveedor me esta quitando mas energia que valor?
-7. Que ritmo puedo sostener seis meses sin romperme?
-8. Que version de mi negocio seria mas pequena, mas clara y mas sostenible?
+1. ¿Qué parte de mi deseo de emprender viene de visión y qué parte viene de ansiedad?
+2. ¿Qué estoy intentando demostrar?
+3. ¿Qué dato necesito aceptar aunque no me guste?
+4. ¿Qué decisión estoy posponiendo por miedo?
+5. ¿Qué decisión estoy apresurando por impaciencia?
+6. ¿Qué cliente, socio o proveedor me está quitando más energía que valor?
+7. ¿Qué ritmo puedo sostener seis meses sin romperme?
+8. ¿Qué versión de mi negocio sería más pequeña, más clara y más sostenible?
 
 ---
 
 ## Cierre Editorial
 
-Construir un negocio es construir una relacion con la realidad.
+Construir un negocio es construir una relación con la realidad.
 
-La realidad no siempre premia al mas emocionado. Premia con mas frecuencia al que observa, aprende, corrige y resiste con inteligencia.
+La realidad no siempre premia al más emocionado. Premia con más frecuencia al que observa, aprende, corrige y resiste con inteligencia.
 
 El constructor no necesita volverse perfecto.
 
-Necesita volverse mas consciente.
+Necesita volverse más consciente.
 
-Un negocio serio no nace solo de una buena idea. Nace de una persona que aprende a convertir energia en criterio, paciencia en estrategia y errores en sistema.
+Un negocio serio no nace solo de una buena idea. Nace de una persona que aprende a convertir energía en criterio, paciencia en estrategia y errores en sistema.
 
 ---
 
-## Ficha De Version
+## Ficha De Versión
 
-**Documento:** Psicologia Del Constructor De Negocios  
-**Version:** 0.1 editorial  
-**Fecha:** Julio 2026  
-**Preparado para:** Biblioteca Geobooker 2026  
-**Estado:** Borrador completo para revision editorial  
-**Uso futuro:** PDF descargable, consulta PWA, Geobooker Emprende y formacion de emprendedores
+**Documento:** Psicología Del Constructor De Negocios
+**Versión:** 0.1 editorial
+**Fecha:** Julio 2026
+**Preparado para:** Biblioteca Geobooker 2026
+**Estado:** Borrador completo para revisión editorial
+**Uso futuro:** PDF descargable, consulta PWA, Geobooker Emprende y formación de emprendedores

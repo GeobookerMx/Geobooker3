@@ -147,10 +147,3 @@
   function = "seo-business"
   path = "/business/*"
 
-[[edge_functions]]
-  function = "seo-library"
-  path = "/biblioteca"
-
-[[edge_functions]]
-  function = "seo-library"
-  path = "/biblioteca/*"

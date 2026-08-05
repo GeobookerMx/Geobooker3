@@ -111,6 +111,6 @@ export default async (request, context) => {
     .on('head', { element(element) {
       element.append('<script type="application/ld+json">' + jsonForHtml(schema) + '</script>', { html: true });
     } })
-    .on('#root', { element(element) { element.setInnerContent(page.html, { html: true }); } })
+    .on('#root', { element(element) { element.append(page.html, { html: true }); } })
     .transform(response);
 };

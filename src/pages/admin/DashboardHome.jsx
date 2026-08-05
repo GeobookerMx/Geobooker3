@@ -24,7 +24,8 @@ import {
   Navigation,
   Share2,
   Heart,
-  Shield
+  Shield,
+  AlertTriangle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -32,6 +33,15 @@ import {
   getTopSearches
 } from '../../services/analyticsService';
 import { useAdminAuditLog } from '../../hooks/useAdminAuditLog';
+
+const APPLE_CREDENTIAL_ROTATION_TARGET = '2027-02-01';
+const SECURITY_REVIEW_DAY_LABEL = 'antes del dia 5 de cada mes';
+
+function getDaysUntil(dateString) {
+  const target = new Date(dateString + 'T00:00:00-06:00');
+  const diffMs = target.getTime() - Date.now();
+  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+}
 
 export default function DashboardHome() {
   const { fetchAuditLogs } = useAdminAuditLog();
@@ -65,6 +75,12 @@ export default function DashboardHome() {
 
   const [topSearches, setTopSearches] = useState([]);
   const [appFunnel, setAppFunnel] = useState([]);
+  const [securityOps, setSecurityOps] = useState({
+    criticalEvents30d: 0,
+    highEvents30d: 0,
+    recentEvents: [],
+    loading: true
+  });
   const [recentActivity, setRecentActivity] = useState([]);
   const [intlStats, setIntlStats] = useState({
     byCountry: [],
@@ -274,6 +290,31 @@ export default function DashboardHome() {
         console.warn('Error loading intent metrics:', intentErr);
       }
 
+      // Cargar eventos sospechosos de seguridad operativa
+      try {
+        const thirtyDaysAgoSecurity = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        const { data: securityEvents, error: securityEventsError } = await supabase
+          .from('security_events')
+          .select('id, event_type, severity, source, message, detected_at, metadata')
+          .gte('detected_at', thirtyDaysAgoSecurity)
+          .order('detected_at', { ascending: false })
+          .limit(8);
+
+        if (securityEventsError) {
+          console.warn('Security events table not available yet:', securityEventsError);
+          setSecurityOps(prev => ({ ...prev, recentEvents: [], loading: false }));
+        } else {
+          setSecurityOps({
+            criticalEvents30d: (securityEvents || []).filter(event => event.severity === 'critical').length,
+            highEvents30d: (securityEvents || []).filter(event => event.severity === 'high').length,
+            recentEvents: securityEvents || [],
+            loading: false
+          });
+        }
+      } catch (securityErr) {
+        console.warn('Error loading security events:', securityErr);
+        setSecurityOps(prev => ({ ...prev, recentEvents: [], loading: false }));
+      }
       // Cargar logs de auditoría admin
       try {
         const logs = await fetchAuditLogs(5);
@@ -334,6 +375,11 @@ export default function DashboardHome() {
     ? ((appFunnelTotals.profileSignups / appFunnelTotals.downloadClicks) * 100).toFixed(1)
     : '0.0';
 
+  const appleRotationDaysRemaining = getDaysUntil(APPLE_CREDENTIAL_ROTATION_TARGET);
+  const appleRotationLabel = appleRotationDaysRemaining > 0 ? `${appleRotationDaysRemaining} dias restantes` : 'revision vencida';
+  const hasSecurityAlerts = securityOps.criticalEvents30d > 0 || securityOps.highEvents30d > 0;
+  const latestSecurityEvent = securityOps.recentEvents[0];
+
   if (stats.loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -348,6 +394,42 @@ export default function DashboardHome() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Vista General</h1>
         <p className="text-gray-600 mt-1">Resumen de actividad y métricas principales</p>
+      </div>
+
+      {/* Seguridad operativa y recordatorios criticos */}
+      <div className={`rounded-xl border p-5 shadow-md ${hasSecurityAlerts ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'}`}>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex gap-3">
+            <div className={`mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${hasSecurityAlerts ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-slate-950">Seguridad operativa Geobooker</h2>
+              <p className="mt-1 text-sm text-slate-700">
+                Revision mensual {SECURITY_REVIEW_DAY_LABEL}. Eventos criticos 30d: <strong>{securityOps.criticalEvents30d}</strong> - eventos altos 30d: <strong>{securityOps.highEvents30d}</strong>.
+              </p>
+              <p className="mt-2 text-sm text-slate-700">
+                Rotacion de credenciales Apple: pendiente controlado. No rotar ahora; objetivo de revision: <strong>1 de febrero de 2027</strong> ({appleRotationLabel}).
+              </p>
+              {latestSecurityEvent ? (
+                <p className="mt-2 rounded-lg bg-white/70 px-3 py-2 text-xs font-semibold text-slate-700">
+                  Ultimo evento: {latestSecurityEvent.severity} - {latestSecurityEvent.event_type} - {new Date(latestSecurityEvent.detected_at).toLocaleString('es-MX')}
+                </p>
+              ) : (
+                <p className="mt-2 rounded-lg bg-white/70 px-3 py-2 text-xs font-semibold text-slate-600">
+                  Sin eventos sospechosos registrados en la tabla <code>security_events</code>.
+                </p>
+              )}
+            </div>
+          </div>
+          <Link
+            to="/admin/security"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"
+          >
+            Ver seguridad
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
 
       {/* KPI Cards */}

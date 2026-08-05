@@ -6,7 +6,7 @@ const { createClient } = require('@supabase/supabase-js');
 // - STRIPE_WEBHOOK_SECRET
 // - STRIPE_SECRET_KEY
 // - SUPABASE_URL
-// - SUPABASE_SERVICE_ROLE_KEY (Â¡No la anon key!)
+// - SUPABASE_SERVICE_ROLE_KEY (¡No la anon key!)
 
 // Helper: Generate secure temporary password
 function generateRandomPassword(length = 16) {
@@ -114,6 +114,35 @@ async function notifyCampaignReceived(campaign, paymentMethod = 'card') {
             invoiceText: 'Si necesitas factura, podras solicitarla mas tarde desde tu portal de facturacion.'
         }
     });
+}
+
+async function recordSecurityEvent(supabase, payload = {}) {
+    try {
+        await supabase.from('security_events').insert({
+            event_type: payload.event_type || 'stripe_webhook_security_event',
+            severity: payload.severity || 'warning',
+            source: 'stripe-webhook',
+            route: '/.netlify/functions/stripe-webhook',
+            message: payload.message || null,
+            metadata: payload.metadata || {}
+        });
+    } catch (error) {
+        console.warn('[stripe-webhook] security event skipped:', error.message);
+    }
+
+    if (payload.severity === 'critical') {
+        await postInternalNotification('send-notification-email', {
+            type: 'custom',
+            data: {
+                email: process.env.ADMIN_EMAIL || 'hola@geobooker.com.mx',
+                subject: 'Alerta critica de seguridad - Geobooker',
+                html: '<p><strong>Evento critico detectado:</strong> ' + (payload.event_type || 'security_event') + '</p>' +
+                    '<p>' + (payload.message || 'Revisar Admin Dashboard > Seguridad.') + '</p>' +
+                    '<p><a href="https://geobooker.com.mx/admin/security">Abrir panel de seguridad</a></p>',
+                preheader: 'Geobooker detecto un evento critico de seguridad'
+            }
+        });
+    }
 }
 
 async function upsertCommercialEvent(supabase, payload) {
@@ -228,7 +257,7 @@ exports.handler = async (event) => {
                 const session = stripeEvent.data.object;
                 const metadata = session.metadata || {};
 
-                // CASO 1: Pago de Publicidad (CampaÃ±a normal)
+                // CASO 1: Pago de Publicidad (Campaña normal)
                 if (metadata.type === 'ad_payment') {
                     const campaignId = metadata.campaign_id;
                     if (campaignId) {
@@ -286,16 +315,16 @@ exports.handler = async (event) => {
                             await notifyCampaignReceived(campaign, 'card');
                         }
 
-                        console.log(`CampaÃ±a ${campaignId} pagada y enviada a revisiÃ³n.`);
+                        console.log(`Campaña ${campaignId} pagada y enviada a revisión.`);
                     }
                 }
-                // CASO 1B: CampaÃ±a Enterprise (auto-activaciÃ³n para clientes verificados)
+                // CASO 1B: Campaña Enterprise (auto-activación para clientes verificados)
                 else if (metadata.type === 'enterprise_campaign') {
                     const campaignId = metadata.campaign_id;
                     const advertiserEmail = metadata.advertiser_email || session.customer_details?.email;
 
                     if (campaignId && advertiserEmail) {
-                        // ðŸ†• PASO 1: Crear cuenta de usuario si no existe
+                        // 🆕 PASO 1: Crear cuenta de usuario si no existe
                         let userId = null;
                         let temporaryPassword = null;
                         let isNewUser = false;
@@ -324,11 +353,11 @@ exports.handler = async (event) => {
                                 } else {
                                     userId = newUser.user.id;
                                     isNewUser = true;
-                                    console.log(`âœ… New advertiser account created: ${advertiserEmail}`);
+                                    console.log(`✅ New advertiser account created: ${advertiserEmail}`);
                                 }
                             } else {
                                 userId = existingUser.user.id;
-                                console.log(`â„¹ï¸ Advertiser account already exists: ${advertiserEmail}`);
+                                console.log(`ℹ️ Advertiser account already exists: ${advertiserEmail}`);
                             }
                         } catch (authError) {
                             console.error('Auth error:', authError);
@@ -337,7 +366,7 @@ exports.handler = async (event) => {
                         // PASO 2: actualizar pago conservando fechas elegidas en checkout
                         const { data: existingCampaign } = await supabase
                             .from('ad_campaigns')
-                            .select('start_date, end_date, total_budget, budget')
+                            .select('start_date, end_date, total_budget, total_with_iva, budget')
                             .eq('id', campaignId)
                             .single();
 
@@ -349,6 +378,36 @@ exports.handler = async (event) => {
                         const stripeAmount = typeof session.amount_total === 'number' ? session.amount_total / 100 : 0;
                         const ivaAmount = Number(metadata.iva_amount_usd || metadata.iva_amount_mxn || 0);
                         const totalWithIva = Number(metadata.total_amount_usd || metadata.total_amount_mxn || 0) || stripeAmount;
+                        const expectedAmount = Number(existingCampaign?.total_with_iva || existingCampaign?.total_budget || existingCampaign?.budget || 0);
+
+                        if (expectedAmount > 0 && stripeAmount + 0.01 < expectedAmount) {
+                            console.error('[stripe-webhook] Enterprise amount mismatch:', { campaignId, stripeAmount, expectedAmount });
+                            await supabase
+                                .from('ad_campaigns')
+                                .update({
+                                    payment_status: 'amount_mismatch',
+                                    status: 'draft',
+                                    stripe_session_id: session.id,
+                                    stripe_payment_intent: session.payment_intent
+                                })
+                                .eq('id', campaignId);
+                            await recordSecurityEvent(supabase, {
+                                event_type: 'stripe_enterprise_amount_mismatch',
+                                severity: 'critical',
+                                message: 'Stripe amount is lower than expected Enterprise campaign amount',
+                                metadata: {
+                                    campaign_id: campaignId,
+                                    stripe_session_id: session.id,
+                                    payment_intent: session.payment_intent,
+                                    stripe_amount: stripeAmount,
+                                    expected_amount: expectedAmount,
+                                    billing_country: billingCountry,
+                                    plan: metadata.plan || null
+                                }
+                            });
+                            break;
+                        }
+
                         const invoiceRequired = billingCountry === 'MX';
                         const preservedStartDate = existingCampaign?.start_date || fallbackStartDate.toISOString().split('T')[0];
                         const preservedEndDate = existingCampaign?.end_date || fallbackEndDate.toISOString().split('T')[0];
@@ -449,29 +508,29 @@ exports.handler = async (event) => {
                         await postInternalNotification('notify-admin-campaign', { campaign: updatedCampaign });
                         await notifyCampaignReceived(updatedCampaign, 'card');
 
-                        // ðŸ†• PASO 3:  Enviar email de bienvenida (solo si es nuevo usuario)
+                        // 🆕 PASO 3:  Enviar email de bienvenida (solo si es nuevo usuario)
                         if (isNewUser && temporaryPassword) {
                             try {
-                                // Llamar funciÃ³n de email (debes crear send-welcome-email.js)
+                                // Llamar función de email (debes crear send-welcome-email.js)
                                 await fetch(`${process.env.URL}/.netlify/functions/send-welcome-email`, {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({
                                         email: advertiserEmail,
                                         password: temporaryPassword,
-                                        campaignName: updatedCampaign?.advertiser_name || 'Tu CampaÃ±a',
+                                        campaignName: updatedCampaign?.advertiser_name || 'Tu Campaña',
                                         companyName: metadata.company || metadata.advertiser_name,
                                         dashboardUrl: `${process.env.URL}/advertiser/dashboard`
                                     })
                                 });
-                                console.log(`ðŸ“§ Welcome email sent to ${advertiserEmail}`);
+                                console.log(`📧 Welcome email sent to ${advertiserEmail}`);
                             } catch (emailError) {
                                 console.error('Error sending welcome email:', emailError);
                                 // Don't fail the webhook if email fails
                             }
                         }
 
-                        console.log(`âœ… Enterprise campaign ${campaignId} paid. Plan: ${metadata.plan}, Company: ${metadata.company}, IsNew: ${isNewUser}`);
+                        console.log(`✅ Enterprise campaign ${campaignId} paid. Plan: ${metadata.plan}, Company: ${metadata.company}, IsNew: ${isNewUser}`);
                     }
                 }
                 // CASO 1C: Geobooker Connect Launch Reservation
@@ -605,12 +664,12 @@ exports.handler = async (event) => {
                         console.log('Connect launch reservation paid:', connectCampaignId);
                     }
                 }
-                // CASO 2: SuscripciÃ³n Premium (Usuario)
+                // CASO 2: Suscripción Premium (Usuario)
                 else {
                     const userId = metadata.userId || session.client_reference_id;
                     if (userId) {
                         const subscriptionId = session.subscription;
-                        // Si es modo 'payment' (lifetime) no habrÃ¡ subscriptionId, manejar con cuidado
+                        // Si es modo 'payment' (lifetime) no habrá subscriptionId, manejar con cuidado
                         // Para MVP premium recurrente asumimos subscription
                         let premiumUntil = null;
 
@@ -618,7 +677,7 @@ exports.handler = async (event) => {
                             const subscription = await stripe.subscriptions.retrieve(subscriptionId);
                             premiumUntil = new Date(subscription.current_period_end * 1000).toISOString();
                         } else {
-                            // Caso pago Ãºnico lifetime (ej. 1 aÃ±o fijo sin recurrencia)
+                            // Caso pago único lifetime (ej. 1 año fijo sin recurrencia)
                             const oneYearLater = new Date();
                             oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
                             premiumUntil = oneYearLater.toISOString();
@@ -673,7 +732,7 @@ exports.handler = async (event) => {
                         }
                     );
 
-                    console.log(`RenovaciÃ³n exitosa para usuario ${userId}`);
+                    console.log(`Renovación exitosa para usuario ${userId}`);
                 }
                 break;
             }
@@ -689,7 +748,7 @@ exports.handler = async (event) => {
                     })
                     .eq('stripe_subscription_id', subscriptionId);
 
-                console.log(`SuscripciÃ³n ${subscriptionId} cancelada/finalizada`);
+                console.log(`Suscripción ${subscriptionId} cancelada/finalizada`);
                 break;
             }
 
@@ -752,10 +811,10 @@ exports.handler = async (event) => {
                             await notifyCampaignReceived(campaign, 'oxxo');
                         }
 
-                        console.log(`CampaÃ±a ${metadata.product_id} pagada via OXXO`);
+                        console.log(`Campaña ${metadata.product_id} pagada via OXXO`);
                     }
 
-                    // Si es pago de suscripciÃ³n Ãºnica (no recurrente)
+                    // Si es pago de suscripción única (no recurrente)
                     if (metadata.user_id && metadata.subscription_type) {
                         const premiumUntil = new Date();
                         premiumUntil.setMonth(premiumUntil.getMonth() + 1);
@@ -782,7 +841,7 @@ exports.handler = async (event) => {
                 break;
             }
 
-            // CASO: ExpiraciÃ³n de SesiÃ³n de Checkout (Limpieza de borradores)
+            // CASO: Expiración de Sesión de Checkout (Limpieza de borradores)
             case 'checkout.session.expired': {
                 const session = stripeEvent.data.object;
                 const metadata = session.metadata || {};

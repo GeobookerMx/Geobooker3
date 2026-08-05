@@ -47,13 +47,49 @@ exports.handler = async (event) => {
     ['/advertise', '0.9', 'weekly'],
     ['/enterprise', '0.9', 'weekly'],
     ['/b2b-connect', '0.8', 'weekly'],
+    ['/biblioteca', '0.8', 'weekly'],
+    ['/emprende', '0.8', 'weekly'],
     ['/claim', '0.8', 'weekly'],
     ['/about', '0.7', 'monthly'],
+    ['/community', '0.7', 'monthly'],
+    ['/support', '0.6', 'monthly'],
     ['/faq', '0.6', 'monthly'],
+    ['/seguridad', '0.5', 'monthly'],
+    ['/legal/ads-policy', '0.5', 'monthly'],
+    ['/legal/fiscal', '0.5', 'monthly'],
+    ['/guia-resico', '0.5', 'monthly'],
     ['/privacy', '0.4', 'monthly'],
     ['/terms', '0.4', 'monthly'],
   ];
   staticRoutes.forEach(([path, priority, changefreq]) => addRoute(path, null, priority, changefreq));
+
+  const libraryDocumentRoutes = [
+    '/biblioteca/punto-de-partida-geobooker',
+    '/biblioteca/liderar-sin-cargo',
+    '/biblioteca/radiografia-del-negocio',
+    '/biblioteca/abrir-con-criterio',
+    '/biblioteca/encontrar-al-cliente-correcto',
+    '/biblioteca/numeros-que-sostienen',
+    '/biblioteca/ordenar-la-operacion',
+    '/biblioteca/vender-atender-y-regresar',
+    '/biblioteca/aparecer-donde-el-cliente-busca',
+    '/biblioteca/confianza-que-se-puede-ver',
+    '/biblioteca/negocio-que-puede-durar',
+    '/biblioteca/construir-sin-romperse'
+  ];
+  libraryDocumentRoutes.forEach((route) => addRoute(route, null, '0.7', 'monthly'));
+
+  const emprendeChallengeRoutes = [
+    '/emprende/reto/primera-decision-negocio-local',
+    '/emprende/reto/precio-margen-y-caja-del-negocio',
+    '/emprende/reto/producto-servicio-y-busqueda-real',
+    '/emprende/reto/operacion-en-hora-pico',
+    '/emprende/reto/visibilidad-local-categoria-ciudad',
+    '/emprende/reto/liderazgo-equipo-pequeno',
+    '/emprende/reto/crecimiento-sostenible-negocio-local',
+    '/emprende/reto/crisis-reputacion-postventa'
+  ];
+  emprendeChallengeRoutes.forEach((route) => addRoute(route, null, '0.7', 'monthly'));
 
   const globalCityRoutes = [
     '/cities/los-angeles', '/cities/new-york', '/cities/houston', '/cities/miami',

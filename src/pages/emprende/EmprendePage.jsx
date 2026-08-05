@@ -1,7 +1,7 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, BookOpen, BriefcaseBusiness, Share2 } from 'lucide-react';
+import { ArrowLeft, BookOpen, BriefcaseBusiness, Share2, Smartphone, Sparkles, Trophy } from 'lucide-react';
 import MissionPlayer from '../../components/emprende/MissionPlayer';
 import {
   EMPRENDE_BUSINESSES,
@@ -133,12 +133,26 @@ export default function EmprendePage() {
                 Geobooker Emprende
               </p>
               <h1 className="mt-4 max-w-4xl text-4xl font-black leading-tight tracking-tight md:text-6xl">
-                Aprende a tomar mejores decisiones antes de gastar dinero real.
+                Retos de negocio para decidir mejor antes de gastar dinero real.
               </h1>
               <p className="mt-5 max-w-3xl text-base leading-8 text-slate-300 md:text-lg">
-                Un simulador ligero para entender visibilidad local, clientes, reputacion y operacion.
-                Primero practicas; despues conectas con acciones reales dentro de Geobooker.
+                Una experiencia ligera, compartible y pensada para movil: situaciones reales, decisiones,
+                impacto, XP, medallas y acciones conectadas con Geobooker.
               </p>
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
+                  <Sparkles className="h-5 w-5 text-cyan-300" />
+                  <p className="mt-2 text-sm font-black">Retos de 3 a 4 min</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
+                  <Trophy className="h-5 w-5 text-amber-300" />
+                  <p className="mt-2 text-sm font-black">XP, rango y medallas</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
+                  <Smartphone className="h-5 w-5 text-emerald-300" />
+                  <p className="mt-2 text-sm font-black">Listo para Android y iOS</p>
+                </div>
+              </div>
             </div>
 
             <div className="rounded-[2rem] border border-white/10 bg-white/10 p-5 backdrop-blur">
@@ -157,7 +171,7 @@ export default function EmprendePage() {
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-black text-slate-950 transition hover:bg-cyan-50"
               >
                 <Share2 className="h-4 w-4" />
-                Compartir reto
+                Compartir reto actual
               </button>
               {shareStatus && <p className="mt-2 text-center text-xs text-slate-300">{shareStatus}</p>}
             </div>
@@ -178,7 +192,7 @@ export default function EmprendePage() {
                 Cambiar el negocio no borra tu aprendizaje; solo adapta el contexto.
               </p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {EMPRENDE_BUSINESSES.map((business) => (
                 <button
                   key={business.id}
@@ -213,7 +227,7 @@ export default function EmprendePage() {
                       : 'bg-white text-slate-700'
                 }`}
               >
-                Mision {mission.order}
+                Reto {mission.order}
               </button>
             );
           })}
@@ -231,4 +245,3 @@ export default function EmprendePage() {
     </main>
   );
 }
-

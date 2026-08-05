@@ -1,9 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle2, RotateCcw, TrendingUp } from 'lucide-react';
+import {
+  ArrowRight,
+  CheckCircle2,
+  Lightbulb,
+  Medal,
+  RotateCcw,
+  Save,
+  Target,
+  TrendingUp,
+  Trophy
+} from 'lucide-react';
 import GeoGuide from './GeoGuide';
-import { applyDecision, getMissionStateLabel } from '../../features/emprende/engine';
-import { MISSION_STATE } from '../../features/emprende/missionContent';
+import {
+  applyDecision,
+  getEmprendeBadges,
+  getEmprendeRank,
+  getMissionStateLabel,
+  saveMissionReflection
+} from '../../features/emprende/engine';
+import { EMPRENDE_MISSIONS, MISSION_STATE } from '../../features/emprende/missionContent';
 import { saveEmprendeProgress } from '../../features/emprende/storage';
 import { trackEmprendeEvent, trackMissionStep } from '../../features/emprende/analytics';
 
@@ -30,7 +46,15 @@ const skillLabels = {
   finance: 'Finanzas',
   customers: 'Clientes',
   operations: 'Operacion',
-  visibility: 'Visibilidad'
+  visibility: 'Visibilidad',
+  leadership: 'Liderazgo',
+  sustainability: 'Sostenibilidad'
+};
+
+const qualityLabels = {
+  best: 'Decision solida',
+  mixed: 'Decision mixta',
+  risky: 'Decision riesgosa'
 };
 
 const MetricPill = ({ label, value }) => (
@@ -58,6 +82,21 @@ const DeltaList = ({ delta = {} }) => (
   </div>
 );
 
+const SkillBar = ({ label, value }) => {
+  const width = Math.min(100, Math.max(8, Number(value || 0) * 12));
+  return (
+    <div>
+      <div className="flex items-center justify-between text-xs font-black uppercase tracking-wide text-slate-500">
+        <span>{label}</span>
+        <span>{value || 0}</span>
+      </div>
+      <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-100">
+        <div className="h-full rounded-full bg-cyan-500" style={{ width: `${width}%` }} />
+      </div>
+    </div>
+  );
+};
+
 export default function MissionPlayer({
   mission,
   business,
@@ -70,12 +109,20 @@ export default function MissionPlayer({
   const existingDecision = mission.decisions.find((item) => item.id === existingRun?.decisionId) || null;
   const [state, setState] = useState(existingRun ? MISSION_STATE.COMPLETED : MISSION_STATE.INTRO);
   const [selectedDecision, setSelectedDecision] = useState(existingDecision);
+  const [reflection, setReflection] = useState(progress.reflections?.[mission.id] || '');
+  const [reflectionSaved, setReflectionSaved] = useState(false);
+
+  const rank = useMemo(() => getEmprendeRank(progress.xp || 0), [progress.xp]);
+  const badges = useMemo(() => getEmprendeBadges(progress), [progress]);
+  const completedCount = progress.completedMissionIds?.length || 0;
 
   useEffect(() => {
     const nextDecision = mission.decisions.find((item) => item.id === progress.missionRuns?.[mission.id]?.decisionId) || null;
     setSelectedDecision(nextDecision);
     setState(nextDecision ? MISSION_STATE.COMPLETED : MISSION_STATE.INTRO);
-  }, [mission.id, progress.missionRuns, mission.decisions]);
+    setReflection(progress.reflections?.[mission.id] || '');
+    setReflectionSaved(false);
+  }, [mission.id, progress.missionRuns, progress.reflections, mission.decisions]);
 
   useEffect(() => {
     trackMissionStep(mission, state, {
@@ -109,6 +156,17 @@ export default function MissionPlayer({
     }
   };
 
+  const handleSaveReflection = () => {
+    const nextProgress = saveEmprendeProgress(saveMissionReflection(progress, mission.id, reflection));
+    onProgressChange(nextProgress);
+    setReflectionSaved(true);
+    trackEmprendeEvent('emprende_reflection_saved', {
+      mission_id: mission.id,
+      mission_slug: mission.slug,
+      length: reflection.trim().length
+    });
+  };
+
   const completed = state === MISSION_STATE.COMPLETED;
 
   return (
@@ -117,7 +175,7 @@ export default function MissionPlayer({
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-600">
-              Mision {mission.order} de Geobooker Emprende
+              Reto {mission.order} de {EMPRENDE_MISSIONS.length} - {mission.estimatedMinutes} min
             </p>
             <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
               {mission.title}
@@ -140,8 +198,42 @@ export default function MissionPlayer({
             {state === MISSION_STATE.LEARNING && mission.learning}
             {state === MISSION_STATE.REAL_ACTION && 'Ahora conecta el aprendizaje con una accion real dentro de Geobooker.'}
             {state === MISSION_STATE.REWARD && 'Buen avance. Sumaste experiencia y habilidades para tomar mejores decisiones de negocio.'}
-            {completed && 'Mision completada. Puedes repetirla, pasar a otra mision o llevar esta accion al mundo real.'}
+            {completed && 'Reto completado. Puedes repetirlo, compartirlo o llevar esta accion al mundo real.'}
           </GeoGuide>
+        </div>
+
+        <div className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-400 text-slate-950">
+              <Lightbulb className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-800">Usted que haria?</p>
+              <p className="mt-1 text-sm font-bold leading-6 text-slate-800">{mission.challengePrompt}</p>
+              <textarea
+                value={reflection}
+                onChange={(event) => {
+                  setReflection(event.target.value);
+                  setReflectionSaved(false);
+                }}
+                rows={3}
+                maxLength={420}
+                placeholder="Escriba su razonamiento antes de elegir. Ejemplo: primero validaria caja, urgencia y cliente ideal..."
+                className="mt-4 w-full rounded-2xl border border-amber-200 bg-white px-4 py-3 text-sm leading-6 text-slate-800 outline-none transition focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
+              />
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs font-bold text-amber-800">{reflection.length}/420 - Guardado local en este dispositivo.</p>
+                <button
+                  type="button"
+                  onClick={handleSaveReflection}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-xs font-black text-white transition hover:bg-slate-800"
+                >
+                  <Save className="h-4 w-4" />
+                  {reflectionSaved ? 'Guardado' : 'Guardar respuesta'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {state === MISSION_STATE.DECISION && (
@@ -154,7 +246,12 @@ export default function MissionPlayer({
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h3 className="text-lg font-black text-slate-950">{decision.label}</h3>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-lg font-black text-slate-950">{decision.label}</h3>
+                      <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-slate-500">
+                        {qualityLabels[decision.quality] || 'Opcion'}
+                      </span>
+                    </div>
                     <p className="mt-2 text-sm leading-6 text-slate-600">{decision.description}</p>
                   </div>
                   <ArrowRight className="mt-1 h-5 w-5 shrink-0 text-blue-600 transition group-hover:translate-x-1" />
@@ -236,7 +333,7 @@ export default function MissionPlayer({
               onClick={onNextMission}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white transition hover:bg-blue-700"
             >
-              Siguiente mision
+              Siguiente reto
               <ArrowRight className="h-4 w-4" />
             </button>
           )}
@@ -245,7 +342,33 @@ export default function MissionPlayer({
 
       <aside className="space-y-4">
         <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-lg">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">Tablero</p>
+          <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.22em] text-slate-500">
+            <Trophy className="h-4 w-4 text-amber-500" />
+            Perfil emprendedor
+          </p>
+          <div className={`mt-4 rounded-2xl border px-4 py-3 ${rank.tone}`}>
+            <p className="text-sm font-black">{rank.label}</p>
+            <p className="mt-1 text-xs font-bold opacity-80">
+              {rank.next ? `${rank.next - (progress.xp || 0)} XP para el siguiente rango` : 'Rango maximo de esta version'}
+            </p>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-slate-50 p-3">
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-500">XP</p>
+              <p className="mt-1 text-2xl font-black text-slate-950">{progress.xp || 0}</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-3">
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Retos</p>
+              <p className="mt-1 text-2xl font-black text-slate-950">{completedCount}/{EMPRENDE_MISSIONS.length}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-lg">
+          <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.22em] text-slate-500">
+            <Target className="h-4 w-4 text-blue-600" />
+            Tablero
+          </p>
           <div className="mt-4 grid gap-3">
             {Object.entries(progress.metrics || {}).map(([key, value]) => (
               <MetricPill key={key} label={metricLabels[key] || key} value={value} />
@@ -253,12 +376,29 @@ export default function MissionPlayer({
           </div>
         </div>
 
+        <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-lg">
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">Habilidades</p>
+          <div className="mt-4 space-y-3">
+            {Object.entries(progress.skills || {}).map(([key, value]) => (
+              <SkillBar key={key} label={skillLabels[key] || key} value={value} />
+            ))}
+          </div>
+        </div>
+
         <div className="rounded-[2rem] border border-slate-200 bg-slate-950 p-5 text-white shadow-lg">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-300">Progreso</p>
-          <p className="mt-3 text-4xl font-black">{progress.xp || 0} XP</p>
-          <p className="mt-2 text-sm leading-6 text-slate-300">
-            Misiones completadas: {progress.completedMissionIds?.length || 0}
+          <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.22em] text-cyan-300">
+            <Medal className="h-4 w-4" />
+            Medallas
           </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {badges.length > 0 ? badges.map((badge) => (
+              <span key={badge} className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-black text-white">
+                {badge}
+              </span>
+            )) : (
+              <p className="text-sm leading-6 text-slate-300">Completa retos y guarda respuestas para desbloquear medallas.</p>
+            )}
+          </div>
         </div>
       </aside>
     </div>

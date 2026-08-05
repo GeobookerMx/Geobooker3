@@ -130,29 +130,50 @@ export default function EnterpriseLanding() {
             "@context": "https://schema.org",
             "@type": "CollectionPage",
             name: "Geobooker Enterprise Ads",
-            description: "Paquetes enterprise de Geobooker para campañas multi-ciudad, regionales, nacionales y cross-border.",
+            description: "Paquetes enterprise de Geobooker para campanas multi-ciudad, regionales, nacionales y cross-border.",
             url: "https://geobooker.com.mx/enterprise",
             mainEntity: {
-                "@type": "ItemList",
-                itemListElement: pricing.map((plan, index) => ({
-                    "@type": "ListItem",
-                    position: index + 1,
-                    item: {
-                        "@type": "Product",
-                        name: plan.name,
-                        description: plan.description || "Paquete enterprise de Geobooker",
-                        category: "Enterprise Advertising",
-                        offers: {
+                "@type": "Service",
+                name: "Geobooker Global Ads",
+                serviceType: "Managed digital advertising placements",
+                provider: {
+                    "@type": "Organization",
+                    name: "Geobooker",
+                    url: "https://geobooker.com.mx"
+                },
+                areaServed: [
+                    { "@type": "Country", name: "Mexico" },
+                    { "@type": "Country", name: "United States" },
+                    { "@type": "Country", name: "Canada" },
+                    { "@type": "Country", name: "United Kingdom" },
+                    { "@type": "Country", name: "Spain" }
+                ],
+                termsOfService: "https://geobooker.com.mx/legal/ads-policy",
+                hasOfferCatalog: {
+                    "@type": "OfferCatalog",
+                    name: "Geobooker Enterprise Advertising Plans",
+                    itemListElement: pricing.map((plan, index) => {
+                        const displayedPrice = Number(plan.final_price || plan.promotional_price || plan.price || plan.monthly_price || 0);
+                        return {
                             "@type": "Offer",
-                            priceCurrency: "USD",
-                            price: 0,
-                            availability: "https://schema.org/InStock",
+                            position: index + 1,
+                            name: plan.name,
+                            description: plan.description || "Managed enterprise advertising plan by Geobooker.",
                             url: `https://geobooker.com.mx/enterprise/checkout?plan=${plan.code}`,
-                        },
-                    },
-                })),
-            },
-        },
+                            availability: "https://schema.org/InStock",
+                            priceCurrency: "USD",
+                            priceValidUntil: "2026-12-31",
+                            priceSpecification: {
+                                "@type": "PriceSpecification",
+                                price: displayedPrice,
+                                priceCurrency: "USD"
+                            },
+                            eligibleRegion: "Global"
+                        };
+                    })
+                }
+            }
+        }
     ];
 
     if (IS_IOS_NATIVE) {

@@ -1,90 +1,90 @@
 // src/hooks/useGuestSearchLimit.js
 /**
- * Hook para limitar búsquedas de usuarios invitados
- * 
- * 🎉 PERIODO DE LANZAMIENTO GRATUITO:
- * Hasta el 1 de marzo de 2026, TODOS los usuarios (incluidos invitados)
- * pueden buscar sin límite. Después de esa fecha, se activa el límite
- * de 1 búsqueda gratis para invitados.
+ * Hook para invitar a usuarios invitados a crear cuenta sin bloquear busquedas.
+ * Durante lanzamiento 2026 Geobooker conserva busqueda abierta, pero muestra
+ * una invitacion inteligente despues de varias busquedas reales.
  */
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 const GUEST_SEARCH_KEY = 'geobooker_guest_searches';
+const GUEST_PROMPT_KEY = 'geobooker_guest_login_prompt_last_seen';
 const MAX_GUEST_SEARCHES = 1;
+const SOFT_PROMPT_AFTER_SEARCHES = 2;
+const PROMPT_COOLDOWN_MS = 12 * 60 * 60 * 1000;
 
-// 🎉 Fecha límite del período de lanzamiento gratuito (31 de diciembre 2026, medianoche CST)
-// Extendido desde 2026-03-01 porque al expirar disparaba el modal de login al buscar
-// para sesiones que aún se estaban restaurando (AuthContext loading), sacando al usuario.
 const FREE_LAUNCH_END_DATE = new Date('2026-12-31T23:59:59-06:00');
-
-// Helper: ¿Estamos en el período de lanzamiento gratuito?
 const isFreeLaunchPeriod = () => new Date() < FREE_LAUNCH_END_DATE;
 
+function shouldShowSoftPrompt(nextCount) {
+    if (nextCount < SOFT_PROMPT_AFTER_SEARCHES) return false;
+
+    const lastSeen = Number(localStorage.getItem(GUEST_PROMPT_KEY) || 0);
+    return !lastSeen || Date.now() - lastSeen > PROMPT_COOLDOWN_MS;
+}
+
 export const useGuestSearchLimit = () => {
-    // ✅ Esperamos a que AuthContext termine de restaurar la sesión.
-    // Antes, durante los primeros segundos `user` era null aunque el usuario sí
-    // estuviera autenticado, y al buscar se disparaba el modal de login.
     const { user, loading } = useAuth();
     const [searchCount, setSearchCount] = useState(0);
     const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
-    // 🎉 Durante el lanzamiento gratuito, no limitar a nadie
     const freeLaunch = isFreeLaunchPeriod();
 
-    // Load search count from localStorage
     useEffect(() => {
-        if (loading) return; // aún no sabemos si está logueado
+        if (loading) return;
         if (!user) {
             const stored = localStorage.getItem(GUEST_SEARCH_KEY);
             setSearchCount(stored ? parseInt(stored, 10) : 0);
         } else {
-            // Reset for logged in users + limpiar contador legado en localStorage
             setSearchCount(0);
             localStorage.removeItem(GUEST_SEARCH_KEY);
+            localStorage.removeItem(GUEST_PROMPT_KEY);
         }
     }, [user, loading]);
 
-    // Check if guest can search
     const canSearch = useCallback(() => {
-        if (loading) return true; // mientras carga, no bloqueamos
-        if (freeLaunch) return true; // 🎉 Lanzamiento gratuito: todos pueden buscar
-        if (user) return true; // Logged in users can always search
+        if (loading) return true;
+        if (freeLaunch) return true;
+        if (user) return true;
         return searchCount < MAX_GUEST_SEARCHES;
     }, [user, loading, searchCount, freeLaunch]);
 
-    // Increment search count for guests
     const recordSearch = useCallback(() => {
-        if (loading) return; // no contar mientras AuthContext carga
-        if (!user) {
-            const newCount = searchCount + 1;
-            setSearchCount(newCount);
-            localStorage.setItem(GUEST_SEARCH_KEY, newCount.toString());
+        if (loading || user) return;
 
-            // 🎉 Durante lanzamiento gratuito, NO mostrar prompt de login
-            if (!freeLaunch && newCount >= MAX_GUEST_SEARCHES) {
+        setSearchCount((currentCount) => {
+            const nextCount = currentCount + 1;
+            localStorage.setItem(GUEST_SEARCH_KEY, nextCount.toString());
+
+            if (freeLaunch) {
+                if (shouldShowSoftPrompt(nextCount)) {
+                    setShowLoginPrompt(true);
+                    localStorage.setItem(GUEST_PROMPT_KEY, Date.now().toString());
+                }
+            } else if (nextCount >= MAX_GUEST_SEARCHES) {
                 setShowLoginPrompt(true);
+                localStorage.setItem(GUEST_PROMPT_KEY, Date.now().toString());
             }
-        }
-    }, [user, loading, searchCount, freeLaunch]);
 
-    // Check and prompt for login if needed
+            return nextCount;
+        });
+    }, [user, loading, freeLaunch]);
+
     const checkAndPrompt = useCallback(() => {
-        if (loading) return true; // permitir mientras carga
-        if (freeLaunch) return true; // 🎉 Lanzamiento: siempre permitido
+        if (loading) return true;
+        if (freeLaunch) return true;
         if (!user && searchCount >= MAX_GUEST_SEARCHES) {
             setShowLoginPrompt(true);
-            return false; // Cannot search
+            localStorage.setItem(GUEST_PROMPT_KEY, Date.now().toString());
+            return false;
         }
-        return true; // Can search
+        return true;
     }, [user, loading, searchCount, freeLaunch]);
 
-    // Close prompt
     const closeLoginPrompt = useCallback(() => {
         setShowLoginPrompt(false);
     }, []);
 
-    // Get remaining searches
     const remainingSearches = freeLaunch
         ? Infinity
         : (user ? Infinity : Math.max(0, MAX_GUEST_SEARCHES - searchCount));

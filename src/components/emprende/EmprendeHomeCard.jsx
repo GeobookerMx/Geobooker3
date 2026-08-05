@@ -24,7 +24,7 @@ export default function EmprendeHomeCard() {
               Practica decisiones de negocio antes de invertir tiempo o presupuesto real.
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 md:text-base">
-              Aprende con mini misiones sobre visibilidad local, clientes, reputacion y operacion.
+              Aprende con retos cortos, preguntas tipo "Usted que haria?", XP y medallas sobre visibilidad, clientes, reputacion y operacion.
               Despues conecta cada aprendizaje con acciones reales dentro de Geobooker.
             </p>
             <div className="mt-5 flex flex-col gap-3 sm:flex-row">
@@ -33,7 +33,7 @@ export default function EmprendeHomeCard() {
                 onClick={() => handleClick('start')}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-cyan-300 px-5 py-3 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
               >
-                Empezar simulador
+                Empezar retos
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link

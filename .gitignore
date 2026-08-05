@@ -69,3 +69,18 @@ vite.config.timestamp.*
 
 denue_datos.csv
 TodoTransporteTT/
+
+# -----------------------------
+# Security: never track real secrets
+# -----------------------------
+.env.production
+apple-client-secret.txt
+apple-jwt-secret.txt
+apple-secret-output.txt
+*-secret*.txt
+*client-secret*.txt
+*jwt-secret*.txt
+*service-role*.txt
+*private-key*.txt
+credentials*.json
+service-account*.json

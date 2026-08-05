@@ -28,7 +28,12 @@ export const loadEmprendeProgress = () => {
       skills: {
         ...createInitialProgress().skills,
         ...(parsed.skills || {})
-      }
+      },
+      reflections: {
+        ...createInitialProgress().reflections,
+        ...(parsed.reflections || {})
+      },
+      badges: parsed.badges || []
     };
   } catch (error) {
     console.warn('[Emprende] Could not load local progress:', error);

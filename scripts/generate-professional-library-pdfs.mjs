@@ -113,7 +113,9 @@ function cleanMarkdownForPrint(source) {
   let skippedSubtitle = false;
   for (let index = start; index < lines.length; index += 1) {
     const line = lines[index];
-    if (/^##\s+Portada Editorial\s*$/i.test(line.trim())) continue;
+    const trimmed = line.trim();
+    if (/^##(?:\s+\d+\.)?\s+Ficha\s+De\s+Versión\s*$/i.test(trimmed)) break;
+    if (/^##\s+Portada Editorial\s*$/i.test(trimmed)) continue;
     if (!skippedTitle && /^#\s+/.test(line)) { skippedTitle = true; continue; }
     if (skippedTitle && !skippedSubtitle && /^##\s+/.test(line)) { skippedSubtitle = true; continue; }
     if (/^---+$/.test(line.trim())) continue;

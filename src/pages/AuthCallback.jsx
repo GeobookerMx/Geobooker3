@@ -11,7 +11,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { trackUserLogin } from '../services/analyticsService';
+import { getAuthErrorCode, trackAuthFunnelEvent, trackUserLogin } from '../services/analyticsService';
 import { getPlatform } from '../utils/platformDetection';
 
 const MAX_WAIT_MS = 8000;
@@ -55,6 +55,11 @@ const AuthCallback = () => {
 
             setStatus('success');
             const provider = session.user?.app_metadata?.provider || 'oauth';
+            trackAuthFunnelEvent('oauth_callback_success', {
+                funnel: 'login',
+                method: provider,
+                userId: session.user.id
+            });
             try { trackUserLogin(session.user.id, provider); } catch (e) { /* analytics opcional */ }
             await persistProfile(session.user);
 
@@ -69,6 +74,11 @@ const AuthCallback = () => {
             if (subscription) subscription.unsubscribe();
 
             console.error('[AuthCallback] Falló el callback:', reason);
+            trackAuthFunnelEvent('oauth_callback_error', {
+                funnel: 'login',
+                method: 'oauth',
+                errorCode: getAuthErrorCode(reason)
+            });
             setStatus('error');
             setTimeout(() => {
                 navigate('/login?error=' + encodeURIComponent(reason || 'callback_failed'), { replace: true });

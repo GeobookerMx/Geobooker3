@@ -184,7 +184,7 @@ export default function CarouselAd() {
 }
 
 function CarouselCard({ campaign, isActive }) {
-    const { trackClick } = useAdTracking(campaign.id, true);
+    const { trackClick } = useAdTracking(campaign.id, isActive, { slot: 'featured_carousel' });
     const creative = campaign.ad_creatives?.[0];
 
     const imageUrl = creative?.image_url || campaign.creative_url || null;

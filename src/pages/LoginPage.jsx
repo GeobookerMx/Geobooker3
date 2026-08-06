@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
-import { trackUserLogin } from '../services/analyticsService';
+import { getAuthErrorCode, trackAuthFunnelEvent, trackUserLogin } from '../services/analyticsService';
 import { Capacitor } from '@capacitor/core';
 
 const LoginPage = () => {
@@ -13,18 +13,36 @@ const LoginPage = () => {
   const isAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 
   const [loading, setLoading] = useState(false);
+  const hasStartedForm = useRef(false);
   const [formData, setFormData] = useState({ email: '', password: '', rememberMe: false });
   const oauthRedirectTo = isNative
     ? 'geobooker://auth/callback'
     : `${window.location.origin}/auth/callback`;
 
+  useEffect(() => {
+    trackAuthFunnelEvent('login_form_view', {
+      funnel: 'login',
+      method: 'email',
+      dedupeKey: 'login_form_view'
+    });
+  }, []);
+
   const handleChange = (e) => {
+    if (!hasStartedForm.current) {
+      hasStartedForm.current = true;
+      trackAuthFunnelEvent('login_form_start', {
+        funnel: 'login',
+        method: 'email',
+        dedupeKey: 'login_form_start'
+      });
+    }
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    trackAuthFunnelEvent('login_submit', { funnel: 'login', method: 'email' });
     setLoading(true);
     try {
       const normalizedEmail = formData.email.trim().toLowerCase();
@@ -33,10 +51,22 @@ const LoginPage = () => {
         password: formData.password
       });
       if (error) throw error;
-      if (data.user?.id) trackUserLogin(data.user.id, 'email');
+      if (data.user?.id) {
+        trackAuthFunnelEvent('login_success', {
+          funnel: 'login',
+          method: 'email',
+          userId: data.user.id
+        });
+        trackUserLogin(data.user.id, 'email');
+      }
       toast.success(t('login.welcomeBack'));
       navigate('/');
     } catch (error) {
+      trackAuthFunnelEvent('login_error', {
+        funnel: 'login',
+        method: 'email',
+        errorCode: getAuthErrorCode(error)
+      });
       const msg = error.message || '';
       if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials')) {
         if (['@icloud.com', '@apple.com', '@me.com'].some(d => formData.email.toLowerCase().includes(d))) {
@@ -60,6 +90,7 @@ const LoginPage = () => {
   const handleOAuth = async (provider) => {
     try {
       setLoading(true);
+      trackAuthFunnelEvent('oauth_start', { funnel: 'login', method: provider });
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -79,6 +110,11 @@ const LoginPage = () => {
         window.location.href = data.url;
       }
     } catch (error) {
+      trackAuthFunnelEvent('login_error', {
+        funnel: 'login',
+        method: provider,
+        errorCode: getAuthErrorCode(error)
+      });
       console.error(`OAuth ${provider} error:`, error);
       toast.error(`Error al iniciar sesión con ${provider}`);
     } finally {

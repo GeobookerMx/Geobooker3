@@ -75,6 +75,8 @@ export default function DashboardHome() {
 
   const [topSearches, setTopSearches] = useState([]);
   const [appFunnel, setAppFunnel] = useState([]);
+  const [authFunnel, setAuthFunnel] = useState(null);
+  const [efficiencySnapshot, setEfficiencySnapshot] = useState(null);
   const [securityOps, setSecurityOps] = useState({
     criticalEvents30d: 0,
     highEvents30d: 0,
@@ -251,6 +253,20 @@ export default function DashboardHome() {
         setAppFunnel([]);
       }
 
+      // Embudo de autenticacion y control de eficiencia (dos filas agregadas,
+      // nunca se descargan eventos crudos al navegador del administrador).
+      try {
+        const [authResult, efficiencyResult] = await Promise.all([
+          supabase.from('admin_auth_funnel_30d_v1').select('*').maybeSingle(),
+          supabase.from('admin_efficiency_snapshot_v1').select('*').maybeSingle()
+        ]);
+
+        if (!authResult.error) setAuthFunnel(authResult.data || null);
+        if (!efficiencyResult.error) setEfficiencySnapshot(efficiencyResult.data || null);
+      } catch (efficiencyError) {
+        console.warn('Efficiency views not available yet:', efficiencyError);
+      }
+
       // Cargar m?tricas de intenci?n de negocio
       try {
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
@@ -373,6 +389,13 @@ export default function DashboardHome() {
 
   const appSignupRate = appFunnelTotals.downloadClicks > 0
     ? ((appFunnelTotals.profileSignups / appFunnelTotals.downloadClicks) * 100).toFixed(1)
+    : '0.0';
+
+  const authSignupRate = Number(authFunnel?.signup_submits || 0) > 0
+    ? ((Number(authFunnel?.signup_successes || 0) / Number(authFunnel.signup_submits)) * 100).toFixed(1)
+    : '0.0';
+  const authLoginRate = Number(authFunnel?.login_submits || 0) > 0
+    ? ((Number(authFunnel?.login_successes || 0) / Number(authFunnel.login_submits)) * 100).toFixed(1)
     : '0.0';
 
   const appleRotationDaysRemaining = getDaysUntil(APPLE_CREDENTIAL_ROTATION_TARGET);
@@ -608,6 +631,43 @@ export default function DashboardHome() {
               </tbody>
             </table>
           )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-md">
+          <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900"><Users className="h-5 w-5 text-violet-600" />Embudo de cuenta (30 dias)</h3>
+          <p className="mt-1 text-sm text-gray-600">Vista, envio y resultado sin almacenar correo ni contrasena.</p>
+          <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+            {[
+              ['Registro visto', authFunnel?.signup_views || 0],
+              ['Registro enviado', authFunnel?.signup_submits || 0],
+              ['Exito registro', `${authSignupRate}%`],
+              ['Exito login', `${authLoginRate}%`]
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-xl bg-violet-50 p-3 text-violet-950">
+                <p className="text-xs font-bold uppercase opacity-70">{label}</p>
+                <p className="mt-1 text-2xl font-black">{typeof value === 'number' ? value.toLocaleString() : value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-md">
+          <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900"><Activity className="h-5 w-5 text-amber-600" />Eficiencia Supabase (30 dias)</h3>
+          <p className="mt-1 text-sm text-gray-600">El indicador por pagina debe bajar despues del despliegue.</p>
+          <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+            {[
+              ['Paginas', Number(efficiencySnapshot?.page_views || 0).toLocaleString()],
+              ['Sesiones', Number(efficiencySnapshot?.sessions || 0).toLocaleString()],
+              ['Impresiones', Number(efficiencySnapshot?.ad_impressions || 0).toLocaleString()],
+              ['Por pagina', Number(efficiencySnapshot?.impressions_per_page || 0).toFixed(1)]
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-xl bg-amber-50 p-3 text-amber-950">
+                <p className="text-xs font-bold uppercase opacity-70">{label}</p>
+                <p className="mt-1 text-2xl font-black">{value}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

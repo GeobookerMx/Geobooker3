@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { sendWelcomeEmail, sendReferralBonusEmail } from '../services/notificationService';
-import { trackUserSignup } from '../services/analyticsService';
-import { getPlatform } from '../utils/platformDetection';
+import { getAuthErrorCode, trackAuthFunnelEvent, trackUserSignup } from '../services/analyticsService';
 import { isPremiumPromoActive, getPromoMessage, getPremiumPromoDeadlineLabel } from '../config/promotions';
 import { Capacitor } from '@capacitor/core';
 
@@ -15,6 +14,7 @@ const SignupPage = () => {
     const isNative = Capacitor.isNativePlatform();
     const isAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
     const [loading, setLoading] = useState(false);
+    const hasStartedForm = useRef(false);
     const oauthRedirectTo = isNative
         ? 'geobooker://auth/callback'
         : `${window.location.origin}/auth/callback`;
@@ -26,7 +26,23 @@ const SignupPage = () => {
         acceptTerms: false
     });
 
+    useEffect(() => {
+        trackAuthFunnelEvent('signup_form_view', {
+            funnel: 'signup',
+            method: 'email',
+            dedupeKey: 'signup_form_view'
+        });
+    }, []);
+
     const handleChange = (e) => {
+        if (!hasStartedForm.current) {
+            hasStartedForm.current = true;
+            trackAuthFunnelEvent('signup_form_start', {
+                funnel: 'signup',
+                method: 'email',
+                dedupeKey: 'signup_form_start'
+            });
+        }
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({
             ...prev,
@@ -37,23 +53,29 @@ const SignupPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        trackAuthFunnelEvent('signup_submit', { funnel: 'signup', method: 'email' });
+
         // Validaciones
         if (!formData.fullName.trim()) {
+            trackAuthFunnelEvent('signup_error', { funnel: 'signup', method: 'email', errorCode: 'missing_name' });
             toast.error(t('signup.errorFullName'));
             return;
         }
 
         if (formData.password.length < 8) {
+            trackAuthFunnelEvent('signup_error', { funnel: 'signup', method: 'email', errorCode: 'short_password' });
             toast.error(t('signup.errorPasswordLength'));
             return;
         }
 
         if (formData.password !== formData.confirmPassword) {
+            trackAuthFunnelEvent('signup_error', { funnel: 'signup', method: 'email', errorCode: 'password_mismatch' });
             toast.error(t('signup.errorPasswordMatch'));
             return;
         }
 
         if (!formData.acceptTerms) {
+            trackAuthFunnelEvent('signup_error', { funnel: 'signup', method: 'email', errorCode: 'terms_not_accepted' });
             toast.error(t('signup.errorTerms'));
             return;
         }
@@ -82,7 +104,20 @@ const SignupPage = () => {
 
             // ✅ TRACKEAR SIGNUP (NUEVO)
             if (data?.user?.id) {
+                trackAuthFunnelEvent('signup_success', {
+                    funnel: 'signup',
+                    method: 'email',
+                    userId: data.user.id
+                });
                 trackUserSignup(data.user.id, 'email', { referralCode });
+
+                if (!data.session) {
+                    trackAuthFunnelEvent('email_confirmation_pending', {
+                        funnel: 'signup',
+                        method: 'email',
+                        userId: data.user.id
+                    });
+                }
 
                 // 🌍 Guardar datos de registro internacional
                 const registrationDomain = window.location.hostname;
@@ -148,6 +183,11 @@ const SignupPage = () => {
 
         } catch (error) {
             console.error('Error al registrarse:', error);
+            trackAuthFunnelEvent('signup_error', {
+                funnel: 'signup',
+                method: 'email',
+                errorCode: getAuthErrorCode(error)
+            });
             if (error.message.includes('already registered')) {
                 toast.error(t('signup.errorAlreadyRegistered'));
             } else {
@@ -322,6 +362,7 @@ const SignupPage = () => {
                                 onClick={async () => {
                                     try {
                                         setLoading(true);
+                                        trackAuthFunnelEvent('oauth_start', { funnel: 'signup', method: 'google' });
                                         const { data, error } = await supabase.auth.signInWithOAuth({
                                             provider: 'google',
                                             options: {
@@ -365,6 +406,7 @@ const SignupPage = () => {
                                     onClick={async () => {
                                         try {
                                             setLoading(true);
+                                            trackAuthFunnelEvent('oauth_start', { funnel: 'signup', method: 'apple' });
                                             const { data, error } = await supabase.auth.signInWithOAuth({
                                                 provider: 'apple',
                                                 options: {
@@ -404,6 +446,7 @@ const SignupPage = () => {
                                 onClick={async () => {
                                     try {
                                         setLoading(true);
+                                        trackAuthFunnelEvent('oauth_start', { funnel: 'signup', method: 'facebook' });
                                         const { data, error } = await supabase.auth.signInWithOAuth({
                                             provider: 'facebook',
                                             options: {

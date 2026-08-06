@@ -1,6 +1,9 @@
 // src/services/adService.js
 import { supabase } from '../lib/supabase';
 
+const campaignCache = new Map();
+const CAMPAIGN_CACHE_MS = 60_000;
+
 export const normalizeCountryCode = (value) => String(value || '').trim().toUpperCase();
 
 const normalizeCityName = (value) => String(value || '')
@@ -13,6 +16,33 @@ const normalizeTargetList = (value) => {
     if (Array.isArray(value)) return value.filter(Boolean);
     if (typeof value === 'string' && value.trim()) return [value.trim()];
     return [];
+};
+
+const getCampaignCacheKey = (source, spaceName, context = {}) => JSON.stringify([
+    source,
+    spaceName || '',
+    normalizeCountryCode(context.country),
+    normalizeCityName(context.city),
+    context.language || '',
+    context.deviceType || ''
+]);
+
+const withCampaignCache = async (key, loader) => {
+    const cached = campaignCache.get(key);
+    if (cached && Date.now() - cached.createdAt < CAMPAIGN_CACHE_MS) {
+        return cached.value instanceof Promise ? cached.value : [...cached.value];
+    }
+
+    const pending = loader();
+    campaignCache.set(key, { createdAt: Date.now(), value: pending });
+    try {
+        const value = await pending;
+        campaignCache.set(key, { createdAt: Date.now(), value });
+        return [...value];
+    } catch (error) {
+        campaignCache.delete(key);
+        throw error;
+    }
 };
 
 export const getStoredUserCountryCode = () => (
@@ -79,7 +109,9 @@ export function matchesCampaignLocation(campaign, context = {}) {
  * @returns {Promise<Array>} - Lista de campañas activas (creativos formateados)
  */
 export async function loadActiveCampaigns(spaceName, context = {}) {
-    try {
+    const cacheKey = getCampaignCacheKey('active', spaceName, context);
+    return withCampaignCache(cacheKey, async () => {
+      try {
         const {
             country = null,
             city = null,
@@ -138,10 +170,11 @@ export async function loadActiveCampaigns(spaceName, context = {}) {
 
         return (data || []).filter(campaign => matchesCampaignLocation(campaign, { country, city }));
 
-    } catch (error) {
+      } catch (error) {
         console.error('Error loading campaigns:', error);
         return [];
-    }
+      }
+    });
 }
 
 /**
@@ -150,7 +183,9 @@ export async function loadActiveCampaigns(spaceName, context = {}) {
  * @returns {Promise<Array>} - Filtered campaigns sorted by priority
  */
 export async function loadEnterpriseCampaigns(spaceName = null, context = {}) {
-    try {
+    const cacheKey = getCampaignCacheKey('enterprise', spaceName, context);
+    return withCampaignCache(cacheKey, async () => {
+      try {
         const { country = null, city = null } = context;
         const today = new Date().toISOString().split('T')[0];
 
@@ -159,7 +194,7 @@ export async function loadEnterpriseCampaigns(spaceName = null, context = {}) {
         // Query active Enterprise campaigns with their creatives
         let query = supabase
             .from('ad_campaigns')
-            .select('*, ad_creatives(*), ad_spaces(name)')
+            .select('*, ad_creatives(*), ad_spaces!inner(name)')
             .eq('status', 'active')
             .lte('start_date', today)
             .or(`end_date.gte.${today},end_date.is.null`);
@@ -223,10 +258,11 @@ export async function loadEnterpriseCampaigns(spaceName = null, context = {}) {
             };
         });
 
-    } catch (error) {
+      } catch (error) {
         console.error('Error loading Enterprise campaigns:', error);
         return [];
-    }
+      }
+    });
 }
 
 /**
@@ -235,38 +271,13 @@ export async function loadEnterpriseCampaigns(spaceName = null, context = {}) {
  */
 export async function trackImpression(campaignId) {
     try {
-        // Incrementar contador de impresiones en la campaña
-        await supabase.rpc('increment_ad_impression', {
-            campaign_id: campaignId
+        const { error } = await supabase.rpc('record_ad_impression', {
+            p_campaign_id: campaignId,
+            p_country: getStoredUserCountryCode(),
+            p_city: localStorage.getItem('userCity') || null,
+            p_device: window.innerWidth < 768 ? 'mobile' : 'desktop'
         });
-
-        // Actualizar analytics diarios
-        const today = new Date().toISOString().split('T')[0];
-
-        const { data: existing } = await supabase
-            .from('ad_analytics')
-            .select('*')
-            .eq('campaign_id', campaignId)
-            .eq('date', today)
-            .single();
-
-        if (existing) {
-            await supabase
-                .from('ad_analytics')
-                .update({
-                    impressions: existing.impressions + 1
-                })
-                .eq('id', existing.id);
-        } else {
-            await supabase
-                .from('ad_analytics')
-                .insert({
-                    campaign_id: campaignId,
-                    date: today,
-                    impressions: 1,
-                    clicks: 0
-                });
-        }
+        if (error) throw error;
     } catch (error) {
         console.error('Error tracking impression:', error);
     }
@@ -278,41 +289,17 @@ export async function trackImpression(campaignId) {
  * @param {string} url - URL de destino
  */
 export async function trackClick(campaignId, url) {
+    // Navegar de inmediato para no bloquear la experiencia si analytics falla
+    // y para conservar el gesto de usuario requerido por los popup blockers.
+    if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
     try {
-        // Incrementar contador de clicks en la campaña
-        await supabase.rpc('increment_ad_click', {
-            campaign_id: campaignId
+        const { error } = await supabase.rpc('record_ad_click', {
+            p_campaign_id: campaignId
         });
-
-        // Actualizar analytics diarios
-        const today = new Date().toISOString().split('T')[0];
-
-        const { data: existing } = await supabase
-            .from('ad_analytics')
-            .select('*')
-            .eq('campaign_id', campaignId)
-            .eq('date', today)
-            .single();
-
-        if (existing) {
-            const newClicks = existing.clicks + 1;
-            const newCTR = existing.impressions > 0
-                ? ((newClicks / existing.impressions) * 100).toFixed(2)
-                : 0;
-
-            await supabase
-                .from('ad_analytics')
-                .update({
-                    clicks: newClicks,
-                    ctr: newCTR
-                })
-                .eq('id', existing.id);
-        }
-
-        // Abrir URL en nueva pestaña
-        if (url) {
-            window.open(url, '_blank', 'noopener,noreferrer');
-        }
+        if (error) throw error;
     } catch (error) {
         console.error('Error tracking click:', error);
     }

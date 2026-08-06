@@ -1,0 +1,40 @@
+{
+  "source": "Overture Maps Places",
+  "release": "2026-06-17.0",
+  "maxRecordsPerArea": 10000,
+  "minimumConfidence": 0.75,
+  "areas": [
+    {
+      "id": "us-los-angeles",
+      "countryCode": "US",
+      "country": "United States",
+      "city": "Los Angeles",
+      "bbox": [-118.67, 33.70, -118.15, 34.34],
+      "phase": 1
+    },
+    {
+      "id": "ca-toronto",
+      "countryCode": "CA",
+      "country": "Canada",
+      "city": "Toronto",
+      "bbox": [-79.64, 43.58, -79.12, 43.86],
+      "phase": 1
+    },
+    {
+      "id": "es-madrid",
+      "countryCode": "ES",
+      "country": "Spain",
+      "city": "Madrid",
+      "bbox": [-3.89, 40.31, -3.52, 40.58],
+      "phase": 1
+    },
+    {
+      "id": "fr-paris",
+      "countryCode": "FR",
+      "country": "France",
+      "city": "Paris",
+      "bbox": [2.22, 48.81, 2.47, 48.91],
+      "phase": 2
+    }
+  ]
+}

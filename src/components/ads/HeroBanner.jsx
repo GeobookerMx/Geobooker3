@@ -35,11 +35,9 @@ export default function HeroBanner() {
         currentCampaign: regularCampaign,
         hasCampaigns: hasRegular,
         loading,
-        currentIndex,
-        campaigns: regularCampaigns,
-        goToCampaign
+        campaigns: regularCampaigns
     } = useActiveCampaigns('hero_banner', {
-        autoRotate: true,
+        autoRotate: false,
         rotationInterval: 10000 // 10 segundos
     });
 
@@ -62,7 +60,8 @@ export default function HeroBanner() {
 
     const { trackClick } = useAdTracking(
         currentCampaign?.id,
-        true // Auto-track impression
+        true,
+        { slot: 'hero_banner' }
     );
 
     if (loading) {

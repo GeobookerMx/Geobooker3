@@ -543,6 +543,90 @@ export async function trackAppDownloadIntent({ target = 'hub', platformHint = 'u
     }
 }
 
+/**
+ * Registra pasos del embudo de autenticacion sin correo, nombre ni texto de error.
+ * `dedupeKey` evita duplicar vistas/inicios por StrictMode o re-renderizados.
+ */
+export async function trackAuthFunnelEvent(eventName, {
+    funnel,
+    method = 'unknown',
+    userId = null,
+    errorCode = null,
+    dedupeKey = null,
+    metadata = {}
+} = {}) {
+    if (!eventName || !funnel) return;
+
+    if (dedupeKey) {
+        try {
+            const storageKey = `gb_auth_funnel:${getSessionId()}:${dedupeKey}`;
+            if (sessionStorage.getItem(storageKey)) return;
+            sessionStorage.setItem(storageKey, '1');
+        } catch {
+            // El tracking sigue funcionando cuando sessionStorage esta bloqueado.
+        }
+    }
+
+    trackEvent(eventName, { funnel, method });
+
+    try {
+        const attribution = getCurrentAttribution();
+        const safeMetadata = Object.fromEntries(
+            Object.entries(metadata).filter(([, value]) => (
+                value === null || ['string', 'number', 'boolean'].includes(typeof value)
+            )).slice(0, 10)
+        );
+
+        const fullPayload = {
+            session_type: `funnel_${eventName}`,
+            user_id: userId,
+            country: localStorage.getItem('userCountry') || null,
+            city: localStorage.getItem('userCity') || null,
+            referral_source: getAttributionSummary() || null,
+            platform: getRuntimePlatform(),
+            app_version: getAppVersion(),
+            traffic_source: attribution?.utm_source || null,
+            traffic_medium: attribution?.utm_medium || null,
+            traffic_campaign: attribution?.utm_campaign || null,
+            metadata: {
+                funnel,
+                method,
+                anonymous_id: getOrCreateDeviceId(),
+                session_id: getSessionId(),
+                error_code: errorCode ? String(errorCode).slice(0, 80) : null,
+                ...safeMetadata
+            }
+        };
+
+        const fallbackPayload = {
+            session_type: fullPayload.session_type,
+            user_id: fullPayload.user_id,
+            country: fullPayload.country,
+            city: fullPayload.city,
+            referral_source: fullPayload.referral_source
+        };
+
+        const { error } = await insertWithOptionalColumns('user_sessions', fullPayload, fallbackPayload);
+
+        if (error && import.meta.env.DEV) {
+            logger.warn('[Analytics] Failed to store auth funnel event:', error.message);
+        }
+    } catch (err) {
+        if (import.meta.env.DEV) logger.warn('[Analytics] Failed to track auth funnel:', err);
+    }
+}
+
+export function getAuthErrorCode(error) {
+    const message = String(error?.message || error || '').toLowerCase();
+    if (message.includes('already registered') || message.includes('already been registered')) return 'already_registered';
+    if (message.includes('invalid login') || message.includes('invalid_credentials')) return 'invalid_credentials';
+    if (message.includes('email not confirmed')) return 'email_not_confirmed';
+    if (message.includes('rate') || message.includes('too many')) return 'rate_limited';
+    if (message.includes('timeout')) return 'timeout';
+    if (message.includes('network') || message.includes('fetch')) return 'network_error';
+    return 'unknown_error';
+}
+
 export async function trackUserSignup(userId, method = 'email', metadata = {}) {
     // GA4 tracking
     trackEvent('sign_up', {
@@ -705,7 +789,8 @@ export async function flushEventQueue() {
     const remaining = [];
     for (const ev of q) {
         try {
-            const { queued_at, ...data } = ev;
+            const data = { ...ev };
+            delete data.queued_at;
             const { error } = await supabase.from('business_intent_logs').insert(data);
             if (error) {
                 remaining.push(ev);

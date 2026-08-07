@@ -65,6 +65,8 @@ Thumbs.db
 # ✔️ Cache
 # -----------------------------
 .cache/
+__pycache__/
+*.py[cod]
 vite.config.timestamp.*
 
 denue_datos.csv

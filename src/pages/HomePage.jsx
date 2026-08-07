@@ -329,7 +329,16 @@ const CITY_COORDINATES = {
   london: { lat: 51.5074, lng: -0.1278 },
   manchester: { lat: 53.4808, lng: -2.2426 },
   toronto: { lat: 43.6532, lng: -79.3832 },
-  vancouver: { lat: 49.2827, lng: -123.1207 }
+  vancouver: { lat: 49.2827, lng: -123.1207 },
+  madrid: { lat: 40.4168, lng: -3.7038 },
+  paris: { lat: 48.8566, lng: 2.3522 }
+};
+
+const CITY_DATA_FILTERS = {
+  'los-angeles': { city: 'Los Angeles', countryCode: 'US' },
+  toronto: { city: 'Toronto', countryCode: 'CA' },
+  madrid: { city: 'Madrid', countryCode: 'ES' },
+  paris: { city: 'Paris', countryCode: 'FR' }
 };
 
 
@@ -510,7 +519,6 @@ const HomePage = () => {
   const [awardFilter, setAwardFilter] = useState('all');
   const [showAwardsPrompt, setShowAwardsPrompt] = useState(false);
   const [nearbyAwardCount, setNearbyAwardCount] = useState(0);
-  const [showDeferredModules, setShowDeferredModules] = useState(false);
   const [showDeferredAds, setShowDeferredAds] = useState(false);
   const [showDeferredFloatingUi, setShowDeferredFloatingUi] = useState(false);
   const mapIdleTimerRef = useRef(null);
@@ -523,14 +531,14 @@ const HomePage = () => {
   const categoryFilter = category || searchParams.get('category');
   const subcategoryFilter = subcategory || searchParams.get('subcategory');
   const cityFilter = city || searchParams.get('city');
-
-  const getMapCenter = () => {
+  const cityDataFilter = cityFilter ? CITY_DATA_FILTERS[cityFilter.toLowerCase()] : null;
+  const activeMapCenter = useMemo(() => {
     if (cityFilter) {
       const coords = CITY_COORDINATES[cityFilter.toLowerCase()];
       if (coords) return coords;
     }
     return userLocation;
-  };
+  }, [cityFilter, userLocation]);
 
   // SEO dinámico basado en filtros
   const getSEOTitle = () => {
@@ -573,13 +581,11 @@ const HomePage = () => {
       return fallbackTimer;
     };
 
-    const modulesTimer = schedule(900, setShowDeferredModules);
     const adsTimer = schedule(1400, setShowDeferredAds);
     const floatingTimer = schedule(2200, setShowDeferredFloatingUi);
 
     return () => {
       cancelled = true;
-      clearTimeout(modulesTimer);
       clearTimeout(adsTimer);
       clearTimeout(floatingTimer);
     };
@@ -626,8 +632,8 @@ const HomePage = () => {
   const fetchGeobookerBusinesses = useCallback(async () => {
     try {
       // ⚡ PASO 1: Intentar cargar desde caché primero (instantáneo)
-      const cacheStatus = await isCacheValid(userLocation);
-      if (cacheStatus.isValid && !categoryFilter) {
+      const cacheStatus = cityDataFilter ? { isValid: false } : await isCacheValid(userLocation);
+      if (cacheStatus.isValid && !categoryFilter && !cityDataFilter) {
         const cachedBusinesses = await getCachedBusinesses();
         if (cachedBusinesses.length > 0) {
           const enrichedCachedBusinesses = await enrichBusinessesWithAwards(cachedBusinesses);
@@ -645,6 +651,11 @@ const HomePage = () => {
 
       if (categoryFilter) query = query.eq('category', categoryFilter);
       if (subcategoryFilter) query = query.eq('subcategory', subcategoryFilter);
+      if (cityDataFilter) {
+        query = query
+          .eq('country_code', cityDataFilter.countryCode)
+          .ilike('city', cityDataFilter.city);
+      }
 
       const { data, error } = await query;
       if (error) throw error;
@@ -676,14 +687,14 @@ const HomePage = () => {
         }));
 
         setGeobookerBusinesses(businessesWithPremium);
-        if (!categoryFilter && userLocation && businessesWithPremium.length > 0) {
+        if (!categoryFilter && !cityDataFilter && userLocation && businessesWithPremium.length > 0) {
           cacheBusinesses(businessesWithPremium, userLocation);
         }
       }
     } catch (error) {
       console.error('Error fetching Geobooker businesses:', error);
     }
-  }, [categoryFilter, subcategoryFilter, userLocation]);
+  }, [categoryFilter, subcategoryFilter, userLocation, cityDataFilter]);
 
   // 💚 OPCION 1: Cargar recomendaciones filtradas por viewport del mapa
   // Solo se cargan las recomendaciones visibles en el área del mapa, no TODAS.
@@ -758,26 +769,26 @@ const HomePage = () => {
   useEffect(() => {
     const searchGooglePlacesWithCategory = async () => {
       // Solo buscar si hay filtro de categoría Y tenemos ubicación del usuar io
-      if (!categoryFilter || !userLocation) return;
+      if (!categoryFilter || !activeMapCenter) return;
 
       try {
         // ⚡ OPTIMIZACIÓN: Mostrar caché inmediatamente (loading optimista)
         const searchTerm = subcategoryFilter || categoryFilter;
-        const cacheKey = generateCacheKey(userLocation, searchTerm, 'search');
+        const cacheKey = generateCacheKey(activeMapCenter, searchTerm, 'search');
         const cachedResults = getFromCache(cacheKey);
 
         if (cachedResults && cachedResults.length > 0) {
-          setBusinesses(prepareMapResults(cachedResults, userLocation, SEARCH_RESULT_RENDER_LIMIT));
+          setBusinesses(prepareMapResults(cachedResults, activeMapCenter, SEARCH_RESULT_RENDER_LIMIT));
           toast.success(`💾 ${cachedResults.length} negocios (caché instantáneo)`, { duration: 2000 });
         } else {
           setSearchLoading(true);
         }
 
         // Buscar en Google Places (actualiza en background)
-        const results = await searchPlacesUniversal(userLocation, searchTerm, 10000);
+        const results = await searchPlacesUniversal(activeMapCenter, searchTerm, 10000);
 
         if (results && results.length > 0) {
-          startTransition(() => setBusinesses(prepareMapResults(results, userLocation, SEARCH_RESULT_RENDER_LIMIT)));
+          startTransition(() => setBusinesses(prepareMapResults(results, activeMapCenter, SEARCH_RESULT_RENDER_LIMIT)));
           // Si no había caché, mostrar mensaje de éxito
           if (!cachedResults || cachedResults.length === 0) {
             toast.success(`🔍 ${results.length} negocios encontrados para "${searchTerm}"`, { duration: 3000 });
@@ -793,7 +804,7 @@ const HomePage = () => {
     };
 
     searchGooglePlacesWithCategory();
-  }, [categoryFilter, subcategoryFilter, userLocation]);
+  }, [categoryFilter, subcategoryFilter, userLocation, activeMapCenter]);
 
   // Show location modal for new users who have no location at all
   // [APP STORE FIX] Only show after user interaction, not on app launch
@@ -828,7 +839,7 @@ const HomePage = () => {
   };
 
   const handleBusinessesFound = (foundBusinesses = [], meta = {}) => {
-    const renderableBusinesses = prepareMapResults(foundBusinesses, userLocation, SEARCH_RESULT_RENDER_LIMIT);
+    const renderableBusinesses = prepareMapResults(foundBusinesses, activeMapCenter, SEARCH_RESULT_RENDER_LIMIT);
 
     startTransition(() => {
       setBusinesses(renderableBusinesses);
@@ -888,16 +899,16 @@ const HomePage = () => {
     [awardFilter, denueBusinesses]
   );
   const visibleSearchBusinesses = useMemo(
-    () => prepareMapResults(filteredBusinesses, userLocation, SEARCH_RESULT_RENDER_LIMIT),
-    [filteredBusinesses, userLocation]
+    () => prepareMapResults(filteredBusinesses, activeMapCenter, SEARCH_RESULT_RENDER_LIMIT),
+    [filteredBusinesses, activeMapCenter]
   );
   const visibleGeobookerBusinesses = useMemo(() => {
     const openBusinesses = openNowFilter
       ? filteredGeobookerBusinesses.filter((business) => isBusinessOpen(business.opening_hours).isOpen === true)
       : filteredGeobookerBusinesses;
 
-    return prepareMapResults(openBusinesses, userLocation, NATIVE_MAP_RENDER_LIMIT);
-  }, [filteredGeobookerBusinesses, openNowFilter, userLocation]);
+    return prepareMapResults(openBusinesses, activeMapCenter, NATIVE_MAP_RENDER_LIMIT);
+  }, [filteredGeobookerBusinesses, openNowFilter, activeMapCenter]);
   const visibleDenueBusinesses = useMemo(
     () => prepareMapResults(filteredDenueBusinesses, userLocation, DENUE_MAP_RENDER_LIMIT),
     [filteredDenueBusinesses, userLocation]
@@ -1541,7 +1552,7 @@ const HomePage = () => {
           <Suspense fallback={<MapLoadingFallback />}>
             <BusinessMap
               userLocation={userLocation}
-              center={getMapCenter()}
+              center={activeMapCenter}
               businesses={mapSearchBusinesses} // Google Places o resultados semanticos priorizados
               geobookerBusinesses={mapGeobookerBusinesses}
               denueBusinesses={mapDenueBusinesses}

@@ -102,6 +102,18 @@ const CITIES_CONFIG = {
         heroImage: '/images/cities/vancouver.jpg',
         description: 'Vancouver\'s best local businesses. Sushi, nature, and West Coast vibes.',
         descriptionEs: 'Los mejores negocios locales de Vancouver. Sushi, naturaleza y vibraciones de la Costa Oeste.'
+    },
+    // Spain
+    'madrid': {
+        name: 'Madrid',
+        state: 'Comunidad de Madrid',
+        country: 'ES',
+        population: '3.4M+',
+        lang: 'es',
+        popularCategories: ['restaurant', 'coffee_shop', 'bakery', 'beauty_salon', 'professional_service'],
+        heroImage: '/images/cities/madrid.jpg',
+        description: 'Discover local businesses, food and professional services in Madrid.',
+        descriptionEs: 'Descubre negocios, restaurantes y servicios profesionales en Madrid.'
     }
 };
 
@@ -132,7 +144,7 @@ export default function CityLandingPage() {
 
     const isSpanish = i18n.language === 'es';
     const description = isSpanish && city.descriptionEs ? city.descriptionEs : city.description;
-    const countryLabels = { US: 'United States', GB: 'United Kingdom', CA: 'Canada' };
+    const countryLabels = { US: 'United States', GB: 'United Kingdom', CA: 'Canada', ES: 'España' };
     const cityUrl = `https://geobooker.com/cities/${citySlug}`;
     const cityStructuredData = [
         {
@@ -230,7 +242,7 @@ export default function CityLandingPage() {
                         {isSpanish ? `Categorías Populares en ${city.name}` : `Popular Categories in ${city.name}`}
                     </h2>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto">
-                        {city.popularCategories.map((cat, index) => (
+                        {city.popularCategories.map((cat) => (
                             <Link
                                 key={cat}
                                 to={`/search?q=${cat}&city=${citySlug}`}

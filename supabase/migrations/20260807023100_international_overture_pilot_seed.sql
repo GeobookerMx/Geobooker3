@@ -3,13 +3,56 @@
 
 BEGIN;
 
-ALTER TABLE public.businesses ALTER COLUMN owner_id DROP NOT NULL;
+CREATE TABLE IF NOT EXISTS public.international_businesses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id UUID,
+  name TEXT NOT NULL,
+  description TEXT,
+  category TEXT,
+  subcategory TEXT,
+  address TEXT,
+  city TEXT NOT NULL,
+  state_code TEXT,
+  postal_code TEXT,
+  country_code TEXT NOT NULL,
+  latitude DOUBLE PRECISION NOT NULL,
+  longitude DOUBLE PRECISION NOT NULL,
+  website TEXT,
+  website_url TEXT,
+  phone TEXT,
+  slug TEXT NOT NULL,
+  source_type TEXT NOT NULL DEFAULT 'seed_overture',
+  source_record_id TEXT NOT NULL,
+  attribution_text TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'approved',
+  business_status TEXT NOT NULL DEFAULT 'active',
+  is_visible BOOLEAN NOT NULL DEFAULT TRUE,
+  is_claimed BOOLEAN NOT NULL DEFAULT FALSE,
+  is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+  preferred_language TEXT DEFAULT 'en',
+  imported_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_businesses_overture_source_record
-  ON public.businesses(source_record_id)
-  WHERE source_type = 'seed_overture' AND source_record_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_international_businesses_source_record
+  ON public.international_businesses(source_record_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_international_businesses_slug
+  ON public.international_businesses(slug);
+CREATE INDEX IF NOT EXISTS idx_international_businesses_location
+  ON public.international_businesses(country_code, city);
 
-INSERT INTO public.businesses (
+ALTER TABLE public.international_businesses ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS international_businesses_public_read_v1
+  ON public.international_businesses;
+CREATE POLICY international_businesses_public_read_v1
+  ON public.international_businesses
+  FOR SELECT TO anon, authenticated
+  USING (status = 'approved' AND is_visible = TRUE);
+
+GRANT SELECT ON public.international_businesses TO anon, authenticated;
+GRANT ALL ON public.international_businesses TO service_role;
+
+INSERT INTO public.international_businesses (
   owner_id, name, description, category, subcategory, address, city, state_code,
   postal_code, country_code, latitude, longitude, website, website_url, phone,
   slug, source_type, source_record_id, attribution_text, status, business_status,
@@ -3019,7 +3062,7 @@ ON CONFLICT DO NOTHING;
 
 DO $$
 BEGIN
-  IF (SELECT COUNT(*) FROM public.businesses WHERE source_type = 'seed_overture' AND country_code = 'US' AND city = 'Los Angeles') < 1000 THEN RAISE EXCEPTION 'Incomplete Overture seed for Los Angeles'; END IF; IF (SELECT COUNT(*) FROM public.businesses WHERE source_type = 'seed_overture' AND country_code = 'CA' AND city = 'Toronto') < 1000 THEN RAISE EXCEPTION 'Incomplete Overture seed for Toronto'; END IF; IF (SELECT COUNT(*) FROM public.businesses WHERE source_type = 'seed_overture' AND country_code = 'ES' AND city = 'Madrid') < 1000 THEN RAISE EXCEPTION 'Incomplete Overture seed for Madrid'; END IF;
+  IF (SELECT COUNT(*) FROM public.international_businesses WHERE source_type = 'seed_overture' AND country_code = 'US' AND city = 'Los Angeles') < 1000 THEN RAISE EXCEPTION 'Incomplete Overture seed for Los Angeles'; END IF; IF (SELECT COUNT(*) FROM public.international_businesses WHERE source_type = 'seed_overture' AND country_code = 'CA' AND city = 'Toronto') < 1000 THEN RAISE EXCEPTION 'Incomplete Overture seed for Toronto'; END IF; IF (SELECT COUNT(*) FROM public.international_businesses WHERE source_type = 'seed_overture' AND country_code = 'ES' AND city = 'Madrid') < 1000 THEN RAISE EXCEPTION 'Incomplete Overture seed for Madrid'; END IF;
 END $$;
 
 COMMIT;

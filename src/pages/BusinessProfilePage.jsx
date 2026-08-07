@@ -77,6 +77,19 @@ const BusinessProfilePage = () => {
                     error = byIdResult.error;
                 }
 
+                // Los pilotos internacionales viven en una tabla aislada para no
+                // modificar el catálogo principal de México.
+                if (error || !data) {
+                    const internationalResult = await supabase
+                        .from('international_businesses')
+                        .select('*')
+                        .or(`slug.eq.${slugOrId},id.eq.${slugOrId}`)
+                        .single();
+
+                    data = internationalResult.data;
+                    error = internationalResult.error;
+                }
+
                 // Si no existe en validos/activos, buscar en las tablas de DENUE (candidatos)
                 if (error || !data) {
                     const { data: candidateData, error: candidateError } = await supabase

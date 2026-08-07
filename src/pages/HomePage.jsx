@@ -643,8 +643,9 @@ const HomePage = () => {
       }
 
       // ⚡ PASO 2: Si caché no es válido o está vacío, cargar desde Supabase
+      const businessTable = cityDataFilter ? 'international_businesses' : 'businesses';
       let query = supabase
-        .from('businesses')
+        .from(businessTable)
         .select('*')
         .eq('status', 'approved')
         .eq('is_visible', true);

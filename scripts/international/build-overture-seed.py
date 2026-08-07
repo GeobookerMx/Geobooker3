@@ -168,7 +168,7 @@ def render_sql(records_by_area: dict[str, list[dict]], release: str) -> str:
     for records in records_by_area.values():
         sample = records[0]
         assertions.append(
-            "IF (SELECT COUNT(*) FROM public.businesses WHERE source_type = 'seed_overture' "
+            "IF (SELECT COUNT(*) FROM public.international_businesses WHERE source_type = 'seed_overture' "
             f"AND country_code = {sql_text(sample['country_code'])} AND city = {sql_text(sample['city'])}) < {len(records)} "
             f"THEN RAISE EXCEPTION 'Incomplete Overture seed for {sample['city']}'; END IF;"
         )
@@ -178,13 +178,56 @@ def render_sql(records_by_area: dict[str, list[dict]], release: str) -> str:
 
 BEGIN;
 
-ALTER TABLE public.businesses ALTER COLUMN owner_id DROP NOT NULL;
+CREATE TABLE IF NOT EXISTS public.international_businesses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id UUID,
+  name TEXT NOT NULL,
+  description TEXT,
+  category TEXT,
+  subcategory TEXT,
+  address TEXT,
+  city TEXT NOT NULL,
+  state_code TEXT,
+  postal_code TEXT,
+  country_code TEXT NOT NULL,
+  latitude DOUBLE PRECISION NOT NULL,
+  longitude DOUBLE PRECISION NOT NULL,
+  website TEXT,
+  website_url TEXT,
+  phone TEXT,
+  slug TEXT NOT NULL,
+  source_type TEXT NOT NULL DEFAULT 'seed_overture',
+  source_record_id TEXT NOT NULL,
+  attribution_text TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'approved',
+  business_status TEXT NOT NULL DEFAULT 'active',
+  is_visible BOOLEAN NOT NULL DEFAULT TRUE,
+  is_claimed BOOLEAN NOT NULL DEFAULT FALSE,
+  is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+  preferred_language TEXT DEFAULT 'en',
+  imported_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_businesses_overture_source_record
-  ON public.businesses(source_record_id)
-  WHERE source_type = 'seed_overture' AND source_record_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_international_businesses_source_record
+  ON public.international_businesses(source_record_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_international_businesses_slug
+  ON public.international_businesses(slug);
+CREATE INDEX IF NOT EXISTS idx_international_businesses_location
+  ON public.international_businesses(country_code, city);
 
-INSERT INTO public.businesses (
+ALTER TABLE public.international_businesses ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS international_businesses_public_read_v1
+  ON public.international_businesses;
+CREATE POLICY international_businesses_public_read_v1
+  ON public.international_businesses
+  FOR SELECT TO anon, authenticated
+  USING (status = 'approved' AND is_visible = TRUE);
+
+GRANT SELECT ON public.international_businesses TO anon, authenticated;
+GRANT ALL ON public.international_businesses TO service_role;
+
+INSERT INTO public.international_businesses (
   owner_id, name, description, category, subcategory, address, city, state_code,
   postal_code, country_code, latitude, longitude, website, website_url, phone,
   slug, source_type, source_record_id, attribution_text, status, business_status,

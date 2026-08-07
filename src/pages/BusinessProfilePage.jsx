@@ -86,7 +86,9 @@ const BusinessProfilePage = () => {
                         .or(`slug.eq.${slugOrId},id.eq.${slugOrId}`)
                         .single();
 
-                    data = internationalResult.data;
+                    data = internationalResult.data
+                        ? { ...internationalResult.data, catalog_source: 'international' }
+                        : null;
                     error = internationalResult.error;
                 }
 

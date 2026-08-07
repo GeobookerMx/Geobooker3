@@ -50,7 +50,8 @@ const DeferredSectionFallback = ({ minHeight = '180px' }) => (
   />
 );
 
-const SEARCH_RESULT_RENDER_LIMIT = 60;
+const SEARCH_RESULT_RENDER_LIMIT = 20;
+const INTERNATIONAL_MAP_RENDER_LIMIT = 20;
 const NATIVE_MAP_RENDER_LIMIT = 250;
 const DENUE_MAP_RENDER_LIMIT = 450;
 const RECOMMENDED_MAP_RENDER_LIMIT = 80;
@@ -664,6 +665,7 @@ const HomePage = () => {
         const businessesWithAwards = await enrichBusinessesWithAwards(data);
         const baseBusinesses = businessesWithAwards.map((business) => ({
           ...business,
+          catalog_source: cityDataFilter ? 'international' : 'native',
           is_premium_owner: false
         }));
 
@@ -684,6 +686,7 @@ const HomePage = () => {
         const premiumOwners = Object.fromEntries(premiumEntries);
         const businessesWithPremium = businessesWithAwards.map((business) => ({
           ...business,
+          catalog_source: cityDataFilter ? 'international' : 'native',
           is_premium_owner: premiumOwners[business.owner_id] || false
         }));
 
@@ -908,8 +911,9 @@ const HomePage = () => {
       ? filteredGeobookerBusinesses.filter((business) => isBusinessOpen(business.opening_hours).isOpen === true)
       : filteredGeobookerBusinesses;
 
-    return prepareMapResults(openBusinesses, activeMapCenter, NATIVE_MAP_RENDER_LIMIT);
-  }, [filteredGeobookerBusinesses, openNowFilter, activeMapCenter]);
+    const renderLimit = cityDataFilter ? INTERNATIONAL_MAP_RENDER_LIMIT : NATIVE_MAP_RENDER_LIMIT;
+    return prepareMapResults(openBusinesses, activeMapCenter, renderLimit);
+  }, [filteredGeobookerBusinesses, openNowFilter, activeMapCenter, cityDataFilter]);
   const visibleDenueBusinesses = useMemo(
     () => prepareMapResults(filteredDenueBusinesses, userLocation, DENUE_MAP_RENDER_LIMIT),
     [filteredDenueBusinesses, userLocation]
@@ -1395,6 +1399,9 @@ const HomePage = () => {
               onBusinessesFound={handleBusinessesFound}
               loading={searchLoading}
               initialValue={lastSearchQuery}
+              localBusinesses={cityDataFilter ? geobookerBusinesses : []}
+              searchLocation={cityDataFilter ? activeMapCenter : null}
+              searchCountry={cityDataFilter?.countryCode || null}
             />
 
             <div className="mt-4 flex flex-wrap justify-center gap-2">

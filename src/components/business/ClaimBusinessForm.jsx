@@ -105,8 +105,11 @@ const ClaimBusinessForm = ({ isOpen, onClose, business, onSuccess }) => {
                 evidenceUrl = await uploadEvidence(evidenceFile);
             }
 
+            const isInternational = business.catalog_source === 'international';
+            const claimsTable = isInternational ? 'international_business_claims' : 'business_claims';
+
             const { error } = await supabase
-                .from('business_claims')
+                .from(claimsTable)
                 .insert({
                     business_id: business.id,
                     user_id: user.id,

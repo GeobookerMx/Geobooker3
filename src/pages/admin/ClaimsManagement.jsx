@@ -2,7 +2,7 @@
 // Panel de administración para aprobar/rechazar reclamos de negocios
 // Compatible con negocios nativos, DENUE y Overture
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import {
@@ -20,32 +20,46 @@ const ClaimsManagement = () => {
     const [rejectReason, setRejectReason] = useState('');
     const [showRejectModal, setShowRejectModal] = useState(null);
 
-    const loadClaims = async () => {
+    const loadClaims = useCallback(async () => {
         setLoading(true);
         try {
-            let query = supabase
+            let nativeQuery = supabase
                 .from('business_claims')
                 .select('*, businesses(id, name, category, address, source_type, source_record_id, is_claimed)')
                 .order('created_at', { ascending: false });
+            let internationalQuery = supabase
+                .from('international_business_claims')
+                .select('*, international_businesses(id, name, category, address, city, country_code, source_type, source_record_id, is_claimed)')
+                .order('created_at', { ascending: false });
 
             if (filter !== 'all') {
-                query = query.eq('status', filter);
+                nativeQuery = nativeQuery.eq('status', filter);
+                internationalQuery = internationalQuery.eq('status', filter);
             }
 
-            const { data, error } = await query;
-            if (error) throw error;
-            setClaims(data || []);
+            const [nativeResult, internationalResult] = await Promise.all([nativeQuery, internationalQuery]);
+            const isMissingTable = (error) =>
+                error?.code === '42P01' || String(error?.message || '').toLowerCase().includes('schema cache');
+
+            if (nativeResult.error && !isMissingTable(nativeResult.error)) throw nativeResult.error;
+            if (internationalResult.error && !isMissingTable(internationalResult.error)) throw internationalResult.error;
+
+            const mergedClaims = [
+                ...(nativeResult.data || []).map((claim) => ({ ...claim, catalog_source: 'native' })),
+                ...(internationalResult.data || []).map((claim) => ({ ...claim, catalog_source: 'international' }))
+            ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            setClaims(mergedClaims);
         } catch (err) {
             console.error('Error loading claims:', err);
             toast.error('Error cargando reclamos');
         } finally {
             setLoading(false);
         }
-    };
+    }, [filter]);
 
     useEffect(() => {
         loadClaims();
-    }, [filter]);
+    }, [loadClaims]);
 
     // Aprobar claim
     const handleApprove = async (claim) => {
@@ -54,8 +68,10 @@ const ClaimsManagement = () => {
             const { data: { user } } = await supabase.auth.getUser();
 
             // 1. Actualizar claim a aprobado
+            const isInternational = claim.catalog_source === 'international';
+            const claimsTable = isInternational ? 'international_business_claims' : 'business_claims';
             const { error: claimError } = await supabase
-                .from('business_claims')
+                .from(claimsTable)
                 .update({
                     status: 'approved',
                     reviewed_by: user?.id,
@@ -67,27 +83,29 @@ const ClaimsManagement = () => {
             if (claimError) throw claimError;
 
             // 2. Actualizar negocio como reclamado
+            const businessTable = isInternational ? 'international_businesses' : 'businesses';
+            const businessId = claim.business_id;
             const { error: bizError } = await supabase
-                .from('businesses')
+                .from(businessTable)
                 .update({
                     is_claimed: true,
                     claimed_by: claim.user_id,
                     claimed_at: new Date().toISOString(),
                     owner_id: claim.user_id, // Asignar como dueño
                 })
-                .eq('id', claim.business_id);
+                .eq('id', businessId);
 
             if (bizError) throw bizError;
 
             // 3. Rechazar otros claims activos para el mismo negocio
             await supabase
-                .from('business_claims')
+                .from(claimsTable)
                 .update({
                     status: 'rejected',
                     review_notes: 'Otro reclamo fue aprobado para este negocio',
                     reviewed_at: new Date().toISOString(),
                 })
-                .eq('business_id', claim.business_id)
+                .eq('business_id', businessId)
                 .neq('id', claim.id)
                 .in('status', ['submitted', 'under_review']);
 
@@ -95,7 +113,7 @@ const ClaimsManagement = () => {
 
             // Enviar email de notificación al reclamante
             try {
-                const bizName = claim.businesses?.name || 'tu negocio';
+                const bizName = (claim.businesses || claim.international_businesses)?.name || 'tu negocio';
                 await sendEmail({
                     to: claim.email,
                     subject: `✅ ¡Tu reclamo de "${bizName}" fue aprobado! — Geobooker`,
@@ -141,8 +159,12 @@ const ClaimsManagement = () => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
 
+            const claim = claims.find((item) => item.id === claimId);
+            const claimsTable = claim?.catalog_source === 'international'
+                ? 'international_business_claims'
+                : 'business_claims';
             const { error } = await supabase
-                .from('business_claims')
+                .from(claimsTable)
                 .update({
                     status: 'rejected',
                     reviewed_by: user?.id,
@@ -156,9 +178,8 @@ const ClaimsManagement = () => {
 
             // Enviar email de notificación al reclamante
             try {
-                const claim = claims.find(c => c.id === claimId);
                 if (claim?.email) {
-                    const bizName = claim.businesses?.name || 'el negocio solicitado';
+                    const bizName = (claim.businesses || claim.international_businesses)?.name || 'el negocio solicitado';
                     await sendEmail({
                         to: claim.email,
                         subject: `Actualización sobre tu reclamo de "${bizName}" — Geobooker`,
@@ -273,7 +294,7 @@ const ClaimsManagement = () => {
                 ) : (
                     <div className="grid gap-6">
                         {claims.map((claim) => {
-                            const biz = claim.businesses;
+                            const biz = claim.businesses || claim.international_businesses;
                             const statusConfig = getStatusConfig(claim.status);
                             const StatusIcon = statusConfig.icon;
 

@@ -28,21 +28,39 @@ const ClaimBusinessPage = () => {
     setSearched(true);
 
     try {
-      // Buscar en negocios nativos + DENUE que NO estén reclamados
-      const { data, error } = await supabase
-        .from('businesses')
-        .select('id, name, category, address, source_type, is_claimed, latitude, longitude')
-        .ilike('name', `%${query.trim()}%`)
-        .eq('is_claimed', false)
-        .limit(20);
+      const searchTerm = query.trim();
+      const [nativeResult, internationalResult] = await Promise.all([
+        supabase
+          .from('businesses')
+          .select('id, name, category, address, city, country_code, source_type, is_claimed, latitude, longitude')
+          .ilike('name', `%${searchTerm}%`)
+          .eq('is_claimed', false)
+          .limit(10),
+        supabase
+          .from('international_businesses')
+          .select('id, name, category, address, city, country_code, source_type, is_claimed, latitude, longitude')
+          .ilike('name', `%${searchTerm}%`)
+          .eq('is_claimed', false)
+          .limit(10)
+      ]);
 
-      if (error) throw error;
+      const isMissingTable = (error) =>
+        error?.code === '42P01' || String(error?.message || '').toLowerCase().includes('schema cache');
+      if (nativeResult.error && !isMissingTable(nativeResult.error)) throw nativeResult.error;
+      if (internationalResult.error && !isMissingTable(internationalResult.error)) {
+        throw internationalResult.error;
+      }
 
-      setResults(data || []);
+      const mergedResults = [
+        ...(nativeResult.data || []).map((business) => ({ ...business, catalog_source: 'native' })),
+        ...(internationalResult.data || []).map((business) => ({ ...business, catalog_source: 'international' }))
+      ].slice(0, 20);
+
+      setResults(mergedResults);
 
       trackEvent('claim_search', {
-        query: query.trim(),
-        results_count: data?.length || 0,
+        query: searchTerm,
+        results_count: mergedResults.length,
       });
     } catch (err) {
       console.error('Error searching businesses:', err);
@@ -102,7 +120,7 @@ const ClaimBusinessPage = () => {
             <span className="text-yellow-300">Geobooker</span>?
           </h1>
           <p className="text-lg md:text-xl text-orange-100 max-w-2xl mx-auto mb-2">
-            Miles de negocios del DENUE e INEGI ya aparecen en nuestro mapa.
+            Negocios de directorios oficiales y fuentes globales ya aparecen en nuestro mapa.
             Busca el tuyo y toma control de tu perfil digital.
           </p>
           <p className="text-sm text-orange-200 max-w-xl mx-auto">
@@ -160,7 +178,7 @@ const ClaimBusinessPage = () => {
               No encontramos "{query}" disponible para reclamar
             </h3>
             <p className="text-gray-500 mb-6 max-w-md mx-auto">
-              Puede que el nombre sea diferente en la base de datos del DENUE, o quizá tu negocio aún no esté registrado.
+              Puede que el nombre sea diferente en el directorio de origen, o quizá tu negocio aún no esté registrado.
             </p>
             <Link
               to="/business/register"
@@ -204,7 +222,7 @@ const ClaimBusinessPage = () => {
                           {biz.address && (
                             <p className="text-sm text-gray-400 mt-1 flex items-center gap-1 truncate">
                               <MapPin className="w-3 h-3 flex-shrink-0" />
-                              {biz.address}
+                              {[biz.address, biz.city, biz.country_code].filter(Boolean).join(', ')}
                             </p>
                           )}
                         </div>

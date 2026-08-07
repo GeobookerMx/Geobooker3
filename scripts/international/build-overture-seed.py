@@ -6,6 +6,7 @@ import argparse
 import json
 import re
 import unicodedata
+from collections import Counter, defaultdict, deque
 from pathlib import Path
 
 from overturemaps import record_batch_reader
@@ -96,7 +97,64 @@ def normalize_record(row: dict, area: dict, release: str) -> dict | None:
     }
 
 
-def fetch_area(area: dict, release: str, limit: int) -> list[dict]:
+def select_balanced_records(
+    records: list[dict],
+    limit: int,
+    max_per_category: int,
+    max_per_subcategory: int,
+) -> list[dict]:
+    buckets: dict[tuple[str, str], deque[dict]] = defaultdict(deque)
+    for record in records:
+        buckets[(record["category"], record["subcategory"])].append(record)
+
+    category_counts: Counter[str] = Counter()
+    subcategory_counts: Counter[tuple[str, str]] = Counter()
+    selected: list[dict] = []
+
+    while len(selected) < limit:
+        eligible = []
+        for bucket_key, bucket in buckets.items():
+            if not bucket:
+                continue
+            category, _ = bucket_key
+            if category_counts[category] >= max_per_category:
+                continue
+            if subcategory_counts[bucket_key] >= max_per_subcategory:
+                continue
+            candidate = bucket[0]
+            eligible.append((
+                category_counts[category],
+                subcategory_counts[bucket_key],
+                -candidate["score"],
+                candidate["name"].casefold(),
+                candidate["source_id"],
+                bucket_key,
+            ))
+
+        if not eligible:
+            break
+
+        *_, chosen_bucket = min(eligible)
+        chosen = buckets[chosen_bucket].popleft()
+        selected.append(chosen)
+        category_counts[chosen["category"]] += 1
+        subcategory_counts[chosen_bucket] += 1
+
+    if len(selected) < limit:
+        raise RuntimeError(
+            f"balanced selection produced {len(selected)} of {limit}; "
+            "increase --max-per-category or --max-per-subcategory"
+        )
+    return selected
+
+
+def fetch_area(
+    area: dict,
+    release: str,
+    limit: int,
+    max_per_category: int,
+    max_per_subcategory: int,
+) -> list[dict]:
     reader = record_batch_reader("place", bbox=area["bbox"], release=release)
     selected: list[dict] = []
     seen: set[tuple] = set()
@@ -120,7 +178,15 @@ def fetch_area(area: dict, release: str, limit: int) -> list[dict]:
     selected.sort(key=lambda item: (-item["score"], item["name"].casefold(), item["source_id"]))
     if len(selected) < limit:
         raise RuntimeError(f"{area['id']}: only {len(selected)} eligible records; expected {limit}")
-    return selected[:limit]
+    try:
+        return select_balanced_records(
+            selected,
+            limit,
+            max_per_category=max_per_category,
+            max_per_subcategory=max_per_subcategory,
+        )
+    except RuntimeError as error:
+        raise RuntimeError(f"{area['id']}: {error}") from error
 
 
 def render_sql(records_by_area: dict[str, list[dict]], release: str) -> str:
@@ -250,19 +316,33 @@ def main() -> None:
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--limit", type=int, default=1000)
+    parser.add_argument("--max-per-category", type=int, default=500)
+    parser.add_argument("--max-per-subcategory", type=int, default=100)
     parser.add_argument("--areas", nargs="+", required=True)
     args = parser.parse_args()
+
+    if min(args.limit, args.max_per_category, args.max_per_subcategory) <= 0:
+        parser.error("limits must be positive integers")
 
     config = json.loads(args.config.read_text(encoding="utf-8"))
     release = config["release"]
     area_map = {area["id"]: area for area in config["areas"]}
     records_by_area = {
-        area_id: fetch_area(area_map[area_id], release, args.limit)
+        area_id: fetch_area(
+            area_map[area_id],
+            release,
+            args.limit,
+            args.max_per_category,
+            args.max_per_subcategory,
+        )
         for area_id in args.areas
     }
     args.output.write_text(render_sql(records_by_area, release), encoding="utf-8", newline="\n")
     for area_id, records in records_by_area.items():
-        print(f"{area_id}: {len(records)} records")
+        category_counts = Counter(record["category"] for record in records)
+        subcategory_counts = Counter(record["subcategory"] for record in records)
+        distribution = dict(sorted(category_counts.items()))
+        print(f"{area_id}: {len(records)} records; categories={distribution}; largest_subcategory={max(subcategory_counts.values())}")
     print(f"output: {args.output}")
 
 

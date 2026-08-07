@@ -8,7 +8,60 @@ import { isAwardSearchQuery } from '../utils/awardUtils';
 import { matchesSemanticText } from '../utils/semanticDictionary';
 import { analyzeSearchIntent, buildIntentSearchQueries } from '../utils/searchIntentEngine';
 
-const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) => {
+const LOCAL_RESULT_LIMIT = 20;
+
+const normalizeSearchValue = (value = '') =>
+  String(value)
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+const findLocalSemanticMatches = (businesses, query, intent) => {
+  const queryText = normalizeSearchValue(query);
+  const normalizedHints = (intent?.categoryHints || []).map(normalizeSearchValue);
+
+  return (businesses || [])
+    .map((business) => {
+      const haystackValues = [
+        business.name,
+        business.category,
+        business.subcategory,
+        business.description,
+        business.address,
+        ...(Array.isArray(business.tags) ? business.tags : [])
+      ];
+      const normalizedHaystack = normalizeSearchValue(haystackValues.filter(Boolean).join(' '));
+      const semanticMatch = matchesSemanticText(query, haystackValues);
+      const hintMatch = normalizedHints.some((hint) => hint && normalizedHaystack.includes(hint));
+      if (!semanticMatch && !hintMatch) return null;
+
+      const exactBoost = normalizedHaystack.includes(queryText) ? 30 : 0;
+      const categoryBoost = hintMatch ? 20 : 0;
+      return {
+        ...business,
+        isSemanticResult: true,
+        search_intent_id: intent?.id || null,
+        search_intent_label: intent?.label || null,
+        search_rank_score: exactBoost + categoryBoost,
+        availability_note: 'Resultado relacionado por categoria o producto. Confirma precio, medida y disponibilidad con el negocio.'
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => (b.search_rank_score || 0) - (a.search_rank_score || 0))
+    .slice(0, LOCAL_RESULT_LIMIT);
+};
+
+const SearchBar = ({
+  onSearch,
+  onBusinessesFound,
+  loading,
+  initialValue = '',
+  localBusinesses = [],
+  searchLocation = null,
+  searchCountry = null
+}) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState(initialValue);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -60,12 +113,30 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
   const handleSearch = async (searchQuery = searchTerm) => {
     if (!searchQuery.trim()) return;
 
-    let effectiveLocation = userLocation;
+    let effectiveLocation = searchLocation || userLocation;
     let loadingTimeout = null;
     const intentAnalysis = analyzeSearchIntent(searchQuery);
 
     try {
       onSearch(true);
+
+      const localSemanticResults = findLocalSemanticMatches(localBusinesses, searchQuery, intentAnalysis);
+      if (localSemanticResults.length > 0) {
+        trackSearch(searchQuery, {
+          resultsCount: localSemanticResults.length,
+          userLat: effectiveLocation?.lat || null,
+          userLng: effectiveLocation?.lng || null,
+          source: 'international_local',
+          intentId: intentAnalysis?.id || null
+        });
+        onBusinessesFound(localSemanticResults, {
+          query: searchQuery,
+          source: 'international_local',
+          intent: intentAnalysis
+        });
+        setShowSuggestions(false);
+        return;
+      }
 
       if (!effectiveLocation && intentAnalysis?.confidence >= 0.85) {
         try {
@@ -77,7 +148,7 @@ const SearchBar = ({ onSearch, onBusinessesFound, loading, initialValue = '' }) 
 
       const semanticResults = await searchBusinessesSemantically(
         searchQuery,
-        inferUserCountry(),
+        searchCountry || inferUserCountry(),
         effectiveLocation
       );
 

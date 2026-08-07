@@ -187,11 +187,18 @@ export default function DashboardHome() {
 
       // Reclamos pendientes
       try {
-        const { count: claimsCount } = await supabase
-          .from('business_claims')
-          .select('id', { count: 'exact', head: true })
-          .in('status', ['submitted', 'under_review']);
-        setStats(prev => ({ ...prev, pendingClaims: claimsCount || 0 }));
+        const [nativeClaims, internationalClaims] = await Promise.all([
+          supabase
+            .from('business_claims')
+            .select('id', { count: 'exact', head: true })
+            .in('status', ['submitted', 'under_review']),
+          supabase
+            .from('international_business_claims')
+            .select('id', { count: 'exact', head: true })
+            .in('status', ['submitted', 'under_review'])
+        ]);
+        const claimsCount = (nativeClaims.count || 0) + (internationalClaims.count || 0);
+        setStats(prev => ({ ...prev, pendingClaims: claimsCount }));
       } catch (claimsErr) {
         console.warn('Error loading pending claims:', claimsErr);
       }

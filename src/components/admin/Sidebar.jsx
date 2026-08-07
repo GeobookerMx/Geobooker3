@@ -59,11 +59,17 @@ const Sidebar = ({ onLogout }) => {
                 .eq('status', 'pending');
             setPendingRecommendations(recsCount || 0);
 
-            const { count: claimsCount } = await supabase
-                .from('business_claims')
-                .select('*', { count: 'exact', head: true })
-                .in('status', ['submitted', 'under_review']);
-            setPendingClaims(claimsCount || 0);
+            const [nativeClaims, internationalClaims] = await Promise.all([
+                supabase
+                    .from('business_claims')
+                    .select('*', { count: 'exact', head: true })
+                    .in('status', ['submitted', 'under_review']),
+                supabase
+                    .from('international_business_claims')
+                    .select('*', { count: 'exact', head: true })
+                    .in('status', ['submitted', 'under_review'])
+            ]);
+            setPendingClaims((nativeClaims.count || 0) + (internationalClaims.count || 0));
         } catch (error) {
             console.error('Error loading pending counts:', error);
         }

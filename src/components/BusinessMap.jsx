@@ -875,16 +875,28 @@ export const BusinessMap = memo(({
             }}
           >
             {(clusterer) =>
-              googleMarkers.map((business) => (
-                <MarkerF
-                  key={`google-${business.id}`}
-                  position={{ lat: Number(business.latitude), lng: Number(business.longitude) }}
-                  onClick={() => onBusinessSelect(business)}
-                  icon={getCategoryIcon(business.category || (business.types && business.types[0]) || '', false)}
-                  title={business.name}
-                  clusterer={clusterer}
-                />
-              ))
+              googleMarkers.map((business) => {
+                const isRecommended = Boolean(business.is_recommended || business.isRecommended);
+                const isPremium = Boolean(business.is_premium_owner || business.is_premium);
+                const category = business.category || (business.types && business.types[0]) || '';
+                const markerTitle = isRecommended
+                  ? `Recomendado | ${business.name}`
+                  : isPremium
+                    ? `Premium | ${business.name}`
+                    : business.name;
+
+                return (
+                  <MarkerF
+                    key={`google-${business.id}`}
+                    position={{ lat: Number(business.latitude), lng: Number(business.longitude) }}
+                    onClick={() => onBusinessSelect(business)}
+                    icon={isRecommended ? RECOMMENDED_ICON : getCategoryIcon(category, isPremium)}
+                    title={markerTitle}
+                    zIndex={isRecommended ? 6000 : isPremium ? 5000 : undefined}
+                    clusterer={clusterer}
+                  />
+                );
+              })
             }
           </MarkerClusterer>
         )}

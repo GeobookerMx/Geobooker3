@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from '../contexts/LocationContext';
 import { searchPlacesUniversal } from '../services/googlePlacesService';
-import { inferUserCountry, searchBusinessesSemantically } from '../services/businessService';
+import { inferUserCountry, searchBusinessesSemantically, searchInternationalBusinesses } from '../services/businessService';
 import { trackSearch } from '../services/analyticsService';
 import { isAwardSearchQuery } from '../utils/awardUtils';
 import { matchesSemanticText } from '../utils/semanticDictionary';
@@ -60,7 +60,8 @@ const SearchBar = ({
   initialValue = '',
   localBusinesses = [],
   searchLocation = null,
-  searchCountry = null
+  searchCountry = null,
+  searchCity = null
 }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState(initialValue);
@@ -120,6 +121,37 @@ const SearchBar = ({
     try {
       onSearch(true);
 
+      if (searchCountry && searchCity) {
+        const internationalResults = await searchInternationalBusinesses(searchQuery, {
+          countryCode: searchCountry,
+          city: searchCity,
+          location: effectiveLocation,
+          intent: intentAnalysis,
+          limit: LOCAL_RESULT_LIMIT
+        });
+
+        if (internationalResults.length > 0) {
+          trackSearch(searchQuery, {
+            resultsCount: internationalResults.length,
+            userLat: effectiveLocation?.lat || null,
+            userLng: effectiveLocation?.lng || null,
+            source: 'international_on_demand',
+            intentId: intentAnalysis?.id || null,
+            country: searchCountry,
+            city: searchCity
+          });
+          onBusinessesFound(internationalResults, {
+            query: searchQuery,
+            source: 'international_on_demand',
+            intent: intentAnalysis,
+            country: searchCountry,
+            city: searchCity
+          });
+          setShowSuggestions(false);
+          return;
+        }
+      }
+
       const localSemanticResults = findLocalSemanticMatches(localBusinesses, searchQuery, intentAnalysis);
       if (localSemanticResults.length > 0) {
         trackSearch(searchQuery, {
@@ -146,11 +178,13 @@ const SearchBar = ({
         }
       }
 
-      const semanticResults = await searchBusinessesSemantically(
-        searchQuery,
-        searchCountry || inferUserCountry(),
-        effectiveLocation
-      );
+      const semanticResults = searchCity
+        ? []
+        : await searchBusinessesSemantically(
+          searchQuery,
+          searchCountry || inferUserCountry(),
+          effectiveLocation
+        );
 
       if (semanticResults.length > 0) {
         trackSearch(searchQuery, {

@@ -525,6 +525,7 @@ const HomePage = () => {
   const mapIdleTimerRef = useRef(null);
   const awardFilterRef = useRef('all');
   const viewportRequestSeqRef = useRef(0);
+  const skipSearchStateSaveRef = useRef(false);
   const mapBoundsRef = useRef(null); // 📍 OPCION 1: Guardar bounds del mapa para filtrar recomendaciones
   const navigate = useNavigate();
 
@@ -533,6 +534,9 @@ const HomePage = () => {
   const subcategoryFilter = subcategory || searchParams.get('subcategory');
   const cityFilter = city || searchParams.get('city');
   const cityDataFilter = cityFilter ? CITY_DATA_FILTERS[cityFilter.toLowerCase()] : null;
+  const searchMarketKey = cityDataFilter
+    ? `${cityDataFilter.countryCode}:${cityDataFilter.city}`.toLowerCase()
+    : 'local';
   const activeMapCenter = useMemo(() => {
     if (cityFilter) {
       const coords = CITY_COORDINATES[cityFilter.toLowerCase()];
@@ -598,39 +602,59 @@ const HomePage = () => {
 
   // Restaurar estado desde sessionStorage al montar
   useEffect(() => {
+    skipSearchStateSaveRef.current = true;
+    setBusinesses([]);
+    setGeobookerBusinesses([]);
+    setRecommendedBusinesses([]);
+    setDenueBusinesses([]);
+    setLastSearchQuery('');
+    setAwardFilter('all');
+    awardFilterRef.current = 'all';
+    viewportRequestSeqRef.current += 1;
+
     const savedState = sessionStorage.getItem('geobooker_search_state');
     if (savedState) {
       try {
         const state = JSON.parse(savedState);
-        // Restaurar negocios de Places si hay guardados
-        if (state.businesses && state.businesses.length > 0) {
+        // Never restore results from another city or country.
+        if (state.marketKey === searchMarketKey && state.businesses && state.businesses.length > 0) {
           setBusinesses(prepareMapResults(state.businesses, null, SEARCH_RESULT_RENDER_LIMIT));
         }
-        // Restaurar query
-        if (state.lastQuery) {
+        if (state.marketKey === searchMarketKey && state.lastQuery) {
           setLastSearchQuery(state.lastQuery);
         }
       } catch (e) {
         console.log('Error restaurando estado:', e);
       }
     }
-  }, []);
+  }, [searchMarketKey]);
 
   // Guardar estado cuando cambian los negocios
   useEffect(() => {
+    if (skipSearchStateSaveRef.current) {
+      skipSearchStateSaveRef.current = false;
+      return;
+    }
+
     if (businesses.length > 0 || lastSearchQuery) {
       const stateToSave = {
         businesses: businesses.slice(0, 50), // Limitar para no saturar storage
         lastQuery: lastSearchQuery,
+        marketKey: searchMarketKey,
         timestamp: Date.now()
       };
       sessionStorage.setItem('geobooker_search_state', JSON.stringify(stateToSave));
     }
-  }, [businesses, lastSearchQuery]);
+  }, [businesses, lastSearchQuery, searchMarketKey]);
 
   // Limpiar búsqueda (botón separado)
   // Cargar negocios nativos de Geobooker (CON CACHÉ IndexedDB)
   const fetchGeobookerBusinesses = useCallback(async () => {
+    if (cityDataFilter) {
+      setGeobookerBusinesses([]);
+      return;
+    }
+
     try {
       // ⚡ PASO 1: Intentar cargar desde caché primero (instantáneo)
       const cacheStatus = cityDataFilter ? { isValid: false } : await isCacheValid(userLocation);
@@ -964,6 +988,8 @@ const HomePage = () => {
   ];
 
   const handleAwardFilterToggle = useCallback(async (nextFilter) => {
+    if (cityDataFilter) return;
+
     const resolvedFilter = awardFilter === nextFilter ? 'all' : nextFilter;
     awardFilterRef.current = resolvedFilter;
     setAwardFilter(resolvedFilter);
@@ -1001,11 +1027,19 @@ const HomePage = () => {
     } catch (error) {
       console.error('Error loading award filter businesses:', error);
     }
-  }, [awardFilter]);
+  }, [awardFilter, cityDataFilter]);
 
   const handleMapIdle = useCallback(({ bounds, zoom }) => {
     // Guardar bounds actuales para posibles re-cargas
     mapBoundsRef.current = bounds;
+
+    if (cityDataFilter) {
+      viewportRequestSeqRef.current += 1;
+      setDenueBusinesses([]);
+      setRecommendedBusinesses([]);
+      return;
+    }
+
     const currentAwardFilter = awardFilterRef.current;
 
     // Si el zoom es muy lejano, no saturar la base de datos
@@ -1113,10 +1147,10 @@ const HomePage = () => {
         console.error('Error fetching DENUE businesses:', error);
       }
     }, 1000); // 1 segundo de debounce
-  }, [geobookerBusinesses, categoryFilter]);
+  }, [geobookerBusinesses, categoryFilter, cityDataFilter]);
 
   useEffect(() => {
-    if (awardFilter === 'all' || !mapBoundsRef.current) {
+    if (cityDataFilter || awardFilter === 'all' || !mapBoundsRef.current) {
       return;
     }
 
@@ -1154,7 +1188,7 @@ const HomePage = () => {
         console.error('Error refreshing award-filter viewport:', error);
       }
     }, 150);
-  }, [awardFilter]);
+  }, [awardFilter, cityDataFilter]);
 
   const handleRetryLocation = async () => {
     try {
@@ -1399,12 +1433,19 @@ const HomePage = () => {
               onBusinessesFound={handleBusinessesFound}
               loading={searchLoading}
               initialValue={lastSearchQuery}
-              localBusinesses={cityDataFilter ? geobookerBusinesses : []}
+              localBusinesses={[]}
               searchLocation={cityDataFilter ? activeMapCenter : null}
               searchCountry={cityDataFilter?.countryCode || null}
+              searchCity={cityDataFilter?.city || null}
             />
 
-            <div className="mt-4 flex flex-wrap justify-center gap-2">
+            {cityDataFilter && !lastSearchQuery && (
+              <p className="mt-4 text-center text-sm font-medium text-blue-100">
+                Busca una categoria, producto, pieza o servicio para mostrar hasta 20 negocios relevantes en {cityDataFilter.city}.
+              </p>
+            )}
+
+            {!cityDataFilter && <div className="mt-4 flex flex-wrap justify-center gap-2">
               {awardFilterOptions.map((option) => (
                 <button
                   key={option.id}
@@ -1418,7 +1459,7 @@ const HomePage = () => {
                   {option.label}
                 </button>
               ))}
-            </div>
+            </div>}
 
             {/* Badge de filtro activo */}
             {categoryFilter && (

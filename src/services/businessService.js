@@ -348,6 +348,86 @@ export function inferUserCountry() {
   return region && region.length === 2 ? region.toUpperCase() : "MX";
 }
 
+export async function searchInternationalBusinesses(searchQuery, options = {}) {
+  const normalizedQuery = clean(searchQuery);
+  const countryCode = String(options.countryCode || '').trim().toUpperCase();
+  const city = String(options.city || '').trim();
+  const location = options.location || null;
+  const intent = options.intent || analyzeSearchIntent(normalizedQuery);
+  const resultLimit = Math.min(Math.max(Number(options.limit) || 20, 1), 20);
+
+  if (!normalizedQuery || !/^[A-Z]{2}$/.test(countryCode) || !city) return [];
+
+  const categoryHints = [...new Set((intent?.categoryHints || []).filter(Boolean))];
+  const { data, error } = await supabase.rpc('search_international_businesses', {
+    p_query: normalizedQuery,
+    p_country_code: countryCode,
+    p_city: city,
+    p_category_hints: categoryHints,
+    p_latitude: Number.isFinite(Number(location?.lat)) ? Number(location.lat) : null,
+    p_longitude: Number.isFinite(Number(location?.lng)) ? Number(location.lng) : null,
+    p_limit: resultLimit
+  });
+
+  if (!error) {
+    return (data || []).map((business) => ({
+      ...business,
+      catalog_source: 'international',
+      isSemanticResult: true,
+      search_intent_id: intent?.id || null,
+      search_intent_label: intent?.label || null,
+      availability_note: 'Resultado relacionado por categoria o producto. Confirma precio, medida y disponibilidad con el negocio.'
+    }));
+  }
+
+  console.warn('International search RPC unavailable, using bounded fallback:', error.message);
+
+  const safeTerms = [...categoryHints, ...normalizedQuery.split(/\s+/)]
+    .map((term) => normalizeText(term).replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''))
+    .filter((term) => term.length >= 3)
+    .slice(0, 8);
+  const orFilters = [...new Set(safeTerms.flatMap((term) => [
+    `subcategory.ilike.%${term}%`,
+    `category.ilike.%${term}%`,
+    `name.ilike.%${term.replace(/_/g, ' ')}%`
+  ]))];
+
+  let fallbackQuery = supabase
+    .from('international_businesses')
+    .select('id, owner_id, name, description, category, subcategory, address, city, state_code, postal_code, country_code, latitude, longitude, website, website_url, phone, slug, source_type, source_record_id, attribution_text, is_claimed, is_verified, preferred_language')
+    .eq('country_code', countryCode)
+    .ilike('city', city)
+    .eq('status', 'approved')
+    .eq('is_visible', true)
+    .limit(100);
+
+  if (orFilters.length > 0) fallbackQuery = fallbackQuery.or(orFilters.join(','));
+
+  const { data: fallbackData, error: fallbackError } = await fallbackQuery;
+  if (fallbackError) {
+    console.warn('International bounded fallback failed:', fallbackError.message);
+    return [];
+  }
+
+  const semanticFallback = (fallbackData || []).filter((business) => matchesSemanticText(normalizedQuery, [
+    business.name,
+    business.category,
+    business.subcategory,
+    business.description,
+    business.address
+  ]));
+
+  return rankSearchResults(semanticFallback, normalizedQuery, location)
+    .slice(0, resultLimit)
+    .map((business) => ({
+      ...business,
+      catalog_source: 'international',
+      isSemanticResult: true,
+      is_recommended: false,
+      is_premium_owner: false
+    }));
+}
+
 export async function searchBusinessesSemantically(searchQuery, userCountry = inferUserCountry(), userLocation = null) {
   const normalizedQuery = clean(searchQuery);
   if (!normalizedQuery) return [];

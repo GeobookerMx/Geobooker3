@@ -261,7 +261,9 @@ export async function trackSearch(query, options = {}) {
             subcategory = null,
             resultsCount = 0,
             userLat = null,
-            userLng = null
+            userLng = null,
+            country = null,
+            city = null
         } = options;
 
         const fullPayload = {
@@ -271,8 +273,8 @@ export async function trackSearch(query, options = {}) {
             results_count: resultsCount,
             user_lat: userLat,
             user_lng: userLng,
-            country: localStorage.getItem('userCountry') || null,
-            city: localStorage.getItem('userCity') || null,
+            country: country || localStorage.getItem('userCountry') || null,
+            city: city || localStorage.getItem('userCity') || null,
             traffic_source: attribution?.utm_source || null,
             traffic_medium: attribution?.utm_medium || null,
             traffic_campaign: attribution?.utm_campaign || null,

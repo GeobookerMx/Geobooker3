@@ -1,8 +1,9 @@
-﻿import React from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight, Building2, CheckCircle2, Globe2, MapPin, Search, ShieldCheck, Sparkles, Truck, Zap } from 'lucide-react';
 import SEO from '../components/SEO';
 import { getMarketLanguage } from '../config/domainStrategy';
+import EconomicUrgencyCapsule from '../components/common/EconomicUrgencyCapsule';
 
 const authorityPages = {
   '/que-es-geobooker': 'what-is-geobooker',
@@ -217,6 +218,10 @@ export default function AuthorityPage() {
             <Building2 className="hidden h-16 w-16 text-amber-200 lg:block" />
           </div>
         </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        <EconomicUrgencyCapsule showMatrix={true} />
       </section>
 
       <section className="border-t border-white/10 bg-slate-900/70 px-4 py-12 sm:px-6 lg:px-8">

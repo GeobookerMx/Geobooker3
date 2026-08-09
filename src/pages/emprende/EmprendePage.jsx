@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, BookOpen, BriefcaseBusiness, Share2, Smartphone, Sparkles, Trophy } from 'lucide-react';
 import MissionPlayer from '../../components/emprende/MissionPlayer';
+import EconomicUrgencyCapsule from '../../components/common/EconomicUrgencyCapsule';
 import {
   EMPRENDE_BUSINESSES,
   EMPRENDE_MISSIONS
@@ -241,6 +242,10 @@ export default function EmprendePage() {
           onNextMission={handleNextMission}
           onReset={handleReset}
         />
+
+        <div className="mt-12">
+          <EconomicUrgencyCapsule showMatrix={true} />
+        </div>
       </section>
     </main>
   );

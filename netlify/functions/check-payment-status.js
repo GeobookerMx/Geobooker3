@@ -1,15 +1,11 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { getCorsHeaders, handlePreflight } = require('./_cors');
 
 exports.handler = async (event) => {
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS'
-  };
+  const preflight = handlePreflight(event);
+  if (preflight) return preflight;
 
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
-  }
+  const headers = getCorsHeaders(event);
 
   if (event.httpMethod !== 'GET') {
     return {

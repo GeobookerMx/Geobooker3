@@ -1,5 +1,7 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
+const { getWebhookHeaders } = require('./_cors');
+
 
 // IMPORTANTE:
 // Para que esto funcione en Netlify, debes agregar estas variables en el Dashboard:
@@ -219,7 +221,9 @@ async function upsertConnectClientAccount(supabase, payload = {}) {
     throw error;
 }
 exports.handler = async (event) => {
-    const headers = { 'Access-Control-Allow-Origin': '*' };
+    // Stripe calls this server-to-server — no browser Origin. Security = signature verification below.
+    const headers = getWebhookHeaders();
+
 
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, headers, body: 'Method Not Allowed' };

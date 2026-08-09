@@ -1,0 +1,59 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Geobooker Business Discovery API",
+    "description": "Allows GPTs and AI assistants to search, discover, and retrieve local business profiles across 18 international cities.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://geobooker.com",
+      "description": "Geobooker Production Server"
+    }
+  ],
+  "paths": {
+    "/llms.txt": {
+      "get": {
+        "summary": "Get Geobooker System & Business Directory Overview",
+        "description": "Returns structured markdown summary of Geobooker capabilities, canonical links, and active expansion cities.",
+        "operationId": "getGeobookerOverview",
+        "responses": {
+          "200": {
+            "description": "Markdown summary of Geobooker",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cities/{citySlug}": {
+      "get": {
+        "summary": "Get City Business Landing Page",
+        "description": "Retrieves public city discovery information for active markets like Madrid, Amsterdam, London, Paris, New York, etc.",
+        "operationId": "getCityLandingPage",
+        "parameters": [
+          {
+            "name": "citySlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "madrid"
+            },
+            "description": "The URL slug of the target city (e.g. madrid, amsterdam, london, paris, new-york, sao-paulo, mexico-city)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "City landing page HTML content"
+          }
+        }
+      }
+    }
+  }
+}

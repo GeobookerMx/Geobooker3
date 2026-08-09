@@ -114,6 +114,149 @@ const CITIES_CONFIG = {
         heroImage: '/images/cities/madrid.jpg',
         description: 'Discover local businesses, food and professional services in Madrid.',
         descriptionEs: 'Descubre negocios, restaurantes y servicios profesionales en Madrid.'
+    },
+    'barcelona': {
+        name: 'Barcelona',
+        state: 'Cataluna',
+        country: 'ES',
+        population: '1.7M+',
+        lang: 'es',
+        popularCategories: ['restaurant', 'hotel', 'professional_service', 'shopping', 'transport'],
+        heroImage: '/images/cities/barcelona.jpg',
+        description: 'Discover local commerce, services and visitor businesses in Barcelona.',
+        descriptionEs: 'Descubre comercio local, servicios y negocios para visitantes en Barcelona.'
+    },
+    'bogota': {
+        name: 'Bogotá',
+        state: 'Distrito Capital',
+        country: 'CO',
+        population: '7.9M+',
+        lang: 'es',
+        popularCategories: ['restaurant', 'transport', 'hotel', 'professional_service', 'shopping'],
+        heroImage: '/images/cities/bogota.jpg',
+        description: 'Discover local businesses, logistics and professional services in Bogota.',
+        descriptionEs: 'Descubre negocios locales, logística y servicios profesionales en Bogotá.'
+    },
+    'amsterdam': {
+        name: 'Amsterdam',
+        state: 'North Holland',
+        country: 'NL',
+        population: '900K+',
+        lang: 'nl',
+        popularCategories: ['cafe', 'restaurant', 'bike_shop', 'hotel', 'professional_service'],
+        heroImage: '/images/cities/amsterdam.jpg',
+        description: 'Discover local businesses, cafes, and bike services in Amsterdam.',
+        descriptionEs: 'Descubre negocios locales, cafeterías y servicios en Amsterdam.'
+    },
+    'rome': {
+        name: 'Rome',
+        state: 'Lazio',
+        country: 'IT',
+        population: '2.8M+',
+        lang: 'it',
+        popularCategories: ['trattoria', 'gelateria', 'hotel', 'coffee_shop', 'shopping'],
+        heroImage: '/images/cities/rome.jpg',
+        description: 'Discover historical local businesses, trattorias, and artisan shops in Rome.',
+        descriptionEs: 'Descubre negocios locales históricos, trattorias y tiendas artesanales en Roma.'
+    },
+    'milan': {
+        name: 'Milan',
+        state: 'Lombardy',
+        country: 'IT',
+        population: '1.4M+',
+        lang: 'it',
+        popularCategories: ['fashion', 'restaurant', 'hotel', 'professional_service', 'cafe'],
+        heroImage: '/images/cities/milan.jpg',
+        description: 'Discover business services, fashion, and dining in Milan.',
+        descriptionEs: 'Descubre servicios comerciales, moda y gastronomía en Milán.'
+    },
+    'paris': {
+        name: 'Paris',
+        state: 'Île-de-France',
+        country: 'FR',
+        population: '2.1M+',
+        lang: 'fr',
+        popularCategories: ['bistro', 'bakery', 'hotel', 'fashion', 'cafe'],
+        heroImage: '/images/cities/paris.jpg',
+        description: 'Discover local shops, bakeries, and services in Paris.',
+        descriptionEs: 'Descubre tiendas locales, panaderías y servicios en París.'
+    },
+    'berlin': {
+        name: 'Berlin',
+        state: 'Berlin',
+        country: 'DE',
+        population: '3.6M+',
+        lang: 'de',
+        popularCategories: ['cafe', 'bar', 'tech_hub', 'hotel', 'restaurant'],
+        heroImage: '/images/cities/berlin.jpg',
+        description: 'Discover creative hubs, cafes, and local businesses in Berlin.',
+        descriptionEs: 'Descubre centros creativos, cafeterías y negocios locales en Berlín.'
+    },
+    'lisbon': {
+        name: 'Lisbon',
+        state: 'Lisbon',
+        country: 'PT',
+        population: '540K+',
+        lang: 'pt',
+        popularCategories: ['pastry_shop', 'restaurant', 'hotel', 'surf_shop', 'cafe'],
+        heroImage: '/images/cities/lisbon.jpg',
+        description: 'Discover coastal businesses, cafes, and local services in Lisbon.',
+        descriptionEs: 'Descubre negocios costeros, cafeterías y servicios locales en Lisboa.'
+    },
+    'sao-paulo': {
+        name: 'São Paulo',
+        state: 'São Paulo',
+        country: 'BR',
+        population: '12.3M+',
+        lang: 'pt',
+        popularCategories: ['restaurant', 'hotel', 'hospital', 'bookstore', 'cafe'],
+        heroImage: '/images/cities/sao-paulo.jpg',
+        description: 'Discover gastronomy, commercial hubs, and services in São Paulo.',
+        descriptionEs: 'Descubre gastronomía, centros comerciales y servicios en São Paulo.'
+    },
+    'mexico-city': {
+        name: 'Mexico City',
+        state: 'CDMX',
+        country: 'MX',
+        population: '9.2M+',
+        lang: 'es',
+        popularCategories: ['restaurant', 'museum', 'hotel', 'bookstore', 'bakery'],
+        heroImage: '/images/cities/mexico-city.jpg',
+        description: 'Discover culture, food, and local business profiles in Mexico City.',
+        descriptionEs: 'Descubre cultura, gastronomía y perfiles de negocios locales en la Ciudad de México.'
+    },
+    'buenos-aires': {
+        name: 'Buenos Aires',
+        state: 'CABA',
+        country: 'AR',
+        population: '3M+',
+        lang: 'es',
+        popularCategories: ['restaurant', 'cafe', 'bookstore', 'hotel', 'professional_service'],
+        heroImage: '/images/cities/buenos-aires.jpg',
+        description: 'Discover cafes, bookshops, and local businesses in Buenos Aires.',
+        descriptionEs: 'Descubre cafés, librerías y negocios locales en Buenos Aires.'
+    },
+    'santiago': {
+        name: 'Santiago',
+        state: 'Región Metropolitana',
+        country: 'CL',
+        population: '5.6M+',
+        lang: 'es',
+        popularCategories: ['restaurant', 'hotel', 'shopping', 'transport', 'cafe'],
+        heroImage: '/images/cities/santiago.jpg',
+        description: 'Discover commerce, dining, and local services in Santiago.',
+        descriptionEs: 'Descubre comercio, gastronomía y servicios locales en Santiago.'
+    },
+    'lima': {
+        name: 'Lima',
+        state: 'Lima',
+        country: 'PE',
+        population: '9.7M+',
+        lang: 'es',
+        popularCategories: ['cevichería', 'restaurant', 'hotel', 'shopping', 'cafe'],
+        heroImage: '/images/cities/lima.jpg',
+        description: 'Discover culinary spots, tourism, and local business services in Lima.',
+        descriptionEs: 'Descubre gastronomía, turismo y servicios comerciales en Lima.'
     }
 };
 
@@ -144,7 +287,12 @@ export default function CityLandingPage() {
 
     const isSpanish = i18n.language === 'es';
     const description = isSpanish && city.descriptionEs ? city.descriptionEs : city.description;
-    const countryLabels = { US: 'United States', GB: 'United Kingdom', CA: 'Canada', ES: 'España' };
+    const countryLabels = {
+        US: 'United States', GB: 'United Kingdom', CA: 'Canada', ES: 'España',
+        NL: 'Netherlands', IT: 'Italia', FR: 'France', DE: 'Deutschland',
+        PT: 'Portugal', BR: 'Brasil', MX: 'México', CO: 'Colombia',
+        AR: 'Argentina', CL: 'Chile', PE: 'Perú'
+    };
     const cityUrl = `https://geobooker.com/cities/${citySlug}`;
     const cityStructuredData = [
         {

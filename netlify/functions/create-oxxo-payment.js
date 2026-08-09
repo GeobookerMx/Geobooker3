@@ -1,19 +1,13 @@
 // netlify/functions/create-oxxo-payment.js
 // Función para generar vouchers de pago en OXXO
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { getCorsHeaders, handlePreflight } = require('./_cors');
 
 exports.handler = async (event, context) => {
-    // Headers CORS
-    const headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    };
+    const preflight = handlePreflight(event);
+    if (preflight) return preflight;
 
-    // Manejar preflight
-    if (event.httpMethod === 'OPTIONS') {
-        return { statusCode: 200, headers, body: '' };
-    }
+    const headers = getCorsHeaders(event);
 
     if (event.httpMethod !== 'POST') {
         return {

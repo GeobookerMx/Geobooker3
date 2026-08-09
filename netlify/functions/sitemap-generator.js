@@ -107,7 +107,11 @@ exports.handler = async (event) => {
 
   const globalCityRoutes = [
     '/cities/los-angeles', '/cities/new-york', '/cities/houston', '/cities/miami',
-    '/cities/london', '/cities/manchester', '/cities/toronto', '/cities/vancouver'
+    '/cities/london', '/cities/manchester', '/cities/toronto', '/cities/vancouver',
+    '/cities/barcelona', '/cities/amsterdam', '/cities/rome', '/cities/milan',
+    '/cities/paris', '/cities/berlin', '/cities/lisbon', '/cities/sao-paulo',
+    '/cities/mexico-city', '/cities/tokyo', '/cities/sydney', '/cities/dublin',
+    '/cities/zurich', '/cities/medellin', '/cities/bogota'
   ];
   const mexicoCityRoutes = [
     '/ciudad/cdmx', '/ciudad/guadalajara', '/ciudad/monterrey', '/ciudad/puebla',

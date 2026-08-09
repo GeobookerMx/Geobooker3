@@ -18,6 +18,30 @@ const libraryDocuments = [
   ['construir-sin-romperse', '11-construir-sin-romperse.pdf']
 ];
 
+const ACTIVE_CITIES = [
+  // Wave 1 — Preview active
+  { city: 'Los Angeles', country: 'US', lang: 'en', wave: 1 },
+  { city: 'Toronto',     country: 'CA', lang: 'en', wave: 1 },
+  { city: 'Madrid',      country: 'ES', lang: 'es', wave: 1 },
+  // Wave 2 — Candidates
+  { city: 'Miami',       country: 'US', lang: 'en', wave: 2 },
+  { city: 'Houston',     country: 'US', lang: 'en', wave: 2 },
+  { city: 'Vancouver',   country: 'CA', lang: 'en', wave: 2 },
+  { city: 'Barcelona',   country: 'ES', lang: 'es', wave: 2 },
+  // Wave 3 — Europe + LATAM
+  { city: 'London',      country: 'GB', lang: 'en', wave: 3 },
+  { city: 'Amsterdam',   country: 'NL', lang: 'nl', wave: 3 },
+  { city: 'Rome',        country: 'IT', lang: 'it', wave: 3 },
+  { city: 'Milan',       country: 'IT', lang: 'it', wave: 3 },
+  { city: 'Paris',       country: 'FR', lang: 'fr', wave: 3 },
+  { city: 'Berlin',      country: 'DE', lang: 'de', wave: 3 },
+  { city: 'Lisbon',      country: 'PT', lang: 'pt', wave: 3 },
+  { city: 'Bogotá',      country: 'CO', lang: 'es', wave: 3 },
+  { city: 'Buenos Aires',country: 'AR', lang: 'es', wave: 3 },
+  { city: 'Santiago',    country: 'CL', lang: 'es', wave: 3 },
+  { city: 'Lima',        country: 'PE', lang: 'es', wave: 3 },
+];
+
 const commonLinks = (origin) => [
   '- ' + origin + '/',
   '- ' + origin + '/categories',
@@ -27,7 +51,8 @@ const commonLinks = (origin) => [
   '- ' + origin + '/enterprise',
   '- ' + origin + '/advertise',
   '- ' + origin + '/b2b-connect',
-  '- ' + origin + '/download'
+  '- ' + origin + '/download',
+  '- ' + origin + '/reclamar-negocio'
 ];
 
 exports.handler = async (event) => {
@@ -35,16 +60,28 @@ exports.handler = async (event) => {
   const globalMode = isGlobalHost(host);
   const origin = globalMode ? GLOBAL_ORIGIN : MX_ORIGIN;
 
+  const cityList = ACTIVE_CITIES.map(c =>
+    '- ' + c.city + ' (' + c.country + ')'
+  );
+
   const intro = globalMode ? [
     '# Geobooker',
     '',
-    '> Geobooker is a local and global business discovery platform. It connects real-world needs with nearby businesses, services, products, materials and suppliers using intent, category and location signals.',
+    '> Geobooker (geobooker.com) is an international local business discovery platform.' ,
+    '> Unlike navigation apps, Geobooker answers "What business do I need nearby?" not just "How do I get there?".',
+    '> It connects user intent with verified local business profiles, availability, and reputation — helping people discover the right business, not just the nearest one.',
     '',
     'Canonical website: ' + origin,
     'Primary language for this host: en',
     'Mexico website: ' + MX_ORIGIN,
     'Sitemap: ' + origin + '/sitemap.xml',
     'Robots: ' + origin + '/robots.txt',
+    '',
+    '## Key differentiator vs Google Maps',
+    '',
+    '- Google Maps answers: "Where is it? How do I get there?"',
+    '- Geobooker answers: "What business do I need near me and which option is best for me?"',
+    '- Geobooker provides business owners with tools to acquire, manage and convert new customers.',
     '',
     '## Core capabilities',
     '',
@@ -53,18 +90,31 @@ exports.handler = async (event) => {
     '- Help owners claim or register businesses and improve trustworthy local visibility.',
     '- Provide responsible advertising and commercial activation tools for brands and territories.',
     '',
+    '## Cities with active business data (' + ACTIVE_CITIES.length + ' cities)',
+    '',
+    ...cityList,
+    '',
     '## High-value public pages',
     '',
     ...commonLinks(origin)
   ] : [
-    '# Geobooker Mexico',
+    '# Geobooker México',
     '',
-    '> Geobooker conecta necesidades reales con negocios, locales, servicios, productos, materiales y proveedores cercanos mediante señales de intención, categoría y ubicación.',
+    '> Geobooker (geobooker.com.mx) es una plataforma internacional de descubrimiento de negocios locales.',
+    '> A diferencia de los mapas de navegación, Geobooker responde "¿Qué negocio necesito cerca?" y no solo "¿Cómo llego?".',
+    '> Conecta la intención del usuario con perfiles verificados de negocios locales.',
     '',
     'Sitio canónico: ' + origin,
     'Idioma principal: es-MX',
+    'Sitio global: ' + GLOBAL_ORIGIN,
     'Sitemap: ' + origin + '/sitemap.xml',
     'Robots: ' + origin + '/robots.txt',
+    '',
+    '## Diferenciador clave vs Google Maps',
+    '',
+    '- Google Maps responde: "¿Dónde está? ¿Cómo llego?"',
+    '- Geobooker responde: "¿Qué negocio necesito cerca de mí y cuál es la mejor opción?"',
+    '- Geobooker le da al negocio herramientas para conseguir, gestionar y convertir nuevos clientes.',
     '',
     '## Capacidades principales',
     '',
@@ -72,6 +122,10 @@ exports.handler = async (event) => {
     '- Descubrir proveedores locales, servicios logísticos y oportunidades B2B.',
     '- Ayudar a propietarios a registrar o reclamar negocios y fortalecer su visibilidad local.',
     '- Ofrecer publicidad responsable y activación comercial para marcas y territorios.',
+    '',
+    '## Ciudades con datos activos de negocios (' + ACTIVE_CITIES.length + ' ciudades)',
+    '',
+    ...cityList,
     '',
     '## Páginas públicas prioritarias',
     '',

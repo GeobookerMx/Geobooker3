@@ -1,16 +1,40 @@
 // Netlify Function: Create Stripe Checkout Session using fetch (no SDK)
 // This version uses direct API calls to avoid SDK bundling issues
 
+// Allowed origins — only Geobooker-owned domains may call payment endpoints
+const ALLOWED_ORIGINS = [
+    'https://geobooker.com',
+    'https://www.geobooker.com',
+    'https://geobooker.com.mx',
+    'https://www.geobooker.com.mx'
+];
+
 exports.handler = async (event) => {
+    const requestOrigin = event.headers.origin || event.headers.Origin || '';
+    const corsOrigin = ALLOWED_ORIGINS.includes(requestOrigin)
+        ? requestOrigin
+        : ALLOWED_ORIGINS[0]; // default to primary domain if origin unrecognized
+
     const headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        'Access-Control-Allow-Origin': corsOrigin,
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Max-Age': '86400',
+        'Vary': 'Origin'
     };
 
     // Handle preflight
     if (event.httpMethod === 'OPTIONS') {
-        return { statusCode: 200, headers, body: JSON.stringify({ message: 'OK' }) };
+        return { statusCode: 204, headers, body: '' };
+    }
+
+    // Block non-Geobooker origins (belt-and-suspenders, Netlify CDN also enforces CSP)
+    if (requestOrigin && !ALLOWED_ORIGINS.includes(requestOrigin)) {
+        return {
+            statusCode: 403,
+            headers,
+            body: JSON.stringify({ error: 'Origin not allowed' })
+        };
     }
 
     // Validate environment variable
@@ -69,15 +93,14 @@ exports.handler = async (event) => {
 
         // Session config
         formData.append('mode', mode);
-        
+
         // Payment methods: card always. OXXO can be disabled for flows where async payment
         // would complicate fulfillment, such as Connect reservations.
         formData.append('payment_method_types[0]', 'card');
         if (finalCurrency === 'mxn' && allowOxxo !== false) {
             formData.append('payment_method_types[1]', 'oxxo');
-            // SPEI requires customer_creation for delayed payment
         }
-        
+
         formData.append('success_url', successUrl || 'https://geobooker.com.mx/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}');
         formData.append('cancel_url', cancelUrl || 'https://geobooker.com.mx/dashboard/upgrade?canceled=true');
 

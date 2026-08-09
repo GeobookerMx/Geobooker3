@@ -6,6 +6,24 @@
   command = "npm run build"
 
 # ==========================================
+# SECURITY HEADERS — All routes
+# ==========================================
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Prevent clickjacking across the entire app (SPA covers all routes)
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # Force HTTPS for 1 year, include subdomains
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    # Limit browser feature access
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(self), payment=(self 'https://js.stripe.com')"
+    # Content Security Policy — allows Google Maps, Stripe, Supabase, Google Fonts
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://maps.googleapis.com https://js.stripe.com https://www.googletagmanager.com; connect-src 'self' https://*.supabase.co https://api.stripe.com https://maps.googleapis.com wss://*.supabase.co; frame-src https://js.stripe.com; img-src 'self' data: blob: https: *; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; worker-src 'self' blob:"
+
+# ==========================================
 # CDN EDGE - Configuración Global Performance
 # ==========================================
 
@@ -152,6 +170,13 @@
 
 # Nota: El cron ejecuta la función en netlify/functions/check-outdated-businesses.js
 # que verifica negocios desactualizados y envía emails automáticamente
+
+# Cron Job: Monthly Security Audit (1ro de cada mes, 9am CST)
+[functions."security-audit"]
+  schedule = "0 15 1 * *"  # 15:00 UTC = 9:00 AM CST, day 1 of month
+
+# Nota: Verifica RLS activo, tablas expuestas, funciones SECURITY DEFINER.
+# Registra resultado en security_events y envía email al admin si hay alertas.
 
 
 # Edge Functions

@@ -323,14 +323,21 @@ export default function DashboardHome() {
           .order('detected_at', { ascending: false })
           .limit(8);
 
+        let healthData = null;
+        try {
+          const { data: health } = await supabase.from('v_security_health').select('*').maybeSingle();
+          if (health) healthData = health;
+        } catch (e) { /* fallback */ }
+
         if (securityEventsError) {
           console.warn('Security events table not available yet:', securityEventsError);
-          setSecurityOps(prev => ({ ...prev, recentEvents: [], loading: false }));
+          setSecurityOps(prev => ({ ...prev, recentEvents: [], health: healthData, loading: false }));
         } else {
           setSecurityOps({
             criticalEvents30d: (securityEvents || []).filter(event => event.severity === 'critical').length,
             highEvents30d: (securityEvents || []).filter(event => event.severity === 'high').length,
             recentEvents: securityEvents || [],
+            health: healthData,
             loading: false
           });
         }
@@ -441,6 +448,21 @@ export default function DashboardHome() {
               <p className="mt-2 text-sm text-slate-700">
                 Rotacion de credenciales Apple: pendiente controlado. No rotar ahora; objetivo de revision: <strong>1 de febrero de 2027</strong> ({appleRotationLabel}).
               </p>
+              {securityOps.health && (
+                <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                  <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 text-emerald-800 px-2 py-1 font-semibold">
+                    🛡️ Cobertura RLS: {securityOps.health.tables_without_rls === 0 ? '100% (0 sin RLS)' : `${securityOps.health.tables_without_rls} tablas desprotegidas`}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 text-blue-800 px-2 py-1 font-semibold">
+                    ⚡ Rate Limits (24h): {securityOps.health.rate_limited_identifiers_24h || 0} IPs controladas
+                  </span>
+                  {securityOps.health.last_audit_severity && (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-purple-100 text-purple-800 px-2 py-1 font-semibold">
+                      📋 Última auditoría: {securityOps.health.last_audit_severity.toUpperCase()}
+                    </span>
+                  )}
+                </div>
+              )}
               {latestSecurityEvent ? (
                 <p className="mt-2 rounded-lg bg-white/70 px-3 py-2 text-xs font-semibold text-slate-700">
                   Ultimo evento: {latestSecurityEvent.severity} - {latestSecurityEvent.event_type} - {new Date(latestSecurityEvent.detected_at).toLocaleString('es-MX')}

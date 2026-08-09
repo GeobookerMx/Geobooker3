@@ -350,8 +350,8 @@ const ScanInvitePage = () => {
                     });
 
 
-                    // Procesar cada negocio
-                    for (const place of places.slice(0, 5)) { // Limitar a 5 por tipo
+                    // Procesar cada negocio (hasta 20 resultados por tipo devueltos por Google Places)
+                    for (const place of places) {
                         scannedCount++;
 
                         // Verificar si ya existe

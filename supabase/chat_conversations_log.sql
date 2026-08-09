@@ -49,7 +49,8 @@ CREATE POLICY "Insertar conversaciones" ON public.chat_conversations
     WITH CHECK (true);
 
 -- Vista de resumen para el dashboard de admin
-CREATE OR REPLACE VIEW public.chat_stats_daily AS
+CREATE OR REPLACE VIEW public.chat_stats_daily
+WITH (security_invoker = true) AS
 SELECT
     DATE(created_at AT TIME ZONE 'America/Mexico_City') AS fecha,
     COUNT(*) AS total_mensajes,
@@ -68,7 +69,8 @@ ORDER BY fecha DESC;
 GRANT SELECT ON public.chat_stats_daily TO authenticated;
 
 -- Preguntas mas frecuentes (top topics) — vista para admin
-CREATE OR REPLACE VIEW public.chat_top_questions AS
+CREATE OR REPLACE VIEW public.chat_top_questions
+WITH (security_invoker = true) AS
 SELECT
     user_message,
     COUNT(*) AS frecuencia,

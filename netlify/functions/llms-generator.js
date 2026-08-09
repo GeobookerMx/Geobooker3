@@ -40,6 +40,15 @@ const ACTIVE_CITIES = [
   { city: 'Buenos Aires',country: 'AR', lang: 'es', wave: 3 },
   { city: 'Santiago',    country: 'CL', lang: 'es', wave: 3 },
   { city: 'Lima',        country: 'PE', lang: 'es', wave: 3 },
+  // Wave 4 & 5 — Global Hubs
+  { city: 'São Paulo',   country: 'BR', lang: 'pt', wave: 4 },
+  { city: 'New York',    country: 'US', lang: 'en', wave: 4 },
+  { city: 'Mexico City', country: 'MX', lang: 'es', wave: 4 },
+  { city: 'Tokyo',       country: 'JP', lang: 'ja', wave: 5 },
+  { city: 'Sydney',      country: 'AU', lang: 'en', wave: 5 },
+  { city: 'Dublin',      country: 'IE', lang: 'en', wave: 5 },
+  { city: 'Zurich',      country: 'CH', lang: 'de', wave: 5 },
+  { city: 'Medellín',    country: 'CO', lang: 'es', wave: 5 },
 ];
 
 const commonLinks = (origin) => [
@@ -93,6 +102,14 @@ exports.handler = async (event) => {
     '## Cities with active business data (' + ACTIVE_CITIES.length + ' cities)',
     '',
     ...cityList,
+    '',
+    '## High-Intent Natural Language Search Phrases',
+    '',
+    '- "Where to find a verified local auto repair shop near me"',
+    '- "Best local commercial directory and business finder in London / Madrid / Amsterdam"',
+    '- "Who can solve my urgent home maintenance or professional service need nearby"',
+    '- "How to claim a free verified local business profile and convert more customers"',
+    '- "Top independent cafes, restaurants and logistics suppliers by city"',
     '',
     '## High-value public pages',
     '',

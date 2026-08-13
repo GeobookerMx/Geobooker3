@@ -3,7 +3,9 @@
 const APP_VERSION = '1.3.6';
 const VERSION_KEY = 'gb_app_version';
 const DB_NAMES = ['business-cache', 'google-places-cache'];
-const AUTH_KEYS = ['supabase.auth.token', 'sb-access-token', 'sb-refresh_token'];
+const AUTH_STORAGE_KEY = 'geobooker-auth';
+const VERSIONED_LOCAL_STORAGE_KEYS = ['geobooker_active_ads_cache'];
+const VERSIONED_LOCAL_STORAGE_PREFIXES = ['gp_cache_'];
 
 /**
  * Función auxiliar para eliminar una base de datos usando la API nativa
@@ -28,6 +30,24 @@ const deleteRuntimeCaches = async () => {
     console.log('🧹 Caches del Service Worker eliminados.');
 };
 
+const deleteVersionedLocalStorageCaches = () => {
+    const keys = Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index))
+        .filter(Boolean);
+    const removedKeys = [];
+
+    keys.forEach((key) => {
+        const isVersionedKey = VERSIONED_LOCAL_STORAGE_KEYS.includes(key);
+        const hasVersionedPrefix = VERSIONED_LOCAL_STORAGE_PREFIXES.some((prefix) => key.startsWith(prefix));
+
+        if (isVersionedKey || hasVersionedPrefix) {
+            localStorage.removeItem(key);
+            removedKeys.push(key);
+        }
+    });
+
+    return removedKeys;
+};
+
 /**
  * Verifica si la versión de la app ha cambiado y limpia el caché si es necesario.
  * Esto asegura que los usuarios siempre tengan datos frescos tras un nuevo despliegue.
@@ -39,20 +59,19 @@ export const checkAppVersion = async () => {
         if (storedVersion !== APP_VERSION) {
             console.log(`🚀 Nueva versión detectada (${APP_VERSION}). Limpiando caché...`);
 
-            // 1. Limpiar localStorage (excepto la versión y tokens de auth si los hubiera)
-            const preservedData = {};
+            // 1. Eliminar solo caches versionados propiedad de Geobooker.
+            // Todo lo demás se conserva por diseño, especialmente:
+            // - geobooker-auth (sesión Supabase)
+            // - gb_cookie_consent y att_status (consentimiento)
+            // - language*, userCountry*, userCity y geobooker_last_location (preferencias)
+            const authSession = localStorage.getItem(AUTH_STORAGE_KEY);
+            const removedLocalStorageKeys = deleteVersionedLocalStorageCaches();
 
-            AUTH_KEYS.forEach(key => {
-                const val = localStorage.getItem(key);
-                if (val) preservedData[key] = val;
-            });
-
-            localStorage.clear();
-
-            // Restaurar datos esenciales
-            Object.entries(preservedData).forEach(([key, val]) => {
-                localStorage.setItem(key, val);
-            });
+            // Defensa adicional: una invalidación de caches nunca debe cerrar la sesión.
+            if (authSession !== null && localStorage.getItem(AUTH_STORAGE_KEY) !== authSession) {
+                localStorage.setItem(AUTH_STORAGE_KEY, authSession);
+            }
+            console.log('🧹 Caches localStorage eliminados:', removedLocalStorageKeys);
 
             // 2. Limpiar CacheStorage / Service Worker
             await deleteRuntimeCaches();

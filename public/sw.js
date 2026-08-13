@@ -128,6 +128,13 @@ self.addEventListener('fetch', (event) => {
     if (isDocumentRequest) {
         event.respondWith(
             fetch(request, { cache: 'no-store' })
+                .then((response) => {
+                    if (response?.ok && response.headers.get('content-type')?.includes('text/html')) {
+                        const responseClone = response.clone();
+                        caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', responseClone));
+                    }
+                    return response;
+                })
                 .catch(() => caches.match('/index.html').then((cachedIndex) => cachedIndex || caches.match('/')))
         );
         return;
@@ -137,7 +144,13 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(
             fetch(request)
                 .then(async (response) => {
-                    if (response && response.status === 200) {
+                    const contentType = response?.headers.get('content-type') || '';
+                    const expectsStyle = url.pathname.endsWith('.css');
+                    const hasExpectedType = expectsStyle
+                        ? contentType.includes('text/css')
+                        : contentType.includes('javascript');
+
+                    if (response?.ok && hasExpectedType) {
                         const responseClone = response.clone();
                         caches.open(RUNTIME_CACHE).then((cache) => {
                             cache.put(request, responseClone);
@@ -148,7 +161,12 @@ self.addEventListener('fetch', (event) => {
 
                     // A cached file with the exact same content hash is compatible
                     // with the running client and can bridge an atomic deploy safely.
-                    return (await caches.match(request)) || response;
+                    // Netlify can rewrite a missing asset to index.html with status 200;
+                    // never cache or execute that HTML response as JavaScript/CSS.
+                    return (await caches.match(request)) || new Response('', {
+                        status: 404,
+                        statusText: 'Build Asset Not Found'
+                    });
                 })
                 .catch(() => caches.match(request).then((cachedResponse) => (
                     cachedResponse || new Response('', { status: 404, statusText: 'Asset Not Found' })

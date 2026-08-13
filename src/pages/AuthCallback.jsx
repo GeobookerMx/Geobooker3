@@ -24,6 +24,7 @@ const AuthCallback = () => {
     useEffect(() => {
         let resolved = false;
         let timeoutId;
+        let redirectTimeoutId;
         let subscription;
 
         const persistProfile = async (sessionUser) => {
@@ -64,7 +65,7 @@ const AuthCallback = () => {
             await persistProfile(session.user);
 
             // Pequeño delay para mostrar el mensaje de éxito antes de redirigir
-            setTimeout(() => navigate('/', { replace: true }), 800);
+            redirectTimeoutId = setTimeout(() => navigate('/', { replace: true }), 800);
         };
 
         const onFailure = (reason) => {
@@ -79,8 +80,8 @@ const AuthCallback = () => {
                 method: 'oauth',
                 errorCode: getAuthErrorCode(reason)
             });
-            setStatus('error');
-            setTimeout(() => {
+            setStatus(reason === 'timeout' ? 'timeout' : 'error');
+            redirectTimeoutId = setTimeout(() => {
                 navigate('/login?error=' + encodeURIComponent(reason || 'callback_failed'), { replace: true });
             }, 1500);
         };
@@ -116,15 +117,18 @@ const AuthCallback = () => {
                 // Ignorar — seguimos esperando el evento
             }
 
-            // 4. Timeout global: si pasados MAX_WAIT_MS no llegó la sesión, fallar.
-            timeoutId = setTimeout(() => onFailure('timeout'), MAX_WAIT_MS);
         };
 
+        // El timeout cubre toda la operación, incluida una llamada a getSession()
+        // que nunca resuelva. onFailure marca resolved antes de cambiar el estado,
+        // por lo que cualquier respuesta tardía queda ignorada de forma segura.
+        timeoutId = setTimeout(() => onFailure('timeout'), MAX_WAIT_MS);
         run();
 
         return () => {
             resolved = true;
             clearTimeout(timeoutId);
+            clearTimeout(redirectTimeoutId);
             if (subscription) subscription.unsubscribe();
         };
     }, [navigate, searchParams]);
@@ -172,6 +176,20 @@ const AuthCallback = () => {
                         </h2>
                         <p className="mt-2 text-gray-500">
                             Redirigiendo al login...
+                        </p>
+                    </>
+                )}
+
+                {status === 'timeout' && (
+                    <>
+                        <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
+                            <span className="text-3xl" aria-hidden="true">⏱️</span>
+                        </div>
+                        <h2 className="mt-6 text-xl font-semibold text-gray-800">
+                            El inicio de sesión tardó demasiado
+                        </h2>
+                        <p className="mt-2 text-gray-500">
+                            Redirigiendo al login para intentarlo nuevamente...
                         </p>
                     </>
                 )}

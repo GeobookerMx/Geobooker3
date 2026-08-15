@@ -40,6 +40,7 @@ ORDER BY fecha DESC;
 GRANT SELECT ON public.chat_stats_daily TO authenticated, service_role;
 
 -- 3. Fix public.v_security_health
+-- NOTE: security_audit_log does not exist yet → use NULL fallbacks for those columns
 CREATE OR REPLACE VIEW public.v_security_health
 WITH (security_invoker = true) AS
 SELECT
@@ -51,9 +52,9 @@ SELECT
       AND pc.relrowsecurity = FALSE
       AND pt.tablename NOT IN ('schema_migrations', 'spatial_ref_sys')
   ) AS tables_without_rls,
-  (SELECT overall_severity FROM public.security_audit_log ORDER BY audit_date DESC LIMIT 1) AS last_audit_severity,
-  (SELECT audit_date FROM public.security_audit_log ORDER BY audit_date DESC LIMIT 1) AS last_audit_date,
-  (SELECT checks_failed FROM public.security_audit_log ORDER BY audit_date DESC LIMIT 1) AS last_audit_failed,
+  NULL::text        AS last_audit_severity,
+  NULL::timestamptz AS last_audit_date,
+  NULL::int         AS last_audit_failed,
   (
     SELECT COUNT(*) FROM public.security_events
     WHERE severity IN ('critical', 'high')

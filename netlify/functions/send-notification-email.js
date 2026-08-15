@@ -6,6 +6,7 @@
  */
 const { resolveEmailSender } = require('./_email-config');
 const { buildCampaignEmail } = require('./_campaign-email');
+const { authorizeEmailRequest } = require('./_email-request-auth');
 
 exports.handler = async function handler(event) {
     if (event.httpMethod !== 'POST') {
@@ -13,7 +14,23 @@ exports.handler = async function handler(event) {
     }
 
     try {
-        const { type, data } = JSON.parse(event.body);
+        const rawBody = event.body || '';
+        if (rawBody.length > 200_000) {
+            return { statusCode: 413, body: JSON.stringify({ error: 'payload_too_large' }) };
+        }
+        const payload = JSON.parse(rawBody);
+        const authorization = await authorizeEmailRequest(event, payload);
+        if (!authorization.authorized) {
+            return {
+                statusCode: authorization.statusCode,
+                body: JSON.stringify({ error: authorization.error })
+            };
+        }
+
+        const { type, data } = payload;
+        if (!data || typeof data !== 'object' || !/^\S+@\S+\.\S+$/.test(String(data.email || ''))) {
+            return { statusCode: 400, body: JSON.stringify({ error: 'invalid_recipient' }) };
+        }
 
         const RESEND_API_KEY = process.env.RESEND_API_KEY;
         if (!RESEND_API_KEY) {
@@ -113,6 +130,61 @@ function getCampaignFacts(data) {
     return { formattedBudget, placement, targetLocation, paymentMethod, dashboardUrl, invoiceText };
 }
 
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
+function isEnglish(data = {}) {
+    const language = String(data.language || data.locale || '').toLowerCase();
+    if (language) return language.startsWith('en');
+    return String(data.billingCountry || data.billing_country || '').toUpperCase() !== 'MX';
+}
+
+function campaignDashboardUrl(value) {
+    try {
+        const url = new URL(value || 'https://geobooker.com.mx/advertiser/dashboard');
+        if (url.protocol === 'https:' && ['geobooker.com.mx', 'www.geobooker.com.mx'].includes(url.hostname)) {
+            return url.toString();
+        }
+    } catch {
+        // Use the canonical dashboard below.
+    }
+    return 'https://geobooker.com.mx/advertiser/dashboard';
+}
+
+function buildCampaignReceivedEmail(data = {}) {
+    const facts = getCampaignFacts(data);
+    const english = isEnglish(data);
+    const name = escapeHtml(data.name || (english ? 'Advertiser' : 'Anunciante'));
+    const placement = escapeHtml(facts.placement);
+    const location = escapeHtml(facts.targetLocation);
+    const budget = escapeHtml(facts.formattedBudget);
+    const payment = escapeHtml(facts.paymentMethod);
+    const invoice = escapeHtml(facts.invoiceText);
+    const dashboardUrl = escapeHtml(campaignDashboardUrl(facts.dashboardUrl));
+
+    const copy = english ? {
+        title: 'Advertising purchase received',
+        intro: `Hello <strong>${name}</strong>, we received your Geobooker advertising purchase.`,
+        placement: 'Placement', location: 'Target location', budget: 'Investment', payment: 'Payment method',
+        next: 'The campaign remains under review. No publication or delivery is guaranteed until it is approved.',
+        button: 'Open advertiser dashboard'
+    } : {
+        title: 'Compra publicitaria recibida',
+        intro: `Hola <strong>${name}</strong>, recibimos tu compra publicitaria en Geobooker.`,
+        placement: 'Espacio', location: 'Ubicación objetivo', budget: 'Inversión', payment: 'Método de pago',
+        next: 'La campaña permanece en revisión. No se publicará ni se considerará entregada hasta ser aprobada.',
+        button: 'Abrir panel del anunciante'
+    };
+
+    return `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f4f4f5;padding:20px"><main style="max-width:640px;margin:auto;background:#fff;border-radius:12px;padding:28px"><h1>${copy.title}</h1><p>${copy.intro}</p><div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:18px"><p><strong>${copy.placement}:</strong> ${placement}</p><p><strong>${copy.location}:</strong> ${location}</p><p><strong>${copy.budget}:</strong> ${budget}</p><p><strong>${copy.payment}:</strong> ${payment}</p></div><p>${copy.next}</p><p>${invoice}</p><p><a href="${dashboardUrl}" style="display:inline-block;background:#2563eb;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none">${copy.button}</a></p></main></body></html>`;
+}
+
 
 function buildConnectLaunchReceivedEmail(data) {
     const amount = formatCurrency(data.amount || 0, data.currency || 'MXN');
@@ -151,8 +223,6 @@ function getEmailTemplate(type, data) {
         .list li { margin-bottom: 8px; }
         .muted { color: #6b7280; font-size: 14px; }
     `;
-
-    const campaignFacts = getCampaignFacts(data);
 
     const templates = {
         welcome: {
@@ -217,3 +287,5 @@ function getEmailTemplate(type, data) {
 
     return templates[type] || null;
 }
+
+exports._getEmailTemplate = getEmailTemplate;

@@ -1,4 +1,5 @@
 // src/services/notificationService.js
+import { getAuthenticatedJsonHeaders } from './authenticatedRequest';
 /**
  * Notification Service
  * Handles sending emails via Netlify functions
@@ -16,7 +17,7 @@ async function sendNotification(type, data) {
     try {
         const response = await fetch(NOTIFICATION_ENDPOINT, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await getAuthenticatedJsonHeaders(),
             body: JSON.stringify({ type, data })
         });
 
@@ -93,7 +94,7 @@ export async function notifyAdminNewCampaign(campaignData) {
     try {
         await fetch(ADMIN_ENDPOINT, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await getAuthenticatedJsonHeaders(),
             body: JSON.stringify({ campaign: campaignData })
         });
     } catch (error) {

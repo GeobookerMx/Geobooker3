@@ -1,98 +1,92 @@
-// netlify/functions/delete-account.js
-// ✅ Apple Guideline 5.1.1(v): Eliminación REAL de cuenta
-// Esta función usa service_role para eliminar al usuario de Supabase Auth.
-// NUNCA exponer service_role en el frontend.
-
+// Apple Guideline 5.1.1(v): irreversible self-service account deletion.
 const { createClient } = require('@supabase/supabase-js');
+const { getCorsHeaders, handlePreflight, rejectUnauthorizedOrigin } = require('./_cors');
+const { enforceRateLimit } = require('./_rate-limit');
+const { getOptionalRequestUser } = require('./_payment-security');
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+function json(statusCode, headers, body) {
+  return { statusCode, headers, body: JSON.stringify(body) };
+}
+
+async function requireSuccess(query, code) {
+  const { error } = await query;
+  if (error) throw new Error(code);
+}
 
 exports.handler = async (event) => {
-  // Solo POST
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+  const preflight = handlePreflight(event);
+  if (preflight) return preflight;
+  const headers = getCorsHeaders(event, {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-store'
+  });
+  const originError = rejectUnauthorizedOrigin(event);
+  if (originError) return originError;
+  if (event.httpMethod !== 'POST') return json(405, headers, { error: 'method_not_allowed' });
+
+  let body;
+  try {
+    body = JSON.parse(event.body || '{}');
+  } catch {
+    return json(400, headers, { error: 'invalid_request' });
+  }
+  if (body.confirmation !== 'DELETE_MY_ACCOUNT') {
+    return json(400, headers, { error: 'explicit_confirmation_required' });
   }
 
-  // Leer Authorization header
-  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'No authorization token provided' }) };
-  }
-  const token = authHeader.replace('Bearer ', '').trim();
+  const rateLimitError = await enforceRateLimit(event, {
+    action: 'delete_account',
+    maxCalls: 3,
+    windowSeconds: 3600,
+    headers
+  });
+  if (rateLimitError) return rateLimitError;
 
   try {
-    // 1. Verificar que el token es válido usando el cliente anon
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+    const user = await getOptionalRequestUser(event);
+    if (!user) return json(401, headers, { error: 'authentication_required' });
 
-    if (userError || !user) {
-      return { statusCode: 401, body: JSON.stringify({ error: 'Invalid or expired token' }) };
-    }
+    const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !serviceKey) return json(503, headers, { error: 'account_deletion_unavailable' });
+    const admin = createClient(url, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
+    const now = new Date().toISOString();
 
-    const userId = user.id;
-    const userEmail = user.email;
-
-    // 2. Cliente admin con service_role para operaciones privilegiadas
-    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-    // 3. Marcar negocios del usuario como eliminados
-    await supabaseAdmin
-      .from('businesses')
-      .update({ status: 'deleted', updated_at: new Date().toISOString() })
-      .eq('owner_id', userId);
-
-    // 4. Anonimizar perfil de usuario
-    await supabaseAdmin
-      .from('user_profiles')
-      .update({
+    await requireSuccess(
+      admin.from('businesses').update({ status: 'deleted', updated_at: now }).eq('owner_id', user.id),
+      'business_cleanup_failed'
+    );
+    await requireSuccess(
+      admin.from('user_profiles').update({
         full_name: '[Cuenta Eliminada]',
         first_name: null,
         last_name: null,
         phone: null,
         avatar_url: null,
-        deleted_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', userId);
-
-    // 5. Registrar solicitud de eliminación como procesada
-    await supabaseAdmin
-      .from('account_deletion_requests')
-      .insert({
-        user_id: userId,
-        email: userEmail,
+        deleted_at: now,
+        updated_at: now
+      }).eq('id', user.id),
+      'profile_cleanup_failed'
+    );
+    await requireSuccess(
+      admin.from('account_deletion_requests').insert({
+        user_id: user.id,
+        email: user.email,
         reason: 'user_initiated_in_app',
         status: 'processed',
-        requested_at: new Date().toISOString(),
-        processed_at: new Date().toISOString()
-      });
+        requested_at: now,
+        processed_at: now
+      }),
+      'deletion_audit_failed'
+    );
 
-    // 6. Eliminar al usuario de Supabase Auth (acción irreversible)
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
-
-    if (deleteError) {
-      console.error('Error eliminando usuario de Auth:', deleteError);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Error al eliminar cuenta: ' + deleteError.message })
-      };
-    }
-
-    console.log(`✅ Usuario ${userId} eliminado correctamente de Supabase Auth`);
-
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ success: true, message: 'Cuenta eliminada correctamente' })
-    };
-
+    const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
+    if (deleteError) throw new Error('auth_deletion_failed');
+    return json(200, headers, { success: true, message: 'Cuenta eliminada correctamente' });
   } catch (error) {
-    console.error('Error en delete-account:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Error interno del servidor: ' + error.message })
-    };
+    console.error('[delete-account] Failed:', error.message);
+    return json(error.statusCode || 500, headers, { error: 'account_deletion_failed' });
   }
 };

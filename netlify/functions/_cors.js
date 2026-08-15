@@ -21,21 +21,27 @@ const ALLOWED_ORIGINS = [
   'https://localhost',
   'capacitor://localhost',
   'http://localhost',
+  'http://localhost:5173',
+  'http://localhost:8888',
 ];
+
+function getRequestOrigin(event) {
+  return event?.headers?.origin || event?.headers?.Origin || '';
+}
 
 /**
  * Returns CORS headers restricted to Geobooker-owned origins.
  * Falls back to the primary domain for unrecognized origins.
  */
 function getCorsHeaders(event, extraHeaders = {}) {
-  const origin = event?.headers?.origin || event?.headers?.Origin || '';
+  const origin = getRequestOrigin(event);
   const allowedOrigin = ALLOWED_ORIGINS.includes(origin)
     ? origin
     : ALLOWED_ORIGINS[0];
 
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Geobooker-Payment-Status-Token',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Max-Age': '86400',
     'Vary': 'Origin',
@@ -60,6 +66,10 @@ function getWebhookHeaders() {
  */
 function handlePreflight(event, extraHeaders = {}) {
   if (event.httpMethod === 'OPTIONS') {
+    if (isUnauthorizedOrigin(event)) {
+      return rejectUnauthorizedOrigin(event, extraHeaders);
+    }
+
     return {
       statusCode: 204,
       headers: getCorsHeaders(event, extraHeaders),
@@ -74,9 +84,29 @@ function handlePreflight(event, extraHeaders = {}) {
  * Use this to reject unauthorized cross-origin calls explicitly.
  */
 function isUnauthorizedOrigin(event) {
-  const origin = event?.headers?.origin || event?.headers?.Origin || '';
+  const origin = getRequestOrigin(event);
   if (!origin) return false; // server-to-server calls have no Origin — allow
   return !ALLOWED_ORIGINS.includes(origin);
 }
 
-module.exports = { getCorsHeaders, getWebhookHeaders, handlePreflight, isUnauthorizedOrigin, ALLOWED_ORIGINS };
+function rejectUnauthorizedOrigin(event, extraHeaders = {}) {
+  if (!isUnauthorizedOrigin(event)) return null;
+
+  return {
+    statusCode: 403,
+    headers: getCorsHeaders(event, {
+      'Content-Type': 'application/json',
+      ...extraHeaders,
+    }),
+    body: JSON.stringify({ error: 'Origin not allowed' }),
+  };
+}
+
+module.exports = {
+  getCorsHeaders,
+  getWebhookHeaders,
+  handlePreflight,
+  isUnauthorizedOrigin,
+  rejectUnauthorizedOrigin,
+  ALLOWED_ORIGINS,
+};

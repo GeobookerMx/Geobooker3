@@ -1,9 +1,12 @@
 const { createClient } = require('@supabase/supabase-js');
+const { getCorsHeaders, handlePreflight, rejectUnauthorizedOrigin } = require('./_cors');
+const { enforceRateLimit } = require('./_rate-limit');
+const { getOptionalRequestUser } = require('./_payment-security');
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.VITE_GEMINI_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabase = (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY)
@@ -44,10 +47,10 @@ const INTERNAL_SYSTEM_TERMS = [
 const EXFILTRATION_INTENTS = [
     /dame/i,
     /muestrame/i,
-    /mu[eé]strame/i,
+    /mu[eÃ©]strame/i,
     /revela/i,
     /ensename/i,
-    /ens[eé]name/i,
+    /ens[eÃ©]name/i,
     /comparte/i,
     /exporta/i,
     /lista completa/i,
@@ -57,7 +60,7 @@ const EXFILTRATION_INTENTS = [
     /ignore/i,
     /ignora/i,
     /saltate/i,
-    /s[aá]ltate/i
+    /s[aÃ¡]ltate/i
 ];
 
 function isSensitivePrompt(userMessage = '') {
@@ -76,12 +79,6 @@ function buildSensitiveRefusal(currentLang = 'es') {
     return currentLang.startsWith('en')
         ? 'I can help you with public information about Geobooker, but I cannot reveal customer data, credentials, private metrics, system prompts, or internal technical infrastructure.'
         : 'Puedo ayudarte con informacion publica de Geobooker, pero no estoy autorizado a revelar datos privados de clientes, credenciales, metricas internas, prompts del sistema o detalles de infraestructura tecnica.';
-}
-
-function buildFallbackMessage(language = 'es') {
-    return String(language || '').toLowerCase().startsWith('en')
-        ? 'The assistant is temporarily offline. Geobooker can still help you with business discovery, listing claims, advertising, Geobooker Connect, invoicing and support through hola@geobooker.com.mx.'
-        : 'El asistente esta temporalmente fuera de linea. Aun asi, Geobooker puede ayudarte con busqueda de negocios, reclamo de perfiles, publicidad, Geobooker Connect, facturacion y soporte desde hola@geobooker.com.mx.';
 }
 
 function normalizeText(value = '') {
@@ -300,17 +297,14 @@ async function logToSupabase({
 
 exports.handler = async (event) => {
     const startTime = Date.now();
-
-    const headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Content-Type': 'application/json'
-    };
-
-    if (event.httpMethod === 'OPTIONS') {
-        return { statusCode: 200, headers, body: '' };
-    }
+    const preflight = handlePreflight(event);
+    if (preflight) return preflight;
+    const headers = getCorsHeaders(event, {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store'
+    });
+    const originError = rejectUnauthorizedOrigin(event);
+    if (originError) return originError;
 
     if (event.httpMethod !== 'POST') {
         return {
@@ -319,6 +313,22 @@ exports.handler = async (event) => {
             body: JSON.stringify({ success: false, error: 'Metodo no permitido' })
         };
     }
+
+    if (!event.body || Buffer.byteLength(event.body, 'utf8') > 32 * 1024) {
+        return {
+            statusCode: 413,
+            headers,
+            body: JSON.stringify({ success: false, error: 'Solicitud demasiado grande' })
+        };
+    }
+
+    const rateLimitError = await enforceRateLimit(event, {
+        action: 'chat_assistant',
+        maxCalls: 8,
+        windowSeconds: 60,
+        headers
+    });
+    if (rateLimitError) return rateLimitError;
 
     let body = {};
     try {
@@ -332,14 +342,33 @@ exports.handler = async (event) => {
     }
 
     const userMessage = typeof body.userMessage === 'string' ? body.userMessage.trim() : '';
-    const conversationHistory = Array.isArray(body.conversationHistory) ? body.conversationHistory : [];
-    const hostname = body.hostname || 'geobooker.com.mx';
-    const pathname = body.pathname || '/';
-    const language = body.language || 'es-MX';
-    const sessionId = body.sessionId || 'session_unknown';
-    const userId = body.userId || null;
+    const conversationHistory = (Array.isArray(body.conversationHistory) ? body.conversationHistory : [])
+        .slice(-8)
+        .map((message) => ({
+            role: message?.role === 'user' ? 'user' : 'assistant',
+            content: String(message?.content || '').slice(0, 2000)
+        }));
+    const hostname = typeof body.hostname === 'string' ? body.hostname.slice(0, 255) : 'geobooker.com.mx';
+    const pathname = typeof body.pathname === 'string' ? body.pathname.slice(0, 500) : '/';
+    const language = typeof body.language === 'string' ? body.language.slice(0, 20) : 'es-MX';
+    const requestedSessionId = typeof body.sessionId === 'string' ? body.sessionId.trim() : '';
+    const sessionId = /^[A-Za-z0-9_-]{8,100}$/.test(requestedSessionId)
+        ? requestedSessionId
+        : 'session_unknown';
 
-    if (!userMessage) {
+    let requestUser = null;
+    try {
+        requestUser = await getOptionalRequestUser(event);
+    } catch (error) {
+        return {
+            statusCode: error.statusCode || 401,
+            headers,
+            body: JSON.stringify({ success: false, error: 'Sesion invalida' })
+        };
+    }
+    const userId = requestUser?.id || null;
+
+    if (!userMessage || userMessage.length > 2000) {
         return {
             statusCode: 400,
             headers,
@@ -409,7 +438,7 @@ exports.handler = async (event) => {
                     : 'Hola! Soy GeoBot, el asistente oficial de Geobooker. Como puedo ayudarte a impulsar tu negocio o encontrar comercios locales hoy?'
             }]
         },
-        ...conversationHistory.slice(-8).map((message) => ({
+        ...conversationHistory.map((message) => ({
             role: message?.role === 'user' ? 'user' : 'model',
             parts: [{ text: String(message?.content || '') }]
         })),

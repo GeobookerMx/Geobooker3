@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { getAuthenticatedJsonHeaders } from './authenticatedRequest';
 
 /**
  * Procesa una plantilla reemplazando las variables {{var}} por datos del negocio
@@ -39,7 +40,7 @@ export async function sendEmail({ to, subject, html }) {
     try {
         const response = await fetch('/.netlify/functions/send-notification-email', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await getAuthenticatedJsonHeaders(),
             body: JSON.stringify({
                 type: 'custom',  // Para emails de campañas personalizadas
                 data: {

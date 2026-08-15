@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { Mail, ArrowLeft, Check } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { getPasswordRecoveryRedirect } from '../utils/authRedirects';
 
 const ForgotPasswordPage = () => {
     useTranslation();
@@ -41,7 +43,10 @@ const ForgotPasswordPage = () => {
         try {
             const normalizedEmail = email.trim().toLowerCase();
             const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-                redirectTo: `${window.location.origin}/reset-password`
+                redirectTo: getPasswordRecoveryRedirect({
+                    isNative: Capacitor.isNativePlatform(),
+                    hostname: window.location.hostname
+                })
             });
 
             if (error) throw error;

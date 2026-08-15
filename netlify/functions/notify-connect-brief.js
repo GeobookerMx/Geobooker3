@@ -1,13 +1,9 @@
 const { resolveEmailSender } = require('./_email-config');
+const { getCorsHeaders, handlePreflight, rejectUnauthorizedOrigin } = require('./_cors');
+const { enforceRateLimit } = require('./_rate-limit');
+const { loadEnterpriseLead } = require('./_lead-notification-authority');
 
-const headers = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Content-Type': 'application/json'
-};
-
-function json(statusCode, body) {
+function json(statusCode, body, headers = { 'Content-Type': 'application/json' }) {
   return { statusCode, headers, body: JSON.stringify(body) };
 }
 
@@ -34,12 +30,13 @@ function uniqueEmails(values = []) {
   return [...new Set(values.map((item) => String(item || '').trim().toLowerCase()).filter(Boolean))];
 }
 
-async function sendEmail({ apiKey, from, replyTo, to, subject, html }) {
+async function sendEmail({ apiKey, from, replyTo, to, subject, html, idempotencyKey }) {
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Idempotency-Key': idempotencyKey
     },
     body: JSON.stringify({
       from,
@@ -59,19 +56,32 @@ async function sendEmail({ apiKey, from, replyTo, to, subject, html }) {
 }
 
 exports.handler = async function handler(event) {
-  if (event.httpMethod === 'OPTIONS') return json(200, { ok: true });
-  if (event.httpMethod !== 'POST') return json(405, { error: 'Method Not Allowed' });
+  const preflight = handlePreflight(event);
+  if (preflight) return preflight;
+  const headers = getCorsHeaders(event, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+  const originError = rejectUnauthorizedOrigin(event);
+  if (originError) return originError;
+  if (event.httpMethod !== 'POST') return json(405, { error: 'Method Not Allowed' }, headers);
+
+  const rateLimitError = await enforceRateLimit(event, {
+    action: 'notify_connect_brief',
+    maxCalls: 3,
+    windowSeconds: 600,
+    headers
+  });
+  if (rateLimitError) return rateLimitError;
 
   try {
-    const { lead } = JSON.parse(event.body || '{}');
+    const { leadId } = JSON.parse(event.body || '{}');
+    const lead = await loadEnterpriseLead(leadId);
     if (!lead?.company_name || !lead?.contact_email) {
-      return json(400, { error: 'Missing Connect brief data' });
+      return json(400, { error: 'Missing Connect brief data' }, headers);
     }
 
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
     if (!RESEND_API_KEY) {
       console.warn('[notify-connect-brief] RESEND_API_KEY not configured');
-      return json(200, { success: false, skipped: true, reason: 'missing_resend_key' });
+      return json(200, { success: false, skipped: true, reason: 'missing_resend_key' }, headers);
     }
 
     const meta = parseLeadMessage(lead.message);
@@ -84,7 +94,6 @@ exports.handler = async function handler(event) {
     const senderConfig = resolveEmailSender({ preferredName: 'Geobooker Connect' });
     const packageName = meta.package_name || lead.selected_plan || 'Piloto Connect';
     const reservationPrice = meta.reservation_price_mxn || lead.reservation_price_mxn || '';
-    const batchSize = Number(meta.batch_size || 1000).toLocaleString('es-MX');
     const checkoutUrl = `https://geobooker.com.mx/b2b-connect/checkout?package=${encodeURIComponent(meta.package_code || 'connect_1000')}`;
 
     const adminHtml = `<!doctype html><html><body style="margin:0;background:#f8fafc;font-family:Arial,sans-serif;color:#0f172a;">
@@ -140,7 +149,8 @@ exports.handler = async function handler(event) {
       replyTo: lead.contact_email,
       to: adminRecipients,
       subject: `Nuevo brief Connect: ${lead.company_name}`,
-      html: adminHtml
+      html: adminHtml,
+      idempotencyKey: `connect-brief-admin/${lead.id}`
     });
 
     let customerResult = null;
@@ -151,7 +161,8 @@ exports.handler = async function handler(event) {
         replyTo: senderConfig.replyTo || 'hola@geobooker.com.mx',
         to: lead.contact_email,
         subject: 'Recibimos tu brief inicial de Geobooker Connect',
-        html: customerHtml
+        html: customerHtml,
+        idempotencyKey: `connect-brief-customer/${lead.id}`
       });
     } catch (customerError) {
       console.warn('[notify-connect-brief] Customer email failed:', customerError.message);
@@ -159,12 +170,11 @@ exports.handler = async function handler(event) {
 
     return json(200, {
       success: true,
-      adminRecipients,
-      adminEmailId: adminResult?.id || null,
-      customerEmailId: customerResult?.id || null
-    });
+      adminNotified: Boolean(adminResult?.id),
+      customerNotified: Boolean(customerResult?.id)
+    }, headers);
   } catch (error) {
-    console.error('[notify-connect-brief] Error:', error);
-    return json(500, { error: error.message || 'Connect brief notification failed' });
+    console.error('[notify-connect-brief] Error:', error.message);
+    return json(error.statusCode || 500, { error: error.statusCode ? error.message : 'Connect brief notification failed' }, headers);
   }
 };

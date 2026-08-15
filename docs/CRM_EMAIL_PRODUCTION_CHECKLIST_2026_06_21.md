@@ -104,6 +104,6 @@ limit 20;
 
 ## 6. Riesgos residuales
 
-- los endpoints cron quedan protegidos por `CRON_SECRET` o por origen confiable (`geobooker.com.mx` / localhost) para no romper el panel admin
+- los endpoints de cola quedan protegidos por `CRON_SECRET` o por una sesion Supabase de administrador; el origen del navegador no se considera una credencial
 - si GitHub Actions no esta habilitado, el flujo automatico no correra aunque el codigo este listo
 - si faltan plantillas activas por ronda, el sistema caera a fallback por tier o primera activa

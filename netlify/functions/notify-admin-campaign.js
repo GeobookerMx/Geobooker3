@@ -3,6 +3,7 @@
  * Notify admin when a paid campaign enters pending review.
  * Works for both standard ad campaigns and enterprise campaigns.
  */
+const { authorizeEmailRequest } = require('./_email-request-auth');
 
 exports.handler = async function handler(event) {
     if (event.httpMethod !== 'POST') {
@@ -10,9 +11,23 @@ exports.handler = async function handler(event) {
     }
 
     try {
-        const { campaign } = JSON.parse(event.body);
-
         const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'hola@geobooker.com.mx';
+        const rawBody = event.body || '';
+        if (rawBody.length > 100_000) {
+            return { statusCode: 413, body: JSON.stringify({ error: 'payload_too_large' }) };
+        }
+        const { campaign } = JSON.parse(rawBody);
+        const authorization = await authorizeEmailRequest(event, {
+            type: 'admin_campaign',
+            data: { email: ADMIN_EMAIL }
+        });
+        if (!authorization.authorized) {
+            return {
+                statusCode: authorization.statusCode,
+                body: JSON.stringify({ error: authorization.error })
+            };
+        }
+
         const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
         if (!RESEND_API_KEY) {

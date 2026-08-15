@@ -4,6 +4,8 @@ const DEFAULT_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://localhost:8888'
 ];
+const { timingSafeEqual } = require('node:crypto');
+const { authorizeAdminRequest } = require('./_admin-request-auth');
 
 function normalizeHeaderMap(headers = {}) {
     const normalized = {};
@@ -31,28 +33,33 @@ function hasValidCronSecret(event) {
     const bearer = headers.authorization || '';
     const directHeader = headers['x-cron-secret'] || '';
 
-    return bearer === `Bearer ${expectedSecret}` || directHeader === expectedSecret;
+    const supplied = bearer.startsWith('Bearer ') ? bearer.slice(7) : directHeader;
+    const expected = Buffer.from(String(expectedSecret));
+    const actual = Buffer.from(String(supplied || ''));
+    return expected.length >= 32
+      && actual.length === expected.length
+      && timingSafeEqual(actual, expected);
 }
 
-function ensureCronOrTrustedOrigin(event) {
+async function ensureCronOrAdmin(event, dependencies = {}) {
     if (hasValidCronSecret(event)) {
         return null;
     }
 
-    if (isAllowedOrigin(extractOriginCandidate(event))) {
-        return null;
-    }
-
+    const authorization = await authorizeAdminRequest(event, dependencies);
+    if (authorization.authorized) return null;
     return {
-        statusCode: 401,
+        statusCode: authorization.statusCode,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             success: false,
-            error: 'Unauthorized'
+            error: authorization.error
         })
     };
 }
 
 module.exports = {
-    ensureCronOrTrustedOrigin
+    ensureCronOrAdmin,
+    extractOriginCandidate,
+    isAllowedOrigin
 };

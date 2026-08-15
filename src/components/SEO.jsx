@@ -188,12 +188,28 @@ const addWebAppSchema = (currentLang) => {
         operatingSystem: 'Any',
         browserRequirements: 'Requires JavaScript. Requires HTML5.',
         url: DOMAIN_STRATEGY.globalOrigin,
-        inLanguage: ['en', 'es', 'zh', 'ja', 'ko'],
+        inLanguage: ['en', 'es', 'pt', 'de', 'fr', 'it', 'nl', 'ja', 'ko', 'sv'],
         areaServed: [
             { '@type': 'Country', name: 'Mexico' },
             { '@type': 'Country', name: 'United States' },
             { '@type': 'Country', name: 'United Kingdom' },
-            { '@type': 'Country', name: 'Canada' }
+            { '@type': 'Country', name: 'Canada' },
+            { '@type': 'Country', name: 'Germany' },
+            { '@type': 'Country', name: 'France' },
+            { '@type': 'Country', name: 'Italy' },
+            { '@type': 'Country', name: 'Spain' },
+            { '@type': 'Country', name: 'Netherlands' },
+            { '@type': 'Country', name: 'Japan' },
+            { '@type': 'Country', name: 'Australia' },
+            { '@type': 'Country', name: 'Switzerland' },
+            { '@type': 'Country', name: 'Singapore' },
+            { '@type': 'Country', name: 'South Korea' },
+            { '@type': 'Country', name: 'United Arab Emirates' },
+            { '@type': 'Country', name: 'Ireland' },
+            { '@type': 'Country', name: 'Sweden' },
+            { '@type': 'Country', name: 'Brazil' },
+            { '@type': 'Country', name: 'Colombia' },
+            { '@type': 'Country', name: 'Chile' }
         ],
         offers: {
             '@type': 'Offer',
@@ -247,9 +263,24 @@ const addOrganizationSchema = () => {
             { '@type': 'Country', name: 'Mexico' },
             { '@type': 'Country', name: 'United States' },
             { '@type': 'Country', name: 'United Kingdom' },
-            { '@type': 'Country', name: 'Canada' }
+            { '@type': 'Country', name: 'Canada' },
+            { '@type': 'Country', name: 'Germany' },
+            { '@type': 'Country', name: 'France' },
+            { '@type': 'Country', name: 'Italy' },
+            { '@type': 'Country', name: 'Spain' },
+            { '@type': 'Country', name: 'Netherlands' },
+            { '@type': 'Country', name: 'Japan' },
+            { '@type': 'Country', name: 'Australia' },
+            { '@type': 'Country', name: 'Switzerland' },
+            { '@type': 'Country', name: 'Singapore' },
+            { '@type': 'Country', name: 'South Korea' },
+            { '@type': 'Country', name: 'Ireland' },
+            { '@type': 'Country', name: 'Sweden' },
+            { '@type': 'Country', name: 'Brazil' },
+            { '@type': 'Country', name: 'Colombia' },
+            { '@type': 'Country', name: 'Chile' }
         ],
-        knowsLanguage: ['es', 'en', 'fr', 'zh', 'ja', 'ko']
+        knowsLanguage: ['es', 'en', 'pt', 'de', 'fr', 'it', 'nl', 'ja', 'ko', 'sv']
     };
 
     const script = document.createElement('script');

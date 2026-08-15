@@ -4,6 +4,15 @@
 [build]
   publish = "dist"
   command = "npm run build"
+  edge_functions = "netlify/edge-functions"
+
+# ==========================================
+# EDGE FUNCTIONS — Geolocation Routing
+# ==========================================
+
+[[edge_functions]]
+  path = "/"
+  function = "geo-redirect"
 
 # ==========================================
 # SECURITY HEADERS — All routes

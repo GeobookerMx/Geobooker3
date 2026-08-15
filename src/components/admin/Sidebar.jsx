@@ -20,6 +20,7 @@ import {
     Shield
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { featureFlags } from '../../config/featureFlags';
 
 const Sidebar = ({ onLogout }) => {
     const location = useLocation();
@@ -89,6 +90,9 @@ const Sidebar = ({ onLogout }) => {
             title: 'Negocios y Usuarios',
             items: [
                 { path: '/admin/businesses', icon: Store, label: 'Negocios', badge: pendingBusinesses, badgeColor: 'yellow' },
+                ...(featureFlags.commercialSpaces
+                    ? [{ path: '/admin/commercial-spaces', icon: Store, label: 'Espacios comerciales' }]
+                    : []),
                 { path: '/admin/users', icon: Users, label: 'Usuarios' },
                 { path: '/admin/reports', icon: BarChart3, label: 'Reportes Negocios' }
             ]

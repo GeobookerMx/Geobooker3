@@ -2,6 +2,7 @@
 import React, { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import PageLoader from "./components/common/PageLoader";
+import { featureFlags } from "./config/featureFlags";
 
 // Layouts
 import PublicLayout from "./components/layout/PublicLayout.jsx";
@@ -42,6 +43,7 @@ const LeadsHistory = lazy(() => import("./pages/admin/LeadsHistory.jsx"));
 const FiscalManagement = lazy(() => import("./pages/admin/FiscalManagement.jsx"));
 const RecommendationsManagement = lazy(() => import("./pages/admin/RecommendationsManagement.jsx"));
 const ClaimsManagement = lazy(() => import("./pages/admin/ClaimsManagement.jsx"));
+const CommercialSpacesModeration = lazy(() => import("./pages/admin/CommercialSpacesModeration.jsx"));
 const UnsubscribePage = lazy(() => import("./pages/UnsubscribePage.jsx"));
 
 // User Pages - Lazy Loaded
@@ -111,6 +113,10 @@ const IndustriesPage = lazy(() => import("./pages/en/IndustriesPage.jsx"));
 const EmprendePage = lazy(() => import("./pages/emprende/EmprendePage.jsx"));
 const BibliotecaPage = lazy(() => import("./pages/biblioteca/BibliotecaPage.jsx"));
 const BibliotecaDocumentPage = lazy(() => import("./pages/biblioteca/BibliotecaDocumentPage.jsx"));
+const CommercialSpacesPage = lazy(() => import("./pages/spaces/CommercialSpacesPage.jsx"));
+const CommercialSpaceDetailPage = lazy(() => import("./pages/spaces/CommercialSpaceDetailPage.jsx"));
+const CommercialSpaceFormPage = lazy(() => import("./pages/spaces/CommercialSpaceFormPage.jsx"));
+const MyCommercialSpacesPage = lazy(() => import("./pages/spaces/MyCommercialSpacesPage.jsx"));
 
 export default function AppRouter() {
   return (
@@ -136,6 +142,8 @@ export default function AppRouter() {
           <Route path="/c/:category/:subcategory" element={<HomePage />} />
           <Route path="/ciudad/:city" element={<HomePage />} />
           <Route path="/categories" element={<CategoriesPage />} />
+          {featureFlags.commercialSpaces && <Route path="/espacios" element={<CommercialSpacesPage />} />}
+          {featureFlags.commercialSpaces && <Route path="/espacios/:slug" element={<CommercialSpaceDetailPage />} />}
 
           <Route path="/cities/:citySlug" element={<CityLandingPage />} />
           <Route path="/en/advertise-in-mexico" element={<AdvertiseInMexicoPage />} />
@@ -201,6 +209,7 @@ export default function AppRouter() {
           }
         >
           <Route path="/business/register" element={<BusinessFormPage />} />
+          {featureFlags.commercialSpaces && <Route path="/espacios/publicar" element={<CommercialSpaceFormPage />} />}
           <Route path="/register" element={<RegisterPage />} />
         </Route>
 
@@ -217,6 +226,7 @@ export default function AppRouter() {
           <Route path="/advertise/create" element={<CampaignCreateWizard />} />
           <Route path="/advertise/success" element={<AdvertiseSuccessPage />} />
           <Route path="/dashboard/billing" element={<BillingPortal />} />
+          {featureFlags.commercialSpaces && <Route path="/dashboard/espacios" element={<MyCommercialSpacesPage />} />}
         </Route>
 
         <Route path="/admin/login" element={<AdminLogin />} />
@@ -247,6 +257,7 @@ export default function AppRouter() {
           <Route path="fiscal" element={<FiscalManagement />} />
           <Route path="recommendations" element={<RecommendationsManagement />} />
           <Route path="claims" element={<ClaimsManagement />} />
+          {featureFlags.commercialSpaces && <Route path="commercial-spaces" element={<CommercialSpacesModeration />} />}
         </Route>
       </Routes>
     </Suspense>

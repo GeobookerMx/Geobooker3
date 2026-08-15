@@ -1,16 +1,15 @@
 // src/components/modals/UpgradeRequiredModal.jsx
 // Apple Guidelines 3.1.1 & 2.1(a): Hidden entirely on native iOS
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Crown, X, Store, Check, ArrowRight, Gift } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
-import { getPremiumPromoDeadlineLabel, isPremiumPromoActive, PROMOTIONS } from '../../config/promotions';
+import { getPremiumPromoDeadlineLabel, isPremiumPromoActive } from '../../config/promotions';
 import { Capacitor } from '@capacitor/core';
 import { PREMIUM_PRICING } from '../../config/premiumPricing';
+import { activatePremiumPromotion } from '../../services/premiumService';
 
 const UpgradeRequiredModal = ({ isOpen, onClose, currentBusinessCount = 1 }) => {
-    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const promoActive = isPremiumPromoActive();
     // Apple Guideline 3.1.1 & 2.1(a): Never show upgrade/payment UI on native iOS
@@ -23,22 +22,7 @@ const UpgradeRequiredModal = ({ isOpen, onClose, currentBusinessCount = 1 }) => 
     const handleFreeUpgrade = async () => {
         setLoading(true);
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                toast.error('Debes iniciar sesión');
-                return;
-            }
-
-            const { error } = await supabase
-                .from('user_profiles')
-                .upsert({
-                    id: session.user.id,
-                    is_premium_owner: true,
-                    premium_until: PROMOTIONS.PREMIUM_FREE_UNTIL,
-                    updated_at: new Date().toISOString()
-                }, { onConflict: 'id' });
-
-            if (error) throw error;
+            await activatePremiumPromotion();
 
             toast.success('🎉 ¡Premium activado GRATIS! Ya puedes registrar más negocios.', { duration: 5000 });
             onClose();

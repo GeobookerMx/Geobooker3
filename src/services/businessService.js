@@ -2,6 +2,7 @@ import { supabase } from "../lib/supabase";
 import { getAttributionSummary } from "./attributionService";
 import { matchesSemanticText } from "../utils/semanticDictionary";
 import { analyzeSearchIntent, getIntentSearchHaystack } from "../utils/searchIntentEngine";
+import { featureFlags } from "../config/featureFlags";
 
 const TT_INTENT_TERMS = [
   'todo transporte',
@@ -12,8 +13,6 @@ const TT_INTENT_TERMS = [
   'bodega',
   'storage',
   'warehouse',
-  'patio',
-  'patio logistico',
   'almacen',
   'flete',
   'freight',
@@ -62,17 +61,6 @@ const TT_INTENT_TERMS = [
   'fasteners',
   'screws',
   'bolts',
-  'truck parking',
-  'truck yard',
-  'drop yard',
-  'secure yard',
-  'pension para tracto',
-  'pension para tractocamion',
-  'patio para mercancia',
-  'resguardo de mercancia',
-  'estacionamiento de trailer',
-  'tractocamion',
-  'trailer parking',
 ];
 
 const TT_ROW_LIMIT = 120;
@@ -325,7 +313,9 @@ export async function searchTodoTransporteMatches(searchQuery) {
 
   const [providerMatches, storageMatches] = await Promise.all([
     fetchTTMatchesFromTable('providers', 'provider', normalizedQuery, TT_RESULT_LIMIT),
-    fetchTTMatchesFromTable('storage_spaces', 'storage', normalizedQuery, TT_RESULT_LIMIT)
+    featureFlags.ttStorageDiscovery
+      ? fetchTTMatchesFromTable('storage_spaces', 'storage', normalizedQuery, TT_RESULT_LIMIT)
+      : Promise.resolve([])
   ]);
 
   const deduped = [];
@@ -587,7 +577,8 @@ export async function createBusiness(form, user) {
 
   const columnErrorMessage = `${insertResponse.error?.message || ''} ${insertResponse.error?.details || ''}`.toLowerCase();
   if (insertResponse.error && (columnErrorMessage.includes('column') || columnErrorMessage.includes('schema cache') || columnErrorMessage.includes('does not exist'))) {
-    const { attribution_text, ...fallbackPayload } = payload;
+    const fallbackPayload = { ...payload };
+    delete fallbackPayload.attribution_text;
     insertResponse = await supabase
       .from("businesses")
       .insert([fallbackPayload])

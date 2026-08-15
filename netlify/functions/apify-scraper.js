@@ -6,18 +6,31 @@
  * Pattern: start job -> return runId -> poll for results
  */
 
+import adminAuth from './_admin-request-auth.js';
+
+const { authorizeAdminRequest } = adminAuth;
+
 export async function handler(event) {
     const headers = {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        'Cache-Control': 'no-store'
     };
 
     if (event.httpMethod === 'OPTIONS') {
-        return { statusCode: 200, headers, body: '' };
+        return { statusCode: 204, headers, body: '' };
     }
 
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) };
+    }
+
+    const authorization = await authorizeAdminRequest(event);
+    if (!authorization.authorized) {
+        return {
+            statusCode: authorization.statusCode,
+            headers,
+            body: JSON.stringify({ error: authorization.error })
+        };
     }
 
     const APIFY_API_TOKEN = process.env.APIFY_API_TOKEN;
@@ -44,11 +57,17 @@ export async function handler(event) {
     try {
         // ========== START: Iniciar el actor ==========
         if (action === 'start') {
-            const { searchQuery, location, maxResults = 20 } = body;
+            const searchQuery = typeof body.searchQuery === 'string' ? body.searchQuery.trim() : '';
+            const location = typeof body.location === 'string' ? body.location.trim() : '';
+            const requestedMaxResults = Number(body.maxResults ?? 20);
 
-            if (!searchQuery || !location) {
+            if (!searchQuery || searchQuery.length > 120 || !location || location.length > 160) {
                 return { statusCode: 400, headers, body: JSON.stringify({ error: 'searchQuery y location requeridos' }) };
             }
+            if (!Number.isFinite(requestedMaxResults) || requestedMaxResults < 1) {
+                return { statusCode: 400, headers, body: JSON.stringify({ error: 'maxResults invalido' }) };
+            }
+            const maxResults = Math.min(Math.floor(requestedMaxResults), 50);
 
             // Construir búsqueda más precisa
             // Formato: "restaurants in Manchester, UK" es más específico que "restaurants Manchester"
@@ -60,7 +79,7 @@ export async function handler(event) {
 
             const input = {
                 searchStringsArray: [searchString],
-                maxCrawledPlacesPerSearch: Math.min(maxResults, 50),
+                maxCrawledPlacesPerSearch: maxResults,
                 language: searchLanguage,
                 deeperCityScrape: false,
                 maxReviews: 0,
@@ -74,22 +93,21 @@ export async function handler(event) {
             console.log(`🚀 Starting: "${searchQuery}" in ${location}`);
 
             // Llamada directa a Apify API para iniciar actor
-            const startRes = await fetch(`${BASE_URL}/acts/${ACTOR_ID}/runs?token=${APIFY_API_TOKEN}`, {
+            const startRes = await fetch(`${BASE_URL}/acts/${ACTOR_ID}/runs`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${APIFY_API_TOKEN}`
+                },
                 body: JSON.stringify(input)
             });
 
             if (!startRes.ok) {
                 const err = await startRes.text();
-                console.error('Apify start error:', err);
                 console.error('Apify status code:', startRes.status);
-                console.error('Apify actor:', ACTOR_ID);
 
                 // Parsear error para dar mensaje más útil
                 let errorMessage = 'Error iniciando actor';
-                let errorDetails = err;
-
                 try {
                     const errorJson = JSON.parse(err);
                     if (errorJson.error?.message) {
@@ -111,9 +129,7 @@ export async function handler(event) {
                     headers,
                     body: JSON.stringify({
                         error: errorMessage,
-                        details: errorDetails,
-                        statusCode: startRes.status,
-                        actor: ACTOR_ID
+                        statusCode: startRes.status
                     })
                 };
             }
@@ -134,14 +150,15 @@ export async function handler(event) {
 
         // ========== POLL: Verificar estado ==========
         if (action === 'poll') {
-            const { runId } = body;
+            const runId = typeof body.runId === 'string' ? body.runId.trim() : '';
 
-            if (!runId) {
+            if (!/^[A-Za-z0-9_-]{1,100}$/.test(runId)) {
                 return { statusCode: 400, headers, body: JSON.stringify({ error: 'runId requerido' }) };
             }
 
             // Obtener estado del run
-            const statusRes = await fetch(`${BASE_URL}/actor-runs/${runId}?token=${APIFY_API_TOKEN}`);
+            const apifyHeaders = { 'Authorization': `Bearer ${APIFY_API_TOKEN}` };
+            const statusRes = await fetch(`${BASE_URL}/actor-runs/${runId}`, { headers: apifyHeaders });
 
             if (!statusRes.ok) {
                 return { statusCode: 404, headers, body: JSON.stringify({ error: 'Run no encontrado' }) };
@@ -177,7 +194,10 @@ export async function handler(event) {
                 }
 
                 // Obtener resultados del dataset
-                const dataRes = await fetch(`${BASE_URL}/datasets/${datasetId}/items?token=${APIFY_API_TOKEN}&limit=100`);
+                const dataRes = await fetch(`${BASE_URL}/datasets/${datasetId}/items?limit=50`, { headers: apifyHeaders });
+                if (!dataRes.ok) {
+                    return { statusCode: 502, headers, body: JSON.stringify({ error: 'No fue posible obtener resultados' }) };
+                }
                 const items = await dataRes.json();
 
                 const businesses = (Array.isArray(items) ? items : []).map(place => ({

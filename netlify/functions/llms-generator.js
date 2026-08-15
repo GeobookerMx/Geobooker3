@@ -49,6 +49,13 @@ const ACTIVE_CITIES = [
   { city: 'Dublin',      country: 'IE', lang: 'en', wave: 5 },
   { city: 'Zurich',      country: 'CH', lang: 'de', wave: 5 },
   { city: 'Medellín',    country: 'CO', lang: 'es', wave: 5 },
+  // Wave 6 — Tier 2 Financial & Commercial Hubs
+  { city: 'Singapore',   country: 'SG', lang: 'en', wave: 6 },
+  { city: 'Seoul',       country: 'KR', lang: 'ko', wave: 6 },
+  { city: 'Dubai',       country: 'AE', lang: 'en', wave: 6 },
+  { city: 'Stockholm',   country: 'SE', lang: 'sv', wave: 6 },
+  { city: 'Vienna',      country: 'AT', lang: 'de', wave: 6 },
+  { city: 'Brussels',    country: 'BE', lang: 'fr', wave: 6 },
 ];
 
 const commonLinks = (origin) => [

@@ -8,11 +8,9 @@ import { Link } from 'react-router-dom';
 import { MessageCircle, X, Send, Loader2, Bot, User, Sparkles, ArrowRight, LifeBuoy, Megaphone, Search, ShieldCheck, Mail } from 'lucide-react';
 import { sendMessageToGemini } from '../../services/geminiService';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../../contexts/AuthContext';
 
 function ChatWidget() {
     const { t, i18n } = useTranslation();
-    const { user } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState('');
@@ -124,7 +122,7 @@ function ChatWidget() {
                     content: message.content
                 }));
 
-            const result = await sendMessageToGemini(text.trim(), history, sessionId, user?.id);
+            const result = await sendMessageToGemini(text.trim(), history, sessionId);
 
             const assistantMessage = {
                 id: (Date.now() + 1).toString(),

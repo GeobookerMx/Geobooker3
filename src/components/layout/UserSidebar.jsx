@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import { RecommendationForm } from '../recommendations';
 import { Capacitor } from '@capacitor/core';
+import { featureFlags } from '../../config/featureFlags';
 
 const UserSidebar = () => {
     const location = useLocation();
@@ -49,6 +50,11 @@ const UserSidebar = () => {
             icon: User,
             badge: 'Tab'
         },
+        ...(featureFlags.commercialSpaces ? [{
+            name: 'Mis Espacios',
+            path: '/dashboard/espacios',
+            icon: Building2
+        }] : []),
         {
             name: 'Recomendar Negocio',
             path: '#recommend',

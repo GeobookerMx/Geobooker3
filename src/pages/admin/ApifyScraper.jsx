@@ -17,6 +17,7 @@ import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
 import { Link } from 'react-router-dom';
 import WhatsAppService from '../../services/whatsappService';
+import { getAuthenticatedJsonHeaders } from '../../services/authenticatedRequest';
 
 const FUNCTIONS_BASE_URL = (import.meta.env.VITE_FUNCTIONS_BASE_URL || '/.netlify/functions').replace(/\/$/, '');
 
@@ -266,7 +267,7 @@ const ApifyScraper = () => {
             // PASO 1: Iniciar el job
             const startResponse = await fetch(functionsUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: await getAuthenticatedJsonHeaders(),
                 body: JSON.stringify({
                     action: 'start',
                     searchQuery: searchQuery.trim(),
@@ -300,7 +301,7 @@ const ApifyScraper = () => {
 
                     const pollResponse = await fetch(functionsUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: await getAuthenticatedJsonHeaders(),
                         body: JSON.stringify({
                             action: 'poll',
                             runId

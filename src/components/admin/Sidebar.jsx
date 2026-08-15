@@ -20,6 +20,7 @@ import {
     Shield
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { featureFlags } from '../../config/featureFlags';
 
 const Sidebar = ({ onLogout }) => {
     const location = useLocation();
@@ -115,6 +116,15 @@ const Sidebar = ({ onLogout }) => {
             title: 'Marketing y CRM',
             items: [
                 { path: '/admin/crm', icon: Mail, label: 'CRM y Marketing' },
+                ...(featureFlags.crm2ImportReview
+                    ? [{ path: '/admin/crm2-imports', icon: Database, label: 'CRM 2.0 Staging' }]
+                    : []),
+                ...(featureFlags.crm2Operations
+                    ? [{ path: '/admin/crm2-operations', icon: TrendingUp, label: 'CRM 2.0 Operaciones' }]
+                    : []),
+                ...(featureFlags.crm2Directory
+                    ? [{ path: '/admin/crm2-directory', icon: Users, label: 'CRM 2.0 Directorio' }]
+                    : []),
                 { path: '/admin/scan-invite', icon: Users, label: 'Scan Local' },
                 { path: '/admin/scraper', icon: Globe, label: 'Apify Scraper (Global)' },
                 { path: '/admin/scraper-history', icon: Database, label: 'Leads x Scraping' }

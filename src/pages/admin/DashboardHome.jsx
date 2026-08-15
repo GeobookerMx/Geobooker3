@@ -25,7 +25,8 @@ import {
   Share2,
   Heart,
   Shield,
-  AlertTriangle
+  AlertTriangle,
+  MessageSquare
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -98,6 +99,15 @@ export default function DashboardHome() {
     total: 0,
     uniqueUsers: 0,
     topBusinesses: []
+  });
+
+  const [scanStats, setScanStats] = useState({
+    leadsToday: 0,
+    totalLeads: 0,
+    whatsappToday: 0,
+    whatsappLimit: 50,
+    converted: 0,
+    conversionRate: '0.0'
   });
 
   const loadAnalyticsData = useCallback(async () => {
@@ -352,6 +362,33 @@ export default function DashboardHome() {
       } catch (auditErr) {
         console.warn('Error loading audit logs in dashboard:', auditErr);
       }
+
+      // Cargar métricas de Scan & Invite
+      try {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayISO = todayStart.toISOString();
+
+        const [leadsToday, totalLeads, whatsappToday, convertedLeads] = await Promise.all([
+          supabase.from('scan_leads').select('id', { count: 'exact', head: true }).gte('created_at', todayISO),
+          supabase.from('scan_leads').select('id', { count: 'exact', head: true }),
+          supabase.from('scan_lead_contacts').select('id', { count: 'exact', head: true }).eq('type', 'whatsapp_sent').gte('created_at', todayISO),
+          supabase.from('scan_leads').select('id', { count: 'exact', head: true }).eq('status', 'converted')
+        ]);
+
+        const total = totalLeads.count || 0;
+        const converted = convertedLeads.count || 0;
+        setScanStats({
+          leadsToday: leadsToday.count || 0,
+          totalLeads: total,
+          whatsappToday: whatsappToday.count || 0,
+          whatsappLimit: 50,
+          converted,
+          conversionRate: total > 0 ? ((converted / total) * 100).toFixed(1) : '0.0'
+        });
+      } catch (scanErr) {
+        console.warn('Error loading scan stats:', scanErr);
+      }
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       setStats(prev => ({ ...prev, loading: false }));
@@ -553,6 +590,23 @@ export default function DashboardHome() {
             link="/admin/claims"
           />
         )}
+        {/* Scan & Invite KPIs */}
+        <KPICard
+          title="📍 Leads Capturados Hoy"
+          value={scanStats.leadsToday.toLocaleString()}
+          subtitle={`${scanStats.totalLeads.toLocaleString()} total acumulados`}
+          icon={Search}
+          color="cyan"
+          link="/admin/scan-invite"
+        />
+        <KPICard
+          title="💬 WhatsApp Enviados Hoy"
+          value={`${scanStats.whatsappToday}/${scanStats.whatsappLimit}`}
+          subtitle={`${scanStats.conversionRate}% conversión total`}
+          icon={MessageSquare}
+          color={scanStats.whatsappToday >= scanStats.whatsappLimit ? 'red' : 'green'}
+          link="/admin/scan-invite"
+        />
       </div>
 
       {/* Analytics KPIs - Tráfico en tiempo real */}

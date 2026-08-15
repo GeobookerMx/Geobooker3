@@ -67,8 +67,23 @@ exports.handler = async (event) => {
             allowOxxo = true
         } = JSON.parse(event.body);
 
-        // Validate currency
-        const validCurrencies = ['mxn', 'usd'];
+        // Validate currency — supports all Top 15 global markets
+        const validCurrencies = [
+            'mxn', 'usd',          // Americas Tier 1
+            'eur',                  // Eurozone (DE, FR, IT, ES, NL, IE, AT, BE)
+            'gbp',                  // United Kingdom
+            'cad',                  // Canada
+            'brl',                  // Brazil
+            'aud',                  // Australia
+            'chf',                  // Switzerland
+            'jpy',                  // Japan
+            'krw',                  // South Korea
+            'sek',                  // Sweden
+            'aed',                  // UAE / Dubai
+            'sgd',                  // Singapore
+            'cop',                  // Colombia
+            'clp',                  // Chile
+        ];
         const finalCurrency = validCurrencies.includes(currency?.toLowerCase()) ? currency.toLowerCase() : 'mxn';
 
         // Build form data for Stripe API

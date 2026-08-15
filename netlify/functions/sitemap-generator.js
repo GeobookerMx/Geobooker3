@@ -111,7 +111,10 @@ exports.handler = async (event) => {
     '/cities/barcelona', '/cities/amsterdam', '/cities/rome', '/cities/milan',
     '/cities/paris', '/cities/berlin', '/cities/lisbon', '/cities/sao-paulo',
     '/cities/mexico-city', '/cities/tokyo', '/cities/sydney', '/cities/dublin',
-    '/cities/zurich', '/cities/medellin', '/cities/bogota'
+    '/cities/zurich', '/cities/medellin', '/cities/bogota',
+    // Wave 6
+    '/cities/singapore', '/cities/seoul', '/cities/dubai',
+    '/cities/stockholm', '/cities/vienna', '/cities/brussels'
   ];
   const mexicoCityRoutes = [
     '/ciudad/cdmx', '/ciudad/guadalajara', '/ciudad/monterrey', '/ciudad/puebla',

@@ -713,16 +713,6 @@ const ScanInvitePage = () => {
         return true;
     });
 
-    // DEBUG: Log filter results
-    console.log('🔍 Filter debug:', {
-        totalLeads: leads.length,
-        hiddenCount: hiddenLeadIds.size,
-        filterStatus: filters.status,
-        filteredCount: filteredLeads.length,
-        sampleStatus: leads[0]?.status,
-        sampleLeadId: leads[0]?.id ? normalizeLeadId(leads[0].id) : null
-    });
-
     return (
         <div className="min-h-screen bg-gray-50 p-6">
             <div className="max-w-7xl mx-auto">
@@ -784,6 +774,25 @@ const ScanInvitePage = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Banner: Leads Ocultos recuperables */}
+                {hiddenLeadIds.size > 0 && (
+                    <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-4 rounded-r-xl flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <span className="text-2xl">👁️</span>
+                            <div>
+                                <p className="font-bold text-amber-800">Tienes {hiddenLeadIds.size} leads ocultos en esta sesión</p>
+                                <p className="text-amber-700 text-sm">Leads que contactaste o limpiaste. Puedes recuperarlos para hacer seguimiento.</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={resetHiddenLeads}
+                            className="shrink-0 flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-semibold transition shadow"
+                        >
+                            🔄 Restaurar todos
+                        </button>
+                    </div>
+                )}
 
                 {/* Alert Banner when limit reached */}
                 {dailyCount >= dailyLimit && (
@@ -1029,9 +1038,9 @@ const ScanInvitePage = () => {
                         {hiddenLeadIds.size > 0 && (
                             <button
                                 onClick={resetHiddenLeads}
-                                className="flex items-center gap-1 text-gray-500 hover:text-gray-700 text-sm"
+                                className="flex items-center gap-1 text-amber-600 hover:text-amber-800 font-semibold text-sm border border-amber-300 bg-amber-50 px-3 py-1 rounded-lg"
                             >
-                                🔄 Mostrar {hiddenLeadIds.size} ocultos
+                                🔄 Restaurar {hiddenLeadIds.size} ocultos
                             </button>
                         )}
                     </div>
@@ -1072,11 +1081,30 @@ const ScanInvitePage = () => {
                                         const phoneContact = lead.scan_lead_contacts?.find(c => c.type === 'phone');
                                         const emailContact = lead.scan_lead_contacts?.find(c => c.type === 'email');
 
+                                        // Badge: ¿ya fue contactado previamente?
+                                        const isContacted = ['contacted', 'converted', 'replied'].includes(lead.status);
+                                        const isBlacklisted = lead.status === 'blacklisted';
+
                                         return (
-                                            <tr key={lead.id} className="hover:bg-gray-50">
+                                            <tr key={lead.id} className={`hover:bg-gray-50 ${
+                                                isBlacklisted ? 'opacity-50 bg-red-50' :
+                                                isContacted ? 'bg-yellow-50' : ''
+                                            }`}>
                                                 <td className="px-4 py-3">
                                                     <div>
-                                                        <p className="font-medium text-gray-900">{lead.name}</p>
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <p className="font-medium text-gray-900">{lead.name}</p>
+                                                            {isContacted && (
+                                                                <span className="inline-flex items-center gap-1 text-xs bg-yellow-100 text-yellow-700 border border-yellow-300 rounded-full px-2 py-0.5 font-semibold">
+                                                                    ✅ Ya contactado
+                                                                </span>
+                                                            )}
+                                                            {isBlacklisted && (
+                                                                <span className="inline-flex items-center gap-1 text-xs bg-red-100 text-red-700 border border-red-300 rounded-full px-2 py-0.5 font-semibold">
+                                                                    🚫 No contactar
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <p className="text-sm text-gray-500 truncate max-w-xs">{lead.address}</p>
                                                     </div>
                                                 </td>
@@ -1125,9 +1153,21 @@ const ScanInvitePage = () => {
                                                                 <Mail className="w-3 h-3" /> {emailContact.value}
                                                             </span>
                                                         )}
-                                                        {!phoneContact && lead.notes && (
-                                                            <span className="text-xs text-orange-600 flex items-center gap-1" title={lead.notes}>
-                                                                ⚠️ Sin teléfono
+                                                        {!phoneContact && lead.google_maps_url && (
+                                                            <a
+                                                                href={lead.google_maps_url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-xs text-orange-600 hover:text-orange-800 flex items-center gap-1 font-medium"
+                                                                title="Abre Google Maps y copia el teléfono aquí"
+                                                            >
+                                                                <ExternalLink className="w-3 h-3" />
+                                                                Buscar teléfono en Maps →
+                                                            </a>
+                                                        )}
+                                                        {!phoneContact && !lead.google_maps_url && (
+                                                            <span className="text-xs text-orange-500 flex items-center gap-1">
+                                                                ⚠️ Sin teléfono ni link
                                                             </span>
                                                         )}
                                                     </div>

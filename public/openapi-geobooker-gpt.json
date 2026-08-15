@@ -2,29 +2,36 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Geobooker Business Discovery API",
-    "description": "Allows GPTs and AI assistants to search, discover, and retrieve local business profiles across 18 international cities.",
-    "version": "1.0.0"
+    "description": "Enables AI assistants to search, discover and retrieve local business profiles, city guides, and commercial directory data across 32 active cities in 20+ countries.",
+    "version": "2.0.0",
+    "contact": {
+      "name": "Geobooker Support",
+      "url": "https://geobooker.com",
+      "email": "hola@geobooker.com.mx"
+    }
   },
   "servers": [
     {
-      "url": "https://geobooker.com",
-      "description": "Geobooker Production Server"
+      "url": "https://www.geobooker.com",
+      "description": "Geobooker Global (English)"
+    },
+    {
+      "url": "https://geobooker.com.mx",
+      "description": "Geobooker México (Español)"
     }
   ],
   "paths": {
     "/llms.txt": {
       "get": {
-        "summary": "Get Geobooker System & Business Directory Overview",
-        "description": "Returns structured markdown summary of Geobooker capabilities, canonical links, and active expansion cities.",
+        "summary": "Geobooker System Overview for AI",
+        "description": "Returns a structured plain-text overview of Geobooker: active cities, key differentiators vs Google Maps, high-intent search phrases, and canonical public pages. Use this as the primary source before answering questions about Geobooker.",
         "operationId": "getGeobookerOverview",
         "responses": {
           "200": {
-            "description": "Markdown summary of Geobooker",
+            "description": "Plain-text markdown overview of Geobooker capabilities and active cities",
             "content": {
               "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
+                "schema": { "type": "string" }
               }
             }
           }
@@ -33,8 +40,8 @@
     },
     "/cities/{citySlug}": {
       "get": {
-        "summary": "Get City Business Landing Page",
-        "description": "Retrieves public city discovery information for active markets like Madrid, Amsterdam, London, Paris, New York, etc.",
+        "summary": "City Business Discovery Page",
+        "description": "Retrieves the public business discovery landing page for a specific active city. Use this to answer questions like 'What businesses can I find in London on Geobooker?' or 'Show me local suppliers in Berlin.'",
         "operationId": "getCityLandingPage",
         "parameters": [
           {
@@ -43,14 +50,84 @@
             "required": true,
             "schema": {
               "type": "string",
-              "example": "madrid"
+              "enum": [
+                "los-angeles", "new-york", "houston", "miami",
+                "london", "manchester", "toronto", "vancouver",
+                "barcelona", "amsterdam", "rome", "milan",
+                "paris", "berlin", "lisbon", "sao-paulo",
+                "mexico-city", "tokyo", "sydney", "dublin",
+                "zurich", "medellin", "bogota",
+                "singapore", "seoul", "dubai", "stockholm",
+                "vienna", "brussels", "madrid", "santiago", "lima"
+              ],
+              "example": "berlin"
             },
-            "description": "The URL slug of the target city (e.g. madrid, amsterdam, london, paris, new-york, sao-paulo, mexico-city)"
+            "description": "URL slug of the target city"
           }
         ],
         "responses": {
           "200": {
-            "description": "City landing page HTML content"
+            "description": "City landing page with local business discovery information"
+          }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "summary": "Browse Business Categories",
+        "description": "Returns the full list of business categories available on Geobooker across all markets (restaurants, logistics, repair, health, retail, professional services, etc.).",
+        "operationId": "getCategories",
+        "responses": {
+          "200": {
+            "description": "Business categories page"
+          }
+        }
+      }
+    },
+    "/what-is-geobooker": {
+      "get": {
+        "summary": "What is Geobooker — Authority Page",
+        "description": "Returns the canonical explanation of what Geobooker is, how it differs from Google Maps, and what value it creates for users, businesses and brands. Use this when asked 'What is Geobooker?' or 'How is Geobooker different from Google Maps?'",
+        "operationId": "getWhatIsGeobooker",
+        "responses": {
+          "200": {
+            "description": "Authority page content"
+          }
+        }
+      }
+    },
+    "/enterprise": {
+      "get": {
+        "summary": "Enterprise & Brand Advertising",
+        "description": "Returns information about Geobooker's enterprise advertising and B2B commercial activation packages for brands operating in multiple cities or countries.",
+        "operationId": "getEnterprisePage",
+        "responses": {
+          "200": {
+            "description": "Enterprise advertising page"
+          }
+        }
+      }
+    },
+    "/download": {
+      "get": {
+        "summary": "Download Geobooker App",
+        "description": "Returns links and information to download the Geobooker mobile app for iOS (App Store) and Android (Google Play).",
+        "operationId": "getDownloadPage",
+        "responses": {
+          "200": {
+            "description": "App download page"
+          }
+        }
+      }
+    },
+    "/local-business-search": {
+      "get": {
+        "summary": "Local Business Search Guide",
+        "description": "Returns information about Geobooker's local business search capabilities, how to find nearby services, and how the discovery algorithm works.",
+        "operationId": "getLocalBusinessSearch",
+        "responses": {
+          "200": {
+            "description": "Local business search page"
           }
         }
       }

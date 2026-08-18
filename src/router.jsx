@@ -106,6 +106,9 @@ const CityLandingPage = lazy(() => import("./pages/cities/CityLandingPage.jsx"))
 const AdvertiseInMexicoPage = lazy(() => import("./pages/en/AdvertiseInMexicoPage.jsx"));
 const EnPricingPage = lazy(() => import("./pages/en/PricingPage.jsx"));
 const IndustriesPage = lazy(() => import("./pages/en/IndustriesPage.jsx"));
+const FindBusinessesPage = lazy(() => import("./pages/en/FindBusinessesPage.jsx"));
+const NearshoringMexicoPage = lazy(() => import("./pages/en/NearshoringMexicoPage.jsx"));
+const MexicoBusinessDirectoryPage = lazy(() => import("./pages/en/MexicoBusinessDirectoryPage.jsx"));
 
 // Geobooker Emprende - Lazy Loaded
 const EmprendePage = lazy(() => import("./pages/emprende/EmprendePage.jsx"));
@@ -141,6 +144,9 @@ export default function AppRouter() {
           <Route path="/en/advertise-in-mexico" element={<AdvertiseInMexicoPage />} />
           <Route path="/en/pricing" element={<EnPricingPage />} />
           <Route path="/en/industries" element={<IndustriesPage />} />
+          <Route path="/en/find-businesses-near-me" element={<FindBusinessesPage />} />
+          <Route path="/en/nearshoring-mexico" element={<NearshoringMexicoPage />} />
+          <Route path="/en/mexico-business-directory" element={<MexicoBusinessDirectoryPage />} />
 
           <Route path="/advertise" element={<AdvertisePage />} />
           <Route path="/r/:code" element={<ReferralLanding />} />

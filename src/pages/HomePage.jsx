@@ -332,13 +332,21 @@ const CITY_COORDINATES = {
   toronto: { lat: 43.6532, lng: -79.3832 },
   vancouver: { lat: 49.2827, lng: -123.1207 },
   madrid: { lat: 40.4168, lng: -3.7038 },
+  barcelona: { lat: 41.3874, lng: 2.1686 },
+  bogota: { lat: 4.7110, lng: -74.0721 },
   paris: { lat: 48.8566, lng: 2.3522 }
 };
 
 const CITY_DATA_FILTERS = {
   'los-angeles': { city: 'Los Angeles', countryCode: 'US' },
+  miami: { city: 'Miami', countryCode: 'US' },
+  houston: { city: 'Houston', countryCode: 'US' },
   toronto: { city: 'Toronto', countryCode: 'CA' },
+  vancouver: { city: 'Vancouver', countryCode: 'CA' },
   madrid: { city: 'Madrid', countryCode: 'ES' },
+  barcelona: { city: 'Barcelona', countryCode: 'ES' },
+  london: { city: 'London', countryCode: 'GB' },
+  bogota: { city: 'Bogota', countryCode: 'CO' },
   paris: { city: 'Paris', countryCode: 'FR' }
 };
 

@@ -131,6 +131,10 @@ exports.handler = async (event) => {
 
   if (globalMode) {
     ['/en/advertise-in-mexico', '/en/pricing', '/en/industries'].forEach((route) => addRoute(route, null, '0.7', 'monthly'));
+    // High-value international SEO landing pages
+    addRoute('/en/find-businesses-near-me', null, '0.9', 'weekly');
+    addRoute('/en/nearshoring-mexico', null, '0.9', 'weekly');
+    addRoute('/en/mexico-business-directory', null, '0.8', 'weekly');
   }
 
   if (supabase) {

@@ -36,31 +36,185 @@
                 <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/auth/callback" />
             </intent-filter>
 
-            <!-- Global App Links HTTPS: rutas publicas equivalentes en web/app -->
+            <!-- ============================================ -->
+            <!-- DEEP LINKS ESTRATÉGICOS: www.geobooker.com -->
+            <!-- ============================================ -->
+
+            <!-- 🔥 CRECIMIENTO VIRAL: Referidos — cada link compartido abre la app directamente -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/r" />
+            </intent-filter>
+
+            <!-- 📍 CORE: Negocios y Lugares — tráfico orgánico de Google/SEO -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/business" />
-                <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/cities" />
-                <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/city" />
-                <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/category" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/place" />
+            </intent-filter>
+
+            <!-- 🗂️ DESCUBRIMIENTO: Categorías y Ciudades — usuarios explorando -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/c" />
-                <data android:scheme="https" android:host="www.geobooker.com" android:path="/claim" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/ciudad" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/cities" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/categories" />
+            </intent-filter>
+
+            <!-- 💰 REVENUE: Publicidad y Enterprise — clientes de pago -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="www.geobooker.com" android:path="/advertise" />
-                <data android:scheme="https" android:host="www.geobooker.com" android:path="/enterprise" />
-                <data android:scheme="https" android:host="www.geobooker.com" android:path="/b2b-connect" />
-                <data android:scheme="https" android:host="www.geobooker.com" android:path="/download" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/claim" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/enterprise" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/b2b-connect" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/proveedores" />
+            </intent-filter>
+
+            <!-- 🚀 EMPRENDE + BIBLIOTECA: Content marketing — retención y engagement -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/emprende" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/biblioteca" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/biblioteca" />
+            </intent-filter>
+
+            <!-- 📲 ADQUISICIÓN: Download, About, Comunidad — páginas de conversión -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/download" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/about" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/quienes-somos" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/comunidad" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/community" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/faq" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/support" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/soporte" />
+            </intent-filter>
+
+            <!-- 🌎 INTERNACIONAL SEO: Páginas en inglés — captura tráfico global -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/en" />
+            </intent-filter>
+
+            <!-- 🏆 SEO AUTHORITY: Páginas de autoridad — captura long-tail keywords -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/what-is-geobooker" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/que-es-geobooker" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/local-business-search" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/buscar-negocios-cerca" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/products-services-near-me" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/productos-y-servicios-cerca" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/logistics-providers" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/proveedores-logisticos" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/local-advertising" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/publicidad-local" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/ai-business-search" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/busqueda-con-ia-negocios" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:path="/desarrollo-apps" />
+            </intent-filter>
+
+            <!-- ============================================ -->
+            <!-- DEEP LINKS ESTRATÉGICOS: geobooker.com.mx   -->
+            <!-- ============================================ -->
+
+            <!-- 🔥 CRECIMIENTO VIRAL: Referidos -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/r" />
+            </intent-filter>
+
+            <!-- 📍 CORE: Negocios y Lugares -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/business" />
-                <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/ciudad" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/place" />
+            </intent-filter>
+
+            <!-- 🗂️ DESCUBRIMIENTO: Categorías y Ciudades -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/c" />
-                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/claim" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/ciudad" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/cities" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/categories" />
+            </intent-filter>
+
+            <!-- 💰 REVENUE: Publicidad y Enterprise -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="geobooker.com.mx" android:path="/advertise" />
-                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/enterprise" />
-                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/b2b-connect" />
-                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/download" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/claim" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/enterprise" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/b2b-connect" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/proveedores" />
+            </intent-filter>
+
+            <!-- 🚀 EMPRENDE + BIBLIOTECA -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/emprende" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/biblioteca" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/biblioteca" />
+            </intent-filter>
+
+            <!-- 📲 ADQUISICIÓN: Download, About, Comunidad -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/download" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/about" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/quienes-somos" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/comunidad" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/community" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/faq" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/support" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/soporte" />
+            </intent-filter>
+
+            <!-- 🏆 SEO AUTHORITY: Páginas de autoridad -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/what-is-geobooker" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/que-es-geobooker" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/buscar-negocios-cerca" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/productos-y-servicios-cerca" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/proveedores-logisticos" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/publicidad-local" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/busqueda-con-ia-negocios" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:path="/desarrollo-apps" />
             </intent-filter>
         </activity>
 

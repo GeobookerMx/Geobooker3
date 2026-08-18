@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import time
 import unicodedata
 from collections import Counter, defaultdict, deque
 from pathlib import Path
@@ -34,6 +35,11 @@ def slugify(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", normalized.lower()).strip("-")[:90]
 
 
+def normalize_for_match(value: object | None) -> str:
+    normalized = unicodedata.normalize("NFKD", str(value or ""))
+    return normalized.encode("ascii", "ignore").decode("ascii").casefold().strip()
+
+
 def first_value(value: object) -> object | None:
     if isinstance(value, list) and value:
         return value[0]
@@ -59,7 +65,7 @@ def normalize_record(row: dict, area: dict, release: str) -> dict | None:
     matching_addresses = [
         item for item in addresses
         if (item.get("country") or "").upper() == country_code
-        and (item.get("locality") or "").casefold() == city.casefold()
+        and normalize_for_match(item.get("locality")) == normalize_for_match(city)
     ]
     if not matching_addresses:
         return None
@@ -155,7 +161,13 @@ def fetch_area(
     max_per_category: int,
     max_per_subcategory: int,
 ) -> list[dict]:
-    reader = record_batch_reader("place", bbox=area["bbox"], release=release)
+    reader = record_batch_reader(
+        "place",
+        bbox=area["bbox"],
+        release=release,
+        connect_timeout=60,
+        request_timeout=180,
+    )
     selected: list[dict] = []
     seen: set[tuple] = set()
 
@@ -187,6 +199,25 @@ def fetch_area(
         )
     except RuntimeError as error:
         raise RuntimeError(f"{area['id']}: {error}") from error
+
+
+def fetch_area_with_retry(
+    area: dict,
+    release: str,
+    limit: int,
+    max_per_category: int,
+    max_per_subcategory: int,
+    attempts: int = 3,
+) -> list[dict]:
+    for attempt in range(1, attempts + 1):
+        try:
+            return fetch_area(area, release, limit, max_per_category, max_per_subcategory)
+        except OSError:
+            if attempt == attempts:
+                raise
+            time.sleep(attempt * 5)
+
+    raise RuntimeError(f"{area['id']}: exhausted Overture retries")
 
 
 def render_sql(records_by_area: dict[str, list[dict]], release: str) -> str:
@@ -328,7 +359,7 @@ def main() -> None:
     release = config["release"]
     area_map = {area["id"]: area for area in config["areas"]}
     records_by_area = {
-        area_id: fetch_area(
+        area_id: fetch_area_with_retry(
             area_map[area_id],
             release,
             args.limit,

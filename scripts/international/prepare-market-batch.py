@@ -65,7 +65,11 @@ def main() -> None:
         args.area,
     ]
 
-    completed = subprocess.run(command, check=True, capture_output=True, text=True)
+    try:
+        completed = subprocess.run(command, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as error:
+        details = (error.stderr or error.stdout or "unknown builder error").strip()
+        raise RuntimeError(f"batch builder failed for {args.area}: {details}") from error
     checksum = hashlib.sha256(args.output.read_bytes()).hexdigest()
     report = {
         "marketId": args.area,

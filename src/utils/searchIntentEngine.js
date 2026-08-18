@@ -269,6 +269,21 @@ export const SEARCH_INTENT_RULES = [
     keywords: ['contador', 'contadora', 'resico', 'facturacion', 'declaracion anual', 'abogado', 'notaria', 'contrato', 'asesoria fiscal', 'accountant', 'lawyer', 'tax advisor', 'legal services']
   },
   {
+    id: 'space_rental_real_estate',
+    label: 'Renta de espacios, locales y oficinas',
+    confidence: 0.90,
+    categoryHints: ['real-estate-agency', 'coworking-space', 'business-center', 'office-space', 'storage-spaces'],
+    googleQuery: 'renta oficinas locales comerciales coworking bienes raices',
+    fallbackQueries: ['renta de locales cerca', 'oficinas en renta cerca', 'coworking cerca', 'bienes raices cerca'],
+    trustSignals: ['precio de renta', 'contrato flexible', 'servicios incluidos', 'dimensiones'],
+    keywords: [
+      'renta local', 'renta locales', 'renta oficina', 'renta oficinas', 'renta de oficina', 'renta de local',
+      'alquiler de locales', 'alquiler de oficinas', 'coworking', 'espacio de trabajo', 'sala de juntas',
+      'oficina virtual', 'locales comerciales', 'bienes raices', 'real estate', 'commercial space', 'office for rent', 'office rental',
+      'renta de espacio', 'renta de espacios', 'alquiler de espacio'
+    ]
+  },
+  {
     id: 'pharmacy_product',
     label: 'Farmacia y medicamento',
     confidence: 0.82,

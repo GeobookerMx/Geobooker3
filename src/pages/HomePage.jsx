@@ -333,6 +333,8 @@ const CITY_COORDINATES = {
   toronto: { lat: 43.6532, lng: -79.3832 },
   vancouver: { lat: 49.2827, lng: -123.1207 },
   madrid: { lat: 40.4168, lng: -3.7038 },
+  barcelona: { lat: 41.3874, lng: 2.1686 },
+  bogota: { lat: 4.7110, lng: -74.0721 },
   paris: { lat: 48.8566, lng: 2.3522 }
 };
 

@@ -61,7 +61,7 @@ const SEMANTIC_GROUPS = [
   ['stationery_store', ['papeleria', 'copias', 'impresiones', 'utiles escolares', 'stationery', 'copy center', 'printing']],
   ['print_shop', ['imprenta', 'tarjetas', 'flyers', 'lonas', 'printing', 'print shop', 'business cards']],
   ['advertising_agency', ['publicidad', 'anuncios', 'marketing', 'agencia', 'social media', 'ads', 'advertising agency']],
-  ['real_estate', ['inmobiliaria', 'renta de casas', 'venta de casas', 'departamentos', 'real estate', 'realtor', 'property']],
+  ['real_estate', ['inmobiliaria', 'renta de casas', 'venta de casas', 'departamentos', 'real estate', 'realtor', 'property', 'renta de locales', 'renta de oficinas', 'coworking', 'renta de espacio', 'renta de espacios', 'alquiler de local', 'alquiler de oficina', 'locales comerciales', 'oficinas en renta', 'espacio de trabajo']],
   ['hotel', ['hotel', 'hospedaje', 'motel', 'lodging', 'hotel near me', 'rooms']],
   ['travel_agency', ['turismo', 'tours', 'guia turistico', 'travel agency', 'local guide', 'vacation packages']],
   ['gas_station', ['gasolinera', 'gasolina cerca', 'diesel', 'fuel station', 'gas station near me']],

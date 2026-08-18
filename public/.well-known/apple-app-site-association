@@ -1,0 +1,50 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "QCN4SYVAQ4.com.geobooker.ios",
+        "paths": [
+          "/business/*",
+          "/place/*",
+          "/c/*",
+          "/ciudad/*",
+          "/cities/*",
+          "/categories",
+          "/claim",
+          "/advertise",
+          "/enterprise",
+          "/enterprise/*",
+          "/b2b-connect",
+          "/b2b-connect/*",
+          "/download",
+          "/emprende",
+          "/emprende/*",
+          "/biblioteca",
+          "/biblioteca/*",
+          "/r/*",
+          "/about",
+          "/quienes-somos",
+          "/comunidad",
+          "/community",
+          "/faq",
+          "/support",
+          "/soporte",
+          "/privacy",
+          "/terms",
+          "/en/*",
+          "/auth/callback",
+          "NOT /admin/*",
+          "NOT /.well-known/*",
+          "NOT /robots.txt",
+          "NOT /sitemap.xml"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "QCN4SYVAQ4.com.geobooker.ios"
+    ]
+  }
+}

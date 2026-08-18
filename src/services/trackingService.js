@@ -226,9 +226,15 @@ export function isTrackingAllowed() {
  */
 export function initTrackingFromConsent() {
     try {
-        // On iOS native app, don't auto-enable — wait for ATT
+        // On iOS native app, don't auto-enable unless already authorized
         if (isIOSApp()) {
-            console.log('📱 iOS native: skipping auto-init, waiting for ATT');
+            const attStatus = localStorage.getItem('att_status');
+            if (attStatus === 'authorized') {
+                console.log('📱 iOS native: already authorized, enabling tracking');
+                enableTracking();
+            } else {
+                console.log('📱 iOS native: skipping auto-init, waiting for ATT');
+            }
             return;
         }
 

@@ -100,6 +100,19 @@
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
 
+# Deep Link Verification Files
+[[headers]]
+  for = "/.well-known/assetlinks.json"
+  [headers.values]
+    Content-Type = "application/json"
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/.well-known/apple-app-site-association"
+  [headers.values]
+    Content-Type = "application/json"
+    Cache-Control = "public, max-age=3600"
+
 # ==========================================
 # SEO endpoints host-aware (.com global / .com.mx Mexico)
 [[redirects]]

@@ -111,7 +111,67 @@ END $$;
 GRANT ALL ON public.security_audit_log TO service_role;
 
 -- ============================================================
--- 4. v_security_health VIEW
+-- 4. SECURITY EVENTS TABLE
+-- Required by v_security_health. The original alerting SQL also uses this
+-- shape, but Preview branches only apply files under supabase/migrations.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.security_events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_type text NOT NULL,
+  severity text NOT NULL DEFAULT 'warning'
+    CHECK (severity IN ('info', 'warning', 'high', 'critical')),
+  source text NOT NULL DEFAULT 'platform',
+  route text,
+  actor_email text,
+  user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  ip_hash text,
+  user_agent text,
+  status text NOT NULL DEFAULT 'open'
+    CHECK (status IN ('open', 'reviewing', 'resolved', 'false_positive')),
+  message text,
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  detected_at timestamptz NOT NULL DEFAULT now(),
+  resolved_at timestamptz,
+  resolved_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_security_events_detected
+  ON public.security_events (detected_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_security_events_severity_status
+  ON public.security_events (severity, status, detected_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_security_events_type
+  ON public.security_events (event_type, detected_at DESC);
+
+ALTER TABLE public.security_events ENABLE ROW LEVEL SECURITY;
+
+GRANT ALL ON public.security_events TO service_role;
+
+DO $$
+BEGIN
+  IF to_regclass('public.admin_users') IS NOT NULL THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Admins can read security events" ON public.security_events';
+    EXECUTE $p$
+      CREATE POLICY "Admins can read security events"
+      ON public.security_events
+      FOR SELECT
+      TO authenticated
+      USING (
+        EXISTS (
+          SELECT 1
+          FROM public.admin_users au
+          WHERE au.id = auth.uid()
+        )
+      )
+    $p$;
+  END IF;
+END $$;
+
+-- ============================================================
+-- 5. v_security_health VIEW
 -- At-a-glance security status for the admin dashboard
 -- ============================================================
 CREATE OR REPLACE VIEW public.v_security_health AS
@@ -156,7 +216,7 @@ BEGIN
 END $$;
 
 -- ============================================================
--- 5. CLEANUP: Remove rate limit entries older than 24 hours
+-- 6. CLEANUP: Remove rate limit entries older than 24 hours
 -- (keeps the table lean; cron runs daily via check-outdated-businesses)
 -- ============================================================
 CREATE OR REPLACE FUNCTION public.cleanup_old_rate_limits()

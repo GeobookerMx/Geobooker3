@@ -9,8 +9,7 @@ import { AppProvider } from "./contexts/AppContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { LocationProvider } from "./contexts/LocationContext";
 import { useSessionTimeout } from "./hooks/useSessionTimeout";
-import { trackSessionStart } from "./services/analyticsService";
-import { flushEventQueue } from "./services/analyticsService";
+import { flushEventQueue, initAppRuntimeTracking, trackAppRuntimeEvent, trackSessionStart } from "./services/analyticsService";
 import { initTrackingFromConsent, enableTracking } from "./services/trackingService";
 import { detectUserCountry } from "./services/geoLocationService";
 import { usePageTracking } from "./hooks/usePageTracking";
@@ -219,7 +218,10 @@ function PageTracker() {
 function AppInitializer() {
   useEffect(() => {
     checkAppVersion();
+    captureAttribution(window.location.href);
+    captureQrAttribution(window.location.href);
     initTrackingFromConsent();
+    initAppRuntimeTracking();
     trackSessionStart(false);
     initWebVitals(); // Envia LCP, INP, CLS, FCP, TTFB a GA4 (sin costo operacional)
 
@@ -236,6 +238,9 @@ function AppInitializer() {
         try {
           appStateListener = await CapApp.addListener('appStateChange', async ({ isActive }) => {
             if (isActive) {
+              trackAppRuntimeEvent('session_resume', {
+                metadata: { source: 'app_state_change' }
+              });
               const { data: { session } } = await supabase.auth.getSession();
               if (session) {
                 await supabase.auth.refreshSession();
@@ -330,9 +335,6 @@ function AppInitializer() {
       }
     };
     initGeo();
-    captureAttribution(window.location.href);
-    captureQrAttribution(window.location.href);
-
     return () => {
       window.removeEventListener("online", handleOnline);
       if (appStateListener) appStateListener.remove();

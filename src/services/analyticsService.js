@@ -171,6 +171,14 @@ const getAppVersion = () => {
     }
 };
 
+const getAppBuild = () => {
+    try {
+        return localStorage.getItem('gb_app_build') || 'unknown';
+    } catch {
+        return 'unknown';
+    }
+};
+
 const getRuntimePlatform = () => {
     try {
         return getPlatform();
@@ -192,6 +200,154 @@ const getOS = () => {
 /**
  * Registrar visita a página
  */
+let appRuntimeInfoPromise = null;
+
+async function getAppRuntimeInfo() {
+    if (appRuntimeInfoPromise) return appRuntimeInfoPromise;
+
+    appRuntimeInfoPromise = (async () => {
+        const platform = getRuntimePlatform();
+        const baseInfo = {
+            platform,
+            nativePlatform: platform,
+            appVersion: getAppVersion(),
+            appBuild: getAppBuild(),
+            isNative: platform.includes('-native')
+        };
+
+        if (!baseInfo.isNative) return baseInfo;
+
+        try {
+            const { App } = await import('@capacitor/app');
+            const nativeInfo = await App.getInfo();
+            const appVersion = nativeInfo?.version || baseInfo.appVersion || 'unknown';
+            const appBuild = nativeInfo?.build || baseInfo.appBuild || 'unknown';
+
+            try {
+                localStorage.setItem('gb_app_version', appVersion);
+                localStorage.setItem('gb_app_build', appBuild);
+            } catch {
+                // Runtime telemetry can still be sent without localStorage writes.
+            }
+
+            return {
+                ...baseInfo,
+                appVersion,
+                appBuild,
+                nativePlatform: nativeInfo?.id || platform,
+                appName: nativeInfo?.name || 'Geobooker'
+            };
+        } catch (error) {
+            logger.warn('[Analytics] Could not read native app info:', error);
+            return baseInfo;
+        }
+    })();
+
+    return appRuntimeInfoPromise;
+}
+
+export async function trackAppRuntimeEvent(eventType, {
+    dedupeKey = null,
+    metadata = {}
+} = {}) {
+    const allowedEvents = new Set(['first_open', 'session_start', 'session_resume']);
+    if (!allowedEvents.has(eventType)) return;
+
+    try {
+        const runtimeInfo = await getAppRuntimeInfo();
+
+        if (eventType === 'first_open') {
+            const firstOpenKey = 'gb_runtime_first_open_tracked';
+            if (localStorage.getItem(firstOpenKey)) return;
+            localStorage.setItem(firstOpenKey, new Date().toISOString());
+        }
+
+        if (dedupeKey) {
+            const scopedKey = `gb_runtime:${getSessionId()}:${dedupeKey}`;
+            if (sessionStorage.getItem(scopedKey)) return;
+            sessionStorage.setItem(scopedKey, '1');
+        }
+
+        if (eventType === 'session_resume') {
+            const resumeKey = 'gb_runtime_last_resume_at';
+            const lastResumeAt = Number(sessionStorage.getItem(resumeKey) || 0);
+            const now = Date.now();
+            if (now - lastResumeAt < 120000) return;
+            sessionStorage.setItem(resumeKey, String(now));
+        }
+
+        const attribution = getCurrentAttribution();
+        const safeMetadata = Object.fromEntries(
+            Object.entries(metadata).filter(([, value]) => (
+                value === null || ['string', 'number', 'boolean'].includes(typeof value)
+            )).slice(0, 12)
+        );
+
+        const fullPayload = {
+            event_type: eventType,
+            device_id: getOrCreateDeviceId(),
+            session_id: getSessionId(),
+            user_id: (await supabase.auth.getUser())?.data?.user?.id || null,
+            platform: runtimeInfo.platform,
+            native_platform: runtimeInfo.nativePlatform,
+            app_version: runtimeInfo.appVersion,
+            app_build: runtimeInfo.appBuild,
+            os: getOS(),
+            device_type: getDeviceType(),
+            country: localStorage.getItem('userCountry') || null,
+            country_code: localStorage.getItem('userCountryCode') || null,
+            city: localStorage.getItem('userCity') || null,
+            language: localStorage.getItem('language') || document.documentElement.lang || navigator.language || 'es',
+            traffic_source: attribution?.utm_source || null,
+            traffic_medium: attribution?.utm_medium || null,
+            traffic_campaign: attribution?.utm_campaign || null,
+            attribution_snapshot: {
+                current: attribution,
+                first_touch: getFirstTouchAttribution()
+            },
+            metadata: {
+                is_native: runtimeInfo.isNative,
+                app_name: runtimeInfo.appName || 'Geobooker',
+                ...safeMetadata
+            }
+        };
+
+        const fallbackPayload = {
+            event_type: fullPayload.event_type,
+            device_id: fullPayload.device_id,
+            session_id: fullPayload.session_id,
+            user_id: fullPayload.user_id,
+            platform: fullPayload.platform,
+            app_version: fullPayload.app_version,
+            app_build: fullPayload.app_build
+        };
+
+        trackEvent(`app_${eventType}`, {
+            platform: fullPayload.platform,
+            app_version: fullPayload.app_version,
+            app_build: fullPayload.app_build
+        });
+
+        const { error } = await insertWithOptionalColumns('app_runtime_events', fullPayload, fallbackPayload);
+        if (error && import.meta.env.DEV) {
+            logger.warn('[Analytics] Failed to store app runtime event:', error.message);
+        }
+    } catch (err) {
+        if (import.meta.env.DEV) logger.warn('[Analytics] Failed to track app runtime event:', err);
+    }
+}
+
+export function initAppRuntimeTracking() {
+    void getAppRuntimeInfo();
+    void trackAppRuntimeEvent('first_open', {
+        metadata: { source: 'app_initializer' }
+    });
+    void trackAppRuntimeEvent('session_start', {
+        dedupeKey: 'session_start',
+        metadata: { source: 'app_initializer' }
+    });
+}
+
 export async function trackPageView(pagePath, pageTitle = document.title) {
     try {
         const attribution = getCurrentAttribution();

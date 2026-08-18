@@ -36,6 +36,16 @@
                 <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/auth/callback" />
             </intent-filter>
 
+            <!-- Password recovery: links from Supabase email must return to the app -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/reset-password" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/reset-password" />
+                <data android:scheme="https" android:host="www.geobooker.com.mx" android:pathPrefix="/reset-password" />
+            </intent-filter>
+
             <!-- ============================================ -->
             <!-- DEEP LINKS ESTRATÉGICOS: www.geobooker.com -->
             <!-- ============================================ -->
@@ -75,6 +85,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="www.geobooker.com" android:path="/advertise" />
                 <data android:scheme="https" android:host="www.geobooker.com" android:path="/claim" />
+                <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/space" />
                 <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/enterprise" />
                 <data android:scheme="https" android:host="www.geobooker.com" android:pathPrefix="/b2b-connect" />
                 <data android:scheme="https" android:host="www.geobooker.com" android:path="/proveedores" />
@@ -172,6 +183,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="geobooker.com.mx" android:path="/advertise" />
                 <data android:scheme="https" android:host="geobooker.com.mx" android:path="/claim" />
+                <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/space" />
                 <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/enterprise" />
                 <data android:scheme="https" android:host="geobooker.com.mx" android:pathPrefix="/b2b-connect" />
                 <data android:scheme="https" android:host="geobooker.com.mx" android:path="/proveedores" />

@@ -9,6 +9,9 @@ const EMPTY_METRICS = {
   searches: 0,
   signups: 0,
   sessions: 0,
+  appFirstOpens: 0,
+  appRuntimeSessions: 0,
+  appUniqueDevices: 0,
   downloadClicks: 0,
   storeClicks: 0,
   nativeBusinesses: 0,
@@ -50,6 +53,7 @@ export default function MvpTractionPanel() {
     const results = await Promise.allSettled([
       getAnalyticsSummary(30),
       supabase.from('admin_app_user_funnel_v1').select('*'),
+      supabase.from('admin_app_runtime_funnel_v1').select('*'),
       safeCount('user_profiles', (query) => query.gte('created_at', start30d)),
       safeCount('businesses'),
       safeCount('international_businesses'),
@@ -58,23 +62,32 @@ export default function MvpTractionPanel() {
 
     const analytics = results[0].status === 'fulfilled' ? results[0].value : {};
     const appRows = results[1].status === 'fulfilled' && !results[1].value.error ? (results[1].value.data || []) : [];
+    const runtimeRows = results[2].status === 'fulfilled' && !results[2].value.error ? (results[2].value.data || []) : [];
     const appTotals = appRows.reduce((total, row) => ({
       sessions: total.sessions + Number(row.app_or_web_sessions_30d || 0),
       downloadClicks: total.downloadClicks + Number(row.download_clicks_30d || 0),
       storeClicks: total.storeClicks + Number(row.download_store_clicks_30d || 0)
     }), { sessions: 0, downloadClicks: 0, storeClicks: 0 });
+    const runtimeTotals = runtimeRows.reduce((total, row) => ({
+      appFirstOpens: total.appFirstOpens + Number(row.first_opens_30d || 0),
+      appRuntimeSessions: total.appRuntimeSessions + Number(row.session_starts_30d || 0) + Number(row.session_resumes_30d || 0),
+      appUniqueDevices: total.appUniqueDevices + Number(row.unique_devices_30d || 0)
+    }), { appFirstOpens: 0, appRuntimeSessions: 0, appUniqueDevices: 0 });
 
     setMetrics({
       pageViews: analytics.pageViews || 0,
       uniqueVisitors: analytics.uniqueVisitors || 0,
       searches: analytics.searches || 0,
-      signups: results[2].status === 'fulfilled' ? results[2].value : 0,
+      signups: results[3].status === 'fulfilled' ? results[3].value : 0,
       sessions: appTotals.sessions,
+      appFirstOpens: runtimeTotals.appFirstOpens,
+      appRuntimeSessions: runtimeTotals.appRuntimeSessions,
+      appUniqueDevices: runtimeTotals.appUniqueDevices,
       downloadClicks: appTotals.downloadClicks,
       storeClicks: appTotals.storeClicks,
-      nativeBusinesses: results[3].status === 'fulfilled' ? results[3].value : 0,
-      internationalBusinesses: results[4].status === 'fulfilled' ? results[4].value : 0,
-      rentalSpaces: results[5].status === 'fulfilled' ? results[5].value : 0
+      nativeBusinesses: results[4].status === 'fulfilled' ? results[4].value : 0,
+      internationalBusinesses: results[5].status === 'fulfilled' ? results[5].value : 0,
+      rentalSpaces: results[6].status === 'fulfilled' ? results[6].value : 0
     });
     setUpdatedAt(new Date());
     setLoading(false);
@@ -97,6 +110,9 @@ export default function MvpTractionPanel() {
       ['Busquedas', metrics.searches, '30 dias'],
       ['Registros', metrics.signups, '30 dias'],
       ['Sesiones app/web', metrics.sessions, '30 dias'],
+      ['Primeras aperturas app/PWA', metrics.appFirstOpens, '30 dias'],
+      ['Sesiones runtime app/PWA', metrics.appRuntimeSessions, '30 dias'],
+      ['Dispositivos app/PWA unicos', metrics.appUniqueDevices, '30 dias'],
       ['Clicks de descarga', metrics.downloadClicks, '30 dias'],
       ['Clicks hacia tiendas', metrics.storeClicks, '30 dias'],
       ['Negocios Geobooker', metrics.nativeBusinesses, 'Acumulado'],
@@ -137,7 +153,7 @@ export default function MvpTractionPanel() {
         <MetricCard icon={Building2} label="Negocios nativos" value={metrics.nativeBusinesses} helper="Acumulado real en Geobooker" color="emerald" />
         <MetricCard icon={Globe2} label="Directorio internacional" value={metrics.internationalBusinesses} helper="Registros visibles en mercados globales" color="violet" />
         <MetricCard icon={Building2} label="Espacios en renta" value={metrics.rentalSpaces} helper="Publicaciones estructuradas del nuevo MVP" color="amber" />
-        <MetricCard icon={Smartphone} label="Sesiones app/web" value={metrics.sessions} helper="Embudo instrumentado de 30 dias" />
+        <MetricCard icon={Smartphone} label="Aperturas reales" value={metrics.appFirstOpens} helper={`${metrics.appRuntimeSessions.toLocaleString()} sesiones runtime / ${metrics.appUniqueDevices.toLocaleString()} dispositivos`} />
       </div>
 
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">

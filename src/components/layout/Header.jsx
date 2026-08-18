@@ -231,6 +231,13 @@ export default function Header() {
             + {t("nav.addBusiness")}
           </Link>
 
+          <Link
+            to="/space/register"
+            className="border-2 border-emerald-700 bg-white/70 text-emerald-800 px-4 py-2 rounded-full font-bold hover:bg-emerald-700 hover:text-white transition-colors"
+          >
+            Rentar espacio
+          </Link>
+
           <LanguageSelector />
 
           {user ? (
@@ -431,6 +438,14 @@ export default function Header() {
             className="block bg-geoPink text-white px-4 py-2 rounded-full w-max hover:bg-geoPurple transition"
           >
             + {t("nav.addBusiness")}
+          </Link>
+
+          <Link
+            to="/space/register"
+            onClick={() => setIsOpen(false)}
+            className="block border-2 border-emerald-700 bg-white text-emerald-800 px-4 py-2 rounded-full w-max font-bold hover:bg-emerald-700 hover:text-white transition"
+          >
+            Rentar espacio
           </Link>
 
           {user ? (

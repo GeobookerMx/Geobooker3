@@ -35,10 +35,10 @@
 
       var script = document.createElement('script');
       script.id = 'google-maps-script';
-      // ✅ callback=__gmInit garantiza que iOS WKWebView detecte la carga correctamente
-      // ❌ NO usar loading=async con callback (son mutuamente excluyentes en iOS)
+      // ✅ callback=__gmInit garantiza que iOS WKWebView detecte la carga correctamente.
+      // ✅ loading=async evita la advertencia de rendimiento de Google Maps JS API.
       script.src = 'https://maps.googleapis.com/maps/api/js?key=' + key
-                   + '&libraries=places&callback=__gmInit';
+                   + '&libraries=places&loading=async&callback=__gmInit';
       script.async = true;
       script.defer = true;
       script.onerror = function() {

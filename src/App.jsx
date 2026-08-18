@@ -11,7 +11,7 @@ import { LocationProvider } from "./contexts/LocationContext";
 import { useSessionTimeout } from "./hooks/useSessionTimeout";
 import { trackSessionStart } from "./services/analyticsService";
 import { flushEventQueue } from "./services/analyticsService";
-import { initTrackingFromConsent } from "./services/trackingService";
+import { initTrackingFromConsent, enableTracking } from "./services/trackingService";
 import { detectUserCountry } from "./services/geoLocationService";
 import { usePageTracking } from "./hooks/usePageTracking";
 // ✅ FIX Apple Guideline 2.1: ATT permission request
@@ -266,6 +266,9 @@ function AppInitializer() {
             const { status } = await AppTrackingTransparency.requestPermission();
             console.log("[ATT] Resultado del prompt:", status);
             localStorage.setItem("att_status", status);
+            if (status === "authorized") {
+              enableTracking();
+            }
           } catch (e) {
             console.warn("[ATT] requestPermission falló:", e);
           }

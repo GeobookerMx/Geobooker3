@@ -11,6 +11,7 @@ import { RecommendationForm } from "../recommendations";
 import { IS_IOS_NATIVE } from "../../utils/iosStore";
 import { Capacitor } from "@capacitor/core";
 import { getPremiumPromoLongMessage, isPremiumPromoActive } from "../../config/promotions";
+import { featureFlags } from "../../config/featureFlags";
 
 export default function Header() {
   const { t, i18n } = useTranslation();
@@ -172,6 +173,7 @@ export default function Header() {
           <Link to="/categories" className="text-geoPurple hover:text-geoPink transition-colors">
             {t("nav.categories")}
           </Link>
+          {featureFlags.commercialSpaces && <Link to="/espacios" className="text-geoPurple font-bold hover:text-geoPink transition-colors">Espacios</Link>}
           <Link to="/quienes-somos" className="text-geoPurple hover:text-geoPink transition-colors">
             {t("nav.about")}
           </Link>
@@ -287,6 +289,7 @@ export default function Header() {
                   >
                     🏪 {t("nav.addBusiness")}
                   </Link>
+                  {featureFlags.commercialSpaces && <Link to="/dashboard/espacios" onClick={() => setShowUserMenu(false)} className="block px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-50">🏢 Mis espacios</Link>}
 
                   <Link
                     to="/emprende"
@@ -346,6 +349,11 @@ export default function Header() {
           >
             {t("nav.categories")}
           </Link>
+          {featureFlags.commercialSpaces && (
+            <Link to="/espacios" onClick={() => setIsOpen(false)} className="block font-bold text-geoPurple hover:text-geoPink">
+              Espacios comerciales
+            </Link>
+          )}
           <Link
             to="/quienes-somos"
             onClick={() => setIsOpen(false)}
@@ -446,6 +454,12 @@ export default function Header() {
               >
                 📊 {t("nav.dashboard")}
               </Link>
+
+              {featureFlags.commercialSpaces && (
+                <Link to="/dashboard/espacios" onClick={() => setIsOpen(false)} className="mb-2 block font-bold text-blue-700">
+                  Mis espacios comerciales
+                </Link>
+              )}
 
               <Link
                 to="/account/delete"

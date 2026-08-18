@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { IS_IOS_NATIVE } from '../utils/iosStore';
+import { getAuthenticatedJsonHeaders } from '../services/authenticatedRequest';
 
 const BillingPortal = () => {
     const { user } = useAuth();
@@ -220,7 +221,7 @@ const BillingPortal = () => {
 
             await fetch('/.netlify/functions/send-notification-email', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: await getAuthenticatedJsonHeaders(),
                 body: JSON.stringify({
                     type: 'custom',
                     data: {

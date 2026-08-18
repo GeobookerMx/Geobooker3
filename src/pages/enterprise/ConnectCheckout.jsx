@@ -4,7 +4,6 @@ import { ArrowLeft, BadgeCheck, CreditCard, Loader2, ShieldCheck } from 'lucide-
 import { Capacitor } from '@capacitor/core';
 import toast from 'react-hot-toast';
 import SEO from '../../components/SEO';
-import { supabase } from '../../lib/supabase';
 import { APP_LINKS } from '../../config/appLinks';
 import { buildPaymentReturnUrl } from '../../services/paymentReturnUrls';
 import {
@@ -15,8 +14,7 @@ import {
   COMMERCIAL_FISCAL_NOTICE,
   COMMERCIAL_NO_GUARANTEE_NOTICE,
   COMMERCIAL_TERMS_VERSION,
-  CONNECT_RESERVATION_NOTICE,
-  buildTermsSnapshot
+  CONNECT_RESERVATION_NOTICE
 } from '../../config/commercialCompliance';
 
 const formatCurrency = (amount = 0, currency = 'MXN') => {
@@ -79,103 +77,42 @@ export default function ConnectCheckout() {
     setLoading(true);
 
     try {
-      const leadId = crypto.randomUUID();
-      const campaignId = crypto.randomUUID();
-      const termsSnapshot = buildTermsSnapshot('geobooker_connect_reservation');
-
-      const metadataPayload = {
-        service_line: 'geobooker_connect',
-        lead_type: 'connect_launch_checkout',
-        package_code: selectedPackage.code,
-        package_name: selectedPackage.name,
-        launch_offer_code: GBOOKER_CONNECT_LAUNCH.code,
-        target_audience: form.target_audience,
-        objective: form.objective,
-        company_website: form.company_website || null,
-        reservation_price_mxn: selectedPackage.reservationPriceMxn,
-        batch_size: selectedPackage.batchSize,
-        terms_version: COMMERCIAL_TERMS_VERSION,
-        terms_accepted_at: termsSnapshot.accepted_at,
-        invoice_required: true,
-        fiscal_notice: COMMERCIAL_FISCAL_NOTICE,
-        no_guarantee_notice: COMMERCIAL_NO_GUARANTEE_NOTICE
-      };
-
-      const { error: leadError } = await supabase
-        .from('enterprise_leads')
-        .insert({
-          id: leadId,
-          company_name: form.company_name,
-          contact_name: form.contact_name || null,
-          contact_email: form.contact_email,
-          contact_phone: form.contact_phone || null,
+      const reservationResponse = await fetch('/.netlify/functions/create-connect-reservation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packageCode: selectedPackage.code,
+          companyName: form.company_name,
+          contactName: form.contact_name,
+          contactEmail: form.contact_email,
+          contactPhone: form.contact_phone,
+          companyWebsite: form.company_website,
+          targetAudience: form.target_audience,
+          objective: form.objective,
           country: form.country || 'Mexico',
-          industry: 'Geobooker Connect',
-          company_website: form.company_website || null,
-          selected_plan: selectedPackage.name,
-          target_cities: form.target_audience,
-          budget_range: `${selectedPackage.reservationPriceMxn} MXN launch reservation`,
-          service_line: 'geobooker_connect',
-          intake_source: 'connect_checkout',
-          launch_offer_code: GBOOKER_CONNECT_LAUNCH.code,
-          pricing_snapshot: {
-            reservation_price_mxn: selectedPackage.reservationPriceMxn,
-            package_code: selectedPackage.code,
-            package_name: selectedPackage.name
-          },
-          message: JSON.stringify(metadataPayload),
-          status: 'new'
-        });
+          termsAccepted: true,
+          termsVersion: COMMERCIAL_TERMS_VERSION
+        })
+      });
+      const reservation = await reservationResponse.json().catch(() => ({}));
+      if (!reservationResponse.ok || !reservation.campaignId) {
+        throw new Error(reservation.error || 'No pudimos crear la reserva Connect.');
+      }
 
-      if (leadError) throw leadError;
-
-      const { error: campaignError } = await supabase
-        .from('connect_campaigns')
-        .insert({
-          id: campaignId,
-          enterprise_lead_id: leadId,
-          package_code: selectedPackage.code,
-          package_name: selectedPackage.name,
-          campaign_objective: form.objective,
-          target_audience: form.target_audience,
-          batch_size: selectedPackage.batchSize,
-          launch_price_mxn: selectedPackage.reservationPriceMxn,
-          billing_email: form.contact_email,
-          metadata: metadataPayload
-        });
-
-      if (campaignError) throw campaignError;
+      const { leadId, campaignId } = reservation;
 
       const response = await fetch('/.netlify/functions/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: selectedPackage.reservationPriceMxn * 100,
-          currency: 'mxn',
           allowOxxo: false,
-          productName: `${selectedPackage.name} - Reserva de lanzamiento`,
-          customerEmail: form.contact_email,
           successUrl: buildPaymentReturnUrl(`/b2b-connect/success?campaign=${campaignId}`),
           cancelUrl: buildPaymentReturnUrl(`/b2b-connect/checkout?package=${selectedPackage.code}&canceled=true`),
           metadata: {
             type: 'connect_launch_payment',
             connect_campaign_id: campaignId,
             enterprise_lead_id: leadId,
-            package_code: selectedPackage.code,
-            package_name: selectedPackage.name,
-            company_name: form.company_name,
-            contact_name: form.contact_name || '',
-            contact_phone: form.contact_phone || '',
-            company_website: form.company_website || '',
-            target_audience: form.target_audience,
-            objective: form.objective,
-            billing_email: form.contact_email,
-            billing_country: form.country || 'Mexico',
-            reservation_price_mxn: selectedPackage.reservationPriceMxn,
-            terms_version: COMMERCIAL_TERMS_VERSION,
-            terms_accepted_at: termsSnapshot.accepted_at,
-            invoice_required: 'true',
-            payment_method_policy: 'card_only_connect_reservation'
+            package_code: selectedPackage.code
           }
         })
       });

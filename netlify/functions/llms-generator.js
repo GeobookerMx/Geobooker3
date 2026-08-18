@@ -1,5 +1,6 @@
 const GLOBAL_ORIGIN = 'https://www.geobooker.com';
 const MX_ORIGIN = 'https://geobooker.com.mx';
+const expansionMarkets = require('../../scripts/international/expansion-markets.json');
 
 const isGlobalHost = (host = '') => host.includes('geobooker.com') && !host.includes('geobooker.com.mx');
 
@@ -18,7 +19,7 @@ const libraryDocuments = [
   ['construir-sin-romperse', '11-construir-sin-romperse.pdf']
 ];
 
-const ACTIVE_CITIES = [
+const _CITY_ROADMAP = [
   // Wave 1 — Preview active
   { city: 'Los Angeles', country: 'US', lang: 'en', wave: 1 },
   { city: 'Toronto',     country: 'CA', lang: 'en', wave: 1 },
@@ -49,14 +50,16 @@ const ACTIVE_CITIES = [
   { city: 'Dublin',      country: 'IE', lang: 'en', wave: 5 },
   { city: 'Zurich',      country: 'CH', lang: 'de', wave: 5 },
   { city: 'Medellín',    country: 'CO', lang: 'es', wave: 5 },
-  // Wave 6 — Tier 2 Financial & Commercial Hubs
-  { city: 'Singapore',   country: 'SG', lang: 'en', wave: 6 },
-  { city: 'Seoul',       country: 'KR', lang: 'ko', wave: 6 },
-  { city: 'Dubai',       country: 'AE', lang: 'en', wave: 6 },
-  { city: 'Stockholm',   country: 'SE', lang: 'sv', wave: 6 },
-  { city: 'Vienna',      country: 'AT', lang: 'de', wave: 6 },
-  { city: 'Brussels',    country: 'BE', lang: 'fr', wave: 6 },
 ];
+
+const ACTIVE_CITIES = expansionMarkets.markets
+  .filter((market) => market.status === 'active' && Number(market.currentRecords) > 0)
+  .map((market) => ({
+    city: market.city,
+    country: market.countryCode,
+    lang: market.defaultLanguage,
+    records: Number(market.currentRecords)
+  }));
 
 const commonLinks = (origin) => [
   '- ' + origin + '/',
@@ -76,9 +79,9 @@ exports.handler = async (event) => {
   const globalMode = isGlobalHost(host);
   const origin = globalMode ? GLOBAL_ORIGIN : MX_ORIGIN;
 
-  const cityList = ACTIVE_CITIES.map(c =>
-    '- ' + c.city + ' (' + c.country + ')'
-  );
+  const cityList = ACTIVE_CITIES.length > 0
+    ? ACTIVE_CITIES.map(c => '- ' + c.city + ' (' + c.country + '): ' + c.records + ' active listings')
+    : ['- No international market is currently marked active for public discovery.'];
 
   const intro = globalMode ? [
     '# Geobooker',

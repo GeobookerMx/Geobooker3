@@ -12,18 +12,40 @@
 
 import { ApifyClient } from 'apify-client';
 import { createClient } from '@supabase/supabase-js';
+import adminAuth from './_admin-request-auth.js';
+
+const { authorizeAdminRequest } = adminAuth;
 
 export async function handler(event) {
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
+    const authorization = await authorizeAdminRequest(event);
+    if (!authorization.authorized) {
+        return {
+            statusCode: authorization.statusCode,
+            body: JSON.stringify({ error: authorization.error })
+        };
+    }
+
     try {
-        const { searchQuery, location, maxResults = 50, jobId } = JSON.parse(event.body);
+        const body = JSON.parse(event.body || '{}');
+        const searchQuery = typeof body.searchQuery === 'string' ? body.searchQuery.trim() : '';
+        const location = typeof body.location === 'string' ? body.location.trim() : '';
+        const requestedMaxResults = Number(body.maxResults ?? 50);
+        const jobId = typeof body.jobId === 'string' ? body.jobId.trim() : '';
+
+        if (!searchQuery || searchQuery.length > 120 || !location || location.length > 160
+            || !Number.isFinite(requestedMaxResults) || requestedMaxResults < 1
+            || (jobId && !/^[0-9a-f-]{36}$/i.test(jobId))) {
+            return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request' }) };
+        }
+        const maxResults = Math.min(Math.floor(requestedMaxResults), 50);
 
         const APIFY_API_TOKEN = process.env.APIFY_API_TOKEN;
         const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-        const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+        const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
         if (!APIFY_API_TOKEN) {
             return {
@@ -102,7 +124,7 @@ export async function handler(event) {
         console.error('❌ Apify error:', error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: error.message })
+            body: JSON.stringify({ error: 'Scraper job failed' })
         };
     }
 }

@@ -4,9 +4,11 @@
  * La llamada real al modelo vive en Netlify Functions para no exponer la API key.
  */
 
+import { getOptionalAuthenticatedJsonHeaders } from './authenticatedRequest';
+
 const CHAT_ASSISTANT_ENDPOINT = '/.netlify/functions/chat-assistant';
 
-export async function sendMessageToGemini(userMessage, conversationHistory = [], sessionId = null, userId = null) {
+export async function sendMessageToGemini(userMessage, conversationHistory = [], sessionId = null) {
     const trimmedMessage = typeof userMessage === 'string' ? userMessage.trim() : '';
 
     if (!trimmedMessage) {
@@ -19,9 +21,7 @@ export async function sendMessageToGemini(userMessage, conversationHistory = [],
     try {
         const response = await fetch(CHAT_ASSISTANT_ENDPOINT, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: await getOptionalAuthenticatedJsonHeaders(),
             body: JSON.stringify({
                 userMessage: trimmedMessage,
                 conversationHistory: Array.isArray(conversationHistory) ? conversationHistory.slice(-8) : [],
@@ -30,8 +30,7 @@ export async function sendMessageToGemini(userMessage, conversationHistory = [],
                 language: typeof window !== 'undefined'
                     ? (localStorage.getItem('language') || navigator.language || 'es-MX')
                     : 'es-MX',
-                sessionId,
-                userId
+                sessionId
             })
         });
 

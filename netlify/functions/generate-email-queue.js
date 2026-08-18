@@ -1,23 +1,23 @@
 const { createClient } = require('@supabase/supabase-js');
-const { ensureCronOrTrustedOrigin } = require('./_cron-auth');
+const { ensureCronOrAdmin } = require('./_cron-auth');
 
 const supabase = createClient(
     process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-exports.handler = async (event, context) => {
+exports.handler = async (event) => {
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
 
-    const authError = ensureCronOrTrustedOrigin(event);
+    const authError = await ensureCronOrAdmin(event);
     if (authError) return authError
 
     try {
         const body = event.body ? JSON.parse(event.body) : {};
-        const limit = body.limit || 100;
-        const tierFilter = body.tier || null;
+        const limit = Math.min(Math.max(Math.floor(Number(body.limit) || 100), 1), 500);
+        const tierFilter = ['AAA', 'AA', 'A', 'B'].includes(body.tier) ? body.tier : null;
 
         const { data, error } = await supabase.rpc('generate_daily_email_queue', {
             p_limit: limit,
@@ -31,7 +31,7 @@ exports.handler = async (event, context) => {
 
         return {
             statusCode: 200,
-            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+            headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
             body: JSON.stringify({
                 success: true,
                 contacts_added: contactsAdded,

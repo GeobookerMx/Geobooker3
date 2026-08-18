@@ -4,6 +4,10 @@
  * Uses the verified Geobooker sender only; no new email identities are invented.
  */
 
+const { getCorsHeaders, handlePreflight, rejectUnauthorizedOrigin } = require('./_cors');
+const { enforceRateLimit } = require('./_rate-limit');
+const { loadEnterpriseLead } = require('./_lead-notification-authority');
+
 function escapeHtml(value = '') {
     return String(value)
         .replace(/&/g, '&amp;')
@@ -39,12 +43,13 @@ function formatLeadRows(lead = {}) {
         .join('');
 }
 
-async function sendEmail({ from, replyTo, to, subject, html, apiKey }) {
+async function sendEmail({ from, replyTo, to, subject, html, apiKey, idempotencyKey }) {
     const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
             Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Idempotency-Key': idempotencyKey
         },
         body: JSON.stringify({
             from,
@@ -64,23 +69,27 @@ async function sendEmail({ from, replyTo, to, subject, html, apiKey }) {
 }
 
 exports.handler = async function handler(event) {
-    const headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Content-Type': 'application/json'
-    };
-
-    if (event.httpMethod === 'OPTIONS') {
-        return { statusCode: 200, headers, body: JSON.stringify({ ok: true }) };
-    }
+    const preflight = handlePreflight(event);
+    if (preflight) return preflight;
+    const headers = getCorsHeaders(event, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    const originError = rejectUnauthorizedOrigin(event);
+    if (originError) return originError;
 
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) };
     }
 
+    const rateLimitError = await enforceRateLimit(event, {
+        action: 'notify_enterprise_lead',
+        maxCalls: 3,
+        windowSeconds: 600,
+        headers
+    });
+    if (rateLimitError) return rateLimitError;
+
     try {
-        const { lead } = JSON.parse(event.body || '{}');
+        const { leadId } = JSON.parse(event.body || '{}');
+        const lead = await loadEnterpriseLead(leadId);
         if (!lead?.company_name || !lead?.contact_email) {
             return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing lead data' }) };
         }
@@ -140,7 +149,8 @@ exports.handler = async function handler(event) {
             to: ADMIN_EMAIL,
             subject: `Enterprise lead: ${lead.company_name} (${lead.selected_plan || 'sin plan'})`,
             html: adminHtml,
-            apiKey: RESEND_API_KEY
+            apiKey: RESEND_API_KEY,
+            idempotencyKey: `enterprise-lead-admin/${lead.id}`
         });
 
         let customerResult = null;
@@ -151,7 +161,8 @@ exports.handler = async function handler(event) {
                 to: lead.contact_email,
                 subject: 'Recibimos tu pre-registro Enterprise en Geobooker',
                 html: customerHtml,
-                apiKey: RESEND_API_KEY
+                apiKey: RESEND_API_KEY,
+                idempotencyKey: `enterprise-lead-customer/${lead.id}`
             });
         } catch (customerError) {
             console.warn('[notify-enterprise-lead] Customer confirmation failed:', customerError.message);
@@ -160,10 +171,18 @@ exports.handler = async function handler(event) {
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ success: true, adminEmailId: adminResult?.id, customerEmailId: customerResult?.id || null })
+            body: JSON.stringify({
+                success: true,
+                adminNotified: Boolean(adminResult?.id),
+                customerNotified: Boolean(customerResult?.id)
+            })
         };
     } catch (error) {
-        console.error('[notify-enterprise-lead] Error:', error);
-        return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
+        console.error('[notify-enterprise-lead] Error:', error.message);
+        return {
+            statusCode: error.statusCode || 500,
+            headers,
+            body: JSON.stringify({ error: error.statusCode ? error.message : 'Enterprise notification failed' })
+        };
     }
 };

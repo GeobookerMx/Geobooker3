@@ -10,6 +10,12 @@ package-lock.json
 pnpm-lock.yaml
 yarn.lock
 
+# Supabase CLI link/cache metadata is machine-specific.
+supabase/.temp/
+
+# Local-only validation suites are not part of the production changeset.
+netlify/functions/__tests__/
+
 # -----------------------------
 # ✔️ Vite / Build Output
 # -----------------------------

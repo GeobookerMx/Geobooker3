@@ -383,9 +383,63 @@
         }
       `;
     document.head.appendChild(style);
+
+    // Bootstrap recovery: covers a failed entry bundle before main.jsx can
+    // register Vite's preload error handler. One automatic reload is allowed;
+    // a second failure remains visible and offers a manual retry.
+    (function installBootstrapRecovery() {
+      const BOOTSTRAP_RECOVERY_KEY = 'geobooker_bootstrap_recovery_attempted';
+      const BOOT_TIMEOUT_MS = 15000;
+
+      window.__GEOBOOKER_BOOTSTRAPPED__ = false;
+
+      const showBootstrapFailure = () => {
+        const fallback = document.querySelector('.loading-fallback');
+        const loadingText = document.getElementById('loading-text');
+        if (!fallback || !loadingText) return;
+
+        fallback.style.display = 'flex';
+        fallback.style.opacity = '1';
+        loadingText.textContent = document.documentElement.lang === 'en'
+          ? 'Geobooker could not start. Please try again.'
+          : 'Geobooker no pudo iniciar. Intenta nuevamente.';
+
+        if (!document.getElementById('bootstrap-retry-button')) {
+          const retryButton = document.createElement('button');
+          retryButton.id = 'bootstrap-retry-button';
+          retryButton.type = 'button';
+          retryButton.textContent = document.documentElement.lang === 'en' ? 'Retry' : 'Reintentar';
+          retryButton.style.cssText = 'margin-top:16px;padding:10px 20px;border:0;border-radius:8px;background:#5558c4;color:white;font-weight:600;cursor:pointer;';
+          retryButton.addEventListener('click', () => window.location.reload());
+          loadingText.parentElement.appendChild(retryButton);
+        }
+      };
+
+      const recoverBootstrap = () => {
+        if (window.__GEOBOOKER_BOOTSTRAPPED__) return;
+
+        try {
+          if (sessionStorage.getItem(BOOTSTRAP_RECOVERY_KEY) === '1') {
+            showBootstrapFailure();
+            return;
+          }
+          sessionStorage.setItem(BOOTSTRAP_RECOVERY_KEY, '1');
+          window.location.reload();
+        } catch (error) {
+          console.warn('[Geobooker] Bootstrap recovery guard unavailable:', error);
+          showBootstrapFailure();
+        }
+      };
+
+      const bootTimer = window.setTimeout(recoverBootstrap, BOOT_TIMEOUT_MS);
+      window.addEventListener('geobooker:boot-success', () => window.clearTimeout(bootTimer), { once: true });
+      window.addEventListener('error', (event) => {
+        if (event.target?.id === 'geobooker-entry') recoverBootstrap();
+      }, true);
+    })();
   </script>
 
-  <script type="module" src="/src/main.jsx"></script>
+  <script id="geobooker-entry" type="module" src="/src/main.jsx"></script>
 </body>
 
 </html>

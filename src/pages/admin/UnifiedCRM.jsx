@@ -26,6 +26,7 @@ import ConnectOpsDashboard from '../../components/admin/ConnectOpsDashboard';
 import CommercialOpsDashboard from '../../components/admin/CommercialOpsDashboard';
 import MvpTractionPanel from '../../components/admin/MvpTractionPanel';
 import { matchesSemanticText } from '../../utils/semanticDictionary';
+import { getAuthenticatedJsonHeaders } from '../../services/authenticatedRequest';
 
 const FALLBACK_EMAIL_SENDER = {
     name: 'Geobooker Ads',
@@ -705,7 +706,7 @@ const UnifiedCRM = () => {
             if (campaignType === 'email') {
                 const response = await fetch('/.netlify/functions/generate-email-queue', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: await getAuthenticatedJsonHeaders(),
                     body: JSON.stringify({
                         limit: dailyLimit,
                         tier: emailSearchTier === 'all' ? null : emailSearchTier
@@ -938,7 +939,7 @@ const UnifiedCRM = () => {
                 try {
                     const response = await fetch('/.netlify/functions/send-notification-email', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: await getAuthenticatedJsonHeaders(),
                         body: JSON.stringify({
                             type: 'custom',
                             data: {
@@ -1079,7 +1080,7 @@ const UnifiedCRM = () => {
                 try {
                     const response = await fetch('/.netlify/functions/send-notification-email', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: await getAuthenticatedJsonHeaders(),
                         body: JSON.stringify({
                             type: 'custom',
                             data: {

@@ -25,22 +25,6 @@ export const SEARCH_INTENT_RULES = [
     ]
   },
   {
-    id: 'truck_parking_secure_yard',
-    label: 'Patio logistico / pension de tractocamiones',
-    confidence: 0.96,
-    categoryHints: ['truck-parking-logistics', 'storage-spaces', 'transport-logistics'],
-    googleQuery: 'patio logistico pension tractocamiones trailer parking',
-    fallbackQueries: ['patio logistico cerca', 'pension para tractocamiones', 'truck parking secure yard', 'bodega storage carga pesada'],
-    isLogistics: true,
-    trustSignals: ['seguridad', 'acceso 24/7', 'resguardo', 'maniobras', 'carga pesada'],
-    keywords: [
-      'patio', 'pension', 'pension para tracto', 'pension para trailer', 'tracto', 'tractocamion', 'tractocamiones',
-      'trailer', 'trailers', 'caja seca', 'full', 'mercancia', 'resguardo', 'custodia', 'estacionamiento de trailer',
-      'estacionamiento para trailer', 'drop yard', 'truck yard', 'truck parking', 'secure yard', 'freight yard',
-      'yard storage', 'parking for trucks'
-    ]
-  },
-  {
     id: 'warehouse_storage',
     label: 'Bodega, storage y almacenaje',
     confidence: 0.9,

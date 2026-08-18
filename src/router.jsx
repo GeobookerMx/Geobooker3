@@ -2,6 +2,7 @@
 import React, { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import PageLoader from "./components/common/PageLoader";
+import { featureFlags } from "./config/featureFlags";
 
 // Layouts
 import PublicLayout from "./components/layout/PublicLayout.jsx";
@@ -36,6 +37,9 @@ const ReferralManagement = lazy(() => import("./pages/admin/ReferralManagement.j
 const BulkImport = lazy(() => import("./pages/admin/BulkImport.jsx"));
 const SmartCampaignLauncher = lazy(() => import("./pages/admin/SmartCampaignLauncher.jsx"));
 const UnifiedCRM = lazy(() => import("./pages/admin/UnifiedCRM.jsx"));
+const CRM2Imports = lazy(() => import("./pages/admin/CRM2Imports.jsx"));
+const CRM2Operations = lazy(() => import("./pages/admin/CRM2Operations.jsx"));
+const CRM2Directory = lazy(() => import("./pages/admin/CRM2Directory.jsx"));
 const AdminSecurity = lazy(() => import("./pages/admin/Security.jsx"));
 const ApifyScraper = lazy(() => import("./pages/admin/ApifyScraper.jsx"));
 const LeadsHistory = lazy(() => import("./pages/admin/LeadsHistory.jsx"));
@@ -138,6 +142,7 @@ export default function AppRouter() {
           <Route path="/c/:category" element={<HomePage />} />
           <Route path="/c/:category/:subcategory" element={<HomePage />} />
           <Route path="/ciudad/:city" element={<HomePage />} />
+          <Route path="/ciudad/:city/:category" element={<HomePage />} />
           <Route path="/categories" element={<CategoriesPage />} />
 
           <Route path="/cities/:citySlug" element={<CityLandingPage />} />
@@ -245,6 +250,18 @@ export default function AppRouter() {
           <Route path="referrals" element={<ReferralManagement />} />
           <Route path="import" element={<BulkImport />} />
           <Route path="crm" element={<UnifiedCRM />} />
+          <Route
+            path="crm2-imports"
+            element={featureFlags.crm2ImportReview ? <CRM2Imports /> : <Navigate to="/admin/crm" replace />}
+          />
+          <Route
+            path="crm2-operations"
+            element={featureFlags.crm2Operations ? <CRM2Operations /> : <Navigate to="/admin/crm" replace />}
+          />
+          <Route
+            path="crm2-directory"
+            element={featureFlags.crm2Directory ? <CRM2Directory /> : <Navigate to="/admin/crm" replace />}
+          />
           <Route path="security" element={<AdminSecurity />} />
           <Route path="campaigns" element={<Navigate to="/admin/crm" replace />} />
           <Route path="marketing" element={<Navigate to="/admin/crm" replace />} />

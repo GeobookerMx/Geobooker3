@@ -100,7 +100,9 @@ export default function EnterpriseContact() {
             return result;
         }
 
-        const { lead_source, platform, ...fallbackPayload } = leadPayload;
+        const fallbackPayload = { ...leadPayload };
+        delete fallbackPayload.lead_source;
+        delete fallbackPayload.platform;
         return insertLead(fallbackPayload);
     };
 
@@ -148,7 +150,7 @@ export default function EnterpriseContact() {
                 const notifyResponse = await fetch('/.netlify/functions/notify-enterprise-lead', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lead })
+                    body: JSON.stringify({ leadId: lead?.id })
                 });
 
                 if (!notifyResponse.ok) {

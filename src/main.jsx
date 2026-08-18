@@ -20,12 +20,34 @@ import './styles/ios-android-viewport-fix.css'
 import './i18n' // Importar configuración de i18n
 
 const CHUNK_RECOVERY_KEY = 'geobooker_chunk_recovery_attempted';
+const BOOTSTRAP_RECOVERY_KEY = 'geobooker_bootstrap_recovery_attempted';
+const RECOVERY_COOLDOWN_MS = 30_000;
+const BOOT_STABILIZATION_MS = 10_000;
+
+window.__GEOBOOKER_BOOTSTRAPPED__ = true;
+
+const claimChunkRecovery = (reason) => {
+  if (typeof window === 'undefined') return false;
+
+  try {
+    const recoveryState = JSON.parse(sessionStorage.getItem(CHUNK_RECOVERY_KEY) || 'null');
+    if (recoveryState?.attemptedAt && Date.now() - recoveryState.attemptedAt < RECOVERY_COOLDOWN_MS) {
+      return false;
+    }
+
+    sessionStorage.setItem(CHUNK_RECOVERY_KEY, JSON.stringify({
+      attemptedAt: Date.now(),
+      reason,
+      path: window.location.pathname
+    }));
+    return true;
+  } catch (error) {
+    console.warn('[Geobooker] Recovery guard is unavailable:', error);
+    return false;
+  }
+};
 
 const recoverFromStaleChunk = async (reason = 'unknown') => {
-  if (typeof window === 'undefined') return;
-  if (sessionStorage.getItem(CHUNK_RECOVERY_KEY) === '1') return;
-
-  sessionStorage.setItem(CHUNK_RECOVERY_KEY, '1');
   try {
     window.gtag?.('event', 'stale_chunk_recovery', { reason });
     if ('serviceWorker' in navigator) {
@@ -43,15 +65,22 @@ const recoverFromStaleChunk = async (reason = 'unknown') => {
   }
 };
 
+const beginChunkRecovery = (reason) => {
+  if (!claimChunkRecovery(reason)) return false;
+  void recoverFromStaleChunk(reason);
+  return true;
+};
+
 window.addEventListener('vite:preloadError', (event) => {
-  event.preventDefault();
-  recoverFromStaleChunk('vite_preload_error');
+  if (beginChunkRecovery('vite_preload_error')) {
+    event.preventDefault();
+  }
 });
 
 window.addEventListener('unhandledrejection', (event) => {
   const message = String(event.reason?.message || event.reason || '');
   if (message.includes('Failed to fetch dynamically imported module') || message.includes('Importing a module script failed')) {
-    recoverFromStaleChunk('dynamic_import_failed');
+    beginChunkRecovery('dynamic_import_failed');
   }
 });
 
@@ -64,3 +93,20 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <App />  {/* ✅ Simple y limpio */}
   </React.StrictMode>,
 )
+
+// A recovery guard must survive the reload long enough to stop a loop. Once
+// React has remained booted successfully, both bootstrap guards can be reset
+// so a later, independent deploy incident can recover in the same tab.
+window.setTimeout(() => {
+  const root = document.getElementById('root');
+  if (!root?.hasChildNodes()) return;
+
+  try {
+    sessionStorage.removeItem(CHUNK_RECOVERY_KEY);
+    sessionStorage.removeItem(BOOTSTRAP_RECOVERY_KEY);
+  } catch (error) {
+    console.warn('[Geobooker] Could not reset recovery guards:', error);
+  }
+
+  window.dispatchEvent(new Event('geobooker:boot-success'));
+}, BOOT_STABILIZATION_MS);

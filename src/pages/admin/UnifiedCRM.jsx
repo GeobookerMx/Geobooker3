@@ -26,10 +26,11 @@ import ConnectOpsDashboard from '../../components/admin/ConnectOpsDashboard';
 import CommercialOpsDashboard from '../../components/admin/CommercialOpsDashboard';
 import { matchesSemanticText } from '../../utils/semanticDictionary';
 import { getAuthenticatedJsonHeaders } from '../../services/authenticatedRequest';
+import { featureFlags } from '../../config/featureFlags';
 
 const FALLBACK_EMAIL_SENDER = {
-    name: 'Geobooker Ads',
-    email: 'hola@geobooker.com.mx',
+    name: 'Geobooker',
+    email: 'notificaciones@geobooker.com',
     signature: '<div style="margin-top:20px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:14px;color:#6b7280;"><p><strong>Geobooker Ads</strong><br>Publicidad local y enterprise<br>📧 hola@geobooker.com.mx<br>🌐 <a href="https://geobooker.com.mx">geobooker.com.mx</a></p></div>',
     use_for: ['default', 'crm']
 };
@@ -699,6 +700,10 @@ const UnifiedCRM = () => {
 
 
     const generateQueue = async () => {
+        if (campaignType === 'email' && !featureFlags.crmEmailQueue) {
+            toast.error('La preparación de colas CRM está desactivada hasta completar la revisión de contactos.');
+            return;
+        }
         const toastId = toast.loading(campaignType === 'email' ? 'Buscando contactos con email...' : 'Buscando contactos con WhatsApp...');
 
         try {
@@ -900,6 +905,10 @@ const UnifiedCRM = () => {
 
     // ============ SEND CAMPAIGN ============
     const sendCampaign = async () => {
+        if (!featureFlags.crmEmailSend) {
+            toast.error('El envío directo heredado está desactivado. Usa la cola CRM revisada.');
+            return;
+        }
         if (!selectedTemplate) {
             toast.error('Selecciona una plantilla primero');
             return;
@@ -1039,6 +1048,10 @@ const UnifiedCRM = () => {
 
     // ============ SEND TEST EMAIL ============
     const SEND_TEST_EMAIL = async () => {
+        if (!featureFlags.crmEmailSend) {
+            toast.error('Las pruebas de correo CRM están desactivadas.');
+            return;
+        }
         if (!selectedTemplate) {
             toast.error('Selecciona una plantilla primero');
             return;
@@ -1653,10 +1666,13 @@ const UnifiedCRM = () => {
                                             )}
                                             <button
                                                 onClick={generateQueue}
+                                                disabled={campaignType === 'email' && !featureFlags.crmEmailQueue}
                                                 className="flex items-center gap-2 px-6 py-3 bg-white text-blue-600 rounded-lg font-bold hover:bg-blue-50 transition shadow-lg"
                                             >
                                                 <Play className="w-5 h-5" />
-                                                Preparar Cola Real
+                                                {campaignType === 'email'
+                                                    ? (featureFlags.crmEmailQueue ? 'Preparar Cola Revisada' : 'Cola Desactivada')
+                                                    : 'Preparar Cola WhatsApp'}
                                             </button>
                                         </div>
                                     </div>
@@ -1891,8 +1907,10 @@ const UnifiedCRM = () => {
 
                             <div className="space-y-4">
                                 <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                                    Resend debe enviar desde un correo verificado del dominio de Geobooker.
-                                    Si aquí capturas un Gmail u otro externo, el sistema ahora lo usará como respuesta (`reply-to`), pero el envío real saldrá desde <strong>hola@geobooker.com.mx</strong>.
+                                    Resend enviará siempre desde <strong>Geobooker &lt;notificaciones@geobooker.com&gt;</strong>,
+                                    que pertenece al dominio verificado. Este campo solo puede seleccionar una dirección oficial
+                                    de <strong>geobooker.com</strong> o <strong>geobooker.com.mx</strong> para las respuestas;
+                                    Gmail y otros dominios externos se descartan.
                                 </div>
                                 {senders.map((sender, idx) => (
                                     <div key={idx} className="p-4 border rounded-xl bg-gray-50/50 space-y-3">
@@ -1922,7 +1940,7 @@ const UnifiedCRM = () => {
                                                         setSenders(newSenders);
                                                     }}
                                                     className="w-full p-2 border rounded-lg"
-                                                    placeholder="juanpablopg@geobooker.com.mx"
+                                                    placeholder="hola@geobooker.com.mx"
                                                 />
                                             </div>
                                             <button

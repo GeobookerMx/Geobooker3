@@ -1,27 +1,16 @@
 const DEFAULT_BASE_URL = 'https://geobooker.com.mx';
-const DEFAULT_ANDROID_URL = 'https://play.google.com/store/apps/details?id=com.geobooker.app&hl=es_MX';
-const DEFAULT_IOS_URL = 'https://apps.apple.com/mx/app/geobooker-cerca-de-ti/id6758590506';
 
-function buildTrackedUrl(target) {
-    const base = target === 'android_store' ? DEFAULT_ANDROID_URL
-        : target === 'ios_store' ? DEFAULT_IOS_URL
-            : `${DEFAULT_BASE_URL}/download`;
-
-    const url = new URL(base);
-    url.searchParams.set('utm_source', 'crm_email');
-    url.searchParams.set('utm_medium', 'email');
-    url.searchParams.set('utm_campaign', 'geobooker_ads');
-    url.searchParams.set('qr_target', target);
-    return url.toString();
-}
-
-function buildQrImageUrl(target) {
-    return `https://quickchart.io/qr?size=170&text=${encodeURIComponent(buildTrackedUrl(target))}`;
-}
-
-function buildFooter({ companyName = 'tu empresa' } = {}) {
-    const androidUrl = buildTrackedUrl('android_store');
-    const iosUrl = buildTrackedUrl('ios_store');
+function buildFooter({ companyName = 'tu empresa', unsubscribeUrl } = {}) {
+    const preferenceNotice = unsubscribeUrl
+        ? `
+                <p>
+                    Si no deseas recibir más comunicaciones comerciales,
+                    <a href="${unsubscribeUrl}">date de baja con un clic</a>.
+                </p>`
+        : `
+                <p>
+                    Este mensaje corresponde a una notificación solicitada o relacionada con tu cuenta u operación.
+                </p>`;
 
     return `
         <div class="gb-footer">
@@ -32,51 +21,29 @@ function buildFooter({ companyName = 'tu empresa' } = {}) {
                     class="gb-footer-logo"
                 />
                 <p class="gb-footer-text">
-                    Geobooker Ads ayuda a negocios locales a ganar visibilidad con espacios patrocinados,
-                    métricas reales y presencia en búsqueda, mapa y páginas de ciudad.
+                    Geobooker ayuda a las personas a descubrir negocios, servicios y lugares relevantes.
                 </p>
             </div>
-
-            <div class="gb-cta-card">
-                <h3>Descarga Geobooker y conoce nuestros espacios publicitarios</h3>
-                <p>
-                    Tus clientes pueden encontrarte en web, Android e iPhone.
-                    También puedes usar estos accesos para presentar Geobooker con más profesionalismo.
-                </p>
-                <div class="gb-store-buttons">
-                    <a href="${androidUrl}" target="_blank" rel="noopener noreferrer">Google Play</a>
-                    <a href="${iosUrl}" target="_blank" rel="noopener noreferrer">App Store</a>
-                </div>
-            </div>
-
-            <div class="gb-qr-grid">
-                <div class="gb-qr-card">
-                    <img src="${buildQrImageUrl('android_store')}" alt="QR Google Play" />
-                    <strong>QR Android</strong>
-                    <span>Escanea para abrir Google Play</span>
-                </div>
-                <div class="gb-qr-card">
-                    <img src="${buildQrImageUrl('ios_store')}" alt="QR App Store" />
-                    <strong>QR iPhone</strong>
-                    <span>Escanea para abrir App Store</span>
-                </div>
-            </div>
-
             <div class="gb-footer-meta">
                 <p><strong>Web:</strong> <a href="${DEFAULT_BASE_URL}">${DEFAULT_BASE_URL}</a></p>
                 <p><strong>Email comercial:</strong> <a href="mailto:hola@geobooker.com.mx">hola@geobooker.com.mx</a></p>
-                <p><strong>Respuesta comercial:</strong> <a href="mailto:ventasgeobooker@gmail.com">ventasgeobooker@gmail.com</a></p>
                 <p>
-                    Este mensaje comercial se envía porque <strong>${companyName}</strong> aparece como negocio público
-                    o contacto comercial relacionado con presencia local.
+                    Esta comunicación comercial fue revisada para <strong>${companyName}</strong>.
+                    Geobooker no solicita contraseñas, pagos ni información confidencial por correo.
                 </p>
-                <p>Si no deseas más mensajes corporativos, responde este correo con la palabra <strong>BAJA</strong>.</p>
+                ${preferenceNotice}
             </div>
         </div>
     `;
 }
 
-function wrapEmailLayout({ contentHtml, preheader = 'Geobooker Ads', title = 'Geobooker Ads', companyName = 'tu empresa' }) {
+function wrapEmailLayout({
+    contentHtml,
+    preheader = 'Geobooker',
+    title = 'Geobooker',
+    companyName = 'tu empresa',
+    unsubscribeUrl
+}) {
     return `
 <!DOCTYPE html>
 <html lang="es">
@@ -98,23 +65,12 @@ function wrapEmailLayout({ contentHtml, preheader = 'Geobooker Ads', title = 'Ge
         .gb-footer-brand { text-align: center; margin-bottom: 18px; }
         .gb-footer-logo { width: 145px; max-width: 100%; height: auto; opacity: 0.92; }
         .gb-footer-text { margin: 12px 0 0; color: #475569; font-size: 13px; line-height: 1.6; }
-        .gb-cta-card { background: linear-gradient(135deg, #dbeafe 0%, #eef2ff 100%); border: 1px solid #bfdbfe; border-radius: 16px; padding: 18px; text-align: center; margin-bottom: 18px; }
-        .gb-cta-card h3 { margin: 0 0 8px; color: #0f172a; font-size: 18px; }
-        .gb-cta-card p { margin: 0; color: #475569; font-size: 13px; line-height: 1.6; }
-        .gb-store-buttons { margin-top: 14px; }
-        .gb-store-buttons a { display: inline-block; margin: 6px; padding: 10px 16px; border-radius: 999px; background: #0f172a; color: #ffffff !important; text-decoration: none; font-size: 13px; font-weight: 700; }
-        .gb-qr-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
-        .gb-qr-card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px; text-align: center; }
-        .gb-qr-card img { width: 120px; height: 120px; display: block; margin: 0 auto 10px; }
-        .gb-qr-card strong { display: block; color: #0f172a; font-size: 14px; margin-bottom: 4px; }
-        .gb-qr-card span { color: #64748b; font-size: 12px; }
         .gb-footer-meta { color: #64748b; font-size: 12px; line-height: 1.7; text-align: center; }
         .gb-footer-meta p { margin: 7px 0; }
         .gb-footer-meta a { color: #2563eb; text-decoration: none; }
         @media (max-width: 640px) {
             .gb-shell { padding: 12px 0; }
             .gb-content, .gb-footer, .gb-header { padding-left: 18px; padding-right: 18px; }
-            .gb-qr-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -124,20 +80,16 @@ function wrapEmailLayout({ contentHtml, preheader = 'Geobooker Ads', title = 'Ge
         <div class="gb-card">
             <div class="gb-header">
                 <img src="https://geobooker.com.mx/images/geobooker-logo-horizontal-new.png" alt="Geobooker" />
-                <p>Publicidad local, premium y enterprise para hacer crecer tu negocio</p>
+                <p>Descubrimiento local y presencia comercial responsable</p>
             </div>
             <div class="gb-content">
                 ${contentHtml}
             </div>
-            ${buildFooter({ companyName })}
+            ${buildFooter({ companyName, unsubscribeUrl })}
         </div>
     </div>
 </body>
 </html>`;
 }
 
-module.exports = {
-    buildTrackedUrl,
-    buildQrImageUrl,
-    wrapEmailLayout,
-};
+module.exports = { wrapEmailLayout };

@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { Mail, Send, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { sendEmail } from '../../services/emailService';
+import { featureFlags } from '../../config/featureFlags';
 
 const EmailTester = () => {
     const [testEmail, setTestEmail] = useState('hola@geobooker.com.mx');
@@ -11,6 +12,10 @@ const EmailTester = () => {
     const [result, setResult] = useState(null);
 
     const sendTestEmail = async () => {
+        if (!featureFlags.crmEmailSend) {
+            setResult({ success: false, error: 'Las pruebas de correo CRM están desactivadas.' });
+            return;
+        }
         if (!testEmail) {
             setResult({ success: false, message: 'Por favor ingresa un email' });
             return;
@@ -70,7 +75,7 @@ const EmailTester = () => {
             </div>
           </div>
         `,
-                from: 'Geobooker Ads <hola@geobooker.com.mx>'
+                from: 'Geobooker <notificaciones@geobooker.com>'
             });
 
             setResult(response);
@@ -112,7 +117,7 @@ const EmailTester = () => {
 
                 <button
                     onClick={sendTestEmail}
-                    disabled={isSending}
+                    disabled={isSending || !featureFlags.crmEmailSend}
                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2.5 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isSending ? (
@@ -123,7 +128,7 @@ const EmailTester = () => {
                     ) : (
                         <>
                             <Send className="w-4 h-4" />
-                            Enviar Email de Prueba
+                            {featureFlags.crmEmailSend ? 'Enviar Email de Prueba' : 'Pruebas desactivadas'}
                         </>
                     )}
                 </button>

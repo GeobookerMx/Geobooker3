@@ -1,5 +1,9 @@
 # Production CRM WhatsApp Checklist
 
+> Historical checklist. Do not execute its legacy SQL or activate email from
+> this document. For CRM email use `CRM_EMAIL_HARDENING_2026.md`; WhatsApp
+> Cloud API remains disabled pending its separate implementation.
+
 ## Objetivo
 Dejar en produccion una sola ruta estable para:
 - limites WhatsApp nacional/global
@@ -27,10 +31,10 @@ Dejar en produccion una sola ruta estable para:
 
 ## Variables Netlify criticas
 - `RESEND_API_KEY`
-- `CRM_DEFAULT_FROM_ADDRESS=hola@geobooker.com.mx`
-- `CRM_DEFAULT_FROM_NAME=Geobooker Ads`
-- `CRM_REPLY_TO_EMAIL=ventasgeobooker@gmail.com`
-- `RESEND_VERIFIED_DOMAIN=geobooker.com.mx`
+- `CRM_DEFAULT_FROM_ADDRESS=notificaciones@geobooker.com`
+- `CRM_DEFAULT_FROM_NAME=Geobooker`
+- `CRM_REPLY_TO_EMAIL=hola@geobooker.com.mx`
+- `RESEND_VERIFIED_DOMAIN=geobooker.com`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `VITE_SUPABASE_URL`
 
@@ -48,7 +52,7 @@ Dejar en produccion una sola ruta estable para:
 11. Entrar a `Unified CRM`
 12. Preparar cola de email
 13. Enviar prueba
-14. Confirmar que el remitente real sea `hola@geobooker.com.mx`
+14. Confirmar que el remitente real sea `notificaciones@geobooker.com`
 15. Confirmar que el correo tenga footer, logos y QR
 
 ## Si algo falla

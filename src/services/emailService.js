@@ -20,7 +20,7 @@ export async function sendEmail({ to, subject, html, from }) {
         to,
         subject,
         html,
-        from // Opcional: 'Geobooker Ads <hola@geobooker.com.mx>'
+        from // Opcional: 'Geobooker <notificaciones@geobooker.com>'
       })
     });
 
@@ -196,6 +196,6 @@ export async function sendCampaignEmail(contact) {
     to: contact.email,
     subject,
     html,
-    from: 'Geobooker Ads <hola@geobooker.com.mx>'
+    from: 'Geobooker <notificaciones@geobooker.com>'
   });
 }

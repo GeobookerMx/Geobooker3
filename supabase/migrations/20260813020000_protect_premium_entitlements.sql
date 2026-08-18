@@ -8,6 +8,10 @@ DECLARE
   safe_insert_columns TEXT;
   safe_update_columns TEXT;
 BEGIN
+  IF to_regclass('public.user_profiles') IS NULL THEN
+    RETURN;
+  END IF;
+
   SELECT string_agg(format('%I', column_name), ', ' ORDER BY ordinal_position)
     INTO safe_insert_columns
   FROM information_schema.columns
@@ -50,7 +54,28 @@ BEGIN
 END;
 $$;
 
-COMMENT ON COLUMN public.user_profiles.is_premium
-  IS 'Server-managed entitlement. Clients cannot insert or update this column directly.';
-COMMENT ON COLUMN public.user_profiles.is_premium_owner
-  IS 'Server-managed owner entitlement. Clients cannot insert or update this column directly.';
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'user_profiles'
+      AND column_name = 'is_premium'
+  ) THEN
+    COMMENT ON COLUMN public.user_profiles.is_premium
+      IS 'Server-managed entitlement. Clients cannot insert or update this column directly.';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'user_profiles'
+      AND column_name = 'is_premium_owner'
+  ) THEN
+    COMMENT ON COLUMN public.user_profiles.is_premium_owner
+      IS 'Server-managed owner entitlement. Clients cannot insert or update this column directly.';
+  END IF;
+END;
+$$;

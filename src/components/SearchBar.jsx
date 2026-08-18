@@ -10,6 +10,15 @@ import { analyzeSearchIntent, buildIntentSearchQueries } from '../utils/searchIn
 
 const LOCAL_RESULT_LIMIT = 20;
 
+const waitForGoogleMaps = async (timeoutMs = 5000) => {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < timeoutMs) {
+    if (window.google?.maps?.places) return true;
+    await new Promise((resolve) => setTimeout(resolve, 150));
+  }
+  return Boolean(window.google?.maps?.places);
+};
+
 const normalizeSearchValue = (value = '') =>
   String(value)
     .normalize('NFD')
@@ -220,7 +229,8 @@ const SearchBar = ({
         onBusinessesFound([], { query: searchQuery, source: 'timeout' });
       }, 15000);
 
-      if (!window.google || !window.google.maps) {
+      const googleReady = await waitForGoogleMaps();
+      if (!googleReady) {
         console.error('Google Maps no esta disponible');
         onBusinessesFound([], { query: searchQuery, source: 'google_unavailable' });
         return;

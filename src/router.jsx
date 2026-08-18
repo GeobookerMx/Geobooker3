@@ -212,6 +212,7 @@ export default function AppRouter() {
           }
         >
           <Route path="/business/register" element={<BusinessFormPage />} />
+          <Route path="/space/register" element={<BusinessFormPage />} />
           <Route path="/register" element={<RegisterPage />} />
         </Route>
 

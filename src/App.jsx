@@ -9,8 +9,7 @@ import { AppProvider } from "./contexts/AppContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { LocationProvider } from "./contexts/LocationContext";
 import { useSessionTimeout } from "./hooks/useSessionTimeout";
-import { trackSessionStart } from "./services/analyticsService";
-import { flushEventQueue } from "./services/analyticsService";
+import { flushEventQueue, initAppRuntimeTracking, trackAppRuntimeEvent, trackSessionStart } from "./services/analyticsService";
 import { initTrackingFromConsent, enableTracking } from "./services/trackingService";
 import { detectUserCountry } from "./services/geoLocationService";
 import { usePageTracking } from "./hooks/usePageTracking";
@@ -49,8 +48,73 @@ const PUBLIC_NATIVE_PATH_PREFIXES = [
   '/enterprise',
   '/b2b-connect',
   '/download',
-  '/emprende'
+  '/emprende',
+  '/space',
+  '/reset-password'
 ];
+
+const AUTH_LINK_PATHS = ['/auth/callback', '/reset-password'];
+
+async function handleNativeAuthLink(url) {
+  if (!url || typeof window === 'undefined') return false;
+
+  try {
+    const urlObj = new URL(url);
+    const isKnownHost = ['geobooker.com.mx', 'www.geobooker.com.mx', 'www.geobooker.com', 'geobooker.com'].includes(urlObj.hostname);
+    const isCustomScheme = urlObj.protocol === 'geobooker:';
+    const customPath = isCustomScheme ? `/${urlObj.hostname}${urlObj.pathname}` : urlObj.pathname;
+    const targetPath = customPath.replace(/\/+/g, '/');
+    const isAuthLink = AUTH_LINK_PATHS.some((path) => targetPath === path || targetPath.startsWith(`${path}/`));
+
+    if ((!isKnownHost && !isCustomScheme) || !isAuthLink) return false;
+
+    try {
+      const { Browser } = await import('@capacitor/browser');
+      await Browser.close();
+    } catch (error) {
+      console.warn('[Auth Global] No fue necesario cerrar el navegador:', error);
+    }
+
+    const isRecovery = targetPath.startsWith('/reset-password') ||
+      urlObj.searchParams.get('type') === 'recovery' ||
+      new URLSearchParams(urlObj.hash.replace(/^#/, '')).get('type') === 'recovery';
+    const code = urlObj.searchParams.get('code');
+
+    if (code) {
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) throw error;
+      window.location.hash = isRecovery ? '/reset-password' : '/';
+      return true;
+    }
+
+    const tokenParams = new URLSearchParams(urlObj.hash.replace(/^#/, ''));
+    const accessToken = tokenParams.get('access_token') || urlObj.searchParams.get('access_token');
+    const refreshToken = tokenParams.get('refresh_token') || urlObj.searchParams.get('refresh_token');
+
+    if (accessToken && refreshToken) {
+      const { error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken
+      });
+      if (error) throw error;
+      window.location.hash = isRecovery ? '/reset-password' : '/';
+      return true;
+    }
+
+    if (urlObj.searchParams.has('error')) {
+      const description = urlObj.searchParams.get('error_description') || urlObj.searchParams.get('error');
+      window.location.hash = `/login?error=${encodeURIComponent(description)}`;
+      return true;
+    }
+
+    window.location.hash = isRecovery ? '/reset-password' : `/auth/callback${urlObj.search || ''}`;
+    return true;
+  } catch (error) {
+    console.error('[Auth Global] Error procesando el enlace de autenticacion:', error);
+    window.location.hash = '/login?error=auth_failed';
+    return true;
+  }
+}
 
 function routeNativeDeepLinkToApp(url) {
   if (!url || typeof window === 'undefined') return false;
@@ -59,7 +123,7 @@ function routeNativeDeepLinkToApp(url) {
     const urlObj = new URL(url);
     if (urlObj.href.includes('auth/callback')) return false;
 
-    const isKnownHost = ['geobooker.com.mx', 'www.geobooker.com', 'geobooker.com'].includes(urlObj.hostname);
+    const isKnownHost = ['geobooker.com.mx', 'www.geobooker.com.mx', 'www.geobooker.com', 'geobooker.com'].includes(urlObj.hostname);
     const isCustomScheme = urlObj.protocol === 'geobooker:';
     const customPath = isCustomScheme ? `/${urlObj.hostname}${urlObj.pathname}` : urlObj.pathname;
     const targetPath = customPath.replace(/\/+/g, '/');
@@ -82,62 +146,8 @@ if (isNative) {
   try {
     CapApp.addListener('appUrlOpen', async (data) => {
       console.log('[App Global] Deep link recibido:', data.url);
-      if (data?.url?.includes('auth/callback')) {
-        try {
-          // 1. Cerrar el navegador in-app de forma inmediata y fulminante
-          const { Browser } = await import('@capacitor/browser');
-          await Browser.close();
-          console.log('[App Global] Navegador in-app cerrado exitosamente');
-        } catch (e) {
-          console.warn('[App Global] Error al cerrar Browser:', e);
-        }
-
-        try {
-          const urlObj = new URL(data.url);
-          const hashStr = urlObj.hash.replace(/^#/, '');
-          const urlParams = new URLSearchParams(hashStr);
-          const isPasswordRecovery =
-            urlObj.searchParams.get('type') === 'recovery' ||
-            urlParams.get('type') === 'recovery';
-
-          // 2A. Verificar si viene un código de autorización PKCE (?code=xxxx)
-          // Supabase JS v2 en iOS nativo utiliza el flujo PKCE por defecto.
-          const code = urlObj.searchParams.get('code');
-          if (code) {
-            console.log('[Auth Global] Intercambiando código PKCE por sesión...');
-            const { error } = await supabase.auth.exchangeCodeForSession(code);
-            if (error) throw error;
-            console.log('[Auth Global] Sesión PKCE configurada exitosamente');
-            window.location.hash = isPasswordRecovery ? '/reset-password' : '/';
-            return;
-          }
-
-          // 2B. Fallback: extraer tokens directamente del hash (#access_token=xxxx)
-          const access_token = urlParams.get('access_token');
-          const refresh_token = urlParams.get('refresh_token');
-
-          if (access_token && refresh_token) {
-            console.log('[Auth Global] Configurando sesión con access_token...');
-            const { error } = await supabase.auth.setSession({ access_token, refresh_token });
-            if (error) throw error;
-            console.log('[Auth Global] Sesión de tokens configurada nativamente');
-            window.location.hash = isPasswordRecovery ? '/reset-password' : '/';
-            return;
-          }
-
-          // 2C. Manejo de error explícito devuelto por el proveedor
-          if (urlObj.searchParams.has('error')) {
-            const errDesc = urlObj.searchParams.get('error_description') || urlObj.searchParams.get('error');
-            window.location.hash = `/login?error=${encodeURIComponent(errDesc)}`;
-            return;
-          }
-
-          // Fallback final por si la estructura requiere ser procesada por AuthCallback
-          window.location.hash = `/auth/callback${urlObj.hash || urlObj.search}`;
-        } catch (err) {
-          console.error('[Auth Global] Error crítico procesando deep link:', err);
-          window.location.hash = '/login?error=auth_failed';
-        }
+      if (await handleNativeAuthLink(data?.url)) {
+        console.log('[App Global] Enlace de autenticacion procesado');
       } else if (routeNativeDeepLinkToApp(data?.url)) {
         console.log('[App Global] Public deep link routed inside app');
       }
@@ -208,7 +218,10 @@ function PageTracker() {
 function AppInitializer() {
   useEffect(() => {
     checkAppVersion();
+    captureAttribution(window.location.href);
+    captureQrAttribution(window.location.href);
     initTrackingFromConsent();
+    initAppRuntimeTracking();
     trackSessionStart(false);
     initWebVitals(); // Envia LCP, INP, CLS, FCP, TTFB a GA4 (sin costo operacional)
 
@@ -225,6 +238,9 @@ function AppInitializer() {
         try {
           appStateListener = await CapApp.addListener('appStateChange', async ({ isActive }) => {
             if (isActive) {
+              trackAppRuntimeEvent('session_resume', {
+                metadata: { source: 'app_state_change' }
+              });
               const { data: { session } } = await supabase.auth.getSession();
               if (session) {
                 await supabase.auth.refreshSession();
@@ -238,8 +254,10 @@ function AppInitializer() {
       };
       setupNativeListeners();
       CapApp.getLaunchUrl()
-        .then((launchData) => {
-          if (launchData?.url && routeNativeDeepLinkToApp(launchData.url)) {
+        .then(async (launchData) => {
+          if (launchData?.url && await handleNativeAuthLink(launchData.url)) {
+            console.log('[App] Initial auth deep link processed');
+          } else if (launchData?.url && routeNativeDeepLinkToApp(launchData.url)) {
             console.log('[App] Initial public deep link routed inside app');
           }
         })
@@ -317,9 +335,6 @@ function AppInitializer() {
       }
     };
     initGeo();
-    captureAttribution(window.location.href);
-    captureQrAttribution(window.location.href);
-
     return () => {
       window.removeEventListener("online", handleOnline);
       if (appStateListener) appStateListener.remove();

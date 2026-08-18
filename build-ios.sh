@@ -1,66 +1,77 @@
 #!/bin/bash
 # =============================================================
-# GEOBOOKER — Script de Build para iOS
-# Uso: cd ~/Geobooker3 && bash build-ios.sh
+# GEOBOOKER - iOS build helper
+# Usage: cd ~/Geobooker3 && bash build-ios.sh
 # =============================================================
-set -e
+set -euo pipefail
 
 echo ""
-echo "🚀 GEOBOOKER iOS BUILD SCRIPT"
-echo "=============================="
+echo "GEOBOOKER iOS BUILD"
+echo "==================="
 
-# 1. Directorio actual
-echo "📁 Directorio: $(pwd)"
+CURRENT_BRANCH="$(git branch --show-current)"
+CURRENT_COMMIT="$(git rev-parse --short HEAD)"
 
-# 2. Branch actual
-echo "🔀 Branch: $(git branch --show-current)"
-
-# 3. Forzar actualización al último commit de main en GitHub
 echo ""
-echo "⬇️  Descargando últimos cambios de GitHub (origin/main)..."
-git fetch origin
-git reset --hard origin/main
+echo "Directory: $(pwd)"
+echo "Branch: ${CURRENT_BRANCH}"
+echo "Commit: ${CURRENT_COMMIT}"
 
-# 4. Confirmar qué commit se va a compilar
 echo ""
-echo "✅ Commits incluidos en este build:"
-git log --oneline -5
-
-# 5. Variables de entorno
-echo ""
-echo "🔑 Verificando .env.production..."
-if [ -f ".env.production" ]; then
-  echo "   ✅ .env.production encontrado"
-  grep "VITE_SUPABASE_URL" .env.production | head -1
-  grep "VITE_GOOGLE_MAPS_API_KEY" .env.production | head -1
-else
-  echo "   ⚠️  .env.production NO encontrado — se usarán los fallbacks hardcodeados en el código"
+echo "Checking local git state..."
+if [ -n "$(git status --porcelain)" ]; then
+  echo "Local changes detected. Commit or stash them before building iOS."
+  git status --short
+  exit 1
 fi
 
-# 6. Instalar dependencias
 echo ""
-echo "📦 Instalando dependencias (npm install)..."
-npm install
+echo "Fetching origin for visibility only..."
+git fetch origin
 
-# 7. Compilar Vite
 echo ""
-echo "🏗️  Compilando con Vite (npm run build)..."
+echo "Recent commits included in this build:"
+git log --oneline -5
+
+echo ""
+echo "Checking .env.production..."
+if [ -f ".env.production" ]; then
+  echo ".env.production found"
+  if grep -q "VITE_SUPABASE_URL=" .env.production; then
+    echo "VITE_SUPABASE_URL configured"
+  else
+    echo "VITE_SUPABASE_URL missing"
+  fi
+  if grep -q "VITE_GOOGLE_MAPS_API_KEY=" .env.production; then
+    echo "VITE_GOOGLE_MAPS_API_KEY configured"
+  else
+    echo "VITE_GOOGLE_MAPS_API_KEY missing"
+  fi
+else
+  echo ".env.production not found; build will use only Vite/environment defaults."
+fi
+
+echo ""
+echo "Installing dependencies..."
+if [ -f "package-lock.json" ]; then
+  npm ci
+else
+  npm install
+fi
+
+echo ""
+echo "Building web bundle..."
 npm run build
 
-# 8. Sincronizar con iOS
 echo ""
-echo "📱 Sincronizando con proyecto iOS (npx cap sync ios)..."
+echo "Syncing Capacitor iOS..."
 npx cap sync ios
 
 echo ""
-echo "============================================="
-echo "✅ BUILD COMPLETO — EL CÓDIGO WEB ESTÁ LISTO"
-echo "============================================="
-echo ""
-echo "PRÓXIMOS PASOS EN XCODE:"
-echo "  1. Abrir ios/App/App.xcworkspace"
-echo "  2. Product → Clean Build Folder (Shift + Cmd + K)"
-echo "  3. Cambiar Build Number (ej. 25)"
-echo "  4. Product → Archive"
-echo "  5. Distribute App → App Store Connect → Upload"
-echo ""
+echo "Build assets are ready for Xcode."
+echo "Next steps on the remote iMac:"
+echo "  1. Open ios/App/App.xcworkspace"
+echo "  2. Verify signing team and bundle id"
+echo "  3. Product > Clean Build Folder"
+echo "  4. Product > Archive"
+echo "  5. Upload to TestFlight first, then App Store when smoke tests pass"

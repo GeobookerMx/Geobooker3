@@ -115,7 +115,7 @@ export const SEARCH_INTENT_RULES = [
     googleQuery: 'veterinaria alimento mascotas pet supplies',
     fallbackQueries: ['alimento para perro cerca', 'veterinaria cerca', 'pet supplies near me', 'animal hospital'],
     trustSignals: ['horario', 'urgencias', 'stock de alimento', 'servicio veterinario'],
-    keywords: ['croquetas', 'alimento para perro', 'alimento para gato', 'arena para gato', 'vacunas mascotas', 'veterinaria', 'veterinario', 'pet food', 'pet supplies', 'animal hospital']
+    keywords: ['croquetas', 'alimento para perro', 'alimento para gato', 'arena para gato', 'vacunas mascotas', 'veterinaria', 'veterinarias', 'veterinario', 'clinica veterinaria', 'hospital veterinario', 'urgencias veterinarias', 'medico veterinario', 'pet food', 'pet supplies', 'veterinary care', 'animal hospital', 'emergency vet']
   },
   {
     id: 'auto_parts_general',

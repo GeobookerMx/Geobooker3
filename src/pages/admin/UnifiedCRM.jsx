@@ -12,7 +12,7 @@ import {
     Upload, Users, Mail, Send, Search, CheckSquare, Square,
     Trash2, Download, RefreshCw, X, Loader2, Plus, Edit2,
     Building2, BarChart3, TrendingUp, Clock, FileSpreadsheet, BriefcaseBusiness,
-    Play, MessageCircle, Filter, ChevronRight, Eye, Settings
+    Play, MessageCircle, Filter, ChevronRight, Eye, Settings, Activity
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
@@ -24,6 +24,7 @@ import WhatsAppService from '../../services/whatsappService';
 import KPIsPanel from '../../components/admin/KPIsPanel';
 import ConnectOpsDashboard from '../../components/admin/ConnectOpsDashboard';
 import CommercialOpsDashboard from '../../components/admin/CommercialOpsDashboard';
+import MvpTractionPanel from '../../components/admin/MvpTractionPanel';
 import { matchesSemanticText } from '../../utils/semanticDictionary';
 import { getAuthenticatedJsonHeaders } from '../../services/authenticatedRequest';
 
@@ -1140,6 +1141,7 @@ const UnifiedCRM = () => {
     // ============ TABS CONFIG ============
     const tabs = [
         { id: 'contactos', label: '👥 Base de Datos', icon: Users },
+        { id: 'traccion', label: '📊 Traccion MVP', icon: Activity },
         { id: 'email', label: '🚀 Campaña Email', icon: Mail },
         { id: 'whatsapp', label: '💬 WhatsApp', icon: MessageCircle },
         { id: 'plantillas', label: '✉️ Templates', icon: Edit2 },
@@ -1166,7 +1168,7 @@ const UnifiedCRM = () => {
                 <div className="px-4 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3">
                     <div>
                         <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                            🎯 CRM & Marketing Geobooker
+                            🎯 CRM 2.0 & Marketing Geobooker
                         </h1>
                         <p className="text-sm text-gray-500">
                             {totalContacts.toLocaleString()} contactos • {templates.length} plantillas activas
@@ -1231,6 +1233,8 @@ const UnifiedCRM = () => {
 
             {/* Content */}
             <div className="p-4 max-w-7xl mx-auto">
+                {activeTab === 'traccion' && <MvpTractionPanel />}
+
                 {/* ============ TAB: CONTACTOS ============ */}
                 {activeTab === 'contactos' && (
                     <div className="space-y-4">

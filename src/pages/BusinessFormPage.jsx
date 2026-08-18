@@ -10,7 +10,7 @@ const MAPS_LIBRARIES = ['places'];
 import {
   Utensils, Coffee, ShoppingBag, Briefcase, Wrench, HeartPulse, Film, GraduationCap,
   MapPin, Clock, Dog, CreditCard, Truck, Wifi, Accessibility, Star,
-  Hotel, Home, Banknote, Smartphone, PartyPopper, ImagePlus, X, Store
+  Hotel, Home, Banknote, Smartphone, PartyPopper, ImagePlus, X, Store, Shield, Car, FileText
 } from 'lucide-react';
 import PhoneInput from '../components/PhoneInput';
 import { supabase } from '../lib/supabase';
@@ -85,7 +85,7 @@ const CATEGORIES = {
   inmobiliarias: {
     name: 'Inmobiliarias',
     icon: Home,
-    subcategories: ['Locales Comerciales', 'Oficinas', 'Bodegas', 'Consultorios', 'Coworking', 'Naves Industriales', 'Terrenos Comerciales', 'Salones para Eventos', 'Renta de Casas', 'Departamentos', 'Venta de Casas']
+    subcategories: ['Locales Comerciales', 'Oficinas', 'Bodegas', 'Consultorios', 'Coworking', 'Naves Industriales', 'Terrenos Comerciales', 'Salones para Eventos', 'Pensiones para Autos', 'Garages y Cocheras', 'Estacionamientos Nocturnos', 'Cajones de Estacionamiento', 'Renta de Casas', 'Departamentos', 'Venta de Casas']
   },
   finanzas: {
     name: 'Finanzas & Seguros',
@@ -105,7 +105,7 @@ const CATEGORIES = {
 };
 
 // Tags/Características
-const FEATURE_TAGS = [
+const BUSINESS_FEATURE_TAGS = [
   { id: 'pet_friendly', label: 'Pet Friendly', icon: Dog, color: 'amber' },
   { id: '24_hours', label: 'Abierto 24 hrs', icon: Clock, color: 'green' },
   { id: 'accepts_card', label: 'Acepta tarjeta', icon: CreditCard, color: 'blue' },
@@ -115,6 +115,50 @@ const FEATURE_TAGS = [
   { id: 'parking', label: 'Estacionamiento', icon: MapPin, color: 'gray' },
   { id: 'factura', label: 'Facturación', icon: Star, color: 'orange' },
 ];
+
+const SPACE_FEATURE_TAGS = [
+  { id: 'space_cctv', label: 'CCTV / circuito cerrado', icon: Shield, color: 'slate' },
+  { id: 'space_contract', label: 'Renta con contrato', icon: FileText, color: 'emerald' },
+  { id: 'space_guard', label: 'Guardia / vigilancia', icon: Shield, color: 'blue' },
+  { id: 'space_24_7_access', label: 'Acceso 24/7', icon: Clock, color: 'green' },
+  { id: 'space_monthly_rent', label: 'Renta por mes', icon: Banknote, color: 'amber' },
+  { id: 'space_night_parking', label: 'Pensión nocturna', icon: Car, color: 'indigo' },
+  { id: 'space_car_garage', label: 'Garage para autos', icon: Car, color: 'gray' },
+  { id: 'parking', label: 'Estacionamiento', icon: MapPin, color: 'gray' },
+  { id: 'accessible', label: 'Accesible', icon: Accessibility, color: 'indigo' },
+  { id: 'factura', label: 'Facturación', icon: Star, color: 'orange' },
+];
+
+const SPACE_TYPES = [
+  'Local comercial',
+  'Oficina',
+  'Bodega',
+  'Consultorio',
+  'Coworking',
+  'Nave industrial',
+  'Terreno comercial',
+  'Salón para eventos',
+  'Pensión para autos',
+  'Garage / cochera',
+  'Estacionamiento nocturno',
+  'Cajón de estacionamiento',
+  'Otro espacio'
+];
+
+const SPACE_TYPE_SUBCATEGORY = {
+  'Local comercial': 'Locales Comerciales',
+  Oficina: 'Oficinas',
+  Bodega: 'Bodegas',
+  Consultorio: 'Consultorios',
+  Coworking: 'Coworking',
+  'Nave industrial': 'Naves Industriales',
+  'Terreno comercial': 'Terrenos Comerciales',
+  'Salón para eventos': 'Salones para Eventos',
+  'Pensión para autos': 'Pensiones para Autos',
+  'Garage / cochera': 'Garages y Cocheras',
+  'Estacionamiento nocturno': 'Estacionamientos Nocturnos',
+  'Cajón de estacionamiento': 'Cajones de Estacionamiento'
+};
 
 export default function BusinessFormPage() {
   const { user } = useAuth();
@@ -192,8 +236,21 @@ export default function BusinessFormPage() {
       ...previous,
       listing_type: type,
       ...(type === 'space_rental'
-        ? { category: 'inmobiliarias', subcategory: 'Locales Comerciales', space_type: 'Local comercial' }
-        : { category: '', subcategory: '', space_type: '', monthly_rent: '', area_sqm: '', available_from: '' })
+        ? {
+            category: 'inmobiliarias',
+            subcategory: 'Locales Comerciales',
+            space_type: 'Local comercial',
+            tags: previous.tags.filter((tag) => SPACE_FEATURE_TAGS.some((spaceTag) => spaceTag.id === tag))
+          }
+        : {
+            category: '',
+            subcategory: '',
+            space_type: '',
+            monthly_rent: '',
+            area_sqm: '',
+            available_from: '',
+            tags: previous.tags.filter((tag) => BUSINESS_FEATURE_TAGS.some((businessTag) => businessTag.id === tag))
+          })
     }));
   };
 
@@ -219,7 +276,8 @@ export default function BusinessFormPage() {
       ...prev,
       [name]: value,
       // Reset subcategory cuando cambia la categoría
-      ...(name === 'category' ? { subcategory: '' } : {})
+      ...(name === 'category' ? { subcategory: '' } : {}),
+      ...(name === 'space_type' && SPACE_TYPE_SUBCATEGORY[value] ? { subcategory: SPACE_TYPE_SUBCATEGORY[value] } : {})
     }));
   };
 
@@ -342,6 +400,7 @@ export default function BusinessFormPage() {
   };
 
   const selectedCategoryData = form.category ? CATEGORIES[form.category] : null;
+  const activeFeatureTags = publicationType === 'space_rental' ? SPACE_FEATURE_TAGS : BUSINESS_FEATURE_TAGS;
 
   // Componente para label con asterisco rojo
   const RequiredLabel = ({ children }) => (
@@ -486,7 +545,7 @@ export default function BusinessFormPage() {
                       <RequiredLabel>Tipo de espacio</RequiredLabel>
                       <select name="space_type" value={form.space_type} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
                         <option value="">Selecciona el tipo</option>
-                        {['Local comercial', 'Oficina', 'Bodega', 'Consultorio', 'Coworking', 'Nave industrial', 'Terreno comercial', 'Salon para eventos', 'Otro espacio'].map((type) => (
+                        {SPACE_TYPES.map((type) => (
                           <option key={type} value={type}>{type}</option>
                         ))}
                       </select>
@@ -610,13 +669,15 @@ export default function BusinessFormPage() {
             <section className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl border border-green-100">
               <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
                 <span className="bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">4</span>
-                Características de tu Negocio
+                {publicationType === 'space_rental' ? 'Características del espacio en renta' : 'Características de tu Negocio'}
               </h2>
               <p className="text-sm text-gray-500 mb-4">
-                Selecciona las características que apliquen a tu negocio:
+                {publicationType === 'space_rental'
+                  ? 'Selecciona las condiciones, seguridad y modalidad de renta que apliquen al espacio:'
+                  : 'Selecciona las características que apliquen a tu negocio:'}
               </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {FEATURE_TAGS.map(tag => {
+                {activeFeatureTags.map(tag => {
                   const Icon = tag.icon;
                   const isSelected = form.tags.includes(tag.id);
                   return (

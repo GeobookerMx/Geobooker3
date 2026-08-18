@@ -11,7 +11,7 @@ import {
     Navigation, Share2, Heart, ArrowLeft,
     Instagram, Facebook, MessageCircle,
     Wifi, PawPrint, CreditCard, Car, Baby,
-    Shield, CheckCircle
+    Shield, CheckCircle, FileText, Banknote
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import SEO from '../components/SEO';
@@ -35,10 +35,18 @@ import { buildBusinessShareMessage, buildCanonicalShareUrl } from '../services/s
 const TAG_CONFIG = {
     wifi: { icon: Wifi, label: 'WiFi Gratis', color: 'text-blue-600' },
     pet_friendly: { icon: PawPrint, label: 'Pet Friendly', color: 'text-green-600' },
+    accepts_card: { icon: CreditCard, label: 'Acepta Tarjeta', color: 'text-purple-600' },
     accepts_cards: { icon: CreditCard, label: 'Acepta Tarjetas', color: 'text-purple-600' },
     parking: { icon: Car, label: 'Estacionamiento', color: 'text-gray-600' },
     kids_friendly: { icon: Baby, label: 'Apto para Niños', color: 'text-pink-600' },
-    verified: { icon: Shield, label: 'Verificado', color: 'text-yellow-600' }
+    verified: { icon: Shield, label: 'Verificado', color: 'text-yellow-600' },
+    space_cctv: { icon: Shield, label: 'CCTV / circuito cerrado', color: 'text-slate-600' },
+    space_contract: { icon: FileText, label: 'Renta con contrato', color: 'text-emerald-600' },
+    space_guard: { icon: Shield, label: 'Guardia / vigilancia', color: 'text-blue-600' },
+    space_24_7_access: { icon: Clock, label: 'Acceso 24/7', color: 'text-green-600' },
+    space_monthly_rent: { icon: Banknote, label: 'Renta por mes', color: 'text-amber-600' },
+    space_night_parking: { icon: Car, label: 'Pensión nocturna', color: 'text-indigo-600' },
+    space_car_garage: { icon: Car, label: 'Garage para autos', color: 'text-gray-600' }
 };
 
 const BusinessProfilePage = () => {

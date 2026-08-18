@@ -272,15 +272,17 @@ export const SEARCH_INTENT_RULES = [
     id: 'space_rental_real_estate',
     label: 'Renta de espacios, locales y oficinas',
     confidence: 0.90,
-    categoryHints: ['real-estate-agency', 'coworking-space', 'business-center', 'office-space', 'storage-spaces'],
-    googleQuery: 'renta oficinas locales comerciales coworking bienes raices',
-    fallbackQueries: ['renta de locales cerca', 'oficinas en renta cerca', 'coworking cerca', 'bienes raices cerca'],
-    trustSignals: ['precio de renta', 'contrato flexible', 'servicios incluidos', 'dimensiones'],
+    categoryHints: ['real-estate-agency', 'coworking-space', 'business-center', 'office-space', 'storage-spaces', 'parking'],
+    googleQuery: 'renta oficinas locales comerciales coworking pensiones garages estacionamiento nocturno',
+    fallbackQueries: ['renta de locales cerca', 'oficinas en renta cerca', 'coworking cerca', 'pensiones para autos cerca', 'garage en renta cerca', 'estacionamiento nocturno cerca'],
+    trustSignals: ['precio de renta', 'contrato flexible', 'servicios incluidos', 'dimensiones', 'seguridad/CCTV'],
     keywords: [
       'renta local', 'renta locales', 'renta oficina', 'renta oficinas', 'renta de oficina', 'renta de local',
       'alquiler de locales', 'alquiler de oficinas', 'coworking', 'espacio de trabajo', 'sala de juntas',
       'oficina virtual', 'locales comerciales', 'bienes raices', 'real estate', 'commercial space', 'office for rent', 'office rental',
-      'renta de espacio', 'renta de espacios', 'alquiler de espacio'
+      'renta de espacio', 'renta de espacios', 'alquiler de espacio', 'pension para autos', 'pension nocturna',
+      'garage en renta', 'cochera en renta', 'cajon de estacionamiento', 'renta de garage', 'estacionamiento nocturno',
+      'parking monthly', 'monthly parking', 'car garage rental'
     ]
   },
   {

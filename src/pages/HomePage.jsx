@@ -25,6 +25,7 @@ import { getCachedBusinesses, isCacheValid, cacheBusinesses } from '../services/
 import { getBusinessesInBounds } from '../services/denueMapService';
 import { trackEvent } from '../services/analyticsService';
 import { isGlobalHost } from '../config/domainStrategy';
+import publicGlobalMarkets from '../config/publicGlobalMarkets.json';
 import { generateCacheKey, getFromCache, searchPlacesUniversal } from '../services/googlePlacesService';
 import { MapPin, Loader2, Search, Store, Megaphone, ArrowRight, ShieldCheck, Clock3 } from 'lucide-react';
 
@@ -335,12 +336,26 @@ const CITY_COORDINATES = {
   paris: { lat: 48.8566, lng: 2.3522 }
 };
 
-const CITY_DATA_FILTERS = {
-  'los-angeles': { city: 'Los Angeles', countryCode: 'US' },
-  toronto: { city: 'Toronto', countryCode: 'CA' },
-  madrid: { city: 'Madrid', countryCode: 'ES' },
-  paris: { city: 'Paris', countryCode: 'FR' }
+const MEXICO_CITY_ALIASES = {
+  cdmx: ['CDMX', 'Ciudad de México', 'Ciudad de Mexico', 'Mexico City'],
+  guadalajara: ['Guadalajara'],
+  monterrey: ['Monterrey'],
+  puebla: ['Puebla'],
+  tijuana: ['Tijuana'],
+  merida: ['Mérida', 'Merida'],
+  queretaro: ['Querétaro', 'Queretaro'],
+  leon: ['León', 'Leon']
 };
+const MEXICO_CITY_SLUGS = new Set(Object.keys(MEXICO_CITY_ALIASES));
+
+const CITY_DATA_FILTERS = Object.fromEntries(
+  publicGlobalMarkets.markets
+    .filter((market) => market.status === 'active' && Number(market.currentRecords) > 0)
+    .map((market) => [
+      String(market.id || '').replace(/^[a-z]{2}-/, ''),
+      { city: market.city, countryCode: market.countryCode }
+    ])
+);
 
 
 const toMergedArray = (...values) => {
@@ -534,16 +549,21 @@ const HomePage = () => {
   const subcategoryFilter = subcategory || searchParams.get('subcategory');
   const cityFilter = city || searchParams.get('city');
   const cityDataFilter = cityFilter ? CITY_DATA_FILTERS[cityFilter.toLowerCase()] : null;
+  const normalizedCitySlug = String(cityFilter || '').toLowerCase();
+  const mexicoCityAliases = MEXICO_CITY_ALIASES[normalizedCitySlug] || null;
+  const isCityRouteAvailable = !cityFilter
+    || MEXICO_CITY_SLUGS.has(normalizedCitySlug)
+    || Boolean(cityDataFilter);
   const searchMarketKey = cityDataFilter
     ? `${cityDataFilter.countryCode}:${cityDataFilter.city}`.toLowerCase()
     : 'local';
   const activeMapCenter = useMemo(() => {
-    if (cityFilter) {
+    if (cityFilter && isCityRouteAvailable) {
       const coords = CITY_COORDINATES[cityFilter.toLowerCase()];
       if (coords) return coords;
     }
     return userLocation;
-  }, [cityFilter, userLocation]);
+  }, [cityFilter, isCityRouteAvailable, userLocation]);
 
   // SEO dinámico basado en filtros
   const getSEOTitle = () => {
@@ -557,6 +577,14 @@ const HomePage = () => {
     if (cityFilter) return t('seo.cityDescription', { city: cityFilter, defaultValue: `Explora el mapa interactivo de ${cityFilter}. Encuentra restaurantes, farmacias, tiendas y más en Geobooker.` });
     return t('home.subtitle');
   };
+
+  const seoCanonicalPath = city && category
+    ? `/ciudad/${encodeURIComponent(normalizedCitySlug)}/${encodeURIComponent(category)}`
+    : city
+      ? `/ciudad/${encodeURIComponent(normalizedCitySlug)}`
+      : category
+        ? `/c/${encodeURIComponent(category)}${subcategory ? `/${encodeURIComponent(subcategory)}` : ''}`
+        : '/';
 
   // Sistema de Interstitial Ads
   const { showInterstitial, incrementSearchCount, closeInterstitial } = useInterstitialTrigger();
@@ -650,6 +678,11 @@ const HomePage = () => {
   // Limpiar búsqueda (botón separado)
   // Cargar negocios nativos de Geobooker (CON CACHÉ IndexedDB)
   const fetchGeobookerBusinesses = useCallback(async () => {
+    if (cityFilter && !isCityRouteAvailable) {
+      setGeobookerBusinesses([]);
+      return;
+    }
+
     if (cityDataFilter) {
       setGeobookerBusinesses([]);
       return;
@@ -658,7 +691,7 @@ const HomePage = () => {
     try {
       // ⚡ PASO 1: Intentar cargar desde caché primero (instantáneo)
       const cacheStatus = cityDataFilter ? { isValid: false } : await isCacheValid(userLocation);
-      if (cacheStatus.isValid && !categoryFilter && !cityDataFilter) {
+      if (cacheStatus.isValid && !categoryFilter && !cityFilter) {
         const cachedBusinesses = await getCachedBusinesses();
         if (cachedBusinesses.length > 0) {
           const enrichedCachedBusinesses = await enrichBusinessesWithAwards(cachedBusinesses);
@@ -677,6 +710,9 @@ const HomePage = () => {
 
       if (categoryFilter) query = query.eq('category', categoryFilter);
       if (subcategoryFilter) query = query.eq('subcategory', subcategoryFilter);
+      if (mexicoCityAliases) {
+        query = query.or(mexicoCityAliases.map((cityName) => `city.ilike.*${cityName}*`).join(','));
+      }
       if (cityDataFilter) {
         query = query
           .eq('country_code', cityDataFilter.countryCode)
@@ -715,14 +751,14 @@ const HomePage = () => {
         }));
 
         setGeobookerBusinesses(businessesWithPremium);
-        if (!categoryFilter && !cityDataFilter && userLocation && businessesWithPremium.length > 0) {
+        if (!categoryFilter && !cityFilter && userLocation && businessesWithPremium.length > 0) {
           cacheBusinesses(businessesWithPremium, userLocation);
         }
       }
     } catch (error) {
       console.error('Error fetching Geobooker businesses:', error);
     }
-  }, [categoryFilter, subcategoryFilter, userLocation, cityDataFilter]);
+  }, [categoryFilter, subcategoryFilter, userLocation, cityDataFilter, cityFilter, isCityRouteAvailable, mexicoCityAliases]);
 
   // 💚 OPCION 1: Cargar recomendaciones filtradas por viewport del mapa
   // Solo se cargan las recomendaciones visibles en el área del mapa, no TODAS.
@@ -797,7 +833,7 @@ const HomePage = () => {
   useEffect(() => {
     const searchGooglePlacesWithCategory = async () => {
       // Solo buscar si hay filtro de categoría Y tenemos ubicación del usuar io
-      if (!categoryFilter || !activeMapCenter) return;
+      if (!categoryFilter || !activeMapCenter || !isCityRouteAvailable) return;
 
       try {
         // ⚡ OPTIMIZACIÓN: Mostrar caché inmediatamente (loading optimista)
@@ -832,7 +868,7 @@ const HomePage = () => {
     };
 
     searchGooglePlacesWithCategory();
-  }, [categoryFilter, subcategoryFilter, userLocation, activeMapCenter]);
+  }, [categoryFilter, subcategoryFilter, userLocation, activeMapCenter, isCityRouteAvailable]);
 
   // Show location modal for new users who have no location at all
   // [APP STORE FIX] Only show after user interaction, not on app launch
@@ -1243,9 +1279,11 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* SEO Meta Tags */}
-            <SEO
+      <SEO
         title={getSEOTitle()}
         description={getSEODescription()}
+        url={seoCanonicalPath}
+        noindex={!isCityRouteAvailable}
         keywords={[
           'negocios cerca de mi',
           'servicios cerca de mi',
@@ -1258,7 +1296,7 @@ const HomePage = () => {
           'locksmith near me',
           'local business directory'
         ]}
-        structuredData={[
+        structuredData={isCityRouteAvailable ? [
           {
             '@context': 'https://schema.org',
             '@type': 'ItemList',
@@ -1287,7 +1325,7 @@ const HomePage = () => {
             areaServed: ['MX', 'US', 'CA', 'GB'],
             serviceType: 'Local business search, visibility and commercial activation'
           }
-        ]}
+        ] : null}
       />
 
       {/* Banner comercial interno de temporada - visible hasta el 31 de agosto de 2026 */}

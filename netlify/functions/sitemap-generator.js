@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const expansionMarkets = require('../../scripts/international/expansion-markets.json');
 
 const GLOBAL_ORIGIN = 'https://www.geobooker.com';
 const MX_ORIGIN = 'https://geobooker.com.mx';
@@ -24,6 +25,10 @@ const normalizePath = (path = '') => {
 
 const today = () => new Date().toISOString().split('T')[0];
 const toDate = (value) => value ? new Date(value).toISOString().split('T')[0] : today();
+const marketSlug = (market) => String(market.id || '').replace(/^[a-z]{2}-/, '');
+const INDEXABLE_MARKETS = expansionMarkets.markets.filter(
+  (market) => market.status === 'active' && Number(market.currentRecords) > 0
+);
 
 exports.handler = async (event) => {
   const host = String(event.headers.host || event.headers.Host || '').toLowerCase();
@@ -105,17 +110,7 @@ exports.handler = async (event) => {
   ];
   emprendeChallengeRoutes.forEach((route) => addRoute(route, null, '0.7', 'monthly'));
 
-  const globalCityRoutes = [
-    '/cities/los-angeles', '/cities/new-york', '/cities/houston', '/cities/miami',
-    '/cities/london', '/cities/manchester', '/cities/toronto', '/cities/vancouver',
-    '/cities/barcelona', '/cities/amsterdam', '/cities/rome', '/cities/milan',
-    '/cities/paris', '/cities/berlin', '/cities/lisbon', '/cities/sao-paulo',
-    '/cities/mexico-city', '/cities/tokyo', '/cities/sydney', '/cities/dublin',
-    '/cities/zurich', '/cities/medellin', '/cities/bogota',
-    // Wave 6
-    '/cities/singapore', '/cities/seoul', '/cities/dubai',
-    '/cities/stockholm', '/cities/vienna', '/cities/brussels'
-  ];
+  const globalCityRoutes = INDEXABLE_MARKETS.map((market) => `/cities/${marketSlug(market)}`);
   const mexicoCityRoutes = [
     '/ciudad/cdmx', '/ciudad/guadalajara', '/ciudad/monterrey', '/ciudad/puebla',
     '/ciudad/tijuana', '/ciudad/merida', '/ciudad/queretaro', '/ciudad/leon'
@@ -134,20 +129,57 @@ exports.handler = async (event) => {
   }
 
   if (supabase) {
-    try {
-      const { data: businesses, error } = await supabase
-        .from('businesses')
-        .select('id, slug, updated_at, country')
-        .eq('status', 'approved')
-        .order('updated_at', { ascending: false })
-        .limit(globalMode ? 8000 : 10000);
-      if (!error && businesses) {
-        businesses
-          .filter((biz) => globalMode ? String(biz.country || '').toUpperCase() !== 'MX' : String(biz.country || 'MX').toUpperCase() === 'MX')
-          .forEach((biz) => addRoute('/business/' + (biz.slug || biz.id), biz.updated_at, '0.7', 'weekly'));
+    if (!globalMode) {
+      try {
+        const { data: businesses, error } = await supabase
+          .from('businesses')
+          .select('id, slug, updated_at, country')
+          .eq('status', 'approved')
+          .order('updated_at', { ascending: false })
+          .limit(10000);
+        if (!error && businesses) {
+          businesses
+            .filter((biz) => String(biz.country || 'MX').toUpperCase() === 'MX')
+            .forEach((biz) => addRoute('/business/' + (biz.slug || biz.id), biz.updated_at, '0.7', 'weekly'));
+        }
+      } catch (err) {
+        console.warn('[sitemap-generator] businesses skipped:', err.message);
       }
-    } catch (err) {
-      console.warn('[sitemap-generator] businesses skipped:', err.message);
+    }
+
+    if (globalMode && INDEXABLE_MARKETS.length > 0) {
+      try {
+        const activeCitiesByCountry = new Map();
+        INDEXABLE_MARKETS.forEach((market) => {
+          const cities = activeCitiesByCountry.get(market.countryCode) || new Set();
+          cities.add(String(market.city).toLowerCase());
+          activeCitiesByCountry.set(market.countryCode, cities);
+        });
+
+        const { data: internationalBusinesses, error } = await supabase
+          .from('international_businesses')
+          .select('id, slug, updated_at, country_code, city')
+          .in('country_code', [...activeCitiesByCountry.keys()])
+          .eq('status', 'approved')
+          .eq('is_visible', true)
+          .order('updated_at', { ascending: false })
+          .limit(8000);
+
+        if (!error && internationalBusinesses) {
+          internationalBusinesses
+            .filter((business) => activeCitiesByCountry
+              .get(String(business.country_code || '').toUpperCase())
+              ?.has(String(business.city || '').toLowerCase()))
+            .forEach((business) => addRoute(
+              `/business/${business.slug || business.id}`,
+              business.updated_at,
+              '0.7',
+              'weekly'
+            ));
+        }
+      } catch (err) {
+        console.warn('[sitemap-generator] international businesses skipped:', err.message);
+      }
     }
   }
 

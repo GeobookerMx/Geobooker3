@@ -3,8 +3,9 @@
 
 const { Resend } = require('resend');
 const { resolveEmailSender } = require('./_email-config');
+const { authorizeEmailRequest } = require('./_email-request-auth');
 
-exports.handler = async (event, context) => {
+exports.handler = async (event) => {
     // Solo permitir POST
     if (event.httpMethod !== 'POST') {
         return {
@@ -14,11 +15,22 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        // Inicializar Resend con API Key
-        const resend = new Resend(process.env.RESEND_API_KEY);
-
-        // Parsear body
-        const { to, subject, html, from, fromName } = JSON.parse(event.body);
+        const rawBody = event.body || '';
+        if (rawBody.length > 200_000) {
+            return { statusCode: 413, body: JSON.stringify({ error: 'payload_too_large' }) };
+        }
+        const payload = JSON.parse(rawBody);
+        const { to, subject, html, from, fromName } = payload;
+        const authorization = await authorizeEmailRequest(event, {
+            type: 'custom',
+            data: { email: to }
+        });
+        if (!authorization.authorized) {
+            return {
+                statusCode: authorization.statusCode,
+                body: JSON.stringify({ error: authorization.error })
+            };
+        }
 
         // Validar campos requeridos
         if (!to || !subject || !html) {
@@ -29,6 +41,8 @@ exports.handler = async (event, context) => {
                 })
             };
         }
+
+        const resend = new Resend(process.env.RESEND_API_KEY);
 
         const senderConfig = resolveEmailSender({
             preferredEmail: from,
@@ -53,7 +67,7 @@ exports.handler = async (event, context) => {
             statusCode: 200,
             headers: {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
+                'Cache-Control': 'no-store'
             },
             body: JSON.stringify({
                 success: true,

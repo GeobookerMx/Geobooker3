@@ -6,11 +6,12 @@ import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import OxxoVoucher from '../components/payment/OxxoVoucher';
 import { formatPrice } from '../utils/currencyUtils';
-import { getDaysRemaining, getPremiumPromoDeadlineLabel, isPremiumPromoActive, PROMOTIONS } from '../config/promotions';
+import { getDaysRemaining, getPremiumPromoDeadlineLabel, isPremiumPromoActive } from '../config/promotions';
 import { clarityMarkConversion } from '../services/trackingService';
 import { Capacitor } from '@capacitor/core';
 import { buildPaymentReturnUrl } from '../services/paymentReturnUrls';
 import { PREMIUM_PRICING } from '../config/premiumPricing';
+import { activatePremiumPromotion } from '../services/premiumService';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -85,17 +86,7 @@ const UpgradePage = () => {
                 return;
             }
 
-            // Actualizar directamente en user_profiles
-            const { error } = await supabase
-                .from('user_profiles')
-                .update({
-                    is_premium_owner: true,
-                    premium_until: PROMOTIONS.PREMIUM_FREE_UNTIL,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', session.user.id);
-
-            if (error) throw error;
+            await activatePremiumPromotion();
 
             // 🔍 Clarity: Marcar conversión de Premium (promocional)
             clarityMarkConversion('premium_upgrade_free');
@@ -134,6 +125,7 @@ const UpgradePage = () => {
         const toastId = toast.loading('Preparando pago seguro...');
         try {
             const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error('Tu sesión expiró. Inicia sesión nuevamente.');
             const stripe = await stripePromise;
 
             if (!stripe) {
@@ -145,7 +137,10 @@ const UpgradePage = () => {
 
             const response = await fetch('/.netlify/functions/create-checkout-session', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
                 body: JSON.stringify({
                     // Use amount instead of priceId for one-time or trials
                     // Stripe minimum is $10 MXN (1000 centavos)
@@ -195,10 +190,14 @@ const UpgradePage = () => {
         const toastId = toast.loading('Generando voucher OXXO...');
         try {
             const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error('Tu sesión expiró. Inicia sesión nuevamente.');
 
             const response = await fetch('/.netlify/functions/create-oxxo-payment', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
                 body: JSON.stringify({
                     // Use same trial pricing as card: $10 MXN minimum for free trial
                     amount: LAUNCH_CONFIG.launchPrice === 0 ? PREMIUM_PRICING.trialChargeMxn : LAUNCH_CONFIG.regularPrice,

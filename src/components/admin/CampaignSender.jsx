@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { Mail, Send, AlertCircle, CheckCircle, Loader2, Zap, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { supabase } from '../../lib/supabase';
+import { getAuthenticatedJsonHeaders } from '../../services/authenticatedRequest';
 
 const CampaignSender = ({ metrics, onCampaignComplete }) => {
     const [preparing, setPreparing] = useState(false);
@@ -24,7 +24,7 @@ const CampaignSender = ({ metrics, onCampaignComplete }) => {
 
             const response = await fetch('/.netlify/functions/generate-email-queue', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: await getAuthenticatedJsonHeaders(),
                 body: JSON.stringify({ limit: available })
             });
 
@@ -70,7 +70,7 @@ const CampaignSender = ({ metrics, onCampaignComplete }) => {
         try {
             const response = await fetch('/.netlify/functions/process-email-queue', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: await getAuthenticatedJsonHeaders(),
                 body: JSON.stringify({ limit: toSend })
             });
 

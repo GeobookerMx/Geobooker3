@@ -1,6 +1,8 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 const { getWebhookHeaders } = require('./_cors');
+const { getPremiumUntil } = require('./_premium-policy');
+const { ensureInvitedAdvertiser, getInviteRedirect } = require('./_auth-invite');
 
 
 // IMPORTANTE:
@@ -11,27 +13,6 @@ const { getWebhookHeaders } = require('./_cors');
 // - SUPABASE_SERVICE_ROLE_KEY (¡No la anon key!)
 
 // Helper: Generate secure temporary password
-function generateRandomPassword(length = 16) {
-    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
-    let password = '';
-    const array = new Uint8Array(length);
-
-    // Use crypto for better randomness
-    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-        crypto.getRandomValues(array);
-        for (let i = 0; i < length; i++) {
-            password += charset[array[i] % charset.length];
-        }
-    } else {
-        // Fallback for older environments
-        for (let i = 0; i < length; i++) {
-            password += charset[Math.floor(Math.random() * charset.length)];
-        }
-    }
-
-    return password;
-}
-
 async function updateUserProfileWithFallback(supabase, userId, fullPayload, fallbackPayload = null) {
     const primaryPayload = { ...fullPayload };
     const safeFallbackPayload = fallbackPayload || fullPayload;
@@ -68,15 +49,18 @@ async function updateUserProfileWithFallback(supabase, userId, fullPayload, fall
 
 
 async function postInternalNotification(functionName, payload) {
-    if (!process.env.URL) {
-        console.warn('[stripe-webhook] process.env.URL is not configured; skipping internal notification', functionName);
+    if (!process.env.URL || !process.env.INTERNAL_FUNCTION_SECRET) {
+        console.warn('[stripe-webhook] Internal notification configuration missing; skipping', functionName);
         return;
     }
 
     try {
         await fetch(`${process.env.URL}/.netlify/functions/${functionName}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'x-geobooker-internal-secret': process.env.INTERNAL_FUNCTION_SECRET
+            },
             body: JSON.stringify(payload)
         });
     } catch (error) {
@@ -328,43 +312,25 @@ exports.handler = async (event) => {
                     const advertiserEmail = metadata.advertiser_email || session.customer_details?.email;
 
                     if (campaignId && advertiserEmail) {
-                        // 🆕 PASO 1: Crear cuenta de usuario si no existe
+                        // PASO 1: resolver acceso sin crear ni enviar contraseñas.
                         let userId = null;
-                        let temporaryPassword = null;
                         let isNewUser = false;
 
                         try {
-                            // Verificar si el usuario ya existe
-                            const { data: existingUser } = await supabase.auth.admin.getUserByEmail(advertiserEmail);
-
-                            if (!existingUser || !existingUser.user) {
-                                // Usuario NO existe, crearlo
-                                temporaryPassword = generateRandomPassword();
-
-                                const { data: newUser, error: signUpError } = await supabase.auth.admin.createUser({
-                                    email: advertiserEmail,
-                                    password: temporaryPassword,
-                                    email_confirm: true, // Auto-confirm email
-                                    user_metadata: {
-                                        role: 'advertiser',
-                                        company_name: metadata.company || metadata.advertiser_name,
-                                        created_via: 'enterprise_checkout'
-                                    }
-                                });
-
-                                if (signUpError) {
-                                    console.error('Error creating user:', signUpError);
-                                } else {
-                                    userId = newUser.user.id;
-                                    isNewUser = true;
-                                    console.log(`✅ New advertiser account created: ${advertiserEmail}`);
+                            const invitation = await ensureInvitedAdvertiser(supabase, {
+                                email: advertiserEmail,
+                                redirectTo: getInviteRedirect(process.env.URL),
+                                metadata: {
+                                    role: 'advertiser',
+                                    company_name: metadata.company || metadata.advertiser_name,
+                                    created_via: 'enterprise_checkout'
                                 }
-                            } else {
-                                userId = existingUser.user.id;
-                                console.log(`ℹ️ Advertiser account already exists: ${advertiserEmail}`);
-                            }
+                            });
+                            userId = invitation.userId;
+                            isNewUser = invitation.invited;
+                            console.log(`[stripe-webhook] Advertiser auth resolved; invited=${isNewUser}`);
                         } catch (authError) {
-                            console.error('Auth error:', authError);
+                            console.error('[stripe-webhook] Could not resolve advertiser auth:', authError.message);
                         }
 
                         // PASO 2: actualizar pago conservando fechas elegidas en checkout
@@ -512,28 +478,6 @@ exports.handler = async (event) => {
                         await postInternalNotification('notify-admin-campaign', { campaign: updatedCampaign });
                         await notifyCampaignReceived(updatedCampaign, 'card');
 
-                        // 🆕 PASO 3:  Enviar email de bienvenida (solo si es nuevo usuario)
-                        if (isNewUser && temporaryPassword) {
-                            try {
-                                // Llamar función de email (debes crear send-welcome-email.js)
-                                await fetch(`${process.env.URL}/.netlify/functions/send-welcome-email`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                        email: advertiserEmail,
-                                        password: temporaryPassword,
-                                        campaignName: updatedCampaign?.advertiser_name || 'Tu Campaña',
-                                        companyName: metadata.company || metadata.advertiser_name,
-                                        dashboardUrl: `${process.env.URL}/advertiser/dashboard`
-                                    })
-                                });
-                                console.log(`📧 Welcome email sent to ${advertiserEmail}`);
-                            } catch (emailError) {
-                                console.error('Error sending welcome email:', emailError);
-                                // Don't fail the webhook if email fails
-                            }
-                        }
-
                         console.log(`✅ Enterprise campaign ${campaignId} paid. Plan: ${metadata.plan}, Company: ${metadata.company}, IsNew: ${isNewUser}`);
                     }
                 }
@@ -669,7 +613,7 @@ exports.handler = async (event) => {
                     }
                 }
                 // CASO 2: Suscripción Premium (Usuario)
-                else {
+                else if (metadata.type === 'premium_subscription') {
                     const userId = metadata.userId || session.client_reference_id;
                     if (userId) {
                         const subscriptionId = session.subscription;
@@ -682,9 +626,7 @@ exports.handler = async (event) => {
                             premiumUntil = new Date(subscription.current_period_end * 1000).toISOString();
                         } else {
                             // Caso pago único lifetime (ej. 1 año fijo sin recurrencia)
-                            const oneYearLater = new Date();
-                            oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
-                            premiumUntil = oneYearLater.toISOString();
+                            premiumUntil = getPremiumUntil(new Date(), metadata.trial_months);
                         }
 
                         await updateUserProfileWithFallback(
@@ -713,8 +655,6 @@ exports.handler = async (event) => {
             case 'invoice.payment_succeeded': {
                 const invoice = stripeEvent.data.object;
                 const subscriptionId = invoice.subscription;
-                const customerId = invoice.customer;
-
                 // Obtener usuario por stripe_customer_id o subscription_id
                 // Asumimos que ya tenemos guardado el stripe_customer_id
 
@@ -819,9 +759,8 @@ exports.handler = async (event) => {
                     }
 
                     // Si es pago de suscripción única (no recurrente)
-                    if (metadata.user_id && metadata.subscription_type) {
-                        const premiumUntil = new Date();
-                        premiumUntil.setMonth(premiumUntil.getMonth() + 1);
+                    if (metadata.user_id && metadata.subscription_type === 'premium_monthly') {
+                        const premiumUntil = getPremiumUntil(new Date(), metadata.trial_months);
 
                         await updateUserProfileWithFallback(
                             supabase,
@@ -829,13 +768,13 @@ exports.handler = async (event) => {
                             {
                                 is_premium: true,
                                 premium_since: new Date().toISOString(),
-                                premium_until: premiumUntil.toISOString(),
+                                premium_until: premiumUntil,
                                 last_payment_method: 'oxxo'
                             },
                             {
                                 is_premium: true,
                                 premium_since: new Date().toISOString(),
-                                premium_until: premiumUntil.toISOString()
+                                premium_until: premiumUntil
                             }
                         );
 

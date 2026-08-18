@@ -94,6 +94,11 @@ if (isNative) {
 
         try {
           const urlObj = new URL(data.url);
+          const hashStr = urlObj.hash.replace(/^#/, '');
+          const urlParams = new URLSearchParams(hashStr);
+          const isPasswordRecovery =
+            urlObj.searchParams.get('type') === 'recovery' ||
+            urlParams.get('type') === 'recovery';
 
           // 2A. Verificar si viene un código de autorización PKCE (?code=xxxx)
           // Supabase JS v2 en iOS nativo utiliza el flujo PKCE por defecto.
@@ -103,13 +108,11 @@ if (isNative) {
             const { error } = await supabase.auth.exchangeCodeForSession(code);
             if (error) throw error;
             console.log('[Auth Global] Sesión PKCE configurada exitosamente');
-            window.location.hash = '/';
+            window.location.hash = isPasswordRecovery ? '/reset-password' : '/';
             return;
           }
 
           // 2B. Fallback: extraer tokens directamente del hash (#access_token=xxxx)
-          const hashStr = urlObj.hash.replace(/^#/, '');
-          const urlParams = new URLSearchParams(hashStr);
           const access_token = urlParams.get('access_token');
           const refresh_token = urlParams.get('refresh_token');
 
@@ -118,7 +121,7 @@ if (isNative) {
             const { error } = await supabase.auth.setSession({ access_token, refresh_token });
             if (error) throw error;
             console.log('[Auth Global] Sesión de tokens configurada nativamente');
-            window.location.hash = '/';
+            window.location.hash = isPasswordRecovery ? '/reset-password' : '/';
             return;
           }
 

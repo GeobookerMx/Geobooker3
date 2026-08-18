@@ -1,13 +1,11 @@
 // Netlify Function para procesar cola de emails automáticamente
 // Path: netlify/functions/process-email-queue.js
 
-const { Resend } = require('resend');
 const { createClient } = require('@supabase/supabase-js');
 const { resolveEmailSender } = require('./_email-config');
 const { buildCampaignEmail, renderCampaignCopy } = require('./_campaign-email');
-const { ensureCronOrTrustedOrigin } = require('./_cron-auth');
+const { ensureCronOrAdmin } = require('./_cron-auth');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const supabase = createClient(
     process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -20,20 +18,23 @@ const getMexicoDate = () => {
     return now.toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
 };
 
-const getMexicoDateTime = () => {
+const GET_MEXICO_DATE_TIME = () => {
     const now = new Date();
     // Retorna ISO string ajustado a México para timestamps
     return new Date(now.toLocaleString('en-US', { timeZone: 'America/Mexico_City' })).toISOString();
 };
 
-exports.handler = async (event, context) => {
-    const authError = ensureCronOrTrustedOrigin(event);
+exports.handler = async (event) => {
+    const authError = await ensureCronOrAdmin(event);
     if (authError) return authError;
 
     try {
         console.log('🚀 Iniciando procesamiento de cola de emails...');
         const body = event.body ? JSON.parse(event.body) : {};
-        const requestedLimit = Number(body.limit) || null;
+        const parsedLimit = Number(body.limit);
+        const requestedLimit = Number.isFinite(parsedLimit)
+            ? Math.min(Math.max(Math.floor(parsedLimit), 1), 100)
+            : null;
 
         // 1. Obtener límite diario configurado desde crm_settings y fallback a automation_config
         let dailyLimit = 100;
@@ -244,19 +245,27 @@ exports.handler = async (event, context) => {
                     preferredName: 'Geobooker Ads'
                 });
 
-                const emailResult = await resend.emails.send({
-                    from: senderConfig.from,
-                    reply_to: senderConfig.replyTo,
-                    to: contact.email,
-                    subject: finalSubject,
-                    html: finalHtml
+                const emailResponse = await fetch('https://api.resend.com/emails', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Idempotency-Key': `crm-email-queue/${item.id}`
+                    },
+                    body: JSON.stringify({
+                        from: senderConfig.from,
+                        reply_to: senderConfig.replyTo,
+                        to: contact.email,
+                        subject: finalSubject,
+                        html: finalHtml
+                    })
                 });
-
-                if (emailResult?.error) {
-                    throw new Error(`Resend: ${emailResult.error.message}`);
+                const emailResult = await emailResponse.json().catch(() => ({}));
+                if (!emailResponse.ok) {
+                    throw new Error(`Resend request failed (${emailResponse.status})`);
                 }
 
-                const messageId = emailResult?.data?.id || null;
+                const messageId = emailResult?.id || null;
 
                 // Registrar en historial
                 await supabase

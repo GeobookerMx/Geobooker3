@@ -1,4 +1,5 @@
 // Servicio para enviar emails usando Resend (via Netlify Function)
+import { getAuthenticatedJsonHeaders } from './authenticatedRequest';
 // Path: src/services/emailService.js
 
 /**
@@ -14,9 +15,7 @@ export async function sendEmail({ to, subject, html, from }) {
   try {
     const response = await fetch('/.netlify/functions/send-email', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: await getAuthenticatedJsonHeaders(),
       body: JSON.stringify({
         to,
         subject,

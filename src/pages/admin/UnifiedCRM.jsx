@@ -25,6 +25,7 @@ import KPIsPanel from '../../components/admin/KPIsPanel';
 import ConnectOpsDashboard from '../../components/admin/ConnectOpsDashboard';
 import CommercialOpsDashboard from '../../components/admin/CommercialOpsDashboard';
 import { matchesSemanticText } from '../../utils/semanticDictionary';
+import { getAuthenticatedJsonHeaders } from '../../services/authenticatedRequest';
 
 const FALLBACK_EMAIL_SENDER = {
     name: 'Geobooker Ads',
@@ -185,8 +186,6 @@ const TEMPLATE_TYPE_META = {
 };
 
 const PROTECTED_TEMPLATE_TYPES = new Set(['invitation', 'followup', 'reengagement']);
-
-const getTemplateTypeMeta = (templateType) => TEMPLATE_TYPE_META[templateType] || { label: templateType || 'Sin tipo', badge: 'bg-gray-100 text-gray-700' };
 
 const UnifiedCRM = () => {
     // Active Tab
@@ -706,7 +705,7 @@ const UnifiedCRM = () => {
             if (campaignType === 'email') {
                 const response = await fetch('/.netlify/functions/generate-email-queue', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: await getAuthenticatedJsonHeaders(),
                     body: JSON.stringify({
                         limit: dailyLimit,
                         tier: emailSearchTier === 'all' ? null : emailSearchTier
@@ -939,7 +938,7 @@ const UnifiedCRM = () => {
                 try {
                     const response = await fetch('/.netlify/functions/send-notification-email', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: await getAuthenticatedJsonHeaders(),
                         body: JSON.stringify({
                             type: 'custom',
                             data: {
@@ -1080,7 +1079,7 @@ const UnifiedCRM = () => {
                 try {
                     const response = await fetch('/.netlify/functions/send-notification-email', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: await getAuthenticatedJsonHeaders(),
                         body: JSON.stringify({
                             type: 'custom',
                             data: {

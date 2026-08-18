@@ -33,7 +33,8 @@ const DeleteAccountPage = () => {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session.access_token}`
-                }
+                },
+                body: JSON.stringify({ confirmation: 'DELETE_MY_ACCOUNT' })
             });
 
             const result = await response.json();

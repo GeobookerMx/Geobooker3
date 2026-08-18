@@ -1,99 +1,135 @@
-// netlify/functions/create-oxxo-payment.js
-// Función para generar vouchers de pago en OXXO
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const { getCorsHeaders, handlePreflight } = require('./_cors');
+const { getCorsHeaders, handlePreflight, rejectUnauthorizedOrigin } = require('./_cors');
+const { enforceRateLimit } = require('./_rate-limit');
+const { getOptionalRequestUser } = require('./_payment-security');
+const { resolveCheckoutAuthority } = require('./_checkout-authority');
+const {
+    assertPaymentStatusSigningConfigured,
+    createPaymentStatusToken
+} = require('./_payment-status-token');
 
-exports.handler = async (event, context) => {
+exports.handler = async (event) => {
     const preflight = handlePreflight(event);
     if (preflight) return preflight;
 
     const headers = getCorsHeaders(event);
+    const originError = rejectUnauthorizedOrigin(event);
+    if (originError) return originError;
 
     if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405,
             headers,
-            body: JSON.stringify({ error: 'Method not allowed' }),
+            body: JSON.stringify({ error: 'Method not allowed' })
         };
     }
 
+    const rateLimitError = await enforceRateLimit(event, {
+        action: 'create_oxxo_payment',
+        maxCalls: 5,
+        windowSeconds: 300,
+        headers
+    });
+    if (rateLimitError) return rateLimitError;
+
     try {
+        assertPaymentStatusSigningConfigured();
         const {
-            amount,           // Monto en MXN (ej: 119 para $119)
-            email,            // Email del cliente
-            name,             // Nombre del cliente (requerido por Stripe OXXO)
-            productName,      // Nombre del producto (ej: "Hero Banner")
-            productId,        // ID del producto/campaña
-            userId,           // ID del usuario en Supabase
-            metadata = {},    // Metadata adicional para webhook y trazabilidad
-            description       // Descripción del pago
-        } = JSON.parse(event.body);
+            name,
+            productId,
+            userId,
+            metadata: requestMetadata = {}
+        } = JSON.parse(event.body || '{}');
 
-        // Validaciones
-        if (!amount || amount < 10) {
+        const requestUser = await getOptionalRequestUser(event);
+        const isPremiumPayment = productId === 'premium_subscription'
+            || requestMetadata?.subscription_type === 'premium_monthly';
+        const paymentType = isPremiumPayment
+            ? 'premium_subscription'
+            : String(requestMetadata?.type || 'ad_payment');
+
+        if (isPremiumPayment && !requestUser) {
             return {
-                statusCode: 400,
+                statusCode: 401,
                 headers,
-                body: JSON.stringify({ error: 'El monto mínimo es $10 MXN' }),
+                body: JSON.stringify({ error: 'Authentication required for Premium payment' })
             };
         }
 
-        if (amount > 10000) {
+        if (userId && (!requestUser || userId !== requestUser.id)) {
             return {
-                statusCode: 400,
+                statusCode: 403,
                 headers,
-                body: JSON.stringify({ error: 'El monto máximo para OXXO es $10,000 MXN' }),
+                body: JSON.stringify({ error: 'Payment user does not match the authenticated user' })
             };
         }
 
-        if (!email) {
+        const authority = await resolveCheckoutAuthority({
+            paymentType,
+            metadata: {
+                ...requestMetadata,
+                product_id: requestMetadata?.product_id || productId
+            },
+            requestUser
+        });
+
+        if (authority.currency !== 'mxn' || authority.allowOxxo === false) {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'Email es requerido' }),
+                body: JSON.stringify({ error: 'OXXO is not available for this payment' })
+            };
+        }
+
+        const effectiveAmount = authority.amountMinor / 100;
+        if (!Number.isFinite(effectiveAmount) || effectiveAmount < 10 || effectiveAmount > 10000) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'OXXO payment amount is outside the allowed range' })
+            };
+        }
+
+        if (!authority.customerEmail) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'A verified customer email is required' })
             };
         }
 
         const finalMetadata = {
-            product_name: productName || 'Geobooker',
-            product_id: productId || '',
-            user_id: userId || '',
-            payment_type: 'oxxo',
-            ...metadata,
+            ...authority.metadata,
+            product_name: authority.productName || 'Geobooker',
+            payment_type: 'oxxo'
         };
+        if (authority.userId) {
+            finalMetadata.user_id = authority.userId;
+            finalMetadata.userId = authority.userId;
+        }
 
-        // Crear PaymentIntent con OXXO
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: Math.round(amount * 100), // Convertir a centavos
+            amount: authority.amountMinor,
             currency: 'mxn',
             payment_method_types: ['oxxo'],
             metadata: finalMetadata,
-            description: description || `Pago Geobooker - ${productName}`,
-            receipt_email: email,
+            description: `Pago Geobooker - ${authority.productName}`,
+            receipt_email: authority.customerEmail
         });
 
-        // Confirmar el PaymentIntent para generar el voucher OXXO
-        const confirmedIntent = await stripe.paymentIntents.confirm(
-            paymentIntent.id,
-            {
-                payment_method_data: {
-                    type: 'oxxo',
-                    billing_details: {
-                        // Stripe requires first AND last name, minimum 2 chars each
-                        name: name || 'Cliente Geobooker',
-                        email: email,
-                    },
-                },
-                return_url: `${process.env.URL || 'https://geobooker.com.mx'}/payment/oxxo-pending`,
-            }
-        );
+        const confirmedIntent = await stripe.paymentIntents.confirm(paymentIntent.id, {
+            payment_method_data: {
+                type: 'oxxo',
+                billing_details: {
+                    name: name || 'Cliente Geobooker',
+                    email: authority.customerEmail
+                }
+            },
+            return_url: `${process.env.URL || 'https://geobooker.com.mx'}/payment/oxxo-pending`
+        });
 
-        // Extraer información del voucher OXXO
         const oxxoDetails = confirmedIntent.next_action?.oxxo_display_details;
-
-        if (!oxxoDetails) {
-            throw new Error('No se pudo generar el voucher de OXXO');
-        }
+        if (!oxxoDetails) throw new Error('No se pudo generar el voucher de OXXO');
 
         return {
             statusCode: 200,
@@ -101,29 +137,24 @@ exports.handler = async (event, context) => {
             body: JSON.stringify({
                 success: true,
                 paymentIntentId: confirmedIntent.id,
+                paymentStatusToken: createPaymentStatusToken(confirmedIntent.id),
                 voucher: {
-                    // URL del voucher con código de barras
                     hostedVoucherUrl: oxxoDetails.hosted_voucher_url,
-                    // Número de referencia (16 dígitos)
                     number: oxxoDetails.number,
-                    // Fecha de expiración (3 días)
-                    expiresAfter: oxxoDetails.expires_after,
+                    expiresAfter: oxxoDetails.expires_after
                 },
-                amount: amount,
+                amount: effectiveAmount,
                 currency: 'MXN',
                 status: 'pending_payment',
-                message: 'Voucher generado. El usuario tiene 3 días para pagar en OXXO.',
-            }),
+                message: 'Voucher generado. El usuario tiene 3 días para pagar en OXXO.'
+            })
         };
-
     } catch (error) {
         console.error('Error creating OXXO payment:', error);
         return {
-            statusCode: 500,
+            statusCode: error.statusCode || 500,
             headers,
-            body: JSON.stringify({
-                error: error.message || 'Error al crear pago OXXO',
-            }),
+            body: JSON.stringify({ error: error.message || 'Error al crear pago OXXO' })
         };
     }
 };

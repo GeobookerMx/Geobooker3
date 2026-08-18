@@ -45,7 +45,11 @@ const OxxoPendingPage = () => {
         try {
             // Aquí podrías llamar a una función serverless que verifique el estado
             // Por ahora simulamos un check básico
-            const response = await fetch(`/.netlify/functions/check-payment-status?payment_intent=${paymentIntentId}`);
+            const statusToken = voucherData?.statusToken;
+            if (!statusToken) return;
+            const response = await fetch(`/.netlify/functions/check-payment-status?payment_intent=${encodeURIComponent(paymentIntentId)}`, {
+                headers: { 'x-geobooker-payment-status-token': statusToken }
+            });
             if (response.ok) {
                 const data = await response.json();
                 const mappedStatus = data.status === 'succeeded'

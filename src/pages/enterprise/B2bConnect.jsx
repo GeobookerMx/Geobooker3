@@ -131,13 +131,7 @@ export default function B2bConnect() {
                 const notifyResponse = await fetch('/.netlify/functions/notify-connect-brief', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        lead: {
-                            ...payload,
-                            id: leadId,
-                            message: payload.message
-                        }
-                    })
+                    body: JSON.stringify({ leadId })
                 });
 
                 const notifyPayload = await notifyResponse.json().catch(() => ({}));

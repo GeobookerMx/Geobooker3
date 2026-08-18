@@ -39,6 +39,11 @@ A batch may reach preview only when all of the following are true:
 
 Production activation requires a second person or explicit owner approval after preview verification. Import generation and production application must remain separate operations.
 
+Public indexing has a second explicit gate: an approved `active` market must be
+copied into `src/config/publicGlobalMarkets.json` using only its public fields.
+Run `npm run test:global-market-registry` before a build. Preview and candidate
+markets must never be added to that browser registry.
+
 ## Secure operating procedure
 
 1. Validate the market manifest locally:

@@ -3,14 +3,14 @@
 // Path: netlify/functions/generate-whatsapp-queue.js
 
 const { createClient } = require('@supabase/supabase-js');
-const { ensureCronOrTrustedOrigin } = require('./_cron-auth');
+const { ensureCronOrAdmin } = require('./_cron-auth');
 
 const supabase = createClient(
-    process.env.VITE_SUPABASE_URL,
+    process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-exports.handler = async (event, context) => {
+exports.handler = async (event) => {
     // Verificar método
     if (event.httpMethod !== 'POST') {
         return {
@@ -19,7 +19,7 @@ exports.handler = async (event, context) => {
         };
     }
 
-    const authError = ensureCronOrTrustedOrigin(event);
+    const authError = await ensureCronOrAdmin(event);
     if (authError) return authError
 
     try {
@@ -27,8 +27,8 @@ exports.handler = async (event, context) => {
 
         // Parsear parámetros (si vienen en body)
         const body = event.body ? JSON.parse(event.body) : {};
-        const limit = body.limit || 20;
-        const tierFilter = body.tier || null;
+        const limit = Math.min(Math.max(Math.floor(Number(body.limit) || 20), 1), 100);
+        const tierFilter = ['AAA', 'AA', 'A', 'B'].includes(body.tier) ? body.tier : null;
 
         // Llamar a función SQL
         const { data, error } = await supabase

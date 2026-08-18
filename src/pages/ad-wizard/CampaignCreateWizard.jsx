@@ -299,7 +299,8 @@ const getIsoDateOffset = (offsetDays = 0) => {
 
         setUploading(true);
         try {
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { session } } = await supabase.auth.getSession();
+            const user = session?.user;
             if (!user) throw new Error('Debes iniciar sesión');
 
             const filePath = `${user.id}/${Date.now()}.${file.name.split('.').pop()}`;
@@ -332,7 +333,8 @@ const getIsoDateOffset = (offsetDays = 0) => {
         const toastId = toast.loading('Procesando tu campaña...');
 
         try {
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { session } } = await supabase.auth.getSession();
+            const user = session?.user;
             const adPricing = getLocalAdPricing(adSpace?.price_monthly);
             const taxScenario = getTaxScenario(formData.billing_country);
 
@@ -389,7 +391,10 @@ const getIsoDateOffset = (offsetDays = 0) => {
 
                 const response = await fetch('/.netlify/functions/create-checkout-session', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {})
+                    },
                     body: JSON.stringify({
                         priceId: null, // Forzar uso de amount con IVA en lugar de stripe_price_id
                         productId: adSpace.stripe_product_id || null,
@@ -441,7 +446,10 @@ const getIsoDateOffset = (offsetDays = 0) => {
                 // Pago en OXXO
                 const response = await fetch('/.netlify/functions/create-oxxo-payment', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {})
+                    },
                     body: JSON.stringify({
                         amount: totalWithIva,
                         email: formData.advertiser_email,
@@ -482,7 +490,8 @@ const getIsoDateOffset = (offsetDays = 0) => {
                     voucherUrl: data.voucher.hostedVoucherUrl,
                     referenceNumber: data.voucher.number,
                     expiresAt: data.voucher.expiresAfter,
-                    amount: data.amount
+                    amount: data.amount,
+                    statusToken: data.paymentStatusToken
                 };
                 sessionStorage.setItem('oxxo_voucher', JSON.stringify(voucherPayload));
                 setOxxoVoucher(voucherPayload);

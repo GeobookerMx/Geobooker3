@@ -1,14 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
-const crypto = require('crypto');
-
-const ALLOWED_ORIGINS = new Set([
-  'https://geobooker.com.mx',
-  'https://www.geobooker.com.mx',
-  'https://geobooker.com',
-  'https://www.geobooker.com',
-  'http://localhost:5173',
-  'http://localhost:8888'
-]);
+const { getCorsHeaders, handlePreflight, rejectUnauthorizedOrigin } = require('./_cors');
+const { createIdentifier, enforceRateLimit } = require('./_rate-limit');
 
 const ENTERPRISE_PLANS = {
   city_launch: { name: 'City Launch', current_price_usd: 200, duration_months: 1, cities_included: 1, countries_included: 1 },
@@ -45,9 +37,8 @@ function getRequestOrigin(event) {
 }
 
 function getIpHash(event) {
-  const ip = event.headers?.['x-nf-client-connection-ip'] || event.headers?.['client-ip'] || event.headers?.['x-forwarded-for'] || '';
-  if (!ip) return null;
-  return crypto.createHash('sha256').update(String(ip).split(',')[0].trim()).digest('hex');
+  const secret = process.env.RATE_LIMIT_HASH_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  return secret ? createIdentifier(event, secret) : null;
 }
 
 async function recordSecurityEvent(supabase, event, payload = {}) {
@@ -70,20 +61,8 @@ async function recordSecurityEvent(supabase, event, payload = {}) {
   }
 }
 
-function buildHeaders(event) {
-  const origin = getRequestOrigin(event);
-  const allowedOrigin = ALLOWED_ORIGINS.has(origin) ? origin : 'https://geobooker.com.mx';
-
-  return {
-    'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Vary': 'Origin'
-  };
-}
-
 function json(event, statusCode, body) {
-  return { statusCode, headers: buildHeaders(event), body: JSON.stringify(body) };
+  return { statusCode, headers: getCorsHeaders(event), body: JSON.stringify(body) };
 }
 
 function normalizeArray(value) {
@@ -173,8 +152,21 @@ async function insertCampaignWithSchemaFallback(supabase, initialPayload) {
 }
 
 exports.handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') return json(event, 200, { message: 'OK' });
+  const preflight = handlePreflight(event);
+  if (preflight) return preflight;
+
+  const originError = rejectUnauthorizedOrigin(event);
+  if (originError) return originError;
+
   if (event.httpMethod !== 'POST') return json(event, 405, { error: 'Method not allowed' });
+
+  const rateLimitError = await enforceRateLimit(event, {
+    action: 'create_enterprise_campaign_draft',
+    maxCalls: 5,
+    windowSeconds: 300,
+    headers: getCorsHeaders(event)
+  });
+  if (rateLimitError) return rateLimitError;
 
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -184,17 +176,6 @@ exports.handler = async (event) => {
   }
 
   const supabaseForSecurity = createClient(SUPABASE_URL, SERVICE_KEY);
-  const requestOrigin = getRequestOrigin(event);
-  if (requestOrigin && !ALLOWED_ORIGINS.has(requestOrigin)) {
-    await recordSecurityEvent(supabaseForSecurity, event, {
-      event_type: 'blocked_enterprise_checkout_origin',
-      severity: 'high',
-      message: 'Blocked Enterprise checkout request from an unauthorized origin',
-      metadata: { requestOrigin }
-    });
-    return json(event, 403, { error: 'Origin not allowed' });
-  }
-
   try {
     const payload = JSON.parse(event.body || '{}');
     const companyName = limitText(payload.companyName, 120);

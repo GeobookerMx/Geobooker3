@@ -1,9 +1,10 @@
 // src/pages/cities/CityLandingPage.jsx
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import SEO from '../../components/SEO';
-import { Search, MapPin, Star, ArrowRight, Building2 } from 'lucide-react';
+import { Search, MapPin, ArrowRight, Building2 } from 'lucide-react';
+import publicGlobalMarkets from '../../config/publicGlobalMarkets.json';
 
 /**
  * Landing Page para ciudades internacionales
@@ -260,10 +261,22 @@ const CITIES_CONFIG = {
     }
 };
 
+const marketSlug = (market) => String(market.id || '').replace(/^[a-z]{2}-/, '');
+const MARKET_BY_SLUG = new Map(
+    publicGlobalMarkets.markets.map((market) => [marketSlug(market), market])
+);
+const INDEXABLE_CITY_SLUGS = new Set(
+    publicGlobalMarkets.markets
+        .filter((market) => market.status === 'active' && Number(market.currentRecords) > 0)
+        .map(marketSlug)
+);
+
 export default function CityLandingPage() {
     const { citySlug } = useParams();
+    const navigate = useNavigate();
     const { t, i18n } = useTranslation();
     const [city, setCity] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         const cityConfig = CITIES_CONFIG[citySlug];
@@ -287,13 +300,26 @@ export default function CityLandingPage() {
 
     const isSpanish = i18n.language === 'es';
     const description = isSpanish && city.descriptionEs ? city.descriptionEs : city.description;
+    const market = MARKET_BY_SLUG.get(citySlug);
+    const isIndexable = INDEXABLE_CITY_SLUGS.has(citySlug);
+    const recordsAvailable = Number(market?.currentRecords || 0);
     const countryLabels = {
         US: 'United States', GB: 'United Kingdom', CA: 'Canada', ES: 'España',
         NL: 'Netherlands', IT: 'Italia', FR: 'France', DE: 'Deutschland',
         PT: 'Portugal', BR: 'Brasil', MX: 'México', CO: 'Colombia',
         AR: 'Argentina', CL: 'Chile', PE: 'Perú'
     };
-    const cityUrl = `https://geobooker.com/cities/${citySlug}`;
+    const cityUrl = `https://www.geobooker.com/cities/${citySlug}`;
+    const handleSearch = (event) => {
+        event.preventDefault();
+        if (!isIndexable) return;
+        if (searchQuery.trim()) {
+            const params = new URLSearchParams({ category: searchQuery.trim() });
+            navigate(`/ciudad/${citySlug}?${params.toString()}`);
+            return;
+        }
+        navigate(`/ciudad/${citySlug}`);
+    };
     const cityStructuredData = [
         {
             "@context": "https://schema.org",
@@ -316,7 +342,7 @@ export default function CityLandingPage() {
                 "@type": "ListItem",
                 position: index + 1,
                 name: category.replace(/_/g, ' '),
-                url: `${window.location.origin}/search?q=${encodeURIComponent(category)}&city=${encodeURIComponent(citySlug)}`
+                url: `${window.location.origin}/ciudad/${encodeURIComponent(citySlug)}?category=${encodeURIComponent(category)}`
             }))
         }
     ];
@@ -332,7 +358,8 @@ export default function CityLandingPage() {
                     { name: isSpanish ? 'Ciudades' : 'Cities', item: '/cities' },
                     { name: city.name, item: `/cities/${citySlug}` }
                 ]}
-                structuredData={cityStructuredData}
+                structuredData={isIndexable ? cityStructuredData : null}
+                noindex={!isIndexable}
             />
 
             {/* Hero Section */}
@@ -352,17 +379,22 @@ export default function CityLandingPage() {
                         </p>
 
                         {/* Search Bar */}
-                        <div className="bg-white rounded-xl p-2 shadow-2xl flex items-center max-w-xl mx-auto">
+                        <form onSubmit={handleSearch} className="bg-white rounded-xl p-2 shadow-2xl flex items-center max-w-xl mx-auto">
                             <Search className="w-5 h-5 text-gray-400 ml-3" />
                             <input
                                 type="text"
-                                placeholder={isSpanish ? `Buscar negocios en ${city.name}...` : `Search businesses in ${city.name}...`}
-                                className="flex-1 px-4 py-3 text-gray-800 focus:outline-none"
+                                value={searchQuery}
+                                onChange={(event) => setSearchQuery(event.target.value)}
+                                disabled={!isIndexable}
+                                placeholder={isIndexable
+                                    ? (isSpanish ? `Buscar negocios en ${city.name}...` : `Search businesses in ${city.name}...`)
+                                    : (isSpanish ? 'Mercado aún no disponible' : 'Market not available yet')}
+                                className="flex-1 px-4 py-3 text-gray-800 focus:outline-none disabled:bg-gray-100"
                             />
-                            <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-                                {isSpanish ? 'Buscar' : 'Search'}
+                            <button disabled={!isIndexable} className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                {isIndexable ? (isSpanish ? 'Buscar' : 'Search') : (isSpanish ? 'Próximamente' : 'Coming soon')}
                             </button>
-                        </div>
+                        </form>
 
                         {/* Stats */}
                         <div className="flex items-center justify-center gap-8 mt-8">
@@ -372,11 +404,14 @@ export default function CityLandingPage() {
                             </div>
                             <div className="w-px h-10 bg-white/30"></div>
                             <div>
-                                <div className="text-2xl font-bold flex items-center gap-1">
-                                    <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                                    4.8
+                                <div className="text-2xl font-bold">
+                                    {recordsAvailable > 0 ? recordsAvailable.toLocaleString() : (isSpanish ? 'Próximamente' : 'Coming soon')}
                                 </div>
-                                <div className="text-sm opacity-75">{isSpanish ? 'Calificación' : 'Rating'}</div>
+                                <div className="text-sm opacity-75">
+                                    {recordsAvailable > 0
+                                        ? (isSpanish ? 'Perfiles disponibles' : 'Available listings')
+                                        : (isSpanish ? 'Sin publicación activa' : 'No active publication')}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -390,10 +425,10 @@ export default function CityLandingPage() {
                         {isSpanish ? `Categorías Populares en ${city.name}` : `Popular Categories in ${city.name}`}
                     </h2>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto">
-                        {city.popularCategories.map((cat) => (
+                        {isIndexable && city.popularCategories.map((cat) => (
                             <Link
                                 key={cat}
-                                to={`/search?q=${cat}&city=${citySlug}`}
+                                to={`/ciudad/${citySlug}/${encodeURIComponent(cat)}`}
                                 className="bg-white rounded-xl p-4 text-center shadow-md hover:shadow-lg transition-shadow border border-gray-100 hover:border-blue-200"
                             >
                                 <Building2 className="w-8 h-8 mx-auto text-blue-600 mb-2" />
@@ -436,7 +471,7 @@ export default function CityLandingPage() {
                     </h2>
                     <div className="flex flex-wrap justify-center gap-3">
                         {Object.entries(CITIES_CONFIG)
-                            .filter(([slug]) => slug !== citySlug)
+                            .filter(([slug]) => slug !== citySlug && INDEXABLE_CITY_SLUGS.has(slug))
                             .map(([slug, c]) => (
                                 <Link
                                     key={slug}

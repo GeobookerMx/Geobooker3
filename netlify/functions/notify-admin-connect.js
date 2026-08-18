@@ -1,6 +1,28 @@
+const { authorizeEmailRequest } = require('./_email-request-auth');
+
+function escapeHtml(value = '') {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 exports.handler = async function handler(event) {
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
+    }
+
+    const authorization = await authorizeEmailRequest(event, {
+        type: 'admin_connect_notification',
+        data: {}
+    });
+    if (!authorization.authorized) {
+        return {
+            statusCode: authorization.statusCode,
+            body: JSON.stringify({ error: authorization.error })
+        };
     }
 
     try {
@@ -26,12 +48,12 @@ exports.handler = async function handler(event) {
     <div style="padding:24px;">
       <p>Se confirmo una reserva de lanzamiento y ya puede pasar a <strong>brief_review</strong>.</p>
       <div style="background:#f8fafc; border:1px solid #e5e7eb; border-radius:12px; padding:18px; margin-top:18px;">
-        <p><strong>Empresa:</strong> ${campaign.company_name || 'N/A'}</p>
-        <p><strong>Email:</strong> ${campaign.billing_email || 'N/A'}</p>
-        <p><strong>Paquete:</strong> ${campaign.package_name || 'Piloto Connect'}</p>
-        <p><strong>Batch:</strong> ${campaign.batch_size || 0} contactos</p>
-        <p><strong>Monto:</strong> ${campaign.launch_price_mxn || 0} MXN</p>
-        <p><strong>Estado:</strong> ${campaign.payment_status || 'paid'} / ${campaign.fulfillment_status || 'brief_review'}</p>
+        <p><strong>Empresa:</strong> ${escapeHtml(campaign.company_name || 'N/A')}</p>
+        <p><strong>Email:</strong> ${escapeHtml(campaign.billing_email || 'N/A')}</p>
+        <p><strong>Paquete:</strong> ${escapeHtml(campaign.package_name || 'Piloto Connect')}</p>
+        <p><strong>Batch:</strong> ${escapeHtml(campaign.batch_size || 0)} contactos</p>
+        <p><strong>Monto:</strong> ${escapeHtml(campaign.launch_price_mxn || 0)} MXN</p>
+        <p><strong>Estado:</strong> ${escapeHtml(campaign.payment_status || 'paid')} / ${escapeHtml(campaign.fulfillment_status || 'brief_review')}</p>
       </div>
       <p style="margin-top:20px;">
         Revisar en admin / Supabase y coordinar kickoff con el cliente.
@@ -48,12 +70,13 @@ exports.handler = async function handler(event) {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${RESEND_API_KEY}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Idempotency-Key': `connect-reservation-admin/${campaign.id}`
             },
             body: JSON.stringify({
                 from: senderConfig.from,
                 to: adminRecipients,
-                subject: `Nueva reserva Connect: ${campaign.company_name || 'Sin nombre'}`,
+                subject: `Nueva reserva Connect: ${String(campaign.company_name || 'Sin nombre').replace(/[\r\n]/g, ' ').slice(0, 120)}`,
                 html
             })
         });

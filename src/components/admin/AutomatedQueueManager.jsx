@@ -3,6 +3,9 @@
 
 import React, { useState } from 'react';
 import { Play, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { supabase } from '../../lib/supabase';
+import { getAuthenticatedJsonHeaders } from '../../services/authenticatedRequest';
 
 const AutomatedQueueManager = () => {
     const [isGenerating, setIsGenerating] = useState(false);
@@ -53,7 +56,7 @@ const AutomatedQueueManager = () => {
         try {
             const response = await fetch('/.netlify/functions/process-email-queue', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
+                headers: await getAuthenticatedJsonHeaders()
             });
 
             const data = await response.json();

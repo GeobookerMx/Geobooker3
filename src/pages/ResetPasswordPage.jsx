@@ -9,6 +9,8 @@ const ResetPasswordPage = () => {
     useTranslation();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [checkingLink, setCheckingLink] = useState(true);
+    const [recoveryReady, setRecoveryReady] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [formData, setFormData] = useState({
@@ -22,6 +24,45 @@ const ResetPasswordPage = () => {
         hasLetter: false,
         passwordsMatch: false
     });
+
+    useEffect(() => {
+        let mounted = true;
+
+        const verifyRecoverySession = async () => {
+            try {
+                const code = new URLSearchParams(window.location.search).get('code');
+                if (code) {
+                    const { error } = await supabase.auth.exchangeCodeForSession(code);
+                    if (error && !String(error.message || '').toLowerCase().includes('code verifier')) {
+                        throw error;
+                    }
+                }
+
+                const { data: { session } } = await supabase.auth.getSession();
+                if (mounted) setRecoveryReady(Boolean(session));
+            } catch (error) {
+                console.error('Error validating password recovery link:', error);
+                if (mounted) setRecoveryReady(false);
+            } finally {
+                if (mounted) setCheckingLink(false);
+            }
+        };
+
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+            if (!mounted) return;
+            if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+                setRecoveryReady(true);
+                setCheckingLink(false);
+            }
+        });
+
+        verifyRecoverySession();
+
+        return () => {
+            mounted = false;
+            authListener?.subscription?.unsubscribe();
+        };
+    }, []);
 
     // Validar contraseña en tiempo real
     useEffect(() => {
@@ -91,6 +132,34 @@ const ResetPasswordPage = () => {
             <span>{text}</span>
         </div>
     );
+
+    if (checkingLink) {
+        return (
+            <div className="min-h-screen bg-blue-50 flex items-center justify-center px-4">
+                <div className="text-center">
+                    <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+                    <p className="font-medium text-gray-700">Validando tu enlace seguro...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!recoveryReady) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center px-4">
+                <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-xl">
+                    <X className="mx-auto mb-4 h-12 w-12 text-red-500" />
+                    <h1 className="text-2xl font-bold text-gray-900">El enlace ya no es valido</h1>
+                    <p className="mt-3 text-sm text-gray-600">
+                        Solicita un enlace nuevo. Por seguridad, cada enlace solo funciona durante un tiempo limitado.
+                    </p>
+                    <Link to="/forgot-password" className="mt-6 block rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700">
+                        Solicitar otro correo
+                    </Link>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center px-4 py-12">

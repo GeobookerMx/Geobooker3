@@ -16,7 +16,7 @@ const SEMANTIC_GROUPS = [
   ['pharmacy', ['farmacia', 'medicina cerca', 'farmacia abierta', 'farmacia 24 horas', 'drugstore', 'pharmacy near me', 'medicine', 'botica', 'drogueria', 'chemist', 'omeprazol', 'paracetamol', 'ibuprofeno', 'loratadina', 'antigripal', 'suero oral', 'vitaminas', 'medicamento', 'medicine store', 'over the counter medicine']],
   ['doctor', ['doctor', 'medico cerca', 'consulta medica', 'doctor general', 'physician', 'medical office', 'urgent care']],
   ['dentist', ['dentista', 'me duele una muela', 'limpieza dental', 'ortodoncia', 'dental clinic', 'dentist', 'toothache']],
-  ['veterinarian', ['veterinario', 'veterinaria', 'mi perro esta enfermo', 'veterinaria cerca', 'vacunas mascotas', 'vet', 'animal hospital', 'pet clinic']],
+  ['veterinarian', ['veterinario', 'veterinaria', 'veterinarias', 'clinica veterinaria', 'consultorio veterinario', 'hospital veterinario', 'urgencias veterinarias', 'veterinario 24 horas', 'medico veterinario', 'mi perro esta enfermo', 'mi gato esta enfermo', 'vacunas mascotas', 'esterilizacion mascotas', 'vet', 'veterinary care', 'animal hospital', 'pet clinic', 'emergency vet']],
   ['restaurant', ['restaurante', 'donde comer', 'comida cerca', 'restaurante cercano', 'food near me', 'restaurant near me', 'lunch', 'dinner', 'restaurants near me']],
   ['coffee_shop', ['cafe', 'cafeteria', 'cafe cerca', 'coffee shop', 'espresso', 'espresso bar', 'desayunos', 'brunch', 'cowork cafe']],
   ['barbershop', ['barberia', 'corte de cabello', 'fade', 'barber', 'barbershop', 'peluquero', 'barberia cerca de mi']],

@@ -65,6 +65,7 @@ Thumbs.db
 # ✔️ Cache
 # -----------------------------
 .cache/
+supabase/.temp/
 __pycache__/
 *.py[cod]
 vite.config.timestamp.*

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { Mail, ArrowLeft, Check } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 
 const ForgotPasswordPage = () => {
     useTranslation();
@@ -40,8 +41,14 @@ const ForgotPasswordPage = () => {
 
         try {
             const normalizedEmail = email.trim().toLowerCase();
+            const origin = window.location.origin || '';
+            const isNative = Capacitor.isNativePlatform();
+            const redirectUrl = isNative
+                ? 'https://geobooker.com.mx/reset-password'
+                : `${origin}/reset-password`;
+
             const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-                redirectTo: `${window.location.origin}/reset-password`
+                redirectTo: redirectUrl
             });
 
             if (error) throw error;

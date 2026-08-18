@@ -30,7 +30,7 @@ const CATEGORIES = [
     icon: ShoppingBag,
     description: 'Encuentra lo que necesitas',
     color: 'from-blue-500 to-indigo-500',
-    subcategories: ['Abarrotes', 'Minisúper', 'Ropa y Calzado', 'Papelerías', 'Electrónicos', 'Ferreterías', 'Pinturas y Barnices', 'Mueblerías', 'Mascotas', 'Joyerías', 'Floristerías', 'Jugueterías', 'Ópticas']
+    subcategories: ['Abarrotes', 'Minisúper', 'Ropa y Calzado', 'Papelerías', 'Electrónicos', 'Ferreterías', 'Tlapalerías', 'Tornillerías', 'Material Eléctrico', 'Plomería y Tubería', 'Materiales de Construcción', 'Suministros Industriales', 'Pinturas y Barnices', 'Mueblerías', 'Tiendas de Mascotas', 'Joyerías', 'Floristerías', 'Jugueterías', 'Ópticas']
   },
   {
     id: 'servicios',
@@ -38,7 +38,7 @@ const CATEGORIES = [
     icon: Briefcase,
     description: 'Expertos en lo que necesites',
     color: 'from-green-500 to-emerald-500',
-    subcategories: ['Abogados', 'Contadores', 'Consultoría', 'Diseñadores', 'Notarías', 'Arquitectos', 'Recursos Humanos', 'Seguros', 'Fotografía', 'Marketing Digital']
+    subcategories: ['Abogados', 'Contadores', 'Consultoría', 'Diseñadores', 'Notarías', 'Arquitectos', 'Recursos Humanos', 'Seguros', 'Fotografía', 'Marketing Digital', 'Proveedores Industriales', 'Logística y Transporte', 'Distribuidores Mayoristas', 'Mantenimiento Industrial']
   },
   {
     id: 'hogar_autos',
@@ -49,7 +49,7 @@ const CATEGORIES = [
     subcategories: [
       'Taller Mecánico', 'Vulcanizadora', 'Alineación y Balanceo', 'Taller Eléctrico',
       'Motos', 'Tracto/Camiones', 'Servicios a Tractocamiones', 'Diesel', 'Boutique Automotriz', 'Lavado de Autos',
-      'Plomería', 'Electricista', 'Cerrajero', 'Carpintería', 'Herrería', 'Vidriería', 'Limpieza'
+      'Plomería', 'Electricista', 'Cerrajero', 'Carpintería', 'Herrería', 'Vidriería', 'Limpieza', 'Aire Acondicionado y Refrigeración', 'Fumigación', 'Mudanzas y Fletes'
     ]
   },
   {
@@ -58,7 +58,7 @@ const CATEGORIES = [
     icon: HeartPulse,
     description: 'Cuida de ti y tu bienestar',
     color: 'from-pink-500 to-rose-500',
-    subcategories: ['Hospitales', 'Clínicas', 'Consultorios', 'Dentistas', 'Psicología', 'Veterinarias', 'Nutriólogos', 'Fisioterapia', 'Laboratorios', 'Farmacias', 'Spa/Masajes', 'Masajes', 'Gimnasios', 'Barberías', 'Salones de Belleza', 'Uñas', 'SkinCare']
+    subcategories: ['Hospitales', 'Clínicas', 'Consultorios', 'Dentistas', 'Psicología', 'Veterinarias', 'Hospitales Veterinarios', 'Urgencias Veterinarias', 'Estéticas Caninas', 'Nutriólogos', 'Fisioterapia', 'Laboratorios', 'Farmacias', 'Insumos Médicos', 'Spa/Masajes', 'Masajes', 'Gimnasios', 'Barberías', 'Salones de Belleza', 'Uñas', 'SkinCare']
   },
   {
     id: 'entretenimiento',
@@ -91,7 +91,7 @@ const CATEGORIES = [
     icon: Home,
     description: 'Compra, venta y renta',
     color: 'from-lime-500 to-green-600',
-    subcategories: ['Venta de Casas', 'Renta de Casas', 'Departamentos', 'Terrenos', 'Locales Comerciales', 'Bodegas', 'Oficinas']
+    subcategories: ['Locales Comerciales', 'Oficinas', 'Bodegas', 'Consultorios', 'Coworking', 'Naves Industriales', 'Terrenos Comerciales', 'Salones para Eventos', 'Renta de Casas', 'Departamentos', 'Venta de Casas']
   },
   {
     id: 'finanzas',

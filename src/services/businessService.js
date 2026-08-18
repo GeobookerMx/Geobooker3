@@ -348,6 +348,39 @@ export function inferUserCountry() {
   return region && region.length === 2 ? region.toUpperCase() : "MX";
 }
 
+async function searchDirectoryFallback(searchQuery, userCountry, userLocation, intentAnalysis) {
+  const terms = getIntentSearchHaystack(searchQuery)
+    .concat(intentAnalysis?.categoryHints || [])
+    .map((term) => clean(term))
+    .filter((term) => term.length >= 3)
+    .filter((term, index, values) => values.indexOf(term) === index)
+    .slice(0, 24);
+
+  const { data, error } = await supabase.rpc('search_business_directory', {
+    p_query: clean(searchQuery),
+    p_terms: terms,
+    p_country_code: userCountry || 'MX',
+    p_latitude: userLocation?.lat ?? null,
+    p_longitude: userLocation?.lng ?? null,
+    p_radius_km: 75,
+    p_limit: 20
+  });
+
+  if (error) {
+    console.warn('Directory search fallback unavailable:', error.message);
+    return [];
+  }
+
+  return (data || []).map((business) => ({
+    ...business,
+    isSemanticResult: true,
+    is_recommended: false,
+    semantic_match_source: business.source_type || 'business_directory',
+    semantic_matched_term: searchQuery,
+    availability_note: 'Directorio de negocios relacionado con tu busqueda. Confirma servicio, producto, medida y disponibilidad directamente con el proveedor.'
+  }));
+}
+
 export async function searchInternationalBusinesses(searchQuery, options = {}) {
   const normalizedQuery = clean(searchQuery);
   const countryCode = String(options.countryCode || '').trim().toUpperCase();
@@ -463,8 +496,11 @@ export async function searchBusinessesSemantically(searchQuery, userCountry = in
 
     if (rpcError) {
       console.warn("Semantic search RPC unavailable:", rpcError.message);
-      const ttOnlyMatches = await searchTodoTransporteMatches(normalizedQuery);
-      return rankSearchResults(ttOnlyMatches, normalizedQuery, userLocation);
+      const [directoryMatches, ttOnlyMatches] = await Promise.all([
+        searchDirectoryFallback(normalizedQuery, userCountry, userLocation, intentAnalysis),
+        searchTodoTransporteMatches(normalizedQuery)
+      ]);
+      return rankSearchResults([...directoryMatches, ...ttOnlyMatches], normalizedQuery, userLocation).slice(0, 20);
     }
 
     semanticMatches = synonymMatches || [];
@@ -475,7 +511,8 @@ export async function searchBusinessesSemantically(searchQuery, userCountry = in
   const orderedIds = [...new Set((semanticMatches || []).map((item) => item.business_id).filter(Boolean))];
 
   if (orderedIds.length === 0) {
-    return rankSearchResults(ttMatches, normalizedQuery, userLocation);
+    const directoryMatches = await searchDirectoryFallback(normalizedQuery, userCountry, userLocation, intentAnalysis);
+    return rankSearchResults([...directoryMatches, ...ttMatches], normalizedQuery, userLocation).slice(0, 20);
   }
 
   const { data: businesses, error } = await supabase
@@ -487,7 +524,8 @@ export async function searchBusinessesSemantically(searchQuery, userCountry = in
 
   if (error) {
     console.warn("Semantic search business lookup failed:", error.message);
-    return rankSearchResults(ttMatches, normalizedQuery, userLocation);
+    const directoryMatches = await searchDirectoryFallback(normalizedQuery, userCountry, userLocation, intentAnalysis);
+    return rankSearchResults([...directoryMatches, ...ttMatches], normalizedQuery, userLocation).slice(0, 20);
   }
 
   const scoreMap = new Map((semanticMatches || []).map((item) => [item.business_id, item.match_score]));
@@ -529,7 +567,45 @@ export async function searchBusinessesSemantically(searchQuery, userCountry = in
   return rankSearchResults(merged, normalizedQuery, userLocation);
 }
 
-export async function createBusiness(form, user) {
+const SPACE_IMAGE_BUCKET = 'space-listing-images';
+const SPACE_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const MAX_SPACE_IMAGE_BYTES = 5 * 1024 * 1024;
+
+async function uploadSpaceListingImages(files, userId, businessId) {
+  const selectedFiles = Array.from(files || []).slice(0, 5);
+  if (selectedFiles.length === 0) return [];
+
+  const uploadedPaths = [];
+  try {
+    for (const file of selectedFiles) {
+      if (!SPACE_IMAGE_TYPES.has(file.type)) {
+        throw new Error('Las fotos deben ser JPG, PNG o WebP.');
+      }
+      if (file.size > MAX_SPACE_IMAGE_BYTES) {
+        throw new Error('Cada foto debe pesar menos de 5 MB.');
+      }
+
+      const extension = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+      const randomId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const path = `${userId}/${businessId}/${randomId}.${extension}`;
+      const { error } = await supabase.storage
+        .from(SPACE_IMAGE_BUCKET)
+        .upload(path, file, { cacheControl: '31536000', contentType: file.type, upsert: false });
+
+      if (error) throw error;
+      uploadedPaths.push(path);
+    }
+
+    return uploadedPaths.map((path) => supabase.storage.from(SPACE_IMAGE_BUCKET).getPublicUrl(path).data.publicUrl);
+  } catch (error) {
+    if (uploadedPaths.length > 0) {
+      await supabase.storage.from(SPACE_IMAGE_BUCKET).remove(uploadedPaths);
+    }
+    throw error;
+  }
+}
+
+export async function createBusiness(form, user, options = {}) {
   if (!user?.id) {
     throw new Error("Debes iniciar sesion para registrar un negocio.");
   }
@@ -573,6 +649,12 @@ export async function createBusiness(form, user) {
     status: "pending",
     images: form.images || [],
     opening_hours: form.opening_hours || null,
+    listing_type: form.listing_type === 'space_rental' ? 'space_rental' : 'business',
+    space_type: clean(form.space_type) || null,
+    monthly_rent: form.monthly_rent ? Number(form.monthly_rent) : null,
+    rent_currency: clean(form.rent_currency) || null,
+    area_sqm: form.area_sqm ? Number(form.area_sqm) : null,
+    available_from: clean(form.available_from) || null,
     created_at: new Date().toISOString(),
     attribution_text: getAttributionSummary(),
   };
@@ -587,7 +669,9 @@ export async function createBusiness(form, user) {
 
   const columnErrorMessage = `${insertResponse.error?.message || ''} ${insertResponse.error?.details || ''}`.toLowerCase();
   if (insertResponse.error && (columnErrorMessage.includes('column') || columnErrorMessage.includes('schema cache') || columnErrorMessage.includes('does not exist'))) {
-    const { attribution_text, ...fallbackPayload } = payload;
+    const fallbackPayload = { ...payload };
+    ['attribution_text', 'listing_type', 'space_type', 'monthly_rent', 'rent_currency', 'area_sqm', 'available_from']
+      .forEach((column) => delete fallbackPayload[column]);
     insertResponse = await supabase
       .from("businesses")
       .insert([fallbackPayload])
@@ -604,6 +688,25 @@ export async function createBusiness(form, user) {
       details: error.details,
     });
     throw new Error("No se pudo guardar el negocio en Supabase: " + error.message);
+  }
+
+  let createdBusiness = data;
+  if (form.listing_type === 'space_rental' && options.imageFiles?.length > 0) {
+    try {
+      const imageUrls = await uploadSpaceListingImages(options.imageFiles, user.id, data.id);
+      const { data: updatedBusiness, error: imageUpdateError } = await supabase
+        .from('businesses')
+        .update({ images: imageUrls })
+        .eq('id', data.id)
+        .eq('owner_id', user.id)
+        .select('*')
+        .single();
+      if (imageUpdateError) throw imageUpdateError;
+      createdBusiness = updatedBusiness;
+    } catch (imageError) {
+      console.warn('El espacio se guardo, pero sus fotos no pudieron subirse:', imageError);
+      createdBusiness = { ...data, image_upload_warning: imageError.message };
+    }
   }
 
   try {
@@ -625,5 +728,5 @@ export async function createBusiness(form, user) {
     console.warn("Error al procesar conversion de referido:", refErr);
   }
 
-  return data;
+  return createdBusiness;
 }

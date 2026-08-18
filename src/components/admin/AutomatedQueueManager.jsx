@@ -4,37 +4,44 @@
 import React, { useState } from 'react';
 import { Play, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { supabase } from '../../lib/supabase';
 import { getAuthenticatedJsonHeaders } from '../../services/authenticatedRequest';
+import { featureFlags } from '../../config/featureFlags';
 
 const AutomatedQueueManager = () => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [queueResult, setQueueResult] = useState(null);
     const [processResult, setProcessResult] = useState(null);
-    const [dailyLimit, setDailyLimit] = useState(100);
+    const [dailyLimit, setDailyLimit] = useState(10);
     const [tierFilter, setTierFilter] = useState('all');
 
     // Generar cola
     const generateQueue = async () => {
+        if (!featureFlags.crmEmailQueue) {
+            toast.error('La preparación de colas CRM está desactivada hasta completar la revisión de contactos.');
+            return;
+        }
         setIsGenerating(true);
         setQueueResult(null);
 
         try {
-            const { data, error } = await supabase
-                .rpc('generate_daily_email_queue', {
-                    p_limit: dailyLimit,
-                    p_tier_filter: tierFilter === 'all' ? null : tierFilter
-                });
-
-            if (error) throw error;
+            const response = await fetch('/.netlify/functions/generate-email-queue', {
+                method: 'POST',
+                headers: await getAuthenticatedJsonHeaders(),
+                body: JSON.stringify({
+                    limit: dailyLimit,
+                    tier: tierFilter === 'all' ? null : tierFilter
+                })
+            });
+            const data = await response.json();
+            if (!response.ok || data.success === false) throw new Error(data.error || 'queue_generation_failed');
 
             setQueueResult({
                 success: true,
-                ...data[0]
+                ...data
             });
 
-            toast.success(`Cola generada: ${data[0].contacts_added} contactos`);
+            toast.success(`Cola generada: ${data.contacts_added} contactos`);
 
         } catch (error) {
             console.error('Error generando cola:', error);
@@ -50,6 +57,10 @@ const AutomatedQueueManager = () => {
 
     // Procesar cola (enviar emails)
     const processQueue = async () => {
+        if (!featureFlags.crmEmailSend) {
+            toast.error('Los envíos CRM están desactivados.');
+            return;
+        }
         setIsProcessing(true);
         setProcessResult(null);
 
@@ -98,10 +109,10 @@ const AutomatedQueueManager = () => {
                             onChange={(e) => setDailyLimit(parseInt(e.target.value))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                             min="1"
-                            max="500"
+                            max="25"
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                            Resend Free: 100/día max
+                            Límite de seguridad inicial: 25 por día
                         </p>
                     </div>
 
@@ -127,7 +138,7 @@ const AutomatedQueueManager = () => {
                 <div className="flex gap-3">
                     <button
                         onClick={generateQueue}
-                        disabled={isGenerating}
+                        disabled={isGenerating || !featureFlags.crmEmailQueue}
                         className="flex-1 bg-purple-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-purple-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                         {isGenerating ? (
@@ -145,7 +156,7 @@ const AutomatedQueueManager = () => {
 
                     <button
                         onClick={processQueue}
-                        disabled={isProcessing || !queueResult?.success}
+                        disabled={isProcessing || !queueResult?.success || !featureFlags.crmEmailSend}
                         className="flex-1 bg-blue-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-blue-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                         {isProcessing ? (

@@ -32,6 +32,15 @@ function renderCampaignCopy(input = '', variables = {}) {
     return output;
 }
 
+function escapeHtml(value = '') {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 function buildCampaignEmail({
     html,
     subject,
@@ -39,22 +48,30 @@ function buildCampaignEmail({
     contactName,
     tier,
     signatureHtml,
-    preheader
+    preheader,
+    unsubscribeUrl
 }) {
-    const renderedHtml = renderCampaignCopy(html, { companyName, contactName, tier });
-    const renderedSignature = renderCampaignCopy(signatureHtml, { companyName, contactName, tier });
+    const htmlVariables = {
+        companyName: escapeHtml(companyName),
+        contactName: escapeHtml(contactName),
+        tier: escapeHtml(tier)
+    };
+    const renderedHtml = renderCampaignCopy(html, htmlVariables);
+    const renderedSignature = renderCampaignCopy(signatureHtml, htmlVariables);
     const contentHtml = `${extractBodyContent(renderedHtml)}${renderedSignature ? `\n${extractBodyContent(renderedSignature)}` : ''}`;
 
     return wrapEmailLayout({
         contentHtml: contentHtml || '<p>Mensaje sin contenido</p>',
-        preheader: preheader || `${companyName || 'tu empresa'} puede anunciarse en Geobooker con espacios patrocinados`,
-        title: renderCampaignCopy(subject || 'Mensaje de Geobooker', { companyName, contactName, tier }),
-        companyName: companyName || 'tu empresa'
+        preheader: escapeHtml(preheader || `Información de Geobooker para ${companyName || 'tu empresa'}`),
+        title: escapeHtml(renderCampaignCopy(subject || 'Mensaje de Geobooker', { companyName, contactName, tier })),
+        companyName: escapeHtml(companyName || 'tu empresa'),
+        unsubscribeUrl
     });
 }
 
 module.exports = {
     extractBodyContent,
+    escapeHtml,
     renderCampaignCopy,
     buildCampaignEmail
 };

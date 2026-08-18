@@ -60,11 +60,7 @@ function safeMetadata(type, data) {
 
 async function requireSuccess(query, code) {
   const result = await query;
-  if (result.error) {
-    const error = new Error(code);
-    error.cause = result.error;
-    throw error;
-  }
+  if (result.error) throw new Error(code);
   return result.data;
 }
 
@@ -96,21 +92,36 @@ async function reserveEvent(supabase, svixId, eventType) {
   return true;
 }
 
-async function updateContactEngagement(supabase, email, fields, scoreIncrement) {
-  const { data: contact, error } = await supabase
+async function findContact(supabase, email) {
+  const { data, error } = await supabase
     .from('marketing_contacts')
     .select('id,email_engagement_score')
     .eq('email', email)
     .maybeSingle();
   if (error) throw new Error('contact_lookup_failed');
-  if (!contact) return;
+  return data || null;
+}
 
+async function updateContactEngagement(supabase, contact, fields, scoreIncrement) {
+  if (!contact) return;
   await requireSuccess(
     supabase.from('marketing_contacts').update({
       ...fields,
-      email_engagement_score: (contact.email_engagement_score || 0) + scoreIncrement
+      email_engagement_score: Number(contact.email_engagement_score || 0) + scoreIncrement
     }).eq('id', contact.id),
     'contact_update_failed'
+  );
+}
+
+async function suppressPendingQueue(supabase, contactId, reason) {
+  if (!contactId) return;
+  await requireSuccess(
+    supabase.from('email_queue').update({
+      status: 'failed',
+      error_message: reason,
+      next_attempt_at: null
+    }).eq('contact_id', contactId).eq('status', 'pending'),
+    'queue_suppression_failed'
   );
 }
 
@@ -121,41 +132,61 @@ async function processEmailEvent(supabase, webhook) {
   const messageId = typeof data?.email_id === 'string' ? data.email_id : '';
   if (!email || !messageId) throw new Error('invalid_email_event');
 
-  const eventType = type.slice('email.'.length);
   await requireSuccess(
     supabase.from('email_analytics').insert({
       message_id: messageId,
       recipient_email: email,
-      event_type: eventType,
+      event_type: type.slice('email.'.length),
       timestamp: eventTimestamp(webhook),
       metadata: safeMetadata(type, data)
     }),
     'analytics_insert_failed'
   );
 
-  const now = new Date().toISOString();
-  if (type === 'email.opened') {
-    await updateContactEngagement(supabase, email, { last_email_opened: now }, 5);
+  const contact = await findContact(supabase, email);
+  const now = eventTimestamp(webhook);
+  if (type === 'email.delivered') {
+    await updateContactEngagement(supabase, contact, {
+      email_status: 'delivered',
+      email_delivered_at: now
+    }, 0);
+  } else if (type === 'email.opened') {
+    await updateContactEngagement(supabase, contact, {
+      email_opened: true,
+      email_opened_at: now
+    }, 5);
   } else if (type === 'email.clicked') {
-    await updateContactEngagement(supabase, email, { last_email_clicked: now }, 10);
+    await updateContactEngagement(supabase, contact, {
+      email_clicked: true,
+      email_clicked_at: now
+    }, 10);
   } else if (type === 'email.bounced') {
-    await requireSuccess(
-      supabase.from('marketing_contacts').update({
-        email_status: 'bounced',
-        is_active: false,
-        bounce_reason: safeMetadata(type, data).bounce_reason
-      }).eq('email', email),
-      'bounce_suppression_failed'
-    );
+    const metadata = safeMetadata(type, data);
+    if (contact) {
+      await requireSuccess(
+        supabase.from('marketing_contacts').update({
+          email_status: 'bounced',
+          email_marketing_allowed: false,
+          email_suppression_reason: 'provider_bounce',
+          bounce_reason: metadata.bounce_reason
+        }).eq('id', contact.id),
+        'bounce_suppression_failed'
+      );
+      await suppressPendingQueue(supabase, contact.id, 'suppressed_provider_bounce');
+    }
   } else if (type === 'email.complained') {
-    await requireSuccess(
-      supabase.from('marketing_contacts').update({
-        email_status: 'complained',
-        is_active: false,
-        unsubscribed: true
-      }).eq('email', email),
-      'complaint_suppression_failed'
-    );
+    if (contact) {
+      await requireSuccess(
+        supabase.from('marketing_contacts').update({
+          email_status: 'unsubscribed',
+          email_unsubscribed: true,
+          email_marketing_allowed: false,
+          email_suppression_reason: 'provider_spam_complaint'
+        }).eq('id', contact.id),
+        'complaint_suppression_failed'
+      );
+      await suppressPendingQueue(supabase, contact.id, 'suppressed_spam_complaint');
+    }
   }
 }
 

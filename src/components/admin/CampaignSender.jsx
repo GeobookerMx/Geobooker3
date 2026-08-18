@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { Mail, Send, AlertCircle, CheckCircle, Loader2, Zap, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getAuthenticatedJsonHeaders } from '../../services/authenticatedRequest';
+import { featureFlags } from '../../config/featureFlags';
 
 const CampaignSender = ({ metrics, onCampaignComplete }) => {
     const [preparing, setPreparing] = useState(false);
@@ -12,6 +13,10 @@ const CampaignSender = ({ metrics, onCampaignComplete }) => {
     const [progress, setProgress] = useState({ sent: 0, total: 0 });
 
     const prepareQueue = async () => {
+        if (!featureFlags.crmEmailQueue) {
+            toast.error('La preparación de colas CRM está desactivada hasta completar la revisión de contactos.');
+            return;
+        }
         console.log('🔄 Iniciando preparación de cola desde v1.3.0...');
         setPreparing(true);
         try {
@@ -44,6 +49,10 @@ const CampaignSender = ({ metrics, onCampaignComplete }) => {
     };
 
     const startCampaign = async () => {
+        if (!featureFlags.crmEmailSend) {
+            toast.error('Los envíos CRM están desactivados.');
+            return;
+        }
         if (metrics.sentToday >= metrics.dailyLimit) {
             toast.error('Ya alcanzaste el límite diario de emails');
             return;
@@ -98,8 +107,8 @@ const CampaignSender = ({ metrics, onCampaignComplete }) => {
     };
 
     const hasQueue = (metrics.queueCount || 0) > 0;
-    const canPrepare = metrics.sentToday < metrics.dailyLimit;
-    const canSend = hasQueue && metrics.sentToday < metrics.dailyLimit;
+    const canPrepare = featureFlags.crmEmailQueue && metrics.sentToday < metrics.dailyLimit;
+    const canSend = featureFlags.crmEmailSend && hasQueue && metrics.sentToday < metrics.dailyLimit;
 
     return (
         <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl p-6 text-white shadow-xl">
@@ -162,12 +171,20 @@ const CampaignSender = ({ metrics, onCampaignComplete }) => {
                 {hasQueue && (
                     <button
                         onClick={startCampaign}
-                        disabled={sending}
+                        disabled={sending || !featureFlags.crmEmailSend}
                         className="w-full py-5 bg-white text-indigo-700 hover:bg-indigo-50 rounded-xl font-black text-xl transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 shadow-2xl"
                     >
                         {sending ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-7 h-7" />}
-                        {sending ? 'ENVIANDO...' : '2. LANZAR CAMPAÑA AHORA'}
+                        {sending
+                            ? 'ENVIANDO...'
+                            : (featureFlags.crmEmailSend ? '2. LANZAR CAMPAÑA AHORA' : 'ENVÍO CRM DESACTIVADO')}
                     </button>
+                )}
+
+                {!featureFlags.crmEmailSend && (
+                    <div className="py-3 px-4 bg-amber-950/40 rounded-xl text-amber-100 text-sm border border-amber-300/30">
+                        El envío permanece bloqueado hasta configurar Resend, aprobar plantillas y habilitar el control del servidor.
+                    </div>
                 )}
 
                 {!hasQueue && !canPrepare && (

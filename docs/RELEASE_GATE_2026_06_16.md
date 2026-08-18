@@ -1,5 +1,8 @@
 # Release Gate Geobooker - 2026-06-16
 
+> Historical release record. Its CRM email activation values are superseded
+> by `CRM_EMAIL_HARDENING_2026.md`; do not use this file to restore Resend.
+
 ## Estado actual
 
 Esta rama local ya quedo en condicion de candidato serio a produccion:
@@ -53,10 +56,10 @@ No debemos afirmar que produccion esta estable al 100% hasta completar estas 4 a
 Verificar:
 
 - `RESEND_API_KEY`
-- `RESEND_VERIFIED_DOMAIN=geobooker.com.mx`
-- `CRM_DEFAULT_FROM_ADDRESS=hola@geobooker.com.mx`
-- `CRM_DEFAULT_FROM_NAME=Geobooker Ads`
-- `CRM_REPLY_TO_EMAIL=ventasgeobooker@gmail.com`
+- `RESEND_VERIFIED_DOMAIN=geobooker.com`
+- `CRM_DEFAULT_FROM_ADDRESS=notificaciones@geobooker.com`
+- `CRM_DEFAULT_FROM_NAME=Geobooker`
+- `CRM_REPLY_TO_EMAIL=hola@geobooker.com.mx`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `VITE_SUPABASE_URL`
 

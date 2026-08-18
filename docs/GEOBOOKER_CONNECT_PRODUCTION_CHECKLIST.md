@@ -33,9 +33,9 @@ No usar el mismo remitente reputacional para todo.
 
 Recomendado:
 
-- producto: `hola@geobooker.com.mx`
-- ads / CRM principal: `crm@geobooker.com.mx`
-- connect: `hola@geobooker.com.mx`
+- remitente tecnico verificado: `notificaciones@geobooker.com`
+- nombre visible: `Geobooker`
+- respuesta monitoreada: `hola@geobooker.com.mx`
 
 Ideal despues:
 

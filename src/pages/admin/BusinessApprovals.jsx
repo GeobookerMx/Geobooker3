@@ -27,6 +27,11 @@ const TAG_LABELS = {
 
 const SPACE_IMAGE_BUCKET = 'space-listing-images';
 
+function isMissingListingTypeColumn(error) {
+    const message = `${error?.message || ''} ${error?.details || ''}`.toLowerCase();
+    return error?.code === '42703' && message.includes('listing_type');
+}
+
 function getSpaceImageStoragePaths(images = []) {
     return (Array.isArray(images) ? images : [])
         .map((url) => {
@@ -48,6 +53,7 @@ const BusinessApprovals = () => {
     const [filter, setFilter] = useState('pending'); // 'all', 'pending', 'approved', 'rejected'
     const [selectedBusiness, setSelectedBusiness] = useState(null);
     const [showModal, setShowModal] = useState(false);
+    const [rentalSchemaReady, setRentalSchemaReady] = useState(true);
 
     useEffect(() => {
         fetchBusinesses();
@@ -76,7 +82,36 @@ const BusinessApprovals = () => {
 
             const { data, error } = await query;
 
-            if (error) throw error;
+            if (error) {
+                if (isMissingListingTypeColumn(error)) {
+                    setRentalSchemaReady(false);
+                    if (isRentalSpacesMode) {
+                        setBusinesses([]);
+                        toast.error('Falta aplicar la migración de espacios en renta en Supabase.');
+                        return;
+                    }
+
+                    let fallbackQuery = supabase
+                        .from('businesses')
+                        .select(`
+                            *,
+                            owner:user_profiles(id, full_name, email)
+                        `)
+                        .order('created_at', { ascending: false });
+
+                    if (filter !== 'all') {
+                        fallbackQuery = fallbackQuery.eq('status', filter);
+                    }
+
+                    const fallbackResponse = await fallbackQuery;
+                    if (fallbackResponse.error) throw fallbackResponse.error;
+                    setBusinesses(fallbackResponse.data || []);
+                    return;
+                }
+
+                throw error;
+            }
+            setRentalSchemaReady(true);
             setBusinesses(data || []);
         } catch (error) {
             console.error('Error fetching businesses:', error);
@@ -259,6 +294,12 @@ const BusinessApprovals = () => {
                         ? 'Revisa locales, oficinas, bodegas, pensiones y garages enviados por usuarios'
                         : 'Revisa y aprueba solicitudes de registro'}
                 </p>
+                {!rentalSchemaReady && (
+                    <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                        Falta aplicar la migración de Supabase para <code className="font-semibold">businesses.listing_type</code>.
+                        El panel seguirá funcionando, pero los espacios en renta no podrán filtrarse hasta que esa columna exista.
+                    </div>
+                )}
             </div>
 
             {/* Filtros */}

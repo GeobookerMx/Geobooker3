@@ -22,6 +22,11 @@ import {
 import { supabase } from '../../lib/supabase';
 import { featureFlags } from '../../config/featureFlags';
 
+function isMissingListingTypeColumn(error) {
+    const message = `${error?.message || ''} ${error?.details || ''}`.toLowerCase();
+    return error?.code === '42703' && message.includes('listing_type');
+}
+
 const Sidebar = ({ onLogout }) => {
     const location = useLocation();
     const [pendingBusinesses, setPendingBusinesses] = useState(0);
@@ -43,19 +48,35 @@ const Sidebar = ({ onLogout }) => {
 
     const loadPendingCounts = async () => {
         try {
-            const { count: businessCount } = await supabase
+            const businessResponse = await supabase
                 .from('businesses')
                 .select('*', { count: 'exact', head: true })
                 .eq('status', 'pending')
                 .or('listing_type.is.null,listing_type.eq.business');
-            setPendingBusinesses(businessCount || 0);
+            if (businessResponse.error) {
+                if (isMissingListingTypeColumn(businessResponse.error)) {
+                    const fallbackBusinessResponse = await supabase
+                        .from('businesses')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('status', 'pending');
+                    setPendingBusinesses(fallbackBusinessResponse.count || 0);
+                    setPendingRentalSpaces(0);
+                } else {
+                    throw businessResponse.error;
+                }
+            } else {
+                setPendingBusinesses(businessResponse.count || 0);
 
-            const { count: rentalSpacesCount } = await supabase
-                .from('businesses')
-                .select('*', { count: 'exact', head: true })
-                .eq('status', 'pending')
-                .eq('listing_type', 'space_rental');
-            setPendingRentalSpaces(rentalSpacesCount || 0);
+                const rentalSpacesResponse = await supabase
+                    .from('businesses')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'pending')
+                    .eq('listing_type', 'space_rental');
+                if (rentalSpacesResponse.error && !isMissingListingTypeColumn(rentalSpacesResponse.error)) {
+                    throw rentalSpacesResponse.error;
+                }
+                setPendingRentalSpaces(rentalSpacesResponse.count || 0);
+            }
 
             const { count: campaignCount } = await supabase
                 .from('ad_campaigns')

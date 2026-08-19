@@ -14,6 +14,7 @@ const ADMIN_PAGE_META = [
     ['/admin/smart-campaigns', 'Campañas inteligentes', 'Preparación y control de campañas'],
     ['/admin/recommendations', 'Recomendaciones', 'Moderación de recomendaciones comunitarias'],
     ['/admin/businesses', 'Negocios', 'Aprobación y administración de negocios'],
+    ['/admin/rental-spaces', 'Espacios en renta', 'Aprobación y administración de locales, pensiones y garages'],
     ['/admin/analytics', 'Analítica', 'Indicadores de uso y rendimiento'],
     ['/admin/revenue', 'Ingresos', 'Resumen financiero y monetización'],
     ['/admin/inventory', 'Inventario publicitario', 'Disponibilidad y espacios publicitarios'],

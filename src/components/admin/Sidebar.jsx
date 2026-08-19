@@ -25,6 +25,7 @@ import { featureFlags } from '../../config/featureFlags';
 const Sidebar = ({ onLogout }) => {
     const location = useLocation();
     const [pendingBusinesses, setPendingBusinesses] = useState(0);
+    const [pendingRentalSpaces, setPendingRentalSpaces] = useState(0);
     const [pendingCampaigns, setPendingCampaigns] = useState(0);
     const [pendingRecommendations, setPendingRecommendations] = useState(0);
     const [pendingClaims, setPendingClaims] = useState(0);
@@ -45,8 +46,16 @@ const Sidebar = ({ onLogout }) => {
             const { count: businessCount } = await supabase
                 .from('businesses')
                 .select('*', { count: 'exact', head: true })
-                .eq('status', 'pending');
+                .eq('status', 'pending')
+                .or('listing_type.is.null,listing_type.eq.business');
             setPendingBusinesses(businessCount || 0);
+
+            const { count: rentalSpacesCount } = await supabase
+                .from('businesses')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'pending')
+                .eq('listing_type', 'space_rental');
+            setPendingRentalSpaces(rentalSpacesCount || 0);
 
             const { count: campaignCount } = await supabase
                 .from('ad_campaigns')
@@ -90,6 +99,7 @@ const Sidebar = ({ onLogout }) => {
             title: 'Negocios y Usuarios',
             items: [
                 { path: '/admin/businesses', icon: Store, label: 'Negocios', badge: pendingBusinesses, badgeColor: 'yellow' },
+                { path: '/admin/rental-spaces', icon: Home, label: 'Espacios en renta', badge: pendingRentalSpaces, badgeColor: 'green' },
                 { path: '/admin/users', icon: Users, label: 'Usuarios' },
                 { path: '/admin/reports', icon: BarChart3, label: 'Reportes Negocios' }
             ]

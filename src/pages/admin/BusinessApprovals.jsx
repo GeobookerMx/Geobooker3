@@ -1,11 +1,33 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { Check, X, Eye, MapPin, Phone, Mail, Calendar, User, Building2, FileText, Briefcase, RotateCcw } from 'lucide-react';
 import { sendBusinessApprovedEmail, sendBusinessRejectedEmail } from '../../services/notificationService';
 import { useAdminAuditLog } from '../../hooks/useAdminAuditLog';
 
+const TAG_LABELS = {
+    pet_friendly: 'Pet Friendly',
+    '24_hours': 'Abierto 24 hrs',
+    accepts_card: 'Acepta tarjeta',
+    accepts_cards: 'Acepta tarjetas',
+    delivery: 'Entrega a domicilio',
+    wifi: 'WiFi gratis',
+    accessible: 'Accesible',
+    parking: 'Estacionamiento',
+    factura: 'Facturación',
+    space_cctv: 'CCTV / circuito cerrado',
+    space_contract: 'Renta con contrato',
+    space_guard: 'Guardia / vigilancia',
+    space_24_7_access: 'Acceso 24/7',
+    space_monthly_rent: 'Renta por mes',
+    space_night_parking: 'Pensión nocturna',
+    space_car_garage: 'Garage para autos'
+};
+
 const BusinessApprovals = () => {
+    const location = useLocation();
+    const isRentalSpacesMode = location.pathname.includes('/rental-spaces');
     const { logAction } = useAdminAuditLog();
     const [businesses, setBusinesses] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -15,7 +37,7 @@ const BusinessApprovals = () => {
 
     useEffect(() => {
         fetchBusinesses();
-    }, [filter]);
+    }, [filter, isRentalSpacesMode]);
 
     const fetchBusinesses = async () => {
         try {
@@ -32,21 +54,27 @@ const BusinessApprovals = () => {
                 query = query.eq('status', filter);
             }
 
+            if (isRentalSpacesMode) {
+                query = query.eq('listing_type', 'space_rental');
+            } else {
+                query = query.or('listing_type.is.null,listing_type.eq.business');
+            }
+
             const { data, error } = await query;
 
             if (error) throw error;
             setBusinesses(data || []);
         } catch (error) {
             console.error('Error fetching businesses:', error);
-            toast.error('Error al cargar negocios');
+            toast.error(isRentalSpacesMode ? 'Error al cargar espacios en renta' : 'Error al cargar negocios');
         } finally {
             setLoading(false);
         }
     };
 
     const handleApprove = async (businessId) => {
-        console.log('🔄 Intentando aprobar negocio:', businessId);
-        const loadingToast = toast.loading('Aprobando negocio...');
+        console.log('🔄 Intentando aprobar negocio/espacio:', businessId);
+        const loadingToast = toast.loading(isRentalSpacesMode ? 'Aprobando espacio...' : 'Aprobando negocio...');
 
         try {
             const business = businesses.find(b => b.id === businessId);
@@ -62,7 +90,7 @@ const BusinessApprovals = () => {
             }
 
             // Registrar en logs de auditoría
-            await logAction('approve_business', 'business', businessId, business?.name);
+            await logAction(isRentalSpacesMode ? 'approve_rental_space' : 'approve_business', 'business', businessId, business?.name);
 
             // Enviar notificación por correo
             if (business?.owner?.email) {
@@ -74,7 +102,7 @@ const BusinessApprovals = () => {
                 );
             }
 
-            toast.success('Negocio aprobado ✅', { id: loadingToast });
+            toast.success(isRentalSpacesMode ? 'Espacio aprobado ✅' : 'Negocio aprobado ✅', { id: loadingToast });
             fetchBusinesses();
             setShowModal(false);
         } catch (error) {
@@ -96,7 +124,7 @@ const BusinessApprovals = () => {
             if (error) throw error;
 
             // Registrar en logs de auditoría
-            await logAction('reject_business', 'business', businessId, business?.name, { reason });
+            await logAction(isRentalSpacesMode ? 'reject_rental_space' : 'reject_business', 'business', businessId, business?.name, { reason });
 
             // Enviar notificación por correo
             if (business?.owner?.email) {
@@ -108,7 +136,7 @@ const BusinessApprovals = () => {
                 );
             }
 
-            toast.success('Negocio rechazado');
+            toast.success(isRentalSpacesMode ? 'Espacio rechazado' : 'Negocio rechazado');
             fetchBusinesses();
             setShowModal(false);
         } catch (error) {
@@ -132,9 +160,9 @@ const BusinessApprovals = () => {
 
             // Registrar en logs de auditoría
             const business = businesses.find(b => b.id === businessId);
-            await logAction('re-evaluate_business', 'business', businessId, business?.name);
+            await logAction(isRentalSpacesMode ? 're-evaluate_rental_space' : 're-evaluate_business', 'business', businessId, business?.name);
 
-            toast.success('Negocio movido a Pendiente ✅', { id: loadingToast });
+            toast.success(isRentalSpacesMode ? 'Espacio movido a Pendiente ✅' : 'Negocio movido a Pendiente ✅', { id: loadingToast });
             fetchBusinesses();
             setShowModal(false);
         } catch (error) {
@@ -170,8 +198,14 @@ const BusinessApprovals = () => {
         <div className="p-6">
             {/* Header */}
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestión de Negocios</h1>
-                <p className="text-gray-600">Revisa y aprueba solicitudes de registro</p>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    {isRentalSpacesMode ? 'Gestión de Espacios en Renta' : 'Gestión de Negocios'}
+                </h1>
+                <p className="text-gray-600">
+                    {isRentalSpacesMode
+                        ? 'Revisa locales, oficinas, bodegas, pensiones y garages enviados por usuarios'
+                        : 'Revisa y aprueba solicitudes de registro'}
+                </p>
             </div>
 
             {/* Filtros */}
@@ -218,8 +252,12 @@ const BusinessApprovals = () => {
             {businesses.length === 0 ? (
                 <div className="bg-white rounded-xl shadow-md p-12 text-center">
                     <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No hay negocios</h3>
-                    <p className="text-gray-500">No hay negocios con este estado</p>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        {isRentalSpacesMode ? 'No hay espacios en renta' : 'No hay negocios'}
+                    </h3>
+                    <p className="text-gray-500">
+                        {isRentalSpacesMode ? 'No hay espacios con este estado' : 'No hay negocios con este estado'}
+                    </p>
                 </div>
             ) : (
                 <div className="bg-white rounded-xl shadow-md overflow-x-auto">
@@ -227,13 +265,13 @@ const BusinessApprovals = () => {
                         <thead className="bg-gray-50 border-b border-gray-200">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Negocio
+                                    {isRentalSpacesMode ? 'Espacio' : 'Negocio'}
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Propietario
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Categoría
+                                    {isRentalSpacesMode ? 'Tipo / Renta' : 'Categoría'}
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Estado
@@ -273,7 +311,16 @@ const BusinessApprovals = () => {
                                         <div className="text-sm text-gray-500">ID: {business.owner_id?.substring(0, 8)}...</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900 capitalize">{business.category}</div>
+                                        {isRentalSpacesMode ? (
+                                            <div>
+                                                <div className="text-sm font-medium text-gray-900">{business.space_type || business.subcategory || 'Espacio en renta'}</div>
+                                                <div className="text-sm text-gray-500">
+                                                    {business.monthly_rent ? `${Number(business.monthly_rent).toLocaleString('es-MX')} ${business.rent_currency || 'MXN'}/mes` : 'Renta no indicada'}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="text-sm text-gray-900 capitalize">{business.category}</div>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         {getStatusBadge(business.status)}
@@ -396,6 +443,53 @@ const BusinessApprovals = () => {
                                 </div>
                             </section>
 
+                            {selectedBusiness.listing_type === 'space_rental' && (
+                                <section>
+                                    <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center">
+                                        <Building2 className="w-5 h-5 mr-2" />
+                                        Detalles del espacio en renta
+                                    </h3>
+                                    <div className="grid md:grid-cols-2 gap-4 bg-emerald-50 p-4 rounded-lg border border-emerald-100">
+                                        <div>
+                                            <label className="text-sm text-emerald-700">Tipo de espacio</label>
+                                            <p className="font-medium">{selectedBusiness.space_type || selectedBusiness.subcategory || 'No indicado'}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm text-emerald-700">Renta mensual</label>
+                                            <p className="font-medium">
+                                                {selectedBusiness.monthly_rent
+                                                    ? `${Number(selectedBusiness.monthly_rent).toLocaleString('es-MX')} ${selectedBusiness.rent_currency || 'MXN'}`
+                                                    : 'No indicada'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm text-emerald-700">Superficie</label>
+                                            <p className="font-medium">{selectedBusiness.area_sqm ? `${selectedBusiness.area_sqm} m²` : 'No indicada'}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm text-emerald-700">Disponible desde</label>
+                                            <p className="font-medium">
+                                                {selectedBusiness.available_from
+                                                    ? new Date(selectedBusiness.available_from).toLocaleDateString('es-MX')
+                                                    : 'No indicado'}
+                                            </p>
+                                        </div>
+                                        {Array.isArray(selectedBusiness.tags) && selectedBusiness.tags.length > 0 && (
+                                            <div className="md:col-span-2">
+                                                <label className="text-sm text-emerald-700">Características declaradas</label>
+                                                <div className="mt-2 flex flex-wrap gap-2">
+                                                    {selectedBusiness.tags.map((tag) => (
+                                                        <span key={tag} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-800 border border-emerald-200">
+                                                            {TAG_LABELS[tag] || tag}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </section>
+                            )}
+
                             {/* Contacto */}
                             <section>
                                 <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center">
@@ -499,7 +593,7 @@ const BusinessApprovals = () => {
                                         className="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition flex items-center justify-center"
                                     >
                                         <Check className="w-5 h-5 mr-2" />
-                                        Aprobar Negocio
+                                        {selectedBusiness.listing_type === 'space_rental' ? 'Aprobar Espacio' : 'Aprobar Negocio'}
                                     </button>
                                     <button
                                         onClick={() => handleReject(selectedBusiness.id)}
@@ -518,7 +612,7 @@ const BusinessApprovals = () => {
                                         className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition flex items-center justify-center"
                                     >
                                         <Check className="w-5 h-5 mr-2" />
-                                        Aprobar Negocio (Directo)
+                                        {selectedBusiness.listing_type === 'space_rental' ? 'Aprobar Espacio (Directo)' : 'Aprobar Negocio (Directo)'}
                                     </button>
                                     <button
                                         onClick={() => handleMoveToPending(selectedBusiness.id)}

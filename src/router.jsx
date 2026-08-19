@@ -236,6 +236,7 @@ export default function AppRouter() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<DashboardHome />} />
           <Route path="businesses" element={<BusinessApprovals />} />
+          <Route path="rental-spaces" element={<BusinessApprovals />} />
           <Route path="users" element={<UsersPage />} />
           <Route path="ads" element={<AdsManagement />} />
           <Route path="ads-qa" element={<AdsQATool />} />

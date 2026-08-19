@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import {
   Users,
   Store,
+  Home,
   TrendingUp,
   DollarSign,
   Eye,
@@ -947,6 +948,12 @@ export default function DashboardHome() {
               color="green"
             />
             <QuickLink
+              to="/admin/rental-spaces"
+              icon={Home}
+              label="Administrar Rentas"
+              color="emerald"
+            />
+            <QuickLink
               to="/admin/revenue"
               icon={DollarSign}
               label="Ver Ingresos"
@@ -1163,6 +1170,7 @@ function QuickLink({ to, icon, label, color }) {
   const colors = {
     blue: 'text-blue-600 bg-blue-50',
     green: 'text-green-600 bg-green-50',
+    emerald: 'text-emerald-600 bg-emerald-50',
     orange: 'text-orange-600 bg-orange-50',
     purple: 'text-purple-600 bg-purple-50',
   };
@@ -1186,6 +1194,10 @@ const getActionLabel = (action) => {
   const actions = {
     approve_business: 'Aprobó negocio',
     reject_business: 'Rechazó negocio',
+    approve_rental_space: 'Aprobó espacio en renta',
+    reject_rental_space: 'Rechazó espacio en renta',
+    're-evaluate_rental_space': 'Reevaluó espacio en renta',
+    delete_rental_space: 'Eliminó espacio en renta',
     edit_business: 'Modificó negocio',
     create_ad: 'Creó anuncio',
     delete_user: 'Eliminó usuario',

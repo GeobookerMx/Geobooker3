@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
-import { Check, X, Eye, MapPin, Phone, Mail, Calendar, User, Building2, FileText, Briefcase, RotateCcw } from 'lucide-react';
+import { Check, X, Eye, MapPin, Phone, Mail, Calendar, User, Building2, FileText, Briefcase, RotateCcw, Trash2 } from 'lucide-react';
 import { sendBusinessApprovedEmail, sendBusinessRejectedEmail } from '../../services/notificationService';
 import { useAdminAuditLog } from '../../hooks/useAdminAuditLog';
 
@@ -24,6 +24,20 @@ const TAG_LABELS = {
     space_night_parking: 'Pensión nocturna',
     space_car_garage: 'Garage para autos'
 };
+
+const SPACE_IMAGE_BUCKET = 'space-listing-images';
+
+function getSpaceImageStoragePaths(images = []) {
+    return (Array.isArray(images) ? images : [])
+        .map((url) => {
+            if (typeof url !== 'string') return null;
+            const marker = `/storage/v1/object/public/${SPACE_IMAGE_BUCKET}/`;
+            const index = url.indexOf(marker);
+            if (index === -1) return null;
+            return decodeURIComponent(url.slice(index + marker.length).split('?')[0]);
+        })
+        .filter(Boolean);
+}
 
 const BusinessApprovals = () => {
     const location = useLocation();
@@ -168,6 +182,45 @@ const BusinessApprovals = () => {
         } catch (error) {
             console.error('Error moving business to pending:', error);
             toast.error('Error al mover a pendiente', { id: loadingToast });
+        }
+    };
+
+    const handleDeleteRentalSpace = async (businessId) => {
+        const business = businesses.find(b => b.id === businessId) || selectedBusiness;
+        const label = business?.name || 'este espacio en renta';
+        const confirmed = window.confirm(
+            `¿Eliminar definitivamente "${label}"?\n\nEsta acción quitará la propiedad del panel, del mapa/directorio y también intentará remover sus fotos del bucket.`
+        );
+        if (!confirmed) return;
+
+        const loadingToast = toast.loading('Eliminando espacio en renta...');
+        try {
+            const imagePaths = getSpaceImageStoragePaths(business?.images);
+            if (imagePaths.length > 0) {
+                const { error: storageError } = await supabase.storage
+                    .from(SPACE_IMAGE_BUCKET)
+                    .remove(imagePaths);
+                if (storageError) {
+                    console.warn('No se pudieron eliminar todas las fotos del espacio:', storageError);
+                }
+            }
+
+            const { error } = await supabase
+                .from('businesses')
+                .delete()
+                .eq('id', businessId)
+                .eq('listing_type', 'space_rental');
+
+            if (error) throw error;
+
+            await logAction('delete_rental_space', 'business', businessId, business?.name);
+            toast.success('Espacio en renta eliminado', { id: loadingToast });
+            setShowModal(false);
+            setSelectedBusiness(null);
+            fetchBusinesses();
+        } catch (error) {
+            console.error('Error deleting rental space:', error);
+            toast.error(`No se pudo eliminar: ${error.message || 'Error desconocido'}`, { id: loadingToast });
         }
     };
 
@@ -370,6 +423,15 @@ const BusinessApprovals = () => {
                                                     <RotateCcw className="w-5 h-5 inline" />
                                                 </button>
                                             </>
+                                        )}
+                                        {isRentalSpacesMode && (
+                                            <button
+                                                onClick={() => handleDeleteRentalSpace(business.id)}
+                                                className="text-red-700 hover:text-red-950 ml-3"
+                                                title="Eliminar espacio en renta"
+                                            >
+                                                <Trash2 className="w-5 h-5 inline" />
+                                            </button>
                                         )}
                                     </td>
                                 </tr>
@@ -621,6 +683,21 @@ const BusinessApprovals = () => {
                                         <RotateCcw className="w-5 h-5 mr-2" />
                                         Mover a Pendiente para Re-evaluar
                                     </button>
+                                </div>
+                            )}
+
+                            {selectedBusiness.listing_type === 'space_rental' && (
+                                <div className="pt-4 border-t border-red-100">
+                                    <button
+                                        onClick={() => handleDeleteRentalSpace(selectedBusiness.id)}
+                                        className="w-full bg-red-50 text-red-700 py-3 rounded-lg font-bold hover:bg-red-100 transition flex items-center justify-center border border-red-200"
+                                    >
+                                        <Trash2 className="w-5 h-5 mr-2" />
+                                        Eliminar propiedad en renta
+                                    </button>
+                                    <p className="mt-2 text-xs text-red-500 text-center">
+                                        Elimina la propiedad del directorio y remueve sus fotos del bucket cuando sea posible.
+                                    </p>
                                 </div>
                             )}
                         </div>

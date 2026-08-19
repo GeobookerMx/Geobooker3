@@ -96,7 +96,7 @@ INSERT INTO crm_email_senders (email, display_name, is_default, signature_html) 
     </div>'
 ),
 (
-    'ventasgeobooker@gmail.com',
+    'hola@geobooker.com.mx',
     'Ventas Geobooker',
     FALSE,
     '<div style="margin-top:30px;padding-top:20px;border-top:1px solid #e5e7eb;font-family:Arial,sans-serif;">

@@ -187,7 +187,7 @@ SELECT
     WHEN compania ~* '(S\.A\.|SA DE C\.V\.|Corporativo|Grupo|Holdings)'
          OR tamano ~ '(Grande|Very Large)'
          OR tipo ~* '(Tecnología|Fintech|Corporativo)'
-    THEN 'ventasgeobooker@gmail.com'
+    THEN 'hola@geobooker.com.mx'
     ELSE 'geobookerr@gmail.com'
   END,
   
@@ -240,7 +240,7 @@ SELECT
   (SELECT COUNT(*) FROM marketing_contacts WHERE tier = 'A') as tier_a,
   (SELECT COUNT(*) FROM marketing_contacts WHERE tier = 'B') as tier_b,
   (SELECT COUNT(*) FROM marketing_contacts WHERE email_status = 'pending') as pendientes_email,
-  (SELECT COUNT(*) FROM marketing_contacts WHERE assigned_email_sender = 'ventasgeobooker@gmail.com') as asignados_ventas,
+  (SELECT COUNT(*) FROM marketing_contacts WHERE assigned_email_sender = 'hola@geobooker.com.mx') as asignados_ventas,
   (SELECT COUNT(*) FROM marketing_contacts WHERE assigned_email_sender = 'geobookerr@gmail.com') as asignados_general;
 
 -- Ver estadísticas

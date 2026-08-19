@@ -240,7 +240,7 @@ SELECT
   (SELECT COUNT(*) FROM marketing_contacts WHERE tier = 'B') as tier_b,
   
   -- Por cuenta
-  (SELECT COUNT(*) FROM marketing_contacts WHERE assigned_email_sender = 'ventasgeobooker@gmail.com') as cuenta_ventas,
+  (SELECT COUNT(*) FROM marketing_contacts WHERE assigned_email_sender = 'hola@geobooker.com.mx') as cuenta_ventas,
   (SELECT COUNT(*) FROM marketing_contacts WHERE assigned_email_sender = 'geobookerr@gmail.com') as cuenta_general,
   
   -- Estados

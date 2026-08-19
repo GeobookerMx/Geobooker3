@@ -240,7 +240,7 @@ LIMIT 50000;  -- Límite razonable para contactos solo con teléfono
 
 UPDATE marketing_contacts
 SET assigned_email_sender = CASE
-    WHEN tier IN ('AAA', 'AA') THEN 'ventasgeobooker@gmail.com'
+    WHEN tier IN ('AAA', 'AA') THEN 'hola@geobooker.com.mx'
     WHEN tier IN ('A', 'B') THEN 'geobookerr@gmail.com'
     ELSE 'geobookerr@gmail.com'
 END

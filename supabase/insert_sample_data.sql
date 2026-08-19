@@ -75,7 +75,7 @@ SELECT
   
   -- Asignar cuenta
   CASE 
-    WHEN i <= 2000 THEN 'ventasgeobooker@gmail.com'  -- AAA + AA
+    WHEN i <= 2000 THEN 'hola@geobooker.com.mx'  -- AAA + AA
     ELSE 'geobookerr@gmail.com'  -- A + B
   END as assigned_email_sender,
   

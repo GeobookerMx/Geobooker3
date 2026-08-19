@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS marketing_contacts (
   whatsapp_sent_count INTEGER DEFAULT 0,
   
   -- Asignación de cuentas
-  assigned_email_sender TEXT, -- 'ventasgeobooker@gmail.com' o 'geobookerr@gmail.com'
+  assigned_email_sender TEXT, -- remitente verificado de Geobooker
   
   -- Engagement
   email_opened BOOLEAN DEFAULT FALSE,
@@ -218,7 +218,7 @@ CREATE OR REPLACE FUNCTION assign_email_sender(p_tier TEXT)
 RETURNS TEXT AS $$
 BEGIN
   IF p_tier IN ('AAA', 'AA') THEN
-    RETURN 'ventasgeobooker@gmail.com';
+    RETURN 'hola@geobooker.com.mx';
   ELSE
     RETURN 'geobookerr@gmail.com';
   END IF;
@@ -250,7 +250,7 @@ BEGIN
   INSERT INTO email_queue (contact_id, assigned_sender, scheduled_for, priority)
   SELECT 
     id,
-    'ventasgeobooker@gmail.com',
+    'hola@geobooker.com.mx',
     NOW() + INTERVAL '1 hour', -- 1 hora desde ahora
     1
   FROM marketing_contacts
@@ -267,7 +267,7 @@ BEGIN
   INSERT INTO email_queue (contact_id, assigned_sender, scheduled_for, priority)
   SELECT 
     id,
-    'ventasgeobooker@gmail.com',
+    'hola@geobooker.com.mx',
     NOW() + INTERVAL '2 hours',
     2
   FROM marketing_contacts

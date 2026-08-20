@@ -227,6 +227,8 @@ const UnifiedCRM = () => {
     const [emailQueue, setEmailQueue] = useState([]);
     const [waQueue, setWaQueue] = useState([]);
     const [isSending, setIsSending] = useState(false);
+    const [isPreviewingQueue, setIsPreviewingQueue] = useState(false);
+    const [queuePreviewResult, setQueuePreviewResult] = useState(null);
     const [sendProgress, setSendProgress] = useState(0);
     const [waSearchTier] = useState('all');
     const [emailSearchTier, setEmailSearchTier] = useState('all');
@@ -791,6 +793,44 @@ const UnifiedCRM = () => {
         } catch (err) {
             console.error('Error generating queue:', err);
             toast.error(`Error generando cola: ${err.message}`, { id: toastId });
+        }
+    };
+
+
+    const previewEmailQueue = async () => {
+        if (emailQueue.length === 0) {
+            toast.error('Primero prepara la cola real para poder previsualizarla');
+            return;
+        }
+
+        setIsPreviewingQueue(true);
+        setQueuePreviewResult(null);
+        const toastId = toast.loading('Revisando cola sin enviar correos...');
+
+        try {
+            const response = await fetch('/.netlify/functions/process-email-queue', {
+                method: 'POST',
+                headers: await getAuthenticatedJsonHeaders(),
+                body: JSON.stringify({
+                    dryRun: true,
+                    limit: Math.min(emailQueue.length, dailyLimit)
+                })
+            });
+
+            const result = await response.json();
+            if (!response.ok || result.success === false) {
+                throw new Error(result.error || result.message || 'No se pudo previsualizar la cola');
+            }
+
+            setQueuePreviewResult(result);
+            toast.success(`Preview listo: ${result.eligible || 0} contactos elegibles. No se envió ningún correo.`, { id: toastId });
+            addLog(`🔎 Preview sin enviar: ${result.eligible || 0} elegibles, límite ${result.dailyLimit || dailyLimit}`, 'info');
+        } catch (err) {
+            console.error('Preview queue error:', err);
+            toast.error(`Error en preview: ${err.message}`, { id: toastId });
+            addLog(`❌ Preview sin enviar falló: ${err.message}`, 'error');
+        } finally {
+            setIsPreviewingQueue(false);
         }
     };
 
@@ -1719,6 +1759,13 @@ const UnifiedCRM = () => {
                                                         Vista previa
                                                     </button>
                                                     <button
+                                                        onClick={previewEmailQueue}
+                                                        disabled={isPreviewingQueue || isSending || emailQueue.length === 0}
+                                                        className="px-4 py-2 bg-amber-400 text-amber-950 rounded-lg text-sm font-bold hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        {isPreviewingQueue ? 'Revisando...' : 'Preview sin enviar'}
+                                                    </button>
+                                                    <button
                                                         onClick={sendCampaign}
                                                         disabled={!selectedTemplate || !selectedSender || isSending || emailQueue.length === 0}
                                                         className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-bold hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1733,6 +1780,19 @@ const UnifiedCRM = () => {
                                                     </button>
                                                 </div>
                                             </div>
+                                            {queuePreviewResult && (
+                                                <div className="mt-3 rounded-lg border border-white/15 bg-black/20 p-3 text-xs text-blue-50">
+                                                    <div className="flex flex-wrap gap-3">
+                                                        <span><strong>Elegibles:</strong> {queuePreviewResult.eligible || 0}</span>
+                                                        <span><strong>Límite diario:</strong> {queuePreviewResult.dailyLimit || campaignLimits.daily_email_limit}</span>
+                                                        <span><strong>Enviados hoy:</strong> {queuePreviewResult.sentToday || 0}</span>
+                                                        <span><strong>Lote:</strong> {queuePreviewResult.batchLimit || emailQueue.length}</span>
+                                                    </div>
+                                                    <p className="mt-2 text-blue-200">
+                                                        No se envió ningún correo. Este preview solo valida contactos elegibles y límites del backend.
+                                                    </p>
+                                                </div>
+                                            )}
                                             <p className="text-blue-200 text-xs">
                                                 El envío real usa la plantilla seleccionada, el remitente activo y registra historial con `message_id` de Resend.
                                             </p>

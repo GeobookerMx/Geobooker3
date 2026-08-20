@@ -1,173 +1,236 @@
 // src/components/admin/EmailTester.jsx
-// Componente simple para probar envío de emails con Resend
+// Prueba controlada de envío con Resend usando el layout profesional del CRM.
 
-import React, { useState } from 'react';
-import { Mail, Send, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-import { sendEmail } from '../../services/emailService';
+import React, { useMemo, useState } from 'react';
+import { Mail, Send, Loader2, CheckCircle, AlertCircle, Power } from 'lucide-react';
+import { sendEmail } from '../../services/mailService';
 
-const EmailTester = () => {
-    const [testEmail, setTestEmail] = useState('hola@geobooker.com.mx');
+const DEFAULT_RECIPIENTS = 'jpvanesss85@gmail.com\ngeobookerr@gmail.com';
+
+const splitRecipients = (value = '') => (
+    value
+        .split(/[\n,;]+/)
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean)
+);
+
+const isLikelyEmail = (value = '') => /^\S+@\S+\.\S+$/.test(value);
+
+const buildTestHtml = () => `
+  <h2 style="margin:0 0 16px;color:#0f172a;">Prueba CRM Geobooker completada</h2>
+  <p>
+    Este es un correo de prueba enviado desde el CRM de <strong>Geobooker</strong>
+    usando el dominio verificado <strong>hola@geobooker.com.mx</strong>.
+  </p>
+  <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;padding:16px;margin:20px 0;">
+    <p style="margin:0 0 8px;font-weight:700;color:#1d4ed8;">Validaciones de esta prueba</p>
+    <ul style="margin:0;padding-left:18px;color:#334155;line-height:1.7;">
+      <li>Resend conectado al dominio verificado geobooker.com.mx.</li>
+      <li>Remitente oficial: Geobooker Ads &lt;hola@geobooker.com.mx&gt;.</li>
+      <li>Footer profesional con enlaces y QR de descarga Android/iPhone.</li>
+      <li>Webhook preparado para registrar entregas, aperturas, clics, rebotes y quejas.</li>
+    </ul>
+  </div>
+  <p>
+    Si este correo llega correctamente, el siguiente paso es revisar eventos en Resend
+    y en Supabase para confirmar trazabilidad real.
+  </p>
+  <p style="margin-top:24px;color:#475569;">
+    Atentamente,<br />
+    <strong>Equipo Geobooker Ads</strong>
+  </p>
+`;
+
+export default function EmailTester() {
+    const [testerEnabled, setTesterEnabled] = useState(false);
+    const [recipientsInput, setRecipientsInput] = useState(DEFAULT_RECIPIENTS);
     const [isSending, setIsSending] = useState(false);
-    const [result, setResult] = useState(null);
+    const [results, setResults] = useState([]);
+
+    const recipients = useMemo(() => [...new Set(splitRecipients(recipientsInput))], [recipientsInput]);
+    const invalidRecipients = recipients.filter((email) => !isLikelyEmail(email));
+    const suspiciousRecipients = recipients.filter((email) => email.endsWith('@gmail.com.mx'));
+    const canSend = testerEnabled && recipients.length > 0 && invalidRecipients.length === 0 && !isSending;
+
+    const handleTesterToggle = () => {
+        setTesterEnabled((previous) => {
+            const next = !previous;
+            if (!next) {
+                setResults([]);
+                setIsSending(false);
+            }
+            return next;
+        });
+    };
 
     const sendTestEmail = async () => {
-        if (!testEmail) {
-            setResult({ success: false, message: 'Por favor ingresa un email' });
+        if (!testerEnabled) {
+            setResults([{
+                success: false,
+                email: '',
+                error: 'Activa primero el tester profesional.'
+            }]);
+            return;
+        }
+
+        if (!canSend) {
+            setResults([{
+                success: false,
+                email: '',
+                error: invalidRecipients.length
+                    ? `Corrige estos correos: ${invalidRecipients.join(', ')}`
+                    : 'Agrega al menos un destinatario.'
+            }]);
             return;
         }
 
         setIsSending(true);
-        setResult(null);
+        setResults([]);
 
-        try {
+        const nextResults = [];
+        for (const email of recipients) {
             const response = await sendEmail({
-                to: testEmail,
-                subject: '✅ Test CRM Geobooker - Email Funcionando',
-                html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-              <h1 style="color: white; margin: 0;">🎉 ¡Sistema de Email Activo!</h1>
-            </div>
-            
-            <div style="background: white; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
-              <p style="color: #333; font-size: 16px; line-height: 1.6;">
-                Este es un email de prueba enviado desde tu CRM Geobooker usando <strong>Resend</strong>.
-              </p>
-
-              <div style="background: #f0f9ff; border-left: 4px solid #667eea; padding: 15px; margin: 20px 0;">
-                <h3 style="margin: 0 0 10px 0; color: #667eea; font-size: 18px;">✅ Sistema Configurado</h3>
-                <ul style="margin: 0; padding-left: 20px; color: #555;">
-                  <li>Resend API: Activo</li>
-                  <li>Netlify Function: Desplegada</li>
-                  <li>Límite: 100 emails/día (Free)</li>
-                  <li>Base de datos: 10,000 contactos listos</li>
-                </ul>
-              </div>
-
-              <p style="color: #666; font-size: 14px;">
-                <strong>Próximos pasos:</strong>
-              </p>
-              <ol style="color: #666; font-size: 14px;">
-                <li>Integrar con UnifiedCRM.jsx</li>
-                <li>Crear cola de envío automática</li>
-                <li>Dashboard de métricas</li>
-              </ol>
-
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="https://geobooker.com.mx" 
-                   style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-weight: bold;">
-                  Visitar Geobooker
-                </a>
-              </div>
-
-              <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
-              
-              <p style="color: #888; font-size: 12px; margin: 0;">
-                Enviado el: ${new Date().toLocaleString('es-MX')}<br>
-                Desde: Geobooker CRM Test<br>
-                ID de prueba: ${Date.now()}
-              </p>
-            </div>
-          </div>
-        `,
-                from: 'Geobooker Ads <hola@geobooker.com.mx>'
+                to: email,
+                subject: 'Prueba CRM Geobooker - Resend verificado',
+                html: buildTestHtml()
             });
 
-            setResult(response);
-        } catch (error) {
-            setResult({
-                success: false,
-                error: error.message || 'Error al enviar email'
+            nextResults.push({
+                email,
+                success: response.success,
+                emailId: response.emailId,
+                error: response.error
             });
-        } finally {
-            setIsSending(false);
+            setResults([...nextResults]);
         }
+
+        setIsSending(false);
     };
 
     return (
-        <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-blue-200">
-            <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-blue-600 rounded-lg">
-                    <Mail className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                    <h3 className="font-semibold text-gray-900">Test de Email</h3>
-                    <p className="text-sm text-gray-600">Prueba el sistema Resend</p>
-                </div>
-            </div>
-
-            <div className="space-y-3">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Email de  prueba
-                    </label>
-                    <input
-                        type="email"
-                        value={testEmail}
-                        onChange={(e) => setTestEmail(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="tu@email.com"
-                    />
+        <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-purple-50 p-6">
+            <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-blue-600 p-2">
+                        <Mail className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                        <h3 className="font-semibold text-gray-900">Test profesional de email</h3>
+                        <p className="text-sm text-gray-600">
+                            Envía una prueba con Resend, footer Geobooker y QR de descarga.
+                        </p>
+                    </div>
                 </div>
 
                 <button
-                    onClick={sendTestEmail}
-                    disabled={isSending}
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2.5 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    type="button"
+                    onClick={handleTesterToggle}
+                    className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition ${
+                        testerEnabled
+                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                            : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                    }`}
                 >
-                    {isSending ? (
-                        <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            Enviando...
-                        </>
-                    ) : (
-                        <>
-                            <Send className="w-4 h-4" />
-                            Enviar Email de Prueba
-                        </>
-                    )}
+                    <Power className="h-4 w-4" />
+                    {testerEnabled ? 'Desactivar tester profesional' : 'Activar tester profesional'}
                 </button>
-
-                {result && (
-                    <div className={`p-3 rounded-lg flex items-start gap-2 ${result.success
-                        ? 'bg-green-50 border border-green-200'
-                        : 'bg-red-50 border border-red-200'
-                        }`}>
-                        {result.success ? (
-                            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                        ) : (
-                            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                        )}
-                        <div className="flex-1">
-                            <p className={`text-sm font-medium ${result.success ? 'text-green-900' : 'text-red-900'
-                                }`}>
-                                {result.success ? '✅ Email enviado exitosamente' : '❌ Error al enviar email'}
-                            </p>
-                            {result.messageId && (
-                                <p className="text-xs text-green-700 mt-1">
-                                    ID: {result.messageId}
-                                </p>
-                            )}
-                            {result.error && (
-                                <p className="text-xs text-red-700 mt-1">
-                                    {result.error}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                <div className="text-xs text-gray-500 bg-white/50 p-2 rounded border border-gray-200">
-                    <p className="font-medium mb-1">✨ Capacidad actual:</p>
-                    <ul className="space-y-0.5 ml-3">
-                        <li>• 100 emails/día (Resend Free)</li>
-                        <li>• Template profesional HTML</li>
-                        <li>• Tracking en dashboard</li>
-                    </ul>
-                </div>
             </div>
+
+            {!testerEnabled ? (
+                <div className="rounded-xl border border-blue-200 bg-white/70 p-4 text-sm text-blue-900">
+                    El tester está apagado por seguridad. Actívalo solo cuando quieras enviar una prueba real;
+                    después puedes desactivarlo y el CRM seguirá funcionando sin dejar el botón de envío expuesto.
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    <div>
+                        <label className="mb-1 block text-sm font-medium text-gray-700">
+                            Correos de prueba
+                        </label>
+                        <textarea
+                            value={recipientsInput}
+                            onChange={(event) => setRecipientsInput(event.target.value)}
+                            rows={3}
+                            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                            placeholder="correo1@dominio.com, correo2@dominio.com"
+                        />
+                        <p className="mt-1 text-xs text-gray-500">
+                            Puedes separar correos por coma, punto y coma o salto de línea. Se envían uno por uno.
+                        </p>
+                    </div>
+
+                    {suspiciousRecipients.length > 0 && (
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                            Revisa estos correos: <strong>{suspiciousRecipients.join(', ')}</strong>. Gmail normalmente usa <strong>@gmail.com</strong>, no <strong>@gmail.com.mx</strong>.
+                        </div>
+                    )}
+
+                    {invalidRecipients.length > 0 && (
+                        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+                            Formato inválido: {invalidRecipients.join(', ')}
+                        </div>
+                    )}
+
+                    <button
+                        onClick={sendTestEmail}
+                        disabled={!canSend}
+                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2.5 font-medium text-white transition-all hover:from-blue-700 hover:to-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        {isSending ? (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Enviando prueba...
+                            </>
+                        ) : (
+                            <>
+                                <Send className="h-4 w-4" />
+                                Enviar prueba profesional
+                            </>
+                        )}
+                    </button>
+
+                    {results.length > 0 && (
+                        <div className="space-y-2">
+                            {results.map((result) => (
+                                <div
+                                    key={result.email || result.error}
+                                    className={`flex items-start gap-2 rounded-lg border p-3 ${result.success
+                                        ? 'border-green-200 bg-green-50'
+                                        : 'border-red-200 bg-red-50'
+                                        }`}
+                                >
+                                    {result.success ? (
+                                        <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600" />
+                                    ) : (
+                                        <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                        <p className={`text-sm font-medium ${result.success ? 'text-green-900' : 'text-red-900'}`}>
+                                            {result.success ? `Enviado a ${result.email}` : `Error ${result.email ? `en ${result.email}` : ''}`}
+                                        </p>
+                                        {result.emailId && (
+                                            <p className="mt-1 text-xs text-green-700">ID Resend: {result.emailId}</p>
+                                        )}
+                                        {result.error && (
+                                            <p className="mt-1 text-xs text-red-700">{result.error}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="rounded border border-gray-200 bg-white/60 p-3 text-xs text-gray-600">
+                        <p className="mb-1 font-medium">Configuración esperada:</p>
+                        <ul className="ml-3 space-y-0.5">
+                            <li>• Remitente: hola@geobooker.com.mx</li>
+                            <li>• Límite CRM actual: 100 emails/día</li>
+                            <li>• Footer: botones + QR Android/iPhone</li>
+                            <li>• Tracking: Resend webhook → Supabase</li>
+                        </ul>
+                    </div>
+                </div>
+            )}
         </div>
     );
-};
-
-export default EmailTester;
+}

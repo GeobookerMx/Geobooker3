@@ -58,7 +58,7 @@ const CATEGORIES = {
     subcategories: [
       'Taller Mecánico', 'Vulcanizadora', 'Alineación y Balanceo', 'Taller Eléctrico',
       'Motos', 'Tracto/Camiones', 'Servicios a Tractocamiones', 'Diesel', 'Boutique Automotriz', 'Lavado de Autos',
-      'Plomería', 'Electricista', 'Cerrajero', 'Carpintería', 'Herrería', 'Vidriería', 'Limpieza', 'Aire Acondicionado y Refrigeración', 'Fumigación', 'Mudanzas y Fletes'
+      'Plomería', 'Electricista', 'Cerrajero', 'Carpintería', 'Herrería', 'Vidriería', 'Limpieza', 'Lavanderías', 'Tintorerías', 'Planchadurías', 'Aire Acondicionado y Refrigeración', 'Fumigación', 'Mudanzas y Fletes'
     ]
   },
   salud: {
@@ -786,7 +786,7 @@ export default function BusinessFormPage() {
                 </h2>
                 <p className="text-sm text-blue-700">
                   Podrás subir fotos de tu negocio <strong>después de registrarlo</strong>, desde tu panel de control en "Editar negocio".
-                  El plan gratuito incluye <strong>1 foto</strong>, y Premium hasta <strong>10 fotos</strong>.
+                  Para activar la galería completa acepta <strong>Premium GRATIS</strong> al registrarte o al iniciar sesión; Premium permite hasta <strong>10 fotos</strong>.
                 </p>
               </section>
             )}

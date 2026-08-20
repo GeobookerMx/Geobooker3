@@ -80,7 +80,11 @@ const CampaignSender = ({ metrics, onCampaignComplete }) => {
             const batchInfo = result.processedBatch && result.requestedLimit && result.processedBatch < result.requestedLimit
                 ? `\nLote procesado ahora: ${result.processedBatch} (Netlify procesa por bloques).`
                 : '';
-            if (result.sent > 0) {
+            if (result.paused) {
+                toast(`Envios pausados.\n${result.message || 'Activa el envio desde configuracion antes de lanzar.'}`, { duration: 7000 });
+            } else if (result.stopped) {
+                toast(`Corrida detenida por seguridad: ${result.stopReason || 'limite del proveedor'}.\nEnviados: ${result.sent || 0}\nPendientes para reintento: ${result.deferred || 0}`, { duration: 8000 });
+            } else if (result.sent > 0) {
                 toast.success(`Campana completada exitosamente.\nEnviados: ${result.sent}\nFallidos: ${result.failed || 0}${batchInfo}`);
             } else if (result.failed > 0) {
                 toast.error(`La campana no envio correos.\nEnviados: 0\nFallidos: ${result.failed}${batchInfo}`);

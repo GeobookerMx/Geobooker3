@@ -13,8 +13,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { getAuthErrorCode, trackAuthFunnelEvent, trackUserLogin } from '../services/analyticsService';
 import { getPlatform } from '../utils/platformDetection';
+import { Capacitor } from '@capacitor/core';
 
-const MAX_WAIT_MS = 8000;
+const MAX_WAIT_MS = Capacitor.isNativePlatform() ? 15000 : 8000;
 
 const AuthCallback = () => {
     const navigate = useNavigate();

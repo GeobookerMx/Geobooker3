@@ -64,6 +64,8 @@ export function matchesCampaignLocation(campaign, context = {}) {
         .map(normalizeCountryCode)
         .filter(Boolean);
     const explicitCountry = normalizeCountryCode(campaign?.target_country);
+    const scope = String(campaign?.geographic_scope || campaign?.ad_level || '').toLowerCase();
+    const targetLocationText = normalizeCityName(campaign?.target_location);
     const explicitTargets = [
         ...targetCountries,
         ...targetCities,
@@ -73,11 +75,17 @@ export function matchesCampaignLocation(campaign, context = {}) {
 
     if (campaign?.is_demo === true) return true;
 
-    if (targetCities.some((targetCity) => (
+    const cityMatched = targetCities.some((targetCity) => (
         city && (targetCity.includes(city) || city.includes(targetCity))
-    ))) {
+    )) || (
+        city && targetLocationText && (targetLocationText.includes(city) || city.includes(targetLocationText.split(',')[0]))
+    );
+
+    if (cityMatched) {
         return true;
     }
+
+    if (scope === 'city') return false;
 
     if (
         country &&
@@ -89,7 +97,7 @@ export function matchesCampaignLocation(campaign, context = {}) {
     }
 
     // Global means unrestricted only when no explicit territory was configured.
-    return explicitTargets.length === 0;
+    return (scope === 'global' || !scope) && explicitTargets.length === 0;
 }
 
 /**

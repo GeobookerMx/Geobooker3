@@ -350,29 +350,28 @@ function enrichSpace(space) {
 }
 
 function buildAdvertiseSchema(adSpaces) {
-  const listItems = adSpaces.map((space, index) => {
+  const offerItems = adSpaces.map((space) => {
     const pricing = getPricingLabel(space);
     const offerPrice = pricing.totalWithIva || Number(space.price_monthly || 0);
 
     return {
-      "@type": "ListItem",
-      position: index + 1,
-      item: {
-        "@type": "Product",
+      "@type": "Offer",
+      name: space.display_name,
+      description: space.description || space.tipoLabel || "Servicio publicitario en Geobooker",
+      priceCurrency: "MXN",
+      price: offerPrice,
+      availability: "https://schema.org/InStock",
+      url: space.name === "enterprise" ? "https://geobooker.com.mx/enterprise" : "https://geobooker.com.mx/advertise",
+      itemOffered: {
+        "@type": "Service",
         name: space.display_name,
-        description: space.description || space.tipoLabel || "Espacio publicitario en Geobooker",
-        brand: {
-          "@type": "Brand",
-          name: "Geobooker Ads",
+        serviceType: "Publicidad geolocalizada en Geobooker",
+        provider: {
+          "@type": "Organization",
+          name: "Geobooker",
+          url: "https://geobooker.com.mx",
         },
-        category: space.type || "advertising",
-        offers: {
-          "@type": "Offer",
-          priceCurrency: "MXN",
-          price: offerPrice,
-          availability: "https://schema.org/InStock",
-          url: space.name === "enterprise" ? "https://geobooker.com.mx/enterprise" : "https://geobooker.com.mx/advertise",
-        },
+        areaServed: space.name === "enterprise" ? "Multi-país" : "México",
       },
     };
   });
@@ -385,8 +384,9 @@ function buildAdvertiseSchema(adSpaces) {
       description: "Paquetes publicitarios de Geobooker para negocios locales, patrocinio de ciudad y campañas enterprise.",
       url: "https://geobooker.com.mx/advertise",
       mainEntity: {
-        "@type": "ItemList",
-        itemListElement: listItems,
+        "@type": "OfferCatalog",
+        name: "Catálogo de servicios publicitarios Geobooker",
+        itemListElement: offerItems,
       },
     },
     {
@@ -771,7 +771,7 @@ const AdvertisePage = () => {
               Banners internos sugeridos para vender tus propios espacios
             </h3>
             <p className="text-sm text-white/80 mt-2">
-              Previews visuales con ambiente futbolero 2026 para usarlos como autopromocion dentro de Geobooker, sin usar marcas oficiales.
+              Previews visuales con ambiente de Fiestas Patrias para usarlos como autopromoción dentro de Geobooker, destacando negocios locales y Premium gratis.
             </p>
 
             <div className="mt-5 grid gap-3">
@@ -797,7 +797,7 @@ const AdvertisePage = () => {
                   <div className="relative flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                       <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 text-2xl backdrop-blur animate-pulse">
-                        ⚽
+                        🇲🇽
                       </div>
                       <div>
                         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">

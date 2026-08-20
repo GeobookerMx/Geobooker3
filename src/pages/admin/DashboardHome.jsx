@@ -219,7 +219,7 @@ export default function DashboardHome() {
         const { count: denueCount } = await supabase
           .from('businesses')
           .select('id', { count: 'exact', head: true })
-          .eq('source', 'denue');
+          .eq('source_type', 'denue');
         setStats(prev => ({ ...prev, denueCount: denueCount || 0 }));
       } catch (denueErr) {
         console.warn('Error loading DENUE count:', denueErr);
@@ -230,8 +230,8 @@ export default function DashboardHome() {
         const { count: claimedCount } = await supabase
           .from('businesses')
           .select('id', { count: 'exact', head: true })
-          .eq('source', 'denue')
-          .eq('claimed', true);
+          .eq('source_type', 'denue')
+          .eq('is_claimed', true);
         setStats(prev => ({ ...prev, claimedCount: claimedCount || 0 }));
       } catch (convErr) {
         console.warn('Error loading claimed DENUE count:', convErr);
@@ -239,13 +239,37 @@ export default function DashboardHome() {
 
       // Cargar estadísticas internacionales
       try {
-        const { data: countryStats } = await supabase.rpc('get_users_by_country');
         const { data: domainStats } = await supabase.from('v_users_by_domain').select('*');
+        const { data: profileCountries, error: profileCountriesError } = await supabase
+          .from('user_profiles')
+          .select('country_code, registration_country')
+          .not('country_code', 'is', null)
+          .limit(5000);
 
-        const intlCount = countryStats?.filter(c => c.country_code !== 'MX').reduce((sum, c) => sum + parseInt(c.user_count), 0) || 0;
+        let byCountry = [];
+        if (!profileCountriesError) {
+          const totalProfiles = profileCountries?.length || 0;
+          const grouped = new Map();
+          (profileCountries || []).forEach((profile) => {
+            const code = profile.country_code || 'UN';
+            const current = grouped.get(code) || {
+              country_code: code,
+              country_name: profile.registration_country || 'Unknown',
+              user_count: 0
+            };
+            current.user_count += 1;
+            grouped.set(code, current);
+          });
+          byCountry = [...grouped.values()].map((row) => ({
+            ...row,
+            percentage: totalProfiles > 0 ? Number(((row.user_count / totalProfiles) * 100).toFixed(2)) : 0
+          }));
+        }
+
+        const intlCount = byCountry?.filter(c => c.country_code !== 'MX').reduce((sum, c) => sum + parseInt(c.user_count), 0) || 0;
 
         setIntlStats({
-          byCountry: countryStats || [],
+          byCountry,
           intlCount: intlCount,
           byDomain: domainStats || []
         });
@@ -334,11 +358,7 @@ export default function DashboardHome() {
           .order('detected_at', { ascending: false })
           .limit(8);
 
-        let healthData = null;
-        try {
-          const { data: health } = await supabase.from('v_security_health').select('*').maybeSingle();
-          if (health) healthData = health;
-        } catch (e) { /* fallback */ }
+        const healthData = null;
 
         if (securityEventsError) {
           console.warn('Security events table not available yet:', securityEventsError);
@@ -371,9 +391,9 @@ export default function DashboardHome() {
         const todayISO = todayStart.toISOString();
 
         const [leadsToday, totalLeads, whatsappToday, convertedLeads] = await Promise.all([
-          supabase.from('scan_leads').select('id', { count: 'exact', head: true }).gte('created_at', todayISO),
+          supabase.from('scan_leads').select('id', { count: 'exact', head: true }).gte('captured_at', todayISO),
           supabase.from('scan_leads').select('id', { count: 'exact', head: true }),
-          supabase.from('scan_lead_contacts').select('id', { count: 'exact', head: true }).eq('type', 'whatsapp_sent').gte('created_at', todayISO),
+          supabase.from('scan_outreach').select('id', { count: 'exact', head: true }).eq('channel', 'whatsapp').gte('attempted_at', todayISO),
           supabase.from('scan_leads').select('id', { count: 'exact', head: true }).eq('status', 'converted')
         ]);
 

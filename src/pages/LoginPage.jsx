@@ -5,6 +5,10 @@ import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { getAuthErrorCode, trackAuthFunnelEvent, trackUserLogin } from '../services/analyticsService';
 import { Capacitor } from '@capacitor/core';
+import { activatePremiumPromotion } from '../services/premiumService';
+import { getPremiumPromoDeadlineLabel, isPremiumPromoActive } from '../config/promotions';
+
+const PREMIUM_AFTER_LOGIN_KEY = 'geobooker_activate_premium_after_login';
 
 const LoginPage = () => {
   const { t } = useTranslation();
@@ -14,6 +18,11 @@ const LoginPage = () => {
 
   const [loading, setLoading] = useState(false);
   const hasStartedForm = useRef(false);
+  const premiumPromoActive = isPremiumPromoActive();
+  const [activateFreePremiumOnLogin, setActivateFreePremiumOnLogin] = useState(() => {
+    if (!premiumPromoActive) return false;
+    return localStorage.getItem(PREMIUM_AFTER_LOGIN_KEY) !== 'false';
+  });
   const [formData, setFormData] = useState({ email: '', password: '', rememberMe: false });
   const oauthRedirectTo = isNative
     ? 'geobooker://auth/callback'
@@ -58,6 +67,16 @@ const LoginPage = () => {
           userId: data.user.id
         });
         trackUserLogin(data.user.id, 'email');
+      }
+      if (premiumPromoActive && activateFreePremiumOnLogin) {
+        try {
+          await activatePremiumPromotion(data.session?.access_token);
+          localStorage.removeItem(PREMIUM_AFTER_LOGIN_KEY);
+          toast.success('Premium gratis activado. Ya tienes acceso completo.');
+        } catch (premiumError) {
+          console.warn('No se pudo activar Premium al iniciar sesión:', premiumError);
+          toast.error('Entraste correctamente, pero no se pudo activar Premium gratis todavía.');
+        }
       }
       toast.success(t('login.welcomeBack'));
       navigate('/');
@@ -133,6 +152,33 @@ const LoginPage = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('login.title')}</h1>
           <p className="text-gray-600">{t('login.subtitle')}</p>
         </div>
+
+        {premiumPromoActive && (
+          <div className="mb-5 rounded-2xl border-2 border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 p-4 shadow-sm">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={activateFreePremiumOnLogin}
+                onChange={(event) => {
+                  setActivateFreePremiumOnLogin(event.target.checked);
+                  if (event.target.checked) {
+                    localStorage.setItem(PREMIUM_AFTER_LOGIN_KEY, 'true');
+                  } else {
+                    localStorage.setItem(PREMIUM_AFTER_LOGIN_KEY, 'false');
+                  }
+                }}
+                className="mt-1 h-5 w-5 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+              />
+              <span>
+                <span className="block font-bold text-emerald-950">Activar Premium GRATIS al iniciar sesión</span>
+                <span className="mt-1 block text-sm text-emerald-800">
+                  Full access hasta el {getPremiumPromoDeadlineLabel('es-MX')}: fotos, métricas,
+                  redes sociales, perfil destacado y herramientas completas.
+                </span>
+              </span>
+            </label>
+          </div>
+        )}
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Formulario email/password */}

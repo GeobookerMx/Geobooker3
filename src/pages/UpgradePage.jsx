@@ -327,7 +327,7 @@ const UpgradePage = () => {
                             </li>
                             <li className="flex items-start">
                                 <Check className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                                <span>Hasta <strong>3 fotos</strong></span>
+                                <span>Galería de fotos al activar <strong>Premium gratis</strong></span>
                             </li>
                             <li className="flex items-start">
                                 <Check className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />

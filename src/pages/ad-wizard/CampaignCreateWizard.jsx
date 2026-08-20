@@ -337,6 +337,14 @@ const getIsoDateOffset = (offsetDays = 0) => {
             const user = session?.user;
             const adPricing = getLocalAdPricing(adSpace?.price_monthly);
             const taxScenario = getTaxScenario(formData.billing_country);
+            const isGlobalScope = formData.geographic_scope === 'global';
+            const targetCountry = isGlobalScope ? null : (formData.target_country || null);
+            const targetRegion = ['region', 'city'].includes(formData.geographic_scope) ? (formData.target_region || null) : null;
+            const targetCity = formData.geographic_scope === 'city' ? (formData.target_city || null) : null;
+            const audienceTargeting = {
+                countries: targetCountry ? [targetCountry] : [],
+                languages: formData.target_language ? [formData.target_language] : []
+            };
 
             const subtotal = adPricing.finalPrice || 0;
             const ivaAmount = taxScenario.chargeIva ? subtotal * 0.16 : 0;
@@ -349,16 +357,16 @@ const getIsoDateOffset = (offsetDays = 0) => {
                 p_advertiser_email: formData.advertiser_email,
                 p_geographic_scope: formData.geographic_scope,
                 p_target_location: getTargetLocation(),
-                p_audience_targeting: { countries: [formData.target_country], languages: [formData.target_language] },
+                p_audience_targeting: audienceTargeting,
                 p_budget: subtotal,
                 p_creative_title: formData.title,
                 p_creative_description: formData.description,
                 p_creative_url: formData.cta_url,
                 p_creative_cta: formData.cta_text,
                 p_creative_image: formData.image_url,
-                p_target_country: formData.target_country || null,
-                p_target_region: formData.target_region || null,
-                p_target_city: formData.target_city || null,
+                p_target_country: targetCountry,
+                p_target_region: targetRegion,
+                p_target_city: targetCity,
                 p_user_id: user?.id || null,
                 p_start_date: formData.start_date,
                 p_end_date: formData.end_date,
@@ -414,7 +422,7 @@ const getIsoDateOffset = (offsetDays = 0) => {
                             advertiser_email: formData.advertiser_email,
                             advertiser_name: formData.advertiser_name,
                             billing_country: formData.billing_country,
-                            target_country: formData.target_country,
+                            target_country: targetCountry || 'global',
                             target_scope: formData.geographic_scope,
                             tax_status: taxScenario.taxStatus,
                             invoice_type: taxScenario.invoiceType,
@@ -464,7 +472,7 @@ const getIsoDateOffset = (offsetDays = 0) => {
                             ad_space_name: adSpace.name,
                             advertiser_name: formData.advertiser_name,
                             billing_country: formData.billing_country,
-                            target_country: formData.target_country,
+                            target_country: targetCountry || 'global',
                             target_scope: formData.geographic_scope,
                             tax_status: taxScenario.taxStatus,
                             invoice_type: taxScenario.invoiceType,

@@ -8,7 +8,10 @@ const HANDLED_EVENTS = new Set([
   'email.opened',
   'email.clicked',
   'email.bounced',
-  'email.complained'
+  'email.complained',
+  'email.delivery_delayed',
+  'email.failed',
+  'email.suppressed'
 ]);
 
 function json(statusCode, body) {
@@ -53,6 +56,12 @@ function safeMetadata(type, data) {
     return {
       bounce_type: typeof data?.bounce_type === 'string' ? data.bounce_type.slice(0, 100) : null,
       bounce_reason: typeof data?.bounce_reason === 'string' ? data.bounce_reason.slice(0, 500) : null
+    };
+  }
+  if (type === 'email.delivery_delayed' || type === 'email.failed' || type === 'email.suppressed') {
+    return {
+      reason: typeof data?.reason === 'string' ? data.reason.slice(0, 500) : null,
+      status: typeof data?.status === 'string' ? data.status.slice(0, 100) : null
     };
   }
   return {};
@@ -122,30 +131,47 @@ async function processEmailEvent(supabase, webhook) {
   if (!email || !messageId) throw new Error('invalid_email_event');
 
   const eventType = type.slice('email.'.length);
+  const metadata = safeMetadata(type, data);
   await requireSuccess(
     supabase.from('email_analytics').insert({
       message_id: messageId,
       recipient_email: email,
       event_type: eventType,
       timestamp: eventTimestamp(webhook),
-      metadata: safeMetadata(type, data)
+      metadata
     }),
     'analytics_insert_failed'
   );
 
+  await requireSuccess(
+    supabase.from('campaign_history').update({
+      status: eventType
+    }).eq('message_id', messageId),
+    'campaign_history_update_failed'
+  );
+
   const now = new Date().toISOString();
-  if (type === 'email.opened') {
-    await updateContactEngagement(supabase, email, { last_email_opened: now }, 5);
+  if (type === 'email.delivered') {
+    await updateContactEngagement(supabase, email, { email_status: 'sent' }, 0);
+  } else if (type === 'email.opened') {
+    await updateContactEngagement(supabase, email, { last_email_opened: now, email_status: 'opened' }, 5);
   } else if (type === 'email.clicked') {
-    await updateContactEngagement(supabase, email, { last_email_clicked: now }, 10);
+    await updateContactEngagement(supabase, email, { last_email_clicked: now, email_status: 'clicked' }, 10);
   } else if (type === 'email.bounced') {
     await requireSuccess(
       supabase.from('marketing_contacts').update({
         email_status: 'bounced',
         is_active: false,
-        bounce_reason: safeMetadata(type, data).bounce_reason
+        bounce_reason: metadata.bounce_reason
       }).eq('email', email),
       'bounce_suppression_failed'
+    );
+    await requireSuccess(
+      supabase.from('email_queue').update({
+        status: 'failed',
+        error_message: metadata.bounce_reason || 'Email bounced'
+      }).eq('message_id', messageId),
+      'bounce_queue_update_failed'
     );
   } else if (type === 'email.complained') {
     await requireSuccess(
@@ -155,6 +181,36 @@ async function processEmailEvent(supabase, webhook) {
         unsubscribed: true
       }).eq('email', email),
       'complaint_suppression_failed'
+    );
+    await requireSuccess(
+      supabase.from('email_queue').update({
+        status: 'failed',
+        error_message: 'Recipient complained / spam report'
+      }).eq('message_id', messageId),
+      'complaint_queue_update_failed'
+    );
+  } else if (type === 'email.suppressed' || type === 'email.failed') {
+    await requireSuccess(
+      supabase.from('marketing_contacts').update({
+        email_status: type === 'email.suppressed' ? 'suppressed' : 'failed',
+        is_active: false,
+        bounce_reason: metadata.reason || metadata.status || eventType
+      }).eq('email', email),
+      'failed_suppression_failed'
+    );
+    await requireSuccess(
+      supabase.from('email_queue').update({
+        status: 'failed',
+        error_message: metadata.reason || metadata.status || eventType
+      }).eq('message_id', messageId),
+      'failed_queue_update_failed'
+    );
+  } else if (type === 'email.delivery_delayed') {
+    await requireSuccess(
+      supabase.from('marketing_contacts').update({
+        email_status: 'delivery_delayed'
+      }).eq('email', email),
+      'delivery_delay_mark_failed'
     );
   }
 }

@@ -661,7 +661,7 @@ export const BusinessMap = memo(({
       if (cat === 'restaurante') return /restaurante|taqueria|carnicerias|tortilleria|antojitos|panaderia|comida|cocina|cafet[eé]ria|cantina|bar|cerveceria/.test(desc);
       if (cat === 'tienda') return /tienda|abarrotes|farmacia|ferretera|papeleria|ropa|calzado|muebles|electrodomestic|comercio al por/.test(desc);
       if (cat === 'salud') return /clínica|clinica|médico|medico|hospital|dentista|optometrista|laboratorio|farmacia|veterinaria|salud/.test(desc);
-      if (cat === 'servicio') return /taller|mecanico|plomero|electricista|carpintero|lavander|asesor|gestor|servicio|reparacion|belleza|peluquer|salon|estética/.test(desc);
+      if (cat === 'servicio') return /taller|mecanico|plomero|electricista|carpintero|lavander|tintorer|planchadur|planchado|asesor|gestor|servicio|reparacion|belleza|peluquer|salon|estética/.test(desc);
       if (cat === 'educacion') return /escuela|colegio|universidad|preparatoria|kinder|academia|instituto|capacitacion|educacion/.test(desc);
       if (cat === 'entretenimiento') return /gym|gimnasio|cancha|salon de eventos|boliche|cine|teatro|hotel|motel|caseta|discotec|bar/.test(desc);
       if (cat === 'industria') return /fabrica|industria|manufactura|maquila|almacen|bodega|construccion|materiales/.test(desc);

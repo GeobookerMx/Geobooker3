@@ -9,7 +9,8 @@ import { GOOGLE_MAPS_API_KEY } from '../config/supabase';
 
 const MAPS_LIBRARIES = ['places'];
 import { toast } from 'react-hot-toast';
-import { Upload, X, MapPin, Clock, Phone, Globe, Mail, Image as ImageIcon, Briefcase, FileText, Share2 } from 'lucide-react';
+import { Upload, X, MapPin, Clock, Phone, Globe, Mail, Image as ImageIcon, Briefcase, FileText, Share2, Crown } from 'lucide-react';
+import { getPremiumPromoDeadlineLabel, isPremiumPromoActive } from '../config/promotions';
 
 const mapContainerStyle = {
     width: '100%',
@@ -31,6 +32,7 @@ const BusinessEditPage = () => {
     const mapRef = useRef(null);
 
     const { isLoaded } = useSharedGoogleMaps();
+    const premiumPromoActive = isPremiumPromoActive();
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -177,13 +179,24 @@ const BusinessEditPage = () => {
     const handleImageUpload = async (e) => {
         const files = Array.from(e.target.files);
         const currentImageCount = formData.images.length;
-        const maxImages = isPremium ? 10 : 1;
+        const maxImages = isPremium ? 10 : 0;
+
+        if (!isPremium) {
+            toast.error(
+                premiumPromoActive
+                    ? 'Activa Premium gratis para subir fotos de tu negocio.'
+                    : 'Activa Premium para subir fotos de tu negocio.',
+                { duration: 5000 }
+            );
+            e.target.value = '';
+            return;
+        }
 
         if (currentImageCount >= maxImages) {
             if (isPremium) {
                 toast.error('Máximo 10 fotos permitidas');
             } else {
-                toast.error('Plan gratuito: solo 1 foto. Actualiza a Premium para 10 fotos', {
+                toast.error('Activa Premium para subir hasta 10 fotos', {
                     duration: 5000
                 });
                 return;
@@ -318,7 +331,7 @@ const BusinessEditPage = () => {
         );
     }
 
-    const maxImages = isPremium ? 10 : 1;
+    const maxImages = isPremium ? 10 : 0;
     const currentImageCount = formData.images.length;
 
     return (
@@ -689,21 +702,38 @@ const BusinessEditPage = () => {
                             Galería de Fotos
                         </h2>
                         <span className="text-sm text-gray-600">
-                            {currentImageCount} / {maxImages} fotos
+                            {isPremium ? `${currentImageCount} / ${maxImages} fotos` : 'Premium requerido'}
                             {!isPremium && !Capacitor.isNativePlatform() && (
                                 <Link to="/dashboard/upgrade" className="ml-2 text-blue-600 hover:underline">
-                                    Actualizar a Premium
+                                    {premiumPromoActive ? 'Activar gratis' : 'Actualizar a Premium'}
                                 </Link>
                             )}
                         </span>
                     </div>
 
-                    {!isPremium && !Capacitor.isNativePlatform() && (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                            <p className="text-sm text-yellow-800">
-                                <strong>Plan Gratuito:</strong> Puedes subir 1 foto.
-                                Actualiza a Premium para subir hasta 10 fotos y destacar tu negocio.
-                            </p>
+                    {!isPremium && (
+                        <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                            <div className="flex items-start gap-3">
+                                <Crown className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-700" />
+                                <div>
+                                    <p className="text-sm font-semibold text-emerald-950">
+                                        Para subir fotos necesitas activar Premium{premiumPromoActive ? ' gratis' : ''}.
+                                    </p>
+                                    <p className="mt-1 text-sm text-emerald-800">
+                                        Con Premium puedes cargar hasta 10 fotos por negocio, agregar redes sociales,
+                                        fortalecer tu perfil y mejorar la confianza antes de que el cliente te contacte.
+                                        {premiumPromoActive && ` Promoción disponible hasta el ${getPremiumPromoDeadlineLabel('es-MX')}.`}
+                                    </p>
+                                    {!Capacitor.isNativePlatform() && (
+                                        <Link
+                                            to="/dashboard/upgrade"
+                                            className="mt-3 inline-flex rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700"
+                                        >
+                                            {premiumPromoActive ? 'Activar Premium GRATIS' : 'Ver Premium'}
+                                        </Link>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     )}
 
@@ -727,7 +757,7 @@ const BusinessEditPage = () => {
                         ))}
 
                         {/* Botón de upload */}
-                        {currentImageCount < maxImages && (
+                        {isPremium && currentImageCount < maxImages && (
                             <label className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition">
                                 <Upload className="w-8 h-8 text-gray-400" />
                                 <span className="text-sm text-gray-500 mt-2">Subir foto</span>

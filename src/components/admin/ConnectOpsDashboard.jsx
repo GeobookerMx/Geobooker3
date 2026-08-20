@@ -144,6 +144,7 @@ const ConnectOpsDashboard = () => {
   const [savingId, setSavingId] = useState(null);
   const [campaigns, setCampaigns] = useState([]);
   const [runs, setRuns] = useState([]);
+  const [connectLeads, setConnectLeads] = useState([]);
   const [connectLeadCount, setConnectLeadCount] = useState(0);
   const [draftStatuses, setDraftStatuses] = useState({});
   const [selectedCampaignId, setSelectedCampaignId] = useState(null);
@@ -163,8 +164,10 @@ const ConnectOpsDashboard = () => {
           .order('created_at', { ascending: false }),
         supabase
           .from('enterprise_leads')
-          .select('*', { count: 'exact', head: true })
+          .select('id, company_name, contact_name, contact_email, service_line, selected_plan, target_cities, message, created_at', { count: 'exact' })
           .eq('service_line', 'geobooker_connect')
+          .order('created_at', { ascending: false })
+          .limit(10)
       ]);
 
       if (campaignError) throw campaignError;
@@ -174,6 +177,7 @@ const ConnectOpsDashboard = () => {
       const safeCampaigns = campaignRows || [];
       setCampaigns(safeCampaigns);
       setRuns(runRows || []);
+      setConnectLeads(leadRows || []);
       setConnectLeadCount(leadCount || 0);
       setSelectedCampaignId((current) => {
         if (safeCampaigns.some((campaign) => campaign.id === current)) {
@@ -246,6 +250,7 @@ const ConnectOpsDashboard = () => {
   const selectedCampaignCountry = selectedCampaign?.connect_client_accounts?.country || selectedCampaign?.enterprise_leads?.country || 'Mexico';
   const selectedRuns = runs.filter((run) => run.connect_campaign_id === selectedCampaignId);
   const latestRun = selectedRuns[0] || null;
+  const operationalStep = getOperationalStep(selectedCampaign, selectedRuns.length > 0);
 
   const updateDraft = (campaignId, field, value) => {
     setDraftStatuses((prev) => ({

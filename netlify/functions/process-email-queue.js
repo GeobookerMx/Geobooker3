@@ -24,6 +24,67 @@ const GET_MEXICO_DATE_TIME = () => {
     return new Date(now.toLocaleString('en-US', { timeZone: 'America/Mexico_City' })).toISOString();
 };
 
+const parsePositiveInt = (value, fallback, { min = 1, max = Number.MAX_SAFE_INTEGER } = {}) => {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return fallback;
+    return Math.min(Math.max(Math.floor(parsed), min), max);
+};
+
+const truthy = (value) => ['1', 'true', 'yes', 'si', 'sí', 'on'].includes(String(value || '').trim().toLowerCase());
+
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const classifyResendError = (status, payload = {}) => {
+    const type = String(payload?.name || payload?.type || payload?.error?.type || '').toLowerCase();
+    const message = String(payload?.message || payload?.error?.message || '').toLowerCase();
+
+    if (status === 429 || type.includes('rate') || message.includes('rate limit')) return 'rate_limited';
+    if (type.includes('daily_quota') || message.includes('daily quota')) return 'daily_quota_exceeded';
+    if (type.includes('monthly_quota') || message.includes('monthly quota')) return 'monthly_quota_exceeded';
+    if (status === 401 || status === 403) return 'auth_or_permission_error';
+    if (status >= 500) return 'provider_temporary_error';
+    return 'provider_rejected';
+};
+
+async function loadEmailGovernance(requestedLimit, body = {}) {
+    const defaults = {
+        dailyLimit: parsePositiveInt(process.env.CRM_EMAIL_DAILY_LIMIT || process.env.RESEND_DAILY_EMAIL_LIMIT, 100, { min: 1, max: 100000 }),
+        maxPerRun: parsePositiveInt(process.env.CRM_EMAILS_PER_RUN_MAX || process.env.RESEND_EMAILS_PER_RUN_MAX, 25, { min: 1, max: 100 }),
+        requestDelayMs: parsePositiveInt(process.env.CRM_EMAIL_REQUEST_DELAY_MS || process.env.RESEND_REQUEST_DELAY_MS, 250, { min: 200, max: 10000 }),
+        sendingEnabled: truthy(process.env.CRM_EMAIL_SENDING_ENABLED || process.env.RESEND_EMAIL_SENDING_ENABLED),
+        dryRun: truthy(body.dryRun || body.previewOnly || body.preview)
+    };
+
+    const { data: crmSettings } = await supabase
+        .from('crm_settings')
+        .select('setting_key, setting_value')
+        .eq('setting_key', 'campaign_limits')
+        .maybeSingle();
+
+    const limits = crmSettings?.setting_value || {};
+    let automationDailyLimit = null;
+
+    if (!limits?.daily_email_limit) {
+        const { data: config } = await supabase
+            .from('automation_config')
+            .select('daily_limit')
+            .eq('campaign_type', 'email')
+            .maybeSingle();
+        automationDailyLimit = config?.daily_limit || null;
+    }
+
+    return {
+        dailyLimit: parsePositiveInt(body.dailyLimit || limits.daily_email_limit || automationDailyLimit, defaults.dailyLimit, { min: 1, max: 100000 }),
+        maxPerRun: parsePositiveInt(body.maxPerRun || limits.email_batch_limit || limits.emails_per_run || requestedLimit, defaults.maxPerRun, { min: 1, max: 100 }),
+        requestDelayMs: parsePositiveInt(body.requestDelayMs || limits.email_request_delay_ms, defaults.requestDelayMs, { min: 200, max: 10000 }),
+        sendingEnabled: (body.forceSend === true || truthy(body.forceSend))
+            ? true
+            : Boolean(limits.email_sending_enabled ?? limits.sending_enabled ?? defaults.sendingEnabled),
+        dryRun: defaults.dryRun,
+        source: crmSettings?.setting_value ? 'crm_settings.campaign_limits' : 'env/defaults'
+    };
+}
+
 exports.handler = async (event) => {
     const authError = await ensureCronOrAdmin(event);
     if (authError) return authError;
@@ -37,24 +98,34 @@ exports.handler = async (event) => {
             : null;
 
         // 1. Obtener límite diario configurado desde crm_settings y fallback a automation_config
-        let dailyLimit = 100;
+        const governance = await loadEmailGovernance(requestedLimit, body);
+        const dailyLimit = governance.dailyLimit;
 
-        const { data: crmSettings } = await supabase
-            .from('crm_settings')
-            .select('setting_key, setting_value')
-            .eq('setting_key', 'campaign_limits')
-            .maybeSingle();
+        if (!process.env.RESEND_API_KEY && !governance.dryRun) {
+            return {
+                statusCode: 200,
+                headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+                body: JSON.stringify({
+                    success: false,
+                    skipped: true,
+                    reason: 'missing_resend_api_key',
+                    message: 'RESEND_API_KEY no esta configurada; no se enviaron correos.'
+                })
+            };
+        }
 
-        if (crmSettings?.setting_value?.daily_email_limit) {
-            dailyLimit = crmSettings.setting_value.daily_email_limit;
-        } else {
-            const { data: config } = await supabase
-                .from('automation_config')
-                .select('daily_limit')
-                .eq('campaign_type', 'email')
-                .maybeSingle();
-
-            dailyLimit = config?.daily_limit || 100;
+        if (!governance.sendingEnabled && !governance.dryRun) {
+            return {
+                statusCode: 200,
+                headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+                body: JSON.stringify({
+                    success: true,
+                    paused: true,
+                    sent: 0,
+                    message: 'Envios CRM pausados. Activa CRM_EMAIL_SENDING_ENABLED=true o campaign_limits.email_sending_enabled=true para lanzar.',
+                    governance
+                })
+            };
         }
 
         // 2. Verificar cuántos emails se han enviado hoy (HORA MÉXICO)
@@ -91,7 +162,7 @@ exports.handler = async (event) => {
         const batchLimit = Math.min(
             remaining,
             requestedLimit || remaining,
-            25
+            governance.maxPerRun
         );
 
         // ✅ FIX: Dos queries separadas en lugar de join implícito.
@@ -124,7 +195,7 @@ exports.handler = async (event) => {
         const contactIds = queueRows.map(r => r.contact_id).filter(Boolean);
         const { data: contactsData, error: contactsError } = await supabase
             .from('marketing_contacts')
-            .select('id, email, company_name, contact_name, tier, assigned_email_sender, email_sent_count')
+            .select('id, email, company_name, contact_name, tier, assigned_email_sender, email_sent_count, email_status, is_active, email_unsubscribed, unsubscribed')
             .in('id', contactIds);
 
         if (contactsError) throw contactsError;
@@ -134,7 +205,14 @@ exports.handler = async (event) => {
         // Combinar queue + contactos y filtrar los que tengan email válido
         const queueItems = queueRows
             .map(row => ({ ...row, _contact: contactsById[row.contact_id] || null }))
-            .filter(item => item._contact?.email);
+            .filter(item => {
+                const contact = item._contact;
+                if (!contact?.email) return false;
+                if (contact.is_active === false) return false;
+                if (contact.email_unsubscribed || contact.unsubscribed) return false;
+                if (['bounced', 'complained', 'suppressed', 'failed', 'unsubscribed'].includes(String(contact.email_status || '').toLowerCase())) return false;
+                return true;
+            });
 
         if (queueItems.length === 0) {
             return {
@@ -149,10 +227,41 @@ exports.handler = async (event) => {
 
         console.log(`📧 Procesando ${queueItems.length} emails...`);
 
+        if (governance.dryRun) {
+            return {
+                statusCode: 200,
+                headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+                body: JSON.stringify({
+                    success: true,
+                    dryRun: true,
+                    message: `Previsualizacion lista: ${queueItems.length} contactos elegibles; no se envio ningun correo.`,
+                    eligible: queueItems.length,
+                    dailyLimit,
+                    sentToday: sentToday || 0,
+                    remaining,
+                    batchLimit,
+                    governance,
+                    preview: queueItems.slice(0, 10).map(item => ({
+                        queue_id: item.id,
+                        contact_id: item.contact_id,
+                        email_round: item.email_round || 1,
+                        priority: item.priority,
+                        email_domain: String(item._contact.email || '').split('@')[1] || null,
+                        company_name: item._contact.company_name || null,
+                        tier: item._contact.tier || null
+                    }))
+                })
+            };
+        }
+
         // 4. Enviar emails
         const results = {
             sent: 0,
             failed: 0,
+            deferred: 0,
+            stopped: false,
+            stopReason: null,
+            providerHints: [],
             errors: [],
             byRound: { round1: 0, round2: 0, round3: 0 }
         };
@@ -250,6 +359,7 @@ exports.handler = async (event) => {
                     headers: {
                         'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
                         'Content-Type': 'application/json',
+                        'User-Agent': 'GeobookerCRM/2.0 (https://geobooker.com.mx)',
                         'Idempotency-Key': `crm-email-queue/${item.id}`
                     },
                     body: JSON.stringify({
@@ -262,10 +372,38 @@ exports.handler = async (event) => {
                 });
                 const emailResult = await emailResponse.json().catch(() => ({}));
                 if (!emailResponse.ok) {
-                    throw new Error(`Resend request failed (${emailResponse.status})`);
+                    const classification = classifyResendError(emailResponse.status, emailResult);
+                    const retryAfter = emailResponse.headers.get('retry-after') || emailResponse.headers.get('ratelimit-reset');
+                    const providerMessage = emailResult?.message || emailResult?.error?.message || `Resend request failed (${emailResponse.status})`;
+                    results.providerHints.push({
+                        status: emailResponse.status,
+                        classification,
+                        retryAfter,
+                        rateLimitRemaining: emailResponse.headers.get('ratelimit-remaining'),
+                        dailyQuota: emailResponse.headers.get('x-resend-daily-quota'),
+                        monthlyQuota: emailResponse.headers.get('x-resend-monthly-quota')
+                    });
+
+                    if (['rate_limited', 'daily_quota_exceeded', 'monthly_quota_exceeded', 'provider_temporary_error'].includes(classification)) {
+                        await supabase
+                            .from('email_queue')
+                            .update({
+                                status: 'pending',
+                                error_message: `${classification}: ${providerMessage}`
+                            })
+                            .eq('id', item.id);
+
+                        results.deferred++;
+                        results.stopped = true;
+                        results.stopReason = classification;
+                        console.warn(`Deteniendo corrida por ${classification}. El contacto queda pendiente para reintento.`);
+                        break;
+                    }
+
+                    throw new Error(`${classification}: ${providerMessage}`);
                 }
 
-                const messageId = emailResult?.id || null;
+                const messageId = emailResult?.id || emailResult?.data?.id || null;
 
                 // Registrar en historial
                 await supabase
@@ -317,8 +455,8 @@ exports.handler = async (event) => {
 
                 console.log(`✅ Email enviado a: ${contact.email} (${contact.tier}, Ronda ${emailRound})`);
 
-                // Delay para no saturar (100ms entre emails)
-                await new Promise(resolve => setTimeout(resolve, 100));
+                // Delay configurable para respetar Resend y cuidar reputacion de dominio.
+                await wait(governance.requestDelayMs);
 
             } catch (emailError) {
                 console.error(`❌ Error enviando a ${item._contact?.email || 'unknown'}:`, emailError);
@@ -352,6 +490,11 @@ exports.handler = async (event) => {
                 processedBatch: batchLimit,
                 sentToday: (sentToday || 0) + results.sent,
                 remaining: remaining - results.sent,
+                deferred: results.deferred,
+                stopped: results.stopped,
+                stopReason: results.stopReason,
+                providerHints: results.providerHints,
+                governance,
                 errors: results.errors
             })
         };

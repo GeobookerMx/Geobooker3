@@ -10,6 +10,7 @@ import { getAuthenticatedJsonHeaders } from '../../services/authenticatedRequest
 const AutomatedQueueManager = () => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isPreviewing, setIsPreviewing] = useState(false);
     const [queueResult, setQueueResult] = useState(null);
     const [processResult, setProcessResult] = useState(null);
     const [dailyLimit, setDailyLimit] = useState(100);
@@ -48,6 +49,38 @@ const AutomatedQueueManager = () => {
         }
     };
 
+    // Previsualizar cola sin enviar emails
+    const previewQueue = async () => {
+        setIsPreviewing(true);
+        setProcessResult(null);
+
+        try {
+            const response = await fetch('/.netlify/functions/process-email-queue', {
+                method: 'POST',
+                headers: await getAuthenticatedJsonHeaders(),
+                body: JSON.stringify({ dryRun: true, limit: dailyLimit })
+            });
+
+            const data = await response.json();
+            setProcessResult(data);
+
+            if (data.success) {
+                toast.success(`Preview listo: ${data.eligible || 0} contactos elegibles. No se envio ningun correo.`);
+            } else {
+                toast.error('No se pudo previsualizar la cola');
+            }
+        } catch (error) {
+            console.error('Error previsualizando cola:', error);
+            setProcessResult({
+                success: false,
+                error: error.message
+            });
+            toast.error('Error al previsualizar cola');
+        } finally {
+            setIsPreviewing(false);
+        }
+    };
+
     // Procesar cola (enviar emails)
     const processQueue = async () => {
         setIsProcessing(true);
@@ -56,14 +89,19 @@ const AutomatedQueueManager = () => {
         try {
             const response = await fetch('/.netlify/functions/process-email-queue', {
                 method: 'POST',
-                headers: await getAuthenticatedJsonHeaders()
+                headers: await getAuthenticatedJsonHeaders(),
+                body: JSON.stringify({ limit: dailyLimit })
             });
 
             const data = await response.json();
 
             setProcessResult(data);
 
-            if (data.success) {
+            if (data.paused) {
+                toast(`Envios pausados: ${data.message}`);
+            } else if (data.stopped) {
+                toast(`Corrida detenida por seguridad: ${data.stopReason || 'limite del proveedor'}`);
+            } else if (data.success) {
                 toast.success(`Emails enviados: ${data.sent}`);
             } else {
                 toast.error('Error al procesar cola');
@@ -139,6 +177,24 @@ const AutomatedQueueManager = () => {
                             <>
                                 <Play className="w-5 h-5" />
                                 1. Generar Cola
+                            </>
+                        )}
+                    </button>
+
+                    <button
+                        onClick={previewQueue}
+                        disabled={isPreviewing}
+                        className="flex-1 bg-white text-purple-700 border border-purple-200 px-4 py-3 rounded-lg font-medium hover:bg-purple-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                        {isPreviewing ? (
+                            <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                Previsualizando...
+                            </>
+                        ) : (
+                            <>
+                                <AlertCircle className="w-5 h-5" />
+                                Preview sin enviar
                             </>
                         )}
                     </button>

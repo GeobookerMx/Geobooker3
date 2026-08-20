@@ -9,7 +9,14 @@ import { AppProvider } from "./contexts/AppContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { LocationProvider } from "./contexts/LocationContext";
 import { useSessionTimeout } from "./hooks/useSessionTimeout";
-import { flushEventQueue, initAppRuntimeTracking, trackAppRuntimeEvent, trackSessionStart } from "./services/analyticsService";
+import {
+  flushEventQueue,
+  initAppRuntimeTracking,
+  trackAppRuntimeEvent,
+  trackAuthFunnelEvent,
+  trackSessionStart,
+  trackUserLogin
+} from "./services/analyticsService";
 import { initTrackingFromConsent, enableTracking } from "./services/trackingService";
 import { detectUserCountry } from "./services/geoLocationService";
 import { usePageTracking } from "./hooks/usePageTracking";
@@ -55,6 +62,28 @@ const PUBLIC_NATIVE_PATH_PREFIXES = [
 
 const AUTH_LINK_PATHS = ['/auth/callback', '/reset-password'];
 
+async function trackNativeAuthCompletion(session, source = 'native_deep_link') {
+  const userId = session?.user?.id;
+  if (!userId) return;
+
+  const provider = session?.user?.app_metadata?.provider || 'oauth';
+
+  try {
+    trackAuthFunnelEvent('oauth_callback_success', {
+      funnel: 'login',
+      method: provider,
+      userId,
+      metadata: {
+        source,
+        native_callback: true
+      }
+    });
+    await trackUserLogin(userId, provider);
+  } catch (error) {
+    console.warn('[Auth Global] No se pudo registrar analitica del login nativo:', error);
+  }
+}
+
 async function handleNativeAuthLink(url) {
   if (!url || typeof window === 'undefined') return false;
 
@@ -81,8 +110,9 @@ async function handleNativeAuthLink(url) {
     const code = urlObj.searchParams.get('code');
 
     if (code) {
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
       if (error) throw error;
+      if (!isRecovery) await trackNativeAuthCompletion(data?.session, 'native_deep_link_code');
       window.location.hash = isRecovery ? '/reset-password' : '/';
       return true;
     }
@@ -92,17 +122,27 @@ async function handleNativeAuthLink(url) {
     const refreshToken = tokenParams.get('refresh_token') || urlObj.searchParams.get('refresh_token');
 
     if (accessToken && refreshToken) {
-      const { error } = await supabase.auth.setSession({
+      const { data, error } = await supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken
       });
       if (error) throw error;
+      if (!isRecovery) await trackNativeAuthCompletion(data?.session, 'native_deep_link_tokens');
       window.location.hash = isRecovery ? '/reset-password' : '/';
       return true;
     }
 
     if (urlObj.searchParams.has('error')) {
       const description = urlObj.searchParams.get('error_description') || urlObj.searchParams.get('error');
+      trackAuthFunnelEvent('oauth_callback_error', {
+        funnel: 'login',
+        method: 'oauth',
+        errorCode: String(description || 'oauth_error').slice(0, 80),
+        metadata: {
+          source: 'native_deep_link_error',
+          native_callback: true
+        }
+      });
       window.location.hash = `/login?error=${encodeURIComponent(description)}`;
       return true;
     }
@@ -111,6 +151,15 @@ async function handleNativeAuthLink(url) {
     return true;
   } catch (error) {
     console.error('[Auth Global] Error procesando el enlace de autenticacion:', error);
+    trackAuthFunnelEvent('oauth_callback_error', {
+      funnel: 'login',
+      method: 'oauth',
+      errorCode: String(error?.message || 'auth_failed').slice(0, 80),
+      metadata: {
+        source: 'native_deep_link_exception',
+        native_callback: true
+      }
+    });
     window.location.hash = '/login?error=auth_failed';
     return true;
   }

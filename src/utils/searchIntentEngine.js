@@ -108,6 +108,16 @@ export const SEARCH_INTENT_RULES = [
     keywords: ['hojas carta', 'toner', 'cartucho', 'impresiones', 'copias', 'engargolado', 'papeleria', 'utiles oficina', 'office supplies', 'printing', 'copy center']
   },
   {
+    id: 'laundry_ironing_service',
+    label: 'Lavanderia, tintoreria y planchaduria',
+    confidence: 0.86,
+    categoryHints: ['dry-cleaning', 'laundry', 'cleaning-service'],
+    googleQuery: 'lavanderia tintoreria planchaduria',
+    fallbackQueries: ['lavanderia cerca', 'tintoreria cerca', 'planchaduria cerca', 'planchado de ropa cerca', 'laundry near me'],
+    trustSignals: ['entrega rapida', 'servicio por kilo', 'planchado profesional', 'horarios'],
+    keywords: ['lavanderia', 'lavandería', 'lavanderias', 'lavanderías', 'tintoreria', 'tintorería', 'tintorerias', 'tintorerías', 'planchaduria', 'planchaduría', 'planchadurias', 'planchadurías', 'planchado', 'planchado de ropa', 'planchado camisas', 'laundry', 'dry cleaning', 'ironing service']
+  },
+  {
     id: 'pet_supplies_vet',
     label: 'Mascotas, alimento y veterinaria',
     confidence: 0.87,

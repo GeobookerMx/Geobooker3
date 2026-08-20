@@ -846,7 +846,7 @@ const AdvertisePage = () => {
                 Tono creativo
               </p>
               <p className="mt-2 text-sm font-bold text-slate-900">
-                Futbolero, comercial y energico, sin referencias oficiales de FIFA.
+                Fiestas Patrias, Premium gratis y visibilidad local, con tono comercial claro y responsable.
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4">

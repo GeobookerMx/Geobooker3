@@ -29,15 +29,23 @@ exports.handler = async (event) => {
         const tierDistribution = result?.tier_distribution || {};
         const roundDistribution = result?.round_distribution || {};
 
+        const { count: pendingTotal } = await supabase
+            .from('email_queue')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'pending');
+
         return {
             statusCode: 200,
             headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
             body: JSON.stringify({
                 success: true,
                 contacts_added: contactsAdded,
+                pending_total: pendingTotal || 0,
                 tier_distribution: tierDistribution,
                 round_distribution: roundDistribution,
-                message: `Cola generada: ${contactsAdded} contactos`
+                message: contactsAdded > 0
+                    ? `Cola generada: ${contactsAdded} contactos nuevos`
+                    : `Cola sin contactos nuevos; pendientes actuales: ${pendingTotal || 0}`
             })
         };
 

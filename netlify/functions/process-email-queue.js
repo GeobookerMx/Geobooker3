@@ -195,7 +195,7 @@ exports.handler = async (event) => {
         const contactIds = queueRows.map(r => r.contact_id).filter(Boolean);
         const { data: contactsData, error: contactsError } = await supabase
             .from('marketing_contacts')
-            .select('id, email, company_name, contact_name, tier, assigned_email_sender, email_sent_count, email_status, is_active, email_unsubscribed, unsubscribed')
+            .select('id, email, company_name, contact_name, tier, assigned_email_sender, email_sent_count, email_status, is_active, email_unsubscribed')
             .in('id', contactIds);
 
         if (contactsError) throw contactsError;
@@ -209,7 +209,7 @@ exports.handler = async (event) => {
                 const contact = item._contact;
                 if (!contact?.email) return false;
                 if (contact.is_active === false) return false;
-                if (contact.email_unsubscribed || contact.unsubscribed) return false;
+                if (contact.email_unsubscribed) return false;
                 if (['bounced', 'complained', 'suppressed', 'failed', 'unsubscribed'].includes(String(contact.email_status || '').toLowerCase())) return false;
                 return true;
             });

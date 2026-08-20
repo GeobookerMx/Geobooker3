@@ -178,7 +178,7 @@ async function processEmailEvent(supabase, webhook) {
       supabase.from('marketing_contacts').update({
         email_status: 'complained',
         is_active: false,
-        unsubscribed: true
+        email_unsubscribed: true
       }).eq('email', email),
       'complaint_suppression_failed'
     );

@@ -24,6 +24,53 @@ const GET_MEXICO_DATE_TIME = () => {
     return new Date(now.toLocaleString('en-US', { timeZone: 'America/Mexico_City' })).toISOString();
 };
 
+const countSentTodayAcrossSources = async (start, end) => {
+    const [
+        { count: historyCount },
+        { count: queueCount },
+        { count: contactsLastSentCount },
+        { count: contactsEmailSentAtCount }
+    ] = await Promise.all([
+        supabase
+            .from('campaign_history')
+            .select('*', { count: 'exact', head: true })
+            .eq('campaign_type', 'email')
+            .eq('status', 'sent')
+            .gte('sent_at', start)
+            .lte('sent_at', end),
+        supabase
+            .from('email_queue')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'sent')
+            .gte('sent_at', start)
+            .lte('sent_at', end),
+        supabase
+            .from('marketing_contacts')
+            .select('*', { count: 'exact', head: true })
+            .in('email_status', ['sent', 'delivered', 'opened', 'clicked'])
+            .gte('last_email_sent', start)
+            .lte('last_email_sent', end),
+        supabase
+            .from('marketing_contacts')
+            .select('*', { count: 'exact', head: true })
+            .in('email_status', ['sent', 'delivered', 'opened', 'clicked'])
+            .gte('email_sent_at', start)
+            .lte('email_sent_at', end)
+    ]);
+
+    const breakdown = {
+        campaign_history: historyCount || 0,
+        email_queue: queueCount || 0,
+        marketing_contacts_last_email_sent: contactsLastSentCount || 0,
+        marketing_contacts_email_sent_at: contactsEmailSentAtCount || 0
+    };
+
+    return {
+        sentToday: Math.max(...Object.values(breakdown)),
+        breakdown
+    };
+};
+
 const parsePositiveInt = (value, fallback, { min = 1, max = Number.MAX_SAFE_INTEGER } = {}) => {
     const parsed = Number(value);
     if (!Number.isFinite(parsed)) return fallback;
@@ -133,13 +180,7 @@ exports.handler = async (event) => {
         const start = `${today}T00:00:00-06:00`;
         const end = `${today}T23:59:59-06:00`;
         console.log(`📅 Fecha México: ${today}`);
-        const { count: sentToday } = await supabase
-            .from('campaign_history')
-            .select('*', { count: 'exact', head: true })
-            .eq('campaign_type', 'email')
-            .eq('status', 'sent')
-            .gte('sent_at', start)
-            .lte('sent_at', end);
+        const { sentToday, breakdown: sentTodayBreakdown } = await countSentTodayAcrossSources(start, end);
 
         const remaining = dailyLimit - (sentToday || 0);
 
@@ -151,7 +192,8 @@ exports.handler = async (event) => {
                     message: 'Límite diario alcanzado',
                     sent: 0,
                     dailyLimit,
-                    sentToday
+                    sentToday,
+                    sentTodayBreakdown
                 })
             };
         }
@@ -238,6 +280,7 @@ exports.handler = async (event) => {
                     eligible: queueItems.length,
                     dailyLimit,
                     sentToday: sentToday || 0,
+                    sentTodayBreakdown,
                     remaining,
                     batchLimit,
                     governance,
@@ -489,6 +532,7 @@ exports.handler = async (event) => {
                 requestedLimit,
                 processedBatch: batchLimit,
                 sentToday: (sentToday || 0) + results.sent,
+                sentTodayBreakdown,
                 remaining: remaining - results.sent,
                 deferred: results.deferred,
                 stopped: results.stopped,

@@ -15,6 +15,48 @@ const getMexicoDayRange = () => {
     };
 };
 
+const getSentTodayCount = async (start, end) => {
+    const [
+        { count: historyCount },
+        { count: queueCount },
+        { count: contactsLastSentCount },
+        { count: contactsEmailSentAtCount }
+    ] = await Promise.all([
+        supabase
+            .from('campaign_history')
+            .select('*', { count: 'exact', head: true })
+            .eq('campaign_type', 'email')
+            .eq('status', 'sent')
+            .gte('sent_at', start)
+            .lte('sent_at', end),
+        supabase
+            .from('email_queue')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'sent')
+            .gte('sent_at', start)
+            .lte('sent_at', end),
+        supabase
+            .from('marketing_contacts')
+            .select('*', { count: 'exact', head: true })
+            .in('email_status', ['sent', 'delivered', 'opened', 'clicked'])
+            .gte('last_email_sent', start)
+            .lte('last_email_sent', end),
+        supabase
+            .from('marketing_contacts')
+            .select('*', { count: 'exact', head: true })
+            .in('email_status', ['sent', 'delivered', 'opened', 'clicked'])
+            .gte('email_sent_at', start)
+            .lte('email_sent_at', end)
+    ]);
+
+    return Math.max(
+        historyCount || 0,
+        queueCount || 0,
+        contactsLastSentCount || 0,
+        contactsEmailSentAtCount || 0
+    );
+};
+
 const MarketingDashboard = () => {
     const [metrics, setMetrics] = useState({
         total: 0,
@@ -65,13 +107,7 @@ const MarketingDashboard = () => {
 
             // 4. Enviados hoy - usar campaign_history como fuente unica
             const { start, end } = getMexicoDayRange();
-            const { count: sentToday } = await supabase
-                .from('campaign_history')
-                .select('*', { count: 'exact', head: true })
-                .eq('campaign_type', 'email')
-                .eq('status', 'sent')
-                .gte('sent_at', start)
-                .lte('sent_at', end);
+            const sentToday = await getSentTodayCount(start, end);
 
             // 5. Límite configurado: prioridad crm_settings, fallback automation_config
             let dailyLimit = 100;

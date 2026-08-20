@@ -32,16 +32,16 @@ function buildFooter({ companyName = 'tu empresa' } = {}) {
                     class="gb-footer-logo"
                 />
                 <p class="gb-footer-text">
-                    Geobooker Ads ayuda a negocios locales a ganar visibilidad con espacios patrocinados,
-                    métricas reales y presencia en búsqueda, mapa y páginas de ciudad.
+                    Geobooker Ads ayuda a negocios locales, regionales y enterprise a ganar visibilidad
+                    en búsqueda, mapa, páginas de ciudad y espacios patrocinados medibles.
                 </p>
             </div>
 
             <div class="gb-cta-card">
-                <h3>Descarga Geobooker y conoce nuestros espacios publicitarios</h3>
+                <h3>Activa presencia premium y descubre Geobooker Ads</h3>
                 <p>
-                    Tus clientes pueden encontrarte en web, Android e iPhone.
-                    También puedes usar estos accesos para presentar Geobooker con más profesionalismo.
+                    Durante la etapa de lanzamiento estamos abriendo accesos premium sin costo para negocios elegibles.
+                    Tus clientes pueden encontrarte desde web, Android, iPhone y búsquedas locales.
                 </p>
                 <div class="gb-store-buttons">
                     <a href="${androidUrl}" target="_blank" rel="noopener noreferrer">Google Play</a>
@@ -124,7 +124,7 @@ function wrapEmailLayout({ contentHtml, preheader = 'Geobooker Ads', title = 'Ge
         <div class="gb-card">
             <div class="gb-header">
                 <img src="https://geobooker.com.mx/images/geobooker-logo-horizontal-new.png" alt="Geobooker" />
-                <p>Publicidad local, premium y enterprise para hacer crecer tu negocio</p>
+                <p>Publicidad local, premium y enterprise para ganar visibilidad medible</p>
             </div>
             <div class="gb-content">
                 ${contentHtml}

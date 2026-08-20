@@ -225,7 +225,7 @@ const CampaignSender = ({ metrics, onCampaignComplete }) => {
                                         <p className="text-xl font-black">{previewResult.eligible || 0}</p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-indigo-200">Límite usado</p>
+                                        <p className="text-xs text-indigo-200">Lote por corrida</p>
                                         <p className="text-xl font-black">{previewResult.batchLimit || previewResult.requestedLimit || Math.min(dailyAvailable, metrics.queueCount || 0)}</p>
                                     </div>
                                     <div>
@@ -238,7 +238,7 @@ const CampaignSender = ({ metrics, onCampaignComplete }) => {
                                     </div>
                                 </div>
                                 <p className="mt-3 text-xs text-indigo-100">
-                                    Validación segura: no se envió ningún correo. Usa este resultado antes de lanzar la campaña real.
+                                    Validación segura: no se envió ningún correo. El CRM puede tener 100 disponibles al día, pero procesa por lotes para cuidar reputación, errores y límites de Resend.
                                 </p>
                             </div>
                         )}

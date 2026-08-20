@@ -47,6 +47,48 @@ const getMexicoDayRange = () => {
     };
 };
 
+const getSentTodayCount = async (start, end) => {
+    const [
+        { count: historyCount },
+        { count: queueCount },
+        { count: contactsLastSentCount },
+        { count: contactsEmailSentAtCount }
+    ] = await Promise.all([
+        supabase
+            .from('campaign_history')
+            .select('*', { count: 'exact', head: true })
+            .eq('campaign_type', 'email')
+            .eq('status', 'sent')
+            .gte('sent_at', start)
+            .lte('sent_at', end),
+        supabase
+            .from('email_queue')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'sent')
+            .gte('sent_at', start)
+            .lte('sent_at', end),
+        supabase
+            .from('marketing_contacts')
+            .select('*', { count: 'exact', head: true })
+            .in('email_status', ['sent', 'delivered', 'opened', 'clicked'])
+            .gte('last_email_sent', start)
+            .lte('last_email_sent', end),
+        supabase
+            .from('marketing_contacts')
+            .select('*', { count: 'exact', head: true })
+            .in('email_status', ['sent', 'delivered', 'opened', 'clicked'])
+            .gte('email_sent_at', start)
+            .lte('email_sent_at', end)
+    ]);
+
+    return Math.max(
+        historyCount || 0,
+        queueCount || 0,
+        contactsLastSentCount || 0,
+        contactsEmailSentAtCount || 0
+    );
+};
+
 const extractEmailBodyContent = (html = '') => {
     const input = String(html || '').trim();
     if (!input) return '';
@@ -286,18 +328,12 @@ const UnifiedCRM = () => {
     const loadQueueStats = async () => {
         try {
             const { start, end } = getMexicoDayRange();
-            const [{ count: pendingCount }, { count: sentTodayCount }] = await Promise.all([
+            const [{ count: pendingCount }, sentTodayCount] = await Promise.all([
                 supabase
                     .from('email_queue')
                     .select('*', { count: 'exact', head: true })
                     .eq('status', 'pending'),
-                supabase
-                    .from('campaign_history')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('campaign_type', 'email')
-                    .eq('status', 'sent')
-                    .gte('sent_at', start)
-                    .lte('sent_at', end)
+                getSentTodayCount(start, end)
             ]);
 
             setQueueStats(prev => ({
@@ -390,13 +426,7 @@ const UnifiedCRM = () => {
             })));
 
             const { start, end } = getMexicoDayRange();
-            const { count: sentTodayCount } = await supabase
-                .from('campaign_history')
-                .select('*', { count: 'exact', head: true })
-                .eq('campaign_type', 'email')
-                .eq('status', 'sent')
-                .gte('sent_at', start)
-                .lte('sent_at', end);
+            const sentTodayCount = await getSentTodayCount(start, end);
 
             // Email metrics
             setEmailMetrics({

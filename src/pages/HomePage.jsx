@@ -1340,7 +1340,9 @@ const HomePage = () => {
           </div>
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <span className="text-3xl animate-pulse">🇲🇽</span>
+              <span className="flex h-11 w-11 animate-pulse items-center justify-center rounded-2xl border border-white/30 bg-white/20 text-sm font-black tracking-wide shadow-inner">
+                MX
+              </span>
               <div>
                 <span className="font-extrabold text-lg block">
                   Fiestas Patrias: sube tu negocio con Premium GRATIS
@@ -1371,7 +1373,9 @@ const HomePage = () => {
         <div className="bg-gradient-to-r from-slate-900 via-gray-900 to-black text-amber-500 py-3 px-4 shadow-xl border-b border-amber-500/30">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <span className="text-3xl">🚀</span>
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-amber-300/40 bg-amber-400/20 text-amber-100 shadow-inner">
+                <Megaphone className="h-6 w-6" aria-hidden="true" />
+              </span>
               <div>
                 <span className="font-extrabold text-lg block text-amber-500">
                   Impulsa tu Negocio: <span className="text-white">50% OFF en Publicidad Global</span>

@@ -1,4 +1,4 @@
-﻿// src/pages/advertiser/AdvertiserDashboard.jsx
+// src/pages/advertiser/AdvertiserDashboard.jsx
 /**
  * Dashboard for Enterprise Advertisers
  * Shows: Campaign metrics, performance, PDF export
@@ -78,7 +78,7 @@ export default function AdvertiserDashboard() {
 
             const avgCtr = totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(2) : 0;
             const avgCpc = totalClicks > 0 && totalBudget > 0 ? (totalBudget / totalClicks).toFixed(2) : 0;
-            // EstimaciÃ³n: 3-5% de los clics se convierten
+            // EstimaciAn: 3-5% de los clics se convierten
             const estimatedConversions = Math.round(totalClicks * 0.04);
 
             setStats({
@@ -124,11 +124,11 @@ export default function AdvertiserDashboard() {
 
     const getStatusLabel = (status) => {
         switch (status) {
-            case 'active': return 'ðŸŸ¢ Active';
-            case 'pending_review': return 'ðŸŸ¡ Pending Review';
-            case 'draft': return 'âšª Draft';
-            case 'paused': return 'ðŸŸ  Paused';
-            case 'completed': return 'ðŸ”µ Completed';
+            case 'active': return 'YY Active';
+            case 'pending_review': return 'YY Pending Review';
+            case 'draft': return 'as Draft';
+            case 'paused': return 'YY Paused';
+            case 'completed': return 'Y Completed';
             default: return status;
         }
     };
@@ -160,7 +160,7 @@ export default function AdvertiserDashboard() {
                 <div className="container mx-auto px-4">
                     <div className="flex justify-between items-center">
                         <div>
-                            <h1 className="text-3xl font-bold text-white">ðŸ“Š Advertiser Dashboard</h1>
+                            <h1 className="text-3xl font-bold text-white">YS Advertiser Dashboard</h1>
                             <p className="text-blue-100 mt-1">Sigue el estado de tus espacios publicitarios, aprobaciones y KPIs desde un solo lugar.</p>
                         </div>
                         <button
@@ -224,15 +224,15 @@ export default function AdvertiserDashboard() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     <div className="bg-gradient-to-br from-green-900/50 to-green-800/30 border border-green-700/50 rounded-xl p-5">
                         <div className="flex items-center gap-2 text-green-300 text-sm mb-2">
-                            <span className="text-base">ðŸ“±</span>
+                            <span className="text-base">Y</span>
                             WhatsApp Taps
                         </div>
                         <div className="text-3xl font-bold text-green-400">{formatNumber(stats.totalWhatsappTaps)}</div>
-                        <p className="text-xs text-green-400/60 mt-1">Taps a botÃ³n de WhatsApp</p>
+                        <p className="text-xs text-green-400/60 mt-1">Taps a botAn de WhatsApp</p>
                     </div>
                     <div className="bg-gradient-to-br from-blue-900/50 to-blue-800/30 border border-blue-700/50 rounded-xl p-5">
                         <div className="flex items-center gap-2 text-blue-300 text-sm mb-2">
-                            <span className="text-base">ðŸ’°</span>
+                            <span className="text-base">Y</span>
                             Avg. CPC
                         </div>
                         <div className="text-3xl font-bold text-blue-400">${stats.avgCpc}</div>
@@ -240,7 +240,7 @@ export default function AdvertiserDashboard() {
                     </div>
                     <div className="bg-gradient-to-br from-purple-900/50 to-purple-800/30 border border-purple-700/50 rounded-xl p-5">
                         <div className="flex items-center gap-2 text-purple-300 text-sm mb-2">
-                            <span className="text-base">ðŸŽ¯</span>
+                            <span className="text-base">YZ</span>
                             Est. Conversions
                         </div>
                         <div className="text-3xl font-bold text-purple-400">{formatNumber(stats.estimatedConversions)}</div>
@@ -248,7 +248,7 @@ export default function AdvertiserDashboard() {
                     </div>
                     <div className="bg-gradient-to-br from-amber-900/50 to-amber-800/30 border border-amber-700/50 rounded-xl p-5">
                         <div className="flex items-center gap-2 text-amber-300 text-sm mb-2">
-                            <span className="text-base">ðŸ’³</span>
+                            <span className="text-base">Y</span>
                             Total Budget
                         </div>
                         <div className="text-3xl font-bold text-amber-400">${formatNumber(stats.totalBudget)}</div>
@@ -328,9 +328,9 @@ export default function AdvertiserDashboard() {
                                             {/* Plan Type */}
                                             <td className="p-4">
                                                 <div className="text-white text-sm">
-                                                    {campaign.ad_level === 'global' ? 'ðŸŒ Enterprise' :
-                                                     campaign.ad_level === 'regional' ? 'ðŸ¢ Regional' :
-                                                     campaign.campaign_type === 'local' ? 'ðŸ“ Local' : 'ðŸ“ ' + (campaign.campaign_type || 'Standard')}
+                                                    {campaign.ad_level === 'global' ? 'Y Enterprise' :
+                                                     campaign.ad_level === 'regional' ? 'Y Regional' :
+                                                     campaign.campaign_type === 'local' ? 'Y Local' : 'Y ' + (campaign.campaign_type || 'Standard')}
                                                 </div>
                                             </td>
 
@@ -350,7 +350,7 @@ export default function AdvertiserDashboard() {
                                                     {campaign.start_date || 'TBD'}
                                                 </div>
                                                 <div className="text-gray-400 text-xs whitespace-nowrap">
-                                                    â†’ {campaign.end_date || 'Ongoing'}
+                                                    a {campaign.end_date || 'Ongoing'}
                                                 </div>
                                             </td>
 
@@ -365,12 +365,12 @@ export default function AdvertiserDashboard() {
                                             {/* Payment Method */}
                                             <td className="p-4">
                                                 <div className="text-white text-sm">
-                                                    {campaign.payment_method === 'oxxo' ? 'ðŸ§ OXXO' :
-                                                     campaign.payment_status === 'paid' ? 'ðŸ’³ Card' :
-                                                     campaign.payment_status === 'pending' ? 'â³ Pending' : 'â€”'}
+                                                    {campaign.payment_method === 'oxxo' ? 'Y OXXO' :
+                                                     campaign.payment_status === 'paid' ? 'Y Card' :
+                                                     campaign.payment_status === 'pending' ? 'a Pending' : 'a'}
                                                 </div>
                                                 <div className={`text-xs mt-0.5 ${campaign.payment_status === 'paid' ? 'text-green-400' : 'text-yellow-400'}`}>
-                                                    {campaign.payment_status === 'paid' ? 'âœ… Paid' : campaign.payment_status || ''}
+                                                    {campaign.payment_status === 'paid' ? 'a Paid' : campaign.payment_status || ''}
                                                 </div>
                                             </td>
 
@@ -383,7 +383,7 @@ export default function AdvertiserDashboard() {
                                                             href={`/enterprise/edit/${campaign.id}`}
                                                             className="flex items-center gap-1 bg-yellow-600 text-white px-3 py-1.5 rounded-lg hover:bg-yellow-500 text-xs font-medium"
                                                         >
-                                                            âœï¸ Edit
+                                                            ai Edit
                                                         </a>
                                                     )}
 

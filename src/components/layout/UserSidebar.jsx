@@ -19,11 +19,11 @@ const UserSidebar = () => {
     const handleLogout = async () => {
         try {
             await supabase.auth.signOut();
-            toast.success('Sesión cerrada');
+            toast.success('Sesion cerrada');
             navigate('/login');
         } catch (error) {
             console.error('Error logging out:', error);
-            toast.error('Error al cerrar sesión');
+            toast.error('Error al cerrar sesion');
         }
     };
 
@@ -159,7 +159,7 @@ const UserSidebar = () => {
                     className="flex items-center justify-center w-full text-gray-700 hover:text-red-600 hover:bg-red-50 py-3 rounded-lg font-medium transition"
                 >
                     <LogOut className="w-4 h-4 mr-2" />
-                    Cerrar Sesión
+                    Cerrar Sesion
                 </button>
             </div>
         </>

@@ -1,5 +1,5 @@
 // Servicio Global de WhatsApp
-// Single Source of Truth para TODOS los envíos de WhatsApp
+// Single Source of Truth para TODOS los envAos de WhatsApp
 // src/services/whatsappService.js
 
 import { supabase } from '../lib/supabase';
@@ -11,13 +11,13 @@ const { PhoneNumberUtil, PhoneNumberFormat } = pkg;
 const phoneUtil = PhoneNumberUtil.getInstance();
 
 /**
- * Obtiene la fecha de hoy en zona horaria de México (UTC-6)
- * Esto asegura que los contadores se reinicien a medianoche hora México
+ * Obtiene la fecha de hoy en zona horaria de MAxico (UTC-6)
+ * Esto asegura que los contadores se reinicien a medianoche hora MAxico
  * @returns {string} Fecha en formato YYYY-MM-DD
  */
 const getTodayMexico = () => {
     const now = new Date();
-    // UTC-6 para México (Central Time)
+    // UTC-6 para MAxico (Central Time)
     const mexicoOffset = -6 * 60; // en minutos
     const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
     const mexicoTime = new Date(utcTime + (mexicoOffset * 60000));
@@ -34,12 +34,12 @@ export class WhatsAppService {
         manual: 'manual'
     };
 
-    // Configuración (cargada de Supabase)
+    // ConfiguraciAn (cargada de Supabase)
     static config = {
         phone: '525526702368',
         displayNumber: '+52 55 2670 2368',
         dailyLimit: 20,
-        // Límites separados por fuente
+        // LAmites separados por fuente
         limits: {
             scan_invite: 10,  // Nacional
             apify: 10         // Global/Internacional
@@ -51,7 +51,7 @@ export class WhatsAppService {
     }
 
     /**
-     * Inicializar configuración desde Supabase
+     * Inicializar configuraciAn desde Supabase
      */
     static async loadConfig() {
         try {
@@ -101,7 +101,7 @@ export class WhatsAppService {
     }
 
     /**
-     * Verificar si se puede enviar hoy (límite por fuente)
+     * Verificar si se puede enviar hoy (lAmite por fuente)
      * @param {string} source - 'scan_invite', 'apify', 'manual', etc.
      */
     static async canSendToday(source = null) {
@@ -170,7 +170,7 @@ export class WhatsAppService {
                         dailyLimit: 0,
                         source: normalizedSource,
                         bySource: {},
-                        error: `No se pudo consultar WhatsApp hoy: ${error.message}. Fallback RPC falló: ${statsError.message}`
+                        error: `No se pudo consultar WhatsApp hoy: ${error.message}. Fallback RPC fallA: ${statsError.message}`
                     };
                 }
 
@@ -204,7 +204,7 @@ export class WhatsAppService {
     }
 
     /**
-     * Verificar si un teléfono ya fue contactado
+     * Verificar si un telAfono ya fue contactado
      */
     static async isAlreadyContacted(phone) {
         try {
@@ -219,8 +219,8 @@ export class WhatsAppService {
     }
 
     /**
-     * Normalizar número de teléfono (Smart Detection for Mexico/USA/UK/Canada)
-     * Mejorado para detectar números de habla inglesa automáticamente
+     * Normalizar nAmero de telAfono (Smart Detection for Mexico/USA/UK/Canada)
+     * Mejorado para detectar nAmeros de habla inglesa automAticamente
      */
     static COUNTRY_DIAL_CODES = {
         MX: '52',
@@ -417,13 +417,13 @@ export class WhatsAppService {
 
         const normalized = this.normalizePhone(phone, options);
 
-        // Países de habla hispana
-        if (normalized.startsWith('+52')) return 'es';  // México
-        if (normalized.startsWith('+34')) return 'es';  // España
+        // PaAses de habla hispana
+        if (normalized.startsWith('+52')) return 'es';  // MAxico
+        if (normalized.startsWith('+34')) return 'es';  // EspaAa
         if (normalized.startsWith('+54')) return 'es';  // Argentina
         if (normalized.startsWith('+56')) return 'es';  // Chile
         if (normalized.startsWith('+57')) return 'es';  // Colombia
-        if (normalized.startsWith('+51')) return 'es';  // Perú
+        if (normalized.startsWith('+51')) return 'es';  // PerA
         if (normalized.startsWith('+58')) return 'es';  // Venezuela
         if (normalized.startsWith('+593')) return 'es'; // Ecuador
         if (normalized.startsWith('+502')) return 'es'; // Guatemala
@@ -431,17 +431,17 @@ export class WhatsAppService {
         if (normalized.startsWith('+504')) return 'es'; // Honduras
         if (normalized.startsWith('+505')) return 'es'; // Nicaragua
         if (normalized.startsWith('+506')) return 'es'; // Costa Rica
-        if (normalized.startsWith('+507')) return 'es'; // Panamá
+        if (normalized.startsWith('+507')) return 'es'; // PanamA
 
-        // Países de habla inglesa
-        if (normalized.startsWith('+1')) return 'en';   // USA/Canadá
+        // PaAses de habla inglesa
+        if (normalized.startsWith('+1')) return 'en';   // USA/CanadA
         if (normalized.startsWith('+44')) return 'en';  // Reino Unido
         if (normalized.startsWith('+61')) return 'en';  // Australia
         if (normalized.startsWith('+64')) return 'en';  // Nueva Zelanda
         if (normalized.startsWith('+353')) return 'en'; // Irlanda
-        if (normalized.startsWith('+27')) return 'en';  // Sudáfrica
+        if (normalized.startsWith('+27')) return 'en';  // SudAfrica
 
-        return 'es'; // Default español (para mercados latinoamericanos)
+        return 'es'; // Default espaAol (para mercados latinoamericanos)
     }
 
     /**
@@ -455,38 +455,38 @@ export class WhatsAppService {
         const company = contact.company || contact.company_name || contact.name || 'tu negocio';
 
         const templates = {
-            es: `Hola *${company}* ??
+            es: `Hola *${company}*.
 Soy parte del equipo comercial de *Geobooker*.
 
-Hoy miles de personas buscan negocios y servicios cerca de ellos desde su celular. Con Geobooker, *${company}* puede aparecer con ubicaci?n, WhatsApp, c?mo llegar, fotos, servicios y promociones en un solo lugar.
+Hoy miles de personas buscan negocios, servicios y espacios cercanos desde su celular. Con Geobooker, *${company}* puede aparecer con ubicacion, WhatsApp, como llegar, fotos, servicios, promociones y presencia en mapa desde web, Android y iPhone.
 
-Esto te ayuda a:
-? Aumentar tu visibilidad frente a clientes cercanos
-? Recibir contactos por WhatsApp, llamada y navegaci?n al negocio
-? Mantener tu perfil actualizado con horarios, fotos y promociones
-? Estar presente tanto en la web como en nuestra app para Android y iPhone
+Beneficios para tu negocio:
+- Mayor visibilidad frente a clientes cercanos.
+- Contactos por WhatsApp, llamada y navegacion al negocio.
+- Perfil comercial actualizado con horarios, fotos y promociones.
+- Presencia en busqueda local y en nuestras nuevas rutas de expansion.
 
-?? Con?cenos aqu?: ${APP_LINKS.web}
-?? Ya contamos con app en Google Play y App Store:
+Conocenos aqui: ${APP_LINKS.web}
+App disponible en Google Play y App Store:
 ${APP_LINKS.downloadHub}
 
-Si te interesa, te compartimos el enlace para registrar *${company}* en pocos minutos y comenzar a recibir mayor visibilidad local.
+Si te interesa, te compartimos el enlace para registrar *${company}* en pocos minutos y activar mayor visibilidad local.
 
 _(Si no te interesa, responde NO y no te volvemos a contactar.)_`,
 
-            en: `Hi *${company}* ??
+            en: `Hi *${company}*.
 I'm part of the *Geobooker* sales team.
 
-Every day, people search for nearby businesses and services from their phones. With Geobooker, *${company}* can appear with location, WhatsApp, directions, photos, services, and promotions all in one place.
+Every day, people search for nearby businesses, services, and commercial spaces from their phones. With Geobooker, *${company}* can appear with location, WhatsApp, directions, photos, services, promotions, and map presence across web, Android, and iPhone.
 
-This helps you:
-? Increase visibility with nearby customers
-? Receive leads through WhatsApp, phone calls, and directions
-? Keep your profile updated with hours, photos, and promotions
-? Be present on both the web and our Android/iPhone app
+Benefits for your business:
+- More visibility with nearby customers.
+- Leads through WhatsApp, phone calls, and directions.
+- An updated commercial profile with hours, photos, and promotions.
+- Presence in local search and our new expansion routes.
 
-?? Learn more: ${APP_LINKS.web}
-?? Our app is already available through our download hub:
+Learn more: ${APP_LINKS.web}
+App available on Google Play and App Store:
 ${APP_LINKS.downloadHub}
 
 If you're interested, we can share the link to register *${company}* in just a few minutes and start increasing local visibility.
@@ -503,10 +503,10 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
         const clean = String(phone || '').replace(/\D/g, '');
         const encoded = encodeURIComponent(message);
 
-        // Detectar si es móvil
+        // Detectar si es mAvil
         const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
 
-        // URL según plataforma
+        // URL segAn plataforma
         const url = isMobile
             ? `whatsapp://send?phone=${clean}&text=${encoded}`
             : `https://wa.me/${clean}?text=${encoded}`;
@@ -516,7 +516,7 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
     }
 
     /**
-     * Validar formato de teléfono
+     * Validar formato de telAfono
      */
     static isValidPhone(phone, options = {}) {
         if (!phone) return false;
@@ -541,7 +541,7 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
     }
 
     /**
-     * Enviar mensaje de WhatsApp (función principal)
+     * Enviar mensaje de WhatsApp (funciAn principal)
      */
     static async sendMessage(contact, source = 'manual') {
         try {
@@ -633,7 +633,7 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
     }
 
     /**
-     * Obtener estadísticas del día
+     * Obtener estadAsticas del dAa
      */
     static async getTodayStats() {
         try {
@@ -716,7 +716,7 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
 
             if (error) throw error;
 
-            toast.success('¡Marcado como convertido! 🎉');
+            toast.success('Marcado como convertido.');
             return { success: true };
         } catch (error) {
             console.error('Error marking as converted:', error);
@@ -725,7 +725,7 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
     }
 }
 
-// Auto-cargar configuración al importar
+// Auto-cargar configuraciAn al importar
 WhatsAppService.loadConfig();
 
 export default WhatsAppService;

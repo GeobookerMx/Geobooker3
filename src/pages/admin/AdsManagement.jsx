@@ -1,4 +1,4 @@
-﻿// src/pages/admin/AdsManagement.jsx
+// src/pages/admin/AdsManagement.jsx
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
@@ -21,7 +21,7 @@ const AdsManagement = () => {
   const [adSpaces, setAdSpaces] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(null); // ID de la campaÃ±a siendo procesada
+  const [actionLoading, setActionLoading] = useState(null); // ID de la campaAa siendo procesada
   const [contractLoading, setContractLoading] = useState(null);
   const [activeTab, setActiveTab] = useState('campaigns');
   const [statusFilter, setStatusFilter] = useState('active'); // filtro controlado
@@ -35,7 +35,7 @@ const AdsManagement = () => {
   const [rejectCustom, setRejectCustom] = useState('');
   // Metrics viewer state
   const [metricsModal, setMetricsModal] = useState({ open: false, campaign: null, metrics: null, loading: false });
-  const [analyticsData, setAnalyticsData] = useState({ // Datos para grÃ¡ficas
+  const [analyticsData, setAnalyticsData] = useState({ // Datos para grAficas
     impressionsOverTime: [],
     spacePerformance: [],
     topCampaigns: [],
@@ -50,7 +50,7 @@ const AdsManagement = () => {
 
   const loadAnalyticsData = async () => {
     try {
-      // Obtener todas las campaÃ±as con stats
+      // Obtener todas las campaAas con stats
       const { data: allCampaigns, error } = await supabase
         .from('ad_campaigns')
         .select(`*, ad_spaces (name, display_name)`)
@@ -58,8 +58,8 @@ const AdsManagement = () => {
 
       if (error) throw error;
 
-      // Procesar datos para grÃ¡ficas
-      // 1. Top 5 campaÃ±as por CTR
+      // Procesar datos para grAficas
+      // 1. Top 5 campaAas por CTR
       const topCampaigns = [...(allCampaigns || [])]
         .sort((a, b) => {
           const ctrA = a.impressions > 0 ? (a.clicks / a.impressions) : 0;
@@ -100,7 +100,7 @@ const AdsManagement = () => {
         }, {})
       );
 
-      // 4. Impresiones por dÃ­a (Ãºltimos 7 dÃ­as - datos REALES)
+      // 4. Impresiones por dAa (Altimos 7 dAas - datos REALES)
       let impressionsOverTime = [];
       try {
         const { data: trendData, error: trendError } = await supabase.rpc('get_global_ad_activity_trend', { p_days: 7 });
@@ -152,7 +152,7 @@ const AdsManagement = () => {
 
       if (spacesError) throw spacesError;
 
-      // Cargar campaÃ±as
+      // Cargar campaAas
       let query = supabase
         .from('ad_campaigns')
         .select(`*, ad_spaces (name, display_name, type)`)
@@ -173,7 +173,7 @@ const AdsManagement = () => {
       setCampaigns(campaignsData || []);
     } catch (error) {
       console.error('Error cargando datos:', error);
-      toast.error('Error al cargar datos. Verifica tu conexiÃ³n.');
+      toast.error('Error al cargar datos. Verifica tu conexiAn.');
     } finally {
       setLoading(false);
     }
@@ -236,7 +236,7 @@ const AdsManagement = () => {
 
       if (error) throw error;
 
-      // Enviar notificaciÃ³n por correo
+      // Enviar notificaciAn por correo
       const email = campaign?.advertiser_email;
       const name = campaign?.advertiser_name || 'Anunciante';
       const adSpace = campaign?.ad_spaces?.display_name || 'Espacio Publicitario';
@@ -255,7 +255,7 @@ const AdsManagement = () => {
         );
       }
 
-      toast.success('CampaÃ±a aprobada y activa ðŸš€');
+      toast.success('CampaAa aprobada y activa Ys');
       await loadData('pending_review'); // Recargar lista de pendientes
     } catch (error) {
       console.error('Error aprobando:', error);
@@ -283,14 +283,14 @@ const AdsManagement = () => {
           campaign.advertiser_email,
           campaign.advertiser_name || 'Anunciante',
           campaign.ad_spaces?.display_name || 'Espacio Publicitario',
-          finalReason || 'Tu campaña requiere ajustes antes de publicarse.',
+          finalReason || 'Tu campana requiere ajustes antes de publicarse.',
           {
             dashboardUrl: 'https://geobooker.com.mx/advertiser/dashboard'
           }
         );
       }
 
-      toast.success('CampaÃ±a rechazada');
+      toast.success('CampaAa rechazada');
       setRejectModal({ open: false, campaignId: null });
       setRejectReason('');
       setRejectCustom('');
@@ -310,7 +310,7 @@ const AdsManagement = () => {
     setRejectCustom('');
   };
 
-  // Cargar mÃ©tricas de una campaÃ±a (para admin metrics viewer)
+  // Cargar mAtricas de una campaAa (para admin metrics viewer)
   const openMetricsModal = async (campaign) => {
     setMetricsModal({ open: true, campaign, metrics: null, loading: true });
     try {
@@ -350,7 +350,7 @@ const AdsManagement = () => {
     );
   }
 
-  // Calcular estadÃ­sticas
+  // Calcular estadAsticas
   const totalRevenue = campaigns.reduce(
     (sum, c) => sum + parseFloat(c.budget || 0),
     0
@@ -370,13 +370,13 @@ const AdsManagement = () => {
 
   return (
     <div className="space-y-8">
-      {/* TÃ­tulo */}
+      {/* TAtulo */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Geobooker Ads</h1>
-        <p className="text-gray-600 mt-2">Sistema de gestiÃ³n de publicidad</p>
+        <p className="text-gray-600 mt-2">Sistema de gestiAn de publicidad</p>
       </div>
 
-      {/* EstadÃ­sticas */}
+      {/* EstadAsticas */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <StatsCard
           title="Pendientes"
@@ -421,7 +421,7 @@ const AdsManagement = () => {
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
           >
-            CampaÃ±as
+            CampaAas
           </button>
           <button
             onClick={() => setActiveTab('analytics')}
@@ -430,17 +430,17 @@ const AdsManagement = () => {
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
           >
-            ðŸ“Š Analytics
+            YS Analytics
           </button>
         </nav>
       </div>
 
-      {/* Contenido segÃºn tab */}
+      {/* Contenido segAn tab */}
       {activeTab === 'campaigns' && (
         <div>
           <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
             <h2 className="text-xl font-bold text-gray-900">
-              GestiÃ³n de CampaÃ±as
+              GestiAn de CampaAas
             </h2>
 
             <div className="flex items-center space-x-2 w-full md:w-auto">
@@ -455,7 +455,7 @@ const AdsManagement = () => {
                 }}
               >
                 <option value="all">Todos los estados</option>
-                <option value="pending_review">Pendientes de RevisiÃ³n</option>
+                <option value="pending_review">Pendientes de RevisiAn</option>
                 <option value="active">Activas</option>
                 <option value="paused">Pausadas</option>
                 <option value="rejected">Rechazadas</option>
@@ -495,7 +495,7 @@ const AdsManagement = () => {
                     Espacio
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    SegmentaciÃ³n
+                    SegmentaciAn
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Fechas
@@ -515,7 +515,7 @@ const AdsManagement = () => {
                       colSpan="7"
                       className="px-6 py-12 text-center text-gray-500"
                     >
-                      No se encontraron campaÃ±as con los filtros actuales
+                      No se encontraron campaAas con los filtros actuales
                     </td>
                   </tr>
                 ) : (
@@ -574,22 +574,22 @@ const AdsManagement = () => {
                         <div className="flex flex-col">
                           <span className="text-sm font-medium text-gray-900 flex items-center">
                             {campaign.geographic_scope === 'global'
-                              ? 'ðŸŒ Global'
+                              ? 'Y Global'
                               : campaign.target_location === 'Mexico'
-                                ? 'ðŸ‡²ðŸ‡½ MÃ©xico'
+                                ? 'YY MAxico'
                                 : campaign.target_location === 'USA'
-                                  ? 'ðŸ‡ºðŸ‡¸ USA'
+                                  ? 'YY USA'
                                   : campaign.target_location === 'Spain'
-                                    ? 'ðŸ‡ªðŸ‡¸ EspaÃ±a'
+                                    ? 'YY EspaAa'
                                     : campaign.target_location
-                                      ? 'ðŸ“ ' + campaign.target_location
-                                      : 'â€”'}
+                                      ? 'Y ' + campaign.target_location
+                                      : 'a'}
                           </span>
                           {campaign.audience_targeting &&
                             Object.keys(campaign.audience_targeting).length >
                             0 && (
                               <span className="text-xs text-blue-600 bg-blue-50 px-1 rounded mt-1 w-fit">
-                                + SegmentaciÃ³n Avanzada
+                                + SegmentaciAn Avanzada
                               </span>
                             )}
                         </div>
@@ -611,7 +611,7 @@ const AdsManagement = () => {
                             </div>
                           </>
                         ) : (
-                          'â€”'
+                          'a'
                         )}
                       </td>
 
@@ -654,7 +654,7 @@ const AdsManagement = () => {
                               </button>
                             </>
                           )}
-                          {/* BotÃ³n Vista Previa */}
+                          {/* BotAn Vista Previa */}
                           <button
                             disabled={contractLoading === campaign.id}
                             onClick={() => handleGenerateContract(campaign)}
@@ -677,13 +677,13 @@ const AdsManagement = () => {
                             <Eye className="w-4 h-4" />
                             Preview
                           </button>
-                          {/* BotÃ³n MÃ©tricas (NUEVO) */}
+                          {/* BotAn MAtricas (NUEVO) */}
                           <button
                             onClick={() => openMetricsModal(campaign)}
                             className="text-green-600 hover:text-green-900 bg-green-50 px-3 py-1 rounded hover:bg-green-100 transition flex items-center gap-1"
                           >
                             <BarChart3 className="w-4 h-4" />
-                            MÃ©tricas
+                            MAtricas
                           </button>
                           <button
                             onClick={async () => {
@@ -717,16 +717,16 @@ const AdsManagement = () => {
       {activeTab === 'analytics' && (
         <div className="space-y-6">
           <h2 className="text-xl font-bold text-gray-900">
-            ðŸ“Š Analytics y EstadÃ­sticas
+            YS Analytics y EstadAsticas
           </h2>
 
-          {/* GrÃ¡ficas superiores */}
+          {/* GrAficas superiores */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ImpressionsChart data={analyticsData.impressionsOverTime} />
             <SpacePerformanceChart data={analyticsData.spacePerformance} />
           </div>
 
-          {/* GrÃ¡ficas inferiores */}
+          {/* GrAficas inferiores */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <TopCampaignsTable campaigns={analyticsData.topCampaigns} />
             <RevenueChart
@@ -767,14 +767,14 @@ const AdsManagement = () => {
             <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6 rounded-t-2xl">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-xl font-bold">ðŸ‘ï¸ Vista Previa del Anuncio</h3>
-                  <p className="text-purple-200 text-sm mt-1">AsÃ­ se verÃ¡ en el sitio una vez aprobado</p>
+                  <h3 className="text-xl font-bold">Yi Vista Previa del Anuncio</h3>
+                  <p className="text-purple-200 text-sm mt-1">AsA se verA en el sitio una vez aprobado</p>
                 </div>
                 <button
                   onClick={() => setPreviewCampaign(null)}
                   className="text-white/80 hover:text-white text-2xl font-bold"
                 >
-                  Ã—
+                  A
                 </button>
               </div>
             </div>
@@ -808,10 +808,10 @@ const AdsManagement = () => {
                     </div>
                   )}
 
-                  {/* TÃ­tulo y DescripciÃ³n */}
+                  {/* TAtulo y DescripciAn */}
                   <div className="p-4 space-y-2 bg-white">
                     <h4 className="font-bold text-lg text-gray-900">
-                      {previewCampaign.ad_creatives[0].title || 'Sin tÃ­tulo'}
+                      {previewCampaign.ad_creatives[0].title || 'Sin tAtulo'}
                     </h4>
                     {previewCampaign.ad_creatives[0].description && (
                       <p className="text-gray-600 text-sm">
@@ -823,20 +823,20 @@ const AdsManagement = () => {
                     {previewCampaign.ad_creatives[0].cta_text && (
                       <button className="mt-3 bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition inline-flex items-center gap-2">
                         {previewCampaign.ad_creatives[0].cta_text}
-                        <span className="text-xs opacity-70">â†’</span>
+                        <span className="text-xs opacity-70">a</span>
                       </button>
                     )}
 
                     {/* URL destino */}
                     {previewCampaign.ad_creatives[0].cta_url && (
                       <p className="text-xs text-gray-400 mt-2 truncate">
-                        ðŸ”— {previewCampaign.ad_creatives[0].cta_url}
+                        Y {previewCampaign.ad_creatives[0].cta_url}
                       </p>
                     )}
                   </div>
                 </div>
               ) : previewCampaign.creative_url ? (
-                // Fallback: usa creative_url directamente de la campaÃ±a
+                // Fallback: usa creative_url directamente de la campaAa
                 <div className="border-2 border-dashed border-purple-300 rounded-xl overflow-hidden bg-gradient-to-br from-purple-50 to-indigo-50">
                   <div className="bg-purple-100 px-3 py-1 text-xs text-purple-700 font-semibold">Vista Previa del Creativo</div>
 
@@ -868,10 +868,10 @@ const AdsManagement = () => {
                     )}
                   </div>
 
-                  {/* Info de la campaÃ±a */}
+                  {/* Info de la campaAa */}
                   <div className="p-4 space-y-2 bg-white">
                     <h4 className="font-bold text-lg text-gray-900">
-                      {previewCampaign.advertiser_name || 'Sin tÃ­tulo'}
+                      {previewCampaign.advertiser_name || 'Sin tAtulo'}
                     </h4>
                     {previewCampaign.description && (
                       <p className="text-gray-600 text-sm">{previewCampaign.description}</p>
@@ -882,7 +882,7 @@ const AdsManagement = () => {
                       </button>
                     )}
                     {previewCampaign.cta_url && (
-                      <p className="text-xs text-gray-400 mt-2 truncate">ðŸ”— {previewCampaign.cta_url}</p>
+                      <p className="text-xs text-gray-400 mt-2 truncate">Y {previewCampaign.cta_url}</p>
                     )}
                   </div>
                 </div>
@@ -890,7 +890,7 @@ const AdsManagement = () => {
                 <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
                   <AlertCircle className="w-12 h-12 mx-auto text-yellow-500 mb-2" />
                   <p className="text-gray-600 font-semibold">Sin creativos</p>
-                  <p className="text-gray-400 text-sm">Esta campaÃ±a no tiene imÃ¡genes o creativos asociados</p>
+                  <p className="text-gray-400 text-sm">Esta campaAa no tiene imAgenes o creativos asociados</p>
                 </div>
               )}
 
@@ -902,9 +902,9 @@ const AdsManagement = () => {
                     <p className="font-semibold text-gray-800">{previewCampaign.advertiser_name}</p>
                   </div>
                   <div>
-                    <span className="text-gray-500">SegmentaciÃ³n:</span>
+                    <span className="text-gray-500">SegmentaciAn:</span>
                     <p className="font-semibold text-gray-800">
-                      {previewCampaign.geographic_scope === 'global' ? 'ðŸŒ Global' : `ðŸ“ ${previewCampaign.target_location || 'Local'}`}
+                      {previewCampaign.geographic_scope === 'global' ? 'Y Global' : `Y ${previewCampaign.target_location || 'Local'}`}
                     </p>
                   </div>
                 </div>
@@ -920,7 +920,7 @@ const AdsManagement = () => {
                     }}
                     className="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition"
                   >
-                    âœ… Aprobar CampaÃ±a
+                    a Aprobar CampaAa
                   </button>
                   <button
                     onClick={() => {
@@ -929,7 +929,7 @@ const AdsManagement = () => {
                     }}
                     className="flex-1 bg-red-100 text-red-600 py-3 rounded-xl font-bold hover:bg-red-200 transition"
                   >
-                    âŒ Rechazar
+                    a Rechazar
                   </button>
                 </div>
               )}
@@ -938,21 +938,21 @@ const AdsManagement = () => {
         </div>
       )}
 
-      {/* Modal de Rechazo con RazÃ³n */}
+      {/* Modal de Rechazo con RazAn */}
       {rejectModal.open && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setRejectModal({ open: false, campaignId: null })}>
           <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-5 rounded-t-2xl">
-              <h3 className="text-lg font-bold">âŒ Rechazar CampaÃ±a</h3>
-              <p className="text-red-100 text-sm mt-1">Selecciona la razÃ³n del rechazo</p>
+              <h3 className="text-lg font-bold">a Rechazar CampaAa</h3>
+              <p className="text-red-100 text-sm mt-1">Selecciona la razAn del rechazo</p>
             </div>
             <div className="p-6 space-y-4">
               {[
-                { value: 'imagen_inapropiada', label: 'ðŸ–¼ï¸ Imagen inapropiada o de baja calidad' },
-                { value: 'url_no_funciona', label: 'ðŸ”— URL de destino no funciona' },
-                { value: 'contenido_engaÃ±oso', label: 'âš ï¸ Contenido engaÃ±oso o falso' },
-                { value: 'politica_contenido', label: 'ðŸ“‹ No cumple polÃ­ticas de contenido' },
-                { value: 'otra', label: 'âœï¸ Otra razÃ³n...' }
+                { value: 'imagen_inapropiada', label: 'Yi Imagen inapropiada o de baja calidad' },
+                { value: 'url_no_funciona', label: 'Y URL de destino no funciona' },
+                { value: 'contenido_engaAoso', label: 'asi Contenido engaAoso o falso' },
+                { value: 'politica_contenido', label: 'Y No cumple polAticas de contenido' },
+                { value: 'otra', label: 'ai Otra razAn...' }
               ].map(opt => (
                 <button
                   key={opt.value}
@@ -970,7 +970,7 @@ const AdsManagement = () => {
                 <textarea
                   value={rejectCustom}
                   onChange={(e) => setRejectCustom(e.target.value)}
-                  placeholder="Describe la razÃ³n del rechazo..."
+                  placeholder="Describe la razAn del rechazo..."
                   rows={3}
                   className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-red-500"
                 />
@@ -997,7 +997,7 @@ const AdsManagement = () => {
       )
       }
 
-      {/* Modal: MÃ©tricas del Anunciante (Admin ve lo que ve el cliente) */}
+      {/* Modal: MAtricas del Anunciante (Admin ve lo que ve el cliente) */}
       {
         metricsModal.open && (
           <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setMetricsModal({ open: false, campaign: null, metrics: null, loading: false })}>
@@ -1005,16 +1005,16 @@ const AdsManagement = () => {
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-2xl">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h3 className="text-xl font-bold">ðŸ“Š MÃ©tricas del Anunciante</h3>
+                    <h3 className="text-xl font-bold">YS MAtricas del Anunciante</h3>
                     <p className="text-blue-100 text-sm mt-1">
-                      AsÃ­ ve el cliente {metricsModal.campaign?.advertiser_name || ''} su dashboard
+                      AsA ve el cliente {metricsModal.campaign?.advertiser_name || ''} su dashboard
                     </p>
                   </div>
                   <button
                     onClick={() => setMetricsModal({ open: false, campaign: null, metrics: null, loading: false })}
                     className="text-white/80 hover:text-white text-2xl font-bold"
                   >
-                    Ã—
+                    A
                   </button>
                 </div>
               </div>
@@ -1023,7 +1023,7 @@ const AdsManagement = () => {
                 {metricsModal.loading ? (
                   <div className="text-center py-12">
                     <RefreshCw className="w-8 h-8 text-blue-500 animate-spin mx-auto" />
-                    <p className="mt-4 text-gray-600">Cargando mÃ©tricas...</p>
+                    <p className="mt-4 text-gray-600">Cargando mAtricas...</p>
                   </div>
                 ) : (
                   <div className="space-y-6">
@@ -1055,9 +1055,9 @@ const AdsManagement = () => {
                       </div>
                     </div>
 
-                    {/* Info de la CampaÃ±a */}
+                    {/* Info de la CampaAa */}
                     <div className="bg-gray-50 rounded-xl p-4">
-                      <h4 className="font-semibold text-gray-800 mb-3">Detalles de la CampaÃ±a</h4>
+                      <h4 className="font-semibold text-gray-800 mb-3">Detalles de la CampaAa</h4>
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
                           <span className="text-gray-500">Anunciante:</span>
@@ -1068,9 +1068,9 @@ const AdsManagement = () => {
                           <p className="font-medium">{metricsModal.campaign?.advertiser_email}</p>
                         </div>
                         <div>
-                          <span className="text-gray-500">SegmentaciÃ³n:</span>
+                          <span className="text-gray-500">SegmentaciAn:</span>
                           <p className="font-medium">
-                            {metricsModal.campaign?.geographic_scope === 'global' ? 'ðŸŒ Global' : `ðŸ“ ${metricsModal.campaign?.target_location || 'Local'}`}
+                            {metricsModal.campaign?.geographic_scope === 'global' ? 'Y Global' : `Y ${metricsModal.campaign?.target_location || 'Local'}`}
                           </p>
                         </div>
                         <div>
@@ -1102,22 +1102,22 @@ const AdsManagement = () => {
                         <div className="p-4 bg-white">
                           <h5 className="font-bold text-gray-900">{metricsModal.campaign.ad_creatives[0].title}</h5>
                           <p className="text-sm text-gray-600 mt-1">{metricsModal.campaign.ad_creatives[0].description}</p>
-                          <p className="text-xs text-blue-500 mt-2">ðŸ”— {metricsModal.campaign.ad_creatives[0].cta_url}</p>
+                          <p className="text-xs text-blue-500 mt-2">Y {metricsModal.campaign.ad_creatives[0].cta_url}</p>
                         </div>
                       </div>
                     )}
 
-                    {/* Ãšltimas mÃ©tricas diarias */}
+                    {/* Asltimas mAtricas diarias */}
                     {metricsModal.metrics?.daily?.length > 0 && (
                       <div>
-                        <h4 className="font-semibold text-gray-800 mb-3">Ãšltimos 7 dÃ­as</h4>
+                        <h4 className="font-semibold text-gray-800 mb-3">Asltimos 7 dAas</h4>
                         <div className="space-y-2">
                           {metricsModal.metrics.daily.slice(0, 7).map((day, i) => (
                             <div key={i} className="flex justify-between items-center bg-gray-50 rounded-lg px-4 py-2 text-sm">
                               <span className="text-gray-600">{new Date(day.date).toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
                               <div className="flex gap-4">
-                                <span className="text-blue-600">ðŸ‘ {day.impressions || 0}</span>
-                                <span className="text-green-600">ðŸ‘† {day.clicks || 0}</span>
+                                <span className="text-blue-600">Y {day.impressions || 0}</span>
+                                <span className="text-green-600">Y {day.clicks || 0}</span>
                                 <span className="text-purple-600">{day.impressions > 0 ? ((day.clicks / day.impressions) * 100).toFixed(1) : '0.0'}%</span>
                               </div>
                             </div>
@@ -1137,7 +1137,7 @@ const AdsManagement = () => {
 
 export default AdsManagement;
 
-/** Card simple para las estadÃ­sticas de arriba */
+/** Card simple para las estadAsticas de arriba */
 function StatsCard({ title, value, icon: Icon, color = 'blue', highlight = false }) {
   const colorMap = {
     blue: 'text-blue-600 bg-blue-50',

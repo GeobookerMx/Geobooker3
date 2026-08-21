@@ -13,13 +13,13 @@ const Footer = () => {
 
   return (
     <>
-      {/* Banner de Seguridad Anti-Extorsión */}
+      {/* Banner de Seguridad Anti-Extorsion */}
       <SafetyBanner variant="footer" />
 
       <footer className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white py-12 mt-0">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            {/* Columna 1 - Logo, descripción y redes sociales */}
+            {/* Columna 1 - Logo, descripcion y redes sociales */}
             <div className="col-span-1 md:col-span-2">
               <div className="mb-4">
                 <img
@@ -146,23 +146,23 @@ const Footer = () => {
               </div>
             </div>
 
-            {/* Columna 2 - Enlaces rápidos */}
+            {/* Columna 2 - Enlaces rapidos */}
             <div>
               <h3 className="font-semibold mb-4 text-blue-400">{t('footer.quickLinks')}</h3>
               <ul className="space-y-3">
                 <li>
                   <Link to="/" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → {t('nav.home')}
+                     {t('nav.home')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/categories" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → {t('nav.categories')}
+                     {t('nav.categories')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/business/register" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → {t('nav.addBusiness')}
+                     {t('nav.addBusiness')}
                   </Link>
                 </li>
                 <li>
@@ -192,24 +192,24 @@ const Footer = () => {
                 </li>
                 <li>
                   <Link to="/dashboard" className="text-gray-300 hover:text-green-400 hover:pl-2 transition-all duration-200 inline-block">
-                    ⭐ {t('nav.recommend', 'Recomendar un negocio')}
+                     {t('nav.recommend', 'Recomendar un negocio')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/login" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → {t('nav.login')}
+                     {t('nav.login')}
                   </Link>
                 </li>
                 {!IS_IOS_NATIVE && (
                   <li>
                     <Link to="/advertise" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                      → {t('footer.adsPolicy')}
+                       {t('footer.adsPolicy')}
                     </Link>
                   </li>
                 )}
                 <li>
                   <Link to="/guia-resico" className="text-gray-300 hover:text-green-400 hover:pl-2 transition-all duration-200 inline-block">
-                    📋 {t('footer.guiaResico')}
+                     {t('footer.guiaResico')}
                   </Link>
                 </li>
               </ul>
@@ -221,49 +221,49 @@ const Footer = () => {
               <ul className="space-y-3">
                 <li>
                   <Link to="/privacy" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → {t('footer.privacy')}
+                     {t('footer.privacy')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/legal/ads-policy" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → {t('footer.adsPolicy')}
+                     {t('footer.adsPolicy')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/terms" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → {t('footer.terms')}
+                     {t('footer.terms')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/faq" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → {t('footer.faq')}
+                     {t('footer.faq')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/seguridad" className="text-gray-300 hover:text-yellow-400 hover:pl-2 transition-all duration-200 inline-block">
-                    🛡️ {t('footer.security')}
+                     {t('footer.security')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/legal/fiscal" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    💼 {t('footer.fiscal')}
+                     {t('footer.fiscal')}
                   </Link>
                 </li>
                 <li>
                   <a href={getMailtoLink('soporte')} className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
-                    → {t('footer.support')}
+                     {t('footer.support')}
                   </a>
                 </li>
               </ul>
             </div>
           </div>
 
-          {/* Sección: Desarrollo de Apps */}
+          {/* Seccion: Desarrollo de Apps */}
           <div className="bg-gradient-to-r from-purple-900/50 to-blue-900/50 rounded-2xl p-6 mb-8 border border-purple-500/30">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="text-center md:text-left">
                 <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
-                  <span className="text-3xl">📱</span>
+                  <span className="text-3xl"></span>
                   <h3 className="text-xl font-bold text-white">{t('footer.needApp')}</h3>
                 </div>
                 <p className="text-gray-300 text-sm max-w-lg">
@@ -275,7 +275,7 @@ const Footer = () => {
                   to="/desarrollo-apps"
                   className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-semibold text-center transition-all transform hover:scale-105 shadow-lg"
                 >
-                  📝 {t('footer.requestQuote')}
+                   {t('footer.requestQuote')}
                 </Link>
                 <a
                   href={getMailtoLink('ventas', 'Cotizaci?n desarrollo de app')}
@@ -293,10 +293,10 @@ const Footer = () => {
                 <span className="text-gray-400 text-sm font-medium">{t('footer.payments')}:</span>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2 bg-yellow-500/20 px-3 py-1.5 rounded-lg">
-                    <span className="text-yellow-400 font-bold text-sm">🏪 OXXO Pay</span>
+                    <span className="text-yellow-400 font-bold text-sm"> OXXO Pay</span>
                   </div>
                   <div className="flex items-center gap-1 bg-blue-500/20 px-3 py-1.5 rounded-lg">
-                    <span className="text-blue-400 font-bold text-sm">💳 Visa</span>
+                    <span className="text-blue-400 font-bold text-sm"> Visa</span>
                   </div>
                   <div className="flex items-center gap-1 bg-orange-500/20 px-3 py-1.5 rounded-lg">
                     <span className="text-orange-400 font-bold text-sm">Mastercard</span>
@@ -325,7 +325,7 @@ const Footer = () => {
               <div className="text-center md:text-left">
                 <h4 className="text-white font-bold text-lg mb-1">{t('footer.share')}</h4>
                 <p className="text-gray-400 text-sm">{t('footer.shareDesc')}</p>
-                <p className="text-blue-400 text-xs mt-1">QR primero · link de respaldo: geobooker.com.mx/download</p>
+                <p className="text-blue-400 text-xs mt-1">QR primero  link de respaldo: geobooker.com.mx/download</p>
                 <div className="flex flex-wrap gap-3 mt-3 text-xs">
                   <a href={APP_LINKS.androidStoreUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 underline underline-offset-4">
                     Google Play
@@ -338,7 +338,7 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* ✅ Banner INEGI DENUE - Agradecimiento por datos abiertos */}
+          {/*  Banner INEGI DENUE - Agradecimiento por datos abiertos */}
           <div className="border-t border-gray-700/50 py-6 mb-4">
             <div className="flex flex-col md:flex-row items-center justify-center gap-4 bg-gradient-to-r from-green-900/20 via-emerald-900/20 to-green-900/20 border border-green-700/30 rounded-xl px-6 py-4">
               {/* Escudo INEGI */}
@@ -350,17 +350,17 @@ const Footer = () => {
                 </div>
                 <div className="text-left">
                   <div className="flex items-center gap-2">
-                    <span className="text-green-400 font-bold text-sm tracking-wide">INEGI · DENUE</span>
+                    <span className="text-green-400 font-bold text-sm tracking-wide">INEGI  DENUE</span>
                     <span className="bg-green-700/40 text-green-300 text-xs px-2 py-0.5 rounded-full border border-green-600/30">Datos Abiertos</span>
                   </div>
-                  <p className="text-xs text-gray-500">Directorio Estadístico Nacional de Unidades Económicas</p>
+                  <p className="text-xs text-gray-500">Directorio Estadistico Nacional de Unidades Economicas</p>
                 </div>
               </div>
 
               {/* Texto de agradecimiento */}
               <div className="text-center md:text-left max-w-xl">
                 <p className="text-gray-400 text-xs leading-relaxed">
-                  La información comercial de negocios en esta plataforma proviene parcialmente del{' '}
+                  La informacion comercial de negocios en esta plataforma proviene parcialmente del{' '}
                   <a
                     href="https://www.inegi.org.mx/app/mapa/denue/"
                     target="_blank"
@@ -369,8 +369,8 @@ const Footer = () => {
                   >
                     DENUE del INEGI
                   </a>
-                  , como fuente de referencia para la activación y visibilidad comercial de negocios locales en México.
-                  Agradecemos al Instituto Nacional de Estadística y Geografía por la apertura de sus datos estadísticos.
+                  , como fuente de referencia para la activacion y visibilidad comercial de negocios locales en Mexico.
+                  Agradecemos al Instituto Nacional de Estadistica y Geografia por la apertura de sus datos estadisticos.
                 </p>
               </div>
 
@@ -381,12 +381,12 @@ const Footer = () => {
                 rel="noopener noreferrer"
                 className="shrink-0 text-xs text-green-500/70 hover:text-green-400 transition-colors border border-green-700/30 hover:border-green-600/50 px-3 py-1.5 rounded-lg"
               >
-                inegi.org.mx →
+                inegi.org.mx 
               </a>
             </div>
           </div>
 
-          {/* Línea divisoria y copyright */}
+          {/* Linea divisoria y copyright */}
           <div className="border-t border-gray-700 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center text-gray-400 text-sm">
               <p className="mb-4 md:mb-0">

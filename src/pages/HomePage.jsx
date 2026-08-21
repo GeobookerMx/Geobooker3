@@ -339,14 +339,14 @@ const CITY_COORDINATES = {
 };
 
 const MEXICO_CITY_ALIASES = {
-  cdmx: ['CDMX', 'Ciudad de México', 'Ciudad de Mexico', 'Mexico City'],
+  cdmx: ['CDMX', 'Ciudad de Mexico', 'Ciudad de Mexico', 'Mexico City'],
   guadalajara: ['Guadalajara'],
   monterrey: ['Monterrey'],
   puebla: ['Puebla'],
   tijuana: ['Tijuana'],
-  merida: ['Mérida', 'Merida'],
-  queretaro: ['Querétaro', 'Queretaro'],
-  leon: ['León', 'Leon']
+  merida: ['Merida', 'Merida'],
+  queretaro: ['Queretaro', 'Queretaro'],
+  leon: ['Leon', 'Leon']
 };
 const MEXICO_CITY_SLUGS = new Set(Object.keys(MEXICO_CITY_ALIASES));
 
@@ -497,24 +497,24 @@ const filterBusinessesInBounds = (businesses, bounds) =>
       lng >= bounds.west && lng <= bounds.east;
   });
 
-// ✅ Los restaurantes del seed ya tienen lat/lng hardcodeados — no necesitamos geocodificar
+//  Los restaurantes del seed ya tienen lat/lng hardcodeados  no necesitamos geocodificar
 const getAwardSeedFallbackBusinesses = async (bounds, awardFilter) => {
   const matchingSeedBusinesses = michelinSeed2026
     .filter((business) => matchesAwardFilter(business, awardFilter))
     .map((business) => ({
       ...business,
       id: `michelin-seed-${business.name}-${business.city}`.replace(/\s+/g, '_').toLowerCase(),
-      // Asegurar que lat/lng y latitude/longitude están presentes
+      // Asegurar que lat/lng y latitude/longitude estan presentes
       lat: Number(business.lat ?? business.latitude),
       lng: Number(business.lng ?? business.longitude),
       latitude: Number(business.latitude ?? business.lat),
       longitude: Number(business.longitude ?? business.lng),
       source_type: 'michelin_seed_local'
     }))
-    .filter((b) => !isNaN(b.lat) && !isNaN(b.lng)); // Solo restaurantes con coordenadas válidas
+    .filter((b) => !isNaN(b.lat) && !isNaN(b.lng)); // Solo restaurantes con coordenadas validas
 
   if (import.meta.env.DEV) {
-    console.log(`[AwardSeed] ${matchingSeedBusinesses.length} restaurantes del seed (${awardFilter}) con coordenadas válidas`);
+    console.log(`[AwardSeed] ${matchingSeedBusinesses.length} restaurantes del seed (${awardFilter}) con coordenadas validas`);
   }
 
   return filterBusinessesInBounds(matchingSeedBusinesses, bounds);
@@ -543,10 +543,10 @@ const HomePage = () => {
   const awardFilterRef = useRef('all');
   const viewportRequestSeqRef = useRef(0);
   const skipSearchStateSaveRef = useRef(false);
-  const mapBoundsRef = useRef(null); // 📍 OPCION 1: Guardar bounds del mapa para filtrar recomendaciones
+  const mapBoundsRef = useRef(null); //  OPCION 1: Guardar bounds del mapa para filtrar recomendaciones
   const navigate = useNavigate();
 
-  // Filtros de categoría desde URL (parámetros de consulta o ruta)
+  // Filtros de categoria desde URL (parametros de consulta o ruta)
   const categoryFilter = category || searchParams.get('category');
   const subcategoryFilter = subcategory || searchParams.get('subcategory');
   const cityFilter = city || searchParams.get('city');
@@ -567,16 +567,16 @@ const HomePage = () => {
     return userLocation;
   }, [cityFilter, isCityRouteAvailable, userLocation]);
 
-  // SEO dinámico basado en filtros
+  // SEO dinamico basado en filtros
   const getSEOTitle = () => {
     if (cityFilter && categoryFilter) return t('seo.cityCategoryTitle', { category: categoryFilter, city: cityFilter, defaultValue: `Los mejores ${categoryFilter} en ${cityFilter}` });
-    if (categoryFilter) return t('seo.categoryTitle', { category: categoryFilter, defaultValue: `${categoryFilter} cerca de mí` });
+    if (categoryFilter) return t('seo.categoryTitle', { category: categoryFilter, defaultValue: `${categoryFilter} cerca de mi` });
     if (cityFilter) return t('seo.cityTitle', { city: cityFilter, defaultValue: `Negocios y servicios en ${cityFilter}` });
     return t('home.title');
   };
 
   const getSEODescription = () => {
-    if (cityFilter) return t('seo.cityDescription', { city: cityFilter, defaultValue: `Explora el mapa interactivo de ${cityFilter}. Encuentra restaurantes, farmacias, tiendas y más en Geobooker.` });
+    if (cityFilter) return t('seo.cityDescription', { city: cityFilter, defaultValue: `Explora el mapa interactivo de ${cityFilter}. Encuentra restaurantes, farmacias, tiendas y mas en Geobooker.` });
     return t('home.subtitle');
   };
 
@@ -591,7 +591,7 @@ const HomePage = () => {
   // Sistema de Interstitial Ads
   const { showInterstitial, incrementSearchCount, closeInterstitial } = useInterstitialTrigger();
 
-  // Sistema de límite de búsquedas para invitados
+  // Sistema de limite de busquedas para invitados
   const {
     recordSearch: recordGuestSearch,
     showLoginPrompt,
@@ -627,7 +627,7 @@ const HomePage = () => {
   }, []);
 
   // ==========================================
-  // PERSISTENCIA DE ESTADO DE BÚSQUEDA
+  // PERSISTENCIA DE ESTADO DE BUSQUEDA
   // ==========================================
 
   // Restaurar estado desde sessionStorage al montar
@@ -677,8 +677,8 @@ const HomePage = () => {
     }
   }, [businesses, lastSearchQuery, searchMarketKey]);
 
-  // Limpiar búsqueda (botón separado)
-  // Cargar negocios nativos de Geobooker (CON CACHÉ IndexedDB)
+  // Limpiar busqueda (boton separado)
+  // Cargar negocios nativos de Geobooker (CON CACHE IndexedDB)
   const fetchGeobookerBusinesses = useCallback(async () => {
     if (cityFilter && !isCityRouteAvailable) {
       setGeobookerBusinesses([]);
@@ -691,18 +691,18 @@ const HomePage = () => {
     }
 
     try {
-      // ⚡ PASO 1: Intentar cargar desde caché primero (instantáneo)
+      //  PASO 1: Intentar cargar desde cache primero (instantaneo)
       const cacheStatus = cityDataFilter ? { isValid: false } : await isCacheValid(userLocation);
       if (cacheStatus.isValid && !categoryFilter && !cityFilter) {
         const cachedBusinesses = await getCachedBusinesses();
         if (cachedBusinesses.length > 0) {
           const enrichedCachedBusinesses = await enrichBusinessesWithAwards(cachedBusinesses);
           setGeobookerBusinesses(enrichedCachedBusinesses);
-          return; // Usar caché, no llamar a Supabase
+          return; // Usar cache, no llamar a Supabase
         }
       }
 
-      // ⚡ PASO 2: Si caché no es válido o está vacío, cargar desde Supabase
+      //  PASO 2: Si cache no es valido o esta vacio, cargar desde Supabase
       const businessTable = cityDataFilter ? 'international_businesses' : 'businesses';
       let query = supabase
         .from(businessTable)
@@ -762,8 +762,8 @@ const HomePage = () => {
     }
   }, [categoryFilter, subcategoryFilter, userLocation, cityDataFilter, cityFilter, isCityRouteAvailable, mexicoCityAliases]);
 
-  // 💚 OPCION 1: Cargar recomendaciones filtradas por viewport del mapa
-  // Solo se cargan las recomendaciones visibles en el área del mapa, no TODAS.
+  //  OPCION 1: Cargar recomendaciones filtradas por viewport del mapa
+  // Solo se cargan las recomendaciones visibles en el area del mapa, no TODAS.
   const fetchRecommendationsByBounds = async (bounds) => {
     if (!bounds) return;
     try {
@@ -776,18 +776,18 @@ const HomePage = () => {
         .lte('latitude', north)
         .gte('longitude', west)
         .lte('longitude', east)
-        .limit(100); // Máximo 100 recomendaciones por viewport
+        .limit(100); // Maximo 100 recomendaciones por viewport
 
       if (error) {
-        console.error('❌ [HomePage] Error recomendaciones por viewport:', error.message);
+        console.error(' [HomePage] Error recomendaciones por viewport:', error.message);
         return;
       }
 
       const conCoords = (inView || []).filter(r => r.latitude != null && r.longitude != null);
-      console.log(`💚 [HomePage] ${conCoords.length} recomendaciones en viewport`);
+      console.log(` [HomePage] ${conCoords.length} recomendaciones en viewport`);
       setRecommendedBusinesses(conCoords);
     } catch (error) {
-      console.error('❌ [HomePage] Error cargando recomendaciones:', error);
+      console.error(' [HomePage] Error cargando recomendaciones:', error);
     }
   };
 
@@ -797,26 +797,26 @@ const HomePage = () => {
 
   // NOTA: Las recomendaciones ahora se cargan en handleMapIdle (filtradas por viewport)
 
-  // ✅ FIX: Escuchar cambios de visibilidad de negocios (toggle on/off)
+  //  FIX: Escuchar cambios de visibilidad de negocios (toggle on/off)
   // Cuando un usuario cambia is_visible en el dashboard, actualizar el mapa inmediatamente
   useEffect(() => {
     const handleVisibilityChange = (event) => {
       const { businessId, newVisibility } = event.detail;
 
-      console.log(`🔄 [HomePage] Business ${businessId} visibility changed to ${newVisibility}`);
+      console.log(` [HomePage] Business ${businessId} visibility changed to ${newVisibility}`);
 
       setGeobookerBusinesses(prev => {
         if (newVisibility === false) {
-          // Quitar del mapa si se ocultó
+          // Quitar del mapa si se oculto
           const filtered = prev.filter(b => b.id !== businessId);
-          console.log(`✅ [HomePage] Negocio removido del mapa. Antes: ${prev.length}, Después: ${filtered.length}`);
+          console.log(` [HomePage] Negocio removido del mapa. Antes: ${prev.length}, Despues: ${filtered.length}`);
           return filtered;
         } else {
-          // Si se activó de nuevo, verificar si ya está en el mapa
+          // Si se activo de nuevo, verificar si ya esta en el mapa
           const exists = prev.find(b => b.id === businessId);
           if (!exists) {
-            // Recargar todos los negocios para incluir el que se activó
-            console.log('🔄 [HomePage] Recargando negocios para incluir el activado');
+            // Recargar todos los negocios para incluir el que se activo
+            console.log(' [HomePage] Recargando negocios para incluir el activado');
             fetchGeobookerBusinesses();
           }
           return prev;
@@ -831,21 +831,21 @@ const HomePage = () => {
     };
   }, [fetchGeobookerBusinesses]);
 
-  // ⚡ NUEVO: Buscar en Google Places automáticamente cuando hay filtro de categoría
+  //  NUEVO: Buscar en Google Places automaticamente cuando hay filtro de categoria
   useEffect(() => {
     const searchGooglePlacesWithCategory = async () => {
-      // Solo buscar si hay filtro de categoría Y tenemos ubicación del usuar io
+      // Solo buscar si hay filtro de categoria Y tenemos ubicacion del usuar io
       if (!categoryFilter || !activeMapCenter || !isCityRouteAvailable) return;
 
       try {
-        // ⚡ OPTIMIZACIÓN: Mostrar caché inmediatamente (loading optimista)
+        //  OPTIMIZACION: Mostrar cache inmediatamente (loading optimista)
         const searchTerm = subcategoryFilter || categoryFilter;
         const cacheKey = generateCacheKey(activeMapCenter, searchTerm, 'search');
         const cachedResults = getFromCache(cacheKey);
 
         if (cachedResults && cachedResults.length > 0) {
           setBusinesses(prepareMapResults(cachedResults, activeMapCenter, SEARCH_RESULT_RENDER_LIMIT));
-          toast.success(`💾 ${cachedResults.length} negocios (caché instantáneo)`, { duration: 2000 });
+          toast.success(` ${cachedResults.length} negocios (cache instantaneo)`, { duration: 2000 });
         } else {
           setSearchLoading(true);
         }
@@ -855,12 +855,12 @@ const HomePage = () => {
 
         if (results && results.length > 0) {
           startTransition(() => setBusinesses(prepareMapResults(results, activeMapCenter, SEARCH_RESULT_RENDER_LIMIT)));
-          // Si no había caché, mostrar mensaje de éxito
+          // Si no habia cache, mostrar mensaje de exito
           if (!cachedResults || cachedResults.length === 0) {
-            toast.success(`🔍 ${results.length} negocios encontrados para "${searchTerm}"`, { duration: 3000 });
+            toast.success(` ${results.length} negocios encontrados para "${searchTerm}"`, { duration: 3000 });
           }
         } else if (!cachedResults || cachedResults.length === 0) {
-          toast(`No se encontraron negocios para "${searchTerm}"`, { icon: '📭', duration: 3000 });
+          toast(`No se encontraron negocios para "${searchTerm}"`, { icon: '', duration: 3000 });
         }
       } catch (error) {
         console.error('Error buscando en Google Places:', error);
@@ -1089,27 +1089,27 @@ const HomePage = () => {
       return;
     }
 
-    // 🎯 Límite dinámico según zoom para evitar saturación visual
-    // Cuando hay categoría, permitir más resultados (están filtrados)
+    //  Limite dinamico segun zoom para evitar saturacion visual
+    // Cuando hay categoria, permitir mas resultados (estan filtrados)
     let dynamicLimit;
     if (currentAwardFilter !== 'all') {
       if (zoom <= 12)      dynamicLimit = 240;
       else if (zoom <= 14) dynamicLimit = 400;
       else                 dynamicLimit = 650;
     } else if (categoryFilter) {
-      // Con categoría: más resultados porque ya están filtrados
+      // Con categoria: mas resultados porque ya estan filtrados
       if (zoom <= 13)      dynamicLimit = 100;
       else if (zoom <= 14) dynamicLimit = 200;
       else                 dynamicLimit = 400;
     } else {
-      // Sin categoría: límites conservadores
+      // Sin categoria: limites conservadores
       if (zoom <= 13)      dynamicLimit = 50;
       else if (zoom <= 14) dynamicLimit = 100;
       else if (zoom <= 15) dynamicLimit = 200;
       else                 dynamicLimit = 300;
     }
 
-    // Debounce de 1 segundo para no saturar al mover el mapa rápido
+    // Debounce de 1 segundo para no saturar al mover el mapa rapido
     if (mapIdleTimerRef.current) clearTimeout(mapIdleTimerRef.current);
 
     mapIdleTimerRef.current = setTimeout(async () => {
@@ -1145,7 +1145,7 @@ const HomePage = () => {
         const effectiveCategory = categoryFilter || (activeAwardFilter !== 'all' ? 'restaurantes' : null);
         const catLabel = effectiveCategory ? `, cat=${effectiveCategory}` : '';
         const awardLabel = activeAwardFilter !== 'all' ? `, award=${activeAwardFilter}` : '';
-        console.log(`🗺️ [HomePage] Consultando DENUE en viewport (zoom=${zoom}, limit=${dynamicLimit}${catLabel}${awardLabel})...`, bounds);
+        console.log(` [HomePage] Consultando DENUE en viewport (zoom=${zoom}, limit=${dynamicLimit}${catLabel}${awardLabel})...`, bounds);
         const candidates = await getBusinessesInBounds(
           bounds.south,
           bounds.west,
@@ -1156,7 +1156,7 @@ const HomePage = () => {
         );
         
         if (candidates && candidates.length > 0) {
-          // ✅ FIX: Filtrar para quedarnos SOLO con candidatos DENUE/seed
+          //  FIX: Filtrar para quedarnos SOLO con candidatos DENUE/seed
           const geobookerIds = new Set(geobookerBusinesses.map(b => b.id));
           const onlyDenueCandidates = candidates.filter(c => {
             if (geobookerIds.has(c.id)) return false;
@@ -1164,22 +1164,22 @@ const HomePage = () => {
             return src.includes('seed') || src.includes('denue');
           });
           
-          console.log(`✅ [HomePage] ${candidates.length} resultados RPC → ${onlyDenueCandidates.length} candidatos DENUE únicos.`);
+          console.log(` [HomePage] ${candidates.length} resultados RPC  ${onlyDenueCandidates.length} candidatos DENUE unicos.`);
           const enrichedDenueCandidates = await enrichBusinessesWithAwards(onlyDenueCandidates);
           if (requestId !== viewportRequestSeqRef.current || awardFilterRef.current !== 'all') {
-            console.log('[HomePage] Ignorando resultados genéricos atrasados porque cambió el filtro');
+            console.log('[HomePage] Ignorando resultados genericos atrasados porque cambio el filtro');
             return;
           }
           setDenueBusinesses(enrichedDenueCandidates);
         } else {
           if (requestId !== viewportRequestSeqRef.current || awardFilterRef.current !== 'all') {
-            console.log('[HomePage] Ignorando limpieza genérica atrasada porque cambió el filtro');
+            console.log('[HomePage] Ignorando limpieza generica atrasada porque cambio el filtro');
             return;
           }
           setDenueBusinesses([]);
         }
 
-        // 💚 OPCION 1: Cargar recomendaciones filtradas por viewport (lazy loading)
+        //  OPCION 1: Cargar recomendaciones filtradas por viewport (lazy loading)
         await fetchRecommendationsByBounds(bounds);
       } catch (error) {
         console.error('Error fetching DENUE businesses:', error);
@@ -1354,7 +1354,7 @@ const HomePage = () => {
             </div>
             <div className="flex items-center gap-3 text-sm">
               <div className="flex items-center gap-2">
-                <span className="opacity-90">Promoción</span>
+                <span className="opacity-90">Promocion</span>
                 <span className="bg-white/25 backdrop-blur px-3 py-1.5 rounded-lg font-bold text-base">
                   Premium gratis
                 </span>
@@ -1367,8 +1367,8 @@ const HomePage = () => {
         </div>
       )}
 
-      {/* 🌟 BANNER Enterprise VIP (50% OFF) - Visible hasta 1 de Julio 2026 */}
-      {/* Apple 3.1.1: oculto temporalmente para revisión con feature flag VITE_SHOW_VIP_BANNER */}
+      {/*  BANNER Enterprise VIP (50% OFF) - Visible hasta 1 de Julio 2026 */}
+      {/* Apple 3.1.1: oculto temporalmente para revision con feature flag VITE_SHOW_VIP_BANNER */}
       {import.meta.env.VITE_SHOW_VIP_BANNER === 'true' && !IS_IOS_NATIVE && new Date() < new Date('2026-09-02T00:00:00-06:00') && (
         <div className="bg-gradient-to-r from-slate-900 via-gray-900 to-black text-amber-500 py-3 px-4 shadow-xl border-b border-amber-500/30">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
@@ -1401,7 +1401,7 @@ const HomePage = () => {
         </div>
       )}
 
-      {/* Modal de permiso de ubicación */}
+      {/* Modal de permiso de ubicacion */}
       <LocationPermissionModal
         isOpen={showLocationModal}
         onClose={() => setShowLocationModal(false)}
@@ -1409,7 +1409,7 @@ const HomePage = () => {
         permissionDenied={permissionDenied}
       />
 
-      {/* Modal de login para invitados (después de 1 búsqueda gratis) */}
+      {/* Modal de login para invitados (despues de 1 busqueda gratis) */}
       <GuestLoginPromptModal
         isOpen={showLoginPrompt}
         onClose={closeLoginPrompt}
@@ -1456,7 +1456,7 @@ const HomePage = () => {
         </div>
       )}
 
-      {/* Hero Section con búsqueda */}
+      {/* Hero Section con busqueda */}
       <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white">
         <div className="container mx-auto px-4 py-16">
           <div className="text-center mb-8">
@@ -1509,16 +1509,16 @@ const HomePage = () => {
             {categoryFilter && (
               <div className="flex justify-center mt-4">
                 <div className="inline-flex items-center bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full">
-                  <span className="mr-2">🔍 {t('home.filterActive')}</span>
+                  <span className="mr-2"> {t('home.filterActive')}</span>
                   <span className="font-bold capitalize">{categoryFilter.replace('_', ' ')}</span>
-                  {subcategoryFilter && <span className="mx-1">→</span>}
+                  {subcategoryFilter && <span className="mx-1"></span>}
                   {subcategoryFilter && <span className="font-bold">{subcategoryFilter}</span>}
                   <button
                     onClick={() => setSearchParams({})}
                     className="ml-3 bg-white/30 hover:bg-white/50 rounded-full w-6 h-6 flex items-center justify-center transition"
                     title={t('home.removeFilter')}
                   >
-                    ✕
+                    
                   </button>
                 </div>
               </div>
@@ -1555,7 +1555,7 @@ const HomePage = () => {
               </div>
             )}
 
-            {/* Botón para actualizar ubicación (móviles) */}
+            {/* Boton para actualizar ubicacion (moviles) */}
             {!locationLoading && permissionGranted && userLocation && (
               <div className="text-center mt-4">
                 <button
@@ -1563,7 +1563,7 @@ const HomePage = () => {
                     try {
                       await refreshLocation();
                     } catch (error) {
-                      console.error('Error actualizando ubicación:', error);
+                      console.error('Error actualizando ubicacion:', error);
                     }
                   }}
                   className="inline-flex items-center bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition duration-200"
@@ -1598,12 +1598,12 @@ const HomePage = () => {
         </Suspense>
       )}
 
-      {/* 🤖 La IA de Geobooker te recomienda */}
+      {/*  La IA de Geobooker te recomienda */}
       <div className="container mx-auto px-4 py-4">
         <AIRecommendations />
       </div>
 
-      {/* Resultados Patrocinados - Solo si hay búsqueda activa */}
+      {/* Resultados Patrocinados - Solo si hay busqueda activa */}
       {
         businesses.length > 0 && (
           <div className="container mx-auto px-4 py-6">
@@ -1611,7 +1611,7 @@ const HomePage = () => {
               {/* Primer resultado patrocinado */}
               <SponsoredResultCard context={{ search: true, location: userLocation }} />
 
-              {/* Anuncio fullwidth después del 3er resultado */}
+              {/* Anuncio fullwidth despues del 3er resultado */}
               <SponsoredFullwidth context={{ search: true, location: userLocation }} />
 
               {/* Segundo resultado patrocinado */}
@@ -1816,7 +1816,7 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Sección Recomendados (Segunda Plana) */}
+      {/* Seccion Recomendados (Segunda Plana) */}
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-sm mx-auto lg:max-w-none lg:grid lg:grid-cols-4 lg:gap-6">
           <div className="lg:col-span-1">
@@ -1832,7 +1832,7 @@ const HomePage = () => {
         </Suspense>
       )}
 
-      {/* Sección: Cómo Funciona */}
+      {/* Seccion: Como Funciona */}
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">{t('home.howItWorks.title')}</h2>
@@ -1886,13 +1886,13 @@ const HomePage = () => {
         {/* Video Demo Section - YouTube Short */}
         <div className="mt-16 max-w-md mx-auto">
           <div className="text-center mb-8">
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">📹 {t('home.video.title')}</h3>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2"> {t('home.video.title')}</h3>
             <p className="text-gray-600">{t('home.video.subtitle')}</p>
           </div>
 
-          {/* YouTube Video — iframe en web, thumbnail en iOS nativo (WKWebView bloquea iframes) */}
+          {/* YouTube Video  iframe en web, thumbnail en iOS nativo (WKWebView bloquea iframes) */}
           {IS_IOS_NATIVE ? (
-            // ✅ FIX Bug #2: En iOS, abrir video en Safari directamente
+            //  FIX Bug #2: En iOS, abrir video en Safari directamente
             <a
               href="https://www.youtube.com/watch?v=2IaVw19pgzY"
               target="_blank"
@@ -1902,11 +1902,11 @@ const HomePage = () => {
               {/* Thumbnail de YouTube */}
               <img
                 src="https://img.youtube.com/vi/2IaVw19pgzY/maxresdefault.jpg"
-                alt="Geobooker - Cómo funciona"
+                alt="Geobooker - Como funciona"
                 className="absolute inset-0 w-full h-full object-cover opacity-80"
                 onError={(e) => { e.target.src = 'https://img.youtube.com/vi/2IaVw19pgzY/hqdefault.jpg'; }}
               />
-              {/* Botón Play */}
+              {/* Boton Play */}
               <div className="relative z-10 flex flex-col items-center gap-3">
                 <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center shadow-2xl">
                   <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
@@ -1914,7 +1914,7 @@ const HomePage = () => {
                   </svg>
                 </div>
                 <span className="text-white font-bold text-sm bg-black/60 px-3 py-1 rounded-full">
-                  📩 Ver en YouTube
+                   Ver en YouTube
                 </span>
               </div>
             </a>
@@ -1924,7 +1924,7 @@ const HomePage = () => {
               <iframe
                 className="absolute top-0 left-0 w-full h-full"
                 src="https://www.youtube.com/embed/2IaVw19pgzY"
-                title="Geobooker - Cómo funciona"
+                title="Geobooker - Como funciona"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
@@ -1949,7 +1949,7 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Estadísticas */}
+      {/* Estadisticas */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
@@ -1959,7 +1959,7 @@ const HomePage = () => {
             </div>
             <div>
               <div className="text-5xl font-bold mb-2">25+</div>
-              <div className="text-blue-200">{t('home.stats.countries', 'Países alcanzados')}</div>
+              <div className="text-blue-200">{t('home.stats.countries', 'Paises alcanzados')}</div>
             </div>
             <div>
               <div className="text-5xl font-bold mb-2">200+</div>
@@ -2028,12 +2028,12 @@ const HomePage = () => {
                     F
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-900">Farmacia San José</h4>
-                    <p className="text-sm text-gray-600">📍 {t('home.businessSection.nearby', { distance: '500m' })}</p>
+                    <h4 className="font-bold text-gray-900">Farmacia San Jose</h4>
+                    <p className="text-sm text-gray-600"> {t('home.businessSection.nearby', { distance: '500m' })}</p>
                   </div>
                 </div>
                 <div className="flex items-center text-yellow-500">
-                  ★★★★★ <span className="text-gray-600 ml-2 text-sm">(4.9)</span>
+                   <span className="text-gray-600 ml-2 text-sm">(4.9)</span>
                 </div>
               </div>
 
@@ -2044,11 +2044,11 @@ const HomePage = () => {
                   </div>
                   <div>
                     <h4 className="font-bold text-gray-900">Restaurante El Buen Sabor</h4>
-                    <p className="text-sm text-gray-600">📍 {t('home.businessSection.nearby', { distance: '1.2km' })}</p>
+                    <p className="text-sm text-gray-600"> {t('home.businessSection.nearby', { distance: '1.2km' })}</p>
                   </div>
                 </div>
                 <div className="flex items-center text-yellow-500">
-                  ★★★★☆ <span className="text-gray-600 ml-2 text-sm">(4.5)</span>
+                   <span className="text-gray-600 ml-2 text-sm">(4.5)</span>
                 </div>
               </div>
             </div>
@@ -2056,21 +2056,21 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* 🏪 CTA: Reclamar Negocio */}
+      {/*  CTA: Reclamar Negocio */}
       <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-3">
-            ¿Tu negocio ya está en Geobooker?
+            Tu negocio ya esta en Geobooker?
           </h2>
           <p className="text-lg text-orange-100 mb-8 max-w-2xl mx-auto">
-            Miles de negocios del DENUE ya aparecen en nuestro mapa. Búscalo, reclámalo gratis y toma control de tu perfil digital.
+            Miles de negocios del DENUE ya aparecen en nuestro mapa. Buscalo, reclamalo gratis y toma control de tu perfil digital.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               to="/claim"
               className="bg-white text-amber-700 px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2"
             >
-              🏪 Reclamar mi Negocio
+               Reclamar mi Negocio
             </Link>
             <Link
               to="/business/register"
@@ -2087,7 +2087,7 @@ const HomePage = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
             <span className="bg-purple-100 text-purple-700 px-4 py-1 rounded-full text-sm font-semibold">
-              ⭐ {t('home.verifiedBusinesses')}
+               {t('home.verifiedBusinesses')}
             </span>
             <h3 className="text-3xl font-bold text-gray-900 mt-4 mb-2">
               {t('home.trust.title')}
@@ -2106,7 +2106,7 @@ const HomePage = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-4 left-4 text-white">
-                  <p className="font-bold text-lg">🐕 {t('home.testimonials.vet.name')}</p>
+                  <p className="font-bold text-lg"> {t('home.testimonials.vet.name')}</p>
                   <p className="text-sm text-white/80">{t('home.testimonials.vet.desc')}</p>
                 </div>
               </div>
@@ -2122,7 +2122,7 @@ const HomePage = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-4 left-4 text-white">
-                  <p className="font-bold text-lg">🍽️ {t('home.testimonials.rest.name')}</p>
+                  <p className="font-bold text-lg"> {t('home.testimonials.rest.name')}</p>
                   <p className="text-sm text-white/80">{t('home.testimonials.rest.desc')}</p>
                 </div>
               </div>
@@ -2131,26 +2131,26 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Sección Promoción Geobooker Global */}
-      {/* Apple 3.1.1: oculta en iOS nativo — promoción de planes Enterprise / Ads pagos */}
+      {/* Seccion Promocion Geobooker Global */}
+      {/* Apple 3.1.1: oculta en iOS nativo  promocion de planes Enterprise / Ads pagos */}
       {!IS_IOS_NATIVE && (
       <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-16 px-4">
         <div className="container mx-auto max-w-5xl text-center">
           <div className="inline-flex items-center gap-2 bg-blue-600/30 backdrop-blur-sm text-blue-300 px-4 py-2 rounded-full mb-6">
-            <span className="text-lg">🌎</span>
+            <span className="text-lg"></span>
             <span className="text-sm font-medium">{t('globalPromo.badge', 'Publicidad Global')}</span>
           </div>
 
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            {t('globalPromo.homeTitle', '¿Quieres que tu marca aparezca al otro lado del mundo?')}
+            {t('globalPromo.homeTitle', 'Quieres que tu marca aparezca al otro lado del mundo?')}
           </h2>
           <p className="text-gray-300 mb-10 max-w-2xl mx-auto text-lg">
-            {t('globalPromo.homeSubtitle', 'Lanza o expande tu marca en una ciudad específica con Geobooker Global. Segmentación por país, idioma y categoría.')}
+            {t('globalPromo.homeSubtitle', 'Lanza o expande tu marca en una ciudad especifica con Geobooker Global. Segmentacion por pais, idioma y categoria.')}
           </p>
 
           <div className="grid md:grid-cols-2 gap-6 mb-10 text-left max-w-3xl mx-auto">
             <div className="bg-white/10 backdrop-blur rounded-xl p-5 border border-white/20">
-              <div className="text-3xl mb-3">🏪</div>
+              <div className="text-3xl mb-3"></div>
               <h4 className="font-bold text-white mb-2">{t('globalPromo.local.title')}</h4>
               <p className="text-gray-400 text-sm">{t('globalPromo.local.desc')}</p>
               <Link to="/advertise" className="text-blue-400 hover:text-blue-300 text-sm font-medium mt-3 inline-block">
@@ -2158,11 +2158,11 @@ const HomePage = () => {
               </Link>
             </div>
             <div className="bg-white/10 backdrop-blur rounded-xl p-5 border border-white/20">
-              <div className="text-3xl mb-3">🌍</div>
+              <div className="text-3xl mb-3"></div>
               <h4 className="font-bold text-white mb-2">{t('globalPromo.global.title')}</h4>
               <p className="text-gray-400 text-sm">{t('globalPromo.global.desc')}</p>
               <Link to="/enterprise" className="text-amber-400 hover:text-amber-300 text-sm font-medium mt-3 inline-block">
-                {t('enterprise.ctaViewPricing', 'Ver planes Enterprise →')}
+                {t('enterprise.ctaViewPricing', 'Ver planes Enterprise ')}
               </Link>
             </div>
           </div>
@@ -2171,8 +2171,8 @@ const HomePage = () => {
             to="/advertise"
             className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all inline-flex items-center gap-2"
           >
-            {t('globalPromo.ctaLearnMore', 'Aprende cómo hacerlo')}
-            <span>→</span>
+            {t('globalPromo.ctaLearnMore', 'Aprende como hacerlo')}
+            <span></span>
           </Link>
         </div>
       </div>
@@ -2203,7 +2203,7 @@ const HomePage = () => {
         </Suspense>
       )}
 
-      {/* Interstitial Ad (Pantalla Completa) - Aparece después de 5 búsquedas */}
+      {/* Interstitial Ad (Pantalla Completa) - Aparece despues de 5 busquedas */}
       {
         showInterstitial && (
           <InterstitialAd onClose={closeInterstitial} />

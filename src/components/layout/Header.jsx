@@ -12,11 +12,12 @@ import { IS_IOS_NATIVE } from "../../utils/iosStore";
 import { Capacitor } from "@capacitor/core";
 import { getPremiumPromoLongMessage, isPremiumPromoActive } from "../../config/promotions";
 import { featureFlags } from "../../config/featureFlags";
+import { BarChart3, Bell, Building2, LogOut, Megaphone, Star, Store } from "lucide-react";
 
 export default function Header() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  // ✅ Fuente única de verdad de auth — antes había un onAuthStateChange duplicado
+  // Fuente unica de verdad de auth; evita listener duplicado.
   // que disparaba race conditions con AuthContext y forzaba re-renders extras.
   const { user, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -46,8 +47,8 @@ export default function Header() {
     };
   }, [isOpen, showUserMenu]);
 
-  // ✅ Cargar perfil y logo del negocio cuando cambia el user del AuthContext.
-  // Antes este efecto suscribía su propio onAuthStateChange (duplicado con AuthContext).
+  // Cargar perfil y logo del negocio cuando cambia el user del AuthContext.
+  // Antes este efecto duplicaba la suscripcion de AuthContext.
   useEffect(() => {
     let cancelled = false;
 
@@ -93,7 +94,7 @@ export default function Header() {
   const handleLogout = async () => {
     try {
       // El AuthProvider y su listener onAuthStateChange ya propagan user=null
-      // automáticamente — no es necesario manejar el estado aquí manualmente.
+      // AuthProvider propaga user=null; no necesitamos estado manual aqui.
       await signOut();
       setUserProfile(null);
       setBusinessLogo(null);
@@ -101,7 +102,7 @@ export default function Header() {
       toast.success(t("nav.logoutSuccess"));
       navigate("/welcome", { replace: true });
     } catch (error) {
-      console.error("Error al cerrar sesión:", error);
+      console.error("Error al cerrar sesion:", error);
       toast.error(t("nav.logoutError"));
     }
   };
@@ -136,7 +137,7 @@ export default function Header() {
           to={user ? "/dashboard/upgrade" : "/signup"}
           className="block bg-gradient-to-r from-emerald-600 via-green-500 to-lime-500 px-4 py-2 text-center text-sm font-bold text-white hover:brightness-105 transition"
         >
-          ✨ {getPremiumPromoLongMessage(currentLocale)} - {t('nav.premiumActivate')}
+          {getPremiumPromoLongMessage(currentLocale)} - {t('nav.premiumActivate')}
         </Link>
       )}
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
@@ -202,7 +203,7 @@ export default function Header() {
             to="/claim"
             className="border-2 border-amber-600 text-amber-700 px-4 py-1.5 rounded-full font-bold hover:bg-amber-600 hover:text-white transition-all flex items-center gap-1 shadow-sm hover:-translate-y-0.5"
           >
-            🏪 {t('nav.claimBusiness')}
+            <span className="inline-flex items-center justify-center gap-2"><Store className="h-4 w-4" aria-hidden="true" /> {t('nav.claimBusiness')}</span>
           </Link>
 
           {user && (
@@ -210,7 +211,7 @@ export default function Header() {
               onClick={() => setShowRecommendForm(true)}
               className="border-2 border-geoPurple text-geoPurple px-4 py-1.5 rounded-full font-bold hover:bg-geoPurple hover:text-white transition-all flex items-center gap-1 shadow-sm hover:-translate-y-0.5"
             >
-              ⭐ {t('nav.recommend')}
+              <span className="inline-flex items-center justify-center gap-2"><Star className="h-4 w-4" aria-hidden="true" /> {t('nav.recommend')}</span>
             </button>
           )}
 
@@ -220,7 +221,7 @@ export default function Header() {
               to="/advertise"
               className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 py-1.5 rounded-lg font-bold hover:from-red-600 hover:to-orange-600 transition-all flex items-center gap-1 shadow-lg hover:scale-105"
             >
-              🚀 {t("nav.moreSales")}
+              <span className="inline-flex items-center gap-2"><Megaphone className="h-4 w-4" aria-hidden="true" /> {t("nav.moreSales")}</span>
             </Link>
           )}
 
@@ -247,7 +248,7 @@ export default function Header() {
                 className="relative p-2 text-geoPurple hover:text-geoPink transition-colors"
                 title={t("nav.viewDashboard")}
               >
-                <span className="text-xl">🔔</span>
+                <Bell className="h-5 w-5" aria-hidden="true" />
                 <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
               </Link>
 
@@ -286,17 +287,30 @@ export default function Header() {
                     onClick={() => setShowUserMenu(false)}
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    📊 {t("nav.dashboard")}
+                    <span className="inline-flex items-center gap-2"><BarChart3 className="h-4 w-4" aria-hidden="true" /> {t("nav.dashboard")}</span>
                   </Link>
+
 
                   <Link
                     to="/business/register"
                     onClick={() => setShowUserMenu(false)}
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    🏪 {t("nav.addBusiness")}
+                    <span className="inline-flex items-center gap-2"><Store className="h-4 w-4" aria-hidden="true" /> {t("nav.addBusiness")}</span>
                   </Link>
-                  {featureFlags.commercialSpaces && <Link to="/dashboard/espacios" onClick={() => setShowUserMenu(false)} className="block px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-50">🏢 Mis espacios</Link>}
+                  {featureFlags.commercialSpaces && <Link to="/dashboard/espacios" onClick={() => setShowUserMenu(false)} className="block px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-50"><span className="inline-flex items-center gap-2"><Building2 className="h-4 w-4" aria-hidden="true" /> Mis espacios</span></Link>}
+
+                  <button
+                    type="button"
+                    data-nav-id="recommend_user_menu"
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      setShowRecommendForm(true);
+                    }}
+                    className="block w-full px-4 py-2 text-left text-sm font-bold text-emerald-700 hover:bg-emerald-50"
+                  >
+                    <span className="inline-flex items-center gap-2"><Star className="h-4 w-4" aria-hidden="true" /> {t('nav.recommend')}</span>
+                  </button>
 
                   <Link
                     to="/emprende"
@@ -328,7 +342,7 @@ export default function Header() {
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                   >
-                    🚪 {t("nav.logout")}
+                    <span className="inline-flex items-center gap-2"><LogOut className="h-4 w-4" aria-hidden="true" /> {t("nav.logout")}</span>
                   </button>
                 </div>
               )}
@@ -406,7 +420,7 @@ export default function Header() {
             onClick={() => setIsOpen(false)}
             className="block text-center border-2 border-amber-600 text-amber-700 hover:bg-amber-600 hover:text-white px-4 py-2 rounded-full w-full font-bold transition-all mb-2"
           >
-            🏪 {t('nav.claimBusiness')}
+            <span className="inline-flex items-center justify-center gap-2"><Store className="h-4 w-4" aria-hidden="true" /> {t('nav.claimBusiness')}</span>
           </Link>
 
           {user && (
@@ -417,7 +431,7 @@ export default function Header() {
               }}
               className="block text-center border-2 border-geoPurple text-geoPurple hover:bg-geoPurple hover:text-white px-4 py-2 rounded-full w-full font-bold transition-all"
             >
-              ⭐ {t('nav.recommend')}
+              <span className="inline-flex items-center justify-center gap-2"><Star className="h-4 w-4" aria-hidden="true" /> {t('nav.recommend')}</span>
             </button>
           )}
 
@@ -428,7 +442,7 @@ export default function Header() {
               onClick={() => setIsOpen(false)}
               className="block text-red-600 font-bold bg-red-50 p-2 rounded"
             >
-              🚀 {t("nav.moreSales")}
+              <span className="inline-flex items-center gap-2"><Megaphone className="h-4 w-4" aria-hidden="true" /> {t("nav.moreSales")}</span>
             </Link>
           )}
 
@@ -467,8 +481,20 @@ export default function Header() {
                 onClick={() => setIsOpen(false)}
                 className="block text-geoPurple hover:text-geoPink mb-2"
               >
-                📊 {t("nav.dashboard")}
+                    <span className="inline-flex items-center gap-2"><BarChart3 className="h-4 w-4" aria-hidden="true" /> {t("nav.dashboard")}</span>
               </Link>
+
+              <button
+                type="button"
+                data-nav-id="recommend_mobile_user_menu"
+                onClick={() => {
+                  setIsOpen(false);
+                  setShowRecommendForm(true);
+                }}
+                className="mb-2 block w-full text-left font-bold text-emerald-700 hover:text-emerald-800"
+              >
+                <span className="inline-flex items-center gap-2"><Star className="h-4 w-4" aria-hidden="true" /> {t('nav.recommend')}</span>
+              </button>
 
               {featureFlags.commercialSpaces && (
                 <Link to="/dashboard/espacios" onClick={() => setIsOpen(false)} className="mb-2 block font-bold text-blue-700">
@@ -491,7 +517,7 @@ export default function Header() {
                 }}
                 className="block text-red-600 hover:text-red-700"
               >
-                🚪 {t("nav.logout")}
+                <span className="inline-flex items-center gap-2"><LogOut className="h-4 w-4" aria-hidden="true" /> {t("nav.logout")}</span>
               </button>
             </div>
           ) : (

@@ -1,27 +1,27 @@
 // src/services/googlePlacesService.js
 /**
  * Servicio para interactuar con Google Places API
- * Incluye sistema de caché para reducir costos (ahorra ~80% de llamadas)
+ * Incluye sistema de cache para reducir costos (ahorra ~80% de llamadas)
  * 
  * OPTIMIZACIONES:
- * - Caché de búsquedas: 1 hora por ubicación+keyword
- * - Caché de detalles: 4 horas por placeId
- * - Key basado en ubicación redondeada (agrupa ubicaciones cercanas)
+ * - Cache de busquedas: 1 hora por ubicacion+keyword
+ * - Cache de detalles: 4 horas por placeId
+ * - Key basado en ubicacion redondeada (agrupa ubicaciones cercanas)
  */
 
 // ==========================================
-// SISTEMA DE CACHÉ
+// SISTEMA DE CACHE
 // ==========================================
 const CACHE_CONFIG = {
-    SEARCH_TTL: 24 * 60 * 60 * 1000,      // 24 horas para búsquedas (antes: 1 hora)
+    SEARCH_TTL: 24 * 60 * 60 * 1000,      // 24 horas para busquedas (antes: 1 hora)
     DETAILS_TTL: 48 * 60 * 60 * 1000,     // 48 horas para detalles (antes: 4 horas)
     LOCATION_PRECISION: 3,                // Decimales para agrupar ubicaciones (~111m)
     STORAGE_KEY_PREFIX: 'gp_cache_'
 };
 
 /**
- * Genera una clave de caché basada en ubicación y keyword
- * Redondea la ubicación para agrupar búsquedas cercanas
+ * Genera una clave de cache basada en ubicacion y keyword
+ * Redondea la ubicacion para agrupar busquedas cercanas
  */
 // EXPORTAR para uso en loading optimista
 export const generateCacheKey = (location, keyword, type = 'search') => {
@@ -32,7 +32,7 @@ export const generateCacheKey = (location, keyword, type = 'search') => {
 };
 
 /**
- * Guarda datos en caché
+ * Guarda datos en cache
  */
 const saveToCache = (key, data, ttl) => {
     try {
@@ -42,16 +42,16 @@ const saveToCache = (key, data, ttl) => {
             timestamp: Date.now()
         };
         localStorage.setItem(key, JSON.stringify(cacheEntry));
-        console.log(`📦 Caché guardado: ${key}`);
+        console.log(` Cache guardado: ${key}`);
     } catch (e) {
-        console.log('⚠️ Error guardando caché:', e.message);
-        // Si localStorage está lleno, limpiar caché viejo
+        console.log(' Error guardando cache:', e.message);
+        // Si localStorage esta lleno, limpiar cache viejo
         cleanOldCache();
     }
 };
 
 /**
- * Obtiene datos del caché si no han expirado
+ * Obtiene datos del cache si no han expirado
  */
 // EXPORTAR para uso en loading optimista
 export const getFromCache = (key) => {
@@ -62,11 +62,11 @@ export const getFromCache = (key) => {
         const entry = JSON.parse(cached);
         if (Date.now() > entry.expires) {
             localStorage.removeItem(key);
-            console.log(`🗑️ Caché expirad o: ${key}`);
+            console.log(` Cache expirad o: ${key}`);
             return null;
         }
 
-        console.log(`✅ Usando caché: ${key} (válido por ${Math.round((entry.expires - Date.now()) / 60000)} min)`);
+        console.log(` Usando cache: ${key} (valido por ${Math.round((entry.expires - Date.now()) / 60000)} min)`);
         return entry.data;
     } catch (e) {
         return null;
@@ -74,7 +74,7 @@ export const getFromCache = (key) => {
 };
 
 /**
- * Limpia entradas de caché expiradas (mantenimiento)
+ * Limpia entradas de cache expiradas (mantenimiento)
  */
 const cleanOldCache = () => {
     try {
@@ -94,33 +94,33 @@ const cleanOldCache = () => {
         }
         keysToRemove.forEach(key => localStorage.removeItem(key));
         if (keysToRemove.length > 0) {
-            console.log(`🧹 Limpiados ${keysToRemove.length} cachés expirados`);
+            console.log(` Limpiados ${keysToRemove.length} caches expirados`);
         }
     } catch (e) {
-        console.log('Error limpiando caché:', e);
+        console.log('Error limpiando cache:', e);
     }
 };
 
-// Limpiar caché viejo al cargar
+// Limpiar cache viejo al cargar
 cleanOldCache();
 
 
 // ==========================================
-// FUNCIONES DE BÚSQUEDA CON CACHÉ
+// FUNCIONES DE BUSQUEDA CON CACHE
 // ==========================================
 
 /**
  * Busca negocios cercanos usando Google Places Nearby Search
- * CON CACHÉ: Si ya buscaste lo mismo en la última hora, usa caché
+ * CON CACHE: Si ya buscaste lo mismo en la ultima hora, usa cache
  * 
- * @param {Object} location - {lat, lng} ubicación del usuario
- * @param {string} keyword - término de búsqueda (ej: "farmacia", "restaurante")
- * @param {number} radius - radio de búsqueda en metros (default: 5000m = 5km)
- * @param {boolean} forceRefresh - si true, ignora caché
+ * @param {Object} location - {lat, lng} ubicacion del usuario
+ * @param {string} keyword - termino de busqueda (ej: "farmacia", "restaurante")
+ * @param {number} radius - radio de busqueda en metros (default: 5000m = 5km)
+ * @param {boolean} forceRefresh - si true, ignora cache
  * @returns {Promise<Array>} Array de negocios encontrados
  */
 export const searchNearbyPlaces = async (location, keyword, radius = 5000, forceRefresh = false) => {
-    // Verificar caché primero
+    // Verificar cache primero
     const cacheKey = generateCacheKey(location, keyword, 'search');
     if (!forceRefresh) {
         const cached = getFromCache(cacheKey);
@@ -131,7 +131,7 @@ export const searchNearbyPlaces = async (location, keyword, radius = 5000, force
 
     return new Promise((resolve, reject) => {
         if (!window.google || !window.google.maps) {
-            reject(new Error('Google Maps no está cargado'));
+            reject(new Error('Google Maps no esta cargado'));
             return;
         }
 
@@ -146,7 +146,7 @@ export const searchNearbyPlaces = async (location, keyword, radius = 5000, force
             language: window.localStorage.getItem('language') || 'es' // Sincronizado con i18next
         };
 
-        console.log(`🔍 Buscando en Google Places: "${keyword}" cerca de (${location.lat.toFixed(4)}, ${location.lng.toFixed(4)})`);
+        console.log(` Buscando en Google Places: "${keyword}" cerca de (${location.lat.toFixed(4)}, ${location.lng.toFixed(4)})`);
 
         service.nearbySearch(request, (results, status) => {
             if (status === window.google.maps.places.PlacesServiceStatus.OK) {
@@ -173,31 +173,31 @@ export const searchNearbyPlaces = async (location, keyword, radius = 5000, force
                     }
                 }));
 
-                // Guardar en caché
+                // Guardar en cache
                 saveToCache(cacheKey, businesses, CACHE_CONFIG.SEARCH_TTL);
 
                 resolve(businesses);
             } else if (status === window.google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
-                // Sin resultados no es error, guardar en caché también
+                // Sin resultados no es error, guardar en cache tambien
                 saveToCache(cacheKey, [], CACHE_CONFIG.SEARCH_TTL);
                 resolve([]);
             } else {
-                reject(new Error(`Error en búsqueda: ${status}`));
+                reject(new Error(`Error en busqueda: ${status}`));
             }
         });
     });
 };
 
 /**
- * Obtiene detalles completos de un negocio específico
- * CON CACHÉ: Detalles se cachean por 4 horas
+ * Obtiene detalles completos de un negocio especifico
+ * CON CACHE: Detalles se cachean por 4 horas
  * 
  * @param {string} placeId - ID del lugar de Google
- * @param {boolean} forceRefresh - si true, ignora caché
+ * @param {boolean} forceRefresh - si true, ignora cache
  * @returns {Promise<Object>} Detalles completos del negocio
  */
 export const getPlaceDetails = async (placeId, forceRefresh = false) => {
-    // Verificar caché primero
+    // Verificar cache primero
     const cacheKey = `${CACHE_CONFIG.STORAGE_KEY_PREFIX}details_${placeId}`;
     if (!forceRefresh) {
         const cached = getFromCache(cacheKey);
@@ -208,7 +208,7 @@ export const getPlaceDetails = async (placeId, forceRefresh = false) => {
 
     return new Promise((resolve, reject) => {
         if (!window.google || !window.google.maps) {
-            reject(new Error('Google Maps no está cargado'));
+            reject(new Error('Google Maps no esta cargado'));
             return;
         }
 
@@ -216,7 +216,7 @@ export const getPlaceDetails = async (placeId, forceRefresh = false) => {
             document.createElement('div')
         );
 
-        // OPTIMIZACIÓN: Pedir solo campos esenciales (reduce costo)
+        // OPTIMIZACION: Pedir solo campos esenciales (reduce costo)
         const request = {
             placeId: placeId,
             fields: [
@@ -234,7 +234,7 @@ export const getPlaceDetails = async (placeId, forceRefresh = false) => {
             language: window.localStorage.getItem('language') || 'es'
         };
 
-        console.log(`📋 Obteniendo detalles de Google Places: ${placeId}`);
+        console.log(` Obteniendo detalles de Google Places: ${placeId}`);
 
         service.getDetails(request, (place, status) => {
             if (status === window.google.maps.places.PlacesServiceStatus.OK) {
@@ -254,7 +254,7 @@ export const getPlaceDetails = async (placeId, forceRefresh = false) => {
                     isFromGoogle: true
                 };
 
-                // Guardar en caché (4 horas para detalles)
+                // Guardar en cache (4 horas para detalles)
                 saveToCache(cacheKey, details, CACHE_CONFIG.DETAILS_TTL);
 
                 resolve(details);
@@ -266,17 +266,17 @@ export const getPlaceDetails = async (placeId, forceRefresh = false) => {
 };
 
 /**
- * Busca negocios por tipo específico (categoría)
- * CON CACHÉ
+ * Busca negocios por tipo especifico (categoria)
+ * CON CACHE
  * 
- * @param {Object} location - {lat, lng} ubicación del usuario
+ * @param {Object} location - {lat, lng} ubicacion del usuario
  * @param {string} type - tipo de negocio (ej: "pharmacy", "restaurant")
- * @param {number} radius - radio de búsqueda en metros
- * @param {boolean} forceRefresh - si true, ignora caché
+ * @param {number} radius - radio de busqueda en metros
+ * @param {boolean} forceRefresh - si true, ignora cache
  * @returns {Promise<Array>} Array de negocios encontrados
  */
 export const searchByType = async (location, type, radius = 5000, forceRefresh = false) => {
-    // Verificar caché primero
+    // Verificar cache primero
     const cacheKey = generateCacheKey(location, type, 'type');
     if (!forceRefresh) {
         const cached = getFromCache(cacheKey);
@@ -287,7 +287,7 @@ export const searchByType = async (location, type, radius = 5000, forceRefresh =
 
     return new Promise((resolve, reject) => {
         if (!window.google || !window.google.maps) {
-            reject(new Error('Google Maps no está cargado'));
+            reject(new Error('Google Maps no esta cargado'));
             return;
         }
 
@@ -302,7 +302,7 @@ export const searchByType = async (location, type, radius = 5000, forceRefresh =
             language: window.localStorage.getItem('language') || 'es'
         };
 
-        console.log(`🔍 Buscando por tipo en Google Places: "${type}"`);
+        console.log(` Buscando por tipo en Google Places: "${type}"`);
 
         service.nearbySearch(request, (results, status) => {
             if (status === window.google.maps.places.PlacesServiceStatus.OK) {
@@ -322,7 +322,7 @@ export const searchByType = async (location, type, radius = 5000, forceRefresh =
                     isFromGoogle: true
                 }));
 
-                // Guardar en caché
+                // Guardar en cache
                 saveToCache(cacheKey, businesses, CACHE_CONFIG.SEARCH_TTL);
 
                 resolve(businesses);
@@ -330,14 +330,14 @@ export const searchByType = async (location, type, radius = 5000, forceRefresh =
                 saveToCache(cacheKey, [], CACHE_CONFIG.SEARCH_TTL);
                 resolve([]);
             } else {
-                reject(new Error(`Error en búsqueda por tipo: ${status}`));
+                reject(new Error(`Error en busqueda por tipo: ${status}`));
             }
         });
     });
 };
 
 /**
- * Mapeo de categorías en español a tipos de Google Places
+ * Mapeo de categorias en espanol a tipos de Google Places
  */
 export const CATEGORY_MAPPING = {
     // Salud
@@ -345,7 +345,7 @@ export const CATEGORY_MAPPING = {
     'farmacias': 'pharmacy',
     'hospital': 'hospital',
     'hospitales': 'hospital',
-    'clínica': 'hospital',
+    'clinica': 'hospital',
     'clinica': 'hospital',
     'veterinaria': 'veterinary_care',
     'veterinarias': 'veterinary_care',
@@ -361,14 +361,14 @@ export const CATEGORY_MAPPING = {
     // Comida
     'restaurante': 'restaurant',
     'restaurantes': 'restaurant',
-    'cafetería': 'cafe',
     'cafeteria': 'cafe',
-    'cafeterías': 'cafe',
-    'café': 'cafe',
+    'cafeteria': 'cafe',
+    'cafeterias': 'cafe',
     'cafe': 'cafe',
-    'panadería': 'bakery',
+    'cafe': 'cafe',
     'panaderia': 'bakery',
-    'panaderías': 'bakery',
+    'panaderia': 'bakery',
+    'panaderias': 'bakery',
     'bar': 'bar',
     'bares': 'bar',
 
@@ -379,12 +379,12 @@ export const CATEGORY_MAPPING = {
     'tiendas': 'store',
 
     // Servicios personales
-    'barbería': 'hair_care',
     'barberia': 'hair_care',
-    'barberías': 'hair_care',
-    'peluquería': 'hair_care',
+    'barberia': 'hair_care',
+    'barberias': 'hair_care',
     'peluqueria': 'hair_care',
-    'salón de belleza': 'beauty_salon',
+    'peluqueria': 'hair_care',
+    'salon de belleza': 'beauty_salon',
     'salon de belleza': 'beauty_salon',
     'maquillaje': 'beauty_salon',
     'maquillista': 'beauty_salon',
@@ -398,7 +398,7 @@ export const CATEGORY_MAPPING = {
     'gym': 'gym',
 
     // Automotriz
-    'taller mecánico': 'car_repair',
+    'taller mecanico': 'car_repair',
     'taller mecanico': 'car_repair',
     'talleres': 'car_repair',
     'gasolinera': 'gas_station',
@@ -412,22 +412,22 @@ export const CATEGORY_MAPPING = {
     'teatros': 'movie_theater',
 
     // Servicios
-    'lavandería': 'laundry',
     'lavanderia': 'laundry',
-    'lavanderías': 'laundry',
+    'lavanderia': 'laundry',
     'lavanderias': 'laundry',
-    'planchaduría': 'laundry',
+    'lavanderias': 'laundry',
     'planchaduria': 'laundry',
-    'planchadurías': 'laundry',
+    'planchaduria': 'laundry',
+    'planchadurias': 'laundry',
     'planchadurias': 'laundry',
     'planchado': 'laundry',
     'planchado de ropa': 'laundry',
-    'tintorería': 'laundry',
+    'tintoreria': 'laundry',
     'tintoreria': 'laundry',
     'banco': 'bank',
     'bancos': 'bank',
 
-    // Educación
+    // Educacion
     'escuela': 'school',
     'escuelas': 'school',
     'universidad': 'university',
@@ -440,8 +440,8 @@ export const CATEGORY_MAPPING = {
 };
 
 /**
- * Obtiene el tipo de Google Places basado en la búsqueda en español
- * @param {string} searchTerm - término de búsqueda en español
+ * Obtiene el tipo de Google Places basado en la busqueda en espanol
+ * @param {string} searchTerm - termino de busqueda en espanol
  * @returns {string|null} tipo de Google Places o null
  */
 export const getPlaceType = (searchTerm) => {
@@ -559,7 +559,7 @@ export const searchTextPlaces = async (location, query, radius = 10000, forceRef
 
     return new Promise((resolve, reject) => {
         if (!window.google || !window.google.maps) {
-            reject(new Error('Google Maps no estÃ¡ cargado'));
+            reject(new Error('Google Maps no estA cargado'));
             return;
         }
 
@@ -574,7 +574,7 @@ export const searchTextPlaces = async (location, query, radius = 10000, forceRef
             language: window.localStorage.getItem('language') || 'es'
         };
 
-        console.log(`🔎 Buscando por texto en Google Places: "${query}"`);
+        console.log(` Buscando por texto en Google Places: "${query}"`);
 
         service.textSearch(request, (results, status) => {
             if (status === window.google.maps.places.PlacesServiceStatus.OK) {
@@ -585,7 +585,7 @@ export const searchTextPlaces = async (location, query, radius = 10000, forceRef
                 saveToCache(cacheKey, [], CACHE_CONFIG.SEARCH_TTL);
                 resolve([]);
             } else {
-                reject(new Error(`Error en bÃºsqueda por texto: ${status}`));
+                reject(new Error(`Error en bAsqueda por texto: ${status}`));
             }
         });
     });
@@ -629,7 +629,7 @@ export const searchPlacesUniversal = async (location, searchTerm, radius = 10000
 };
 
 /**
- * Estadísticas de caché (para debugging/admin)
+ * Estadisticas de cache (para debugging/admin)
  */
 export const getCacheStats = () => {
     const stats = {
@@ -663,7 +663,7 @@ export const getCacheStats = () => {
 };
 
 /**
- * Limpia todo el caché de Google Places
+ * Limpia todo el cache de Google Places
  */
 export const clearAllCache = () => {
     const keysToRemove = [];
@@ -674,6 +674,6 @@ export const clearAllCache = () => {
         }
     }
     keysToRemove.forEach(key => localStorage.removeItem(key));
-    console.log(`🗑️ Limpiados ${keysToRemove.length} entradas de caché`);
+    console.log(` Limpiados ${keysToRemove.length} entradas de cache`);
     return keysToRemove.length;
 };

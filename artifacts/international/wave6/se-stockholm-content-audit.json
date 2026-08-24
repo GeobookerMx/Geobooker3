@@ -1,0 +1,29 @@
+{
+  "marketId": "se-stockholm",
+  "sqlFile": "artifacts\\international\\wave6\\se-stockholm-1000.sql",
+  "recordCount": 1000,
+  "automatedAuditPassed": true,
+  "failures": {},
+  "warnings": {
+    "missingAddress": 0,
+    "missingAddressPercent": 0.0
+  },
+  "completeness": {
+    "websiteCount": 975,
+    "websitePercent": 97.5,
+    "httpsWebsiteCount": 444,
+    "phoneCount": 984,
+    "phonePercent": 98.4,
+    "websiteOrPhoneCount": 996,
+    "websiteOrPhonePercent": 99.6
+  },
+  "categoryDistribution": {
+    "belleza": 200,
+    "restaurantes": 200,
+    "salud": 200,
+    "servicios": 200,
+    "tiendas": 200
+  },
+  "sampleSize": 100,
+  "manualVerificationRequired": true
+}

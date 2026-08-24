@@ -71,6 +71,9 @@ def main() -> None:
         details = (error.stderr or error.stdout or "unknown builder error").strip()
         raise RuntimeError(f"batch builder failed for {args.area}: {details}") from error
     checksum = hashlib.sha256(args.output.read_bytes()).hexdigest()
+    builder_output = completed.stdout.strip().splitlines()
+    quality_line = next((line for line in builder_output if line.startswith("QUALITY_JSON=")), None)
+    automated_quality = json.loads(quality_line.split("=", 1)[1]) if quality_line else {}
     report = {
         "marketId": args.area,
         "countryCode": market["countryCode"],
@@ -82,9 +85,11 @@ def main() -> None:
         "generatedAt": datetime.now(timezone.utc).isoformat(),
         "sqlFile": str(args.output),
         "checksumSha256": checksum,
-        "status": "generated_not_validated",
+        "status": "automated_checks_complete_manual_review_required",
         "qualityGates": rollout_config["qualityGates"],
-        "builderOutput": completed.stdout.strip().splitlines(),
+        "automatedQualityChecks": automated_quality,
+        "manualApprovalRequired": True,
+        "builderOutput": builder_output,
     }
     args.report.write_text(json.dumps(report, indent=2), encoding="utf-8", newline="\n")
 

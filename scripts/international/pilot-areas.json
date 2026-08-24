@@ -1,6 +1,6 @@
 {
   "source": "Overture Maps Places",
-  "release": "2026-06-17.0",
+  "release": "2026-08-19.0",
   "maxRecordsPerArea": 10000,
   "minimumConfidence": 0.75,
   "areas": [
@@ -83,6 +83,62 @@
       "city": "Paris",
       "bbox": [2.22, 48.81, 2.47, 48.91],
       "phase": 2
+    },
+    {
+      "id": "sg-singapore",
+      "countryCode": "SG",
+      "country": "Singapore",
+      "city": "Singapore",
+      "defaultLanguage": "en",
+      "bbox": [103.60, 1.20, 104.10, 1.48],
+      "phase": 6
+    },
+    {
+      "id": "kr-seoul",
+      "countryCode": "KR",
+      "country": "South Korea",
+      "city": "Seoul",
+      "defaultLanguage": "ko",
+      "bbox": [126.76, 37.41, 127.18, 37.70],
+      "phase": 6
+    },
+    {
+      "id": "ae-dubai",
+      "countryCode": "AE",
+      "country": "United Arab Emirates",
+      "city": "Dubai",
+      "defaultLanguage": "en",
+      "bbox": [55.05, 24.80, 55.60, 25.40],
+      "phase": 6
+    },
+    {
+      "id": "se-stockholm",
+      "countryCode": "SE",
+      "country": "Sweden",
+      "city": "Stockholm",
+      "defaultLanguage": "sv",
+      "bbox": [17.75, 59.17, 18.30, 59.50],
+      "phase": 6
+    },
+    {
+      "id": "at-vienna",
+      "countryCode": "AT",
+      "country": "Austria",
+      "city": "Vienna",
+      "cityAliases": ["Wien"],
+      "defaultLanguage": "de",
+      "bbox": [16.15, 48.10, 16.62, 48.33],
+      "phase": 6
+    },
+    {
+      "id": "be-brussels",
+      "countryCode": "BE",
+      "country": "Belgium",
+      "city": "Brussels",
+      "cityAliases": ["Bruxelles", "Brussel"],
+      "defaultLanguage": "fr",
+      "bbox": [4.20, 50.75, 4.55, 50.95],
+      "phase": 6
     }
   ]
 }

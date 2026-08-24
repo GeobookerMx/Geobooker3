@@ -1,0 +1,176 @@
+[
+  {
+    "marketId": "ae-dubai",
+    "sqlFile": "artifacts\\international\\wave6\\ae-dubai-1000.sql",
+    "recordCount": 1000,
+    "automatedAuditPassed": true,
+    "failures": {},
+    "warnings": {
+      "missingAddress": 0,
+      "missingAddressPercent": 0.0
+    },
+    "completeness": {
+      "websiteCount": 953,
+      "websitePercent": 95.3,
+      "httpsWebsiteCount": 546,
+      "phoneCount": 932,
+      "phonePercent": 93.2,
+      "websiteOrPhoneCount": 974,
+      "websiteOrPhonePercent": 97.4
+    },
+    "categoryDistribution": {
+      "belleza": 224,
+      "restaurantes": 224,
+      "salud": 104,
+      "servicios": 224,
+      "tiendas": 224
+    },
+    "sampleSize": 100,
+    "manualVerificationRequired": true
+  },
+  {
+    "marketId": "at-vienna",
+    "sqlFile": "artifacts\\international\\wave6\\at-vienna-1000.sql",
+    "recordCount": 1000,
+    "automatedAuditPassed": true,
+    "failures": {},
+    "warnings": {
+      "missingAddress": 0,
+      "missingAddressPercent": 0.0
+    },
+    "completeness": {
+      "websiteCount": 989,
+      "websitePercent": 98.9,
+      "httpsWebsiteCount": 468,
+      "phoneCount": 985,
+      "phonePercent": 98.5,
+      "websiteOrPhoneCount": 998,
+      "websiteOrPhonePercent": 99.8
+    },
+    "categoryDistribution": {
+      "belleza": 200,
+      "restaurantes": 200,
+      "salud": 200,
+      "servicios": 200,
+      "tiendas": 200
+    },
+    "sampleSize": 100,
+    "manualVerificationRequired": true
+  },
+  {
+    "marketId": "be-brussels",
+    "sqlFile": "artifacts\\international\\wave6\\be-brussels-1000.sql",
+    "recordCount": 1000,
+    "automatedAuditPassed": true,
+    "failures": {},
+    "warnings": {
+      "missingAddress": 0,
+      "missingAddressPercent": 0.0
+    },
+    "completeness": {
+      "websiteCount": 919,
+      "websitePercent": 91.9,
+      "httpsWebsiteCount": 383,
+      "phoneCount": 942,
+      "phonePercent": 94.2,
+      "websiteOrPhoneCount": 984,
+      "websiteOrPhonePercent": 98.4
+    },
+    "categoryDistribution": {
+      "belleza": 209,
+      "restaurantes": 209,
+      "salud": 164,
+      "servicios": 209,
+      "tiendas": 209
+    },
+    "sampleSize": 100,
+    "manualVerificationRequired": true
+  },
+  {
+    "marketId": "kr-seoul",
+    "sqlFile": "artifacts\\international\\wave6\\kr-seoul-1000.sql",
+    "recordCount": 1000,
+    "automatedAuditPassed": true,
+    "failures": {},
+    "warnings": {
+      "missingAddress": 0,
+      "missingAddressPercent": 0.0
+    },
+    "completeness": {
+      "websiteCount": 857,
+      "websitePercent": 85.7,
+      "httpsWebsiteCount": 268,
+      "phoneCount": 844,
+      "phonePercent": 84.4,
+      "websiteOrPhoneCount": 934,
+      "websiteOrPhonePercent": 93.4
+    },
+    "categoryDistribution": {
+      "belleza": 200,
+      "restaurantes": 200,
+      "salud": 200,
+      "servicios": 200,
+      "tiendas": 200
+    },
+    "sampleSize": 100,
+    "manualVerificationRequired": true
+  },
+  {
+    "marketId": "se-stockholm",
+    "sqlFile": "artifacts\\international\\wave6\\se-stockholm-1000.sql",
+    "recordCount": 1000,
+    "automatedAuditPassed": true,
+    "failures": {},
+    "warnings": {
+      "missingAddress": 0,
+      "missingAddressPercent": 0.0
+    },
+    "completeness": {
+      "websiteCount": 975,
+      "websitePercent": 97.5,
+      "httpsWebsiteCount": 444,
+      "phoneCount": 984,
+      "phonePercent": 98.4,
+      "websiteOrPhoneCount": 996,
+      "websiteOrPhonePercent": 99.6
+    },
+    "categoryDistribution": {
+      "belleza": 200,
+      "restaurantes": 200,
+      "salud": 200,
+      "servicios": 200,
+      "tiendas": 200
+    },
+    "sampleSize": 100,
+    "manualVerificationRequired": true
+  },
+  {
+    "marketId": "sg-singapore",
+    "sqlFile": "artifacts\\international\\wave6\\sg-singapore-1000.sql",
+    "recordCount": 1000,
+    "automatedAuditPassed": true,
+    "failures": {},
+    "warnings": {
+      "missingAddress": 0,
+      "missingAddressPercent": 0.0
+    },
+    "completeness": {
+      "websiteCount": 978,
+      "websitePercent": 97.8,
+      "httpsWebsiteCount": 413,
+      "phoneCount": 981,
+      "phonePercent": 98.1,
+      "websiteOrPhoneCount": 998,
+      "websiteOrPhonePercent": 99.8
+    },
+    "categoryDistribution": {
+      "belleza": 200,
+      "restaurantes": 200,
+      "salud": 200,
+      "servicios": 200,
+      "tiendas": 200
+    },
+    "sampleSize": 100,
+    "manualVerificationRequired": true
+  }
+]

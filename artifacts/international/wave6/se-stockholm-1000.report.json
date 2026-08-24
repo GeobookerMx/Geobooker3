@@ -1,0 +1,44 @@
+{
+  "marketId": "se-stockholm",
+  "countryCode": "SE",
+  "city": "Stockholm",
+  "source": "Overture Maps Places",
+  "sourceRelease": "2026-08-19.0",
+  "targetRecords": 1000,
+  "previousRecords": 0,
+  "generatedAt": "2026-08-24T16:43:42.531115+00:00",
+  "sqlFile": "artifacts\\international\\wave6\\se-stockholm-1000.sql",
+  "checksumSha256": "17a96af311bdb298bd3651f23a5383aef04b9a0d44bffaf0b270bb0ce05b656f",
+  "status": "automated_checks_complete_manual_review_required",
+  "qualityGates": {
+    "minimumSampleSize": 100,
+    "minimumLocationAccuracyPercent": 95,
+    "maximumVisibleDuplicatePercent": 5,
+    "maximumInvalidCoordinatePercent": 1
+  },
+  "automatedQualityChecks": {
+    "categoryDistribution": {
+      "belleza": 200,
+      "restaurantes": 200,
+      "salud": 200,
+      "servicios": 200,
+      "tiendas": 200
+    },
+    "duplicatePercent": 0.0,
+    "duplicateRecords": 0,
+    "invalidCoordinatePercent": 0.0,
+    "invalidCoordinates": 0,
+    "largestSubcategory": 8,
+    "manualLocationReviewRequired": true,
+    "marketId": "se-stockholm",
+    "outsideApprovedBbox": 0,
+    "outsideApprovedBboxPercent": 0.0,
+    "recordCount": 1000
+  },
+  "manualApprovalRequired": true,
+  "builderOutput": [
+    "se-stockholm: 1000 records; categories={'belleza': 200, 'restaurantes': 200, 'salud': 200, 'servicios': 200, 'tiendas': 200}; largest_subcategory=8",
+    "QUALITY_JSON={\"categoryDistribution\": {\"belleza\": 200, \"restaurantes\": 200, \"salud\": 200, \"servicios\": 200, \"tiendas\": 200}, \"duplicatePercent\": 0.0, \"duplicateRecords\": 0, \"invalidCoordinatePercent\": 0.0, \"invalidCoordinates\": 0, \"largestSubcategory\": 8, \"manualLocationReviewRequired\": true, \"marketId\": \"se-stockholm\", \"outsideApprovedBbox\": 0, \"outsideApprovedBboxPercent\": 0.0, \"recordCount\": 1000}",
+    "output: artifacts\\international\\wave6\\se-stockholm-1000.sql"
+  ]
+}

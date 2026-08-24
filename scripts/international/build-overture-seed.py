@@ -9,6 +9,7 @@ import time
 import unicodedata
 from collections import Counter, defaultdict, deque
 from pathlib import Path
+from urllib.parse import urlparse
 
 from overturemaps import record_batch_reader
 
@@ -46,6 +47,24 @@ def first_value(value: object) -> object | None:
     return None
 
 
+def normalize_website(value: object | None) -> str | None:
+    website = str(value or "").strip()
+    if not website:
+        return None
+    if "://" not in website:
+        website = "https://" + website
+    parsed = urlparse(website)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return None
+    return website
+
+
+def normalize_phone(value: object | None) -> str | None:
+    phone = str(value or "").strip()
+    digits = re.sub(r"\D", "", phone)
+    return phone if 6 <= len(digits) <= 15 else None
+
+
 def normalize_record(row: dict, area: dict, release: str) -> dict | None:
     name = (row.get("names") or {}).get("primary")
     taxonomy = row.get("taxonomy") or {}
@@ -62,14 +81,20 @@ def normalize_record(row: dict, area: dict, release: str) -> dict | None:
     addresses = row.get("addresses") or []
     country_code = area["countryCode"]
     city = area["city"]
+    accepted_localities = {
+        normalize_for_match(value)
+        for value in [city, *(area.get("cityAliases") or [])]
+    }
     matching_addresses = [
         item for item in addresses
         if (item.get("country") or "").upper() == country_code
-        and normalize_for_match(item.get("locality")) == normalize_for_match(city)
+        and normalize_for_match(item.get("locality")) in accepted_localities
     ]
     if not matching_addresses:
         return None
     address = matching_addresses[0]
+    if not str(address.get("freeform") or "").strip():
+        return None
 
     bbox = row.get("bbox") or {}
     longitude = bbox.get("xmin")
@@ -77,8 +102,8 @@ def normalize_record(row: dict, area: dict, release: str) -> dict | None:
     if longitude is None or latitude is None:
         return None
 
-    website = first_value(row.get("websites"))
-    phone = first_value(row.get("phones"))
+    website = normalize_website(first_value(row.get("websites")))
+    phone = normalize_phone(first_value(row.get("phones")))
     source_id = row["id"]
     score = confidence + (0.04 if website else 0) + (0.03 if phone else 0) + (0.03 if address.get("freeform") else 0)
 
@@ -100,6 +125,7 @@ def normalize_record(row: dict, area: dict, release: str) -> dict | None:
         "confidence": confidence,
         "score": score,
         "release": release,
+        "preferred_language": area.get("defaultLanguage", "en"),
     }
 
 
@@ -167,7 +193,10 @@ def fetch_area(
         release=release,
         connect_timeout=60,
         request_timeout=180,
+        stac=True,
     )
+    if reader is None:
+        raise RuntimeError(f"{area['id']}: Overture STAC returned no files for the approved area")
     selected: list[dict] = []
     seen: set[tuple] = set()
 
@@ -251,10 +280,10 @@ def render_sql(records_by_area: dict[str, list[dict]], release: str) -> str:
                     sql_text(f"Overture Maps Foundation, Places {release}"),
                     "'approved'",
                     "'active'",
-                    "TRUE",
                     "FALSE",
                     "FALSE",
-                    "'en'" if item["country_code"] in {"US", "CA"} else "'es'",
+                    "FALSE",
+                    sql_text(item["preferred_language"]),
                     "NOW()",
                     "NOW()",
                 ]) + ")"
@@ -314,13 +343,6 @@ CREATE INDEX IF NOT EXISTS idx_international_businesses_location
   ON public.international_businesses(country_code, city);
 
 ALTER TABLE public.international_businesses ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS international_businesses_public_read_v1
-  ON public.international_businesses;
-CREATE POLICY international_businesses_public_read_v1
-  ON public.international_businesses
-  FOR SELECT TO anon, authenticated
-  USING (status = 'approved' AND is_visible = TRUE);
-
 GRANT SELECT ON public.international_businesses TO anon, authenticated;
 GRANT ALL ON public.international_businesses TO service_role;
 
@@ -370,10 +392,45 @@ def main() -> None:
     }
     args.output.write_text(render_sql(records_by_area, release), encoding="utf-8", newline="\n")
     for area_id, records in records_by_area.items():
+        area = area_map[area_id]
+        west, south, east, north = area["bbox"]
         category_counts = Counter(record["category"] for record in records)
         subcategory_counts = Counter(record["subcategory"] for record in records)
+        duplicate_keys = Counter(
+            (
+                record["name"].casefold(),
+                (record["address"] or "").casefold(),
+                round(record["latitude"], 5),
+                round(record["longitude"], 5),
+            )
+            for record in records
+        )
+        duplicate_records = sum(count - 1 for count in duplicate_keys.values() if count > 1)
+        invalid_coordinates = sum(
+            1
+            for record in records
+            if not (-90 <= record["latitude"] <= 90 and -180 <= record["longitude"] <= 180)
+        )
+        outside_approved_bbox = sum(
+            1
+            for record in records
+            if not (west <= record["longitude"] <= east and south <= record["latitude"] <= north)
+        )
         distribution = dict(sorted(category_counts.items()))
         print(f"{area_id}: {len(records)} records; categories={distribution}; largest_subcategory={max(subcategory_counts.values())}")
+        print("QUALITY_JSON=" + json.dumps({
+            "marketId": area_id,
+            "recordCount": len(records),
+            "categoryDistribution": distribution,
+            "largestSubcategory": max(subcategory_counts.values()),
+            "duplicateRecords": duplicate_records,
+            "duplicatePercent": round(duplicate_records * 100 / len(records), 2),
+            "invalidCoordinates": invalid_coordinates,
+            "invalidCoordinatePercent": round(invalid_coordinates * 100 / len(records), 2),
+            "outsideApprovedBbox": outside_approved_bbox,
+            "outsideApprovedBboxPercent": round(outside_approved_bbox * 100 / len(records), 2),
+            "manualLocationReviewRequired": True,
+        }, sort_keys=True))
     print(f"output: {args.output}")
 
 

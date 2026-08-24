@@ -335,7 +335,18 @@ const CITY_COORDINATES = {
   madrid: { lat: 40.4168, lng: -3.7038 },
   barcelona: { lat: 41.3874, lng: 2.1686 },
   bogota: { lat: 4.7110, lng: -74.0721 },
-  paris: { lat: 48.8566, lng: 2.3522 }
+  paris: { lat: 48.8566, lng: 2.3522 },
+  singapore: { lat: 1.3521, lng: 103.8198 },
+  seoul: { lat: 37.5665, lng: 126.9780 },
+  dubai: { lat: 25.2048, lng: 55.2708 },
+  stockholm: { lat: 59.3293, lng: 18.0686 },
+  vienna: { lat: 48.2082, lng: 16.3738 },
+  brussels: { lat: 50.8503, lng: 4.3517 },
+  tokyo: { lat: 35.6762, lng: 139.6503 },
+  sydney: { lat: -33.8688, lng: 151.2093 },
+  dublin: { lat: 53.3498, lng: -6.2603 },
+  zurich: { lat: 47.3769, lng: 8.5417 },
+  medellin: { lat: 6.2442, lng: -75.5812 }
 };
 
 const MEXICO_CITY_ALIASES = {

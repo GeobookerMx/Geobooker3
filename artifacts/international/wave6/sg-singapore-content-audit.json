@@ -1,0 +1,29 @@
+{
+  "marketId": "sg-singapore",
+  "sqlFile": "artifacts\\international\\wave6\\sg-singapore-1000.sql",
+  "recordCount": 1000,
+  "automatedAuditPassed": true,
+  "failures": {},
+  "warnings": {
+    "missingAddress": 0,
+    "missingAddressPercent": 0.0
+  },
+  "completeness": {
+    "websiteCount": 978,
+    "websitePercent": 97.8,
+    "httpsWebsiteCount": 413,
+    "phoneCount": 981,
+    "phonePercent": 98.1,
+    "websiteOrPhoneCount": 998,
+    "websiteOrPhonePercent": 99.8
+  },
+  "categoryDistribution": {
+    "belleza": 200,
+    "restaurantes": 200,
+    "salud": 200,
+    "servicios": 200,
+    "tiendas": 200
+  },
+  "sampleSize": 100,
+  "manualVerificationRequired": true
+}

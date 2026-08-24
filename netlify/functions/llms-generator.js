@@ -1,6 +1,6 @@
 const GLOBAL_ORIGIN = 'https://www.geobooker.com';
 const MX_ORIGIN = 'https://geobooker.com.mx';
-const expansionMarkets = require('../../scripts/international/expansion-markets.json');
+const publicGlobalMarkets = require('../../src/config/publicGlobalMarkets.json');
 
 const isGlobalHost = (host = '') => host.includes('geobooker.com') && !host.includes('geobooker.com.mx');
 
@@ -52,7 +52,7 @@ const _CITY_ROADMAP = [
   { city: 'Medellín',    country: 'CO', lang: 'es', wave: 5 },
 ];
 
-const ACTIVE_CITIES = expansionMarkets.markets
+const ACTIVE_CITIES = publicGlobalMarkets.markets
   .filter((market) => market.status === 'active' && Number(market.currentRecords) > 0)
   .map((market) => ({
     city: market.city,

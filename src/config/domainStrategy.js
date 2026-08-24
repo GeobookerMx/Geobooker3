@@ -45,36 +45,11 @@ export const getAlternateUrls = (path = '/') => {
   const mx = MEXICO_CANONICAL_ORIGIN;
 
   return {
-    // Americas
     'en':      global + p,
     'en-US':   global + p,
     'en-CA':   global + p,
     'es':      mx + p,
     'es-MX':   mx + p,
-    'pt-BR':   global + '/cities/sao-paulo',
-
-    // Europe
-    'de-DE':   global + '/cities/berlin',
-    'de-AT':   global + '/cities/vienna',
-    'de-CH':   global + '/cities/zurich',
-    'en-GB':   global + '/cities/london',
-    'en-IE':   global + '/cities/dublin',
-    'fr-FR':   global + '/cities/paris',
-    'it-IT':   global + '/cities/milan',
-    'es-ES':   global + '/cities/madrid',
-    'nl-NL':   global + '/cities/amsterdam',
-    'nl-BE':   global + '/cities/amsterdam',
-    'sv-SE':   global + '/cities/stockholm',
-    'es-CO':   global + '/cities/bogota',
-    'es-CL':   global + '/cities/santiago',
-
-    // Asia Pacific & Middle East
-    'ja-JP':   global + '/cities/tokyo',
-    'ko-KR':   global + '/cities/seoul',
-    'en-AU':   global + '/cities/sydney',
-    'en-SG':   global + '/cities/singapore',
-
-    // Fallback
     'x-default': global + p,
   };
 };

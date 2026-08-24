@@ -1,0 +1,44 @@
+{
+  "marketId": "kr-seoul",
+  "countryCode": "KR",
+  "city": "Seoul",
+  "source": "Overture Maps Places",
+  "sourceRelease": "2026-08-19.0",
+  "targetRecords": 1000,
+  "previousRecords": 0,
+  "generatedAt": "2026-08-24T16:43:03.895810+00:00",
+  "sqlFile": "artifacts\\international\\wave6\\kr-seoul-1000.sql",
+  "checksumSha256": "2f9546f21e5379ef2a500617ac175d418889c220b7e92900055a956777eea16b",
+  "status": "automated_checks_complete_manual_review_required",
+  "qualityGates": {
+    "minimumSampleSize": 100,
+    "minimumLocationAccuracyPercent": 95,
+    "maximumVisibleDuplicatePercent": 5,
+    "maximumInvalidCoordinatePercent": 1
+  },
+  "automatedQualityChecks": {
+    "categoryDistribution": {
+      "belleza": 200,
+      "restaurantes": 200,
+      "salud": 200,
+      "servicios": 200,
+      "tiendas": 200
+    },
+    "duplicatePercent": 0.0,
+    "duplicateRecords": 0,
+    "invalidCoordinatePercent": 0.0,
+    "invalidCoordinates": 0,
+    "largestSubcategory": 19,
+    "manualLocationReviewRequired": true,
+    "marketId": "kr-seoul",
+    "outsideApprovedBbox": 0,
+    "outsideApprovedBboxPercent": 0.0,
+    "recordCount": 1000
+  },
+  "manualApprovalRequired": true,
+  "builderOutput": [
+    "kr-seoul: 1000 records; categories={'belleza': 200, 'restaurantes': 200, 'salud': 200, 'servicios': 200, 'tiendas': 200}; largest_subcategory=19",
+    "QUALITY_JSON={\"categoryDistribution\": {\"belleza\": 200, \"restaurantes\": 200, \"salud\": 200, \"servicios\": 200, \"tiendas\": 200}, \"duplicatePercent\": 0.0, \"duplicateRecords\": 0, \"invalidCoordinatePercent\": 0.0, \"invalidCoordinates\": 0, \"largestSubcategory\": 19, \"manualLocationReviewRequired\": true, \"marketId\": \"kr-seoul\", \"outsideApprovedBbox\": 0, \"outsideApprovedBboxPercent\": 0.0, \"recordCount\": 1000}",
+    "output: artifacts\\international\\wave6\\kr-seoul-1000.sql"
+  ]
+}

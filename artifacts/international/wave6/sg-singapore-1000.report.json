@@ -1,0 +1,44 @@
+{
+  "marketId": "sg-singapore",
+  "countryCode": "SG",
+  "city": "Singapore",
+  "source": "Overture Maps Places",
+  "sourceRelease": "2026-08-19.0",
+  "targetRecords": 1000,
+  "previousRecords": 0,
+  "generatedAt": "2026-08-24T16:42:42.363183+00:00",
+  "sqlFile": "artifacts\\international\\wave6\\sg-singapore-1000.sql",
+  "checksumSha256": "35d956f6cfec40c40e12625eb91b4cbf1a9b3a72a80eea7a352c7031cfe27a8f",
+  "status": "automated_checks_complete_manual_review_required",
+  "qualityGates": {
+    "minimumSampleSize": 100,
+    "minimumLocationAccuracyPercent": 95,
+    "maximumVisibleDuplicatePercent": 5,
+    "maximumInvalidCoordinatePercent": 1
+  },
+  "automatedQualityChecks": {
+    "categoryDistribution": {
+      "belleza": 200,
+      "restaurantes": 200,
+      "salud": 200,
+      "servicios": 200,
+      "tiendas": 200
+    },
+    "duplicatePercent": 0.0,
+    "duplicateRecords": 0,
+    "invalidCoordinatePercent": 0.0,
+    "invalidCoordinates": 0,
+    "largestSubcategory": 6,
+    "manualLocationReviewRequired": true,
+    "marketId": "sg-singapore",
+    "outsideApprovedBbox": 0,
+    "outsideApprovedBboxPercent": 0.0,
+    "recordCount": 1000
+  },
+  "manualApprovalRequired": true,
+  "builderOutput": [
+    "sg-singapore: 1000 records; categories={'belleza': 200, 'restaurantes': 200, 'salud': 200, 'servicios': 200, 'tiendas': 200}; largest_subcategory=6",
+    "QUALITY_JSON={\"categoryDistribution\": {\"belleza\": 200, \"restaurantes\": 200, \"salud\": 200, \"servicios\": 200, \"tiendas\": 200}, \"duplicatePercent\": 0.0, \"duplicateRecords\": 0, \"invalidCoordinatePercent\": 0.0, \"invalidCoordinates\": 0, \"largestSubcategory\": 6, \"manualLocationReviewRequired\": true, \"marketId\": \"sg-singapore\", \"outsideApprovedBbox\": 0, \"outsideApprovedBboxPercent\": 0.0, \"recordCount\": 1000}",
+    "output: artifacts\\international\\wave6\\sg-singapore-1000.sql"
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "marketId": "at-vienna",
+  "countryCode": "AT",
+  "city": "Vienna",
+  "source": "Overture Maps Places",
+  "sourceRelease": "2026-08-19.0",
+  "targetRecords": 1000,
+  "previousRecords": 0,
+  "generatedAt": "2026-08-24T16:43:57.639427+00:00",
+  "sqlFile": "artifacts\\international\\wave6\\at-vienna-1000.sql",
+  "checksumSha256": "171acfbbeecb6df2b639381fd5b7fadb3a7697be0c901232a08242511de7b59f",
+  "status": "automated_checks_complete_manual_review_required",
+  "qualityGates": {
+    "minimumSampleSize": 100,
+    "minimumLocationAccuracyPercent": 95,
+    "maximumVisibleDuplicatePercent": 5,
+    "maximumInvalidCoordinatePercent": 1
+  },
+  "automatedQualityChecks": {
+    "categoryDistribution": {
+      "belleza": 200,
+      "restaurantes": 200,
+      "salud": 200,
+      "servicios": 200,
+      "tiendas": 200
+    },
+    "duplicatePercent": 0.0,
+    "duplicateRecords": 0,
+    "invalidCoordinatePercent": 0.0,
+    "invalidCoordinates": 0,
+    "largestSubcategory": 5,
+    "manualLocationReviewRequired": true,
+    "marketId": "at-vienna",
+    "outsideApprovedBbox": 0,
+    "outsideApprovedBboxPercent": 0.0,
+    "recordCount": 1000
+  },
+  "manualApprovalRequired": true,
+  "builderOutput": [
+    "at-vienna: 1000 records; categories={'belleza': 200, 'restaurantes': 200, 'salud': 200, 'servicios': 200, 'tiendas': 200}; largest_subcategory=5",
+    "QUALITY_JSON={\"categoryDistribution\": {\"belleza\": 200, \"restaurantes\": 200, \"salud\": 200, \"servicios\": 200, \"tiendas\": 200}, \"duplicatePercent\": 0.0, \"duplicateRecords\": 0, \"invalidCoordinatePercent\": 0.0, \"invalidCoordinates\": 0, \"largestSubcategory\": 5, \"manualLocationReviewRequired\": true, \"marketId\": \"at-vienna\", \"outsideApprovedBbox\": 0, \"outsideApprovedBboxPercent\": 0.0, \"recordCount\": 1000}",
+    "output: artifacts\\international\\wave6\\at-vienna-1000.sql"
+  ]
+}

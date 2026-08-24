@@ -1,0 +1,44 @@
+{
+  "marketId": "ae-dubai",
+  "countryCode": "AE",
+  "city": "Dubai",
+  "source": "Overture Maps Places",
+  "sourceRelease": "2026-08-19.0",
+  "targetRecords": 1000,
+  "previousRecords": 0,
+  "generatedAt": "2026-08-24T16:43:22.138994+00:00",
+  "sqlFile": "artifacts\\international\\wave6\\ae-dubai-1000.sql",
+  "checksumSha256": "cb6cb73fcc32500768086ee160fd2e18244ff4af1642b035e05e9227d96b4c77",
+  "status": "automated_checks_complete_manual_review_required",
+  "qualityGates": {
+    "minimumSampleSize": 100,
+    "minimumLocationAccuracyPercent": 95,
+    "maximumVisibleDuplicatePercent": 5,
+    "maximumInvalidCoordinatePercent": 1
+  },
+  "automatedQualityChecks": {
+    "categoryDistribution": {
+      "belleza": 224,
+      "restaurantes": 224,
+      "salud": 104,
+      "servicios": 224,
+      "tiendas": 224
+    },
+    "duplicatePercent": 0.0,
+    "duplicateRecords": 0,
+    "invalidCoordinatePercent": 0.0,
+    "invalidCoordinates": 0,
+    "largestSubcategory": 39,
+    "manualLocationReviewRequired": true,
+    "marketId": "ae-dubai",
+    "outsideApprovedBbox": 0,
+    "outsideApprovedBboxPercent": 0.0,
+    "recordCount": 1000
+  },
+  "manualApprovalRequired": true,
+  "builderOutput": [
+    "ae-dubai: 1000 records; categories={'belleza': 224, 'restaurantes': 224, 'salud': 104, 'servicios': 224, 'tiendas': 224}; largest_subcategory=39",
+    "QUALITY_JSON={\"categoryDistribution\": {\"belleza\": 224, \"restaurantes\": 224, \"salud\": 104, \"servicios\": 224, \"tiendas\": 224}, \"duplicatePercent\": 0.0, \"duplicateRecords\": 0, \"invalidCoordinatePercent\": 0.0, \"invalidCoordinates\": 0, \"largestSubcategory\": 39, \"manualLocationReviewRequired\": true, \"marketId\": \"ae-dubai\", \"outsideApprovedBbox\": 0, \"outsideApprovedBboxPercent\": 0.0, \"recordCount\": 1000}",
+    "output: artifacts\\international\\wave6\\ae-dubai-1000.sql"
+  ]
+}

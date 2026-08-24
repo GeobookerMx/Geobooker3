@@ -258,6 +258,127 @@ const CITIES_CONFIG = {
         heroImage: '/images/cities/lima.jpg',
         description: 'Discover culinary spots, tourism, and local business services in Lima.',
         descriptionEs: 'Descubre gastronomía, turismo y servicios comerciales en Lima.'
+    },
+    'singapore': {
+        name: 'Singapore',
+        state: 'Singapore',
+        country: 'SG',
+        population: '5.9M+',
+        lang: 'en',
+        popularCategories: ['restaurant', 'professional_service', 'shopping', 'health_care', 'logistics'],
+        heroImage: '/images/cities/singapore.jpg',
+        description: 'Discover trusted restaurants, professional services, shops, and logistics providers in Singapore.',
+        descriptionEs: 'Descubre restaurantes, servicios profesionales, tiendas y proveedores logísticos en Singapur.'
+    },
+    'seoul': {
+        name: 'Seoul',
+        state: 'Seoul Capital Area',
+        country: 'KR',
+        population: '9.3M+',
+        lang: 'ko',
+        popularCategories: ['restaurant', 'beauty_salon', 'shopping', 'health_care', 'technology'],
+        heroImage: '/images/cities/seoul.jpg',
+        description: 'Discover restaurants, beauty services, technology providers, and local shops in Seoul.',
+        descriptionEs: 'Descubre restaurantes, servicios de belleza, tecnología y comercios locales en Seúl.'
+    },
+    'dubai': {
+        name: 'Dubai',
+        state: 'Dubai',
+        country: 'AE',
+        population: '3.8M+',
+        lang: 'en',
+        popularCategories: ['restaurant', 'hotel', 'real_estate', 'professional_service', 'logistics'],
+        heroImage: '/images/cities/dubai.jpg',
+        description: 'Discover hospitality, real estate, professional services, and logistics businesses in Dubai.',
+        descriptionEs: 'Descubre hotelería, bienes raíces, servicios profesionales y logística en Dubái.'
+    },
+    'stockholm': {
+        name: 'Stockholm',
+        state: 'Stockholm County',
+        country: 'SE',
+        population: '1M+',
+        lang: 'sv',
+        popularCategories: ['restaurant', 'cafe', 'technology', 'professional_service', 'shopping'],
+        heroImage: '/images/cities/stockholm.jpg',
+        description: 'Discover restaurants, technology companies, professional services, and local shops in Stockholm.',
+        descriptionEs: 'Descubre restaurantes, empresas tecnológicas, servicios profesionales y comercios en Estocolmo.'
+    },
+    'vienna': {
+        name: 'Vienna',
+        state: 'Vienna',
+        country: 'AT',
+        population: '2M+',
+        lang: 'de',
+        popularCategories: ['restaurant', 'cafe', 'hotel', 'health_care', 'professional_service'],
+        heroImage: '/images/cities/vienna.jpg',
+        description: 'Discover restaurants, hotels, health providers, and professional services in Vienna.',
+        descriptionEs: 'Descubre restaurantes, hoteles, servicios de salud y profesionales en Viena.'
+    },
+    'brussels': {
+        name: 'Brussels',
+        state: 'Brussels-Capital',
+        country: 'BE',
+        population: '1.2M+',
+        lang: 'fr',
+        popularCategories: ['restaurant', 'cafe', 'professional_service', 'hotel', 'shopping'],
+        heroImage: '/images/cities/brussels.jpg',
+        description: 'Discover restaurants, professional services, hotels, and local shops in Brussels.',
+        descriptionEs: 'Descubre restaurantes, servicios profesionales, hoteles y comercios en Bruselas.'
+    },
+    'tokyo': {
+        name: 'Tokyo',
+        state: 'Tokyo Metropolis',
+        country: 'JP',
+        population: '14M+',
+        lang: 'ja',
+        popularCategories: ['restaurant', 'shopping', 'technology', 'hotel', 'professional_service'],
+        heroImage: '/images/cities/tokyo.jpg',
+        description: 'Discover restaurants, technology providers, shops, and professional services in Tokyo.',
+        descriptionEs: 'Descubre restaurantes, tecnología, comercios y servicios profesionales en Tokio.'
+    },
+    'sydney': {
+        name: 'Sydney',
+        state: 'New South Wales',
+        country: 'AU',
+        population: '5.3M+',
+        lang: 'en',
+        popularCategories: ['restaurant', 'cafe', 'professional_service', 'health_care', 'real_estate'],
+        heroImage: '/images/cities/sydney.jpg',
+        description: 'Discover restaurants, health providers, professional services, and local businesses in Sydney.',
+        descriptionEs: 'Descubre restaurantes, servicios de salud, profesionales y negocios locales en Sídney.'
+    },
+    'dublin': {
+        name: 'Dublin',
+        state: 'Leinster',
+        country: 'IE',
+        population: '1.3M+',
+        lang: 'en',
+        popularCategories: ['restaurant', 'pub', 'technology', 'professional_service', 'hotel'],
+        heroImage: '/images/cities/dublin.jpg',
+        description: 'Discover restaurants, technology companies, professional services, and hospitality in Dublin.',
+        descriptionEs: 'Descubre restaurantes, tecnología, servicios profesionales y hotelería en Dublín.'
+    },
+    'zurich': {
+        name: 'Zurich',
+        state: 'Zurich',
+        country: 'CH',
+        population: '440K+',
+        lang: 'de',
+        popularCategories: ['finance', 'restaurant', 'professional_service', 'health_care', 'hotel'],
+        heroImage: '/images/cities/zurich.jpg',
+        description: 'Discover financial, professional, health, hospitality, and local services in Zurich.',
+        descriptionEs: 'Descubre servicios financieros, profesionales, de salud y hotelería en Zúrich.'
+    },
+    'medellin': {
+        name: 'Medellín',
+        state: 'Antioquia',
+        country: 'CO',
+        population: '2.6M+',
+        lang: 'es',
+        popularCategories: ['restaurant', 'technology', 'professional_service', 'health_care', 'shopping'],
+        heroImage: '/images/cities/medellin.jpg',
+        description: 'Discover technology, professional services, restaurants, and local commerce in Medellin.',
+        descriptionEs: 'Descubre tecnología, servicios profesionales, restaurantes y comercio local en Medellín.'
     }
 };
 
@@ -307,7 +428,10 @@ export default function CityLandingPage() {
         US: 'United States', GB: 'United Kingdom', CA: 'Canada', ES: 'España',
         NL: 'Netherlands', IT: 'Italia', FR: 'France', DE: 'Deutschland',
         PT: 'Portugal', BR: 'Brasil', MX: 'México', CO: 'Colombia',
-        AR: 'Argentina', CL: 'Chile', PE: 'Perú'
+        AR: 'Argentina', CL: 'Chile', PE: 'Perú', SG: 'Singapore',
+        KR: 'South Korea', AE: 'United Arab Emirates', SE: 'Sweden',
+        AT: 'Austria', BE: 'Belgium', JP: 'Japan', AU: 'Australia',
+        IE: 'Ireland', CH: 'Switzerland'
     };
     const cityUrl = `https://www.geobooker.com/cities/${citySlug}`;
     const handleSearch = (event) => {

@@ -1,5 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
-const expansionMarkets = require('../../scripts/international/expansion-markets.json');
+const publicGlobalMarkets = require('../../src/config/publicGlobalMarkets.json');
 
 const GLOBAL_ORIGIN = 'https://www.geobooker.com';
 const MX_ORIGIN = 'https://geobooker.com.mx';
@@ -26,7 +26,7 @@ const normalizePath = (path = '') => {
 const today = () => new Date().toISOString().split('T')[0];
 const toDate = (value) => value ? new Date(value).toISOString().split('T')[0] : today();
 const marketSlug = (market) => String(market.id || '').replace(/^[a-z]{2}-/, '');
-const INDEXABLE_MARKETS = expansionMarkets.markets.filter(
+const INDEXABLE_MARKETS = publicGlobalMarkets.markets.filter(
   (market) => market.status === 'active' && Number(market.currentRecords) > 0
 );
 

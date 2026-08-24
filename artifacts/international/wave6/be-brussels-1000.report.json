@@ -1,0 +1,44 @@
+{
+  "marketId": "be-brussels",
+  "countryCode": "BE",
+  "city": "Brussels",
+  "source": "Overture Maps Places",
+  "sourceRelease": "2026-08-19.0",
+  "targetRecords": 1000,
+  "previousRecords": 0,
+  "generatedAt": "2026-08-24T16:44:13.754481+00:00",
+  "sqlFile": "artifacts\\international\\wave6\\be-brussels-1000.sql",
+  "checksumSha256": "95e8571df49a3cff8bbaae17b567d111b09d3fa0eeb0aafdabdfffcc10b71dd7",
+  "status": "automated_checks_complete_manual_review_required",
+  "qualityGates": {
+    "minimumSampleSize": 100,
+    "minimumLocationAccuracyPercent": 95,
+    "maximumVisibleDuplicatePercent": 5,
+    "maximumInvalidCoordinatePercent": 1
+  },
+  "automatedQualityChecks": {
+    "categoryDistribution": {
+      "belleza": 209,
+      "restaurantes": 209,
+      "salud": 164,
+      "servicios": 209,
+      "tiendas": 209
+    },
+    "duplicatePercent": 0.0,
+    "duplicateRecords": 0,
+    "invalidCoordinatePercent": 0.0,
+    "invalidCoordinates": 0,
+    "largestSubcategory": 36,
+    "manualLocationReviewRequired": true,
+    "marketId": "be-brussels",
+    "outsideApprovedBbox": 0,
+    "outsideApprovedBboxPercent": 0.0,
+    "recordCount": 1000
+  },
+  "manualApprovalRequired": true,
+  "builderOutput": [
+    "be-brussels: 1000 records; categories={'belleza': 209, 'restaurantes': 209, 'salud': 164, 'servicios': 209, 'tiendas': 209}; largest_subcategory=36",
+    "QUALITY_JSON={\"categoryDistribution\": {\"belleza\": 209, \"restaurantes\": 209, \"salud\": 164, \"servicios\": 209, \"tiendas\": 209}, \"duplicatePercent\": 0.0, \"duplicateRecords\": 0, \"invalidCoordinatePercent\": 0.0, \"invalidCoordinates\": 0, \"largestSubcategory\": 36, \"manualLocationReviewRequired\": true, \"marketId\": \"be-brussels\", \"outsideApprovedBbox\": 0, \"outsideApprovedBboxPercent\": 0.0, \"recordCount\": 1000}",
+    "output: artifacts\\international\\wave6\\be-brussels-1000.sql"
+  ]
+}

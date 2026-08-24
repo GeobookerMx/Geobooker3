@@ -1,0 +1,29 @@
+{
+  "marketId": "ae-dubai",
+  "sqlFile": "artifacts\\international\\wave6\\ae-dubai-1000.sql",
+  "recordCount": 1000,
+  "automatedAuditPassed": true,
+  "failures": {},
+  "warnings": {
+    "missingAddress": 0,
+    "missingAddressPercent": 0.0
+  },
+  "completeness": {
+    "websiteCount": 953,
+    "websitePercent": 95.3,
+    "httpsWebsiteCount": 546,
+    "phoneCount": 932,
+    "phonePercent": 93.2,
+    "websiteOrPhoneCount": 974,
+    "websiteOrPhonePercent": 97.4
+  },
+  "categoryDistribution": {
+    "belleza": 224,
+    "restaurantes": 224,
+    "salud": 104,
+    "servicios": 224,
+    "tiendas": 224
+  },
+  "sampleSize": 100,
+  "manualVerificationRequired": true
+}

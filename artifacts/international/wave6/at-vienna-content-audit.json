@@ -1,0 +1,29 @@
+{
+  "marketId": "at-vienna",
+  "sqlFile": "artifacts\\international\\wave6\\at-vienna-1000.sql",
+  "recordCount": 1000,
+  "automatedAuditPassed": true,
+  "failures": {},
+  "warnings": {
+    "missingAddress": 0,
+    "missingAddressPercent": 0.0
+  },
+  "completeness": {
+    "websiteCount": 989,
+    "websitePercent": 98.9,
+    "httpsWebsiteCount": 468,
+    "phoneCount": 985,
+    "phonePercent": 98.5,
+    "websiteOrPhoneCount": 998,
+    "websiteOrPhonePercent": 99.8
+  },
+  "categoryDistribution": {
+    "belleza": 200,
+    "restaurantes": 200,
+    "salud": 200,
+    "servicios": 200,
+    "tiendas": 200
+  },
+  "sampleSize": 100,
+  "manualVerificationRequired": true
+}

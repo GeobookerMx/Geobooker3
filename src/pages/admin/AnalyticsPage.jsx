@@ -1,588 +1,265 @@
-// src/pages/admin/AnalyticsPage.jsx
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
-import { getAnalyticsSummary, getTopSearches, getDeviceBreakdown } from '../../services/analyticsService';
-import {
-    TrendingUp,
-    Users,
-    Search,
-    MapPin,
-    Smartphone,
-    Monitor,
-    Globe,
-    Clock,
-    Navigation,
-    Download,
-    Eye,
-    MousePointer,
-    ArrowRight,
-    BarChart3,
-    Calendar,
-    Target,
-    Zap,
-    Star,
-    RefreshCw
-} from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-
+import {
+    ArrowRight, BarChart3, Clock, Download, MapPin, Monitor, Navigation,
+    RefreshCw, Search, Smartphone, Star, Target, TrendingUp, Users, Zap
+} from 'lucide-react';
+import {
+    Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart,
+    ResponsiveContainer, Tooltip, XAxis, YAxis
+} from 'recharts';
+import { supabase } from '../../lib/supabase';
+import {
+    getAnalyticsSummary, getCountryTraffic, getDeviceBreakdown, getHourlyTraffic
+} from '../../services/analyticsService';
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
+const DEVICE_LABELS = { mobile: 'Móvil', desktop: 'Desktop', tablet: 'Tablet', unknown: 'Sin clasificar' };
+const DEVICE_COLORS = { mobile: '#3B82F6', desktop: '#10B981', tablet: '#F59E0B', unknown: '#94A3B8' };
+
+const number = (value) => Number(value || 0);
+const ratio = (value, total) => total > 0 ? Math.round((number(value) / total) * 100) : 0;
+const dayKey = (value) => new Date(value).toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
+
+const trend = (current, previous) => {
+    if (!previous) return current ? { label: 'Nueva', direction: 'up' } : { label: '0%', direction: 'flat' };
+    const change = Math.round(((current - previous) / previous) * 100);
+    return { label: `${change > 0 ? '+' : ''}${change}%`, direction: change > 0 ? 'up' : change < 0 ? 'down' : 'flat' };
+};
+
+const trendClass = (direction) => direction === 'up'
+    ? 'bg-green-100 text-green-700'
+    : direction === 'down' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600';
+
+const formatDay = (value) => new Date(`${value}T12:00:00`).toLocaleDateString('es-MX', {
+    weekday: 'short', day: 'numeric'
+});
+
+const normalizeOverview = (payload = {}) => ({
+    totalUsers: number(payload.total_users),
+    premiumUsers: number(payload.premium_users),
+    businessesRegistered: number(payload.businesses_registered),
+    recentSignups: number(payload.recent_signups),
+    recentBusinesses: number(payload.recent_businesses),
+    pageViews: number(payload.page_views),
+    uniqueVisitors: number(payload.unique_visitors),
+    searches: number(payload.searches),
+    routes: number(payload.routes),
+    profileViews: number(payload.profile_views),
+    pwaInstalls: number(payload.pwa_installs),
+    todayPageViews: number(payload.today_page_views),
+    todaySearches: number(payload.today_searches),
+    daily: (payload.daily || []).map((row) => ({
+        date: formatDay(row.date),
+        usuarios: number(row.unique_sessions),
+        busquedas: number(row.searches),
+        navegaciones: number(row.routes)
+    })),
+    hourly: (payload.hourly || []).map((row) => ({
+        hora: `${String(row.hour).padStart(2, '0')}:00`,
+        usuarios: number(row.unique_visitors),
+        busquedas: number(row.searches)
+    })),
+    searchesList: (payload.top_searches || []).map((row) => ({
+        term: row.query ? row.query.charAt(0).toUpperCase() + row.query.slice(1) : 'Sin término',
+        count: number(row.current_count),
+        trend: trend(number(row.current_count), number(row.previous_count))
+    })),
+    devices: (payload.devices || []).map((row) => ({
+        name: DEVICE_LABELS[row.device] || row.device,
+        value: number(row.percentage),
+        count: number(row.count),
+        color: DEVICE_COLORS[row.device] || '#8B5CF6'
+    })),
+    countries: (payload.countries || []).map((row) => ({
+        name: row.country || row.country_code || 'Desconocido',
+        value: number(row.percentage),
+        searches: number(row.searches),
+        pageViews: number(row.page_views)
+    })),
+    categories: (payload.categories || []).map((row) => ({ name: row.name, count: number(row.count) })),
+    subcategories: (payload.subcategories || []).map((row) => ({ name: row.name, count: number(row.count) }))
+});
+
+async function loadCompatibilityOverview() {
+    const now = new Date();
+    const start7 = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+    const start14 = new Date(now.getTime() - (14 * 24 * 60 * 60 * 1000));
+    const [
+        users, premium, businesses, recentSignups, recentBusinesses, categoriesResult,
+        subcategoriesResult, pages, searchesResult, routes, profiles, installs,
+        summary, hourly, countries, devices
+    ] = await Promise.all([
+        supabase.from('user_profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('user_profiles').select('*', { count: 'exact', head: true }).eq('is_premium_owner', true),
+        supabase.from('businesses').select('*', { count: 'exact', head: true }),
+        supabase.from('user_profiles').select('*', { count: 'exact', head: true }).gte('created_at', start7.toISOString()),
+        supabase.from('businesses').select('*', { count: 'exact', head: true }).gte('created_at', start7.toISOString()),
+        supabase.from('businesses').select('category').eq('status', 'approved'),
+        supabase.from('businesses').select('subcategory').eq('status', 'approved').not('subcategory', 'is', null),
+        supabase.from('page_analytics').select('created_at,session_id').gte('created_at', start7.toISOString()),
+        supabase.from('search_analytics').select('query,created_at').gte('created_at', start14.toISOString()),
+        supabase.from('route_analytics').select('created_at').gte('created_at', start7.toISOString()),
+        supabase.from('business_intent_logs').select('*', { count: 'exact', head: true }).eq('event_name', 'view_business_profile').gte('created_at', start7.toISOString()),
+        supabase.from('app_download_events').select('*', { count: 'exact', head: true }).eq('target', 'pwa_install').gte('created_at', start7.toISOString()),
+        getAnalyticsSummary(7), getHourlyTraffic(7), getCountryTraffic(30), getDeviceBreakdown(30)
+    ]);
+
+    const errors = [users, premium, businesses, recentSignups, recentBusinesses, categoriesResult,
+        subcategoriesResult, pages, searchesResult, routes, profiles, installs]
+        .map((result) => result?.error?.message).filter(Boolean);
+
+    const aggregate = (rows, field, fallback) => Object.entries((rows || []).reduce((acc, row) => {
+        const key = row[field] || fallback;
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+    }, {})).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+
+    const current = {};
+    const previous = {};
+    (searchesResult.data || []).forEach((row) => {
+        const query = row.query?.trim().toLowerCase();
+        if (!query) return;
+        const bucket = new Date(row.created_at) >= start7 ? current : previous;
+        bucket[query] = (bucket[query] || 0) + 1;
+    });
+
+    const dates = Array.from({ length: 7 }, (_, index) => {
+        const date = new Date();
+        date.setDate(date.getDate() - (6 - index));
+        return { key: dayKey(date), date: formatDay(dayKey(date)), sessions: new Set(), busquedas: 0, navegaciones: 0 };
+    });
+    const byDate = new Map(dates.map((entry) => [entry.key, entry]));
+    (pages.data || []).forEach((row) => { if (row.session_id) byDate.get(dayKey(row.created_at))?.sessions.add(row.session_id); });
+    (searchesResult.data || []).filter((row) => new Date(row.created_at) >= start7)
+        .forEach((row) => { const entry = byDate.get(dayKey(row.created_at)); if (entry) entry.busquedas += 1; });
+    (routes.data || []).forEach((row) => { const entry = byDate.get(dayKey(row.created_at)); if (entry) entry.navegaciones += 1; });
+
+    return {
+        overview: normalizeOverview({
+            total_users: users.count, premium_users: premium.count, businesses_registered: businesses.count,
+            recent_signups: recentSignups.count, recent_businesses: recentBusinesses.count,
+            page_views: summary.pageViews, unique_visitors: summary.uniqueVisitors, searches: summary.searches,
+            routes: (routes.data || []).length, profile_views: profiles.count, pwa_installs: installs.count,
+            today_page_views: summary.todayPageViews, today_searches: summary.todaySearches,
+            daily: dates.map((entry) => ({ date: entry.key, unique_sessions: entry.sessions.size, searches: entry.busquedas, routes: entry.navegaciones })),
+            hourly, countries, devices,
+            top_searches: Object.entries(current).sort((a, b) => b[1] - a[1]).slice(0, 10)
+                .map(([query, count]) => ({ query, current_count: count, previous_count: previous[query] || 0 })),
+            categories: aggregate(categoriesResult.data, 'category', 'Sin categoría').slice(0, 8),
+            subcategories: aggregate(subcategoriesResult.data, 'subcategory', 'Sin subcategoría').slice(0, 10)
+        }),
+        errors
+    };
+}
 
 export default function AnalyticsPage() {
     const [loading, setLoading] = useState(true);
-    const [stats, setStats] = useState({
-        totalUsers: 0,
-        activeUsers: 0,
-        totalSearches: 0,
-        avgSessionTime: '0:00',
-        pwaInstalls: 0,
-        navigationRequests: 0,
-        premiumUsers: 0,
-        businessesRegistered: 0
-    });
+    const [overview, setOverview] = useState(() => normalizeOverview());
+    const [warnings, setWarnings] = useState([]);
 
-    const [trafficData, setTrafficData] = useState([]);
-    const [topSearches, setTopSearches] = useState([]);
-    const [categoryStats, setCategoryStats] = useState([]);
-    const [subcategoryStats, setSubcategoryStats] = useState([]);
-    const [peakHours, setPeakHours] = useState([]);
-    const [geoDistribution, setGeoDistribution] = useState([]);
-    const [deviceStats, setDeviceStats] = useState([]);
-    const [conversionFunnel, setConversionFunnel] = useState([]);
-    const [userBehavior, setUserBehavior] = useState([]);
-
-    useEffect(() => {
-        loadAnalyticsData();
-    }, []);
-
-    const loadAnalyticsData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            // ==========================================
-            // DATOS REALES DE SUPABASE
-            // ==========================================
-
-            // Total de usuarios
-            const { count: usersCount } = await supabase
-                .from('user_profiles')
-                .select('*', { count: 'exact', head: true });
-
-            // Usuarios Premium
-            const { count: premiumCount } = await supabase
-                .from('user_profiles')
-                .select('*', { count: 'exact', head: true })
-                .eq('is_premium_owner', true);
-
-            // Total de negocios registrados
-            const { count: businessCount } = await supabase
-                .from('businesses')
-                .select('*', { count: 'exact', head: true });
-
-            // Negocios por categoría
-            const { data: categoryData } = await supabase
-                .from('businesses')
-                .select('category')
-                .eq('status', 'approved');
-
-            // Agrupar por categoría
-            const categoryCounts = {};
-            (categoryData || []).forEach(b => {
-                const cat = b.category || 'Sin categoría';
-                categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
-            });
-            const categoryArray = Object.entries(categoryCounts)
-                .map(([name, count]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), count }))
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 8);
-
-            // Negocios por subcategoría
-            const { data: subcatData } = await supabase
-                .from('businesses')
-                .select('subcategory')
-                .eq('status', 'approved')
-                .not('subcategory', 'is', null);
-
-            const subcatCounts = {};
-            (subcatData || []).forEach(b => {
-                const sub = b.subcategory || 'Sin subcategoría';
-                subcatCounts[sub] = (subcatCounts[sub] || 0) + 1;
-            });
-            const subcatArray = Object.entries(subcatCounts)
-                .map(([name, count]) => ({ name, count }))
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 10);
-
-            // ==========================================
-            // DATOS REALES DE ANALYTICS SERVICE
-            // ==========================================
-
-            // Analytics Summary (page views, searches, visitors)
-            const summary = await getAnalyticsSummary(7);
-
-            // Top Búsquedas (REAL)
-            const realSearches = await getTopSearches(8, 7);
-            const searches = realSearches.map((s, i) => ({
-                term: s.query.charAt(0).toUpperCase() + s.query.slice(1),
-                count: s.count,
-                trend: i < 3 ? '+' + Math.floor(Math.random() * 20 + 5) + '%' : '-' + Math.floor(Math.random() * 10) + '%'
-            }));
-
-            // Dispositivos (REAL)
-            const deviceData = await getDeviceBreakdown(30);
-            const total = deviceData.desktop + deviceData.mobile + deviceData.tablet || 1;
-            const devices = [
-                { name: 'Móvil', value: Math.round((deviceData.mobile / total) * 100), color: '#3B82F6' },
-                { name: 'Desktop', value: Math.round((deviceData.desktop / total) * 100), color: '#10B981' },
-                { name: 'Tablet', value: Math.round((deviceData.tablet / total) * 100), color: '#F59E0B' }
-            ];
-
-            // Tráfico últimos 7 días (usando page_analytics)
-            const { data: trafficRaw } = await supabase
-                .from('page_analytics')
-                .select('created_at')
-                .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
-
-            const trafficByDay = {};
-            (trafficRaw || []).forEach(row => {
-                const day = new Date(row.created_at).toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric' });
-                trafficByDay[day] = (trafficByDay[day] || 0) + 1;
-            });
-            const last7Days = Array.from({ length: 7 }, (_, i) => {
-                const date = new Date();
-                date.setDate(date.getDate() - (6 - i));
-                const dayLabel = date.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric' });
-                return {
-                    date: dayLabel,
-                    usuarios: trafficByDay[dayLabel] || 0,
-                    busquedas: Math.floor((trafficByDay[dayLabel] || 0) * 1.5),
-                    navegaciones: Math.floor((trafficByDay[dayLabel] || 0) * 0.2)
-                };
-            });
-
-            // Route clicks count (REAL from route_analytics if exists)
-            let routeClicksCount = 0;
-            try {
-                const { data: rc } = await supabase.rpc('get_route_clicks_count', { p_days: 7 });
-                routeClicksCount = rc || 0;
-            } catch (e) { /* table may not exist yet */ }
-
-            // Horarios pico - placeholder (requiere RPC avanzado)
-            const hours = [
-                { hora: '6am', usuarios: 18 }, { hora: '9am', usuarios: 68 },
-                { hora: '12pm', usuarios: 120 }, { hora: '3pm', usuarios: 78 },
-                { hora: '6pm', usuarios: 105 }, { hora: '9pm', usuarios: 125 }
-            ];
-
-            // Distribución geográfica - placeholder (requiere tracking de país)
-            const geo = [
-                { name: 'México 🇲🇽', value: 85, searches: summary.searches || 0, cities: 'CDMX, GDL, MTY' },
-                { name: 'USA 🇺🇸', value: 10, searches: 0, cities: 'LA, Houston' },
-                { name: 'Otros 🌎', value: 5, searches: 0, cities: '' }
-            ];
-
-            // Funnel de conversión (REAL)
-            const funnel = [
-                { etapa: 'Visitantes', cantidad: summary.uniqueVisitors || 0, porcentaje: 100 },
-                { etapa: 'Búsquedas', cantidad: summary.searches || 0, porcentaje: summary.uniqueVisitors ? Math.round((summary.searches / summary.uniqueVisitors) * 100) : 0 },
-                { etapa: 'Clic en negocio', cantidad: summary.pageViews || 0, porcentaje: summary.uniqueVisitors ? Math.round((summary.pageViews / summary.uniqueVisitors) * 100) : 0 },
-                { etapa: 'Solicitud de ruta', cantidad: routeClicksCount, porcentaje: summary.uniqueVisitors ? Math.round((routeClicksCount / summary.uniqueVisitors) * 100) : 0 },
-                { etapa: 'Registro', cantidad: usersCount || 0, porcentaje: summary.uniqueVisitors ? Math.round(((usersCount || 0) / summary.uniqueVisitors) * 100) : 0 },
-                { etapa: 'Negocio registrado', cantidad: businessCount || 0, porcentaje: summary.uniqueVisitors ? Math.round(((businessCount || 0) / summary.uniqueVisitors) * 100) : 0 }
-            ];
-
-            // Comportamiento de usuario
-            const behavior = [
-                { metrica: 'Páginas vistas (7d)', valor: String(summary.pageViews || 0), icono: '📄' },
-                { metrica: 'Visitantes únicos (7d)', valor: String(summary.uniqueVisitors || 0), icono: '👤' },
-                { metrica: 'Búsquedas totales (7d)', valor: String(summary.searches || 0), icono: '🔍' },
-                { metrica: 'Hoy: Páginas', valor: String(summary.todayPageViews || 0), icono: '📊' },
-                { metrica: 'Hoy: Búsquedas', valor: String(summary.todaySearches || 0), icono: '🔎' },
-                { metrica: 'Rutas solicitadas (7d)', valor: String(routeClicksCount), icono: '🗺️' }
-            ];
-
-            setStats({
-                totalUsers: usersCount || 0,
-                activeUsers: summary.uniqueVisitors || 0,
-                totalSearches: summary.searches || 0,
-                avgSessionTime: '—',
-                pwaInstalls: 0,
-                navigationRequests: routeClicksCount,
-                premiumUsers: premiumCount || 0,
-                businessesRegistered: businessCount || 0
-            });
-
-            setTrafficData(last7Days);
-            setTopSearches(searches);
-            setCategoryStats(categoryArray);
-            setSubcategoryStats(subcatArray);
-            setPeakHours(hours);
-            setGeoDistribution(geo);
-            setDeviceStats(devices);
-            setConversionFunnel(funnel);
-            setUserBehavior(behavior);
-
-
+            const { data, error } = await supabase.rpc('get_admin_analytics_observed_v1', { p_days: 7, p_geo_days: 30 });
+            if (!error && data) {
+                setOverview(normalizeOverview(data));
+                setWarnings([]);
+            } else {
+                const fallback = await loadCompatibilityOverview();
+                setOverview(fallback.overview);
+                setWarnings([
+                    'El agregado eficiente de Analytics aún no está aplicado; se usó el modo de compatibilidad.',
+                    ...fallback.errors
+                ]);
+            }
         } catch (error) {
             console.error('Error loading analytics:', error);
+            setWarnings([error.message || 'No se pudieron cargar las métricas.']);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-64">
-                <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
-            </div>
-        );
-    }
+    useEffect(() => { loadData(); }, [loadData]);
+
+    const peakHour = overview.hourly.reduce((best, row) => (!best || row.usuarios > best.usuarios ? row : best), null);
+    const journey = [
+        { label: 'Visitantes únicos', value: overview.uniqueVisitors, rate: 100 },
+        { label: 'Búsquedas realizadas', value: overview.searches, rate: ratio(overview.searches, overview.uniqueVisitors) },
+        { label: 'Perfiles consultados', value: overview.profileViews, rate: ratio(overview.profileViews, overview.uniqueVisitors) },
+        { label: 'Rutas solicitadas', value: overview.routes, rate: ratio(overview.routes, overview.uniqueVisitors) },
+        { label: 'Registros nuevos', value: overview.recentSignups, rate: ratio(overview.recentSignups, overview.uniqueVisitors) },
+        { label: 'Negocios nuevos', value: overview.recentBusinesses, rate: ratio(overview.recentBusinesses, overview.uniqueVisitors) }
+    ];
+
+    if (loading) return <div className="flex h-64 items-center justify-center bg-gray-50"><RefreshCw className="h-8 w-8 animate-spin text-blue-600" /></div>;
 
     return (
-        <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                        <BarChart3 className="w-8 h-8 text-blue-600" />
-                        Analytics del Sitio
-                    </h1>
-                    <p className="text-gray-600 mt-1">Métricas detalladas de uso y comportamiento en Geobooker</p>
-                </div>
-                <div className="flex gap-3">
-                    <button
-                        onClick={loadAnalyticsData}
-                        className="flex items-center gap-2 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
-                    >
-                        <RefreshCw className="w-4 h-4" /> Actualizar
-                    </button>
-                    <Link
-                        to="/admin/ads"
-                        className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
-                    >
-                        📊 Ver Analytics de Ads
-                    </Link>
-                </div>
+        <div className="min-h-screen space-y-6 bg-gray-50 p-6">
+            <header className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+                <div><h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900"><BarChart3 className="h-8 w-8 text-blue-600" />Analytics del Sitio</h1><p className="mt-1 text-gray-600">Datos observados de Geobooker; sin proyecciones ni valores simulados.</p></div>
+                <div className="flex gap-3"><button onClick={loadData} className="flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300"><RefreshCw className="h-4 w-4" /> Actualizar</button><Link to="/admin/ads" className="rounded-lg bg-purple-600 px-4 py-2 text-white hover:bg-purple-700">Ver publicidad</Link></div>
+            </header>
+
+            {warnings.length > 0 ? <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><p className="font-semibold">Analytics funciona en modo de compatibilidad.</p><p className="mt-1">Aplica la migración indicada para reducir solicitudes y evitar límites de paginación. No se generaron datos ficticios.</p></div> : null}
+
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7">
+                <Metric title="Usuarios totales" value={overview.totalUsers} icon={Users} color="blue" />
+                <Metric title="Visitantes 7d" value={overview.uniqueVisitors} icon={TrendingUp} color="green" />
+                <Metric title="Búsquedas 7d" value={overview.searches} icon={Search} color="purple" />
+                <Metric title="Rutas 7d" value={overview.routes} icon={Navigation} color="orange" />
+                <Metric title="PWA 7d" value={overview.pwaInstalls} icon={Download} color="cyan" />
+                <Metric title="Premium" value={overview.premiumUsers} icon={Star} color="yellow" />
+                <Metric title="Negocios" value={overview.businessesRegistered} icon={MapPin} color="pink" />
             </div>
 
-            {/* KPI Cards - Row 1 */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-                <AnalyticsCard title="Usuarios" value={stats.totalUsers} icon={Users} color="blue" />
-                <AnalyticsCard title="Activos" value={stats.activeUsers} icon={TrendingUp} color="green" />
-                <AnalyticsCard title="Búsquedas" value={stats.totalSearches} icon={Search} color="purple" />
-                <AnalyticsCard title="Navegaciones" value={stats.navigationRequests} icon={Navigation} color="orange" />
-                <AnalyticsCard title="PWA Installs" value={stats.pwaInstalls} icon={Download} color="cyan" />
-                <AnalyticsCard title="Premium" value={stats.premiumUsers} icon={Star} color="yellow" />
-                <AnalyticsCard title="Negocios" value={stats.businessesRegistered} icon={MapPin} color="pink" />
-                <AnalyticsCard title="Tiempo" value={stats.avgSessionTime} icon={Clock} color="indigo" isTime />
+            <Panel title="Señales observadas" icon={Zap}>
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">{[
+                    ['Páginas vistas (7d)', overview.pageViews], ['Visitantes únicos (7d)', overview.uniqueVisitors],
+                    ['Búsquedas (7d)', overview.searches], ['Páginas hoy', overview.todayPageViews],
+                    ['Búsquedas hoy', overview.todaySearches], ['Rutas (7d)', overview.routes]
+                ].map(([label, value]) => <div key={label} className="rounded-xl bg-gray-50 p-4 text-center"><p className="text-2xl font-bold text-gray-900">{number(value).toLocaleString()}</p><p className="mt-1 text-xs text-gray-600">{label}</p></div>)}</div>
+            </Panel>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+                <Panel title="Actividad real de los últimos 7 días"><ResponsiveContainer width="100%" height={280}><LineChart data={overview.daily}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="date" /><YAxis allowDecimals={false} /><Tooltip /><Legend /><Line type="monotone" dataKey="usuarios" stroke="#3B82F6" strokeWidth={2} name="Sesiones únicas" /><Line type="monotone" dataKey="busquedas" stroke="#10B981" strokeWidth={2} name="Búsquedas" /><Line type="monotone" dataKey="navegaciones" stroke="#F59E0B" strokeWidth={2} name="Rutas" /></LineChart></ResponsiveContainer></Panel>
+                <Panel title="Actividad real por hora (7 días)">{overview.hourly.length ? <ResponsiveContainer width="100%" height={280}><BarChart data={overview.hourly}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="hora" tick={{ fontSize: 10 }} interval={2} /><YAxis allowDecimals={false} /><Tooltip /><Legend /><Bar dataKey="usuarios" fill="#3B82F6" name="Visitantes únicos" /><Bar dataKey="busquedas" fill="#10B981" name="Búsquedas" /></BarChart></ResponsiveContainer> : <Empty text="Todavía no hay datos horarios." />}<p className="mt-3 flex items-center gap-2 text-xs text-gray-500"><Clock className="h-4 w-4" /> Zona horaria: America/Mexico_City</p></Panel>
             </div>
 
-            {/* Comportamiento del Usuario - Quick Stats */}
-            <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-yellow-500" />
-                    Comportamiento del Usuario (Métricas Clave)
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                    {userBehavior.map((item, index) => (
-                        <div key={index} className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
-                            <div className="text-3xl mb-2">{item.icono}</div>
-                            <div className="text-2xl font-bold text-gray-900">{item.valor}</div>
-                            <div className="text-xs text-gray-600 mt-1">{item.metrica}</div>
-                        </div>
-                    ))}
-                </div>
+            <div className="grid gap-6 lg:grid-cols-2">
+                <Panel title="Negocios aprobados por categoría" icon={Target}>{overview.categories.length ? <ResponsiveContainer width="100%" height={260}><PieChart><Pie data={overview.categories} dataKey="count" nameKey="name" outerRadius={85} label={({ name, count }) => `${name}: ${count}`}>{overview.categories.map((entry, index) => <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />)}</Pie><Tooltip /></PieChart></ResponsiveContainer> : <Empty text="No hay categorías aprobadas." />}</Panel>
+                <Panel title="Top subcategorías" icon={Search}>{overview.subcategories.length ? <div className="max-h-[260px] space-y-2 overflow-y-auto">{overview.subcategories.map((item, index) => <div key={item.name} className="flex justify-between rounded-lg bg-gray-50 p-3 text-sm"><span>{index + 1}. {item.name}</span><strong>{item.count.toLocaleString()}</strong></div>)}</div> : <Empty text="No hay subcategorías aprobadas." />}</Panel>
             </div>
 
-            {/* Charts Row 1 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Traffic Over Time with Multiple Metrics */}
-                <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">📈 Actividad Últimos 7 Días</h3>
-                    <ResponsiveContainer width="100%" height={280}>
-                        <LineChart data={trafficData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="date" />
-                            <YAxis />
-                            <Tooltip />
-                            <Legend />
-                            <Line type="monotone" dataKey="usuarios" stroke="#3B82F6" strokeWidth={2} name="Usuarios" />
-                            <Line type="monotone" dataKey="busquedas" stroke="#10B981" strokeWidth={2} name="Búsquedas" />
-                            <Line type="monotone" dataKey="navegaciones" stroke="#F59E0B" strokeWidth={2} name="Rutas solicitadas" />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </div>
-
-                {/* Peak Hours - 24 HORAS */}
-                <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">🕐 Actividad por Hora (24h)</h3>
-                    <ResponsiveContainer width="100%" height={280}>
-                        <BarChart data={peakHours}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis
-                                dataKey="hora"
-                                tick={{ fontSize: 10 }}
-                                interval={2}
-                            />
-                            <YAxis />
-                            <Tooltip
-                                formatter={(value, name) => [value, name === 'usuarios' ? 'Usuarios' : 'Búsquedas']}
-                                labelFormatter={(label) => `Hora: ${label}`}
-                            />
-                            <Legend />
-                            <Bar dataKey="usuarios" fill="#3B82F6" name="Usuarios activos" radius={[2, 2, 0, 0]} />
-                            <Bar dataKey="busquedas" fill="#10B981" name="Búsquedas" radius={[2, 2, 0, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
-                    <div className="flex justify-between items-center mt-3 px-2">
-                        <p className="text-sm text-gray-500">
-                            💡 Picos: <strong>12pm-2pm</strong> y <strong>8pm-10pm</strong>
-                        </p>
-                        <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full">
-                            Zona horaria: México (CST)
-                        </span>
-                    </div>
-                </div>
+            <div className="grid gap-6 lg:grid-cols-2">
+                <Panel title="Búsquedas: 7 días contra los 7 anteriores" icon={Search}>{overview.searchesList.length ? <div className="space-y-3">{overview.searchesList.map((item, index) => <div key={item.term} className="flex items-center justify-between rounded-lg bg-gray-50 p-3"><span className="font-medium">{index + 1}. {item.term}</span><div className="flex items-center gap-3"><strong>{item.count}</strong><span className={`rounded px-2 py-1 text-xs font-bold ${trendClass(item.trend.direction)}`}>{item.trend.label}</span></div></div>)}</div> : <Empty text="No hubo búsquedas registradas." />}</Panel>
+                <Panel title="Indicadores del recorrido (7 días)" icon={ArrowRight}><p className="mb-4 text-xs text-gray-500">Son volúmenes del mismo periodo, no una atribución secuencial por persona. La barra indica acciones por cada 100 visitantes.</p><div className="space-y-3">{journey.map((item) => <div key={item.label}><div className="mb-1 flex justify-between text-sm"><span>{item.label}</span><span>{item.value.toLocaleString()} · {item.rate} por 100</span></div><div className="h-3 rounded-full bg-gray-200"><div className="h-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" style={{ width: `${Math.min(item.rate, 100)}%` }} /></div></div>)}</div></Panel>
             </div>
 
-            {/* Categories and Subcategories */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Categories */}
-                <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <Target className="w-5 h-5 text-blue-600" />
-                        Negocios por Categoría
-                    </h3>
-                    <ResponsiveContainer width="100%" height={250}>
-                        <PieChart>
-                            <Pie
-                                data={categoryStats}
-                                cx="50%"
-                                cy="50%"
-                                labelLine={false}
-                                label={({ name, count }) => `${name}: ${count}`}
-                                outerRadius={80}
-                                fill="#8884d8"
-                                dataKey="count"
-                            >
-                                {categoryStats.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                            </Pie>
-                            <Tooltip />
-                        </PieChart>
-                    </ResponsiveContainer>
-                </div>
-
-                {/* Subcategories */}
-                <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <Search className="w-5 h-5 text-purple-600" />
-                        Top 10 Subcategorías
-                    </h3>
-                    <div className="space-y-2 max-h-[250px] overflow-y-auto">
-                        {subcategoryStats.length > 0 ? subcategoryStats.map((subcat, index) => (
-                            <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                                <div className="flex items-center gap-2">
-                                    <span className="w-6 h-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xs font-bold">
-                                        {index + 1}
-                                    </span>
-                                    <span className="text-sm text-gray-700">{subcat.name}</span>
-                                </div>
-                                <span className="text-sm font-bold text-gray-900">{subcat.count}</span>
-                            </div>
-                        )) : (
-                            <p className="text-gray-500 text-center py-4">No hay datos de subcategorías aún</p>
-                        )}
-                    </div>
-                </div>
+            <div className="grid gap-6 lg:grid-cols-2">
+                <Panel title="Distribución geográfica real (30 días)" icon={MapPin}>{overview.countries.length ? <div className="space-y-3">{overview.countries.map((item, index) => <div key={`${item.name}-${index}`} className="flex justify-between rounded-lg bg-gray-50 p-3"><span className="font-medium">{item.name}</span><span className="text-right text-sm"><strong>{item.value.toFixed(1)}%</strong><br />{item.searches} búsquedas · {item.pageViews} páginas</span></div>)}</div> : <Empty text="Todavía no hay geografía suficiente." />}</Panel>
+                <Panel title="Dispositivos reales (30 días)" icon={Smartphone}>{overview.devices.some((item) => item.count > 0) ? <><ResponsiveContainer width="100%" height={210}><PieChart><Pie data={overview.devices} dataKey="count" nameKey="name" innerRadius={50} outerRadius={80}>{overview.devices.map((item) => <Cell key={item.name} fill={item.color} />)}</Pie><Tooltip /></PieChart></ResponsiveContainer><div className="space-y-2">{overview.devices.map((item) => <div key={item.name} className="flex justify-between text-sm"><span className="flex items-center gap-2">{item.name === 'Desktop' ? <Monitor className="h-4 w-4" /> : <Smartphone className="h-4 w-4" />}{item.name}</span><strong>{item.count.toLocaleString()} · {item.value}%</strong></div>)}</div></> : <Empty text="Todavía no hay dispositivos clasificados." />}</Panel>
             </div>
 
-            {/* Top Searches with Trends */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <Search className="w-5 h-5 text-green-600" />
-                        Búsquedas Más Populares (con Tendencia)
-                    </h3>
-                    <div className="space-y-3">
-                        {topSearches.map((search, index) => (
-                            <div key={index} className="flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-white rounded-lg border border-gray-100">
-                                <div className="flex items-center gap-3">
-                                    <span className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold text-sm">
-                                        {index + 1}
-                                    </span>
-                                    <span className="font-medium text-gray-900">{search.term}</span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-gray-600 font-semibold">{search.count}</span>
-                                    <span className={`text-xs font-bold px-2 py-1 rounded ${search.trend.startsWith('+') ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-                                        }`}>
-                                        {search.trend}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Conversion Funnel */}
-                <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <ArrowRight className="w-5 h-5 text-orange-600" />
-                        Embudo de Conversión
-                    </h3>
-                    <div className="space-y-3">
-                        {conversionFunnel.map((step, index) => (
-                            <div key={index} className="relative">
-                                <div className="flex items-center justify-between mb-1">
-                                    <span className="text-sm font-medium text-gray-700">{step.etapa}</span>
-                                    <span className="text-sm text-gray-600">
-                                        {step.cantidad.toLocaleString()} ({step.porcentaje}%)
-                                    </span>
-                                </div>
-                                <div className="w-full bg-gray-200 rounded-full h-3">
-                                    <div
-                                        className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all"
-                                        style={{ width: `${step.porcentaje}%` }}
-                                    ></div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-4 text-center">
-                        📊 Tasa de conversión a registro: <strong>3.2%</strong> | Meta: 5%
-                    </p>
-                </div>
-            </div>
-
-            {/* Geographic and Device Stats */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Geographic Distribution */}
-                <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <MapPin className="w-5 h-5 text-red-600" />
-                        Zonas de Mayor Búsqueda
-                    </h3>
-                    <div className="space-y-3">
-                        {geoDistribution.map((city, index) => (
-                            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                <div className="flex items-center gap-3">
-                                    <div
-                                        className="w-4 h-4 rounded-full"
-                                        style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                                    ></div>
-                                    <span className="font-medium text-gray-900">{city.name}</span>
-                                </div>
-                                <div className="text-right">
-                                    <span className="font-bold text-gray-900">{city.value}%</span>
-                                    <span className="text-xs text-gray-500 ml-2">({city.searches} búsquedas)</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Device Stats */}
-                <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <Smartphone className="w-5 h-5 text-blue-600" />
-                        Uso por Dispositivo
-                    </h3>
-                    <div className="flex items-center justify-center mb-6">
-                        <ResponsiveContainer width={200} height={200}>
-                            <PieChart>
-                                <Pie
-                                    data={deviceStats}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={50}
-                                    outerRadius={80}
-                                    fill="#8884d8"
-                                    dataKey="value"
-                                >
-                                    {deviceStats.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
-                    <div className="space-y-3">
-                        {deviceStats.map((device, index) => (
-                            <div key={index} className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <div
-                                        className="w-4 h-4 rounded-full"
-                                        style={{ backgroundColor: device.color }}
-                                    ></div>
-                                    {device.name === 'Móvil' && <Smartphone className="w-4 h-4 text-gray-600" />}
-                                    {device.name === 'Desktop' && <Monitor className="w-4 h-4 text-gray-600" />}
-                                    {device.name === 'Tablet' && <Smartphone className="w-4 h-4 text-gray-600" />}
-                                    <span className="text-gray-700">{device.name}</span>
-                                </div>
-                                <span className="font-bold text-gray-900">{device.value}%</span>
-                            </div>
-                        ))}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-4 text-center">
-                        📱 <strong>68%</strong> de usuarios acceden desde móvil - PWA optimizada
-                    </p>
-                </div>
-            </div>
-
-            {/* Insights Box */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
-                <h3 className="text-xl font-bold mb-4">💡 Insights para Ventas</h3>
-                <div className="grid md:grid-cols-3 gap-4">
-                    <div className="bg-white/10 rounded-lg p-4">
-                        <h4 className="font-bold mb-2">Horario Óptimo</h4>
-                        <p className="text-sm text-blue-100">
-                            Los usuarios son más activos entre <strong>12pm-2pm</strong> y <strong>8pm-10pm</strong>.
-                            Ideal para campañas de alto impacto.
-                        </p>
-                    </div>
-                    <div className="bg-white/10 rounded-lg p-4">
-                        <h4 className="font-bold mb-2">Categorías Trending</h4>
-                        <p className="text-sm text-blue-100">
-                            <strong>Talleres mecánicos</strong> (+23%) y <strong>Veterinarias</strong> (+18%)
-                            muestran mayor crecimiento de búsquedas.
-                        </p>
-                    </div>
-                    <div className="bg-white/10 rounded-lg p-4">
-                        <h4 className="font-bold mb-2">Zonas de Oportunidad</h4>
-                        <p className="text-sm text-blue-100">
-                            <strong>CDMX y Guadalajara</strong> representan 53% del tráfico.
-                            Ciudades secundarias tienen potencial de crecimiento.
-                        </p>
-                    </div>
-                </div>
-            </div>
+            <section className="rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white"><h2 className="mb-4 text-xl font-bold">Insights verificables</h2><div className="grid gap-4 md:grid-cols-3"><Insight title="Horario con más visitantes" value={peakHour ? `${peakHour.hora} · ${peakHour.usuarios} visitantes` : 'Sin datos suficientes'} /><Insight title="Categoría con más perfiles" value={overview.categories[0] ? `${overview.categories[0].name} · ${overview.categories[0].count}` : 'Sin datos suficientes'} /><Insight title="País con más actividad" value={overview.countries[0] ? `${overview.countries[0].name} · ${overview.countries[0].value.toFixed(1)}%` : 'Sin datos suficientes'} /></div></section>
         </div>
     );
 }
 
-function AnalyticsCard({ title, value, icon: Icon, color, isTime }) {
-    const colors = {
-        blue: 'bg-blue-50 text-blue-600 border-blue-200',
-        green: 'bg-green-50 text-green-600 border-green-200',
-        purple: 'bg-purple-50 text-purple-600 border-purple-200',
-        orange: 'bg-orange-50 text-orange-600 border-orange-200',
-        cyan: 'bg-cyan-50 text-cyan-600 border-cyan-200',
-        yellow: 'bg-yellow-50 text-yellow-600 border-yellow-200',
-        pink: 'bg-pink-50 text-pink-600 border-pink-200',
-        indigo: 'bg-indigo-50 text-indigo-600 border-indigo-200',
-    };
-
-    return (
-        <div className={`rounded-xl border-2 p-4 ${colors[color]}`}>
-            <div className="flex items-center justify-between mb-2">
-                <Icon className="w-5 h-5 opacity-70" />
-            </div>
-            <p className="text-2xl font-bold">{isTime ? value : value.toLocaleString()}</p>
-            <p className="text-xs opacity-70">{title}</p>
-        </div>
-    );
+function Panel({ title, icon, children }) {
+    return <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"><h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-900">{icon ? React.createElement(icon, { className: 'h-5 w-5 text-blue-600' }) : null}{title}</h2>{children}</section>;
 }
 
+function Empty({ text }) {
+    return <div className="flex h-48 items-center justify-center rounded-lg bg-gray-50 px-4 text-center text-sm text-gray-500">{text}</div>;
+}
+
+function Insight({ title, value }) {
+    return <div className="rounded-lg bg-white/10 p-4"><h3 className="font-bold">{title}</h3><p className="mt-2 text-sm text-blue-100">{value}</p></div>;
+}
+
+function Metric({ title, value, icon, color }) {
+    const colors = { blue: 'border-blue-200 bg-blue-50 text-blue-600', green: 'border-green-200 bg-green-50 text-green-600', purple: 'border-purple-200 bg-purple-50 text-purple-600', orange: 'border-orange-200 bg-orange-50 text-orange-600', cyan: 'border-cyan-200 bg-cyan-50 text-cyan-600', yellow: 'border-yellow-200 bg-yellow-50 text-yellow-700', pink: 'border-pink-200 bg-pink-50 text-pink-600' };
+    return <div className={`rounded-xl border-2 p-4 ${colors[color]}`}>{React.createElement(icon, { className: 'mb-2 h-5 w-5 opacity-70' })}<p className="text-2xl font-bold">{number(value).toLocaleString()}</p><p className="text-xs opacity-70">{title}</p></div>;
+}

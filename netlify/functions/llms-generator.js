@@ -71,7 +71,7 @@ const commonLinks = (origin) => [
   '- ' + origin + '/advertise',
   '- ' + origin + '/b2b-connect',
   '- ' + origin + '/download',
-  '- ' + origin + '/reclamar-negocio'
+  '- ' + origin + '/claim'
 ];
 
 exports.handler = async (event) => {

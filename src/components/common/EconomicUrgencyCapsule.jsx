@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
  * Componente de Cápsulas Económicas y Posicionamiento vs Google Maps
  * Destaca la urgencia laboral, poder adquisitivo y el rol de Geobooker como motor económico local.
  */
-export default function EconomicUrgencyCapsule({ showMatrix = true, compact = false }) {
+export default function EconomicUrgencyCapsule({ showMatrix = true }) {
   const { i18n } = useTranslation();
   const isSpanish = i18n.language === 'es' || !i18n.language.startsWith('en');
   const [activeTab, setActiveTab] = useState('pensions');
@@ -113,7 +113,7 @@ export default function EconomicUrgencyCapsule({ showMatrix = true, compact = fa
 
             <div className="flex flex-wrap items-center gap-3">
               <Link
-                to="/reclamar-negocio"
+                to="/claim"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs md:text-sm font-bold bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:opacity-90 transition-opacity shadow-sm"
               >
                 {isSpanish ? 'Reclamar Negocio Gratis' : 'Claim Free Profile'}

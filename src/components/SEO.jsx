@@ -1,7 +1,7 @@
 // src/components/SEO.jsx
 import { useEffect } from 'react';
 import { COMPANY_INFO, CONTACT_EMAILS, SOCIAL_LINKS } from '../config/contacts';
-import { DOMAIN_STRATEGY, buildCanonicalUrl, getAlternateUrls, getCanonicalOrigin, getMarketLanguage } from '../config/domainStrategy';
+import { buildCanonicalUrl, getAlternateUrls, getCanonicalOrigin, getMarketLanguage } from '../config/domainStrategy';
 
 const SEO = ({
     title = 'Geobooker - Busqueda local, negocios y servicios cerca de ti',
@@ -187,40 +187,19 @@ const addWebAppSchema = (currentLang) => {
         applicationCategory: 'BusinessApplication',
         operatingSystem: 'Any',
         browserRequirements: 'Requires JavaScript. Requires HTML5.',
-        url: DOMAIN_STRATEGY.globalOrigin,
-        inLanguage: ['en', 'es', 'pt', 'de', 'fr', 'it', 'nl', 'ja', 'ko', 'sv'],
-        areaServed: [
-            { '@type': 'Country', name: 'Mexico' },
-            { '@type': 'Country', name: 'United States' },
-            { '@type': 'Country', name: 'United Kingdom' },
-            { '@type': 'Country', name: 'Canada' },
-            { '@type': 'Country', name: 'Germany' },
-            { '@type': 'Country', name: 'France' },
-            { '@type': 'Country', name: 'Italy' },
-            { '@type': 'Country', name: 'Spain' },
-            { '@type': 'Country', name: 'Netherlands' },
-            { '@type': 'Country', name: 'Japan' },
-            { '@type': 'Country', name: 'Australia' },
-            { '@type': 'Country', name: 'Switzerland' },
-            { '@type': 'Country', name: 'Singapore' },
-            { '@type': 'Country', name: 'South Korea' },
-            { '@type': 'Country', name: 'United Arab Emirates' },
-            { '@type': 'Country', name: 'Ireland' },
-            { '@type': 'Country', name: 'Sweden' },
-            { '@type': 'Country', name: 'Brazil' },
-            { '@type': 'Country', name: 'Colombia' },
-            { '@type': 'Country', name: 'Chile' }
-        ],
+        url: getCanonicalOrigin(),
+        inLanguage: ['es', 'en'],
+        areaServed: { '@type': 'Country', name: 'Mexico' },
         offers: {
             '@type': 'Offer',
             price: '0',
-            priceCurrency: 'USD',
+            priceCurrency: 'MXN',
             availability: 'https://schema.org/InStock'
         },
         author: {
             '@type': 'Organization',
             name: 'Geobooker',
-            url: 'https://geobooker.com'
+            url: getCanonicalOrigin()
         }
     };
 
@@ -241,11 +220,10 @@ const addOrganizationSchema = () => {
         name: COMPANY_INFO.name,
         alternateName: COMPANY_INFO.legalName,
         url: COMPANY_INFO.website,
-        logo: `${DOMAIN_STRATEGY.globalOrigin}/images/logo-main.png`,
-        description: 'Geobooker connects users, businesses and brands through local search, visibility and measurable commercial activation.',
+        logo: `${getCanonicalOrigin()}/images/geobooker-logo.svg`,
+        description: 'Geobooker ayuda a encontrar negocios, servicios, productos y espacios comerciales por ubicación y categoría.',
         foundingDate: String(COMPANY_INFO.founded),
         sameAs: [
-            'https://geobooker.com',
             SOCIAL_LINKS.facebook,
             SOCIAL_LINKS.instagram,
             SOCIAL_LINKS.twitter,
@@ -259,28 +237,8 @@ const addOrganizationSchema = () => {
             contactType: 'customer support',
             availableLanguage: ['Spanish', 'English']
         },
-        areaServed: [
-            { '@type': 'Country', name: 'Mexico' },
-            { '@type': 'Country', name: 'United States' },
-            { '@type': 'Country', name: 'United Kingdom' },
-            { '@type': 'Country', name: 'Canada' },
-            { '@type': 'Country', name: 'Germany' },
-            { '@type': 'Country', name: 'France' },
-            { '@type': 'Country', name: 'Italy' },
-            { '@type': 'Country', name: 'Spain' },
-            { '@type': 'Country', name: 'Netherlands' },
-            { '@type': 'Country', name: 'Japan' },
-            { '@type': 'Country', name: 'Australia' },
-            { '@type': 'Country', name: 'Switzerland' },
-            { '@type': 'Country', name: 'Singapore' },
-            { '@type': 'Country', name: 'South Korea' },
-            { '@type': 'Country', name: 'Ireland' },
-            { '@type': 'Country', name: 'Sweden' },
-            { '@type': 'Country', name: 'Brazil' },
-            { '@type': 'Country', name: 'Colombia' },
-            { '@type': 'Country', name: 'Chile' }
-        ],
-        knowsLanguage: ['es', 'en', 'pt', 'de', 'fr', 'it', 'nl', 'ja', 'ko', 'sv']
+        areaServed: { '@type': 'Country', name: 'Mexico' },
+        knowsLanguage: ['es', 'en']
     };
 
     const script = document.createElement('script');

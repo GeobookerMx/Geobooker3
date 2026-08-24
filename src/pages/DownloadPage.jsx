@@ -1,8 +1,15 @@
-// src/pages/DownloadPage.jsx
-// Landing de descarga para QR general, Android, iPhone y PWA
-
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Download,
+  MapPin,
+  Search,
+  ShieldCheck,
+  Smartphone,
+  Store,
+} from 'lucide-react';
 import SEO from '../components/SEO';
 import AppQRCode from '../components/common/AppQRCode';
 import {
@@ -14,64 +21,71 @@ import {
 import { captureQrAttribution, getStoredQrAttribution } from '../services/qrAttributionService';
 import { trackAppDownloadIntent } from '../services/analyticsService';
 
+const detectPlatform = () => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  if (/iphone|ipad|ipod/.test(userAgent)) return 'ios';
+  if (/android/.test(userAgent)) return 'android';
+  return 'desktop';
+};
+
 const DownloadPage = () => {
-  const [platform, setPlatform] = useState('unknown');
+  const [platform, setPlatform] = useState('desktop');
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [attribution, setAttribution] = useState(() => getStoredQrAttribution());
 
   useEffect(() => {
-    const userAgent = navigator.userAgent.toLowerCase();
-    if (/iphone|ipad|ipod/.test(userAgent)) setPlatform('ios');
-    else if (/android/.test(userAgent)) setPlatform('android');
-    else if (/windows/.test(userAgent)) setPlatform('windows');
-    else if (/macintosh|mac os x/.test(userAgent)) setPlatform('mac');
+    setPlatform(detectPlatform());
+    setIsInstalled(window.matchMedia('(display-mode: standalone)').matches);
 
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    const handleBeforeInstall = (event) => {
+      event.preventDefault();
+      setDeferredPrompt(event);
+    };
+    const handleInstalled = () => {
       setIsInstalled(true);
-    }
-
-    const handleBeforeInstall = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(null);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('appinstalled', handleInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('appinstalled', handleInstalled);
+    };
   }, []);
 
   useEffect(() => {
     const captured = captureQrAttribution(window.location.href);
-    if (captured) {
-      setAttribution(captured);
-    }
+    if (captured) setAttribution(captured);
   }, []);
 
-  const handleInstall = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') setIsInstalled(true);
-    setDeferredPrompt(null);
-  };
+  const trackingSource = attribution?.utm_source || 'download_page';
 
-  const appSchema = [
+  const platformCards = useMemo(() => ([
     {
-      '@context': 'https://schema.org',
-      '@type': 'MobileApplication',
-      name: 'Geobooker',
-      applicationCategory: 'BusinessApplication',
-      operatingSystem: 'Android, iOS, Web',
-      url: APP_LINKS.downloadHub,
-      downloadUrl: APP_LINKS.downloadHub,
-      offers: {
-        '@type': 'Offer',
-        price: '0',
-        priceCurrency: 'MXN',
-      },
+      id: 'android',
+      title: 'Android',
+      storeName: 'Google Play',
+      available: hasAndroidStoreLink(),
+      href: APP_LINKS.androidStoreUrl,
+      target: 'android_store',
+      description: 'Instala Geobooker desde Google Play y accede rápidamente a la búsqueda y al mapa.',
+      className: 'from-emerald-500 to-green-600',
     },
-  ];
+    {
+      id: 'ios',
+      title: 'iPhone y iPad',
+      storeName: 'App Store',
+      available: hasIosStoreLink(),
+      href: APP_LINKS.iosStoreUrl,
+      target: 'ios_store',
+      description: 'Descarga la app oficial para iPhone y iPad desde App Store.',
+      className: 'from-slate-700 to-slate-950',
+    },
+  ]), []);
 
+  const preferredCard = platformCards.find((card) => card.id === platform && card.available);
   const universalQrUrl = buildTrackedDownloadUrl({
     platform: 'generic',
     source: 'qr',
@@ -80,248 +94,190 @@ const DownloadPage = () => {
     target: 'hub',
   });
 
-  const handleDownloadClick = async (card) => {
-    await trackAppDownloadIntent({
-      target: card.id === 'android' ? 'android_store' : card.id === 'ios' ? 'ios_store' : 'hub',
+  const trackStoreClick = (card) => {
+    trackAppDownloadIntent({
+      target: card.target,
       platformHint: card.id,
-      source: attribution?.utm_source || 'download_page',
+      source: trackingSource,
       campaign: attribution?.utm_campaign || `${card.id}_store`,
     });
   };
 
-  const platformCards = [
-    {
-      id: 'android',
-      title: 'Android',
-      badge: hasAndroidStoreLink() ? 'Google Play listo' : 'PWA disponible hoy',
-      description: hasAndroidStoreLink()
-        ? 'Escanea para abrir Google Play o descargar directamente la app de Geobooker.'
-        : 'Mientras conectamos Google Play, este QR lleva a la instalación web optimizada para Android.',
-      qrValue: buildTrackedDownloadUrl({
-        platform: 'android',
-        source: 'qr',
-        medium: 'scan',
-        campaign: 'android_store',
-        target: hasAndroidStoreLink() ? 'android_store' : 'hub',
-      }),
-      actionHref: hasAndroidStoreLink() ? APP_LINKS.androidStoreUrl : APP_LINKS.downloadHub,
-      actionLabel: hasAndroidStoreLink() ? 'Abrir en Google Play' : 'Instalar versión web',
-      gradient: 'from-green-500 to-emerald-600',
-    },
-    {
-      id: 'ios',
-      title: 'iPhone / iPad',
-      badge: hasIosStoreLink() ? 'App Store listo' : 'PWA disponible hoy',
-      description: hasIosStoreLink()
-        ? 'Escanea para abrir App Store o descargar la app de Geobooker en iPhone y iPad.'
-        : 'Mientras conectamos App Store, este QR lleva a la guía de instalación desde Safari.',
-      qrValue: buildTrackedDownloadUrl({
-        platform: 'ios',
-        source: 'qr',
-        medium: 'scan',
-        campaign: 'ios_store',
-        target: hasIosStoreLink() ? 'ios_store' : 'hub',
-      }),
-      actionHref: hasIosStoreLink() ? APP_LINKS.iosStoreUrl : APP_LINKS.downloadHub,
-      actionLabel: hasIosStoreLink() ? 'Abrir en App Store' : 'Ver guía para iPhone',
-      gradient: 'from-slate-700 to-slate-900',
-    },
-  ];
+  const handlePwaInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setIsInstalled(true);
+      await trackAppDownloadIntent({
+        target: 'pwa_install',
+        platformHint: platform,
+        source: trackingSource,
+        campaign: attribution?.utm_campaign || 'pwa_install',
+      });
+    }
+    setDeferredPrompt(null);
+  };
 
-  const renderIOSInstructions = () => (
-    <div className="bg-slate-900/80 rounded-2xl p-6 border border-white/10">
-      <h3 className="text-lg font-bold text-white mb-4">Instalar en iPhone o iPad</h3>
-      <ol className="space-y-3 text-slate-300 text-sm">
-        <li>1. Abre Geobooker en Safari.</li>
-        <li>2. Toca el botón Compartir.</li>
-        <li>3. Elige "Añadir a pantalla de inicio".</li>
-        <li>4. Confirma con "Añadir".</li>
-      </ol>
-    </div>
-  );
-
-  const renderAndroidInstructions = () => (
-    <div className="bg-slate-900/80 rounded-2xl p-6 border border-white/10">
-      <h3 className="text-lg font-bold text-white mb-4">Instalar en Android</h3>
-      {deferredPrompt ? (
-        <button
-          onClick={handleInstall}
-          className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-xl font-bold hover:shadow-lg transition"
-        >
-          Instalar app ahora
-        </button>
-      ) : (
-        <ol className="space-y-3 text-slate-300 text-sm">
-          <li>1. Abre Geobooker en Chrome.</li>
-          <li>2. Toca el menú del navegador.</li>
-          <li>3. Elige "Instalar app" o "Añadir a inicio".</li>
-        </ol>
-      )}
-    </div>
-  );
+  const structuredData = [{
+    '@context': 'https://schema.org',
+    '@type': 'MobileApplication',
+    name: 'Geobooker',
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'Android, iOS, Web',
+    url: APP_LINKS.downloadHub,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'MXN' },
+  }];
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#1e3a8a,_#0f172a_55%,_#020617)]">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#1e3a8a,_#0f172a_55%,_#020617)] text-white">
       <SEO
-        title="Descargar Geobooker App | Android, iPhone y PWA"
-        description="Descarga Geobooker en Android, iPhone o instala la PWA. Escanea el QR y encuentra negocios cerca de ti."
+        title="Descargar Geobooker | Android, iPhone y PWA"
+        description="Descarga Geobooker para buscar negocios, servicios, productos y espacios comerciales cerca de ti."
         url={APP_LINKS.downloadHub}
-        structuredData={appSchema}
+        structuredData={structuredData}
       />
 
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-400/20 text-cyan-300 px-4 py-2 rounded-full text-sm font-semibold mb-6">
-            QR oficial de descarga Geobooker
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
+        <header className="mx-auto max-w-3xl text-center">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-400/25 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200">
+            <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+            Descarga oficial de Geobooker
           </div>
-          <h1 className="text-4xl md:text-6xl font-black text-white leading-tight">
-            Descarga Geobooker en Android, iPhone o como PWA
+          <h1 className="text-4xl font-black leading-tight sm:text-6xl">
+            Encuentra lo que necesitas cerca de ti
           </h1>
-          <p className="text-slate-300 text-lg mt-5">
-            Usa el QR general como punto principal de descarga. Los links quedan como respaldo, pero el flujo ideal será escanear y medir.
+          <p className="mt-5 text-lg text-slate-300">
+            Busca negocios, servicios, productos y espacios comerciales desde la app o desde cualquier navegador.
           </p>
-        </div>
 
-        <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-8 mt-12">
-          <section className="bg-white/8 backdrop-blur-xl border border-white/10 rounded-[32px] p-8 shadow-2xl">
-            <div className="flex flex-col md:flex-row items-center gap-8">
-              <AppQRCode
-                size={220}
-                darkMode={true}
-                value={universalQrUrl}
-                label="Escanea para descargar"
-                subtitle="QR principal listo para campañas, volanteo y CRM"
-                className="shrink-0"
-              />
+          {preferredCard ? (
+            <a
+              href={preferredCard.href}
+              onClick={() => trackStoreClick(preferredCard)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-7 inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-6 py-4 font-bold text-slate-950 shadow-lg transition hover:bg-cyan-400"
+            >
+              <Download className="h-5 w-5" aria-hidden="true" />
+              Descargar en {preferredCard.storeName}
+            </a>
+          ) : deferredPrompt && !isInstalled ? (
+            <button
+              type="button"
+              onClick={handlePwaInstall}
+              className="mt-7 inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-6 py-4 font-bold text-slate-950 shadow-lg transition hover:bg-cyan-400"
+            >
+              <Download className="h-5 w-5" aria-hidden="true" />
+              Instalar Geobooker
+            </button>
+          ) : null}
+        </header>
 
-              <div className="text-center md:text-left">
-                <div className="inline-flex items-center rounded-full bg-emerald-500/15 text-emerald-300 px-3 py-1 text-xs font-bold uppercase tracking-wide mb-4">
-                  Descarga universal
+        <section className="mt-12 grid gap-8 rounded-[32px] border border-white/10 bg-white/[0.07] p-7 shadow-2xl backdrop-blur-xl lg:grid-cols-[0.8fr_1.2fr] lg:p-10">
+          <AppQRCode
+            size={220}
+            darkMode
+            value={universalQrUrl}
+            label="Escanea para elegir tu descarga"
+            subtitle="Android, iPhone o acceso web"
+            className="self-center"
+          />
+
+          <div>
+            <p className="text-sm font-bold uppercase tracking-wider text-emerald-300">Un acceso, tres opciones</p>
+            <h2 className="mt-2 text-3xl font-bold">Lleva Geobooker contigo</h2>
+            <p className="mt-4 text-slate-300">
+              El QR abre esta página y te permite elegir la tienda correcta. Cada clic de descarga se registra de forma agregada para mejorar la experiencia, sin afirmar que una instalación ocurrió hasta que la plataforma la confirme.
+            </p>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              {[
+                [Search, 'Búsqueda por necesidad'],
+                [MapPin, 'Resultados por ubicación'],
+                [Store, 'Negocios y espacios'],
+              ].map(([Icon, label]) => (
+                <div key={label} className="rounded-2xl border border-white/10 bg-slate-950/45 p-4">
+                  {React.createElement(Icon, { className: 'mb-3 h-6 w-6 text-cyan-300', 'aria-hidden': true })}
+                  <p className="text-sm font-semibold">{label}</p>
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-3">
-                  Un solo QR maestro para campañas, flyers, sucursales, promotores y CRM
-                </h2>
-                <p className="text-slate-300 mb-5">
-                  Este QR ya queda preparado con parámetros de rastreo para que después podamos generar variantes profesionales por canal, ciudad, promotor o campaña.
-                </p>
-                <div className="grid sm:grid-cols-3 gap-3">
-                  <div className="bg-slate-900/60 rounded-2xl p-4 border border-white/10">
-                    <div className="text-2xl mb-2">📲</div>
-                    <p className="text-white font-semibold text-sm">Instalación móvil</p>
-                  </div>
-                  <div className="bg-slate-900/60 rounded-2xl p-4 border border-white/10">
-                    <div className="text-2xl mb-2">🗺️</div>
-                    <p className="text-white font-semibold text-sm">Mapa listo al abrir</p>
-                  </div>
-                  <div className="bg-slate-900/60 rounded-2xl p-4 border border-white/10">
-                    <div className="text-2xl mb-2">🎯</div>
-                    <p className="text-white font-semibold text-sm">Listo para CRM futuro</p>
-                  </div>
-                </div>
-                <p className="text-slate-400 text-xs mt-5">
-                  Respaldo por link: <span className="text-cyan-300">geobooker.com.mx/download</span>
-                </p>
-              </div>
+              ))}
             </div>
-          </section>
-
-          <aside className="space-y-4">
-            {platform === 'android' && !isInstalled ? renderAndroidInstructions() : null}
-            {platform === 'ios' && !isInstalled ? renderIOSInstructions() : null}
 
             {isInstalled ? (
-              <div className="bg-emerald-500/15 border border-emerald-400/30 rounded-2xl p-6">
-                <h3 className="text-white font-bold text-xl">App instalada</h3>
-                <p className="text-emerald-100 mt-2">Geobooker ya está lista en tu pantalla de inicio.</p>
-                <Link
-                  to="/"
-                  className="inline-flex mt-4 bg-white text-emerald-700 px-5 py-3 rounded-xl font-bold"
-                >
-                  Abrir Geobooker
-                </Link>
+              <div className="mt-6 flex items-center gap-2 rounded-xl border border-emerald-400/25 bg-emerald-500/10 p-4 text-emerald-100">
+                <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+                Geobooker ya está instalada en este dispositivo.
               </div>
             ) : null}
-
-            <div className="bg-slate-900/80 rounded-2xl p-6 border border-white/10">
-              <h3 className="text-white font-bold text-xl mb-3">Estado actual para Fase 2</h3>
-              <ul className="space-y-2 text-sm text-slate-300">
-                <li>QR general ya es el activo principal de descarga.</li>
-                <li>QRs por plataforma ya apuntan a tiendas reales.</li>
-                <li>La base de tracking queda lista para CRM y campañas físicas.</li>
-              </ul>
-              {attribution ? (
-                <div className="mt-4 rounded-xl bg-white/5 border border-white/10 p-4 text-xs text-slate-300">
-                  <p className="font-semibold text-white mb-2">Atribución detectada</p>
-                  <p>source: {attribution.utm_source || 'N/D'}</p>
-                  <p>medium: {attribution.utm_medium || 'N/D'}</p>
-                  <p>campaign: {attribution.utm_campaign || 'N/D'}</p>
-                  <p>platform: {attribution.platform_hint || 'N/D'}</p>
-                </div>
-              ) : null}
-            </div>
-          </aside>
-        </div>
-
-        <section className="grid md:grid-cols-2 gap-6 mt-10">
-          {platformCards.map((card) => (
-            <div key={card.id} className="bg-white rounded-[28px] p-6 shadow-xl">
-              <div className={`inline-flex bg-gradient-to-r ${card.gradient} text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide mb-4`}>
-                {card.badge}
-              </div>
-              <div className="flex flex-col lg:flex-row items-center gap-6">
-                <AppQRCode
-                  size={148}
-                  value={card.qrValue}
-                  label={`QR ${card.title}`}
-                  subtitle={hasAndroidStoreLink() || hasIosStoreLink() ? 'Abre la mejor ruta disponible' : 'Usa la landing de descarga'}
-                />
-                <div className="text-center lg:text-left">
-                  <h3 className="text-2xl font-bold text-slate-900">{card.title}</h3>
-                  <p className="text-slate-600 mt-3">{card.description}</p>
-                  <a
-                    href={card.actionHref}
-                    onClick={() => handleDownloadClick(card)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex mt-5 text-sm text-slate-700 underline underline-offset-4 hover:text-slate-900 transition"
-                  >
-                    Link de respaldo: {card.actionLabel}
-                  </a>
-                </div>
-              </div>
-            </div>
-          ))}
-        </section>
-
-        <section className="mt-10 bg-white/8 backdrop-blur-xl border border-white/10 rounded-[32px] p-8">
-          <h2 className="text-2xl font-bold text-white mb-4">Base profesional para QR y CRM</h2>
-          <div className="grid md:grid-cols-2 gap-6 text-slate-300 text-sm">
-            <div className="bg-slate-900/60 rounded-2xl p-5 border border-white/10">
-              <h3 className="text-white font-semibold mb-3">Ya resuelto</h3>
-              <ul className="space-y-2">
-                <li>URLs oficiales de Google Play y App Store conectadas.</li>
-                <li>QR general de descarga priorizado sobre links.</li>
-                <li>UTMs y parámetros base listos para campañas futuras.</li>
-              </ul>
-            </div>
-            <div className="bg-slate-900/60 rounded-2xl p-5 border border-white/10">
-              <h3 className="text-white font-semibold mb-3">Siguiente nivel CRM</h3>
-              <ul className="space-y-2">
-                <li>Generar QR por sucursal, promotor, feria, volante o campaña.</li>
-                <li>Guardar escaneos en una tabla de leads/attribution.</li>
-                <li>Conectar esos QR a WhatsApp, email o journeys comerciales.</li>
-              </ul>
-            </div>
           </div>
         </section>
 
+        <section className="mt-8 grid gap-6 md:grid-cols-2" aria-label="Opciones de descarga">
+          {platformCards.map((card) => {
+            const qrValue = buildTrackedDownloadUrl({
+              platform: card.id,
+              source: 'qr',
+              medium: 'scan',
+              campaign: `${card.id}_store`,
+              target: card.target,
+            });
+
+            return (
+              <article key={card.id} className="rounded-[28px] bg-white p-6 text-slate-900 shadow-xl">
+                <div className={`inline-flex rounded-full bg-gradient-to-r ${card.className} px-3 py-1 text-xs font-bold uppercase tracking-wide text-white`}>
+                  Disponible
+                </div>
+                <div className="mt-5 flex flex-col items-center gap-6 sm:flex-row">
+                  <AppQRCode
+                    size={136}
+                    value={qrValue}
+                    label={`Abrir ${card.storeName}`}
+                    subtitle="Enlace oficial"
+                  />
+                  <div className="text-center sm:text-left">
+                    <h2 className="text-2xl font-bold">{card.title}</h2>
+                    <p className="mt-3 text-sm text-slate-600">{card.description}</p>
+                    <a
+                      href={card.href}
+                      onClick={() => trackStoreClick(card)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-700"
+                    >
+                      <Smartphone className="h-4 w-4" aria-hidden="true" />
+                      Abrir {card.storeName}
+                    </a>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </section>
+
+        {deferredPrompt && !isInstalled ? (
+          <section className="mt-8 rounded-2xl border border-white/10 bg-slate-900/70 p-6 text-center">
+            <h2 className="text-xl font-bold">También puedes instalar la versión web</h2>
+            <p className="mt-2 text-sm text-slate-300">Crea un acceso directo en tu dispositivo sin salir del navegador.</p>
+            <button
+              type="button"
+              onClick={handlePwaInstall}
+              className="mt-5 inline-flex items-center gap-2 rounded-xl border border-cyan-300/40 px-5 py-3 font-semibold text-cyan-200 transition hover:bg-cyan-400/10"
+            >
+              <Download className="h-4 w-4" aria-hidden="true" />
+              Instalar versión web
+            </button>
+          </section>
+        ) : null}
+
         <div className="mt-10 text-center">
-          <Link to="/" className="text-cyan-300 hover:text-cyan-200 font-medium">
-            ← Volver al inicio
+          <Link to="/" className="inline-flex items-center gap-2 font-medium text-cyan-300 hover:text-cyan-200">
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            Volver al inicio
           </Link>
         </div>
       </div>
-    </div>
+    </main>
   );
 };
 

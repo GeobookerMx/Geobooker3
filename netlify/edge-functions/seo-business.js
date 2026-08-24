@@ -1,103 +1,136 @@
+/* global Netlify, HTMLRewriter */
+
+const BUSINESS_SELECT = 'name,description,category,subcategory,address,city,state_code,postal_code,country_code,website,phone,slug,is_verified,updated_at';
+const CANDIDATE_SELECT = 'name,category_raw,category_normalized,subcategory,address_line,city_name,state_code,postal_code,country_code,website,phone,slug,attribution_text,updated_at';
+const INTERNATIONAL_SELECT = 'name,description,category,subcategory,address,city,state_code,postal_code,country_code,website,phone,slug,is_verified,attribution_text,updated_at';
+
+const safeJson = (value) => JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
+
+const titleCase = (value = '') => String(value)
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+
+const fetchFirst = async ({ supabaseUrl, supabaseKey, table, select, lookup, filters = [] }) => {
+    const params = new URLSearchParams({ select, limit: '1', ...lookup });
+    filters.forEach(([key, value]) => params.append(key, value));
+    const response = await fetch(`${supabaseUrl}/rest/v1/${table}?${params.toString()}`, {
+        headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` }
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return Array.isArray(data) ? data[0] || null : null;
+};
+
+const normalizeBusiness = (record, source) => {
+    if (!record) return null;
+    if (source === 'candidate') {
+        return {
+            ...record,
+            description: null,
+            category: record.category_normalized || record.category_raw || record.subcategory,
+            address: record.address_line,
+            city: record.city_name,
+            is_verified: false,
+            sourceLabel: record.attribution_text
+        };
+    }
+    return { ...record, sourceLabel: record.attribution_text || null };
+};
+
 export default async (request, context) => {
-    // Extraer el path
     const url = new URL(request.url);
-    const pathParts = url.pathname.split('/');
+    const pathParts = url.pathname.split('/').filter(Boolean);
+    if (pathParts[0] !== 'business' || !pathParts[1]) return context.next();
 
-    // Asegurar que estamos en /business/:id
-    if (pathParts[1] !== 'business' || !pathParts[2]) {
-        return context.next();
-    }
-
-    const businessId = pathParts[2];
-
-    // Cargar la respuesta original (el index.html del React SPA)
     const response = await context.next();
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('text/html')) return response;
 
-    // Solo inyectamos SEO si es archivo HTML
-    const contentType = response.headers.get("content-type");
-    if (!contentType || !contentType.includes("text/html")) {
-        return response;
-    }
+    const supabaseUrl = Netlify.env.get('VITE_SUPABASE_URL');
+    const supabaseKey = Netlify.env.get('SUPABASE_SERVICE_ROLE_KEY') || Netlify.env.get('VITE_SUPABASE_ANON_KEY');
+    if (!supabaseUrl || !supabaseKey) return response;
 
-    // Usar Netlify env variables (en Edge no existe process.env)
-    const supabaseUrl = Netlify.env.get("VITE_SUPABASE_URL");
-    let supabaseKey = Netlify.env.get("VITE_SUPABASE_ANON_KEY"); 
-    
-    // Si tenemos Service Role Key úsalo por prioridad (para bypass RLS en perfiles cerrados)
-    const serviceKey = Netlify.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (serviceKey) supabaseKey = serviceKey;
-
-    if (!supabaseUrl || !supabaseKey) {
-        return response; // No config, devolver original
-    }
-
-    let business = null;
+    const identifier = decodeURIComponent(pathParts[1]);
+    const lookupColumn = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(identifier) ? 'id' : 'slug';
+    const lookup = { [lookupColumn]: `eq.${identifier}` };
+    let record = null;
+    let source = null;
 
     try {
-        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(businessId);
-        const isInt = /^\d+$/.test(businessId);
-        const queryParam = (isUuid || isInt) ? `id=eq.${businessId}` : `slug=eq.${businessId}`;
-
-        // Primera tabla: business_candidates (Donde están los 260k del DENUE)
-        let res = await fetch(`${supabaseUrl}/rest/v1/business_candidates?${queryParam}&select=name,city,state,industry,description`, {
-            headers: {
-                "apikey": supabaseKey,
-                "Authorization": `Bearer ${supabaseKey}`
-            }
+        record = await fetchFirst({
+            supabaseUrl, supabaseKey, table: 'businesses', select: BUSINESS_SELECT,
+            lookup, filters: [['status', 'eq.approved']]
         });
-        let data = await res.json();
-        
-        if (data && data.length > 0) {
-            business = data[0];
-        } else {
-            // Segunda tabla: businesses (Donde están los Claimed/Verified)
-            res = await fetch(`${supabaseUrl}/rest/v1/businesses?${queryParam}&select=name,city,state,industry,description`, {
-                headers: {
-                    "apikey": supabaseKey,
-                    "Authorization": `Bearer ${supabaseKey}`
-                }
-            });
-            data = await res.json();
-            if (data && data.length > 0) business = data[0];
-        }
-    } catch (err) {
-        console.error("Edge SEO Fetch error:", err);
-    }
+        source = record ? 'business' : null;
 
-    // Si el negocio no existe o hubo error, enviamos la página genérica original
-    if (!business) {
+        if (!record) {
+            record = await fetchFirst({
+                supabaseUrl, supabaseKey, table: 'international_businesses', select: INTERNATIONAL_SELECT,
+                lookup, filters: [['status', 'eq.approved'], ['is_visible', 'eq.true']]
+            });
+            source = record ? 'international' : null;
+        }
+
+        if (!record) {
+            record = await fetchFirst({
+                supabaseUrl, supabaseKey, table: 'business_candidates', select: CANDIDATE_SELECT,
+                lookup, filters: [['moderation_status', 'eq.approved']]
+            });
+            source = record ? 'candidate' : null;
+        }
+    } catch (error) {
+        console.error('[seo-business] Profile lookup failed:', error);
         return response;
     }
 
-    // Construir los textos SEO
-    // Limpieza básica de strings (capitalizar primera letra, etc)
-    const cleanWord = (text) => text ? text.charAt(0).toUpperCase() + text.slice(1).toLowerCase() : '';
-    
-    const bizName = business.name || 'Empresa Local';
-    const bizCity = cleanWord(business.city);
-    const bizIndustry = cleanWord(business.industry);
-    
-    const title = `${bizName} | Geobooker ${bizCity ? `- ${bizCity}` : ''}`;
-    const description = business.description 
-        || `Toda la información y perfil de negocios de ${bizName}. Encuentra empresas de ${bizIndustry} en ${bizCity}. Contacto, ubicación y networking local verificado.`;
+    const business = normalizeBusiness(record, source);
+    if (!business) return response;
 
-    // Utilizar HTMLRewriter para inyectar tags y sobreescribir los vacíos/genéricos
+    const name = business.name || 'Negocio local';
+    const city = titleCase(business.city || '');
+    const region = titleCase(business.state_code || '');
+    const category = titleCase(business.subcategory || business.category || 'negocio local');
+    const location = [city, region].filter(Boolean).join(', ');
+    const title = `${name}${location ? ` en ${location}` : ''} | Geobooker`;
+    const description = business.description || `Consulta ubicación, contacto y datos públicos de ${name}, ${category}${location ? ` en ${location}` : ''}, en Geobooker.`;
+    const canonical = `${url.origin}/business/${encodeURIComponent(business.slug || identifier)}`;
+    const schema = {
+        '@context': 'https://schema.org',
+        '@type': 'LocalBusiness',
+        name,
+        description,
+        url: canonical,
+        address: {
+            '@type': 'PostalAddress',
+            streetAddress: business.address || undefined,
+            addressLocality: city || undefined,
+            addressRegion: region || undefined,
+            postalCode: business.postal_code || undefined,
+            addressCountry: business.country_code || undefined
+        },
+        telephone: business.phone || undefined,
+        sameAs: business.website ? [business.website] : undefined
+    };
+    Object.keys(schema.address).forEach((key) => schema.address[key] === undefined && delete schema.address[key]);
+    Object.keys(schema).forEach((key) => schema[key] === undefined && delete schema[key]);
+
     return new HTMLRewriter()
-        .on('title', {
-            element(element) {
-                element.setInnerContent(title);
-            }
-        })
+        .on('title', { element: (element) => element.setInnerContent(title) })
+        .on('meta[name="description"]', { element: (element) => element.setAttribute('content', description) })
+        .on('meta[property="og:title"]', { element: (element) => element.setAttribute('content', title) })
+        .on('meta[property="og:description"]', { element: (element) => element.setAttribute('content', description) })
+        .on('meta[property="og:url"]', { element: (element) => element.setAttribute('content', canonical) })
+        .on('meta[name="twitter:title"]', { element: (element) => element.setAttribute('content', title) })
+        .on('meta[name="twitter:description"]', { element: (element) => element.setAttribute('content', description) })
+        .on('link[rel="canonical"]', { element: (element) => element.setAttribute('href', canonical) })
         .on('head', {
-            element(element) {
-                // Inyectar en el final del <head>
-                element.append(`<meta name="description" content="${description}">`, { html: true });
-                element.append(`<meta property="og:title" content="${title}">`, { html: true });
-                element.append(`<meta property="og:description" content="${description}">`, { html: true });
-                element.append(`<meta property="og:type" content="profile">`, { html: true });
-                element.append(`<meta name="twitter:title" content="${title}">`, { html: true });
-                element.append(`<meta name="twitter:description" content="${description}">`, { html: true });
-            }
+            element: (element) => element.append(
+                `<script type="application/ld+json">${safeJson(schema)}</script>`,
+                { html: true }
+            )
         })
         .transform(response);
 };

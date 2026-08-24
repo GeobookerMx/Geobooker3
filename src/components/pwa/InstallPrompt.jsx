@@ -6,6 +6,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { Download, X, Smartphone } from 'lucide-react';
+import { trackAppDownloadIntent } from '../../services/analyticsService';
 
 const InstallPrompt = () => {
     const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -43,13 +44,15 @@ const InstallPrompt = () => {
         window.addEventListener('beforeinstallprompt', handler);
 
         // Check if installed after
-        window.addEventListener('appinstalled', () => {
+        const installedHandler = () => {
             setIsInstalled(true);
             setShowBanner(false);
-        });
+        };
+        window.addEventListener('appinstalled', installedHandler);
 
         return () => {
             window.removeEventListener('beforeinstallprompt', handler);
+            window.removeEventListener('appinstalled', installedHandler);
         };
     }, []);
 
@@ -59,11 +62,17 @@ const InstallPrompt = () => {
             const { outcome } = await deferredPrompt.userChoice;
             if (outcome === 'accepted') {
                 setShowBanner(false);
+                await trackAppDownloadIntent({
+                    target: 'pwa_install',
+                    platformHint: 'pwa',
+                    source: 'install_prompt',
+                    campaign: 'pwa_install'
+                });
             }
             setDeferredPrompt(null);
         } else if (isIOS) {
             // Show iOS instructions
-            alert('Para instalar en iPhone/iPad:\n\n1. Toca el botón "Compartir" (📤)\n2. Selecciona "Agregar a pantalla de inicio"\n3. Confirma "Agregar"');
+            alert('Para instalar en iPhone o iPad:\n\n1. Toca el botón Compartir.\n2. Selecciona Agregar a pantalla de inicio.\n3. Confirma Agregar.');
         }
     };
 

@@ -13,8 +13,7 @@ const FREE_BUSINESS_LIMIT = 2;
 
 const BusinessList = () => {
     const { user } = useAuth();
-    const isNative = Capacitor.isNativePlatform();
-    const isIOS = Capacitor.getPlatform() === 'ios';
+    const isIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
     const [businesses, setBusinesses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [togglingId, setTogglingId] = useState(null);
@@ -155,7 +154,7 @@ const BusinessList = () => {
                             </span>
                         )}
                     </h2>
-                    {!isPremium && !isNative && businesses.length > 0 && (
+                    {!isPremium && !isIOS && businesses.length > 0 && (
                         <p className="text-sm text-gray-500 mt-1">
                             {premiumPromoActive
                                 ? `Premium gratis activo hasta el ${getPremiumPromoDeadlineLabel('es-MX')}`
@@ -175,7 +174,7 @@ const BusinessList = () => {
                         <span className="mr-2">+</span> Registrar Negocio
                     </Link>
                 ) : (
-                    !isNative && (
+                    !isIOS && (
                         <Link
                             to="/dashboard/upgrade"
                             className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2 rounded-lg hover:from-yellow-600 hover:to-orange-600 transition duration-200 font-semibold flex items-center gap-2"

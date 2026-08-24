@@ -586,14 +586,14 @@ const BusinessProfilePage = () => {
                 )}
 
                 {/* CTA Premium — oculto en iOS (Apple Guideline 3.1.1) */}
-                {business.is_claimed !== false && !business.is_premium && !Capacitor.isNativePlatform() && (
+                {business.is_claimed !== false && !business.is_premium && !(Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') && (
                     <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 text-center text-white mb-6">
                         <h3 className="text-xl font-bold mb-2">Eleva tu negocio</h3>
                         <p className="text-purple-100 mb-4">
                             Desbloquea redes sociales, fotos ilimitadas y mayor exposición.
                         </p>
                         <Link
-                            to="/dashboard/upgrade"
+                            to="/premium?source=business_profile"
                             className="inline-block bg-white text-purple-600 px-6 py-2 rounded-lg font-semibold hover:bg-purple-50 transition"
                         >
                             Actualizar a Premium

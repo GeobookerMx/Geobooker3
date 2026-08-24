@@ -60,6 +60,7 @@ const CategoriesPage = lazy(() => import("./pages/CategoriesPage.jsx"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage.jsx"));
 const BusinessEditPage = lazy(() => import("./pages/BusinessEditPage.jsx"));
 const UpgradePage = lazy(() => import("./pages/UpgradePage.jsx"));
+const PremiumEntryPage = lazy(() => import("./pages/PremiumEntryPage.jsx"));
 
 // Ads / Publicidad - Lazy Loaded
 const AdvertisePage = lazy(() => import("./pages/AdvertisePage.jsx"));
@@ -137,6 +138,8 @@ export default function AppRouter() {
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/support" element={<SupportPage />} />
           <Route path="/soporte" element={<SupportPage />} />
+          <Route path="/premium" element={<PremiumEntryPage />} />
+          <Route path="/pricing" element={<Navigate to="/premium" replace />} />
 
           <Route path="/" element={<HomePage />} />
           <Route path="/c/:category" element={<HomePage />} />

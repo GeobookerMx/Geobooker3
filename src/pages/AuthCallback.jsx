@@ -14,6 +14,9 @@ import { supabase } from '../lib/supabase';
 import { getAuthErrorCode, trackAuthFunnelEvent, trackUserLogin } from '../services/analyticsService';
 import { getPlatform } from '../utils/platformDetection';
 import { Capacitor } from '@capacitor/core';
+import { activatePremiumPromotion } from '../services/premiumService';
+import { isPremiumPromoActive } from '../config/promotions';
+import { clearPremiumIntent, hasPremiumIntent } from '../config/premiumFlow';
 
 const MAX_WAIT_MS = Capacitor.isNativePlatform() ? 15000 : 8000;
 
@@ -64,6 +67,15 @@ const AuthCallback = () => {
             });
             try { trackUserLogin(session.user.id, provider); } catch (e) { /* analytics opcional */ }
             await persistProfile(session.user);
+
+            if (isPremiumPromoActive() && hasPremiumIntent()) {
+                try {
+                    await activatePremiumPromotion(session.access_token);
+                    clearPremiumIntent();
+                } catch (premiumError) {
+                    console.warn('[AuthCallback] No se pudo activar Premium:', premiumError);
+                }
+            }
 
             // Pequeño delay para mostrar el mensaje de éxito antes de redirigir
             redirectTimeoutId = setTimeout(() => navigate('/', { replace: true }), 800);

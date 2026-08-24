@@ -134,7 +134,7 @@ export default function Header() {
     >
       {showPremiumPromo && (
         <Link
-          to={user ? "/dashboard/upgrade" : "/signup"}
+          to={user ? "/dashboard/upgrade" : "/premium?source=header"}
           className="block bg-gradient-to-r from-emerald-600 via-green-500 to-lime-500 px-4 py-2 text-center text-sm font-bold text-white hover:brightness-105 transition"
         >
           {getPremiumPromoLongMessage(currentLocale)} - {t('nav.premiumActivate')}

@@ -70,7 +70,7 @@ export const HOUSE_AD_CAMPAIGNS = [
     metricHook: 'Convierte tráfico tibio en registro',
     gradient: 'from-orange-700 via-amber-500 to-yellow-400',
     icon: TrendingUp,
-    targetHref: '/dashboard/upgrade',
+    targetHref: '/premium?source=house_ad',
     chips: ['Full access', 'Sin costo', 'Perfil fuerte'],
     proofPoints: ['Fotos', 'Redes', 'Métricas'],
     score: 'FREE'

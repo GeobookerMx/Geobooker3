@@ -30,6 +30,7 @@ const BusinessEditPage = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const mapRef = useRef(null);
+    const isIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
 
     const { isLoaded } = useSharedGoogleMaps();
     const premiumPromoActive = isPremiumPromoActive();
@@ -703,7 +704,7 @@ const BusinessEditPage = () => {
                         </h2>
                         <span className="text-sm text-gray-600">
                             {isPremium ? `${currentImageCount} / ${maxImages} fotos` : 'Premium requerido'}
-                            {!isPremium && !Capacitor.isNativePlatform() && (
+                            {!isPremium && !isIOS && (
                                 <Link to="/dashboard/upgrade" className="ml-2 text-blue-600 hover:underline">
                                     {premiumPromoActive ? 'Activar gratis' : 'Actualizar a Premium'}
                                 </Link>
@@ -724,7 +725,7 @@ const BusinessEditPage = () => {
                                         fortalecer tu perfil y mejorar la confianza antes de que el cliente te contacte.
                                         {premiumPromoActive && ` Promoción disponible hasta el ${getPremiumPromoDeadlineLabel('es-MX')}.`}
                                     </p>
-                                    {!Capacitor.isNativePlatform() && (
+                                    {!isIOS && (
                                         <Link
                                             to="/dashboard/upgrade"
                                             className="mt-3 inline-flex rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700"

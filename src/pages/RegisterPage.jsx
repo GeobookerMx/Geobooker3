@@ -6,8 +6,7 @@ import { toast } from 'react-hot-toast';
 import { trackUserSignup } from '../services/analyticsService';
 import { getPremiumPromoDeadlineLabel, isPremiumPromoActive } from '../config/promotions';
 import { activatePremiumPromotion } from '../services/premiumService';
-
-const PREMIUM_AFTER_LOGIN_KEY = 'geobooker_activate_premium_after_login';
+import { PREMIUM_AFTER_LOGIN_KEY } from '../config/premiumFlow';
 
 const RegisterPage = () => {
   const navigate = useNavigate();

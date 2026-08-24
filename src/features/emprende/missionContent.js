@@ -114,7 +114,7 @@ export const EMPRENDE_MISSIONS = [
     learning: 'Crecimiento sano significa vender con margen, cobrar a tiempo y no comprometer capacidad futura por una venta impulsiva.',
     realAction: {
       label: 'Ver planes para negocios',
-      to: '/pricing?source=emprende_m2',
+      to: '/premium?source=emprende_m2',
       secondaryLabel: 'Leer guia fiscal basica',
       secondaryTo: '/guia-resico?source=emprende_m2'
     },

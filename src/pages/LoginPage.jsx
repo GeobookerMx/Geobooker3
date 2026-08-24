@@ -7,8 +7,7 @@ import { getAuthErrorCode, trackAuthFunnelEvent, trackUserLogin } from '../servi
 import { Capacitor } from '@capacitor/core';
 import { activatePremiumPromotion } from '../services/premiumService';
 import { getPremiumPromoDeadlineLabel, isPremiumPromoActive } from '../config/promotions';
-
-const PREMIUM_AFTER_LOGIN_KEY = 'geobooker_activate_premium_after_login';
+import { clearPremiumIntent, PREMIUM_AFTER_LOGIN_KEY, rememberPremiumIntent } from '../config/premiumFlow';
 
 const LoginPage = () => {
   const { t } = useTranslation();
@@ -71,7 +70,7 @@ const LoginPage = () => {
       if (premiumPromoActive && activateFreePremiumOnLogin) {
         try {
           await activatePremiumPromotion(data.session?.access_token);
-          localStorage.removeItem(PREMIUM_AFTER_LOGIN_KEY);
+          clearPremiumIntent();
           toast.success('Premium gratis activado. Ya tienes acceso completo.');
         } catch (premiumError) {
           console.warn('No se pudo activar Premium al iniciar sesión:', premiumError);
@@ -110,6 +109,7 @@ const LoginPage = () => {
     try {
       setLoading(true);
       trackAuthFunnelEvent('oauth_start', { funnel: 'login', method: provider });
+      rememberPremiumIntent(premiumPromoActive && activateFreePremiumOnLogin);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,

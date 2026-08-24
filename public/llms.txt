@@ -7,7 +7,7 @@
 - Inicio: https://geobooker.com.mx/
 - Buscar negocios: https://geobooker.com.mx/search
 - Categorías: https://geobooker.com.mx/categories
-- Espacios en renta: https://geobooker.com.mx/spaces
+- Publicar un espacio en renta: https://geobooker.com.mx/space/register
 - Registrar un negocio: https://geobooker.com.mx/business/register
 - Reclamar un negocio: https://geobooker.com.mx/claim
 - Descargar la app: https://geobooker.com.mx/download

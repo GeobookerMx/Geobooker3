@@ -1,4 +1,4 @@
-/* global Netlify, HTMLRewriter */
+/* global Netlify */
 
 const BUSINESS_SELECT = 'name,description,category,subcategory,address,city,state_code,postal_code,country_code,website,phone,slug,is_verified,updated_at';
 const CANDIDATE_SELECT = 'name,category_raw,category_normalized,subcategory,address_line,city_name,state_code,postal_code,country_code,website,phone,slug,attribution_text,updated_at';
@@ -8,6 +8,13 @@ const safeJson = (value) => JSON.stringify(value)
     .replace(/</g, '\\u003c')
     .replace(/>/g, '\\u003e')
     .replace(/&/g, '\\u0026');
+
+const escapeHtml = (value = '') => String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+const escapeAttribute = (value = '') => escapeHtml(value).replace(/"/g, '&quot;');
 
 const titleCase = (value = '') => String(value)
     .replace(/[_-]+/g, ' ')
@@ -95,7 +102,7 @@ export default async (request, context) => {
     const category = titleCase(business.subcategory || business.category || 'negocio local');
     const location = [city, region].filter(Boolean).join(', ');
     const title = `${name}${location ? ` en ${location}` : ''} | Geobooker`;
-    const description = business.description || `Consulta ubicación, contacto y datos públicos de ${name}, ${category}${location ? ` en ${location}` : ''}, en Geobooker.`;
+    const description = (business.description || `Consulta ubicación, contacto y datos públicos de ${name}, ${category}${location ? ` en ${location}` : ''}, en Geobooker.`).slice(0, 180);
     const canonical = `${url.origin}/business/${encodeURIComponent(business.slug || identifier)}`;
     const schema = {
         '@context': 'https://schema.org',
@@ -117,20 +124,30 @@ export default async (request, context) => {
     Object.keys(schema.address).forEach((key) => schema.address[key] === undefined && delete schema.address[key]);
     Object.keys(schema).forEach((key) => schema[key] === undefined && delete schema[key]);
 
-    return new HTMLRewriter()
-        .on('title', { element: (element) => element.setInnerContent(title) })
-        .on('meta[name="description"]', { element: (element) => element.setAttribute('content', description) })
-        .on('meta[property="og:title"]', { element: (element) => element.setAttribute('content', title) })
-        .on('meta[property="og:description"]', { element: (element) => element.setAttribute('content', description) })
-        .on('meta[property="og:url"]', { element: (element) => element.setAttribute('content', canonical) })
-        .on('meta[name="twitter:title"]', { element: (element) => element.setAttribute('content', title) })
-        .on('meta[name="twitter:description"]', { element: (element) => element.setAttribute('content', description) })
-        .on('link[rel="canonical"]', { element: (element) => element.setAttribute('href', canonical) })
-        .on('head', {
-            element: (element) => element.append(
-                `<script type="application/ld+json">${safeJson(schema)}</script>`,
-                { html: true }
-            )
-        })
-        .transform(response);
+    try {
+        const safeTitle = escapeHtml(title);
+        const safeDescription = escapeAttribute(description);
+        const safeCanonical = escapeAttribute(canonical);
+        let html = await response.text();
+
+        html = html
+            .replace(/<title>[\s\S]*?<\/title>/i, `<title>${safeTitle}</title>`)
+            .replace(/<meta\s+name="description"[\s\S]*?>/i, `<meta name="description" content="${safeDescription}">`)
+            .replace(/<meta\s+property="og:title"[\s\S]*?>/i, `<meta property="og:title" content="${escapeAttribute(title)}">`)
+            .replace(/<meta\s+property="og:description"[\s\S]*?>/i, `<meta property="og:description" content="${safeDescription}">`)
+            .replace(/<meta\s+property="og:url"[\s\S]*?>/i, `<meta property="og:url" content="${safeCanonical}">`)
+            .replace(/<meta\s+name="twitter:title"[\s\S]*?>/i, `<meta name="twitter:title" content="${escapeAttribute(title)}">`)
+            .replace(/<meta\s+name="twitter:description"[\s\S]*?>/i, `<meta name="twitter:description" content="${safeDescription}">`)
+            .replace(/<link\s+rel="canonical"[\s\S]*?>/i, `<link rel="canonical" href="${safeCanonical}">`)
+            .replace('</head>', `<script type="application/ld+json">${safeJson(schema)}</script>\n</head>`);
+
+        const headers = new Headers(response.headers);
+        headers.delete('content-length');
+        headers.delete('content-encoding');
+        headers.set('content-type', 'text/html; charset=utf-8');
+        return new Response(html, { status: response.status, statusText: response.statusText, headers });
+    } catch (error) {
+        console.error('[seo-business] HTML rewrite failed:', error);
+        return response;
+    }
 };

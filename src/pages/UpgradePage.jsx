@@ -51,11 +51,11 @@ const UpgradePage = () => {
     // useEffect causa pantalla blanca porque se ejecuta DESPUÉS del primer render
     // Con return inmediato: iOS nunca ve ni un milisegundo de pantalla blanca
     useEffect(() => {
-        if (!isNative) return;
+        if (!isNative || promoActive) return;
         navigate('/dashboard', { replace: true });
-    }, [isNative, navigate]);
+    }, [isNative, navigate, promoActive]);
 
-    if (isNative) {
+    if (isNative && !promoActive) {
         return (
             <div style={{
                 display: 'flex',
@@ -100,6 +100,48 @@ const UpgradePage = () => {
             setLoading(false);
         }
     };
+
+    // En iOS solamente se ofrece la activación promocional gratuita. No se
+    // muestran precios, Stripe, OXXO ni enlaces de compra externos.
+    if (isNative && promoActive) {
+        return (
+            <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-emerald-50 via-white to-slate-50 px-5 py-12">
+                <section className="w-full max-w-xl rounded-3xl border border-emerald-200 bg-white p-7 text-center shadow-xl">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100">
+                        <Gift className="h-9 w-9 text-emerald-700" aria-hidden="true" />
+                    </div>
+                    <h1 className="mt-5 text-3xl font-black text-slate-950">Activa PREMIUM GRATIS</h1>
+                    <p className="mt-3 text-slate-600">
+                        Desbloquea el panel completo, características, redes sociales y hasta 10 fotos por negocio sin tarjeta ni pago.
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-emerald-800">
+                        Promoción disponible hasta el {LAUNCH_CONFIG.deadline}.
+                    </p>
+                    <ul className="mx-auto mt-6 max-w-sm space-y-3 text-left text-sm text-slate-700">
+                        <li>✓ Administrar la información de tu negocio</li>
+                        <li>✓ Subir y ordenar hasta 10 fotos</li>
+                        <li>✓ Agregar características y redes sociales</li>
+                        <li>✓ Consultar métricas desde tu panel</li>
+                    </ul>
+                    <button
+                        type="button"
+                        onClick={handleFreeUpgrade}
+                        disabled={loading}
+                        className="mt-7 inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-6 py-3.5 text-lg font-bold text-white hover:bg-emerald-700 disabled:cursor-wait disabled:opacity-60"
+                    >
+                        {loading ? 'Activando...' : 'Aceptar y activar PREMIUM GRATIS'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => navigate('/dashboard')}
+                        className="mt-3 w-full rounded-xl px-6 py-3 font-semibold text-slate-600 hover:bg-slate-100"
+                    >
+                        Volver a mi panel
+                    </button>
+                </section>
+            </main>
+        );
+    }
 
     // Abrir modal de selección de pago (solo cuando NO hay promo)
     const handleStartUpgrade = async () => {

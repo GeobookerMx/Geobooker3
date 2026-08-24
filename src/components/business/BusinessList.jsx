@@ -28,11 +28,17 @@ const BusinessList = () => {
         }
     }, [user]);
 
+    useEffect(() => {
+        const handlePremiumActivated = () => setIsPremium(true);
+        window.addEventListener('geobooker:premium-activated', handlePremiumActivated);
+        return () => window.removeEventListener('geobooker:premium-activated', handlePremiumActivated);
+    }, []);
+
     const checkPremiumStatus = async () => {
         try {
             const { data, error } = await supabase.rpc('get_user_premium_status', { user_id: user.id });
             if (error) throw error;
-            setIsPremium(data || false);
+            setIsPremium((current) => current || Boolean(data));
         } catch (error) {
             console.error('Error checking premium:', error);
         }
@@ -148,13 +154,13 @@ const BusinessList = () => {
                 <div>
                     <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
                         Mis Negocios
-                        {isPremium && !isIOS && (
+                        {isPremium && (
                             <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full flex items-center gap-1">
                                 <Crown className="w-3 h-3 fill-yellow-500" /> Premium
                             </span>
                         )}
                     </h2>
-                    {!isPremium && !isIOS && businesses.length > 0 && (
+                    {!isPremium && (!isIOS || premiumPromoActive) && businesses.length > 0 && (
                         <p className="text-sm text-gray-500 mt-1">
                             {premiumPromoActive
                                 ? `Premium gratis activo hasta el ${getPremiumPromoDeadlineLabel('es-MX')}`
@@ -186,7 +192,7 @@ const BusinessList = () => {
                 )}
             </div>
 
-            {premiumPromoActive && !isPremium && !isIOS && (
+            {premiumPromoActive && !isPremium && (
                 <div className="mb-6 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 p-4">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>

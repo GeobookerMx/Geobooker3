@@ -1,0 +1,3 @@
+-- Migration version recorded in the linked Supabase project on 2026-08-14.
+-- The change was applied manually before it was represented in this repository.
+-- This marker keeps local and remote migration history aligned; it performs no work.

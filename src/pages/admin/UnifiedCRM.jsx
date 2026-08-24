@@ -971,14 +971,6 @@ const UnifiedCRM = () => {
 
     // ============ SEND CAMPAIGN ============
     const sendCampaign = async () => {
-        if (!selectedTemplate) {
-            toast.error('Selecciona una plantilla primero');
-            return;
-        }
-        if (!selectedSender) {
-            toast.error('Selecciona un remitente primero');
-            return;
-        }
         if (emailQueue.length === 0) {
             toast.error('Genera la cola primero');
             return;
@@ -987,117 +979,48 @@ const UnifiedCRM = () => {
         setIsSending(true);
         setSendProgress(0);
         setCampaignLog([]);
-        addLog('🚀 Iniciando campaña...', 'info');
+        addLog('Iniciando campaña gobernada por cola...', 'info');
         const toastId = toast.loading('Enviando campaña...');
 
         try {
             let successCount = 0;
             let failCount = 0;
+            let deferredCount = 0;
+            const target = Math.min(emailQueue.length, Math.max(Number(dailyLimit) || 0, 1));
+            const maxBatches = Math.ceil(target / 25);
 
-            for (let i = 0; i < emailQueue.length; i++) {
-                const item = emailQueue[i];
+            for (let batchIndex = 0; batchIndex < maxBatches; batchIndex++) {
+                const remainingTarget = target - successCount - failCount;
+                if (remainingTarget <= 0) break;
 
-                const templateVariables = {
-                    companyName: item.company_name || 'Negocio',
-                    contactName: item.contact_name || 'Amigo',
-                    tier: item.contact_tier || ''
-                };
-
-                const processedBody = applyEmailTemplateVariables(selectedTemplate.html_content, templateVariables);
-                const processedSubject = applyEmailTemplateVariables(selectedTemplate.subject, templateVariables);
-
-                try {
-                    const response = await fetch('/.netlify/functions/send-notification-email', {
-                        method: 'POST',
-                        headers: await getAuthenticatedJsonHeaders(),
-                        body: JSON.stringify({
-                            type: 'custom',
-                            data: {
-                                email: item.contact_email,
-                                subject: processedSubject,
-                                html: processedBody,
-                                signature_html: selectedSender.signature || '',
-                                company_name: item.company_name,
-                                contact_name: item.contact_name,
-                                tier: item.contact_tier,
-                                from_name: selectedSender.name,
-                                from_email: selectedSender.email
-                            }
-                        })
-                    });
-
-                    // Parse respuesta
-                    let result;
-                    try {
-                        result = await response.json();
-                    } catch (e) {
-                        console.error('Error parseando respuesta:', e);
-                        result = { error: 'Invalid JSON response' };
-                    }
-
-                    if (!response.ok) {
-                        throw new Error(result.error || `Error ${response.status}: ${result.message || 'Unknown error'}`);
-                    }
-
-                    console.log(`✅ Email enviado a ${item.contact_email} (ID: ${result.emailId})`);
-                    addLog(`✅ ${item.contact_email} — ${item.company_name || ''}`, 'success');
-
-                    // 1. Mark as sent in marketing_contacts (so it's not selected again)
-                    await supabase.from('marketing_contacts').update({
-                        email_sent_at: new Date().toISOString(),
-                        last_email_sent: new Date().toISOString(),
-                        email_sent_count: (item.email_sent_count || 0) + 1,
-                        email_status: 'sent',
-                        status: 'contactado'
-                    }).eq('id', item.contact_id);
-
-                    // 2. Log to history
-                    await supabase.from('crm_email_logs').insert({
-                        recipient_email: item.contact_email,
-                        subject: processedSubject,
-                        html_content: processedBody,
-                        rendered_html: buildEmailPreviewShell({
-                            html: processedBody,
-                            signatureHtml: selectedSender.signature || '',
-                            companyName: item.company_name || 'Negocio'
-                        }),
-                        status: 'sent',
-                        tier: item.contact_tier,
-                        template_id: selectedTemplate.id,
-                        contact_id: item.contact_id,
-                        message_id: result.emailId || null
-                    });
-
-                    await supabase.from('campaign_history').insert({
-                        contact_id: item.contact_id,
-                        campaign_type: 'email',
-                        status: 'sent',
-                        sent_at: new Date().toISOString(),
-                        message_id: result.emailId || null,
-                        details: {
-                            subject: processedSubject,
-                            sender_email: selectedSender.email,
-                            sender_name: selectedSender.name,
-                            template_id: selectedTemplate.id,
-                            source: 'unified_crm_manual'
-                        }
-                    });
-
-                    successCount++;
-                } catch (err) {
-                    console.error('Send error:', err);
-                    addLog(`❌ ${item.contact_email} — ${err.message}`, 'error');
-                    failCount++;
+                const response = await fetch('/.netlify/functions/process-email-queue', {
+                    method: 'POST',
+                    headers: await getAuthenticatedJsonHeaders(),
+                    body: JSON.stringify({ limit: Math.min(25, remainingTarget) })
+                });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok || result.success === false) {
+                    throw new Error(result.error || result.message || `Error ${response.status}`);
+                }
+                if (result.paused) {
+                    throw new Error(result.message || 'Los envíos están pausados en la configuración del CRM');
                 }
 
-                setSendProgress(Math.round((i + 1) / emailQueue.length * 100));
-                // Slight delay between sends to avoid rate limits
-                await new Promise(r => setTimeout(r, 500));
+                successCount += Number(result.sent || 0);
+                failCount += Number(result.failed || 0);
+                deferredCount += Number(result.deferred || 0);
+                setSendProgress(Math.min(100, Math.round(((successCount + failCount) / target) * 100)));
+                addLog(`Lote ${batchIndex + 1}: ${result.sent || 0} enviados, ${result.failed || 0} fallidos`, result.failed ? 'error' : 'success');
+
+                if (result.stopped || result.stopReason || Number(result.sent || 0) === 0) {
+                    if (result.stopReason) addLog(`Proveedor detuvo la corrida: ${result.stopReason}`, 'error');
+                    break;
+                }
             }
 
-            toast.success(`Campaña finalizada: ${successCount} enviados, ${failCount} fallidos`, { id: toastId });
-            addLog(`🏁 Campaña finalizada: ${successCount} ✅ ${failCount} ❌`, 'info');
-            setEmailQueue([]);
+            toast.success(`Campaña finalizada: ${successCount} enviados, ${failCount} fallidos${deferredCount ? `, ${deferredCount} diferidos` : ''}`, { id: toastId });
+            addLog(`Campaña finalizada: ${successCount} enviados, ${failCount} fallidos`, 'info');
+            setEmailQueue(prev => prev.slice(Math.min(prev.length, successCount + failCount)));
             loadHistory();
             loadQueueStats();
             loadContacts();
@@ -1797,10 +1720,10 @@ const UnifiedCRM = () => {
                                                     </button>
                                                     <button
                                                         onClick={sendCampaign}
-                                                        disabled={!selectedTemplate || !selectedSender || isSending || emailQueue.length === 0}
+                                                        disabled={isSending || emailQueue.length === 0}
                                                         className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-bold hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
                                                     >
-                                                        {isSending ? 'Enviando...' : `Enviar ${emailQueue.length} emails`}
+                                                        {isSending ? 'Enviando...' : `Enviar con límites seguros (${Math.min(emailQueue.length, dailyLimit)})`}
                                                     </button>
                                                     <button
                                                         onClick={() => setEmailQueue([])}
@@ -1824,7 +1747,7 @@ const UnifiedCRM = () => {
                                                 </div>
                                             )}
                                             <p className="text-blue-200 text-xs">
-                                                El envío real usa la plantilla seleccionada, el remitente activo y registra historial con `message_id` de Resend.
+                                                El envío real usa las plantillas activas por ronda, respeta el máximo diario y por lote, procesa bajas y registra el `message_id` de Resend.
                                             </p>
                                         </div>
                                     )}
@@ -2542,7 +2465,7 @@ const UnifiedCRM = () => {
                                     className="px-5 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition disabled:opacity-50 flex items-center gap-2"
                                 >
                                     <Send className="w-4 h-4" />
-                                    Enviar {emailQueue.length} emails
+                                    Enviar con límites seguros
                                 </button>
                             </div>
                         </div>

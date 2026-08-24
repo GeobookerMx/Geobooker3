@@ -38,8 +38,16 @@ export default function CampaignReportButton({
     const handleDownload = async () => {
         const data = reportData || await handleGenerateReport();
         if (data) {
-            downloadReportAsPDF(data);
-            toast.success('Abriendo informe para imprimir/guardar como PDF');
+            setLoading(true);
+            try {
+                await downloadReportAsPDF(data);
+                toast.success('Informe PDF descargado');
+            } catch (error) {
+                console.error('Error downloading report:', error);
+                toast.error('No se pudo descargar el PDF');
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -75,7 +83,7 @@ export default function CampaignReportButton({
                 disabled={loading}
                 className={`text-blue-600 hover:text-blue-700 hover:underline text-sm ${className}`}
             >
-                {loading ? 'Generando...' : '📄 Ver informe'}
+                {loading ? 'Generando...' : 'Ver informe'}
             </button>
         );
     }
@@ -117,7 +125,7 @@ export default function CampaignReportButton({
                     <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-auto">
                         <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
                             <h3 className="text-lg font-bold text-gray-900">
-                                📊 Informe: {campaignName || reportData.campaign.advertiserName}
+                                Informe: {campaignName || reportData.campaign.advertiser_name}
                             </h3>
                             <div className="flex gap-2">
                                 <button

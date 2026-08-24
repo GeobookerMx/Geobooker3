@@ -7,13 +7,18 @@ import { sendWelcomeEmail, sendReferralBonusEmail } from '../services/notificati
 import { getAuthErrorCode, trackAuthFunnelEvent, trackUserSignup } from '../services/analyticsService';
 import { isPremiumPromoActive, getPromoMessage, getPremiumPromoDeadlineLabel } from '../config/promotions';
 import { Capacitor } from '@capacitor/core';
+import { withAuthTimeout } from '../utils/authFlow';
+import { activatePremiumPromotion } from '../services/premiumService';
+import { rememberPremiumIntent } from '../config/premiumFlow';
 
 const SignupPage = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const isNative = Capacitor.isNativePlatform();
     const isAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+    const premiumPromoActive = isPremiumPromoActive();
     const [loading, setLoading] = useState(false);
+    const [activateFreePremiumOnSignup, setActivateFreePremiumOnSignup] = useState(premiumPromoActive);
     const hasStartedForm = useRef(false);
     const oauthRedirectTo = isNative
         ? 'geobooker://auth/callback'
@@ -83,11 +88,12 @@ const SignupPage = () => {
         setLoading(true);
 
         try {
+            rememberPremiumIntent(premiumPromoActive && activateFreePremiumOnSignup);
             const normalizedEmail = formData.email.trim().toLowerCase();
             // Obtener código de referido si existe
             const referralCode = localStorage.getItem('referral_code');
 
-            const { data, error } = await supabase.auth.signUp({
+            const { data, error } = await withAuthTimeout(supabase.auth.signUp({
                 email: normalizedEmail,
                 password: formData.password,
                 options: {
@@ -95,10 +101,10 @@ const SignupPage = () => {
                         full_name: formData.fullName,
                         referred_by: referralCode || null
                     },
-                    // En iOS nativo: no redirigir a browser externo para confirmación
-                    emailRedirectTo: isNative ? undefined : oauthRedirectTo
+                    // La confirmación debe volver al mismo canal: PWA o app nativa.
+                    emailRedirectTo: oauthRedirectTo
                 }
-            });
+            }));
 
             if (error) throw error;
 
@@ -136,6 +142,13 @@ const SignupPage = () => {
             // Enviar correo de bienvenida
             if (data?.user?.email) {
                 sendWelcomeEmail(data.user.email, formData.fullName);
+            }
+
+            if (data?.session && premiumPromoActive && activateFreePremiumOnSignup) {
+                void activatePremiumPromotion(data.session.access_token)
+                    .catch((premiumError) => {
+                        console.warn('No se pudo activar Premium después del registro:', premiumError);
+                    });
             }
 
             // Si hay código de referido, procesarlo
@@ -178,8 +191,12 @@ const SignupPage = () => {
             toast.success(t('signup.success'));
 
             setTimeout(() => {
-                navigate('/login');
-            }, 2000);
+                if (data?.session) {
+                    navigate('/dashboard', { replace: true });
+                } else {
+                    navigate('/login?premium=1&next=%2Fdashboard', { replace: true });
+                }
+            }, 1200);
 
         } catch (error) {
             console.error('Error al registrarse:', error);
@@ -193,6 +210,50 @@ const SignupPage = () => {
             } else {
                 toast.error(error.message || t('signup.error'));
             }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleOAuthSignup = async (provider) => {
+        try {
+            setLoading(true);
+            trackAuthFunnelEvent('oauth_start', { funnel: 'signup', method: provider });
+            rememberPremiumIntent(premiumPromoActive && activateFreePremiumOnSignup);
+
+            const { data, error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
+                provider,
+                options: {
+                    redirectTo: oauthRedirectTo,
+                    skipBrowserRedirect: true,
+                    queryParams: provider === 'google'
+                        ? { access_type: 'offline', prompt: 'select_account' }
+                        : undefined
+                }
+            }));
+
+            if (error) throw error;
+            if (!data?.url) throw new Error('No OAuth URL');
+
+            if (isNative) {
+                const { Browser } = await import('@capacitor/browser');
+                await Browser.open({ url: data.url });
+            } else {
+                window.location.href = data.url;
+            }
+        } catch (error) {
+            console.error(`Error ${provider} Sign-up:`, error);
+            trackAuthFunnelEvent('signup_error', {
+                funnel: 'signup',
+                method: provider,
+                errorCode: getAuthErrorCode(error)
+            });
+            const translatedError = provider === 'google'
+                ? t('signup.googleError')
+                : provider === 'apple'
+                    ? t('signup.appleError')
+                    : 'Error al continuar con Facebook';
+            toast.error(translatedError);
         } finally {
             setLoading(false);
         }
@@ -300,6 +361,23 @@ const SignupPage = () => {
                             />
                         </div>
 
+                        {premiumPromoActive && (
+                            <label className="flex cursor-pointer items-start gap-3 rounded-xl border-2 border-emerald-200 bg-emerald-50 p-4">
+                                <input
+                                    type="checkbox"
+                                    checked={activateFreePremiumOnSignup}
+                                    onChange={(event) => setActivateFreePremiumOnSignup(event.target.checked)}
+                                    className="mt-1 h-5 w-5 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+                                />
+                                <span>
+                                    <span className="block font-bold text-emerald-950">Activar PREMIUM GRATIS con mi cuenta</span>
+                                    <span className="mt-1 block text-sm text-emerald-800">
+                                        Acceso completo para administrar negocios, agregar características y subir hasta 10 fotos por negocio. Sin tarjeta ni cobro durante la promoción.
+                                    </span>
+                                </span>
+                            </label>
+                        )}
+
                         {/* Términos y Condiciones */}
                         <div className="flex items-start">
                             <input
@@ -359,35 +437,7 @@ const SignupPage = () => {
                         <>
                             {/* Google Sign-up */}
                             <button
-                                onClick={async () => {
-                                    try {
-                                        setLoading(true);
-                                        trackAuthFunnelEvent('oauth_start', { funnel: 'signup', method: 'google' });
-                                        const { data, error } = await supabase.auth.signInWithOAuth({
-                                            provider: 'google',
-                                            options: {
-                                                redirectTo: oauthRedirectTo,
-                                                skipBrowserRedirect: true,
-                                                queryParams: { access_type: 'offline', prompt: 'select_account' }
-                                            }
-                                        });
-
-                                        if (error) throw error;
-                                        if (!data?.url) throw new Error('No OAuth URL');
-
-                                        if (isNative) {
-                                            const { Browser } = await import('@capacitor/browser');
-                                            await Browser.open({ url: data.url });
-                                        } else {
-                                            window.location.href = data.url;
-                                        }
-                                    } catch (error) {
-                                        console.error('Error Google Sign-up:', error);
-                                        toast.error(t('signup.googleError'));
-                                    } finally {
-                                        setLoading(false);
-                                    }
-                                }}
+                                onClick={() => handleOAuthSignup('google')}
                                 disabled={loading}
                                 className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition duration-300 font-medium disabled:opacity-50"
                             >
@@ -403,34 +453,7 @@ const SignupPage = () => {
                             {/* Apple Sign-up: solo en web, no en Android */}
                             {!isAndroid && (
                                 <button
-                                    onClick={async () => {
-                                        try {
-                                            setLoading(true);
-                                            trackAuthFunnelEvent('oauth_start', { funnel: 'signup', method: 'apple' });
-                                            const { data, error } = await supabase.auth.signInWithOAuth({
-                                                provider: 'apple',
-                                                options: {
-                                                    redirectTo: oauthRedirectTo,
-                                                    skipBrowserRedirect: true
-                                                }
-                                            });
-
-                                            if (error) throw error;
-                                            if (!data?.url) throw new Error('No OAuth URL');
-
-                                            if (isNative) {
-                                                const { Browser } = await import('@capacitor/browser');
-                                                await Browser.open({ url: data.url });
-                                            } else {
-                                                window.location.href = data.url;
-                                            }
-                                        } catch (error) {
-                                            console.error('Error Apple Sign-up:', error);
-                                            toast.error(t('signup.appleError'));
-                                        } finally {
-                                            setLoading(false);
-                                        }
-                                    }}
+                                    onClick={() => handleOAuthSignup('apple')}
                                     disabled={loading}
                                     className="w-full flex items-center justify-center gap-3 bg-black text-white py-3 px-4 rounded-lg hover:bg-gray-900 transition duration-300 font-medium mt-3 disabled:opacity-50"
                                 >
@@ -443,34 +466,7 @@ const SignupPage = () => {
 
                             {/* Facebook Sign-up */}
                             <button
-                                onClick={async () => {
-                                    try {
-                                        setLoading(true);
-                                        trackAuthFunnelEvent('oauth_start', { funnel: 'signup', method: 'facebook' });
-                                        const { data, error } = await supabase.auth.signInWithOAuth({
-                                            provider: 'facebook',
-                                            options: {
-                                                redirectTo: oauthRedirectTo,
-                                                skipBrowserRedirect: true
-                                            }
-                                        });
-
-                                        if (error) throw error;
-                                        if (!data?.url) throw new Error('No OAuth URL');
-
-                                        if (isNative) {
-                                            const { Browser } = await import('@capacitor/browser');
-                                            await Browser.open({ url: data.url });
-                                        } else {
-                                            window.location.href = data.url;
-                                        }
-                                    } catch (error) {
-                                        console.error('Error Facebook Sign-up:', error);
-                                        toast.error('Error al continuar con Facebook');
-                                    } finally {
-                                        setLoading(false);
-                                    }
-                                }}
+                                onClick={() => handleOAuthSignup('facebook')}
                                 disabled={loading}
                                 className="w-full flex items-center justify-center gap-3 bg-[#1877F2] text-white py-3 px-4 rounded-lg hover:bg-[#166FE5] transition duration-300 font-medium mt-3 disabled:opacity-50"
                             >

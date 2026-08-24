@@ -7,12 +7,14 @@ import toast from 'react-hot-toast';
 import { RecommendationForm } from '../recommendations';
 import { Capacitor } from '@capacitor/core';
 import { featureFlags } from '../../config/featureFlags';
+import { isPremiumPromoActive } from '../../config/promotions';
 
 const UserSidebar = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { user } = useAuth();
     const isNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
+    const premiumPromoActive = isPremiumPromoActive();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [showRecommendForm, setShowRecommendForm] = useState(false);
 
@@ -61,8 +63,8 @@ const UserSidebar = () => {
             icon: Star,
             isAction: true
         },
-        ...(!isNative ? [{
-            name: 'Actualizar a Premium',
+        ...((!isNative || premiumPromoActive) ? [{
+            name: premiumPromoActive ? 'Activar PREMIUM GRATIS' : 'Actualizar a Premium',
             path: '/dashboard/upgrade',
             icon: Crown,
             highlight: true

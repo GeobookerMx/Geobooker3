@@ -362,10 +362,27 @@
         }
       } else {
         // PRODUCTION: Register Service Worker normally
+        const hadServiceWorkerController = Boolean(navigator.serviceWorker.controller);
+        let reloadingForServiceWorkerUpdate = false;
+
+        if (hadServiceWorkerController) {
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (reloadingForServiceWorkerUpdate) return;
+            reloadingForServiceWorkerUpdate = true;
+            window.location.reload();
+          });
+        }
+
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
             .then(registration => {
               console.debug('SW registered:', registration.scope);
+              if (registration.waiting) {
+                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+              }
+              registration.update().catch(error => {
+                console.warn('SW update check failed:', error);
+              });
             })
             .catch(error => {
               console.error('SW registration failed:', error);

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { Lock, Eye, EyeOff, Check, X } from 'lucide-react';
+import { withAuthTimeout } from '../utils/authFlow';
 
 const ResetPasswordPage = () => {
     useTranslation();
@@ -32,13 +33,13 @@ const ResetPasswordPage = () => {
             try {
                 const code = new URLSearchParams(window.location.search).get('code');
                 if (code) {
-                    const { error } = await supabase.auth.exchangeCodeForSession(code);
+                    const { error } = await withAuthTimeout(supabase.auth.exchangeCodeForSession(code));
                     if (error && !String(error.message || '').toLowerCase().includes('code verifier')) {
                         throw error;
                     }
                 }
 
-                const { data: { session } } = await supabase.auth.getSession();
+                const { data: { session } } = await withAuthTimeout(supabase.auth.getSession());
                 if (mounted) setRecoveryReady(Boolean(session));
             } catch (error) {
                 console.error('Error validating password recovery link:', error);
@@ -101,9 +102,9 @@ const ResetPasswordPage = () => {
         setLoading(true);
 
         try {
-            const { error } = await supabase.auth.updateUser({
+            const { error } = await withAuthTimeout(supabase.auth.updateUser({
                 password: formData.password
-            });
+            }));
 
             if (error) throw error;
 

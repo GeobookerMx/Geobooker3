@@ -4,7 +4,7 @@
  * Proporciona funcionalidad offline y caché de assets
  */
 
-const CACHE_VERSION = 'v2.2.0';
+const CACHE_VERSION = 'v2.3.0';
 const CACHE_NAME = `geobooker-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `geobooker-runtime-${CACHE_VERSION}`;
 const CRITICAL_PRECACHE_ASSETS = new Set(['/index.html']);

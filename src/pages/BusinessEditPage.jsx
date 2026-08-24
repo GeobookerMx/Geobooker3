@@ -25,6 +25,27 @@ const defaultCenter = {
 
 const BUSINESS_IMAGES_BUCKET = 'business-images';
 
+const BUSINESS_FEATURE_OPTIONS = [
+    ['pet_friendly', 'Pet Friendly'],
+    ['24_hours', 'Abierto 24 hrs'],
+    ['accepts_card', 'Acepta tarjeta'],
+    ['delivery', 'Entrega a domicilio'],
+    ['wifi', 'WiFi gratis'],
+    ['accessible', 'Accesible'],
+    ['parking', 'Estacionamiento'],
+    ['factura', 'Facturación']
+];
+
+const SPACE_FEATURE_OPTIONS = [
+    ['space_cctv', 'CCTV / circuito cerrado'],
+    ['space_contract', 'Renta con contrato'],
+    ['space_guard', 'Guardia / vigilancia'],
+    ['space_24_7_access', 'Acceso 24/7'],
+    ['space_monthly_rent', 'Renta por mes'],
+    ['space_night_parking', 'Pensión nocturna'],
+    ['space_car_garage', 'Garage para autos']
+];
+
 const BusinessEditPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -61,6 +82,7 @@ const BusinessEditPage = () => {
         invoicing_details: '',
         has_job_openings: false,
         job_openings_details: '',
+        tags: [],
         images: [],
         opening_hours: null
     });
@@ -110,6 +132,7 @@ const BusinessEditPage = () => {
                 invoicing_details: data.invoicing_details || '',
                 has_job_openings: data.has_job_openings || false,
                 job_openings_details: data.job_openings_details || '',
+                tags: Array.isArray(data.tags) ? data.tags : [],
                 images: data.images || [],
                 opening_hours: data.opening_hours || null
             });
@@ -129,17 +152,32 @@ const BusinessEditPage = () => {
         try {
             const { data, error } = await supabase.rpc('get_user_premium_status', { user_id: user.id });
             if (error) throw error;
-            setIsPremium(data || false);
+            setIsPremium((current) => current || Boolean(data));
         } catch (error) {
             console.error('Error checking premium status:', error);
         }
     };
+
+    useEffect(() => {
+        const handlePremiumActivated = () => setIsPremium(true);
+        window.addEventListener('geobooker:premium-activated', handlePremiumActivated);
+        return () => window.removeEventListener('geobooker:premium-activated', handlePremiumActivated);
+    }, []);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value
+        }));
+    };
+
+    const toggleFeature = (featureId) => {
+        setFormData((previous) => ({
+            ...previous,
+            tags: previous.tags.includes(featureId)
+                ? previous.tags.filter((tag) => tag !== featureId)
+                : [...previous.tags, featureId]
         }));
     };
 
@@ -306,6 +344,7 @@ const BusinessEditPage = () => {
                     invoicing_details: formData.invoicing_details,
                     has_job_openings: formData.has_job_openings,
                     job_openings_details: formData.job_openings_details,
+                    tags: formData.tags,
                     images: formData.images,
                     opening_hours: formData.opening_hours,
                     updated_at: new Date()
@@ -334,6 +373,9 @@ const BusinessEditPage = () => {
 
     const maxImages = isPremium ? 10 : 0;
     const currentImageCount = formData.images.length;
+    const featureOptions = business?.listing_type === 'space_rental'
+        ? SPACE_FEATURE_OPTIONS
+        : BUSINESS_FEATURE_OPTIONS;
 
     return (
         <div className="max-w-5xl mx-auto px-4 py-8">
@@ -694,17 +736,47 @@ const BusinessEditPage = () => {
                     </div>
                 </section>
 
-                {/* Sección 6: Galería de Fotos */}
+                {/* Sección 6: Características */}
+                <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-md">
+                    <h2 className="mb-2 flex items-center text-xl font-bold text-gray-800">
+                        <span className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-sm text-blue-600">6</span>
+                        Características
+                    </h2>
+                    <p className="mb-4 text-sm text-gray-600">
+                        Selecciona las características que ayudan a tus clientes a tomar una decisión.
+                    </p>
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                        {featureOptions.map(([featureId, label]) => {
+                            const selected = formData.tags.includes(featureId);
+                            return (
+                                <button
+                                    key={featureId}
+                                    type="button"
+                                    onClick={() => toggleFeature(featureId)}
+                                    aria-pressed={selected}
+                                    className={`rounded-xl border-2 px-3 py-3 text-left text-sm font-semibold transition ${selected
+                                        ? 'border-blue-500 bg-blue-50 text-blue-800'
+                                        : 'border-gray-200 bg-white text-gray-700 hover:border-blue-200'
+                                    }`}
+                                >
+                                    {selected ? '✓ ' : ''}{label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </section>
+
+                {/* Sección 7: Galería de Fotos */}
                 <section className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-xl font-bold text-gray-800 flex items-center">
-                            <span className="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">6</span>
+                            <span className="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">7</span>
                             <ImageIcon className="w-5 h-5 mr-2" />
                             Galería de Fotos
                         </h2>
                         <span className="text-sm text-gray-600">
                             {isPremium ? `${currentImageCount} / ${maxImages} fotos` : 'Premium requerido'}
-                            {!isPremium && !isIOS && (
+                            {!isPremium && (!isIOS || premiumPromoActive) && (
                                 <Link to="/dashboard/upgrade" className="ml-2 text-blue-600 hover:underline">
                                     {premiumPromoActive ? 'Activar gratis' : 'Actualizar a Premium'}
                                 </Link>
@@ -725,7 +797,7 @@ const BusinessEditPage = () => {
                                         fortalecer tu perfil y mejorar la confianza antes de que el cliente te contacte.
                                         {premiumPromoActive && ` Promoción disponible hasta el ${getPremiumPromoDeadlineLabel('es-MX')}.`}
                                     </p>
-                                    {!isIOS && (
+                                    {(!isIOS || premiumPromoActive) && (
                                         <Link
                                             to="/dashboard/upgrade"
                                             className="mt-3 inline-flex rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700"

@@ -7,7 +7,8 @@ import { getAuthErrorCode, trackAuthFunnelEvent, trackUserLogin } from '../servi
 import { Capacitor } from '@capacitor/core';
 import { activatePremiumPromotion } from '../services/premiumService';
 import { getPremiumPromoDeadlineLabel, isPremiumPromoActive } from '../config/promotions';
-import { clearPremiumIntent, PREMIUM_AFTER_LOGIN_KEY, rememberPremiumIntent } from '../config/premiumFlow';
+import { clearPremiumIntent, getPremiumIntentPreference, rememberPremiumIntent } from '../config/premiumFlow';
+import { withAuthTimeout } from '../utils/authFlow';
 
 const LoginPage = () => {
   const { t } = useTranslation();
@@ -20,7 +21,7 @@ const LoginPage = () => {
   const premiumPromoActive = isPremiumPromoActive();
   const [activateFreePremiumOnLogin, setActivateFreePremiumOnLogin] = useState(() => {
     if (!premiumPromoActive) return false;
-    return localStorage.getItem(PREMIUM_AFTER_LOGIN_KEY) !== 'false';
+    return getPremiumIntentPreference() !== 'false';
   });
   const [formData, setFormData] = useState({ email: '', password: '', rememberMe: false });
   const oauthRedirectTo = isNative
@@ -54,10 +55,10 @@ const LoginPage = () => {
     setLoading(true);
     try {
       const normalizedEmail = formData.email.trim().toLowerCase();
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await withAuthTimeout(supabase.auth.signInWithPassword({
         email: normalizedEmail,
         password: formData.password
-      });
+      }));
       if (error) throw error;
       if (data.user?.id) {
         trackAuthFunnelEvent('login_success', {
@@ -68,17 +69,18 @@ const LoginPage = () => {
         trackUserLogin(data.user.id, 'email');
       }
       if (premiumPromoActive && activateFreePremiumOnLogin) {
-        try {
-          await activatePremiumPromotion(data.session?.access_token);
-          clearPremiumIntent();
-          toast.success('Premium gratis activado. Ya tienes acceso completo.');
-        } catch (premiumError) {
-          console.warn('No se pudo activar Premium al iniciar sesión:', premiumError);
-          toast.error('Entraste correctamente, pero no se pudo activar Premium gratis todavía.');
-        }
+        void activatePremiumPromotion(data.session?.access_token)
+          .then(() => {
+            clearPremiumIntent();
+            toast.success('Premium gratis activado. Ya tienes acceso completo.');
+          })
+          .catch((premiumError) => {
+            console.warn('No se pudo activar Premium al iniciar sesión:', premiumError);
+            toast('Tu sesión está activa. Podrás activar Premium desde tu panel.', { icon: 'i' });
+          });
       }
       toast.success(t('login.welcomeBack'));
-      navigate('/');
+      navigate('/dashboard', { replace: true });
     } catch (error) {
       trackAuthFunnelEvent('login_error', {
         funnel: 'login',
@@ -111,14 +113,14 @@ const LoginPage = () => {
       trackAuthFunnelEvent('oauth_start', { funnel: 'login', method: provider });
       rememberPremiumIntent(premiumPromoActive && activateFreePremiumOnLogin);
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: oauthRedirectTo,
           skipBrowserRedirect: true,
           queryParams: provider === 'google' ? { access_type: 'offline', prompt: 'select_account' } : undefined
         }
-      });
+      }));
       if (error) throw error;
       if (!data?.url) throw new Error('No OAuth URL');
 
@@ -161,11 +163,7 @@ const LoginPage = () => {
                 checked={activateFreePremiumOnLogin}
                 onChange={(event) => {
                   setActivateFreePremiumOnLogin(event.target.checked);
-                  if (event.target.checked) {
-                    localStorage.setItem(PREMIUM_AFTER_LOGIN_KEY, 'true');
-                  } else {
-                    localStorage.setItem(PREMIUM_AFTER_LOGIN_KEY, 'false');
-                  }
+                  rememberPremiumIntent(event.target.checked);
                 }}
                 className="mt-1 h-5 w-5 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
               />

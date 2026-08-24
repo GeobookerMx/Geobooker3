@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { Mail, ArrowLeft, Check } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
+import { withAuthTimeout } from '../utils/authFlow';
 
 const ForgotPasswordPage = () => {
     useTranslation();
@@ -47,9 +48,9 @@ const ForgotPasswordPage = () => {
                 ? 'https://geobooker.com.mx/reset-password'
                 : `${origin}/reset-password`;
 
-            const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+            const { error } = await withAuthTimeout(supabase.auth.resetPasswordForEmail(normalizedEmail, {
                 redirectTo: redirectUrl
-            });
+            }));
 
             if (error) throw error;
 

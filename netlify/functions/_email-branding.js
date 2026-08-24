@@ -19,7 +19,7 @@ function buildQrImageUrl(target) {
     return `https://quickchart.io/qr?size=170&text=${encodeURIComponent(buildTrackedUrl(target))}`;
 }
 
-function buildFooter({ companyName = 'tu empresa' } = {}) {
+function buildFooter({ companyName = 'tu empresa', unsubscribeUrl = null } = {}) {
     const androidUrl = buildTrackedUrl('android_store');
     const iosUrl = buildTrackedUrl('ios_store');
 
@@ -70,13 +70,17 @@ function buildFooter({ companyName = 'tu empresa' } = {}) {
                     Este mensaje comercial se envía porque <strong>${companyName}</strong> aparece como negocio público
                     o contacto comercial relacionado con presencia local.
                 </p>
-                <p>Si no deseas más mensajes corporativos, responde este correo con la palabra <strong>BAJA</strong>.</p>
+                <p>
+                    Si no deseas más mensajes corporativos,
+                    ${unsubscribeUrl ? `<a href="${unsubscribeUrl}">cancela la suscripción con un clic</a> o ` : ''}
+                    responde este correo con la palabra <strong>BAJA</strong>.
+                </p>
             </div>
         </div>
     `;
 }
 
-function wrapEmailLayout({ contentHtml, preheader = 'Geobooker Ads', title = 'Geobooker Ads', companyName = 'tu empresa' }) {
+function wrapEmailLayout({ contentHtml, preheader = 'Geobooker Ads', title = 'Geobooker Ads', companyName = 'tu empresa', unsubscribeUrl = null }) {
     return `
 <!DOCTYPE html>
 <html lang="es">
@@ -129,7 +133,7 @@ function wrapEmailLayout({ contentHtml, preheader = 'Geobooker Ads', title = 'Ge
             <div class="gb-content">
                 ${contentHtml}
             </div>
-            ${buildFooter({ companyName })}
+            ${buildFooter({ companyName, unsubscribeUrl })}
         </div>
     </div>
 </body>

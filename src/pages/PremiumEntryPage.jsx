@@ -19,8 +19,9 @@ const PremiumEntryPage = () => {
     );
   }
 
-  // El flujo de adquisición se mantiene fuera de la app nativa de iOS.
-  if (IS_IOS_NATIVE) return <Navigate to={user ? '/dashboard' : '/'} replace />;
+  // En iOS solo permitimos la activación gratuita; cualquier flujo de pago
+  // continúa fuera de la app para respetar las reglas de App Store.
+  if (IS_IOS_NATIVE && !promoActive) return <Navigate to={user ? '/dashboard' : '/'} replace />;
   if (user) return <Navigate to="/dashboard/upgrade" replace />;
 
   const benefits = [

@@ -36,7 +36,7 @@ const DashboardPage = () => {
     try {
       const { data, error } = await supabase.rpc('get_user_premium_status', { user_id: user.id });
       if (error) throw error;
-      setIsPremium(data || false);
+      setIsPremium((current) => current || Boolean(data));
     } catch (error) {
       console.error('Error checking premium:', error);
     }
@@ -118,6 +118,12 @@ const DashboardPage = () => {
     }
   }, [checkPremiumStatus, countBusinesses, loadMyRecommendations, loadReferralCode, user]);
 
+  useEffect(() => {
+    const handlePremiumActivated = () => setIsPremium(true);
+    window.addEventListener('geobooker:premium-activated', handlePremiumActivated);
+    return () => window.removeEventListener('geobooker:premium-activated', handlePremiumActivated);
+  }, []);
+
   const showUpgradeBanner = !isPremium && !premiumPromoActive && businessCount >= 2;
 
   return (
@@ -145,7 +151,7 @@ const DashboardPage = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
               Hola, {user?.user_metadata?.full_name || 'Usuario'} 👋
-              {isPremium && !isIOS && (
+              {isPremium && (
                 <span className="ml-3 inline-flex items-center bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">
                   <Crown className="w-4 h-4 mr-1 fill-yellow-500" />
                   Premium
@@ -154,7 +160,7 @@ const DashboardPage = () => {
             </h1>
             <p className="text-gray-600 mt-1">Bienvenido a tu panel de control</p>
           </div>
-          {!isPremium && !isIOS && (
+          {!isPremium && (!isIOS || premiumPromoActive) && (
             <Link
               to="/dashboard/upgrade"
               className={`w-full md:w-auto text-center ${premiumPromoActive ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700' : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'} text-white px-6 py-3 rounded-lg font-semibold transition flex items-center justify-center shadow-md`}
@@ -166,7 +172,7 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {premiumPromoActive && !isPremium && !isIOS && (
+      {premiumPromoActive && !isPremium && (
         <div className="bg-gradient-to-r from-emerald-50 via-green-50 to-lime-50 border-2 border-emerald-200 rounded-xl p-6 mb-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div>

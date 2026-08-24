@@ -23,3 +23,11 @@ export const hasPremiumIntent = () => {
     return false;
   }
 };
+
+export const getPremiumIntentPreference = () => {
+  try {
+    return localStorage.getItem(PREMIUM_AFTER_LOGIN_KEY);
+  } catch {
+    return null;
+  }
+};

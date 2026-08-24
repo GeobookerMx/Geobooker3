@@ -44,7 +44,7 @@ exports.handler = async (event) => {
       auth: { persistSession: false, autoRefreshToken: false }
     });
     const now = new Date().toISOString();
-    const { data: profile, error } = await supabase
+    let { data: profile, error } = await supabase
       .from('user_profiles')
       .update({
         is_premium: true,
@@ -55,7 +55,36 @@ exports.handler = async (event) => {
       })
       .eq('id', user.id)
       .select('id, is_premium, is_premium_owner, premium_until')
-      .single();
+      .maybeSingle();
+
+    // Algunos registros antiguos o creados durante una incidencia del trigger
+    // de Auth pueden no tener todavia su fila en user_profiles. La promocion no
+    // debe fallar por eso: el backend de confianza crea el perfil faltante.
+    if (!error && !profile) {
+      const fallbackName = user.user_metadata?.full_name
+        || user.user_metadata?.name
+        || String(user.email || 'Usuario').split('@')[0]
+        || 'Usuario';
+
+      const insertResult = await supabase
+        .from('user_profiles')
+        .insert({
+          id: user.id,
+          email: user.email || null,
+          full_name: fallbackName,
+          avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
+          is_premium: true,
+          is_premium_owner: true,
+          premium_since: now,
+          premium_until: PREMIUM_PROMO_UNTIL,
+          updated_at: now
+        })
+        .select('id, is_premium, is_premium_owner, premium_until')
+        .single();
+
+      profile = insertResult.data;
+      error = insertResult.error;
+    }
 
     if (error || !profile) {
       console.error('[activate-premium-promo] Profile update failed:', error?.message);

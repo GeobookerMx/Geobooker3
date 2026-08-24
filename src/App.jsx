@@ -34,6 +34,10 @@ import { Toaster } from "react-hot-toast";
 import { captureQrAttribution } from "./services/qrAttributionService";
 import { captureAttribution } from "./services/attributionService";
 import { initWebVitals } from "./services/vitalsService";
+import { withAuthTimeout } from "./utils/authFlow";
+import { activatePremiumPromotion } from "./services/premiumService";
+import { isPremiumPromoActive } from "./config/promotions";
+import { clearPremiumIntent, hasPremiumIntent } from "./config/premiumFlow";
 
 const ChatWidget = lazy(() => import("./components/agent/ChatWidget"));
 const CookieConsent = lazy(() => import("./components/CookieConsent"));
@@ -61,6 +65,7 @@ const PUBLIC_NATIVE_PATH_PREFIXES = [
 ];
 
 const AUTH_LINK_PATHS = ['/auth/callback', '/reset-password'];
+const processedNativeAuthUrls = new Set();
 
 async function trackNativeAuthCompletion(session, source = 'native_deep_link') {
   const userId = session?.user?.id;
@@ -84,9 +89,20 @@ async function trackNativeAuthCompletion(session, source = 'native_deep_link') {
   }
 }
 
+function activateNativePremiumIfRequested(session) {
+  if (!session?.access_token || !isPremiumPromoActive() || !hasPremiumIntent()) return;
+
+  void activatePremiumPromotion(session.access_token)
+    .then(() => clearPremiumIntent())
+    .catch((error) => {
+      console.warn('[Auth Global] No se pudo activar Premium en el callback nativo:', error);
+    });
+}
+
 async function handleNativeAuthLink(url) {
   if (!url || typeof window === 'undefined') return false;
 
+  let isRecovery = false;
   try {
     const urlObj = new URL(url);
     const isKnownHost = ['geobooker.com.mx', 'www.geobooker.com.mx', 'www.geobooker.com', 'geobooker.com'].includes(urlObj.hostname);
@@ -97,6 +113,12 @@ async function handleNativeAuthLink(url) {
 
     if ((!isKnownHost && !isCustomScheme) || !isAuthLink) return false;
 
+    // iOS y Android pueden entregar el mismo enlace mediante appUrlOpen y
+    // getLaunchUrl. Un code PKCE solo puede intercambiarse una vez.
+    if (processedNativeAuthUrls.has(url)) return true;
+    processedNativeAuthUrls.add(url);
+    window.setTimeout(() => processedNativeAuthUrls.delete(url), 5 * 60 * 1000);
+
     try {
       const { Browser } = await import('@capacitor/browser');
       await Browser.close();
@@ -104,16 +126,19 @@ async function handleNativeAuthLink(url) {
       console.warn('[Auth Global] No fue necesario cerrar el navegador:', error);
     }
 
-    const isRecovery = targetPath.startsWith('/reset-password') ||
+    isRecovery = targetPath.startsWith('/reset-password') ||
       urlObj.searchParams.get('type') === 'recovery' ||
       new URLSearchParams(urlObj.hash.replace(/^#/, '')).get('type') === 'recovery';
     const code = urlObj.searchParams.get('code');
 
     if (code) {
-      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+      const { data, error } = await withAuthTimeout(supabase.auth.exchangeCodeForSession(code));
       if (error) throw error;
-      if (!isRecovery) await trackNativeAuthCompletion(data?.session, 'native_deep_link_code');
-      window.location.hash = isRecovery ? '/reset-password' : '/';
+      if (!isRecovery) {
+        void trackNativeAuthCompletion(data?.session, 'native_deep_link_code');
+        activateNativePremiumIfRequested(data?.session);
+      }
+      window.location.hash = isRecovery ? '/reset-password' : '/dashboard';
       return true;
     }
 
@@ -122,13 +147,16 @@ async function handleNativeAuthLink(url) {
     const refreshToken = tokenParams.get('refresh_token') || urlObj.searchParams.get('refresh_token');
 
     if (accessToken && refreshToken) {
-      const { data, error } = await supabase.auth.setSession({
+      const { data, error } = await withAuthTimeout(supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken
-      });
+      }));
       if (error) throw error;
-      if (!isRecovery) await trackNativeAuthCompletion(data?.session, 'native_deep_link_tokens');
-      window.location.hash = isRecovery ? '/reset-password' : '/';
+      if (!isRecovery) {
+        void trackNativeAuthCompletion(data?.session, 'native_deep_link_tokens');
+        activateNativePremiumIfRequested(data?.session);
+      }
+      window.location.hash = isRecovery ? '/reset-password' : '/dashboard';
       return true;
     }
 
@@ -151,6 +179,19 @@ async function handleNativeAuthLink(url) {
     return true;
   } catch (error) {
     console.error('[Auth Global] Error procesando el enlace de autenticacion:', error);
+
+    // Si la otra ruta nativa ya estableció la sesión, conservar el éxito en vez
+    // de sobrescribirlo con una redirección tardía a /login.
+    try {
+      const { data: { session } } = await withAuthTimeout(supabase.auth.getSession(), 5_000);
+      if (session) {
+        if (!isRecovery) activateNativePremiumIfRequested(session);
+        window.location.hash = isRecovery ? '/reset-password' : '/dashboard';
+        return true;
+      }
+    } catch {
+      // Conservar el error original de autenticación.
+    }
     trackAuthFunnelEvent('oauth_callback_error', {
       funnel: 'login',
       method: 'oauth',

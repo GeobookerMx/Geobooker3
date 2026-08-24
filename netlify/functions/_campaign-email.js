@@ -39,7 +39,8 @@ function buildCampaignEmail({
     contactName,
     tier,
     signatureHtml,
-    preheader
+    preheader,
+    unsubscribeUrl
 }) {
     const renderedHtml = renderCampaignCopy(html, { companyName, contactName, tier });
     const renderedSignature = renderCampaignCopy(signatureHtml, { companyName, contactName, tier });
@@ -49,7 +50,8 @@ function buildCampaignEmail({
         contentHtml: contentHtml || '<p>Mensaje sin contenido</p>',
         preheader: preheader || `${companyName || 'tu empresa'} puede anunciarse en Geobooker con espacios patrocinados`,
         title: renderCampaignCopy(subject || 'Mensaje de Geobooker', { companyName, contactName, tier }),
-        companyName: companyName || 'tu empresa'
+        companyName: companyName || 'tu empresa',
+        unsubscribeUrl
     });
 }
 

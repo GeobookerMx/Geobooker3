@@ -152,7 +152,7 @@ async function processEmailEvent(supabase, webhook) {
 
   const now = new Date().toISOString();
   if (type === 'email.delivered') {
-    await updateContactEngagement(supabase, email, { email_status: 'sent' }, 0);
+    await updateContactEngagement(supabase, email, { email_status: 'delivered' }, 0);
   } else if (type === 'email.opened') {
     await updateContactEngagement(supabase, email, { last_email_opened: now, email_status: 'opened' }, 5);
   } else if (type === 'email.clicked') {

@@ -121,7 +121,9 @@ export default function Header() {
   };
 
   const isNative = Capacitor.isNativePlatform();
-  const showPremiumPromo = !IS_IOS_NATIVE && isPremiumPromoActive();
+  // La promoción gratuita sí puede mostrarse en iOS porque no abre pagos,
+  // precios ni checkout externo.
+  const showPremiumPromo = isPremiumPromoActive();
   const currentLocale = i18n.language?.startsWith('en') ? 'en-US' : 'es-MX';
   const emprendeLabel = currentLocale.startsWith('en') ? 'Learn' : 'Emprende';
   const bibliotecaLabel = currentLocale.startsWith('en') ? 'Library' : 'Biblioteca';

@@ -5,6 +5,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { resolveEmailSender } = require('./_email-config');
 const { buildCampaignEmail, renderCampaignCopy } = require('./_campaign-email');
 const { ensureCronOrAdmin } = require('./_cron-auth');
+const { buildUnsubscribeUrl } = require('./_crm-unsubscribe');
 
 const supabase = createClient(
     process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
@@ -25,12 +26,7 @@ const GET_MEXICO_DATE_TIME = () => {
 };
 
 const countSentTodayAcrossSources = async (start, end) => {
-    const [
-        { count: historyCount },
-        { count: queueCount },
-        { count: contactsLastSentCount },
-        { count: contactsEmailSentAtCount }
-    ] = await Promise.all([
+    const results = await Promise.all([
         supabase
             .from('campaign_history')
             .select('*', { count: 'exact', head: true })
@@ -58,11 +54,16 @@ const countSentTodayAcrossSources = async (start, end) => {
             .lte('email_sent_at', end)
     ]);
 
+    const firstError = results.find(result => result.error)?.error;
+    if (firstError) throw new Error(`Unable to verify daily send limit: ${firstError.message}`);
+
+    const [historyResult, queueResult, contactsLastSentResult, contactsEmailSentAtResult] = results;
+
     const breakdown = {
-        campaign_history: historyCount || 0,
-        email_queue: queueCount || 0,
-        marketing_contacts_last_email_sent: contactsLastSentCount || 0,
-        marketing_contacts_email_sent_at: contactsEmailSentAtCount || 0
+        campaign_history: historyResult.count || 0,
+        email_queue: queueResult.count || 0,
+        marketing_contacts_last_email_sent: contactsLastSentResult.count || 0,
+        marketing_contacts_email_sent_at: contactsEmailSentAtResult.count || 0
     };
 
     return {
@@ -121,12 +122,10 @@ async function loadEmailGovernance(requestedLimit, body = {}) {
     }
 
     return {
-        dailyLimit: parsePositiveInt(body.dailyLimit || limits.daily_email_limit || automationDailyLimit, defaults.dailyLimit, { min: 1, max: 100000 }),
-        maxPerRun: parsePositiveInt(body.maxPerRun || limits.email_batch_limit || limits.emails_per_run || requestedLimit, defaults.maxPerRun, { min: 1, max: 100 }),
-        requestDelayMs: parsePositiveInt(body.requestDelayMs || limits.email_request_delay_ms, defaults.requestDelayMs, { min: 200, max: 10000 }),
-        sendingEnabled: (body.forceSend === true || truthy(body.forceSend))
-            ? true
-            : Boolean(limits.email_sending_enabled ?? limits.sending_enabled ?? defaults.sendingEnabled),
+        dailyLimit: parsePositiveInt(limits.daily_email_limit || automationDailyLimit, defaults.dailyLimit, { min: 1, max: 100000 }),
+        maxPerRun: parsePositiveInt(limits.email_batch_limit || limits.emails_per_run || requestedLimit, defaults.maxPerRun, { min: 1, max: 100 }),
+        requestDelayMs: parsePositiveInt(limits.email_request_delay_ms, defaults.requestDelayMs, { min: 200, max: 10000 }),
+        sendingEnabled: Boolean(limits.email_sending_enabled ?? limits.sending_enabled ?? defaults.sendingEnabled),
         dryRun: defaults.dryRun,
         source: crmSettings?.setting_value ? 'crm_settings.campaign_limits' : 'env/defaults'
     };
@@ -256,6 +255,17 @@ exports.handler = async (event) => {
                 return true;
             });
 
+        const eligibleQueueIds = new Set(queueItems.map(item => item.id));
+        const ineligibleQueueIds = queueRows.map(row => row.id).filter(id => !eligibleQueueIds.has(id));
+        if (ineligibleQueueIds.length > 0) {
+            const { error: cleanupError } = await supabase
+                .from('email_queue')
+                .update({ status: 'failed', error_message: 'Contact suppressed, inactive or missing a valid email' })
+                .in('id', ineligibleQueueIds)
+                .eq('status', 'pending');
+            if (cleanupError) throw cleanupError;
+        }
+
         if (queueItems.length === 0) {
             return {
                 statusCode: 200,
@@ -381,7 +391,8 @@ exports.handler = async (event) => {
                     subject: template.subject || 'Geobooker Ads',
                     companyName,
                     contactName: greeting,
-                    tier: contact.tier
+                    tier: contact.tier,
+                    unsubscribeUrl: buildUnsubscribeUrl(contact.email)
                 });
 
                 const finalSubject = renderCampaignCopy(template.subject || 'Geobooker Ads', {
@@ -397,6 +408,7 @@ exports.handler = async (event) => {
                     preferredName: 'Geobooker Ads'
                 });
 
+                const unsubscribeUrl = buildUnsubscribeUrl(contact.email);
                 const emailResponse = await fetch('https://api.resend.com/emails', {
                     method: 'POST',
                     headers: {
@@ -410,7 +422,13 @@ exports.handler = async (event) => {
                         reply_to: senderConfig.replyTo,
                         to: contact.email,
                         subject: finalSubject,
-                        html: finalHtml
+                        html: finalHtml,
+                        ...(unsubscribeUrl ? {
+                            headers: {
+                                'List-Unsubscribe': `<${unsubscribeUrl}>`,
+                                'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+                            }
+                        } : {})
                     })
                 });
                 const emailResult = await emailResponse.json().catch(() => ({}));

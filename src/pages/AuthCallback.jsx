@@ -66,19 +66,20 @@ const AuthCallback = () => {
                 userId: session.user.id
             });
             try { trackUserLogin(session.user.id, provider); } catch (e) { /* analytics opcional */ }
-            await persistProfile(session.user);
+            // El acceso ya fue confirmado. Perfil y Premium son tareas secundarias
+            // y nunca deben bloquear la entrada del usuario a la aplicación.
+            void persistProfile(session.user);
 
             if (isPremiumPromoActive() && hasPremiumIntent()) {
-                try {
-                    await activatePremiumPromotion(session.access_token);
-                    clearPremiumIntent();
-                } catch (premiumError) {
-                    console.warn('[AuthCallback] No se pudo activar Premium:', premiumError);
-                }
+                void activatePremiumPromotion(session.access_token)
+                    .then(() => clearPremiumIntent())
+                    .catch((premiumError) => {
+                        console.warn('[AuthCallback] No se pudo activar Premium:', premiumError);
+                    });
             }
 
             // Pequeño delay para mostrar el mensaje de éxito antes de redirigir
-            redirectTimeoutId = setTimeout(() => navigate('/', { replace: true }), 800);
+            redirectTimeoutId = setTimeout(() => navigate('/dashboard', { replace: true }), 500);
         };
 
         const onFailure = (reason) => {

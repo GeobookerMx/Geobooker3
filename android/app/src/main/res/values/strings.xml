@@ -4,4 +4,6 @@
     <string name="title_activity_main">Geobooker</string>
     <string name="package_name">com.geobooker.app</string>
     <string name="custom_url_scheme">com.geobooker.app</string>
+    <string name="facebook_app_id">3176918089184321</string>
+    <string name="facebook_client_token"></string>
 </resources>

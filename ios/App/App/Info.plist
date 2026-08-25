@@ -62,6 +62,16 @@
 	<true/>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>Usamos tu permiso para ofrecer anuncios más relevantes y medir campañas. Puedes elegir 'No permitir' sin afectar el uso básico de Geobooker.</string>
+	<key>FacebookAppID</key>
+	<string>3176918089184321</string>
+	<key>FacebookClientToken</key>
+	<string></string>
+	<key>FacebookAutoInitEnabled</key>
+	<false/>
+	<key>FacebookAutoLogAppEventsEnabled</key>
+	<false/>
+	<key>FacebookAdvertiserIDCollectionEnabled</key>
+	<false/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Usamos tu ubicación para mostrarte negocios cercanos a tu alrededor de forma rápida.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>

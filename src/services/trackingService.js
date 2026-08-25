@@ -15,6 +15,7 @@
 
 import { isIOSApp } from '../utils/platformDetection';
 import { disableMetaPixel, enableMetaPixel } from '../lib/metaPixel';
+import { disableMetaAppEvents, enableMetaAppEvents } from './metaAppEvents';
 
 // ============================================
 // CONFIGURATION
@@ -155,8 +156,10 @@ function loadClarity() {
 export async function enableTracking(options = { analytics: true, marketing: true }) {
     if (options.marketing) {
         enableMetaPixel();
+        void enableMetaAppEvents();
     } else {
         disableMetaPixel();
+        void disableMetaAppEvents();
     }
 
     if (trackingEnabled && trackingScriptsLoaded) {
@@ -204,6 +207,7 @@ export async function enableTracking(options = { analytics: true, marketing: tru
 export function disableTracking() {
     trackingEnabled = false;
     disableMetaPixel();
+    void disableMetaAppEvents();
 
     // Update consent to denied
     if (window.gtag) {

@@ -6,6 +6,13 @@
  * and the public API used by product flows. It intentionally has no CAPI code.
  */
 
+import {
+  metaAppTrackCompleteRegistration,
+  metaAppTrackLead,
+  metaAppTrackSearch,
+  metaAppTrackViewContent,
+} from '../services/metaAppEvents';
+
 const META_PIXEL_ID = String(import.meta.env.VITE_META_PIXEL_ID || '').trim();
 
 const OFFICIAL_HOSTNAMES = new Set([
@@ -58,6 +65,11 @@ const recentEvents = new Map();
 
 function isBrowser() {
   return typeof window !== 'undefined' && typeof document !== 'undefined';
+}
+
+function isNativeApp() {
+  return typeof window !== 'undefined'
+    && window.Capacitor?.isNativePlatform?.() === true;
 }
 
 function hasSensitiveValue(value) {
@@ -250,6 +262,7 @@ export function metaTrackCustom(eventName, params = {}, options = {}) {
 export function metaTrackSearch(searchString) {
   const safeSearch = cleanText(searchString, 100);
   if (!safeSearch) return false;
+  if (isNativeApp()) return metaAppTrackSearch(safeSearch);
   return metaTrack('Search', { search_string: safeSearch }, {
     dedupeKey: safeSearch.toLocaleLowerCase(),
     dedupeWindowMs: 1500,
@@ -260,6 +273,7 @@ export function metaTrackViewContent({ contentId, category = 'business' } = {}) 
   const safeId = cleanText(contentId, 120);
   const safeCategory = cleanText(category, 80) || 'business';
   if (!safeId) return false;
+  if (isNativeApp()) return metaAppTrackViewContent({ contentId: safeId, category: safeCategory });
 
   return metaTrack('ViewContent', {
     content_type: 'business',
@@ -273,6 +287,7 @@ export function metaTrackViewContent({ contentId, category = 'business' } = {}) 
 
 export function metaTrackCompleteRegistration({ method = 'email' } = {}) {
   const safeMethod = ['email', 'google', 'apple', 'oauth'].includes(method) ? method : 'other';
+  if (isNativeApp()) return metaAppTrackCompleteRegistration({ method: safeMethod });
   return metaTrack('CompleteRegistration', {
     content_name: 'user_registration',
     status: true,
@@ -287,6 +302,7 @@ export function metaTrackLead(leadType) {
   const safeLeadTypes = new Set(['advertising_lead', 'enterprise_lead', 'b2b_lead']);
   const safeLeadType = safeLeadTypes.has(leadType) ? leadType : null;
   if (!safeLeadType) return false;
+  if (isNativeApp()) return metaAppTrackLead(safeLeadType);
 
   return metaTrack('Lead', { content_name: safeLeadType }, {
     dedupeKey: safeLeadType,

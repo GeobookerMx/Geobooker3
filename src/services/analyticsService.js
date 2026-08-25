@@ -13,6 +13,7 @@ import { supabase } from '../lib/supabase';
 import { logger } from '../utils/logger';
 import { appendAttributionToEvent, getAttributionSummary, getCurrentAttribution, getFirstTouchAttribution } from './attributionService';
 import { getPlatform } from '../utils/platformDetection';
+import { metaTrackSearch } from '../lib/metaPixel';
 
 // ============================================
 // FUNCIONES DE COMPATIBILIDAD CON GA4
@@ -409,6 +410,8 @@ export async function trackPageView(pagePath, pageTitle = document.title) {
  * Registrar búsqueda
  */
 export async function trackSearch(query, options = {}) {
+    metaTrackSearch(query);
+
     try {
         const attribution = getCurrentAttribution();
         const firstTouch = getFirstTouchAttribution();

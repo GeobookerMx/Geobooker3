@@ -30,6 +30,7 @@ import {
     trackBusinessProfileView
 } from '../services/analyticsService';
 import { buildBusinessShareMessage, buildCanonicalShareUrl } from '../services/shareService';
+import { metaTrackViewContent } from '../lib/metaPixel';
 
 // Mapeo de tags a iconos y nombres
 const TAG_CONFIG = {
@@ -124,7 +125,13 @@ const BusinessProfilePage = () => {
                 if (error) throw error;
                 setBusiness(data);
                 // Track profile view (sellable KPI)
-                if (data) trackBusinessProfileView(data.id || slugOrId, data.name, 'direct');
+                if (data) {
+                    trackBusinessProfileView(data.id || slugOrId, data.name, 'direct');
+                    metaTrackViewContent({
+                        contentId: data.id || slugOrId,
+                        category: data.subcategory || data.category || 'business'
+                    });
+                }
             } catch (error) {
                 console.error('Error loading business:', error);
                 toast.error('No se pudo cargar el negocio');

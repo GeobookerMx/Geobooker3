@@ -19,6 +19,7 @@ import toast from 'react-hot-toast';
 import SEO from '../components/SEO';
 import { buildBusinessShareMessage, buildCanonicalShareUrl } from '../services/shareService';
 import { useSharedGoogleMaps } from '../hooks/useSharedGoogleMaps';
+import { metaTrackViewContent } from '../lib/metaPixel';
 
 // Mapeo de tipos de Places a categorías legibles
 const TYPE_LABELS = {
@@ -78,6 +79,10 @@ const PlaceProfilePage = () => {
 
                 setPlace(details);
                 trackViewProfile(placeId, details.name, true);
+                metaTrackViewContent({
+                    contentId: placeId,
+                    category: details.types?.[0] || 'business'
+                });
             } catch (err) {
                 console.error('Error loading place:', err);
                 setError(err.message === 'Google Maps no está cargado'

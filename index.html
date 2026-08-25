@@ -49,6 +49,100 @@
     })();
   </script>
 
+  <!-- Meta Pixel base loader (consent and production-host gated) -->
+  <script>
+    (function (window, document) {
+      var configuredPixelId = '%VITE_META_PIXEL_ID%'.trim();
+      var officialHosts = {
+        'geobooker.com.mx': true,
+        'www.geobooker.com.mx': true,
+        'geobooker.com': true,
+        'www.geobooker.com': true
+      };
+
+      window.__geobookerMetaPixelState = window.__geobookerMetaPixelState || {
+        initialized: false,
+        initialPageViewSent: false,
+        consentGranted: false
+      };
+
+      function canBootstrap(requestedPixelId) {
+        return Boolean(
+          configuredPixelId &&
+          configuredPixelId.indexOf('%VITE_') !== 0 &&
+          requestedPixelId === configuredPixelId &&
+          officialHosts[window.location.hostname.toLowerCase()]
+        );
+      }
+
+      function createFbq() {
+        if (window.fbq) return;
+
+        var fbq = window.fbq = function () {
+          if (fbq.callMethod) {
+            fbq.callMethod.apply(fbq, arguments);
+          } else {
+            fbq.queue.push(arguments);
+          }
+        };
+
+        if (!window._fbq) window._fbq = fbq;
+        fbq.push = fbq;
+        fbq.loaded = true;
+        fbq.version = '2.0';
+        fbq.queue = [];
+      }
+
+      function loadMetaScript() {
+        if (document.getElementById('geobooker-meta-pixel-script')) return;
+        var script = document.createElement('script');
+        script.id = 'geobooker-meta-pixel-script';
+        script.async = true;
+        script.src = 'https://connect.facebook.net/en_US/fbevents.js';
+        script.onerror = function () {
+          console.warn('[Meta Pixel] Base script was blocked or unavailable.');
+        };
+        document.head.appendChild(script);
+      }
+
+      function sendInitialPageView(initialPagePath) {
+        var state = window.__geobookerMetaPixelState;
+        if (!initialPagePath || state.initialPageViewSent || typeof window.fbq !== 'function') return;
+
+        window.fbq('track', 'PageView', { page_path: initialPagePath });
+        state.initialPageViewSent = true;
+        window.__geobookerMetaLastPageView = initialPagePath;
+      }
+
+      window.__geobookerMetaPixelBootstrap = function (options) {
+        options = options || {};
+        if (!canBootstrap(options.pixelId)) return false;
+
+        var state = window.__geobookerMetaPixelState;
+        createFbq();
+
+        if (!state.initialized) {
+          loadMetaScript();
+          window.fbq('init', configuredPixelId);
+          state.initialized = true;
+        }
+
+        window.fbq('consent', 'grant');
+        state.consentGranted = true;
+        sendInitialPageView(options.initialPagePath);
+        return true;
+      };
+
+      window.__geobookerMetaPixelRevoke = function () {
+        var state = window.__geobookerMetaPixelState;
+        state.consentGranted = false;
+        if (state.initialized && typeof window.fbq === 'function') {
+          window.fbq('consent', 'revoke');
+        }
+      };
+    })(window, document);
+  </script>
+
   <!-- FAVICONS Y APP ICONS - Google requires .ico format -->
   <link rel="icon" href="/favicon.ico" sizes="48x48" />
   <link rel="icon" type="image/svg+xml" href="/images/geobooker-logo.svg" />
@@ -238,8 +332,9 @@
   </style>
 
   <!-- 
-    TRACKING NOTE: GA4 and Clarity are loaded dynamically by trackingService.js
-    ONLY after user consent (cookie banner or ATT on iOS).
+    TRACKING NOTE: GA4, Clarity and Meta Pixel are enabled by trackingService.js
+    ONLY after the applicable cookie/marketing consent (or ATT on iOS).
+    Meta also requires an official production hostname; native and preview hosts are blocked.
     Apple Guideline 5.1.2(i) compliance: no tracking before permission.
   -->
 
@@ -258,6 +353,9 @@
 </head>
 
 <body>
+  <noscript>
+    <!-- Meta's image fallback is intentionally disabled: marketing consent cannot be collected without JavaScript. -->
+  </noscript>
   <!-- Fallback visual durante carga -->
   <div class="loading-fallback">
     <div style="text-align: center;">

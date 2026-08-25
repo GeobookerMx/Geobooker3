@@ -7,6 +7,7 @@ import { trackUserSignup } from '../services/analyticsService';
 import { getPremiumPromoDeadlineLabel, isPremiumPromoActive } from '../config/promotions';
 import { activatePremiumPromotion } from '../services/premiumService';
 import { PREMIUM_AFTER_LOGIN_KEY } from '../config/premiumFlow';
+import { metaTrackCompleteRegistration } from '../lib/metaPixel';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -69,6 +70,7 @@ const RegisterPage = () => {
       if (error) throw error;
 
       if (data.user?.id) {
+        metaTrackCompleteRegistration({ method: 'email' });
         trackUserSignup(data.user.id, 'email');
         try {
           await supabase.from('user_profiles').upsert(

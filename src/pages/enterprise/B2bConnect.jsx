@@ -16,6 +16,7 @@ import {
     GBOOKER_CONNECT_PACKAGES,
     getGeobookerConnectPackage
 } from '../../config/geobookerConnect';
+import { metaTrackLead } from '../../lib/metaPixel';
 
 export default function B2bConnect() {
     const [searchParams] = useSearchParams();
@@ -126,6 +127,8 @@ export default function B2bConnect() {
             }
 
             if (error) throw error;
+
+            metaTrackLead('b2b_lead');
 
             try {
                 const notifyResponse = await fetch('/.netlify/functions/notify-connect-brief', {

@@ -14,6 +14,7 @@
  */
 
 import { isIOSApp } from '../utils/platformDetection';
+import { disableMetaPixel, enableMetaPixel } from '../lib/metaPixel';
 
 // ============================================
 // CONFIGURATION
@@ -152,6 +153,12 @@ function loadClarity() {
  * @param {boolean} options.marketing - Enable marketing/ads tracking
  */
 export async function enableTracking(options = { analytics: true, marketing: true }) {
+    if (options.marketing) {
+        enableMetaPixel();
+    } else {
+        disableMetaPixel();
+    }
+
     if (trackingEnabled && trackingScriptsLoaded) {
         console.log('📊 Tracking already enabled');
         return;
@@ -196,6 +203,7 @@ export async function enableTracking(options = { analytics: true, marketing: tru
  */
 export function disableTracking() {
     trackingEnabled = false;
+    disableMetaPixel();
 
     // Update consent to denied
     if (window.gtag) {
@@ -254,7 +262,7 @@ export function initTrackingFromConsent() {
         }
 
         const consent = JSON.parse(savedConsent);
-        if (consent.analytics) {
+        if (consent.analytics || consent.marketing) {
             enableTracking({
                 analytics: consent.analytics || false,
                 marketing: consent.marketing || false,

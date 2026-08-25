@@ -98,7 +98,7 @@ const CookieConsent = () => {
                                     </div>
                                     <div className="bg-gray-50 rounded-lg p-3">
                                         <div className="font-medium text-gray-800">Marketing Cookies</div>
-                                        <p className="text-gray-500 text-xs mt-1">Used for advertising targeting and measuring campaign effectiveness.</p>
+                                        <p className="text-gray-500 text-xs mt-1">Meta Pixel and advertising measurement technologies used for campaign effectiveness and relevant audiences.</p>
                                     </div>
                                 </div>
                             )}

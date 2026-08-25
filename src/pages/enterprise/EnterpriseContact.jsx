@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import SEO from '../../components/SEO';
 import { ENTERPRISE_FALLBACK_PRICING } from '../../config/enterprisePricing';
 import { IS_IOS_NATIVE } from '../../utils/iosStore';
+import { metaTrackLead } from '../../lib/metaPixel';
 
 const INDUSTRIES = [
     'Bebidas (alcohólicas)',
@@ -145,6 +146,7 @@ export default function EnterpriseContact() {
             if (error) throw error;
 
             setSavedLead(lead);
+            metaTrackLead('enterprise_lead');
 
             try {
                 const notifyResponse = await fetch('/.netlify/functions/notify-enterprise-lead', {

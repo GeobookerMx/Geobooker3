@@ -10,6 +10,7 @@ import { Capacitor } from '@capacitor/core';
 import { withAuthTimeout } from '../utils/authFlow';
 import { activatePremiumPromotion } from '../services/premiumService';
 import { rememberPremiumIntent } from '../config/premiumFlow';
+import { metaTrackCompleteRegistration } from '../lib/metaPixel';
 
 const SignupPage = () => {
     const { t } = useTranslation();
@@ -110,6 +111,7 @@ const SignupPage = () => {
 
             // ✅ TRACKEAR SIGNUP (NUEVO)
             if (data?.user?.id) {
+                metaTrackCompleteRegistration({ method: 'email' });
                 trackAuthFunnelEvent('signup_success', {
                     funnel: 'signup',
                     method: 'email',

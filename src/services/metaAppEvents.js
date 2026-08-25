@@ -1,7 +1,6 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
 
 const META_APP_ID = '3176918089184321';
-const META_CLIENT_TOKEN = String(import.meta.env.VITE_META_APP_CLIENT_TOKEN || '').trim();
 
 const SAFE_KEY_PATTERN = /^[A-Za-z][A-Za-z0-9_]{0,49}$/;
 const SENSITIVE_KEY_PATTERN = /(?:^|_)(?:access_?token|refresh_?token|token|jwt|password|passcode|secret|session|code|email|e_?mail|phone|telephone|mobile|curp|rfc|card|account|cookie|authorization|full_?name|contact_?name|owner_?name|address|street|postal|zip|latitude|longitude|lat|lng|coordinates?|gps|medical|financial|bank|message|conversation)(?:$|_)/i;
@@ -111,12 +110,10 @@ async function getNativeStatus() {
 async function configureNative() {
   const status = await getNativeStatus();
   if (!status?.available || status?.debugBuild) return false;
-  if (!META_CLIENT_TOKEN) return false;
 
   try {
     const result = await nativeMetaAppEvents.configure({
       appId: META_APP_ID,
-      clientToken: META_CLIENT_TOKEN,
       autoLogAppEvents: false,
       advertiserIdCollection: false,
     });
@@ -226,5 +223,5 @@ export function metaAppTrackLead(leadType) {
 
 export const metaAppEventsConfig = Object.freeze({
   appId: META_APP_ID,
-  requiresClientToken: true,
+  clientTokenSource: 'native',
 });

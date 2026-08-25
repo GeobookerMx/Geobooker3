@@ -41,7 +41,7 @@ public class MetaAppEventsPlugin extends Plugin {
     @PluginMethod
     public void configure(PluginCall call) {
         String appId = call.getString("appId", "");
-        String clientToken = call.getString("clientToken", "");
+        String clientToken = getContext().getString(R.string.facebook_client_token);
 
         if (!EXPECTED_APP_ID.equals(appId) || clientToken.trim().isEmpty() || isDebugBuild()) {
             JSObject result = new JSObject();

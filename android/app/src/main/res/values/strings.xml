@@ -5,5 +5,5 @@
     <string name="package_name">com.geobooker.app</string>
     <string name="custom_url_scheme">com.geobooker.app</string>
     <string name="facebook_app_id">3176918089184321</string>
-    <string name="facebook_client_token"></string>
+    <string name="facebook_client_token">bc768ca4fcd42a0f20f3d63266d97cb2</string>
 </resources>

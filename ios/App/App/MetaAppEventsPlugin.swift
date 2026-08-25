@@ -32,7 +32,7 @@ public class MetaAppEventsPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func configure(_ call: CAPPluginCall) {
         let appId = call.getString("appId") ?? ""
-        let clientToken = call.getString("clientToken") ?? ""
+        let clientToken = Bundle.main.object(forInfoDictionaryKey: "FacebookClientToken") as? String ?? ""
 
         guard appId == expectedAppId, !clientToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, !isDebugBuild() else {
             call.resolve([

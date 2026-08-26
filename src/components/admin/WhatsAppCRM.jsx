@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import WhatsAppService from '../../services/whatsappService';
 import { supabase } from '../../lib/supabase';
+import { getAuthenticatedJsonHeaders } from '../../services/authenticatedRequest';
 import toast from 'react-hot-toast';
 
 const WhatsAppCRM = () => {
@@ -24,6 +25,9 @@ const WhatsAppCRM = () => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [activeItemId, setActiveItemId] = useState(null);
+    const [cloudItemId, setCloudItemId] = useState(null);
+    const [cloudStatus, setCloudStatus] = useState(null);
+    const [isCheckingCloud, setIsCheckingCloud] = useState(false);
     const [config, setConfig] = useState({ gp_limit: 10, apify_limit: 10 });
     const [showConfig, setShowConfig] = useState(false);
 
@@ -37,13 +41,34 @@ const WhatsAppCRM = () => {
             await Promise.all([
                 loadQueue(),
                 loadStats(),
-                loadConfig()
+                loadConfig(),
+                loadCloudStatus()
             ]);
         } catch (error) {
             console.error('Error loading WhatsApp CRM:', error);
             toast.error('Error cargando WhatsApp CRM');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const loadCloudStatus = async () => {
+        try {
+            setIsCheckingCloud(true);
+            const response = await fetch('/.netlify/functions/whatsapp-cloud-diagnostics', {
+                method: 'GET',
+                headers: await getAuthenticatedJsonHeaders()
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || result.success === false) {
+                throw new Error(result.error || 'No se pudo consultar WhatsApp Cloud API');
+            }
+            setCloudStatus(result.configured || null);
+        } catch (error) {
+            console.warn('WhatsApp Cloud diagnostics unavailable:', error);
+            setCloudStatus(null);
+        } finally {
+            setIsCheckingCloud(false);
         }
     };
 
@@ -261,6 +286,39 @@ Juan Pablo
             toast.error('No se pudo registrar el envío');
         } finally {
             setActiveItemId(null);
+        }
+    };
+
+    const sendWithCloudApi = async (item, { dryRun = false } = {}) => {
+        try {
+            setCloudItemId(item.id);
+            const response = await fetch('/.netlify/functions/send-whatsapp-queue-item', {
+                method: 'POST',
+                headers: await getAuthenticatedJsonHeaders(),
+                body: JSON.stringify({
+                    queueId: item.id,
+                    dryRun
+                })
+            });
+            const result = await response.json().catch(() => ({}));
+
+            if (!response.ok || result.success === false) {
+                throw new Error(result.message || result.error || 'No se pudo enviar por WhatsApp Cloud API');
+            }
+
+            if (result.dryRun) {
+                toast.success('Preview Cloud API OK: no se envio ningun WhatsApp');
+            } else if (result.paused) {
+                toast('Cloud API conectado, envios reales pausados', { icon: '🟡' });
+            } else if (result.sent) {
+                toast.success('WhatsApp enviado por Cloud API');
+                await loadData();
+            }
+        } catch (error) {
+            console.error('Error WhatsApp Cloud API:', error);
+            toast.error(error.message || 'Error en WhatsApp Cloud API');
+        } finally {
+            setCloudItemId(null);
         }
     };
 
@@ -485,6 +543,30 @@ Juan Pablo
                     </div>
                 </div>
 
+                <div className="mt-4 rounded-lg border border-green-200 bg-white/70 p-3 text-sm text-gray-700">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <p className="font-semibold text-gray-900">WhatsApp Cloud API</p>
+                            <p>
+                                {cloudStatus
+                                    ? `Token: ${cloudStatus.accessToken ? 'OK' : 'pendiente'} · Phone ID: ${cloudStatus.phoneNumberId ? 'OK' : 'pendiente'} · Webhook: ${cloudStatus.verifyToken ? 'OK' : 'pendiente'} · Envíos: ${cloudStatus.sendingEnabled ? 'activos' : 'pausados'}`
+                                    : 'Diagnóstico pendiente o no disponible hasta desplegar Netlify.'}
+                            </p>
+                        </div>
+                        <button
+                            onClick={loadCloudStatus}
+                            disabled={isCheckingCloud}
+                            className="px-3 py-2 border border-green-300 rounded-lg hover:bg-green-50 flex items-center gap-2 disabled:opacity-50"
+                        >
+                            <RefreshCw className={`w-4 h-4 ${isCheckingCloud ? 'animate-spin' : ''}`} />
+                            Revisar API
+                        </button>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                        Seguro por defecto: el CRM puede prevalidar Cloud API, pero no enviará mensajes reales mientras CRM_WHATSAPP_SENDING_ENABLED=false.
+                    </p>
+                </div>
+
                 {/* Config Panel */}
                 {showConfig && (
                     <div className="mt-4 pt-4 border-t border-green-200">
@@ -623,6 +705,24 @@ Juan Pablo
                                             >
                                                 {isItemBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
                                                 {isItemBusy ? 'Procesando...' : 'Abrir WA'}
+                                            </button>
+                                            <button
+                                                onClick={() => sendWithCloudApi(item, { dryRun: true })}
+                                                disabled={cloudItemId === item.id || isInvalidPhone}
+                                                className="border border-emerald-300 text-emerald-700 px-4 py-2 rounded-lg hover:bg-emerald-50 flex items-center gap-2 whitespace-nowrap disabled:opacity-50"
+                                                title="Valida el envio Cloud API sin mandar WhatsApp real"
+                                            >
+                                                {cloudItemId === item.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                                                Preview API
+                                            </button>
+                                            <button
+                                                onClick={() => sendWithCloudApi(item)}
+                                                disabled={cloudItemId === item.id || isInvalidPhone}
+                                                className="bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800 flex items-center gap-2 whitespace-nowrap disabled:opacity-50"
+                                                title="Envia por WhatsApp Cloud API solo si Netlify tiene envios activados"
+                                            >
+                                                {cloudItemId === item.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
+                                                Cloud API
                                             </button>
                                         </div>
                                     </div>

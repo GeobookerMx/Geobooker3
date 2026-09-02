@@ -4,7 +4,7 @@ function toHex(bytes) {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-function constantTimeEqual(left, right) {
+export function constantTimeEqual(left, right) {
   const a = String(left || '');
   const b = String(right || '');
   const maxLength = Math.max(a.length, b.length);

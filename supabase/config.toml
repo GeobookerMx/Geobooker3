@@ -1,7 +1,14 @@
+[api]
+enabled = true
+schemas = ["public", "graphql_public", "crm"]
+
 [functions.whatsapp-webhook]
 verify_jwt = false
 
 [functions.whatsapp-send]
+verify_jwt = true
+
+[functions.whatsapp-admin]
 verify_jwt = true
 
 [functions.crm-import-dry-run]

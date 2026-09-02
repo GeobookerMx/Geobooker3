@@ -17,7 +17,8 @@ import {
     Database,
     Mail,
     Globe,
-    Shield
+    Shield,
+    MessageCircle
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { featureFlags } from '../../config/featureFlags';
@@ -147,6 +148,7 @@ const Sidebar = ({ onLogout }) => {
             title: 'Marketing y CRM',
             items: [
                 { path: '/admin/crm', icon: Mail, label: 'CRM y Marketing' },
+                { path: '/admin/whatsapp', icon: MessageCircle, label: 'WhatsApp Center' },
                 ...(featureFlags.crm2ImportReview
                     ? [{ path: '/admin/crm2-imports', icon: Database, label: 'CRM 2.0 Staging' }]
                     : []),

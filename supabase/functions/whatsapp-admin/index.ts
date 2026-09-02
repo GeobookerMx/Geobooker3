@@ -84,17 +84,21 @@ async function checkMetaConnection() {
     metaGet('me?fields=id,name', accessToken, graphVersion),
     metaGet('me/permissions?limit=100', accessToken, graphVersion),
     metaGet(`${encodeURIComponent(wabaId)}?fields=id,name,currency,timezone_id`, accessToken, graphVersion),
-    metaGet(`${encodeURIComponent(phoneNumberId)}?fields=id,display_phone_number,verified_name,quality_rating,code_verification_status,platform_type`, accessToken, graphVersion)
+    metaGet(`${encodeURIComponent(phoneNumberId)}?fields=id,display_phone_number,verified_name,quality_rating,code_verification_status,platform_type`, accessToken, graphVersion),
+    metaGet(`${encodeURIComponent(wabaId)}/subscribed_apps`, accessToken, graphVersion)
   ]);
-  const [identityResult, permissionsResult, wabaResult, phoneResult] = results;
+  const [identityResult, permissionsResult, wabaResult, phoneResult, subscriptionResult] = results;
   const identity = identityResult.status === 'fulfilled' ? identityResult.value : null;
   const permissionsResponse = permissionsResult.status === 'fulfilled' ? permissionsResult.value : null;
   const waba = wabaResult.status === 'fulfilled' ? wabaResult.value : null;
   const phone = phoneResult.status === 'fulfilled' ? phoneResult.value : null;
+  const subscriptions = subscriptionResult.status === 'fulfilled' && Array.isArray(subscriptionResult.value?.data)
+    ? subscriptionResult.value.data
+    : [];
   const permissionMap = Object.fromEntries((permissionsResponse?.data || []).map((permission: { permission: string; status: string }) => [permission.permission, permission.status]));
   const requiredPermissions = ['business_management', 'whatsapp_business_messaging', 'whatsapp_business_management'];
   const errors = results.flatMap((result, index) => result.status === 'rejected' ? [{
-    component: ['token', 'permissions', 'waba', 'phone'][index],
+    component: ['token', 'permissions', 'waba', 'phone', 'subscription'][index],
     code: String(result.reason?.providerCode || result.reason?.name || 'META_CHECK_FAILED'),
     message: humanMetaError(result.reason?.providerCode || null, result.reason?.message || null)
   }] : []);
@@ -110,6 +114,11 @@ async function checkMetaConnection() {
       qualityRating: phone?.quality_rating || null,
       verificationStatus: phone?.code_verification_status || null,
       platformType: phone?.platform_type || null
+    },
+    subscription: {
+      accessible: subscriptionResult.status === 'fulfilled',
+      subscribed: subscriptions.length > 0,
+      appCount: subscriptions.length
     },
     errors,
     checkedAt: new Date().toISOString()

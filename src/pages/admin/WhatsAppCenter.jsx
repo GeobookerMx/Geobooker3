@@ -76,6 +76,7 @@ function Summary({ health, loading, reload }) {
     ['System User Token', health.meta?.token?.valid ? 'Valid' : configured.accessToken ? 'Configured · invalid/unverified' : 'Missing', 'El token nunca se devuelve al navegador.', health.meta?.token?.valid ? 'good' : 'bad'],
     ['WhatsApp Business Account', health.meta?.waba?.accessible ? 'Accessible' : 'Error', health.meta?.waba?.name || health.metaError?.message || 'Sin respuesta de Meta', health.meta?.waba?.accessible ? 'good' : 'bad'],
     ['Phone Number', health.meta?.phone?.accessible ? 'Accessible' : 'Error', health.meta?.phone?.verifiedName || health.meta?.phone?.displayPhoneNumber || 'Sin respuesta de Meta', health.meta?.phone?.accessible ? 'good' : 'bad'],
+    ['WABA Subscription', health.meta?.subscription?.subscribed ? 'Subscribed' : 'No confirmada', health.meta?.subscription?.accessible ? `${health.meta?.subscription?.appCount || 0} app(s) suscrita(s)` : 'Meta no permitió consultar subscribed_apps.', health.meta?.subscription?.subscribed ? 'good' : 'bad'],
     ['Graph API Version', health.graphApiVersion || 'Missing', 'Configuración central server-side.', health.graphApiVersion === 'v26.0' ? 'good' : 'warning'],
     ['Webhook', webhookOk ? 'Conectado' : health.webhook ? 'Requiere atención' : 'Sin eventos', `Último: ${formatDate(health.webhook?.lastReceivedAt)}`, webhookOk ? 'good' : 'warning'],
     ['HMAC Security', health.webhook?.signatureVerified ? 'Active' : 'Sin confirmación reciente', 'Validación obligatoria en POST.', health.webhook?.signatureVerified ? 'good' : 'warning'],

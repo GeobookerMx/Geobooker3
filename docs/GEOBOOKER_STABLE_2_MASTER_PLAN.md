@@ -125,6 +125,11 @@ Gate: el propietario entiende el estado en menos de 30 segundos.
 Draft, audiencia elegible, preview, compliance, dry run, aprobación,
 programación, límites, presupuesto, ejecución, pausa, atribución y resultados.
 
+Avance local: existe foundation SQL para `crm.campaigns`,
+`crm.campaign_members`, `crm.campaign_events` y un resumen admin-only de
+readiness. WhatsApp Center ya puede mostrar conteos agregados sin crear ni
+enviar campañas.
+
 Gate: campaña controlada sin contactar `unknown`, opted-out o suppressed.
 
 ### 8. GeoBot seguro

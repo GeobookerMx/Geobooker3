@@ -407,6 +407,17 @@ Deno.serve(async (request: Request) => {
       }, corsHeaders);
     }
 
+    if (action === 'campaign_readiness') {
+      const { data, error } = await admin.rpc('crm_campaign_readiness_overview');
+      if (error) {
+        return json(409, {
+          error: 'campaign_readiness_unavailable',
+          message: safeFailureDetail(error.message)
+        }, corsHeaders);
+      }
+      return json(200, { readiness: data?.[0] || null }, corsHeaders);
+    }
+
     if (action === 'templates') {
       const { data, error } = await crm.from('whatsapp_templates')
         .select('id,template_name,language_code,category,approval_status,provider_status,components,quality_score,provider_updated_at,last_synced_at,updated_at')

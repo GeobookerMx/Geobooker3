@@ -10,6 +10,9 @@
 - Vista de plantillas sincronizadas, diagnóstico operativo y guía para usuarios no técnicos.
 - Métricas de cola outbound: pending, retry, processing, dead letter y próximo
   job vencido.
+- Pestaña de readiness de campañas con conteos agregados de contactos activos,
+  WhatsApp válidos, marketing elegible, servicio elegible, supresiones,
+  consentimientos unknown y riesgo de cola.
 - Edge Function autenticada `whatsapp-admin`, limitada a miembros de `admin_users`.
 - La función desplegada mantiene `verify_jwt=true`; una petición anónima devuelve 401.
 - Envíos reales permanecen cerrados mediante `WHATSAPP_SEND_ENABLED=false` salvo
@@ -37,7 +40,7 @@
    aplicar `20260907021000_whatsapp_outbound_job_claiming.sql`.
 7. Activar compositor sólo después de validar token, plantilla, presupuesto y consentimiento.
 8. Implementar gestión de follow-ups, asignaciones y oportunidades desde la UI.
-9. Implementar campañas con preview de audiencia y dry run obligatorio.
+9. Implementar creación de campañas con preview de audiencia y dry run obligatorio.
 10. Añadir analítica y atribución comercial.
 
 ## Variables server-side

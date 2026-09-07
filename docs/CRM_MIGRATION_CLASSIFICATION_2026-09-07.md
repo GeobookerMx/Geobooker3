@@ -43,6 +43,8 @@ admin read policies.
 - `20260830231000_whatsapp_meta_sample_isolation.sql`
 - `20260902090000_whatsapp_template_sync_metadata.sql`
 - `20260907020000_harden_crm_service_role_permissions.sql`
+- `20260907021000_whatsapp_outbound_job_claiming.sql`
+- `20260907022000_crm_campaign_readiness.sql`
 
 Expected final state:
 
@@ -53,6 +55,7 @@ Expected final state:
 - `service_role` does not have `DELETE` on CRM tables.
 - Admin UX reads CRM through protected RPCs or `whatsapp-admin`, not direct
   client-side `.schema('crm')` calls.
+- Campaign readiness is aggregate/admin-only and does not send messages.
 
 ## Apply only after CRM foundation is confirmed
 

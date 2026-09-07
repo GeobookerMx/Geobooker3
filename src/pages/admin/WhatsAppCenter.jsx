@@ -236,6 +236,60 @@ function DiagnosticsView() {
   return <div className="space-y-4"><div className="flex items-center justify-between"><div><h2 className="text-2xl font-bold">Centro de diagnóstico</h2><p className="text-sm text-gray-500">Errores recientes sin secrets ni payloads sensibles.</p></div><button onClick={load} className="rounded-xl border p-2"><RefreshCw className="h-4 w-4" /></button></div>{!items.length ? <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-emerald-900"><CheckCircle2 className="mb-2 h-7 w-7" /><p className="font-bold">Sin errores operativos registrados</p></div> : <div className="space-y-3">{items.map((item) => <div key={item.key} className="rounded-xl border border-red-200 bg-red-50 p-4"><div className="flex flex-wrap justify-between gap-2"><p className="font-bold text-red-900">{item.type}: {item.code}</p><span className="text-xs text-red-700">{formatDate(item.date)}</span></div><p className="mt-1 text-sm text-red-800">{item.detail || 'Meta o el backend no proporcionaron más detalle.'}</p><p className="mt-2 text-xs font-semibold text-red-900">Acción sugerida: verificar elegibilidad, configuración y el estado del proveedor antes de reintentar.</p></div>)}</div>}</div>;
 }
 
+function CampaignReadinessView() {
+  const [readiness, setReadiness] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const load = useCallback(() => {
+    setLoading(true);
+    setError('');
+    callAdmin('campaign_readiness')
+      .then((result) => setReadiness(result.readiness || null))
+      .catch((loadError) => setError(loadError.message))
+      .finally(() => setLoading(false));
+  }, []);
+  useEffect(() => { load(); }, [load]);
+  if (loading && !readiness) return <Loading />;
+  const blocked = Number(readiness?.whatsapp_suppressed || 0);
+  const unknown = Number(readiness?.whatsapp_unknown_or_missing || 0);
+  const marketingReady = Number(readiness?.whatsapp_marketing_opted_in || 0);
+  const serviceReady = Number(readiness?.whatsapp_service_allowed || 0);
+  const queueRisk = Number(readiness?.retry_outbound_jobs || 0) + Number(readiness?.dead_letter_outbound_jobs || 0);
+  const cards = [
+    ['Contactos activos', readiness?.active_contacts || 0, 'Base CRM disponible para revisar.', 'info'],
+    ['WhatsApp válidos', readiness?.whatsapp_valid_points || 0, 'Contact points validados en formato usable.', 'info'],
+    ['Marketing elegible', marketingReady, 'Opt-in/allowed y sin supresión activa.', marketingReady ? 'good' : 'warning'],
+    ['Servicio elegible', serviceReady, 'Respuestas permitidas por relación/servicio.', serviceReady ? 'good' : 'warning'],
+    ['Bloqueados', blocked, 'Opt-out, invalid, complaint o suppression activa.', blocked ? 'bad' : 'good'],
+    ['Consentimiento unknown', unknown, 'No deben entrar a campañas hasta resolver evidencia.', unknown ? 'warning' : 'good'],
+    ['Draft campaigns', readiness?.draft_campaigns || 0, 'Campañas creadas, no aprobadas.', 'neutral'],
+    ['Cola con riesgo', queueRisk, 'Retries y dead letters requieren diagnóstico.', queueRisk ? 'bad' : 'good']
+  ];
+  return <div className="space-y-5">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div><h2 className="text-2xl font-bold">Readiness de campañas</h2><p className="text-sm text-gray-500">Preparación agregada; no crea ni envía campañas.</p></div>
+      <button onClick={load} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border bg-white px-4 py-2 font-semibold disabled:opacity-50 dark:bg-gray-800"><RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />Actualizar</button>
+    </div>
+    {error && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">Readiness no disponible todavía: {error}</div>}
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{cards.map(([label, value, detail, tone]) => <IntegrationCard key={label} label={label} value={Number(value || 0).toLocaleString()} detail={detail} tone={tone} />)}</div>
+    <div className="rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+      <div className="flex items-start gap-3">
+        <ShieldCheck className="mt-1 h-5 w-5 text-emerald-600" />
+        <div>
+          <h3 className="font-bold">Gate antes de campañas profesionales</h3>
+          <p className="mt-1 text-sm text-gray-500">Para activar una campaña real deben estar en PASS: Meta Health, plantilla aprobada, presupuesto, número productivo, consentimiento, suppression list, worker y observabilidad.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <StatusBadge tone="good">No envía mensajes</StatusBadge>
+            <StatusBadge tone="warning">Unknown queda excluido</StatusBadge>
+            <StatusBadge tone={blocked ? 'bad' : 'good'}>Suppression obligatoria</StatusBadge>
+            <StatusBadge tone={queueRisk ? 'bad' : 'good'}>Cola observable</StatusBadge>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>;
+}
+
 function GuideView() {
   const steps = [
     ['Consentimiento', 'La persona inicia contacto o existe evidencia válida para la finalidad del mensaje.'],
@@ -270,7 +324,8 @@ export default function WhatsAppCenter() {
   useEffect(() => { loadHealth(); }, [loadHealth]);
   const content = section === 'summary' ? <Summary health={health} loading={healthLoading} reload={loadHealth} />
     : section === 'inbox' ? <InboxView /> : section === 'templates' ? <TemplatesView />
-      : section === 'diagnostics' ? <DiagnosticsView /> : section === 'guide' ? <GuideView /> : <PlannedView section={section} />;
+      : section === 'campaigns' ? <CampaignReadinessView />
+        : section === 'diagnostics' ? <DiagnosticsView /> : section === 'guide' ? <GuideView /> : <PlannedView section={section} />;
   return <div className="mx-auto max-w-[1600px] space-y-5 p-4 md:p-6">
     <div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex items-center gap-3"><span className="rounded-2xl bg-emerald-600 p-2 text-white"><MessageCircle className="h-7 w-7" /></span><div><h1 className="text-3xl font-bold text-gray-900 dark:text-white">WhatsApp Center</h1><p className="text-gray-500">Operación segura de WhatsApp Cloud API dentro del CRM.</p></div></div></div><StatusBadge tone={health?.mode === 'production' ? 'good' : 'warning'}>{health?.mode === 'production' ? 'PRODUCTION' : 'TEST MODE'}</StatusBadge></div>
     <div className="flex gap-2 overflow-x-auto rounded-2xl border bg-white p-2 dark:border-gray-700 dark:bg-gray-800">{NAVIGATION.map(([id, label, Icon]) => <button key={id} onClick={() => setSection(id)} className={`inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold ${section === id ? 'bg-emerald-600 text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'}`}>{React.createElement(Icon, { className: 'h-4 w-4' })}{label}</button>)}</div>

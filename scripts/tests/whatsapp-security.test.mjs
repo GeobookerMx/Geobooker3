@@ -17,6 +17,31 @@ test('outbound policy fails closed when sending is disabled', () => {
   }), { allowed: false, reason: 'sending_disabled' });
 });
 
+test('Campaign readiness is aggregate-only and blocks unsafe audiences', async () => {
+  const readinessMigration = await readFile(
+    new URL('../../supabase/migrations/20260907022000_crm_campaign_readiness.sql', import.meta.url),
+    'utf8'
+  );
+  const adminSource = await readFile(
+    new URL('../../supabase/functions/whatsapp-admin/index.ts', import.meta.url),
+    'utf8'
+  );
+  const centerSource = await readFile(
+    new URL('../../src/pages/admin/WhatsAppCenter.jsx', import.meta.url),
+    'utf8'
+  );
+  assert.match(readinessMigration, /CREATE TABLE IF NOT EXISTS crm\.campaigns/i);
+  assert.match(readinessMigration, /CREATE TABLE IF NOT EXISTS crm\.campaign_members/i);
+  assert.match(readinessMigration, /crm_campaign_readiness_overview/i);
+  assert.match(readinessMigration, /auth\.role\(\), ''\) <> 'service_role'/);
+  assert.match(readinessMigration, /status IN \('opted_out', 'suppressed', 'invalid', 'complaint'\)/);
+  assert.match(readinessMigration, /REVOKE ALL ON TABLE crm\.%I FROM PUBLIC, anon, authenticated/i);
+  assert.match(readinessMigration, /GRANT EXECUTE ON FUNCTION public\.crm_campaign_readiness_overview\(\)[\s\S]*TO authenticated, service_role/i);
+  assert.match(adminSource, /campaign_readiness/);
+  assert.match(centerSource, /CampaignReadinessView/);
+  assert.match(centerSource, /No env/);
+});
+
 test('suppression always blocks outbound messages', () => {
   assert.deepEqual(evaluateOutboundPolicy({
     budgetPolicy: activeBudget, permissionStatus: 'opted_in', suppressed: true,

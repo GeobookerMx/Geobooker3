@@ -418,6 +418,24 @@ Deno.serve(async (request: Request) => {
       return json(200, { readiness: data?.[0] || null }, corsHeaders);
     }
 
+    if (action === 'campaign_preview') {
+      const countryCode = body.countryCode ? String(body.countryCode).trim().toUpperCase().slice(0, 2) : null;
+      const industry = body.industry ? String(body.industry).trim().slice(0, 80) : null;
+      const limit = clampInteger(body.limit, 25, 1, 100);
+      const { data, error } = await admin.rpc('crm_whatsapp_campaign_preview', {
+        p_country_code: countryCode || null,
+        p_industry: industry || null,
+        p_limit: limit
+      });
+      if (error) {
+        return json(409, {
+          error: 'campaign_preview_unavailable',
+          message: safeFailureDetail(error.message)
+        }, corsHeaders);
+      }
+      return json(200, { rows: data || [], limit }, corsHeaders);
+    }
+
     if (action === 'templates') {
       const { data, error } = await crm.from('whatsapp_templates')
         .select('id,template_name,language_code,category,approval_status,provider_status,components,quality_score,provider_updated_at,last_synced_at,updated_at')

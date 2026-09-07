@@ -45,6 +45,7 @@ admin read policies.
 - `20260907020000_harden_crm_service_role_permissions.sql`
 - `20260907021000_whatsapp_outbound_job_claiming.sql`
 - `20260907022000_crm_campaign_readiness.sql`
+- `20260907023000_crm_whatsapp_campaign_preview.sql`
 
 Expected final state:
 
@@ -56,6 +57,8 @@ Expected final state:
 - Admin UX reads CRM through protected RPCs or `whatsapp-admin`, not direct
   client-side `.schema('crm')` calls.
 - Campaign readiness is aggregate/admin-only and does not send messages.
+- WhatsApp campaign preview is bounded, admin-only, read-only and does not
+  enqueue jobs.
 
 ## Apply only after CRM foundation is confirmed
 

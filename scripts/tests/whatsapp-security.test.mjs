@@ -42,6 +42,29 @@ test('Campaign readiness is aggregate-only and blocks unsafe audiences', async (
   assert.match(centerSource, /No env/);
 });
 
+test('WhatsApp campaign preview is read-only and bounded', async () => {
+  const previewMigration = await readFile(
+    new URL('../../supabase/migrations/20260907023000_crm_whatsapp_campaign_preview.sql', import.meta.url),
+    'utf8'
+  );
+  const adminSource = await readFile(
+    new URL('../../supabase/functions/whatsapp-admin/index.ts', import.meta.url),
+    'utf8'
+  );
+  const centerSource = await readFile(
+    new URL('../../src/pages/admin/WhatsAppCenter.jsx', import.meta.url),
+    'utf8'
+  );
+  assert.match(previewMigration, /crm_whatsapp_campaign_preview/i);
+  assert.match(previewMigration, /safe_limit := LEAST\(GREATEST\(COALESCE\(p_limit, 50\), 1\), 200\)/);
+  assert.match(previewMigration, /It performs no writes and sends nothing/i);
+  assert.doesNotMatch(previewMigration, /\bINSERT INTO\b/i);
+  assert.doesNotMatch(previewMigration, /\bUPDATE\b/i);
+  assert.match(adminSource, /campaign_preview/);
+  assert.match(centerSource, /Preview de audiencia WhatsApp/);
+  assert.match(centerSource, /no crea campaña ni cola/);
+});
+
 test('suppression always blocks outbound messages', () => {
   assert.deepEqual(evaluateOutboundPolicy({
     budgetPolicy: activeBudget, permissionStatus: 'opted_in', suppressed: true,

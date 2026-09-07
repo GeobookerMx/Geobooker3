@@ -13,6 +13,7 @@
 - Pestaña de readiness de campañas con conteos agregados de contactos activos,
   WhatsApp válidos, marketing elegible, servicio elegible, supresiones,
   consentimientos unknown y riesgo de cola.
+- Preview de audiencia WhatsApp por país/industria, limitado y de sólo lectura.
 - Edge Function autenticada `whatsapp-admin`, limitada a miembros de `admin_users`.
 - La función desplegada mantiene `verify_jwt=true`; una petición anónima devuelve 401.
 - Envíos reales permanecen cerrados mediante `WHATSAPP_SEND_ENABLED=false` salvo

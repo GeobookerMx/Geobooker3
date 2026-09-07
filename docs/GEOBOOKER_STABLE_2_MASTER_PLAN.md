@@ -128,7 +128,8 @@ programación, límites, presupuesto, ejecución, pausa, atribución y resultado
 Avance local: existe foundation SQL para `crm.campaigns`,
 `crm.campaign_members`, `crm.campaign_events` y un resumen admin-only de
 readiness. WhatsApp Center ya puede mostrar conteos agregados sin crear ni
-enviar campañas.
+enviar campañas. También existe un preview de audiencia WhatsApp, limitado y
+de sólo lectura, para revisar elegibilidad antes de crear campañas.
 
 Gate: campaña controlada sin contactar `unknown`, opted-out o suppressed.
 

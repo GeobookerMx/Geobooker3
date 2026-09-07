@@ -238,8 +238,12 @@ function DiagnosticsView() {
 
 function CampaignReadinessView() {
   const [readiness, setReadiness] = useState(null);
+  const [previewRows, setPreviewRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [error, setError] = useState('');
+  const [countryCode, setCountryCode] = useState('');
+  const [industry, setIndustry] = useState('');
   const load = useCallback(() => {
     setLoading(true);
     setError('');
@@ -248,7 +252,15 @@ function CampaignReadinessView() {
       .catch((loadError) => setError(loadError.message))
       .finally(() => setLoading(false));
   }, []);
+  const loadPreview = useCallback(() => {
+    setPreviewLoading(true);
+    callAdmin('campaign_preview', { countryCode: countryCode || null, industry: industry || null, limit: 25 })
+      .then((result) => setPreviewRows(result.rows || []))
+      .catch((loadError) => setError(loadError.message))
+      .finally(() => setPreviewLoading(false));
+  }, [countryCode, industry]);
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadPreview(); }, [loadPreview]);
   if (loading && !readiness) return <Loading />;
   const blocked = Number(readiness?.whatsapp_suppressed || 0);
   const unknown = Number(readiness?.whatsapp_unknown_or_missing || 0);
@@ -272,6 +284,38 @@ function CampaignReadinessView() {
     </div>
     {error && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">Readiness no disponible todavía: {error}</div>}
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{cards.map(([label, value, detail, tone]) => <IntegrationCard key={label} label={label} value={Number(value || 0).toLocaleString()} detail={detail} tone={tone} />)}</div>
+    <div className="rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h3 className="font-bold">Preview de audiencia WhatsApp</h3>
+          <p className="text-sm text-gray-500">Muestra limitada de sólo lectura; no crea campaña ni cola.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <input value={countryCode} onChange={(event) => setCountryCode(event.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2))} placeholder="País, ej. MX" className="w-28 rounded-xl border bg-white px-3 py-2 text-sm dark:bg-gray-900" />
+          <input value={industry} onChange={(event) => setIndustry(event.target.value.slice(0, 80))} placeholder="Industria" className="w-52 rounded-xl border bg-white px-3 py-2 text-sm dark:bg-gray-900" />
+          <button type="button" onClick={loadPreview} disabled={previewLoading} className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold disabled:opacity-50"><RefreshCw className={`h-4 w-4 ${previewLoading ? 'animate-spin' : ''}`} />Preview</button>
+        </div>
+      </div>
+      <div className="mt-4 overflow-x-auto">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-50 text-left text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+            <tr>{['Contacto', 'Cuenta', 'País', 'Industria', 'Estado', 'Razones', 'Score'].map((label) => <th key={label} className="px-3 py-2">{label}</th>)}</tr>
+          </thead>
+          <tbody className="divide-y dark:divide-gray-700">
+            {!previewLoading && previewRows.length === 0 && <tr><td colSpan="7" className="px-3 py-8 text-center text-gray-500">Sin registros de preview.</td></tr>}
+            {previewRows.map((row, index) => <tr key={`${row.contact_id}-${row.account_id || 'none'}-${index}`} className="text-gray-700 dark:text-gray-200">
+              <td className="px-3 py-2 font-medium">{row.contact_label}</td>
+              <td className="px-3 py-2">{row.account_label || 'Sin cuenta'}</td>
+              <td className="px-3 py-2">{row.country_code || 'Sin país'}</td>
+              <td className="px-3 py-2">{row.industry || 'Sin industria'}</td>
+              <td className="px-3 py-2"><StatusBadge tone={row.eligibility_status === 'eligible' ? 'good' : row.eligibility_status === 'missing_consent' ? 'warning' : 'bad'}>{row.eligibility_status}</StatusBadge></td>
+              <td className="px-3 py-2 text-xs text-gray-500">{Array.isArray(row.eligibility_reasons) ? row.eligibility_reasons.join(', ') : 'Sin razones'}</td>
+              <td className="px-3 py-2">{Number(row.computed_score || 0).toFixed(0)}</td>
+            </tr>)}
+          </tbody>
+        </table>
+      </div>
+    </div>
     <div className="rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
       <div className="flex items-start gap-3">
         <ShieldCheck className="mt-1 h-5 w-5 text-emerald-600" />

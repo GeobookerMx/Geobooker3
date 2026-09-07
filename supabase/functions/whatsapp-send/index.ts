@@ -1,6 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.83.0';
 import {
-  computeRetry,
   evaluateOutboundPolicy,
   isCustomerServiceWindowOpen
 } from '../_shared/whatsapp-security.js';
@@ -188,7 +187,7 @@ Deno.serve(async (request: Request) => {
         template_id: template?.id || null,
         body_text: messageType === 'text' ? text : null,
         content: messageType === 'template' ? { parameters: templateParameters } : {},
-        current_status: 'pending',
+        current_status: 'queued',
         initiated_by_user_id: authData.user.id
       })
       .select('id')
@@ -203,83 +202,20 @@ Deno.serve(async (request: Request) => {
         message_id: message.id,
         idempotency_key: idempotencyKey,
         job_type: messageType === 'template' ? 'template' : 'service_reply',
-        status: 'processing',
-        attempt_count: 1,
-        request_payload: { messageType, templateId: template?.id || null },
+        status: 'pending',
+        attempt_count: 0,
+        request_payload: {
+          messageType,
+          templateId: template?.id || null,
+          templateParameters
+        },
         created_by_user_id: authData.user.id
       })
       .select('id')
       .single();
     if (jobError) throw jobError;
 
-    const graphVersion = requiredEnv('META_GRAPH_API_VERSION');
-    const accessToken = requiredEnv('WHATSAPP_ACCESS_TOKEN');
-    const providerPayload = messageType === 'text'
-      ? { messaging_product: 'whatsapp', to: point.normalized_value.replace(/^\+/, ''), type: 'text', text: { body: text } }
-      : {
-          messaging_product: 'whatsapp',
-          to: point.normalized_value.replace(/^\+/, ''),
-          type: 'template',
-          template: {
-            name: template.template_name,
-            language: { code: template.language_code },
-            ...(templateParameters.length ? {
-              components: [{
-                type: 'body',
-                parameters: templateParameters.map((value) => ({ type: 'text', text: value }))
-              }]
-            } : {})
-          }
-        };
-
-    let providerResponse: Response;
-    try {
-      providerResponse = await fetch(
-        `https://graph.facebook.com/${graphVersion}/${phoneNumber.provider_phone_number_id}/messages`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(providerPayload),
-          signal: AbortSignal.timeout(12_000)
-        }
-      );
-    } catch {
-      await Promise.all([
-        admin.schema('crm').from('messages').update({ current_status: 'unknown' }).eq('id', message.id),
-        admin.schema('crm').from('outbound_jobs').update({ status: 'unknown', last_error_code: 'ambiguous_timeout' }).eq('id', job.id)
-      ]);
-      return response(202, { accepted: false, status: 'unknown', jobId: job.id }, cors);
-    }
-
-    const providerBody = await providerResponse.json().catch(() => ({}));
-    if (!providerResponse.ok) {
-      const retry = computeRetry({ attemptCount: 1, statusCode: providerResponse.status });
-      await Promise.all([
-        admin.schema('crm').from('messages').update({ current_status: 'failed', failure_code: String(providerResponse.status) }).eq('id', message.id),
-        admin.schema('crm').from('outbound_jobs').update({
-          status: retry.state,
-          next_attempt_at: retry.delaySeconds ? new Date(Date.now() + retry.delaySeconds * 1000).toISOString() : null,
-          last_error_code: String(providerResponse.status),
-          last_error_detail: 'Provider rejected request'
-        }).eq('id', job.id)
-      ]);
-      return response(502, { accepted: false, error: 'provider_rejected_message', retry: retry.retry }, cors);
-    }
-
-    const providerMessageId = providerBody?.messages?.[0]?.id;
-    if (!providerMessageId) throw new Error('Provider response missing message id');
-    await Promise.all([
-      admin.schema('crm').from('messages').update({ provider_message_id: providerMessageId, current_status: 'accepted' }).eq('id', message.id),
-      admin.schema('crm').from('outbound_jobs').update({ status: 'accepted' }).eq('id', job.id),
-      admin.schema('crm').from('message_status_events').insert({
-        message_id: message.id,
-        status: 'accepted',
-        provider_timestamp: new Date().toISOString(),
-        provider_event_fingerprint: `${providerMessageId}:accepted`
-      })
-    ]);
-
-    return response(202, { accepted: true, jobId: job.id, messageId: message.id }, cors);
+    return response(202, { accepted: true, queued: true, jobId: job.id, messageId: message.id }, cors);
   } catch (error) {
     console.error('WhatsApp send failed without recipient details');
     return response(500, { error: 'whatsapp_send_failed' }, cors);

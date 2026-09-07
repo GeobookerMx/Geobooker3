@@ -8,6 +8,9 @@ verify_jwt = false
 [functions.whatsapp-send]
 verify_jwt = true
 
+[functions.whatsapp-worker]
+verify_jwt = true
+
 [functions.whatsapp-admin]
 verify_jwt = true
 

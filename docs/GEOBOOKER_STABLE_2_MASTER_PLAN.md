@@ -33,10 +33,12 @@ Secret, WABA, Phone Number ID, service keys y workers permanecen server-side.
 - El código descargado de ambas funciones y sus módulos compartidos coincide
   exactamente con Git.
 - `whatsapp-send` existe en Git, pero no está desplegada.
-- No se encontró un worker separado que consuma y reprocese `crm.outbound_jobs`.
-- La implementación local de `whatsapp-send` realiza el envío dentro de la
-  petición inicial; registra retry, pero no existe un consumidor que ejecute el
-  intento posterior.
+- `whatsapp-worker` existe en Git, pero no está desplegada.
+- El envío outbound fue refactorizado localmente: `whatsapp-send` sólo valida y
+  encola; `whatsapp-worker` reclama jobs de forma atómica y realiza la entrega
+  a Meta cuando `WHATSAPP_SEND_ENABLED=true`.
+- La cola conserva idempotencia, retry/backoff, estados y fail-closed mientras
+  el kill switch esté apagado.
 - Existen 40 versiones locales ausentes del historial remoto. No usar `db push`
   hasta clasificarlas individualmente.
 

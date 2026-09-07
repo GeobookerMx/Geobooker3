@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import {
   computeRetry,
   evaluateOutboundPolicy,
@@ -50,4 +51,33 @@ test('message status does not regress and retry policy is bounded', () => {
   assert.deepEqual(computeRetry({ attemptCount: 1, statusCode: 429 }), { retry: true, state: 'retry', delaySeconds: 30 });
   assert.deepEqual(computeRetry({ attemptCount: 5, statusCode: 500 }), { retry: false, state: 'failed', delaySeconds: null });
   assert.deepEqual(computeRetry({ attemptCount: 1, statusCode: 400 }), { retry: false, state: 'failed', delaySeconds: null });
+});
+
+test('WhatsApp outbound is queued before provider delivery', async () => {
+  const sendSource = await readFile(
+    new URL('../../supabase/functions/whatsapp-send/index.ts', import.meta.url),
+    'utf8'
+  );
+  assert.match(sendSource, /current_status:\s*'queued'/);
+  assert.match(sendSource, /status:\s*'pending'/);
+  assert.match(sendSource, /queued:\s*true/);
+  assert.doesNotMatch(sendSource, /graph\.facebook\.com/);
+});
+
+test('WhatsApp worker owns provider delivery and respects kill switch', async () => {
+  const workerSource = await readFile(
+    new URL('../../supabase/functions/whatsapp-worker/index.ts', import.meta.url),
+    'utf8'
+  );
+  const claimMigration = await readFile(
+    new URL('../../supabase/migrations/20260907021000_whatsapp_outbound_job_claiming.sql', import.meta.url),
+    'utf8'
+  );
+  assert.match(workerSource, /WHATSAPP_SEND_ENABLED'\)\s*!==\s*'true'/);
+  assert.match(workerSource, /claim_whatsapp_outbound_jobs/);
+  assert.match(workerSource, /graph\.facebook\.com/);
+  assert.match(workerSource, /buildStatusFingerprint/);
+  assert.match(claimMigration, /FOR UPDATE SKIP LOCKED/i);
+  assert.match(claimMigration, /REVOKE ALL ON FUNCTION crm\.claim_whatsapp_outbound_jobs\(INTEGER\)[\s\S]*FROM PUBLIC, anon, authenticated/i);
+  assert.match(claimMigration, /GRANT EXECUTE ON FUNCTION crm\.claim_whatsapp_outbound_jobs\(INTEGER\)[\s\S]*TO service_role/i);
 });

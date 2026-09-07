@@ -239,16 +239,28 @@ function DiagnosticsView() {
 function CampaignReadinessView() {
   const [readiness, setReadiness] = useState(null);
   const [previewRows, setPreviewRows] = useState([]);
+  const [templates, setTemplates] = useState([]);
+  const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [draftLoading, setDraftLoading] = useState(false);
   const [error, setError] = useState('');
   const [countryCode, setCountryCode] = useState('');
   const [industry, setIndustry] = useState('');
+  const [draftName, setDraftName] = useState('');
+  const [draftPurpose, setDraftPurpose] = useState('marketing');
+  const [draftTemplateId, setDraftTemplateId] = useState('');
+  const [draftLimit, setDraftLimit] = useState(100);
+  const [dryRunResult, setDryRunResult] = useState(null);
   const load = useCallback(() => {
     setLoading(true);
     setError('');
-    callAdmin('campaign_readiness')
-      .then((result) => setReadiness(result.readiness || null))
+    Promise.all([callAdmin('campaign_readiness'), callAdmin('campaign_list'), callAdmin('templates')])
+      .then(([readinessResult, campaignResult, templateResult]) => {
+        setReadiness(readinessResult.readiness || null);
+        setCampaigns(campaignResult.rows || []);
+        setTemplates((templateResult.rows || []).filter((row) => row.approval_status === 'approved'));
+      })
       .catch((loadError) => setError(loadError.message))
       .finally(() => setLoading(false));
   }, []);
@@ -259,6 +271,36 @@ function CampaignReadinessView() {
       .catch((loadError) => setError(loadError.message))
       .finally(() => setPreviewLoading(false));
   }, [countryCode, industry]);
+  const createDraft = async (event) => {
+    event.preventDefault();
+    setDraftLoading(true);
+    setError('');
+    setDryRunResult(null);
+    try {
+      const draft = await callAdmin('campaign_create_draft', {
+        name: draftName,
+        purpose: draftPurpose,
+        templateId: draftPurpose === 'service' ? null : draftTemplateId || null,
+        countryCode: countryCode || null,
+        industry: industry || null,
+        limit: Number(draftLimit) || 100
+      });
+      const review = await callAdmin('campaign_prepare_review', {
+        campaignId: draft.campaignId,
+        limit: Number(draftLimit) || 100
+      });
+      setDryRunResult(review.result || null);
+      setDraftName('');
+      toast.success('Campaign draft preparado para revisiÃ³n. Sin envÃ­os.');
+      await load();
+      await loadPreview();
+    } catch (loadError) {
+      setError(loadError.message);
+      toast.error(loadError.message);
+    } finally {
+      setDraftLoading(false);
+    }
+  };
   useEffect(() => { load(); }, [load]);
   useEffect(() => { loadPreview(); }, [loadPreview]);
   if (loading && !readiness) return <Loading />;
@@ -311,6 +353,62 @@ function CampaignReadinessView() {
               <td className="px-3 py-2"><StatusBadge tone={row.eligibility_status === 'eligible' ? 'good' : row.eligibility_status === 'missing_consent' ? 'warning' : 'bad'}>{row.eligibility_status}</StatusBadge></td>
               <td className="px-3 py-2 text-xs text-gray-500">{Array.isArray(row.eligibility_reasons) ? row.eligibility_reasons.join(', ') : 'Sin razones'}</td>
               <td className="px-3 py-2">{Number(row.computed_score || 0).toFixed(0)}</td>
+            </tr>)}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <form onSubmit={createDraft} className="rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="font-bold">Crear campaign draft + dry run</h3>
+          <p className="text-sm text-gray-500">Materializa una audiencia para revisiÃ³n. No aprueba, no agenda y no envÃ­a mensajes.</p>
+        </div>
+        <StatusBadge tone="good">WHATSAPP_SEND_ENABLED=false</StatusBadge>
+      </div>
+      <div className="mt-4 grid gap-3 lg:grid-cols-[1.3fr_0.7fr_1.2fr_0.5fr_auto]">
+        <input value={draftName} onChange={(event) => setDraftName(event.target.value)} required minLength={3} maxLength={120} placeholder="Nombre de campaÃ±a" className="rounded-xl border bg-white px-3 py-2 text-sm dark:bg-gray-900" />
+        <select value={draftPurpose} onChange={(event) => setDraftPurpose(event.target.value)} className="rounded-xl border bg-white px-3 py-2 text-sm dark:bg-gray-900">
+          <option value="marketing">Marketing</option>
+          <option value="transactional">Transactional</option>
+          <option value="service">Service</option>
+        </select>
+        <select value={draftTemplateId} onChange={(event) => setDraftTemplateId(event.target.value)} disabled={draftPurpose === 'service'} className="rounded-xl border bg-white px-3 py-2 text-sm disabled:opacity-50 dark:bg-gray-900">
+          <option value="">Plantilla aprobada requerida</option>
+          {templates.map((template) => <option key={template.id} value={template.id}>{template.template_name} Â· {template.language_code}</option>)}
+        </select>
+        <input type="number" min="1" max="500" value={draftLimit} onChange={(event) => setDraftLimit(event.target.value)} className="rounded-xl border bg-white px-3 py-2 text-sm dark:bg-gray-900" />
+        <button type="submit" disabled={draftLoading || !draftName.trim() || (draftPurpose !== 'service' && !draftTemplateId)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"><ShieldCheck className="h-4 w-4" />{draftLoading ? 'Preparandoâ€¦' : 'Crear dry run'}</button>
+      </div>
+      <p className="mt-2 text-xs text-gray-500">Usa los filtros actuales del preview: paÃ­s <strong>{countryCode || 'Todos'}</strong> e industria <strong>{industry || 'Todas'}</strong>.</p>
+      {dryRunResult && <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+        {[
+          ['Candidatos', dryRunResult.total_candidates, 'info'],
+          ['Materializados', dryRunResult.materialized_members, 'info'],
+          ['Elegibles', dryRunResult.eligible_members, 'good'],
+          ['Sin consentimiento', dryRunResult.missing_consent_members, 'warning'],
+          ['Suprimidos', dryRunResult.suppressed_members, 'bad'],
+          ['InvÃ¡lidos', dryRunResult.invalid_candidates, 'warning']
+        ].map(([label, value, tone]) => <IntegrationCard key={label} label={label} value={Number(value || 0).toLocaleString()} tone={tone} />)}
+      </div>}
+    </form>
+    <div className="rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+      <h3 className="font-bold">Campaign drafts recientes</h3>
+      <div className="mt-4 overflow-x-auto">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-50 text-left text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+            <tr>{['CampaÃ±a', 'PropÃ³sito', 'Estado', 'Elegibles', 'Sin consentimiento', 'Suprimidos', 'Actualizada'].map((label) => <th key={label} className="px-3 py-2">{label}</th>)}</tr>
+          </thead>
+          <tbody className="divide-y dark:divide-gray-700">
+            {campaigns.length === 0 && <tr><td colSpan="7" className="px-3 py-8 text-center text-gray-500">Sin campaÃ±as WhatsApp todavÃ­a.</td></tr>}
+            {campaigns.map((campaign) => <tr key={campaign.id}>
+              <td className="px-3 py-2 font-semibold">{campaign.name}</td>
+              <td className="px-3 py-2">{campaign.purpose}</td>
+              <td className="px-3 py-2"><StatusBadge tone={campaign.status === 'review_ready' ? 'info' : 'neutral'}>{campaign.status}</StatusBadge></td>
+              <td className="px-3 py-2">{campaign.memberCounts?.eligible || 0}</td>
+              <td className="px-3 py-2">{campaign.memberCounts?.missing_consent || 0}</td>
+              <td className="px-3 py-2">{campaign.memberCounts?.suppressed || 0}</td>
+              <td className="px-3 py-2">{formatDate(campaign.updated_at)}</td>
             </tr>)}
           </tbody>
         </table>

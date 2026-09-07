@@ -436,6 +436,71 @@ Deno.serve(async (request: Request) => {
       return json(200, { rows: data || [], limit }, corsHeaders);
     }
 
+    if (action === 'campaign_create_draft') {
+      const name = String(body.name || '').trim().slice(0, 120);
+      const purpose = ['marketing', 'transactional', 'service'].includes(String(body.purpose)) ? String(body.purpose) : 'marketing';
+      const templateId = body.templateId ? String(body.templateId) : null;
+      const countryCode = body.countryCode ? String(body.countryCode).trim().toUpperCase().slice(0, 2) : null;
+      const industry = body.industry ? String(body.industry).trim().slice(0, 80) : null;
+      const limit = clampInteger(body.limit, 100, 1, 500);
+      const { data, error } = await admin.rpc('crm_create_whatsapp_campaign_draft', {
+        p_name: name,
+        p_purpose: purpose,
+        p_template_id: templateId,
+        p_country_code: countryCode || null,
+        p_industry: industry || null,
+        p_limit: limit,
+        p_actor_user_id: authData.user.id
+      });
+      if (error) {
+        return json(409, {
+          error: 'campaign_draft_unavailable',
+          message: safeFailureDetail(error.message)
+        }, corsHeaders);
+      }
+      return json(200, { campaignId: data, status: 'draft', sendingEnabled: false }, corsHeaders);
+    }
+
+    if (action === 'campaign_prepare_review') {
+      const campaignId = String(body.campaignId || '');
+      if (!/^[0-9a-f-]{36}$/i.test(campaignId)) return json(400, { error: 'invalid_campaign_id' }, corsHeaders);
+      const limit = clampInteger(body.limit, 100, 1, 500);
+      const { data, error } = await admin.rpc('crm_prepare_whatsapp_campaign_review', {
+        p_campaign_id: campaignId,
+        p_limit: limit,
+        p_actor_user_id: authData.user.id
+      });
+      if (error) {
+        return json(409, {
+          error: 'campaign_review_unavailable',
+          message: safeFailureDetail(error.message)
+        }, corsHeaders);
+      }
+      return json(200, { result: data?.[0] || null, status: 'review_ready', sendingEnabled: false }, corsHeaders);
+    }
+
+    if (action === 'campaign_list') {
+      const { data, error } = await crm.from('campaigns')
+        .select('id,name,purpose,status,audience_rule,template_id,created_at,updated_at')
+        .eq('channel', 'whatsapp')
+        .order('updated_at', { ascending: false })
+        .limit(25);
+      if (error) throw error;
+      const campaignIds = (data || []).map((row) => row.id);
+      const members = campaignIds.length
+        ? await crm.from('campaign_members').select('campaign_id,eligibility_status').in('campaign_id', campaignIds)
+        : { data: [] };
+      const rows = (data || []).map((campaign) => {
+        const campaignMembers = (members.data || []).filter((member) => member.campaign_id === campaign.id);
+        const counts = campaignMembers.reduce((result: Record<string, number>, member: { eligibility_status: string }) => {
+          result[member.eligibility_status] = (result[member.eligibility_status] || 0) + 1;
+          return result;
+        }, {});
+        return { ...campaign, memberCounts: counts };
+      });
+      return json(200, { rows }, corsHeaders);
+    }
+
     if (action === 'templates') {
       const { data, error } = await crm.from('whatsapp_templates')
         .select('id,template_name,language_code,category,approval_status,provider_status,components,quality_score,provider_updated_at,last_synced_at,updated_at')

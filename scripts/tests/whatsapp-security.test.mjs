@@ -65,6 +65,36 @@ test('WhatsApp campaign preview is read-only and bounded', async () => {
   assert.match(centerSource, /no crea campaña ni cola/);
 });
 
+test('WhatsApp campaign drafts require admin review and never enqueue delivery', async () => {
+  const draftsMigration = await readFile(
+    new URL('../../supabase/migrations/20260907024000_crm_whatsapp_campaign_drafts.sql', import.meta.url),
+    'utf8'
+  );
+  const adminSource = await readFile(
+    new URL('../../supabase/functions/whatsapp-admin/index.ts', import.meta.url),
+    'utf8'
+  );
+  const centerSource = await readFile(
+    new URL('../../src/pages/admin/WhatsAppCenter.jsx', import.meta.url),
+    'utf8'
+  );
+  assert.match(draftsMigration, /crm_create_whatsapp_campaign_draft/i);
+  assert.match(draftsMigration, /crm_prepare_whatsapp_campaign_review/i);
+  assert.match(draftsMigration, /auth\.role\(\), ''\) <> 'service_role'/);
+  assert.match(draftsMigration, /sending_enabled', false/);
+  assert.match(draftsMigration, /queued_job_id = NULL/);
+  assert.doesNotMatch(draftsMigration, /INSERT INTO crm\.outbound_jobs/i);
+  assert.doesNotMatch(draftsMigration, /graph\.facebook\.com/i);
+  assert.match(draftsMigration, /REVOKE ALL ON FUNCTION public\.crm_create_whatsapp_campaign_draft[\s\S]*FROM PUBLIC, anon/i);
+  assert.match(draftsMigration, /REVOKE ALL ON FUNCTION public\.crm_prepare_whatsapp_campaign_review[\s\S]*FROM PUBLIC, anon/i);
+  assert.match(adminSource, /campaign_create_draft/);
+  assert.match(adminSource, /campaign_prepare_review/);
+  assert.match(adminSource, /campaign_list/);
+  assert.match(centerSource, /Crear campaign draft \+ dry run/);
+  assert.match(centerSource, /No aprueba, no agenda y no env/);
+  assert.doesNotMatch(centerSource, /Aprobar campa/);
+});
+
 test('suppression always blocks outbound messages', () => {
   assert.deepEqual(evaluateOutboundPolicy({
     budgetPolicy: activeBudget, permissionStatus: 'opted_in', suppressed: true,

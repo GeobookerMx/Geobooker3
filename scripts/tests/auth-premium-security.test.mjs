@@ -57,3 +57,19 @@ test('Premium rate-limit migration is server-only and callable by service_role',
   assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.check_rate_limit[\s\S]*TO service_role/i);
   assert.doesNotMatch(sql, /GRANT[^;]*(anon|authenticated)/i);
 });
+
+test('CRM Data API permissions remain backend-only without service_role DELETE', async () => {
+  const sql = await readFile(
+    new URL('../../supabase/migrations/20260907020000_harden_crm_service_role_permissions.sql', import.meta.url),
+    'utf8'
+  );
+  assert.match(sql, /REVOKE ALL ON SCHEMA crm FROM PUBLIC, anon, authenticated/i);
+  assert.match(sql, /REVOKE ALL ON ALL TABLES IN SCHEMA crm FROM PUBLIC, anon, authenticated/i);
+  assert.match(sql, /GRANT USAGE ON SCHEMA crm TO service_role/i);
+  assert.match(sql, /GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA crm TO service_role/i);
+  assert.match(sql, /REVOKE DELETE ON ALL TABLES IN SCHEMA crm FROM service_role/i);
+  assert.match(sql, /has_schema_privilege\('anon', 'crm', 'USAGE'\)/i);
+  assert.match(sql, /has_table_privilege\('authenticated'/i);
+  assert.match(sql, /NOTIFY pgrst, 'reload schema'/i);
+  assert.doesNotMatch(sql, /GRANT\s+(?:SELECT|INSERT|UPDATE|DELETE|ALL)[^;]*\b(?:anon|authenticated)\b/i);
+});

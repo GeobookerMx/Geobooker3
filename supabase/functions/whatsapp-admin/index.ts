@@ -166,7 +166,7 @@ Deno.serve(async (request: Request) => {
       today.setUTCHours(0, 0, 0, 0);
       const [
         webhook, incoming, outgoing, openConversations, messagesToday,
-        dueFollowups, templates, failedMessage, waba, phone, templateSync, dbProbe
+        dueFollowups, templates, failedMessage, waba, phone, templateSync, outboundJobs, oldestDueJob, dbProbe
       ] = await Promise.all([
         crm.from('webhook_events').select('received_at,processing_status,last_error,signature_verified').order('received_at', { ascending: false }).limit(1).maybeSingle(),
         crm.from('messages').select('provider_timestamp,created_at').eq('direction', 'inbound').order('created_at', { ascending: false }).limit(1).maybeSingle(),
@@ -179,11 +179,17 @@ Deno.serve(async (request: Request) => {
         crm.from('whatsapp_business_accounts').select('status,display_name').order('updated_at', { ascending: false }).limit(1).maybeSingle(),
         crm.from('whatsapp_phone_numbers').select('status,display_phone_number,verified_name,quality_rating').order('updated_at', { ascending: false }).limit(1).maybeSingle(),
         crm.from('audit_log').select('new_values,occurred_at').eq('action', 'whatsapp.templates.sync').order('occurred_at', { ascending: false }).limit(1).maybeSingle(),
+        crm.from('outbound_jobs').select('status'),
+        crm.from('outbound_jobs').select('id,status,scheduled_at,next_attempt_at,attempt_count,max_attempts').in('status', ['pending', 'retry']).order('next_attempt_at', { ascending: true, nullsFirst: false }).order('scheduled_at', { ascending: true }).limit(1).maybeSingle(),
         crm.from('conversations').select('id').limit(1)
       ]);
       if (dbProbe.error) throw dbProbe.error;
       const templateCounts = (templates.data || []).reduce((result: Record<string, number>, row: { approval_status: string }) => {
         result[row.approval_status] = (result[row.approval_status] || 0) + 1;
+        return result;
+      }, {});
+      const queueCounts = (outboundJobs.data || []).reduce((result: Record<string, number>, row: { status: string }) => {
+        result[row.status] = (result[row.status] || 0) + 1;
         return result;
       }, {});
       const testMode = Deno.env.get('WHATSAPP_ALLOW_META_TEST_PAYLOADS') === 'true' || phone.data?.status === 'test';
@@ -228,6 +234,16 @@ Deno.serve(async (request: Request) => {
           messagesToday: messagesToday.count || 0,
           openConversations: openConversations.count || 0,
           followupsDue: dueFollowups.count || 0,
+          outboundQueue: {
+            pending: queueCounts.pending || 0,
+            processing: queueCounts.processing || 0,
+            retry: queueCounts.retry || 0,
+            accepted: queueCounts.accepted || 0,
+            unknown: queueCounts.unknown || 0,
+            failed: queueCounts.failed || 0,
+            deadLetter: queueCounts.dead_letter || 0,
+            oldestDueAt: oldestDueJob.data?.next_attempt_at || oldestDueJob.data?.scheduled_at || null
+          },
           lastIncomingAt: incoming.data?.provider_timestamp || incoming.data?.created_at || null,
           lastOutgoingAt: outgoing.data?.provider_timestamp || outgoing.data?.created_at || null,
           templates: templateCounts

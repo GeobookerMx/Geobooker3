@@ -82,6 +82,7 @@ function Summary({ health, loading, reload }) {
     ['HMAC Security', health.webhook?.signatureVerified ? 'Active' : 'Sin confirmación reciente', 'Validación obligatoria en POST.', health.webhook?.signatureVerified ? 'good' : 'warning'],
     ['Envíos', configured.sendingEnabled ? 'Habilitados' : 'Bloqueados', configured.sendingEnabled ? 'Kill switch abierto.' : 'No se enviarán mensajes reales.', configured.sendingEnabled ? 'warning' : 'good'],
     ['Plantillas', health.templatesSync?.result === 'success' ? 'Synced' : 'Pendientes', health.templatesSync ? `${health.templatesSync.count} · ${formatDate(health.templatesSync.lastSyncedAt)}` : 'Ejecuta Sync from Meta.', health.templatesSync?.result === 'success' ? 'good' : 'warning'],
+    ['Cola outbound', `${health.metrics?.outboundQueue?.pending || 0} pending`, `${health.metrics?.outboundQueue?.retry || 0} retry · ${health.metrics?.outboundQueue?.deadLetter || 0} dead letter`, health.metrics?.outboundQueue?.deadLetter ? 'bad' : health.metrics?.outboundQueue?.retry ? 'warning' : 'good'],
     ['Base CRM', health.database?.operational ? 'Operativa' : 'Error', 'Acceso backend al esquema crm.', health.database?.operational ? 'good' : 'bad']
   ];
   return <div className="space-y-6">
@@ -95,12 +96,15 @@ function Summary({ health, loading, reload }) {
         ['Mensajes hoy', health.metrics?.messagesToday || 0],
         ['Conversaciones abiertas', health.metrics?.openConversations || 0],
         ['Seguimientos vencidos', health.metrics?.followupsDue || 0],
-        ['Plantillas aprobadas', health.metrics?.templates?.approved || 0]
+        ['Plantillas aprobadas', health.metrics?.templates?.approved || 0],
+        ['Jobs en retry', health.metrics?.outboundQueue?.retry || 0],
+        ['Dead letters', health.metrics?.outboundQueue?.deadLetter || 0]
       ].map(([label, value]) => <div key={label} className="rounded-2xl bg-gray-900 p-5 text-white"><p className="text-sm text-gray-300">{label}</p><p className="mt-2 text-3xl font-bold">{Number(value).toLocaleString()}</p></div>)}
     </div>
     <div className="grid gap-4 lg:grid-cols-3">
       <IntegrationCard label="Último mensaje entrante" value={formatDate(health.metrics?.lastIncomingAt)} tone={health.metrics?.lastIncomingAt ? 'good' : 'warning'} />
       <IntegrationCard label="Último mensaje saliente" value={formatDate(health.metrics?.lastOutgoingAt)} tone={health.metrics?.lastOutgoingAt ? 'good' : 'warning'} />
+      <IntegrationCard label="Próximo job vencido" value={formatDate(health.metrics?.outboundQueue?.oldestDueAt)} detail="Sólo se procesa cuando el worker está desplegado y el kill switch se abre." tone={health.metrics?.outboundQueue?.oldestDueAt ? 'warning' : 'good'} />
       <IntegrationCard label="Último error" value={health.lastMessageError?.code || health.webhook?.lastError || 'Ninguno registrado'} detail={health.lastMessageError?.detail} tone={health.lastMessageError || health.webhook?.lastError ? 'bad' : 'good'} />
     </div>
     <div className="rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800"><p className="font-bold">Permisos del System User</p><div className="mt-3 flex flex-wrap gap-2">{['business_management', 'whatsapp_business_messaging', 'whatsapp_business_management'].map((permission) => <StatusBadge key={permission} tone={health.meta?.permissions?.[permission] ? 'good' : 'bad'}>{permission}: {health.meta?.permissions?.[permission] ? 'PASS' : 'FAIL'}</StatusBadge>)}</div></div>

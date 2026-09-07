@@ -81,3 +81,20 @@ test('WhatsApp worker owns provider delivery and respects kill switch', async ()
   assert.match(claimMigration, /REVOKE ALL ON FUNCTION crm\.claim_whatsapp_outbound_jobs\(INTEGER\)[\s\S]*FROM PUBLIC, anon, authenticated/i);
   assert.match(claimMigration, /GRANT EXECUTE ON FUNCTION crm\.claim_whatsapp_outbound_jobs\(INTEGER\)[\s\S]*TO service_role/i);
 });
+
+test('WhatsApp Center health exposes outbound queue metrics', async () => {
+  const adminSource = await readFile(
+    new URL('../../supabase/functions/whatsapp-admin/index.ts', import.meta.url),
+    'utf8'
+  );
+  const centerSource = await readFile(
+    new URL('../../src/pages/admin/WhatsAppCenter.jsx', import.meta.url),
+    'utf8'
+  );
+  assert.match(adminSource, /outboundQueue/);
+  assert.match(adminSource, /crm\.from\('outbound_jobs'\)\.select\('status'\)/);
+  assert.match(adminSource, /oldestDueAt/);
+  assert.match(centerSource, /Cola outbound/);
+  assert.match(centerSource, /Dead letters/);
+  assert.match(centerSource, /Próximo job vencido/);
+});

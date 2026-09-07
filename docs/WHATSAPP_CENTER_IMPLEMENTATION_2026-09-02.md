@@ -8,6 +8,8 @@
 - Bandeja paginada, mensajes por conversación, estados reales, ficha resumida de
   contacto/cuenta, consentimiento y supresión.
 - Vista de plantillas sincronizadas, diagnóstico operativo y guía para usuarios no técnicos.
+- Métricas de cola outbound: pending, retry, processing, dead letter y próximo
+  job vencido.
 - Edge Function autenticada `whatsapp-admin`, limitada a miembros de `admin_users`.
 - La función desplegada mantiene `verify_jwt=true`; una petición anónima devuelve 401.
 - Envíos reales permanecen cerrados mediante `WHATSAPP_SEND_ENABLED=false` salvo
@@ -19,7 +21,10 @@
 - Esquema canónico `crm` para conversaciones, mensajes, estados, actividades,
   permisos, supresiones, plantillas, tareas, colas y auditoría.
 - Edge Function `whatsapp-send` con autorización, idempotencia, ventana de servicio,
-  plantilla aprobada, presupuesto y suppression checks.
+  plantilla aprobada, presupuesto y suppression checks. En la versión local
+  actual sólo encola; no llama a Meta directamente.
+- Edge Function `whatsapp-worker` preparada localmente para reclamar jobs de
+  forma atómica y procesarlos cuando `WHATSAPP_SEND_ENABLED=true`.
 
 ## Pendiente antes de producción
 
@@ -28,10 +33,12 @@
 3. Confirmar suscripción real de la app al WABA y sincronizar plantillas aprobadas.
 4. Registrar el número real como entidad separada; no mezclarlo con el número de prueba.
 5. Probar `whatsapp-admin` con una sesión admin real desde la interfaz desplegada.
-6. Activar compositor sólo después de validar token, plantilla, presupuesto y consentimiento.
-7. Implementar gestión de follow-ups, asignaciones y oportunidades desde la UI.
-8. Implementar campañas con preview de audiencia y dry run obligatorio.
-9. Añadir analítica y atribución comercial.
+6. Desplegar `whatsapp-worker` y programar su ejecución controlada después de
+   aplicar `20260907021000_whatsapp_outbound_job_claiming.sql`.
+7. Activar compositor sólo después de validar token, plantilla, presupuesto y consentimiento.
+8. Implementar gestión de follow-ups, asignaciones y oportunidades desde la UI.
+9. Implementar campañas con preview de audiencia y dry run obligatorio.
+10. Añadir analítica y atribución comercial.
 
 ## Variables server-side
 

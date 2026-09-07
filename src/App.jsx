@@ -38,6 +38,7 @@ import { withAuthTimeout } from "./utils/authFlow";
 import { activatePremiumPromotion } from "./services/premiumService";
 import { isPremiumPromoActive } from "./config/promotions";
 import { clearPremiumIntent, hasPremiumIntent } from "./config/premiumFlow";
+import { markPasswordRecoveryVerified } from "./utils/authRedirects";
 
 const ChatWidget = lazy(() => import("./components/agent/ChatWidget"));
 const CookieConsent = lazy(() => import("./components/CookieConsent"));
@@ -134,6 +135,7 @@ async function handleNativeAuthLink(url) {
     if (code) {
       const { data, error } = await withAuthTimeout(supabase.auth.exchangeCodeForSession(code));
       if (error) throw error;
+      if (isRecovery) markPasswordRecoveryVerified();
       if (!isRecovery) {
         void trackNativeAuthCompletion(data?.session, 'native_deep_link_code');
         activateNativePremiumIfRequested(data?.session);
@@ -152,6 +154,7 @@ async function handleNativeAuthLink(url) {
         refresh_token: refreshToken
       }));
       if (error) throw error;
+      if (isRecovery) markPasswordRecoveryVerified();
       if (!isRecovery) {
         void trackNativeAuthCompletion(data?.session, 'native_deep_link_tokens');
         activateNativePremiumIfRequested(data?.session);

@@ -5,6 +5,12 @@ import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { Lock, Eye, EyeOff, Check, X } from 'lucide-react';
 import { withAuthTimeout } from '../utils/authFlow';
+import {
+    clearPasswordRecoveryVerification,
+    hasPasswordRecoverySignal,
+    isPasswordRecoveryVerified,
+    markPasswordRecoveryVerified
+} from '../utils/authRedirects';
 
 const ResetPasswordPage = () => {
     useTranslation();
@@ -28,19 +34,25 @@ const ResetPasswordPage = () => {
 
     useEffect(() => {
         let mounted = true;
+        const recoverySignal = hasPasswordRecoverySignal(window.location.href);
 
         const verifyRecoverySession = async () => {
             try {
                 const code = new URLSearchParams(window.location.search).get('code');
-                if (code) {
+                if (code && recoverySignal) {
                     const { error } = await withAuthTimeout(supabase.auth.exchangeCodeForSession(code));
-                    if (error && !String(error.message || '').toLowerCase().includes('code verifier')) {
-                        throw error;
+                    const wasAlreadyExchanged = String(error?.message || '').toLowerCase().includes('code verifier');
+                    if (error && !wasAlreadyExchanged) throw error;
+                    if (wasAlreadyExchanged) {
+                        const { data: { session: exchangedSession } } = await withAuthTimeout(supabase.auth.getSession());
+                        if (!exchangedSession) throw error;
                     }
+                    markPasswordRecoveryVerified();
                 }
 
                 const { data: { session } } = await withAuthTimeout(supabase.auth.getSession());
-                if (mounted) setRecoveryReady(Boolean(session));
+                const verifiedRecovery = isPasswordRecoveryVerified();
+                if (mounted) setRecoveryReady(Boolean(session && verifiedRecovery));
             } catch (error) {
                 console.error('Error validating password recovery link:', error);
                 if (mounted) setRecoveryReady(false);
@@ -51,7 +63,11 @@ const ResetPasswordPage = () => {
 
         const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
             if (!mounted) return;
-            if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+            if (event === 'PASSWORD_RECOVERY' && session) {
+                markPasswordRecoveryVerified();
+                setRecoveryReady(true);
+                setCheckingLink(false);
+            } else if (event === 'SIGNED_IN' && session && isPasswordRecoveryVerified()) {
                 setRecoveryReady(true);
                 setCheckingLink(false);
             }
@@ -70,7 +86,7 @@ const ResetPasswordPage = () => {
         const { password, confirmPassword } = formData;
 
         setValidations({
-            minLength: password.length >= 6,
+            minLength: password.length >= 8,
             hasNumber: /\d/.test(password),
             hasLetter: /[a-zA-Z]/.test(password),
             passwordsMatch: password === confirmPassword && password.length > 0
@@ -107,6 +123,13 @@ const ResetPasswordPage = () => {
             }));
 
             if (error) throw error;
+
+            clearPasswordRecoveryVerification();
+            try {
+                await withAuthTimeout(supabase.auth.signOut({ scope: 'local' }));
+            } catch (signOutError) {
+                console.warn('Password updated; local session cleanup did not complete:', signOutError);
+            }
 
             toast.success('¡Contraseña actualizada exitosamente!');
 
@@ -200,6 +223,7 @@ const ResetPasswordPage = () => {
                                     value={formData.password}
                                     onChange={handleChange}
                                     required
+                                    minLength={8}
                                     className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                                     placeholder="Ingresa tu nueva contraseña"
                                 />
@@ -232,6 +256,7 @@ const ResetPasswordPage = () => {
                                     value={formData.confirmPassword}
                                     onChange={handleChange}
                                     required
+                                    minLength={8}
                                     className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                                     placeholder="Confirma tu nueva contraseña"
                                 />
@@ -254,7 +279,7 @@ const ResetPasswordPage = () => {
                             <p className="text-sm font-medium text-gray-700 mb-2">
                                 Tu contraseña debe cumplir con:
                             </p>
-                            <ValidationItem valid={validations.minLength} text="Mínimo 6 caracteres" />
+                            <ValidationItem valid={validations.minLength} text="Mínimo 8 caracteres" />
                             <ValidationItem valid={validations.hasLetter} text="Al menos una letra" />
                             <ValidationItem valid={validations.hasNumber} text="Al menos un número" />
                             <ValidationItem valid={validations.passwordsMatch} text="Las contraseñas coinciden" />

@@ -9,11 +9,11 @@ import { activatePremiumPromotion } from '../services/premiumService';
 import { getPremiumPromoDeadlineLabel, isPremiumPromoActive } from '../config/promotions';
 import { clearPremiumIntent, getPremiumIntentPreference, rememberPremiumIntent } from '../config/premiumFlow';
 import { withAuthTimeout } from '../utils/authFlow';
+import { beginOAuthSignIn } from '../services/oauthService';
 
 const LoginPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const isNative = Capacitor.isNativePlatform();
   const isAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 
   const [loading, setLoading] = useState(false);
@@ -24,9 +24,6 @@ const LoginPage = () => {
     return getPremiumIntentPreference() !== 'false';
   });
   const [formData, setFormData] = useState({ email: '', password: '', rememberMe: false });
-  const oauthRedirectTo = isNative
-    ? 'geobooker://auth/callback'
-    : `${window.location.origin}/auth/callback`;
 
   useEffect(() => {
     trackAuthFunnelEvent('login_form_view', {
@@ -113,23 +110,7 @@ const LoginPage = () => {
       trackAuthFunnelEvent('oauth_start', { funnel: 'login', method: provider });
       rememberPremiumIntent(premiumPromoActive && activateFreePremiumOnLogin);
 
-      const { data, error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: oauthRedirectTo,
-          skipBrowserRedirect: true,
-          queryParams: provider === 'google' ? { access_type: 'offline', prompt: 'select_account' } : undefined
-        }
-      }));
-      if (error) throw error;
-      if (!data?.url) throw new Error('No OAuth URL');
-
-      if (isNative) {
-        const { Browser } = await import('@capacitor/browser');
-        await Browser.open({ url: data.url });
-      } else {
-        window.location.href = data.url;
-      }
+      await beginOAuthSignIn(provider);
     } catch (error) {
       trackAuthFunnelEvent('login_error', {
         funnel: 'login',

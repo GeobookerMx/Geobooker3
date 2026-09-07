@@ -1,6 +1,7 @@
 // src/lib/supabase.js
 import { createClient } from '@supabase/supabase-js';
 import { Capacitor } from '@capacitor/core';
+import { markPasswordRecoveryVerified } from '../utils/authRedirects';
 
 // ✅ FIX CRÍTICO: Fallbacks hardcodeados para builds iOS (Mac no tiene .env.local)
 // Las VITE_* vars son solo para desarrollo local. En iOS, siempre usa el fallback.
@@ -34,5 +35,10 @@ export const supabase = createClient(
     }
   }
 );
+
+// Persist only Supabase's verified recovery event, never a user-controlled URL flag.
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'PASSWORD_RECOVERY' && session) markPasswordRecoveryVerified();
+});
 
 

@@ -11,6 +11,7 @@ import { withAuthTimeout } from '../utils/authFlow';
 import { activatePremiumPromotion } from '../services/premiumService';
 import { rememberPremiumIntent } from '../config/premiumFlow';
 import { metaTrackCompleteRegistration } from '../lib/metaPixel';
+import { beginOAuthSignIn, getOAuthCallbackUrl } from '../services/oauthService';
 
 const SignupPage = () => {
     const { t } = useTranslation();
@@ -21,9 +22,7 @@ const SignupPage = () => {
     const [loading, setLoading] = useState(false);
     const [activateFreePremiumOnSignup, setActivateFreePremiumOnSignup] = useState(premiumPromoActive);
     const hasStartedForm = useRef(false);
-    const oauthRedirectTo = isNative
-        ? 'geobooker://auth/callback'
-        : `${window.location.origin}/auth/callback`;
+    const oauthRedirectTo = getOAuthCallbackUrl({ isNative });
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
@@ -223,26 +222,7 @@ const SignupPage = () => {
             trackAuthFunnelEvent('oauth_start', { funnel: 'signup', method: provider });
             rememberPremiumIntent(premiumPromoActive && activateFreePremiumOnSignup);
 
-            const { data, error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
-                provider,
-                options: {
-                    redirectTo: oauthRedirectTo,
-                    skipBrowserRedirect: true,
-                    queryParams: provider === 'google'
-                        ? { access_type: 'offline', prompt: 'select_account' }
-                        : undefined
-                }
-            }));
-
-            if (error) throw error;
-            if (!data?.url) throw new Error('No OAuth URL');
-
-            if (isNative) {
-                const { Browser } = await import('@capacitor/browser');
-                await Browser.open({ url: data.url });
-            } else {
-                window.location.href = data.url;
-            }
+            await beginOAuthSignIn(provider);
         } catch (error) {
             console.error(`Error ${provider} Sign-up:`, error);
             trackAuthFunnelEvent('signup_error', {

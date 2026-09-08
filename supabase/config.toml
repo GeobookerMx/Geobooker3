@@ -16,3 +16,6 @@ verify_jwt = true
 
 [functions.crm-import-dry-run]
 verify_jwt = true
+
+[functions.crm-reconcile-dry-run]
+verify_jwt = true

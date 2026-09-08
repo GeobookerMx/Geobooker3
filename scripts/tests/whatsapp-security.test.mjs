@@ -7,6 +7,11 @@ import {
   isCustomerServiceWindowOpen,
   shouldAdvanceMessageStatus
 } from '../../supabase/functions/_shared/whatsapp-security.js';
+import {
+  getIngestionSourceDefinition,
+  listIngestionSources,
+  normalizeLegacySourceRecord
+} from '../../supabase/functions/_shared/crm-ingestion-adapters.js';
 
 const activeBudget = { is_active: true, kill_switch: false };
 
@@ -241,6 +246,52 @@ test('workspace reconciliation permits SQL Editor admins without opening PostgRE
   assert.match(migration, /REVOKE ALL ON FUNCTION crm\.has_workspace_access\(UUID, TEXT\[\]\) FROM PUBLIC, anon, authenticated/i);
   assert.match(migration, /REVOKE ALL ON FUNCTION public\.crm_workspace_foundation_status\(\) FROM PUBLIC, anon/i);
   assert.doesNotMatch(migration, /GRANT EXECUTE[^;]+TO anon/i);
+});
+
+test('CRM 360 source adapters are admin-only, bounded, private and never dispatch', async () => {
+  const adapter = await readFile(
+    new URL('../../supabase/functions/crm-reconcile-dry-run/index.ts', import.meta.url),
+    'utf8'
+  );
+  const shared = await readFile(
+    new URL('../../supabase/functions/_shared/crm-ingestion-adapters.js', import.meta.url),
+    'utf8'
+  );
+  const config = await readFile(new URL('../../supabase/config.toml', import.meta.url), 'utf8');
+  assert.match(config, /\[functions\.crm-reconcile-dry-run\]\s+verify_jwt = true/i);
+  assert.match(adapter, /CRM360_RECONCILIATION_ENABLED/);
+  assert.match(adapter, /MAX_BATCH_SIZE = 500/);
+  assert.match(adapter, /admin_users/);
+  assert.match(adapter, /run_mode: 'dry_run'/);
+  assert.match(adapter, /entitiesPromoted: 0/);
+  assert.match(adapter, /messagesQueued: 0/);
+  assert.match(adapter, /messagesSent: 0/);
+  assert.match(shared, /raw_payload: null/);
+  assert.doesNotMatch(adapter, /graph\.facebook\.com|resend\.com|whatsapp-send|process-email-queue/i);
+  assert.doesNotMatch(shared, /raw_payload:\s*record/i);
+});
+
+test('CRM 360 source normalization omits direct contact details and message content', () => {
+  assert.deepEqual(listIngestionSources(), ['apify', 'scan_local', 'csv', 'email_queue', 'email_history']);
+  assert.equal(getIngestionSourceDefinition('csv').relation, 'marketing_contacts');
+  const prepared = normalizeLegacySourceRecord('csv', {
+    id: 'c6980bd9-cd91-4be0-8f6a-c8873984724f',
+    company_name: 'Empresa de prueba',
+    email: 'persona@example.com',
+    phone: '+525500000000',
+    notes: 'contenido que no debe copiarse',
+    body_text: 'mensaje que no debe copiarse',
+    source: 'csv',
+    created_at: '2026-09-08T12:00:00.000Z'
+  });
+  assert.equal(prepared.normalized.company_name, 'Empresa de prueba');
+  assert.equal(prepared.normalized.has_email, true);
+  assert.equal(prepared.normalized.has_phone, true);
+  assert.equal(prepared.occurredAt, '2026-09-08T12:00:00.000Z');
+  assert.equal('email' in prepared.normalized, false);
+  assert.equal('phone' in prepared.normalized, false);
+  assert.equal('notes' in prepared.normalized, false);
+  assert.equal('body_text' in prepared.normalized, false);
 });
 
 test('suppression always blocks outbound messages', () => {

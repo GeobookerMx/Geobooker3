@@ -47,6 +47,53 @@ Para paid media puede usarse una tarifa híbrida: mínimo mensual incluido en el
 paquete más 10–20% del gasto publicitario por encima de un umbral. Nunca mezclar
 en una sola cifra el fee de Geobooker, el gasto de medios y los cargos de Meta.
 
+### Referencia en pesos mexicanos
+
+Para planeación se usa `17.00 MXN/USD`, cercano a la observación de Banxico del
+7 de septiembre de 2026. La cotización contractual debe fijar fecha, moneda,
+impuestos y regla de conversión.
+
+| Paquete | Setup MXN | Gestión mensual MXN | Por reunión cualificada celebrada |
+|---|---:|---:|---:|
+| City Pilot | 25,500–42,500 | 42,500–68,000 | 3,400–6,800 |
+| Country Growth | 59,500–102,000 | 85,000–153,000 | 5,100–11,900 |
+| Enterprise Global | 136,000–255,000 | 204,000–425,000+ | 8,500–25,500 |
+
+## Proyección ilustrativa a tres años
+
+Ingresos netos de servicio Geobooker; excluye inversión publicitaria, tarifas
+Meta trasladadas al cliente, IVA y ventas garantizadas. No es pronóstico
+financiero: debe sustituirse trimestralmente por pipeline y cohortes reales.
+
+| Escenario | Año 1 | Año 2 | Año 3 | Supuesto principal |
+|---|---:|---:|---:|---|
+| Conservador | 2.2 M MXN | 7.1 M MXN | 16.9 M MXN | 3, 8 y 16 clientes activos promedio |
+| Base | 5.0 M MXN | 19.0 M MXN | 45.8 M MXN | 5, 16 y 32 clientes activos promedio |
+| Expansión | 10.0 M MXN | 44.4 M MXN | 125.4 M MXN | 8, 28 y 65 clientes activos promedio |
+
+El escenario base supone ARPA mensual aproximado de 75 mil, 95 mil y 115 mil
+MXN respectivamente, más setups de nuevos clientes. La meta operativa inicial
+debe ser validar 3–5 clientes y margen bruto real antes de contratar estructura
+para el escenario de expansión.
+
+### Qué significa cobrar “por reunión”
+
+No se factura cualquier cita en calendario. Una reunión facturable debe:
+
+1. corresponder al país, industria, tamaño y cargo definidos en el ICP;
+2. provenir de una fuente/campaña atribuible y de un lead con consentimiento;
+3. ser aceptada por el cliente dentro de un plazo pactado;
+4. celebrarse efectivamente, salvo que el contrato facture booked meetings;
+5. tener duración mínima y participante con capacidad o influencia de compra;
+6. no ser duplicada, spam, proveedor, competidor o cuenta excluida;
+7. quedar evidenciada en CRM con `booked_at`, `attended_at`, resultado y owner.
+
+El modelo recomendado para lanzamiento es híbrido: retainer que cubre equipo,
+software y operación + bono por reunión cualificada **celebrada**. Los no-show
+se reponen y las disputas se resuelven con criterios contractuales y evidencia
+del CRM. El cierre comercial sigue siendo responsabilidad compartida y no debe
+prometerse como resultado garantizado.
+
 ## Definición contractual del resultado
 
 Antes de cotizar por desempeño debe quedar escrito:

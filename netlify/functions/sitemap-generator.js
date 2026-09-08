@@ -77,6 +77,7 @@ exports.handler = async (event) => {
     ['/guia-resico', '0.5', 'monthly'],
     ['/privacy', '0.4', 'monthly'],
     ['/terms', '0.4', 'monthly'],
+    ['/data-deletion', '0.4', 'monthly'],
   ];
   staticRoutes.forEach(([path, priority, changefreq]) => addRoute(path, null, priority, changefreq));
 

@@ -235,6 +235,11 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/data-deletion" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
+                    Eliminación de datos
+                  </Link>
+                </li>
+                <li>
                   <Link to="/faq" className="text-gray-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block">
                      {t('footer.faq')}
                   </Link>

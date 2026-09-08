@@ -294,6 +294,23 @@ test('CRM 360 source normalization omits direct contact details and message cont
   assert.equal('body_text' in prepared.normalized, false);
 });
 
+test('global campaign planning is workspace-scoped, configurable and no-send', async () => {
+  const migration = await readFile(
+    new URL('../../supabase/migrations/20260908015000_crm_global_campaign_planning.sql', import.meta.url),
+    'utf8'
+  );
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS crm\.product_catalog/i);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS crm\.campaign_targets/i);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS crm\.campaign_localizations/i);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS crm\.campaign_commercial_terms/i);
+  assert.match(migration, /scope_level IN \('global', 'region', 'country', 'state', 'city', 'postal', 'radius'\)/i);
+  assert.match(migration, /pricing_model IN \('fixed', 'retainer', 'per_contact', 'per_qualified_lead', 'per_held_meeting', 'revenue_share', 'hybrid'\)/i);
+  assert.match(migration, /crm\.has_workspace_access\(p_workspace_id/i);
+  assert.match(migration, /REVOKE ALL ON TABLE crm\.%I FROM PUBLIC, anon, authenticated/i);
+  assert.match(migration, /REVOKE DELETE ON TABLE crm\.%I FROM service_role/i);
+  assert.doesNotMatch(migration, /INSERT INTO crm\.campaigns|INSERT INTO crm\.outbound_jobs|graph\.facebook\.com/i);
+});
+
 test('suppression always blocks outbound messages', () => {
   assert.deepEqual(evaluateOutboundPolicy({
     budgetPolicy: activeBudget, permissionStatus: 'opted_in', suppressed: true,

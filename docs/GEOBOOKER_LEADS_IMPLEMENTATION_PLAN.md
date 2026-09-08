@@ -24,9 +24,11 @@
 
 ## Fase L2 — ingestion 360
 
-- source events e idempotency registry: migración local preparada;
+- source events e idempotency registry: migración aplicada por el administrador;
 - runs, source-to-CRM links y snapshots de reconciliación: preparados;
-- adapters para Apify, Scan Local, CSV/XLSX, formularios y email legado;
+- adaptadores dry-run para Apify, Scan Local, CSV y email legado: desplegados,
+  protegidos y apagados por defecto;
+- XLSX y formularios: pendientes de conectar al mismo ledger;
 - resolver de identidad con `needs_review`;
 - timeline unificada y reconciliación cero-pérdida.
 
@@ -35,10 +37,11 @@ origen se pueden reconciliar.
 
 ## Fase L3 — Campaign Manager global
 
-- país -> región -> ciudad -> postal/radio;
-- idioma primario/secundarios, moneda y timezone;
-- ICP, producto, canal, fechas, presupuesto y owner;
-- templates ligados a WABA + idioma + propósito + market;
+- esquema país -> región -> ciudad -> postal/radio: preparado;
+- idioma primario/secundarios, moneda y timezone: preparado;
+- producto, canal, fechas, presupuesto y owner: preparado;
+- templates ligados a idioma/canal/market: preparado sin activar;
+- términos comerciales configurables y presupuestos separados: preparado;
 - dry run, aprobación, scheduling preview, pause y budget gates.
 
 ## Fase L4 — funnel y resultados

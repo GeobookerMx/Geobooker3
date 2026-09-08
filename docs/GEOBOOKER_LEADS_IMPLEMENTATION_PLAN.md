@@ -5,7 +5,7 @@
 - CRM Core, WhatsApp inbound/outbound queue, campaigns y atribución base: parcial.
 - SQL internacional/consentimiento: aplicado por el administrador.
 - Frontend/`whatsapp-admin` internacional: local, no desplegado.
-- Producción Git: 13 commits detrás del workspace local.
+- Producción Git: el bloque local sigue pendiente de un release controlado.
 - Envío: desactivado.
 
 ## Fase L0 — reconciliación y respaldo
@@ -16,9 +16,11 @@
 
 ## Fase L1 — tenant foundation
 
-- workspaces, memberships, roles, audit de soporte;
-- backfill seguro del B2B actual al workspace interno;
-- pruebas RLS de dos tenants y export isolation.
+- migración local preparada para workspaces, memberships y audit de soporte;
+- backfill transaccional del B2B actual al workspace interno preparado;
+- prueba estática de seguridad preparada;
+- pendiente: respaldo, aplicación en producción, validación de conteos y pruebas
+  RLS dinámicas con dos tenants sintéticos antes de habilitar acceso cliente.
 
 ## Fase L2 — ingestion 360
 
@@ -77,4 +79,3 @@ origen se pueden reconciliar.
 4. Extender geografía/idioma.
 5. Crear ledger/P&L y dashboards.
 6. Desplegar el bloque acumulado con checklist y rollback.
-

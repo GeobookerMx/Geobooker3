@@ -187,6 +187,32 @@ test('international WhatsApp campaigns require approved markets and evidenced op
   assert.match(centerSource, /Opt-in con evidencia/);
 });
 
+test('workspace foundation preserves internal B2B and keeps tenant tables backend-only', async () => {
+  const migration = await readFile(
+    new URL('../../supabase/migrations/20260908012000_crm_workspace_foundation.sql', import.meta.url),
+    'utf8'
+  );
+  const validation = await readFile(
+    new URL('../../supabase/validation/crm_workspace_reconciliation_readonly.sql', import.meta.url),
+    'utf8'
+  );
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS crm\.workspaces/i);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS crm\.workspace_users/i);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS crm\.workspace_access_audit/i);
+  assert.match(migration, /geobooker_internal/);
+  assert.match(migration, /client_portal_enabled[^\n]*false/);
+  assert.match(migration, /UPDATE crm\.%I SET workspace_id = \$1 WHERE workspace_id IS NULL/i);
+  assert.match(migration, /REVOKE ALL ON TABLE crm\.workspaces FROM PUBLIC, anon, authenticated/i);
+  assert.match(migration, /REVOKE ALL ON TABLE crm\.workspace_users FROM PUBLIC, anon, authenticated/i);
+  assert.match(migration, /REVOKE UPDATE, DELETE ON TABLE crm\.workspace_access_audit FROM service_role/i);
+  assert.match(migration, /crm_workspace_foundation_status/);
+  assert.doesNotMatch(migration, /INSERT INTO crm\.outbound_jobs/i);
+  assert.doesNotMatch(migration, /INSERT INTO crm\.messages/i);
+  assert.doesNotMatch(migration, /graph\.facebook\.com/i);
+  assert.doesNotMatch(validation, /^\s*(INSERT|UPDATE|DELETE|ALTER|DROP|CREATE|GRANT|REVOKE)\b/im);
+  assert.match(validation, /unscoped_rows = 0/);
+});
+
 test('suppression always blocks outbound messages', () => {
   assert.deepEqual(evaluateOutboundPolicy({
     budgetPolicy: activeBudget, permissionStatus: 'opted_in', suppressed: true,

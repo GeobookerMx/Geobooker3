@@ -231,6 +231,18 @@ test('CRM 360 intake is idempotent, workspace-scoped and inert until adapters ar
   assert.doesNotMatch(migration, /graph\.facebook\.com/i);
 });
 
+test('workspace reconciliation permits SQL Editor admins without opening PostgREST roles', async () => {
+  const migration = await readFile(
+    new URL('../../supabase/migrations/20260908014000_crm_sql_editor_reconciliation_access.sql', import.meta.url),
+    'utf8'
+  );
+  assert.match(migration, /session_user IN \('postgres', 'supabase_admin'\)/i);
+  assert.match(migration, /PostgREST requests use session_user=authenticator/i);
+  assert.match(migration, /REVOKE ALL ON FUNCTION crm\.has_workspace_access\(UUID, TEXT\[\]\) FROM PUBLIC, anon, authenticated/i);
+  assert.match(migration, /REVOKE ALL ON FUNCTION public\.crm_workspace_foundation_status\(\) FROM PUBLIC, anon/i);
+  assert.doesNotMatch(migration, /GRANT EXECUTE[^;]+TO anon/i);
+});
+
 test('suppression always blocks outbound messages', () => {
   assert.deepEqual(evaluateOutboundPolicy({
     budgetPolicy: activeBudget, permissionStatus: 'opted_in', suppressed: true,

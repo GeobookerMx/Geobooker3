@@ -252,6 +252,8 @@ function CampaignReadinessView() {
   const [draftTemplateId, setDraftTemplateId] = useState('');
   const [draftLimit, setDraftLimit] = useState(100);
   const [dryRunResult, setDryRunResult] = useState(null);
+  const [approvalCheck, setApprovalCheck] = useState(null);
+  const [approvalLoading, setApprovalLoading] = useState('');
   const load = useCallback(() => {
     setLoading(true);
     setError('');
@@ -291,6 +293,7 @@ function CampaignReadinessView() {
       });
       setDryRunResult(review.result || null);
       setDraftName('');
+      setApprovalCheck(null);
       toast.success('Campaign draft preparado para revisiÃ³n. Sin envÃ­os.');
       await load();
       await loadPreview();
@@ -299,6 +302,34 @@ function CampaignReadinessView() {
       toast.error(loadError.message);
     } finally {
       setDraftLoading(false);
+    }
+  };
+  const checkApproval = async (campaignId) => {
+    setApprovalLoading(campaignId);
+    setError('');
+    try {
+      const result = await callAdmin('campaign_approval_check', { campaignId });
+      setApprovalCheck(result.check || null);
+    } catch (loadError) {
+      setError(loadError.message);
+      toast.error(loadError.message);
+    } finally {
+      setApprovalLoading('');
+    }
+  };
+  const approveNoSend = async (campaignId) => {
+    setApprovalLoading(campaignId);
+    setError('');
+    try {
+      await callAdmin('campaign_approve_no_send', { campaignId });
+      toast.success('CampaÃ±a aprobada sin envÃ­os ni agenda.');
+      setApprovalCheck(null);
+      await load();
+    } catch (loadError) {
+      setError(loadError.message);
+      toast.error(loadError.message);
+    } finally {
+      setApprovalLoading('');
     }
   };
   useEffect(() => { load(); }, [load]);
@@ -394,13 +425,31 @@ function CampaignReadinessView() {
     </form>
     <div className="rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
       <h3 className="font-bold">Campaign drafts recientes</h3>
+      {approvalCheck && <div className={`mt-4 rounded-xl border p-4 ${approvalCheck.is_approvable ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-950'}`}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="font-bold">Approval gate: {approvalCheck.is_approvable ? 'PASS' : 'BLOCKED'}</p>
+            <p className="text-sm">Elegibles: {approvalCheck.eligible_members || 0} Â· Sin consentimiento: {approvalCheck.missing_consent_members || 0} Â· Suprimidos: {approvalCheck.suppressed_members || 0} Â· InvÃ¡lidos: {approvalCheck.invalid_members || 0}</p>
+          </div>
+          <StatusBadge tone={approvalCheck.is_approvable ? 'good' : 'warning'}>{approvalCheck.campaign_status}</StatusBadge>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <StatusBadge tone={approvalCheck.approved_template ? 'good' : 'bad'}>Template {approvalCheck.approved_template ? 'PASS' : 'FAIL'}</StatusBadge>
+          <StatusBadge tone={approvalCheck.active_budget_policy && !approvalCheck.budget_kill_switch ? 'good' : 'bad'}>Budget {approvalCheck.active_budget_policy && !approvalCheck.budget_kill_switch ? 'PASS' : 'FAIL'}</StatusBadge>
+          <StatusBadge tone={approvalCheck.waba_ready ? 'good' : 'bad'}>WABA {approvalCheck.waba_ready ? 'PASS' : 'FAIL'}</StatusBadge>
+          <StatusBadge tone={approvalCheck.phone_ready ? 'good' : 'bad'}>Phone {approvalCheck.phone_ready ? 'PASS' : 'FAIL'}</StatusBadge>
+          <StatusBadge tone={(approvalCheck.retry_outbound_jobs || approvalCheck.dead_letter_outbound_jobs) ? 'bad' : 'good'}>Queue {(approvalCheck.retry_outbound_jobs || approvalCheck.dead_letter_outbound_jobs) ? 'RISK' : 'PASS'}</StatusBadge>
+          <StatusBadge tone="good">No send</StatusBadge>
+        </div>
+        {Array.isArray(approvalCheck.reasons) && approvalCheck.reasons.length > 0 && <p className="mt-3 text-sm">Razones: {approvalCheck.reasons.join(', ')}</p>}
+      </div>}
       <div className="mt-4 overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-left text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-            <tr>{['CampaÃ±a', 'PropÃ³sito', 'Estado', 'Elegibles', 'Sin consentimiento', 'Suprimidos', 'Actualizada'].map((label) => <th key={label} className="px-3 py-2">{label}</th>)}</tr>
+            <tr>{['CampaÃ±a', 'PropÃ³sito', 'Estado', 'Elegibles', 'Sin consentimiento', 'Suprimidos', 'Actualizada', 'Gate'].map((label) => <th key={label} className="px-3 py-2">{label}</th>)}</tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-700">
-            {campaigns.length === 0 && <tr><td colSpan="7" className="px-3 py-8 text-center text-gray-500">Sin campaÃ±as WhatsApp todavÃ­a.</td></tr>}
+            {campaigns.length === 0 && <tr><td colSpan="8" className="px-3 py-8 text-center text-gray-500">Sin campaÃ±as WhatsApp todavÃ­a.</td></tr>}
             {campaigns.map((campaign) => <tr key={campaign.id}>
               <td className="px-3 py-2 font-semibold">{campaign.name}</td>
               <td className="px-3 py-2">{campaign.purpose}</td>
@@ -409,6 +458,12 @@ function CampaignReadinessView() {
               <td className="px-3 py-2">{campaign.memberCounts?.missing_consent || 0}</td>
               <td className="px-3 py-2">{campaign.memberCounts?.suppressed || 0}</td>
               <td className="px-3 py-2">{formatDate(campaign.updated_at)}</td>
+              <td className="px-3 py-2">
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={() => checkApproval(campaign.id)} disabled={approvalLoading === campaign.id} className="rounded-lg border px-2 py-1 text-xs font-semibold disabled:opacity-50">Check</button>
+                  {campaign.status === 'review_ready' && <button type="button" onClick={() => approveNoSend(campaign.id)} disabled={approvalLoading === campaign.id} className="rounded-lg bg-gray-900 px-2 py-1 text-xs font-semibold text-white disabled:opacity-50">Approve no-send</button>}
+                </div>
+              </td>
             </tr>)}
           </tbody>
         </table>

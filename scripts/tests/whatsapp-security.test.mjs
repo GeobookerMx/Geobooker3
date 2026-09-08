@@ -95,6 +95,38 @@ test('WhatsApp campaign drafts require admin review and never enqueue delivery',
   assert.doesNotMatch(centerSource, /Aprobar campa/);
 });
 
+test('WhatsApp campaign approval gate does not schedule or send campaigns', async () => {
+  const approvalMigration = await readFile(
+    new URL('../../supabase/migrations/20260907025000_crm_whatsapp_campaign_approval_gate.sql', import.meta.url),
+    'utf8'
+  );
+  const adminSource = await readFile(
+    new URL('../../supabase/functions/whatsapp-admin/index.ts', import.meta.url),
+    'utf8'
+  );
+  const centerSource = await readFile(
+    new URL('../../src/pages/admin/WhatsAppCenter.jsx', import.meta.url),
+    'utf8'
+  );
+  assert.match(approvalMigration, /crm_whatsapp_campaign_approval_check/i);
+  assert.match(approvalMigration, /crm_approve_whatsapp_campaign/i);
+  assert.match(approvalMigration, /campaign_must_be_review_ready/);
+  assert.match(approvalMigration, /active_budget_policy_required/);
+  assert.match(approvalMigration, /budget_kill_switch_enabled/);
+  assert.match(approvalMigration, /production_phone_number_not_active/);
+  assert.match(approvalMigration, /p_confirm_no_send BOOLEAN DEFAULT false/);
+  assert.match(approvalMigration, /campaign_approved_no_send/);
+  assert.match(approvalMigration, /sending_enabled', false/);
+  assert.doesNotMatch(approvalMigration, /INSERT INTO crm\.outbound_jobs/i);
+  assert.doesNotMatch(approvalMigration, /status = 'scheduled'/i);
+  assert.doesNotMatch(approvalMigration, /graph\.facebook\.com/i);
+  assert.match(adminSource, /campaign_approval_check/);
+  assert.match(adminSource, /campaign_approve_no_send/);
+  assert.match(adminSource, /p_confirm_no_send:\s*true/);
+  assert.match(centerSource, /Approval gate/);
+  assert.match(centerSource, /Approve no-send/);
+});
+
 test('suppression always blocks outbound messages', () => {
   assert.deepEqual(evaluateOutboundPolicy({
     budgetPolicy: activeBudget, permissionStatus: 'opted_in', suppressed: true,

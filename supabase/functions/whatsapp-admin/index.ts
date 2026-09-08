@@ -408,14 +408,26 @@ Deno.serve(async (request: Request) => {
     }
 
     if (action === 'campaign_readiness') {
-      const { data, error } = await admin.rpc('crm_campaign_readiness_overview');
-      if (error) {
+      const [readinessResult, marketsResult] = await Promise.all([
+        admin.rpc('crm_campaign_readiness_overview'),
+        admin.rpc('crm_whatsapp_international_readiness')
+      ]);
+      if (readinessResult.error) {
         return json(409, {
           error: 'campaign_readiness_unavailable',
-          message: safeFailureDetail(error.message)
+          message: safeFailureDetail(readinessResult.error.message)
         }, corsHeaders);
       }
-      return json(200, { readiness: data?.[0] || null }, corsHeaders);
+      if (marketsResult.error) {
+        return json(409, {
+          error: 'international_market_readiness_unavailable',
+          message: safeFailureDetail(marketsResult.error.message)
+        }, corsHeaders);
+      }
+      return json(200, {
+        readiness: readinessResult.data?.[0] || null,
+        markets: marketsResult.data || []
+      }, corsHeaders);
     }
 
     if (action === 'campaign_preview') {
@@ -482,16 +494,36 @@ Deno.serve(async (request: Request) => {
     if (action === 'campaign_approval_check') {
       const campaignId = String(body.campaignId || '');
       if (!/^[0-9a-f-]{36}$/i.test(campaignId)) return json(400, { error: 'invalid_campaign_id' }, corsHeaders);
-      const { data, error } = await admin.rpc('crm_whatsapp_campaign_approval_check', {
-        p_campaign_id: campaignId
-      });
-      if (error) {
+      const [approvalResult, marketResult] = await Promise.all([
+        admin.rpc('crm_whatsapp_campaign_approval_check', { p_campaign_id: campaignId }),
+        admin.rpc('crm_whatsapp_campaign_market_check', { p_campaign_id: campaignId })
+      ]);
+      if (approvalResult.error) {
         return json(409, {
           error: 'campaign_approval_check_unavailable',
-          message: safeFailureDetail(error.message)
+          message: safeFailureDetail(approvalResult.error.message)
         }, corsHeaders);
       }
-      return json(200, { check: data?.[0] || null, sendingEnabled: false }, corsHeaders);
+      if (marketResult.error) {
+        return json(409, {
+          error: 'campaign_market_check_unavailable',
+          message: safeFailureDetail(marketResult.error.message)
+        }, corsHeaders);
+      }
+      const approval = approvalResult.data?.[0] || null;
+      const market = marketResult.data?.[0] || null;
+      const check = approval ? {
+        ...approval,
+        is_approvable: Boolean(approval.is_approvable && market?.is_market_ready),
+        market_ready: Boolean(market?.is_market_ready),
+        market_count: market?.market_count || 0,
+        missing_country_members: market?.missing_country_members || 0,
+        unapproved_market_members: market?.unapproved_market_members || 0,
+        missing_evidence_members: market?.missing_evidence_members || 0,
+        markets: market?.markets || [],
+        reasons: [...(approval.reasons || []), ...(market?.reasons || [])]
+      } : null;
+      return json(200, { check, sendingEnabled: false }, corsHeaders);
     }
 
     if (action === 'campaign_approve_no_send') {

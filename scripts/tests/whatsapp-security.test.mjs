@@ -156,6 +156,37 @@ test('WhatsApp dispatch preflight plans batches without queueing or sending', as
   assert.match(centerSource, /No queue/);
 });
 
+test('international WhatsApp campaigns require approved markets and evidenced opt-in', async () => {
+  const migration = await readFile(
+    new URL('../../supabase/migrations/20260908011000_crm_whatsapp_international_consent_gate.sql', import.meta.url),
+    'utf8'
+  );
+  const adminSource = await readFile(
+    new URL('../../supabase/functions/whatsapp-admin/index.ts', import.meta.url),
+    'utf8'
+  );
+  const centerSource = await readFile(
+    new URL('../../src/pages/admin/WhatsAppCenter.jsx', import.meta.url),
+    'utf8'
+  );
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS crm\.market_policies/i);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS crm\.consent_evidence/i);
+  assert.match(migration, /whatsapp_marketing_enabled BOOLEAN NOT NULL DEFAULT FALSE/i);
+  assert.match(migration, /crm_whatsapp_campaign_market_check/i);
+  assert.match(migration, /evidenced_marketing_opt_in_required/i);
+  assert.match(migration, /enforce_whatsapp_marketing_campaign_gate/i);
+  assert.match(migration, /REVOKE ALL ON TABLE crm\.market_policies FROM PUBLIC, anon, authenticated/i);
+  assert.match(migration, /REVOKE ALL ON TABLE crm\.consent_evidence FROM PUBLIC, anon, authenticated/i);
+  assert.match(migration, /REVOKE UPDATE, DELETE ON TABLE crm\.consent_evidence FROM service_role/i);
+  assert.doesNotMatch(migration, /INSERT INTO crm\.outbound_jobs/i);
+  assert.doesNotMatch(migration, /INSERT INTO crm\.messages/i);
+  assert.doesNotMatch(migration, /graph\.facebook\.com/i);
+  assert.match(adminSource, /crm_whatsapp_international_readiness/);
+  assert.match(adminSource, /crm_whatsapp_campaign_market_check/);
+  assert.match(centerSource, /Mercados internacionales candidatos/);
+  assert.match(centerSource, /Opt-in con evidencia/);
+});
+
 test('suppression always blocks outbound messages', () => {
   assert.deepEqual(evaluateOutboundPolicy({
     budgetPolicy: activeBudget, permissionStatus: 'opted_in', suppressed: true,

@@ -238,6 +238,7 @@ function DiagnosticsView() {
 
 function CampaignReadinessView() {
   const [readiness, setReadiness] = useState(null);
+  const [markets, setMarkets] = useState([]);
   const [previewRows, setPreviewRows] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
@@ -261,6 +262,7 @@ function CampaignReadinessView() {
     Promise.all([callAdmin('campaign_readiness'), callAdmin('campaign_list'), callAdmin('templates')])
       .then(([readinessResult, campaignResult, templateResult]) => {
         setReadiness(readinessResult.readiness || null);
+        setMarkets(readinessResult.markets || []);
         setCampaigns(campaignResult.rows || []);
         setTemplates((templateResult.rows || []).filter((row) => row.approval_status === 'approved'));
       })
@@ -356,6 +358,8 @@ function CampaignReadinessView() {
   const marketingReady = Number(readiness?.whatsapp_marketing_opted_in || 0);
   const serviceReady = Number(readiness?.whatsapp_service_allowed || 0);
   const queueRisk = Number(readiness?.retry_outbound_jobs || 0) + Number(readiness?.dead_letter_outbound_jobs || 0);
+  const approvedMarkets = markets.filter((market) => market.whatsapp_marketing_enabled && ['pilot', 'approved'].includes(market.market_status)).length;
+  const readyInternationalContacts = markets.reduce((total, market) => total + Number(market.ready_contacts || 0), 0);
   const cards = [
     ['Contactos activos', readiness?.active_contacts || 0, 'Base CRM disponible para revisar.', 'info'],
     ['WhatsApp válidos', readiness?.whatsapp_valid_points || 0, 'Contact points validados en formato usable.', 'info'],
@@ -363,6 +367,8 @@ function CampaignReadinessView() {
     ['Servicio elegible', serviceReady, 'Respuestas permitidas por relación/servicio.', serviceReady ? 'good' : 'warning'],
     ['Bloqueados', blocked, 'Opt-out, invalid, complaint o suppression activa.', blocked ? 'bad' : 'good'],
     ['Consentimiento unknown', unknown, 'No deben entrar a campañas hasta resolver evidencia.', unknown ? 'warning' : 'good'],
+    ['Mercados habilitados', approvedMarkets, 'Requieren revisión y consentimiento comprobable.', approvedMarkets ? 'good' : 'warning'],
+    ['Contactos internacionales listos', readyInternationalContacts, 'Opt-in con evidencia y mercado habilitado.', readyInternationalContacts ? 'good' : 'warning'],
     ['Draft campaigns', readiness?.draft_campaigns || 0, 'Campañas creadas, no aprobadas.', 'neutral'],
     ['Cola con riesgo', queueRisk, 'Retries y dead letters requieren diagnóstico.', queueRisk ? 'bad' : 'good']
   ];
@@ -373,6 +379,29 @@ function CampaignReadinessView() {
     </div>
     {error && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">Readiness no disponible todavía: {error}</div>}
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{cards.map(([label, value, detail, tone]) => <IntegrationCard key={label} label={label} value={Number(value || 0).toLocaleString()} detail={detail} tone={tone} />)}</div>
+    <div className="rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div><h3 className="font-bold">Mercados internacionales candidatos</h3><p className="text-sm text-gray-500">Cohorte comercial inicial; todos permanecen bloqueados hasta revisión y activación explícita.</p></div>
+        <StatusBadge tone={approvedMarkets ? 'good' : 'warning'}>{approvedMarkets}/20 habilitados</StatusBadge>
+      </div>
+      <div className="mt-4 overflow-x-auto">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-50 text-left text-gray-600 dark:bg-gray-900 dark:text-gray-300"><tr>{['País', 'Región', 'Estado', 'Marketing', 'Opt-in', 'Evidencia', 'Listos', 'Límite diario'].map((label) => <th key={label} className="px-3 py-2">{label}</th>)}</tr></thead>
+          <tbody className="divide-y dark:divide-gray-700">
+            {markets.map((market) => <tr key={market.country_code}>
+              <td className="px-3 py-2 font-semibold">{market.market_name} ({market.country_code})</td>
+              <td className="px-3 py-2">{market.region}</td>
+              <td className="px-3 py-2"><StatusBadge tone={['pilot', 'approved'].includes(market.market_status) ? 'good' : market.market_status === 'blocked' ? 'bad' : 'warning'}>{market.market_status}</StatusBadge></td>
+              <td className="px-3 py-2"><StatusBadge tone={market.whatsapp_marketing_enabled ? 'good' : 'neutral'}>{market.whatsapp_marketing_enabled ? 'ON' : 'OFF'}</StatusBadge></td>
+              <td className="px-3 py-2">{Number(market.opted_in_contacts || 0).toLocaleString()}</td>
+              <td className="px-3 py-2">{Number(market.evidenced_contacts || 0).toLocaleString()}</td>
+              <td className="px-3 py-2">{Number(market.ready_contacts || 0).toLocaleString()}</td>
+              <td className="px-3 py-2">{Number(market.daily_recipient_cap || 0).toLocaleString()}</td>
+            </tr>)}
+          </tbody>
+        </table>
+      </div>
+    </div>
     <div className="rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -454,6 +483,8 @@ function CampaignReadinessView() {
           <StatusBadge tone={approvalCheck.active_budget_policy && !approvalCheck.budget_kill_switch ? 'good' : 'bad'}>Budget {approvalCheck.active_budget_policy && !approvalCheck.budget_kill_switch ? 'PASS' : 'FAIL'}</StatusBadge>
           <StatusBadge tone={approvalCheck.waba_ready ? 'good' : 'bad'}>WABA {approvalCheck.waba_ready ? 'PASS' : 'FAIL'}</StatusBadge>
           <StatusBadge tone={approvalCheck.phone_ready ? 'good' : 'bad'}>Phone {approvalCheck.phone_ready ? 'PASS' : 'FAIL'}</StatusBadge>
+          <StatusBadge tone={approvalCheck.market_ready ? 'good' : 'bad'}>Mercados {approvalCheck.market_ready ? 'PASS' : 'FAIL'}</StatusBadge>
+          <StatusBadge tone={Number(approvalCheck.missing_evidence_members || 0) === 0 ? 'good' : 'bad'}>Evidencia {Number(approvalCheck.missing_evidence_members || 0) === 0 ? 'PASS' : 'FAIL'}</StatusBadge>
           <StatusBadge tone={(approvalCheck.retry_outbound_jobs || approvalCheck.dead_letter_outbound_jobs) ? 'bad' : 'good'}>Queue {(approvalCheck.retry_outbound_jobs || approvalCheck.dead_letter_outbound_jobs) ? 'RISK' : 'PASS'}</StatusBadge>
           <StatusBadge tone="good">No send</StatusBadge>
         </div>

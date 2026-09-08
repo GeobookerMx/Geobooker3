@@ -213,6 +213,24 @@ test('workspace foundation preserves internal B2B and keeps tenant tables backen
   assert.match(validation, /unscoped_rows = 0/);
 });
 
+test('CRM 360 intake is idempotent, workspace-scoped and inert until adapters are enabled', async () => {
+  const migration = await readFile(
+    new URL('../../supabase/migrations/20260908013000_crm_ingestion_360_foundation.sql', import.meta.url),
+    'utf8'
+  );
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS crm\.source_events/i);
+  assert.match(migration, /UNIQUE \(workspace_id, source_system, idempotency_key\)/i);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS crm\.source_entity_links/i);
+  assert.match(migration, /resolution_status IN \('linked', 'needs_review', 'ignored', 'superseded'\)/i);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS crm\.ingestion_reconciliation_snapshots/i);
+  assert.match(migration, /REVOKE ALL ON TABLE crm\.source_events FROM PUBLIC, anon, authenticated/i);
+  assert.match(migration, /REVOKE DELETE ON TABLE crm\.source_events FROM service_role/i);
+  assert.match(migration, /raw_payload IS NULL OR purge_raw_payload_after IS NOT NULL/i);
+  assert.doesNotMatch(migration, /INSERT INTO crm\.(accounts|contacts|messages|activities|outbound_jobs)/i);
+  assert.doesNotMatch(migration, /DELETE FROM public\./i);
+  assert.doesNotMatch(migration, /graph\.facebook\.com/i);
+});
+
 test('suppression always blocks outbound messages', () => {
   assert.deepEqual(evaluateOutboundPolicy({
     budgetPolicy: activeBudget, permissionStatus: 'opted_in', suppressed: true,

@@ -25,7 +25,11 @@ FROM (VALUES
   ('crm.consent_evidence'),
   ('crm.workspaces'),
   ('crm.workspace_users'),
-  ('crm.workspace_access_audit')
+  ('crm.workspace_access_audit'),
+  ('crm.ingestion_runs'),
+  ('crm.source_events'),
+  ('crm.source_entity_links'),
+  ('crm.ingestion_reconciliation_snapshots')
 ) AS expected(relation_name)
 ORDER BY expected.relation_name;
 
@@ -42,7 +46,8 @@ FROM (VALUES
   ('public.crm_whatsapp_campaign_dispatch_preflight(uuid,integer,uuid)'),
   ('public.crm_whatsapp_international_readiness()'),
   ('public.crm_whatsapp_campaign_market_check(uuid)'),
-  ('public.crm_workspace_foundation_status()')
+  ('public.crm_workspace_foundation_status()'),
+  ('public.crm_ingestion_360_status(uuid)')
 ) AS expected(function_name)
 ORDER BY expected.function_name;
 
@@ -86,7 +91,8 @@ WHERE version IN (
   '20260907025000',
   '20260908010000',
   '20260908011000',
-  '20260908012000'
+  '20260908012000',
+  '20260908013000'
 )
 ORDER BY version;
 

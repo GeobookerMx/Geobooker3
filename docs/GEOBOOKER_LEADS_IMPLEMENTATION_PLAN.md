@@ -24,7 +24,8 @@
 
 ## Fase L2 — ingestion 360
 
-- source events e idempotency registry;
+- source events e idempotency registry: migración local preparada;
+- runs, source-to-CRM links y snapshots de reconciliación: preparados;
 - adapters para Apify, Scan Local, CSV/XLSX, formularios y email legado;
 - resolver de identidad con `needs_review`;
 - timeline unificada y reconciliación cero-pérdida.

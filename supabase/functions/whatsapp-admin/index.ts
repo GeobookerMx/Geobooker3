@@ -511,6 +511,28 @@ Deno.serve(async (request: Request) => {
       return json(200, { result: data?.[0] || null, sendingEnabled: false }, corsHeaders);
     }
 
+    if (action === 'campaign_dispatch_preflight') {
+      const campaignId = String(body.campaignId || '');
+      if (!/^[0-9a-f-]{36}$/i.test(campaignId)) return json(400, { error: 'invalid_campaign_id' }, corsHeaders);
+      const batchSize = clampInteger(body.batchSize, 50, 1, 500);
+      const { data, error } = await admin.rpc('crm_whatsapp_campaign_dispatch_preflight', {
+        p_campaign_id: campaignId,
+        p_batch_size: batchSize,
+        p_actor_user_id: authData.user.id
+      });
+      if (error) {
+        return json(409, {
+          error: 'campaign_dispatch_preflight_blocked',
+          message: safeFailureDetail(error.message)
+        }, corsHeaders);
+      }
+      return json(200, {
+        preflight: data?.[0] || null,
+        sendingEnabled: false,
+        productionSendEnabled: Deno.env.get('WHATSAPP_SEND_ENABLED') === 'true'
+      }, corsHeaders);
+    }
+
     if (action === 'campaign_list') {
       const { data, error } = await crm.from('campaigns')
         .select('id,name,purpose,status,audience_rule,template_id,created_at,updated_at')

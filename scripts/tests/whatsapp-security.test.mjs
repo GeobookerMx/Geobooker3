@@ -127,6 +127,35 @@ test('WhatsApp campaign approval gate does not schedule or send campaigns', asyn
   assert.match(centerSource, /Approve no-send/);
 });
 
+test('WhatsApp dispatch preflight plans batches without queueing or sending', async () => {
+  const preflightMigration = await readFile(
+    new URL('../../supabase/migrations/20260908010000_crm_whatsapp_campaign_dispatch_preflight.sql', import.meta.url),
+    'utf8'
+  );
+  const adminSource = await readFile(
+    new URL('../../supabase/functions/whatsapp-admin/index.ts', import.meta.url),
+    'utf8'
+  );
+  const centerSource = await readFile(
+    new URL('../../src/pages/admin/WhatsAppCenter.jsx', import.meta.url),
+    'utf8'
+  );
+  assert.match(preflightMigration, /CREATE TABLE IF NOT EXISTS crm\.campaign_dispatch_runs/i);
+  assert.match(preflightMigration, /crm_whatsapp_campaign_dispatch_preflight/i);
+  assert.match(preflightMigration, /campaign_must_be_approved/);
+  assert.match(preflightMigration, /planned_batches/);
+  assert.match(preflightMigration, /sending_enabled BOOLEAN NOT NULL DEFAULT FALSE/);
+  assert.match(preflightMigration, /GRANT SELECT, INSERT, UPDATE ON TABLE crm\.campaign_dispatch_runs TO service_role/i);
+  assert.match(preflightMigration, /REVOKE DELETE ON TABLE crm\.campaign_dispatch_runs FROM service_role/i);
+  assert.doesNotMatch(preflightMigration, /INSERT INTO crm\.outbound_jobs/i);
+  assert.doesNotMatch(preflightMigration, /INSERT INTO crm\.messages/i);
+  assert.doesNotMatch(preflightMigration, /status = 'scheduled'/i);
+  assert.doesNotMatch(preflightMigration, /graph\.facebook\.com/i);
+  assert.match(adminSource, /campaign_dispatch_preflight/);
+  assert.match(centerSource, /Dispatch preflight/);
+  assert.match(centerSource, /No queue/);
+});
+
 test('suppression always blocks outbound messages', () => {
   assert.deepEqual(evaluateOutboundPolicy({
     budgetPolicy: activeBudget, permissionStatus: 'opted_in', suppressed: true,

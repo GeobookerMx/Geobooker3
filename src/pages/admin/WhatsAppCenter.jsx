@@ -253,6 +253,7 @@ function CampaignReadinessView() {
   const [draftLimit, setDraftLimit] = useState(100);
   const [dryRunResult, setDryRunResult] = useState(null);
   const [approvalCheck, setApprovalCheck] = useState(null);
+  const [preflightResult, setPreflightResult] = useState(null);
   const [approvalLoading, setApprovalLoading] = useState('');
   const load = useCallback(() => {
     setLoading(true);
@@ -324,7 +325,22 @@ function CampaignReadinessView() {
       await callAdmin('campaign_approve_no_send', { campaignId });
       toast.success('CampaÃ±a aprobada sin envÃ­os ni agenda.');
       setApprovalCheck(null);
+      setPreflightResult(null);
       await load();
+    } catch (loadError) {
+      setError(loadError.message);
+      toast.error(loadError.message);
+    } finally {
+      setApprovalLoading('');
+    }
+  };
+  const runPreflight = async (campaignId) => {
+    setApprovalLoading(campaignId);
+    setError('');
+    try {
+      const result = await callAdmin('campaign_dispatch_preflight', { campaignId, batchSize: 50 });
+      setPreflightResult(result.preflight || null);
+      toast.success('Preflight generado. Sin cola ni envÃ­os.');
     } catch (loadError) {
       setError(loadError.message);
       toast.error(loadError.message);
@@ -443,6 +459,16 @@ function CampaignReadinessView() {
         </div>
         {Array.isArray(approvalCheck.reasons) && approvalCheck.reasons.length > 0 && <p className="mt-3 text-sm">Razones: {approvalCheck.reasons.join(', ')}</p>}
       </div>}
+      {preflightResult && <div className={`mt-4 rounded-xl border p-4 ${preflightResult.can_schedule ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-950'}`}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="font-bold">Dispatch preflight: {preflightResult.can_schedule ? 'READY' : 'BLOCKED'}</p>
+            <p className="text-sm">Elegibles: {preflightResult.eligible_member_count || 0} Â· Excluidos: {preflightResult.excluded_member_count || 0} Â· Batches: {preflightResult.batch_count || 0} de {preflightResult.batch_size || 50}</p>
+          </div>
+          <StatusBadge tone="good">No queue Â· No send</StatusBadge>
+        </div>
+        {Array.isArray(preflightResult.reasons) && preflightResult.reasons.length > 0 && <p className="mt-3 text-sm">Razones: {preflightResult.reasons.join(', ')}</p>}
+      </div>}
       <div className="mt-4 overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-left text-gray-600 dark:bg-gray-900 dark:text-gray-300">
@@ -462,6 +488,7 @@ function CampaignReadinessView() {
                 <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={() => checkApproval(campaign.id)} disabled={approvalLoading === campaign.id} className="rounded-lg border px-2 py-1 text-xs font-semibold disabled:opacity-50">Check</button>
                   {campaign.status === 'review_ready' && <button type="button" onClick={() => approveNoSend(campaign.id)} disabled={approvalLoading === campaign.id} className="rounded-lg bg-gray-900 px-2 py-1 text-xs font-semibold text-white disabled:opacity-50">Approve no-send</button>}
+                  {campaign.status === 'approved' && <button type="button" onClick={() => runPreflight(campaign.id)} disabled={approvalLoading === campaign.id} className="rounded-lg bg-blue-600 px-2 py-1 text-xs font-semibold text-white disabled:opacity-50">Preflight</button>}
                 </div>
               </td>
             </tr>)}

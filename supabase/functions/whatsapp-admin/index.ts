@@ -110,7 +110,7 @@ async function checkMetaConnection() {
     metaGet('me/permissions?limit=100', accessToken, graphVersion),
     metaGet(`${encodeURIComponent(wabaId)}?fields=id,name,currency,timezone_id`, accessToken, graphVersion),
     metaGet(`${encodeURIComponent(phoneNumberId)}?fields=id,display_phone_number,verified_name,quality_rating,code_verification_status,platform_type`, accessToken, graphVersion),
-    metaGet(`${encodeURIComponent(wabaId)}/subscribed_apps`, accessToken, graphVersion)
+    metaGet(`${encodeURIComponent(wabaId)}/subscribed_apps?fields=id,name,link`, accessToken, graphVersion)
   ]);
   const [identityResult, permissionsResult, wabaResult, phoneResult, subscriptionResult] = results;
   const identity = identityResult.status === 'fulfilled' ? identityResult.value : null;
@@ -120,6 +120,44 @@ async function checkMetaConnection() {
   const subscriptions = subscriptionResult.status === 'fulfilled' && Array.isArray(subscriptionResult.value?.data)
     ? subscriptionResult.value.data
     : [];
+  const subscribedApps = subscriptions.map((entry: Record<string, any>) => entry?.whatsapp_business_api_data || entry);
+  const geobookerApp = subscribedApps.find((app: Record<string, any>) => /^geobooker$/i.test(String(app?.name || '').trim())) || null;
+  let webhookFields = {
+    accessible: false,
+    active: false,
+    messages: false,
+    callbackMatches: false
+  };
+  let webhookFieldsError = null;
+  if (geobookerApp?.id && Deno.env.get('META_APP_SECRET')) {
+    try {
+      const appAccessToken = `${geobookerApp.id}|${requiredMetaEnv('META_APP_SECRET')}`;
+      const appSubscriptions = await metaGet(
+        `${encodeURIComponent(geobookerApp.id)}/subscriptions?fields=object,callback_url,fields,active`,
+        appAccessToken,
+        graphVersion
+      );
+      const whatsappSubscription = (appSubscriptions?.data || []).find(
+        (subscription: Record<string, any>) => subscription?.object === 'whatsapp_business_account'
+      );
+      const fieldNames = (whatsappSubscription?.fields || []).map(
+        (field: string | Record<string, any>) => typeof field === 'string' ? field : field?.name
+      );
+      const expectedCallback = `${requiredEnv('SUPABASE_URL')}/functions/v1/whatsapp-webhook`;
+      webhookFields = {
+        accessible: true,
+        active: whatsappSubscription?.active !== false && Boolean(whatsappSubscription),
+        messages: fieldNames.includes('messages'),
+        callbackMatches: String(whatsappSubscription?.callback_url || '').replace(/\/$/, '') === expectedCallback.replace(/\/$/, '')
+      };
+    } catch (error) {
+      webhookFieldsError = {
+        component: 'webhook_fields',
+        code: String(error?.providerCode || error?.name || 'META_WEBHOOK_CHECK_FAILED'),
+        message: humanMetaError(error?.providerCode || null, error?.message || null)
+      };
+    }
+  }
   const permissionMap = Object.fromEntries((permissionsResponse?.data || []).map((permission: { permission: string; status: string }) => [permission.permission, permission.status]));
   const requiredPermissions = ['business_management', 'whatsapp_business_messaging', 'whatsapp_business_management'];
   const errors = results.flatMap((result, index) => result.status === 'rejected' ? [{
@@ -127,6 +165,7 @@ async function checkMetaConnection() {
     code: String(result.reason?.providerCode || result.reason?.name || 'META_CHECK_FAILED'),
     message: humanMetaError(result.reason?.providerCode || null, result.reason?.message || null)
   }] : []);
+  if (webhookFieldsError) errors.push(webhookFieldsError);
   return {
     graphVersion,
     token: { valid: Boolean(identity?.id), subjectType: 'system_user' },
@@ -143,8 +182,13 @@ async function checkMetaConnection() {
     },
     subscription: {
       accessible: subscriptionResult.status === 'fulfilled',
-      subscribed: subscriptions.length > 0,
-      appCount: subscriptions.length
+      subscribed: Boolean(geobookerApp),
+      appCount: subscribedApps.length,
+      appName: geobookerApp?.name || null,
+      messagesSubscribed: webhookFields.messages,
+      webhookConfigurationAccessible: webhookFields.accessible,
+      webhookActive: webhookFields.active,
+      callbackMatches: webhookFields.callbackMatches
     },
     errors,
     checkedAt: new Date().toISOString()
@@ -232,6 +276,28 @@ Deno.serve(async (request: Request) => {
           message: humanMetaError(error?.providerCode || null, error?.message || null)
         };
       }
+      const metaDiagnostic = metaConnection ? {
+        result: metaConnection.token?.valid ? 'checked' : 'failed',
+        waba_id_match: String(metaConnection.waba?.id || '') === String(Deno.env.get('WHATSAPP_BUSINESS_ACCOUNT_ID') || ''),
+        phone_number_id_match: String(metaConnection.phone?.id || '') === String(Deno.env.get('WHATSAPP_PHONE_NUMBER_ID') || ''),
+        geobooker_app_subscribed: metaConnection.subscription?.subscribed === true,
+        messages_subscribed: metaConnection.subscription?.messagesSubscribed === true,
+        webhook_active: metaConnection.subscription?.webhookActive === true,
+        callback_matches: metaConnection.subscription?.callbackMatches === true,
+        sending_enabled: Deno.env.get('WHATSAPP_SEND_ENABLED') === 'true',
+        checked_at: metaConnection.checkedAt
+      } : {
+        result: 'failed',
+        sending_enabled: Deno.env.get('WHATSAPP_SEND_ENABLED') === 'true',
+        checked_at: new Date().toISOString()
+      };
+      await crm.from('audit_log').insert({
+        actor_user_id: authData.user.id,
+        actor_type: 'user',
+        action: 'whatsapp.health.check',
+        entity_type: 'whatsapp_integration',
+        new_values: metaDiagnostic
+      });
       return json(200, {
         mode: phone.data?.status === 'active' && metaConnection?.phone?.platformType === 'CLOUD_API'
           ? 'production'

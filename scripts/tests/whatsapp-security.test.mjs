@@ -432,9 +432,13 @@ test('WABA subscription is explicit, super-admin scoped and keeps sending disabl
   assert.match(adminSource, /\$\{encodeURIComponent\(wabaId\)\}\/subscribed_apps/);
   assert.match(adminSource, /action: 'whatsapp\.waba\.subscribe'/);
   assert.match(adminSource, /sending_enabled: false/);
+  assert.match(adminSource, /whatsapp_business_api_data/);
+  assert.match(adminSource, /messagesSubscribed/);
+  assert.match(adminSource, /action: 'whatsapp\.health\.check'/);
   assert.match(centerSource, /callAdmin\('subscribe_waba'/);
   assert.match(centerSource, /Suscribir app al WABA/);
   assert.match(centerSource, /NO habilita envíos/);
+  assert.match(centerSource, /Webhook messages/);
 });
 
 test('public contact routing keeps human support separate from Cloud API', async () => {

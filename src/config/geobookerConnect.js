@@ -1,6 +1,8 @@
+import { WHATSAPP_CHANNELS } from './contacts';
+
 export const GBOOKER_CONNECT_EMAIL = 'hola@geobooker.com.mx';
 export const GBOOKER_CONNECT_REPLY_TO = 'hola@geobooker.com.mx';
-export const GBOOKER_CONNECT_WHATSAPP = '+52 55 2670 2368';
+export const GBOOKER_CONNECT_WHATSAPP = WHATSAPP_CHANNELS.humanSupport.display;
 
 export const GBOOKER_CONNECT_LAUNCH = {
   code: 'connect_launch_1000',

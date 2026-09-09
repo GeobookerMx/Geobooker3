@@ -195,7 +195,7 @@ Deno.serve(async (request: Request) => {
         dueFollowups, templates, failedMessage, waba, phone, templateSync, outboundJobs, oldestDueJob, dbProbe
       ] = await Promise.all([
         crm.from('webhook_events').select('received_at,processing_status,last_error,signature_verified').order('received_at', { ascending: false }).limit(1).maybeSingle(),
-        crm.from('messages').select('provider_timestamp,created_at').eq('direction', 'inbound').order('created_at', { ascending: false }).limit(1).maybeSingle(),
+        crm.from('messages').select('provider_timestamp,created_at,provider_metadata').eq('direction', 'inbound').order('created_at', { ascending: false }).limit(1).maybeSingle(),
         crm.from('messages').select('provider_timestamp,created_at').eq('direction', 'outbound').order('created_at', { ascending: false }).limit(1).maybeSingle(),
         crm.from('conversations').select('*', { count: 'exact', head: true }).in('status', ['open', 'snoozed']),
         crm.from('messages').select('*', { count: 'exact', head: true }).gte('created_at', today.toISOString()),
@@ -203,7 +203,7 @@ Deno.serve(async (request: Request) => {
         crm.from('whatsapp_templates').select('approval_status'),
         crm.from('messages').select('failure_code,failure_detail,updated_at').eq('current_status', 'failed').order('updated_at', { ascending: false }).limit(1).maybeSingle(),
         crm.from('whatsapp_business_accounts').select('status,display_name').order('updated_at', { ascending: false }).limit(1).maybeSingle(),
-        crm.from('whatsapp_phone_numbers').select('status,display_phone_number,verified_name,quality_rating').order('updated_at', { ascending: false }).limit(1).maybeSingle(),
+        crm.from('whatsapp_phone_numbers').select('status,provider_phone_number_id,display_phone_number,verified_name,quality_rating').order('updated_at', { ascending: false }).limit(1).maybeSingle(),
         crm.from('audit_log').select('new_values,occurred_at').eq('action', 'whatsapp.templates.sync').order('occurred_at', { ascending: false }).limit(1).maybeSingle(),
         crm.from('outbound_jobs').select('status'),
         crm.from('outbound_jobs').select('id,status,scheduled_at,next_attempt_at,attempt_count,max_attempts').in('status', ['pending', 'retry']).order('next_attempt_at', { ascending: true, nullsFirst: false }).order('scheduled_at', { ascending: true }).limit(1).maybeSingle(),
@@ -218,7 +218,7 @@ Deno.serve(async (request: Request) => {
         result[row.status] = (result[row.status] || 0) + 1;
         return result;
       }, {});
-      const testMode = Deno.env.get('WHATSAPP_ALLOW_META_TEST_PAYLOADS') === 'true' || phone.data?.status === 'test';
+      const samplePayloadsAllowed = Deno.env.get('WHATSAPP_ALLOW_META_TEST_PAYLOADS') === 'true';
       let metaConnection = null;
       let metaError = null;
       try {
@@ -233,7 +233,9 @@ Deno.serve(async (request: Request) => {
         };
       }
       return json(200, {
-        mode: testMode ? 'test' : 'production',
+        mode: phone.data?.status === 'active' && metaConnection?.phone?.platformType === 'CLOUD_API'
+          ? 'production'
+          : samplePayloadsAllowed || phone.data?.status === 'test' ? 'test' : 'production',
         configured: {
           metaAppSecret: Boolean(Deno.env.get('META_APP_SECRET')),
           wabaId: Boolean(Deno.env.get('WHATSAPP_BUSINESS_ACCOUNT_ID')),
@@ -243,7 +245,8 @@ Deno.serve(async (request: Request) => {
           twoStepPin: /^\d{6}$/.test(Deno.env.get('WHATSAPP_TWO_STEP_PIN') || ''),
           graphApiVersion: Boolean(Deno.env.get('META_GRAPH_API_VERSION')),
           sendingEnabled: Deno.env.get('WHATSAPP_SEND_ENABLED') === 'true',
-          testSendingEnabled: Deno.env.get('WHATSAPP_TEST_SEND_ENABLED') === 'true'
+          testSendingEnabled: Deno.env.get('WHATSAPP_TEST_SEND_ENABLED') === 'true',
+          samplePayloadsAllowed
         },
         graphApiVersion: Deno.env.get('META_GRAPH_API_VERSION') || null,
         meta: metaConnection,
@@ -272,6 +275,7 @@ Deno.serve(async (request: Request) => {
             oldestDueAt: oldestDueJob.data?.next_attempt_at || oldestDueJob.data?.scheduled_at || null
           },
           lastIncomingAt: incoming.data?.provider_timestamp || incoming.data?.created_at || null,
+          lastIncomingIsTest: incoming.data?.provider_metadata?.is_test === true,
           lastOutgoingAt: outgoing.data?.provider_timestamp || outgoing.data?.created_at || null,
           templates: templateCounts
         },
@@ -287,6 +291,91 @@ Deno.serve(async (request: Request) => {
           occurredAt: failedMessage.data.updated_at
         } : null
       }, corsHeaders);
+    }
+
+    if (action === 'subscribe_waba') {
+      if (adminUser.role !== 'super_admin') {
+        return json(403, { error: 'super_admin_required' }, corsHeaders);
+      }
+      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'false') {
+        return json(409, { error: 'subscription_requires_sending_disabled' }, corsHeaders);
+      }
+
+      const accessToken = requiredMetaEnv('WHATSAPP_ACCESS_TOKEN');
+      const graphVersion = requiredMetaEnv('META_GRAPH_API_VERSION');
+      const wabaId = requiredMetaEnv('WHATSAPP_BUSINESS_ACCOUNT_ID');
+      if (String(body.confirmWabaId || '') !== wabaId) {
+        return json(409, { error: 'subscription_scope_confirmation_mismatch' }, corsHeaders);
+      }
+
+      try {
+        const permissionsResponse = await metaGet('me/permissions?limit=100', accessToken, graphVersion);
+        const permissionMap = Object.fromEntries((permissionsResponse?.data || []).map(
+          (permission: { permission: string; status: string }) => [permission.permission, permission.status]
+        ));
+        if (permissionMap.whatsapp_business_management !== 'granted') {
+          return json(409, { error: 'whatsapp_business_management_permission_required' }, corsHeaders);
+        }
+
+        const before = await metaGet(`${encodeURIComponent(wabaId)}/subscribed_apps`, accessToken, graphVersion);
+        const alreadySubscribed = Array.isArray(before?.data) && before.data.length > 0;
+        if (!alreadySubscribed) {
+          const subscribeResponse = await metaPost(
+            `${encodeURIComponent(wabaId)}/subscribed_apps`,
+            {},
+            accessToken,
+            graphVersion
+          );
+          if (subscribeResponse?.success !== true) throw new Error('meta_waba_subscription_not_confirmed');
+        }
+
+        const after = await metaGet(`${encodeURIComponent(wabaId)}/subscribed_apps`, accessToken, graphVersion);
+        const appCount = Array.isArray(after?.data) ? after.data.length : 0;
+        if (appCount < 1) throw new Error('meta_waba_subscription_missing_after_update');
+
+        await crm.from('audit_log').insert({
+          actor_user_id: authData.user.id,
+          actor_type: 'user',
+          action: 'whatsapp.waba.subscribe',
+          entity_type: 'whatsapp_business_account',
+          new_values: {
+            result: 'success',
+            provider_business_account_id: wabaId,
+            app_count: appCount,
+            already_subscribed: alreadySubscribed,
+            sending_enabled: false
+          }
+        });
+
+        return json(200, {
+          success: true,
+          subscribed: true,
+          alreadySubscribed,
+          appCount,
+          wabaId,
+          sendingEnabled: false
+        }, corsHeaders);
+      } catch (error) {
+        await crm.from('audit_log').insert({
+          actor_user_id: authData.user.id,
+          actor_type: 'user',
+          action: 'whatsapp.waba.subscribe',
+          entity_type: 'whatsapp_business_account',
+          new_values: {
+            result: 'failed',
+            provider_business_account_id: wabaId,
+            error_code: String(error?.providerCode || error?.name || 'SUBSCRIPTION_FAILED'),
+            error: safeFailureDetail(error?.message),
+            sending_enabled: false
+          }
+        });
+        return json(409, {
+          error: 'waba_subscription_failed',
+          providerCode: String(error?.providerCode || error?.name || 'SUBSCRIPTION_FAILED'),
+          httpStatus: Number(error?.httpStatus || 0) || null,
+          message: safeFailureDetail(error?.message)
+        }, corsHeaders);
+      }
     }
 
     if (action === 'register_phone') {

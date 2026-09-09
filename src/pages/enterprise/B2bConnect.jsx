@@ -17,6 +17,7 @@ import {
     getGeobookerConnectPackage
 } from '../../config/geobookerConnect';
 import { metaTrackLead } from '../../lib/metaPixel';
+import { WHATSAPP_CHANNELS, getWhatsAppLink } from '../../config/contacts';
 
 export default function B2bConnect() {
     const [searchParams] = useSearchParams();
@@ -521,7 +522,7 @@ export default function B2bConnect() {
 
                             <div className="space-y-6">
                                 <a
-                                    href="https://wa.me/525526702368?text=Hola,%20me%20interesa%20Geobooker%20Connect"
+                                    href={getWhatsAppLink('humanSupport', 'Hola, me interesa Geobooker Connect')}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="group flex items-start gap-4 p-4 rounded-xl hover:bg-white/5 transition-colors"
@@ -531,7 +532,7 @@ export default function B2bConnect() {
                                     </div>
                                     <div>
                                         <h4 className="text-white font-bold mb-1">WhatsApp Directo</h4>
-                                        <p className="text-gray-400 text-sm font-light">+52 55 2670 2368</p>
+                                        <p className="text-gray-400 text-sm font-light">{WHATSAPP_CHANNELS.humanSupport.display}</p>
                                         <span className="text-amber-500 text-xs font-semibold uppercase tracking-wider mt-2 block">Ventas especializadas</span>
                                     </div>
                                 </a>

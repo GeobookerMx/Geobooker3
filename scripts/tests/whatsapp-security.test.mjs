@@ -416,3 +416,39 @@ test('production phone registration is super-admin, scoped, secret-backed and no
   assert.match(centerSource, /callAdmin\('register_phone'/);
   assert.doesNotMatch(centerSource, /WHATSAPP_TWO_STEP_PIN|\bpin\s*:/);
 });
+
+test('WABA subscription is explicit, super-admin scoped and keeps sending disabled', async () => {
+  const adminSource = await readFile(
+    new URL('../../supabase/functions/whatsapp-admin/index.ts', import.meta.url),
+    'utf8'
+  );
+  const centerSource = await readFile(
+    new URL('../../src/pages/admin/WhatsAppCenter.jsx', import.meta.url),
+    'utf8'
+  );
+  assert.match(adminSource, /action === 'subscribe_waba'/);
+  assert.match(adminSource, /subscription_requires_sending_disabled/);
+  assert.match(adminSource, /whatsapp_business_management_permission_required/);
+  assert.match(adminSource, /\$\{encodeURIComponent\(wabaId\)\}\/subscribed_apps/);
+  assert.match(adminSource, /action: 'whatsapp\.waba\.subscribe'/);
+  assert.match(adminSource, /sending_enabled: false/);
+  assert.match(centerSource, /callAdmin\('subscribe_waba'/);
+  assert.match(centerSource, /Suscribir app al WABA/);
+  assert.match(centerSource, /NO habilita envíos/);
+});
+
+test('public contact routing keeps human support separate from Cloud API', async () => {
+  const contactsSource = await readFile(
+    new URL('../../src/config/contacts.js', import.meta.url),
+    'utf8'
+  );
+  const supportSource = await readFile(
+    new URL('../../src/pages/SupportPage.jsx', import.meta.url),
+    'utf8'
+  );
+  assert.match(contactsSource, /humanSupport:[\s\S]*waMe: '525526702368'[\s\S]*public: true/);
+  assert.match(contactsSource, /crmCloud:[\s\S]*waMe: '5215574057295'[\s\S]*public: false/);
+  assert.match(supportSource, /WhatsApp · atención humana/);
+  assert.match(supportSource, /WhatsApp CRM · canal automatizado/);
+  assert.match(supportSource, /se habilitará al concluir las validaciones/);
+});

@@ -25,9 +25,29 @@ export const SOCIAL_LINKS = {
 };
 
 export const PHONE_NUMBERS = {
-    ventas: null, // Agregar cuando esté disponible
-    soporte: null,
+    ventas: '+525526702368',
+    soporte: '+525526702368',
 };
+
+// Cada número tiene una responsabilidad distinta. El canal Cloud API no debe
+// sustituir al contacto humano ni anunciarse como operativo hasta completar
+// suscripción WABA, webhook productivo, plantillas y consentimiento.
+export const WHATSAPP_CHANNELS = Object.freeze({
+    humanSupport: Object.freeze({
+        e164: '+525526702368',
+        waMe: '525526702368',
+        display: '+52 55 2670 2368',
+        label: 'Atención humana y comercial',
+        public: true,
+    }),
+    crmCloud: Object.freeze({
+        e164: '+5215574057295',
+        waMe: '5215574057295',
+        display: '+52 1 55 7405 7295',
+        label: 'Mensajería CRM y notificaciones',
+        public: false,
+    }),
+});
 
 export const COMPANY_INFO = {
     name: 'Geobooker',
@@ -42,4 +62,10 @@ export const getMailtoLink = (type, subject = '') => {
     const email = CONTACT_EMAILS[type] || CONTACT_EMAILS.ventas;
     const subjectParam = subject ? `?subject=${encodeURIComponent(subject)}` : '';
     return `mailto:${email}${subjectParam}`;
+};
+
+export const getWhatsAppLink = (channel = 'humanSupport', message = '') => {
+    const contact = WHATSAPP_CHANNELS[channel] || WHATSAPP_CHANNELS.humanSupport;
+    const text = message ? `?text=${encodeURIComponent(message)}` : '';
+    return `https://wa.me/${contact.waMe}${text}`;
 };

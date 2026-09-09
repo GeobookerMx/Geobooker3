@@ -67,19 +67,44 @@ async function callAdmin(action, params = {}) {
 
 function Summary({ health, loading, reload }) {
   const [registering, setRegistering] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
   const [registrationResult, setRegistrationResult] = useState(null);
   if (loading && !health) return <Loading />;
   if (!health) return <EmptyState title="No se pudo cargar el estado" />;
   const configured = health.configured || {};
   const webhookOk = Boolean(health.webhook?.signatureVerified && health.webhook?.status === 'processed');
   const metaOk = Boolean(health.meta?.token?.valid);
+  const registrationConfirmed = Boolean(
+    health.phone?.status === 'active'
+    && health.meta?.phone?.platformType === 'CLOUD_API'
+    && health.meta?.phone?.verificationStatus === 'VERIFIED'
+  );
   const canRequestRegistration = Boolean(
-    configured.twoStepPin
+    !registrationConfirmed
+    && configured.twoStepPin
     && configured.sendingEnabled === false
     && health.meta?.waba?.id
     && health.meta?.phone?.id
     && health.meta?.permissions?.whatsapp_business_messaging
   );
+  const subscribeWaba = async () => {
+    const wabaId = health.meta?.waba?.id;
+    if (!wabaId || health.meta?.subscription?.subscribed) return;
+    const confirmed = window.confirm(
+      `Suscribir la app Geobooker al WABA ${wabaId}. Esta acción habilita la recepción de webhooks, pero NO habilita envíos.`
+    );
+    if (!confirmed) return;
+    setSubscribing(true);
+    try {
+      const result = await callAdmin('subscribe_waba', { confirmWabaId: wabaId });
+      toast.success(`WABA suscrito correctamente · ${result.appCount} app(s)`);
+      await reload();
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setSubscribing(false);
+    }
+  };
   const registerPhone = async () => {
     const phoneNumberId = health.meta?.phone?.id;
     const wabaId = health.meta?.waba?.id;
@@ -135,7 +160,7 @@ function Summary({ health, loading, reload }) {
       ].map(([label, value]) => <div key={label} className="rounded-2xl bg-gray-900 p-5 text-white"><p className="text-sm text-gray-300">{label}</p><p className="mt-2 text-3xl font-bold">{Number(value).toLocaleString()}</p></div>)}
     </div>
     <div className="grid gap-4 lg:grid-cols-3">
-      <IntegrationCard label="Último mensaje entrante" value={formatDate(health.metrics?.lastIncomingAt)} tone={health.metrics?.lastIncomingAt ? 'good' : 'warning'} />
+      <IntegrationCard label={health.metrics?.lastIncomingIsTest ? 'Último mensaje entrante · muestra Meta' : 'Último mensaje entrante'} value={formatDate(health.metrics?.lastIncomingAt)} detail={health.metrics?.lastIncomingIsTest ? 'Evento de prueba aislado; no se incluye como actividad comercial real.' : null} tone={health.metrics?.lastIncomingAt && !health.metrics?.lastIncomingIsTest ? 'good' : 'warning'} />
       <IntegrationCard label="Último mensaje saliente" value={formatDate(health.metrics?.lastOutgoingAt)} tone={health.metrics?.lastOutgoingAt ? 'good' : 'warning'} />
       <IntegrationCard label="Próximo job vencido" value={formatDate(health.metrics?.outboundQueue?.oldestDueAt)} detail="Sólo se procesa cuando el worker está desplegado y el kill switch se abre." tone={health.metrics?.outboundQueue?.oldestDueAt ? 'warning' : 'good'} />
       <IntegrationCard label="Último error" value={health.lastMessageError?.code || health.webhook?.lastError || 'Ninguno registrado'} detail={health.lastMessageError?.detail} tone={health.lastMessageError || health.webhook?.lastError ? 'bad' : 'good'} />
@@ -153,9 +178,14 @@ function Summary({ health, loading, reload }) {
           </div>
           <p className="mt-3 text-xs">WABA: {health.meta?.waba?.id || 'no disponible'} · Phone Number ID: {health.meta?.phone?.id || 'no disponible'}</p>
         </div>
-        <button type="button" onClick={registerPhone} disabled={!canRequestRegistration || registering} className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">
-          <ShieldCheck className="h-4 w-4" />{registering ? 'Registrando…' : 'Registrar en Cloud API'}
-        </button>
+        <div className="flex flex-col gap-2">
+          <button type="button" onClick={registerPhone} disabled={!canRequestRegistration || registering} className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">
+            <ShieldCheck className="h-4 w-4" />{registrationConfirmed ? 'Registrado en Cloud API' : registering ? 'Registrando…' : 'Registrar en Cloud API'}
+          </button>
+          <button type="button" onClick={subscribeWaba} disabled={health.meta?.subscription?.subscribed || subscribing || !health.meta?.waba?.accessible || configured.sendingEnabled} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">
+            <Workflow className="h-4 w-4" />{health.meta?.subscription?.subscribed ? 'WABA suscrito' : subscribing ? 'Suscribiendo…' : 'Suscribir app al WABA'}
+          </button>
+        </div>
       </div>
       {registrationResult?.success && <div className="mt-4 rounded-xl border border-emerald-300 bg-emerald-100 p-3 text-sm text-emerald-950">Registro confirmado por Meta. {registrationResult.phone?.verifiedName || 'Geobooker'} · {registrationResult.phone?.displayPhoneNumber || registrationResult.phone?.id} · envíos desactivados.</div>}
     </div>
@@ -633,7 +663,7 @@ export default function WhatsAppCenter() {
       : section === 'campaigns' ? <CampaignReadinessView />
         : section === 'diagnostics' ? <DiagnosticsView /> : section === 'guide' ? <GuideView /> : <PlannedView section={section} />;
   return <div className="mx-auto max-w-[1600px] space-y-5 p-4 md:p-6">
-    <div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex items-center gap-3"><span className="rounded-2xl bg-emerald-600 p-2 text-white"><MessageCircle className="h-7 w-7" /></span><div><h1 className="text-3xl font-bold text-gray-900 dark:text-white">WhatsApp Center</h1><p className="text-gray-500">Operación segura de WhatsApp Cloud API dentro del CRM.</p></div></div></div><StatusBadge tone={health?.mode === 'production' ? 'good' : 'warning'}>{health?.mode === 'production' ? 'PRODUCTION' : 'TEST MODE'}</StatusBadge></div>
+    <div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex items-center gap-3"><span className="rounded-2xl bg-emerald-600 p-2 text-white"><MessageCircle className="h-7 w-7" /></span><div><h1 className="text-3xl font-bold text-gray-900 dark:text-white">WhatsApp Center</h1><p className="text-gray-500">Operación segura de WhatsApp Cloud API dentro del CRM.</p></div></div></div><StatusBadge tone={health?.mode === 'production' ? 'good' : 'warning'}>{health?.mode === 'production' ? health?.configured?.sendingEnabled ? 'PRODUCTION' : 'PRODUCTION · SEND DISABLED' : 'TEST MODE'}</StatusBadge></div>
     <div className="flex gap-2 overflow-x-auto rounded-2xl border bg-white p-2 dark:border-gray-700 dark:bg-gray-800">{NAVIGATION.map(([id, label, Icon]) => <button key={id} onClick={() => setSection(id)} className={`inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold ${section === id ? 'bg-emerald-600 text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'}`}>{React.createElement(Icon, { className: 'h-4 w-4' })}{label}</button>)}</div>
     {content}
   </div>;

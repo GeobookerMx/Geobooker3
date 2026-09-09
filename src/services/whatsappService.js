@@ -5,6 +5,7 @@
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { APP_LINKS } from '../config/appLinks';
+import { WHATSAPP_CHANNELS } from '../config/contacts';
 import pkg from 'google-libphonenumber';
 
 const { PhoneNumberUtil, PhoneNumberFormat } = pkg;
@@ -36,8 +37,8 @@ export class WhatsAppService {
 
     // ConfiguraciAn (cargada de Supabase)
     static config = {
-        phone: '525526702368',
-        displayNumber: '+52 55 2670 2368',
+        phone: WHATSAPP_CHANNELS.humanSupport.waMe,
+        displayNumber: WHATSAPP_CHANNELS.humanSupport.display,
         dailyLimit: 20,
         // LAmites separados por fuente
         limits: {
@@ -154,7 +155,7 @@ export class WhatsAppService {
                 };
 
                 (data || []).forEach(item => {
-                    if (countBySource.hasOwnProperty(item.source)) {
+                    if (Object.prototype.hasOwnProperty.call(countBySource, item.source)) {
                         countBySource[item.source]++;
                     }
                 });
@@ -208,7 +209,7 @@ export class WhatsAppService {
      */
     static async isAlreadyContacted(phone) {
         try {
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .rpc('is_phone_already_contacted', { p_phone: phone });
 
             return data === true;

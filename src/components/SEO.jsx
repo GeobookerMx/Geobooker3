@@ -1,6 +1,6 @@
 // src/components/SEO.jsx
 import { useEffect } from 'react';
-import { COMPANY_INFO, CONTACT_EMAILS, SOCIAL_LINKS } from '../config/contacts';
+import { COMPANY_INFO, CONTACT_EMAILS, PHONE_NUMBERS, SOCIAL_LINKS } from '../config/contacts';
 import { buildCanonicalUrl, getAlternateUrls, getCanonicalOrigin, getMarketLanguage } from '../config/domainStrategy';
 
 const SEO = ({
@@ -234,6 +234,7 @@ const addOrganizationSchema = () => {
         contactPoint: {
             '@type': 'ContactPoint',
             email: CONTACT_EMAILS.soporte,
+            telephone: PHONE_NUMBERS.soporte,
             contactType: 'customer support',
             availableLanguage: ['Spanish', 'English']
         },

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, MessageCircle, Phone, ArrowLeft, Search, Store, Megaphone } from 'lucide-react';
-import { CONTACT_EMAILS, getMailtoLink } from '../config/contacts';
+import { CONTACT_EMAILS, WHATSAPP_CHANNELS, getMailtoLink, getWhatsAppLink } from '../config/contacts';
 
 const SupportPage = () => {
     return (
@@ -64,18 +64,28 @@ const SupportPage = () => {
                                     <Phone className="w-6 h-6 mr-4 text-blue-300" />
                                     <div>
                                         <p className="text-sm text-blue-200">Telefono corporativo</p>
-                                        <a href="tel:+525526702368" className="font-semibold text-lg hover:underline">
-                                            +52 55 2670 2368
+                                        <a href={`tel:${WHATSAPP_CHANNELS.humanSupport.e164}`} className="font-semibold text-lg hover:underline">
+                                            {WHATSAPP_CHANNELS.humanSupport.display}
                                         </a>
                                     </div>
                                 </div>
                                 <div className="flex items-center">
                                     <MessageCircle className="w-6 h-6 mr-4 text-blue-300" />
                                     <div>
-                                        <p className="text-sm text-blue-200">WhatsApp</p>
-                                        <a href="https://wa.me/525526702368" target="_blank" rel="noreferrer" className="font-semibold text-lg hover:underline">
-                                            Chat en linea ?
+                                        <p className="text-sm text-blue-200">WhatsApp · atención humana</p>
+                                        <a href={getWhatsAppLink('humanSupport', 'Hola, necesito ayuda con Geobooker')} target="_blank" rel="noreferrer" className="font-semibold text-lg hover:underline">
+                                            {WHATSAPP_CHANNELS.humanSupport.display}
                                         </a>
+                                    </div>
+                                </div>
+                                <div className="flex items-center">
+                                    <MessageCircle className="w-6 h-6 mr-4 text-blue-300" />
+                                    <div>
+                                        <p className="text-sm text-blue-200">WhatsApp CRM · canal automatizado</p>
+                                        <p className="font-semibold text-lg">{WHATSAPP_CHANNELS.crmCloud.display}</p>
+                                        <p className="mt-1 max-w-sm text-xs text-blue-100">
+                                            Número productivo registrado. Su atención pública se habilitará al concluir las validaciones de Meta, plantillas y consentimiento.
+                                        </p>
                                     </div>
                                 </div>
                             </div>

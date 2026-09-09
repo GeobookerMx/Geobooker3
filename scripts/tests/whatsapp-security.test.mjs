@@ -392,3 +392,27 @@ test('WhatsApp Center health exposes outbound queue metrics', async () => {
   assert.match(centerSource, /Dead letters/);
   assert.match(centerSource, /Próximo job vencido/);
 });
+
+test('production phone registration is super-admin, scoped, secret-backed and no-send', async () => {
+  const adminSource = await readFile(
+    new URL('../../supabase/functions/whatsapp-admin/index.ts', import.meta.url),
+    'utf8'
+  );
+  const centerSource = await readFile(
+    new URL('../../src/pages/admin/WhatsAppCenter.jsx', import.meta.url),
+    'utf8'
+  );
+  assert.match(adminSource, /action === 'register_phone'/);
+  assert.match(adminSource, /adminUser\.role !== 'super_admin'/);
+  assert.match(adminSource, /WHATSAPP_TWO_STEP_PIN/);
+  assert.match(adminSource, /WHATSAPP_SEND_ENABLED'\) !== 'false'/);
+  assert.match(adminSource, /messaging_product: 'whatsapp', pin: twoStepPin/);
+  assert.match(adminSource, /whatsapp_business_messaging_permission_required/);
+  assert.match(adminSource, /phone_not_associated_with_configured_waba/);
+  assert.match(adminSource, /status: 'active'/);
+  assert.match(adminSource, /action: 'whatsapp\.phone\.register'/);
+  assert.doesNotMatch(adminSource, /new_values:[\s\S]{0,500}\bpin\b\s*:/i);
+  assert.doesNotMatch(adminSource, /console\.(?:log|error)\([^\n]*(?:twoStepPin|accessToken)/);
+  assert.match(centerSource, /callAdmin\('register_phone'/);
+  assert.doesNotMatch(centerSource, /WHATSAPP_TWO_STEP_PIN|\bpin\s*:/);
+});

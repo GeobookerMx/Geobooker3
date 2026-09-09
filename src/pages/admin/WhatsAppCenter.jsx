@@ -61,16 +61,49 @@ function IntegrationCard({ label, value, detail, tone = 'neutral' }) {
 async function callAdmin(action, params = {}) {
   const { data, error } = await supabase.functions.invoke('whatsapp-admin', { body: { action, ...params } });
   if (error) throw new Error(error.message || 'No fue posible consultar WhatsApp Center');
-  if (data?.error) throw new Error(data.error);
+  if (data?.error) throw new Error(data.message || data.error);
   return data;
 }
 
 function Summary({ health, loading, reload }) {
+  const [registering, setRegistering] = useState(false);
+  const [registrationResult, setRegistrationResult] = useState(null);
   if (loading && !health) return <Loading />;
   if (!health) return <EmptyState title="No se pudo cargar el estado" />;
   const configured = health.configured || {};
   const webhookOk = Boolean(health.webhook?.signatureVerified && health.webhook?.status === 'processed');
   const metaOk = Boolean(health.meta?.token?.valid);
+  const canRequestRegistration = Boolean(
+    configured.twoStepPin
+    && configured.sendingEnabled === false
+    && health.meta?.waba?.id
+    && health.meta?.phone?.id
+    && health.meta?.permissions?.whatsapp_business_messaging
+  );
+  const registerPhone = async () => {
+    const phoneNumberId = health.meta?.phone?.id;
+    const wabaId = health.meta?.waba?.id;
+    if (!phoneNumberId || !wabaId) return;
+    const confirmed = window.confirm(
+      `Registrar en WhatsApp Cloud API el Phone Number ID ${phoneNumberId} dentro del WABA ${wabaId}. Los envíos seguirán desactivados.`
+    );
+    if (!confirmed) return;
+    setRegistering(true);
+    setRegistrationResult(null);
+    try {
+      const result = await callAdmin('register_phone', {
+        confirmPhoneNumberId: phoneNumberId,
+        confirmWabaId: wabaId
+      });
+      setRegistrationResult(result);
+      toast.success('Número registrado correctamente en WhatsApp Cloud API');
+      await reload();
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setRegistering(false);
+    }
+  };
   const cards = [
     ['Meta API', metaOk ? 'Connected' : 'Error', health.metaError?.message || `Última comprobación: ${formatDate(health.meta?.checkedAt)}`, metaOk ? 'good' : 'bad'],
     ['System User Token', health.meta?.token?.valid ? 'Valid' : configured.accessToken ? 'Configured · invalid/unverified' : 'Missing', 'El token nunca se devuelve al navegador.', health.meta?.token?.valid ? 'good' : 'bad'],
@@ -108,6 +141,24 @@ function Summary({ health, loading, reload }) {
       <IntegrationCard label="Último error" value={health.lastMessageError?.code || health.webhook?.lastError || 'Ninguno registrado'} detail={health.lastMessageError?.detail} tone={health.lastMessageError || health.webhook?.lastError ? 'bad' : 'good'} />
     </div>
     <div className="rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800"><p className="font-bold">Permisos del System User</p><div className="mt-3 flex flex-wrap gap-2">{['business_management', 'whatsapp_business_messaging', 'whatsapp_business_management'].map((permission) => <StatusBadge key={permission} tone={health.meta?.permissions?.[permission] ? 'good' : 'bad'}>{permission}: {health.meta?.permissions?.[permission] ? 'PASS' : 'FAIL'}</StatusBadge>)}</div></div>
+    <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-blue-950 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h3 className="font-bold">Registro del número productivo en Cloud API</h3>
+          <p className="mt-1 text-sm">El PIN se lee exclusivamente desde Supabase Secrets. Nunca se solicita ni se envía desde esta pantalla.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <StatusBadge tone={configured.twoStepPin ? 'good' : 'warning'}>PIN server-side: {configured.twoStepPin ? 'CONFIGURADO' : 'PENDIENTE'}</StatusBadge>
+            <StatusBadge tone={configured.sendingEnabled ? 'bad' : 'good'}>Envíos: {configured.sendingEnabled ? 'HABILITADOS' : 'DESACTIVADOS'}</StatusBadge>
+            <StatusBadge tone={health.meta?.permissions?.whatsapp_business_messaging ? 'good' : 'bad'}>Messaging permission</StatusBadge>
+          </div>
+          <p className="mt-3 text-xs">WABA: {health.meta?.waba?.id || 'no disponible'} · Phone Number ID: {health.meta?.phone?.id || 'no disponible'}</p>
+        </div>
+        <button type="button" onClick={registerPhone} disabled={!canRequestRegistration || registering} className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">
+          <ShieldCheck className="h-4 w-4" />{registering ? 'Registrando…' : 'Registrar en Cloud API'}
+        </button>
+      </div>
+      {registrationResult?.success && <div className="mt-4 rounded-xl border border-emerald-300 bg-emerald-100 p-3 text-sm text-emerald-950">Registro confirmado por Meta. {registrationResult.phone?.verifiedName || 'Geobooker'} · {registrationResult.phone?.displayPhoneNumber || registrationResult.phone?.id} · envíos desactivados.</div>}
+    </div>
   </div>;
 }
 

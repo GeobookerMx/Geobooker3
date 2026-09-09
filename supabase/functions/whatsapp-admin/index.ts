@@ -75,6 +75,31 @@ async function metaGet(path: string, accessToken: string, graphVersion: string) 
   return data;
 }
 
+async function metaPost(path: string, body: Record<string, unknown>, accessToken: string, graphVersion: string) {
+  const normalizedPath = path.replace(/^\/+/, '');
+  const response = await fetch(`https://graph.facebook.com/${graphVersion}/${normalizedPath}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(12_000)
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data?.error) {
+    const error = new Error(humanMetaError(data?.error?.code, data?.error?.message));
+    Object.assign(error, {
+      providerCode: data?.error?.code || response.status,
+      providerSubcode: data?.error?.error_subcode || null,
+      httpStatus: response.status
+    });
+    throw error;
+  }
+  return data;
+}
+
 async function checkMetaConnection() {
   const accessToken = requiredMetaEnv('WHATSAPP_ACCESS_TOKEN');
   const graphVersion = requiredMetaEnv('META_GRAPH_API_VERSION');
@@ -106,8 +131,9 @@ async function checkMetaConnection() {
     graphVersion,
     token: { valid: Boolean(identity?.id), subjectType: 'system_user' },
     permissions: Object.fromEntries(requiredPermissions.map((permission) => [permission, permissionMap[permission] === 'granted'])),
-    waba: { accessible: Boolean(waba?.id), name: waba?.name || null, currency: waba?.currency || null, timezoneId: waba?.timezone_id ?? null },
+    waba: { id: waba?.id || null, accessible: Boolean(waba?.id), name: waba?.name || null, currency: waba?.currency || null, timezoneId: waba?.timezone_id ?? null },
     phone: {
+      id: phone?.id || null,
       accessible: Boolean(phone?.id),
       displayPhoneNumber: phone?.display_phone_number || null,
       verifiedName: phone?.verified_name || null,
@@ -214,6 +240,7 @@ Deno.serve(async (request: Request) => {
           phoneNumberId: Boolean(Deno.env.get('WHATSAPP_PHONE_NUMBER_ID')),
           verifyToken: Boolean(Deno.env.get('WHATSAPP_VERIFY_TOKEN')),
           accessToken: Boolean(Deno.env.get('WHATSAPP_ACCESS_TOKEN')),
+          twoStepPin: /^\d{6}$/.test(Deno.env.get('WHATSAPP_TWO_STEP_PIN') || ''),
           graphApiVersion: Boolean(Deno.env.get('META_GRAPH_API_VERSION')),
           sendingEnabled: Deno.env.get('WHATSAPP_SEND_ENABLED') === 'true',
           testSendingEnabled: Deno.env.get('WHATSAPP_TEST_SEND_ENABLED') === 'true'
@@ -260,6 +287,160 @@ Deno.serve(async (request: Request) => {
           occurredAt: failedMessage.data.updated_at
         } : null
       }, corsHeaders);
+    }
+
+    if (action === 'register_phone') {
+      if (adminUser.role !== 'super_admin') {
+        return json(403, { error: 'super_admin_required' }, corsHeaders);
+      }
+      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'false') {
+        return json(409, { error: 'registration_requires_sending_disabled' }, corsHeaders);
+      }
+
+      const accessToken = requiredMetaEnv('WHATSAPP_ACCESS_TOKEN');
+      const graphVersion = requiredMetaEnv('META_GRAPH_API_VERSION');
+      const wabaId = requiredMetaEnv('WHATSAPP_BUSINESS_ACCOUNT_ID');
+      const phoneNumberId = requiredMetaEnv('WHATSAPP_PHONE_NUMBER_ID');
+      const twoStepPin = requiredMetaEnv('WHATSAPP_TWO_STEP_PIN');
+      const confirmedWabaId = String(body.confirmWabaId || '');
+      const confirmedPhoneNumberId = String(body.confirmPhoneNumberId || '');
+
+      if (!/^\d{6}$/.test(twoStepPin)) {
+        return json(409, { error: 'two_step_pin_not_configured' }, corsHeaders);
+      }
+      if (confirmedWabaId !== wabaId || confirmedPhoneNumberId !== phoneNumberId) {
+        return json(409, { error: 'registration_scope_confirmation_mismatch' }, corsHeaders);
+      }
+
+      let localPhoneId: string | null = null;
+      try {
+        const [permissionsResponse, waba, wabaPhonesBefore] = await Promise.all([
+          metaGet('me/permissions?limit=100', accessToken, graphVersion),
+          metaGet(`${encodeURIComponent(wabaId)}?fields=id,name,currency,timezone_id`, accessToken, graphVersion),
+          metaGet(`${encodeURIComponent(wabaId)}/phone_numbers?fields=id,display_phone_number,verified_name,quality_rating,code_verification_status,platform_type`, accessToken, graphVersion)
+        ]);
+        const permissionMap = Object.fromEntries((permissionsResponse?.data || []).map(
+          (permission: { permission: string; status: string }) => [permission.permission, permission.status]
+        ));
+        if (permissionMap.whatsapp_business_messaging !== 'granted') {
+          return json(409, { error: 'whatsapp_business_messaging_permission_required' }, corsHeaders);
+        }
+        if (String(waba?.id || '') !== wabaId) {
+          return json(409, { error: 'waba_scope_mismatch' }, corsHeaders);
+        }
+        const phoneBefore = (wabaPhonesBefore?.data || []).find(
+          (phone: { id?: string }) => String(phone.id || '') === phoneNumberId
+        );
+        if (!phoneBefore) {
+          return json(409, { error: 'phone_not_associated_with_configured_waba' }, corsHeaders);
+        }
+
+        const registerResponse = await metaPost(
+          `${encodeURIComponent(phoneNumberId)}/register`,
+          { messaging_product: 'whatsapp', pin: twoStepPin },
+          accessToken,
+          graphVersion
+        );
+        if (registerResponse?.success !== true) {
+          throw new Error('meta_registration_not_confirmed');
+        }
+
+        const [phoneAfter, wabaAfter, wabaPhonesAfter] = await Promise.all([
+          metaGet(`${encodeURIComponent(phoneNumberId)}?fields=id,display_phone_number,verified_name,quality_rating,code_verification_status,platform_type`, accessToken, graphVersion),
+          metaGet(`${encodeURIComponent(wabaId)}?fields=id,name,currency,timezone_id`, accessToken, graphVersion),
+          metaGet(`${encodeURIComponent(wabaId)}/phone_numbers?fields=id,display_phone_number,verified_name,quality_rating,code_verification_status,platform_type`, accessToken, graphVersion)
+        ]);
+        const phoneInWaba = (wabaPhonesAfter?.data || []).some(
+          (phone: { id?: string }) => String(phone.id || '') === phoneNumberId
+        );
+        if (String(phoneAfter?.id || '') !== phoneNumberId || String(wabaAfter?.id || '') !== wabaId || !phoneInWaba) {
+          throw new Error('post_registration_scope_verification_failed');
+        }
+
+        const { data: localWaba, error: localWabaError } = await crm
+          .from('whatsapp_business_accounts')
+          .upsert({
+            provider: 'meta_cloud',
+            provider_business_account_id: wabaId,
+            display_name: wabaAfter?.name || 'Geobooker',
+            status: 'active'
+          }, { onConflict: 'provider_business_account_id' })
+          .select('id')
+          .single();
+        if (localWabaError || !localWaba) throw new Error('crm_waba_update_failed');
+
+        const normalizedPhone = String(phoneAfter?.display_phone_number || '').replace(/[^\d+]/g, '') || null;
+        const { data: localPhone, error: localPhoneError } = await crm
+          .from('whatsapp_phone_numbers')
+          .upsert({
+            business_account_id: localWaba.id,
+            provider_phone_number_id: phoneNumberId,
+            display_phone_number: phoneAfter?.display_phone_number || null,
+            normalized_phone: normalizedPhone,
+            verified_name: phoneAfter?.verified_name || null,
+            quality_rating: phoneAfter?.quality_rating || null,
+            status: 'active'
+          }, { onConflict: 'provider_phone_number_id' })
+          .select('id')
+          .single();
+        if (localPhoneError || !localPhone) throw new Error('crm_phone_update_failed');
+        localPhoneId = localPhone.id;
+
+        await crm.from('audit_log').insert({
+          actor_user_id: authData.user.id,
+          actor_type: 'user',
+          action: 'whatsapp.phone.register',
+          entity_type: 'whatsapp_phone_number',
+          entity_id: localPhone.id,
+          new_values: {
+            result: 'success',
+            provider_phone_number_id: phoneNumberId,
+            provider_business_account_id: wabaId,
+            platform_type: phoneAfter?.platform_type || null,
+            code_verification_status: phoneAfter?.code_verification_status || null,
+            sending_enabled: false
+          }
+        });
+
+        return json(200, {
+          success: true,
+          meta: { success: true },
+          phone: {
+            id: phoneAfter.id,
+            displayPhoneNumber: phoneAfter.display_phone_number || null,
+            verifiedName: phoneAfter.verified_name || null,
+            qualityRating: phoneAfter.quality_rating || null,
+            verificationStatus: phoneAfter.code_verification_status || null,
+            platformType: phoneAfter.platform_type || null,
+            registeredInCloudApi: true
+          },
+          waba: { id: wabaAfter.id, name: wabaAfter.name || null },
+          crm: { phoneStatus: 'active', environment: 'production' },
+          sendingEnabled: false
+        }, corsHeaders);
+      } catch (error) {
+        await crm.from('audit_log').insert({
+          actor_user_id: authData.user.id,
+          actor_type: 'user',
+          action: 'whatsapp.phone.register',
+          entity_type: 'whatsapp_phone_number',
+          entity_id: localPhoneId,
+          new_values: {
+            result: 'failed',
+            provider_phone_number_id: phoneNumberId,
+            provider_business_account_id: wabaId,
+            error_code: String(error?.providerCode || error?.name || 'REGISTRATION_FAILED'),
+            error: safeFailureDetail(error?.message),
+            sending_enabled: false
+          }
+        });
+        return json(409, {
+          error: 'phone_registration_failed',
+          providerCode: String(error?.providerCode || error?.name || 'REGISTRATION_FAILED'),
+          httpStatus: Number(error?.httpStatus || 0) || null,
+          message: safeFailureDetail(error?.message)
+        }, corsHeaders);
+      }
     }
 
     if (action === 'inbox') {

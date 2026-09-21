@@ -1,5 +1,6 @@
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const COUNTRY_PATTERN = /^[A-Z]{2}$/;
+const PUBLIC_DISCOVERY_SOURCES = /(?:apify|scrap|inegi|denue|overture|open[_ -]?data|public)/i;
 
 export function normalizeText(value) {
   return String(value || '')
@@ -30,8 +31,11 @@ export function normalizeDomain(value) {
 export function normalizePhone(value) {
   const raw = String(value || '').trim();
   if (!raw.startsWith('+')) return null;
-  const digits = raw.slice(1).replace(/\D/g, '');
-  return digits.length >= 8 && digits.length <= 15 ? `+${digits}` : null;
+  let digits = raw.slice(1).replace(/\D/g, '');
+  // Meta can expose historic Mexican mobile identities as +52 1 even though
+  // the canonical E.164 representation now uses +52 plus ten national digits.
+  if (/^521\d{10}$/.test(digits)) digits = `52${digits.slice(3)}`;
+  return /^[1-9]\d{7,14}$/.test(digits) ? `+${digits}` : null;
 }
 
 export function normalizeConsent(value) {
@@ -40,6 +44,46 @@ export function normalizeConsent(value) {
   if (['opted_out', 'unsubscribe', 'no', 'false'].includes(consent)) return 'opted_out';
   if (['suppressed', 'blocked', 'complaint', 'hard_bounce'].includes(consent)) return 'suppressed';
   return 'unknown';
+}
+
+function normalizeTimestamp(value) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}
+
+export function assessImportedContactability(row, normalized) {
+  const sourceType = String(row.source_type || row.source || row.data_source || '').trim();
+  const consentSource = String(row.consent_source || '').trim();
+  const consentTextVersion = String(row.consent_text_version || '').trim();
+  const consentedAt = normalizeTimestamp(row.consented_at || row.opt_in_at || row.consent_timestamp);
+  const reasons = [];
+
+  if (['opted_out', 'suppressed'].includes(normalized.consent_status)) {
+    reasons.push('contact_blocked_by_source_status');
+    return { status: 'blocked', reasons };
+  }
+  if (!normalized.normalized_phone) {
+    reasons.push('valid_e164_whatsapp_number_required');
+    return { status: 'not_contactable', reasons };
+  }
+  if (PUBLIC_DISCOVERY_SOURCES.test(sourceType)) {
+    reasons.push('public_or_scraped_source_is_not_consent');
+    return { status: 'research_only', reasons };
+  }
+  if (normalized.consent_status !== 'explicit_opt_in') {
+    reasons.push('explicit_whatsapp_opt_in_required');
+    return { status: 'consent_required', reasons };
+  }
+  if (!consentSource) reasons.push('consent_source_required');
+  if (!consentTextVersion) reasons.push('consent_text_version_required');
+  if (!consentedAt) reasons.push('consent_timestamp_required');
+  if (!normalized.country_code) reasons.push('country_code_required');
+
+  return {
+    status: reasons.length ? 'evidence_incomplete' : 'evidence_review_required',
+    reasons
+  };
 }
 
 function validationResult(normalized, errors, warnings = []) {
@@ -82,7 +126,14 @@ export function validateContactRow(row) {
     normalized_name: normalizeText(fullName) || null,
     normalized_email: normalizeEmail(emailInput),
     normalized_phone: normalizePhone(phoneInput),
-    consent_status: normalizeConsent(row.whatsapp_opt_in || row.email_marketing_opt_in || row.consent_status || row.consent)
+    country_code: String(row.country_code || '').trim().toUpperCase() || null,
+    source_type: String(row.source_type || row.source || row.data_source || '').trim() || null,
+    source_url: String(row.source_url || row.public_contact_source || '').trim() || null,
+    source_verified_at: normalizeTimestamp(row.source_verified_at || row.verified_at),
+    consent_status: normalizeConsent(row.whatsapp_opt_in || row.email_marketing_opt_in || row.consent_status || row.consent),
+    consent_source: String(row.consent_source || '').trim() || null,
+    consent_text_version: String(row.consent_text_version || '').trim() || null,
+    consented_at: normalizeTimestamp(row.consented_at || row.opt_in_at || row.consent_timestamp)
   };
   const errors = [];
   const warnings = [];
@@ -91,7 +142,11 @@ export function validateContactRow(row) {
   }
   if (emailInput && !normalized.normalized_email) errors.push('email_invalid');
   if (phoneInput && !normalized.normalized_phone) warnings.push('phone_needs_country_review');
+  if (normalized.country_code && !COUNTRY_PATTERN.test(normalized.country_code)) errors.push('country_code_invalid');
   if (normalized.consent_status === 'unknown') warnings.push('consent_unknown');
+  const contactability = assessImportedContactability(row, normalized);
+  normalized.contactability_status = contactability.status;
+  normalized.contactability_reasons = contactability.reasons;
   return validationResult(normalized, errors, warnings);
 }
 

@@ -124,7 +124,11 @@ const SearchBar = ({
   const handleSearch = async (searchQuery = searchTerm) => {
     if (!searchQuery.trim()) return;
 
-    let effectiveLocation = searchLocation || userLocation;
+    const hasExplicitMarket = Boolean(searchCountry || searchCity);
+    // Nunca usar la ubicacion fisica del usuario como fallback silencioso cuando
+    // eligio otro mercado. Evita que una busqueda en Toronto muestre resultados
+    // cercanos al dispositivo en Mexico.
+    let effectiveLocation = hasExplicitMarket ? searchLocation : (searchLocation || userLocation);
     let loadingTimeout = null;
     const intentAnalysis = analyzeSearchIntent(searchQuery);
 
@@ -162,7 +166,28 @@ const SearchBar = ({
         }
       }
 
-      const localSemanticResults = findLocalSemanticMatches(localBusinesses, searchQuery, intentAnalysis);
+      if (hasExplicitMarket && !effectiveLocation) {
+        trackSearch(searchQuery, {
+          resultsCount: 0,
+          source: 'international_market_location_missing',
+          intentId: intentAnalysis?.id || null,
+          country: searchCountry,
+          city: searchCity
+        });
+        onBusinessesFound([], {
+          query: searchQuery,
+          source: 'international_market_location_missing',
+          intent: intentAnalysis,
+          country: searchCountry,
+          city: searchCity
+        });
+        setShowSuggestions(false);
+        return;
+      }
+
+      const localSemanticResults = hasExplicitMarket
+        ? []
+        : findLocalSemanticMatches(localBusinesses, searchQuery, intentAnalysis);
       if (localSemanticResults.length > 0) {
         trackSearch(searchQuery, {
           resultsCount: localSemanticResults.length,

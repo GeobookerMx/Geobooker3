@@ -329,7 +329,7 @@ export class WhatsAppService {
         if (!clean) return '';
 
         if (code === 'MX') {
-            if (clean.startsWith('521') && clean.length === 13) return '+' + clean;
+            if (clean.startsWith('521') && clean.length === 13) return '+52' + clean.slice(3);
             if (clean.startsWith('52') && clean.length === 12) return '+' + clean;
             if (clean.length === 10) return '+52' + clean;
             return '';
@@ -389,6 +389,10 @@ export class WhatsAppService {
         const clean = raw.replace(/\D/g, '');
         if (!clean) return '';
 
+        if (raw.startsWith('+') && clean.startsWith('521') && clean.length === 13) {
+            return '+52' + clean.slice(3);
+        }
+
         if (raw.startsWith('+') && clean.length >= 10 && clean.length <= 15) {
             return '+' + clean;
         }
@@ -402,7 +406,7 @@ export class WhatsAppService {
             return this.normalizePhoneForCountry(clean, resolvedCountry);
         }
 
-        if (clean.startsWith('521') && clean.length === 13) return '+' + clean;
+        if (clean.startsWith('521') && clean.length === 13) return '+52' + clean.slice(3);
         if (clean.startsWith('52') && clean.length >= 12) return '+' + clean;
         if (clean.startsWith('1') && clean.length === 11) return '+' + clean;
         if (clean.length >= 11 && clean.length <= 15) return '+' + clean;

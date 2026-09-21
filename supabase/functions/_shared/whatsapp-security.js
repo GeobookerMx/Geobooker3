@@ -43,8 +43,11 @@ export async function sha256Hex(value) {
 }
 
 export function normalizeProviderPhone(value) {
-  const digits = String(value || '').replace(/\D/g, '');
+  let digits = String(value || '').replace(/\D/g, '');
   if (digits.length < 8 || digits.length > 15) return null;
+  // Meta may still emit Mexico mobile WA IDs with the retired +52 1 prefix.
+  // Canonical E.164 for Mexico is +52 followed by the 10-digit national number.
+  if (/^521\d{10}$/.test(digits)) digits = `52${digits.slice(3)}`;
   return `+${digits}`;
 }
 
@@ -93,6 +96,9 @@ export function evaluateOutboundPolicy({
 
   if (!template || template.approval_status !== 'approved') {
     return { allowed: false, reason: 'approved_template_required' };
+  }
+  if (template.enabled_for_campaigns !== true) {
+    return { allowed: false, reason: 'template_not_enabled_for_campaigns' };
   }
 
   const purpose = template.category === 'marketing' ? 'marketing' : 'transactional';

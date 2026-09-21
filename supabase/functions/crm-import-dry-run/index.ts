@@ -1,5 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.83.0';
+import phoneLibrary from 'npm:google-libphonenumber@3.2.44';
 import {
+  assessImportedContactability,
   classifyAccountDuplicate,
   classifyContactDuplicate,
   determineImportStatus,
@@ -8,6 +10,9 @@ import {
   validateContactRow,
   validateSuppressionRow
 } from '../_shared/crm-import-rules.js';
+
+const { PhoneNumberFormat, PhoneNumberUtil } = phoneLibrary;
+const phoneUtil = PhoneNumberUtil.getInstance();
 
 const ALLOWED_ORIGINS = new Set(['https://geobooker.com.mx', 'https://www.geobooker.com.mx']);
 const DATASET_TYPES = new Set(['accounts', 'contacts', 'suppressions', 'needs_review']);
@@ -38,10 +43,55 @@ function sourceRecordId(datasetType: string, row: Record<string, unknown>) {
   return row.contact_id;
 }
 
+function contactPhoneInput(row: Record<string, any>) {
+  return row.phone || row.mobile || row.whatsapp || row.phone_1_digits || row.phone_1_raw || '';
+}
+
+function validateInternationalContactPhone(row: Record<string, any>) {
+  let raw = String(contactPhoneInput(row) || '').trim();
+  if (!raw) return { normalized: null, error: null };
+  const countryCode = String(row.country_code || '').trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(countryCode)) {
+    return { normalized: null, error: 'phone_country_required' };
+  }
+
+  try {
+    const inputDigits = raw.replace(/\D/g, '');
+    if (countryCode === 'MX' && /^521\d{10}$/.test(inputDigits)) raw = `+52${inputDigits.slice(3)}`;
+    const parsed = phoneUtil.parseAndKeepRawInput(raw, countryCode);
+    if (!phoneUtil.isValidNumber(parsed)) return { normalized: null, error: 'phone_invalid_for_country' };
+    const detectedCountry = phoneUtil.getRegionCodeForNumber(parsed);
+    if (detectedCountry && detectedCountry !== countryCode) {
+      return { normalized: null, error: 'phone_country_mismatch' };
+    }
+    let normalized = phoneUtil.format(parsed, PhoneNumberFormat.E164);
+    if (/^\+521\d{10}$/.test(normalized)) normalized = `+52${normalized.slice(4)}`;
+    return { normalized, error: null };
+  } catch {
+    return { normalized: null, error: 'phone_invalid_for_country' };
+  }
+}
+
+function validateContactRowServer(row: Record<string, any>) {
+  const validation = validateContactRow(row);
+  const phoneResult = validateInternationalContactPhone(row);
+  if (contactPhoneInput(row)) {
+    validation.normalized.normalized_phone = phoneResult.normalized;
+    validation.errors = validation.errors.filter((error: string) => error !== 'phone_invalid');
+    validation.warnings = validation.warnings.filter((warning: string) => warning !== 'phone_needs_country_review');
+    if (phoneResult.error) validation.errors.push(phoneResult.error);
+    const contactability = assessImportedContactability(row, validation.normalized);
+    validation.normalized.contactability_status = contactability.status;
+    validation.normalized.contactability_reasons = contactability.reasons;
+    validation.status = validation.errors.length ? 'invalid' : validation.warnings.length ? 'needs_review' : 'valid';
+  }
+  return validation;
+}
+
 function validateRow(datasetType: string, row: Record<string, unknown>) {
   if (datasetType === 'accounts') return validateAccountRow(row);
   if (datasetType === 'suppressions') return validateSuppressionRow(row);
-  return validateContactRow(row);
+  return validateContactRowServer(row);
 }
 
 function duplicateKey(datasetType: string, normalized: Record<string, unknown>) {
@@ -159,5 +209,10 @@ Deno.serve(async request => {
     result[row.status] = (result[row.status] || 0) + 1;
     return result;
   }, {} as Record<string, number>);
-  return response(200, { batchId, mode: 'dry_run', counts }, origin);
+  const contactabilityCounts = prepared.reduce((result, row) => {
+    const status = String(row.normalized?.contactability_status || 'not_applicable');
+    result[status] = (result[status] || 0) + 1;
+    return result;
+  }, {} as Record<string, number>);
+  return response(200, { batchId, mode: 'dry_run', counts, contactabilityCounts }, origin);
 });

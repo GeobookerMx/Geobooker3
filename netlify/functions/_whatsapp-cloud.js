@@ -1,5 +1,6 @@
 const crypto = require('node:crypto');
 const { createClient } = require('@supabase/supabase-js');
+const { PhoneNumberFormat, PhoneNumberUtil } = require('google-libphonenumber');
 
 const DEFAULT_GRAPH_VERSION = 'v23.0';
 
@@ -85,8 +86,22 @@ function verifyMetaSignature(event, rawBody, appSecret) {
   return suppliedBuffer.length === expectedBuffer.length && crypto.timingSafeEqual(suppliedBuffer, expectedBuffer);
 }
 
-function normalizePhone(value) {
-  return String(value || '').replace(/\D/g, '');
+const phoneUtil = PhoneNumberUtil.getInstance();
+
+function normalizePhone(value, countryCode = 'ZZ') {
+  let raw = String(value || '').trim();
+  if (!raw) return '';
+  const inputDigits = raw.replace(/\D/g, '');
+  if (/^521\d{10}$/.test(inputDigits)) raw = `+52${inputDigits.slice(3)}`;
+  try {
+    const parsed = phoneUtil.parseAndKeepRawInput(raw, countryCode || 'ZZ');
+    if (!phoneUtil.isValidNumber(parsed)) return '';
+    let digits = phoneUtil.format(parsed, PhoneNumberFormat.E164).replace(/^\+/, '');
+    if (/^521\d{10}$/.test(digits)) digits = `52${digits.slice(3)}`;
+    return digits;
+  } catch {
+    return '';
+  }
 }
 
 function extractWhatsAppEvents(payload = {}) {

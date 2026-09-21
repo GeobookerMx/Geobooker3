@@ -87,6 +87,7 @@ const DownloadPage = lazy(() => import("./pages/DownloadPage.jsx"));
 const ClaimBusinessPage = lazy(() => import("./pages/ClaimBusinessPage.jsx"));
 const DeleteAccountPage = lazy(() => import("./pages/DeleteAccountPage.jsx"));
 const DataDeletionPage = lazy(() => import("./pages/DataDeletionPage.jsx"));
+const WhatsAppConsentPage = lazy(() => import("./pages/WhatsAppConsentPage.jsx"));
 
 // Community Pages - Lazy Loaded
 const AboutPage = lazy(() => import("./pages/AboutPage.jsx"));
@@ -172,6 +173,7 @@ export default function AppRouter() {
           <Route path="/delete-account" element={<DeleteAccountPage />} />
           <Route path="/account/delete" element={<DeleteAccountPage />} />
           <Route path="/data-deletion" element={<DataDeletionPage />} />
+          <Route path="/whatsapp-consent" element={<WhatsAppConsentPage />} />
           <Route path="/user-data-deletion" element={<Navigate to="/data-deletion" replace />} />
 
           <Route path="/legal/ads-policy" element={<AdsPolicyPage />} />

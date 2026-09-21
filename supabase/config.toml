@@ -14,6 +14,9 @@ verify_jwt = true
 [functions.whatsapp-admin]
 verify_jwt = true
 
+[functions.meta-business-agent-connector]
+verify_jwt = false
+
 [functions.crm-import-dry-run]
 verify_jwt = true
 

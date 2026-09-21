@@ -35,8 +35,10 @@
         "npm:eslint-plugin-react-refresh@~0.4.9",
         "npm:eslint-plugin-react@^7.34.1",
         "npm:eslint@^8.57.0",
+        "npm:google-libphonenumber@^3.2.44",
         "npm:i18next@^25.6.3",
         "npm:jsonwebtoken@^9.0.3",
+        "npm:jspdf@^4.2.1",
         "npm:lucide-react@0.544",
         "npm:postcss@^8.4.24",
         "npm:qrcode.react@^4.2.0",
@@ -50,6 +52,7 @@
         "npm:stripe@20",
         "npm:tailwindcss@^3.4.0",
         "npm:vite@^7.1.10",
+        "npm:web-vitals@^5.3.0",
         "npm:xlsx@~0.18.5"
       ]
     }

@@ -5,7 +5,16 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default [
   {
-    ignores: ['dist', '.netlify'],
+    ignores: [
+      'dist/**',
+      '.netlify/**',
+      'node_modules/**',
+      'android/**/build/**',
+      'android/app/src/main/assets/public/**',
+      'ios/App/App/public/**',
+      'TodoTransporteTT/**',
+      'worktrees/**'
+    ],
   },
   js.configs.recommended,
   {

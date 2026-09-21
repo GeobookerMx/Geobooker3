@@ -366,7 +366,13 @@ const CITY_DATA_FILTERS = Object.fromEntries(
     .filter((market) => market.status === 'active' && Number(market.currentRecords) > 0)
     .map((market) => [
       String(market.id || '').replace(/^[a-z]{2}-/, ''),
-      { city: market.city, countryCode: market.countryCode }
+      {
+        city: market.city,
+        countryCode: market.countryCode,
+        location: market.center && Number.isFinite(Number(market.center.lat)) && Number.isFinite(Number(market.center.lng))
+          ? { lat: Number(market.center.lat), lng: Number(market.center.lng) }
+          : null
+      }
     ])
 );
 
@@ -572,11 +578,12 @@ const HomePage = () => {
     : 'local';
   const activeMapCenter = useMemo(() => {
     if (cityFilter && isCityRouteAvailable) {
+      if (cityDataFilter?.location) return cityDataFilter.location;
       const coords = CITY_COORDINATES[cityFilter.toLowerCase()];
       if (coords) return coords;
     }
     return userLocation;
-  }, [cityFilter, isCityRouteAvailable, userLocation]);
+  }, [cityFilter, cityDataFilter, isCityRouteAvailable, userLocation]);
 
   // SEO dinamico basado en filtros
   const getSEOTitle = () => {

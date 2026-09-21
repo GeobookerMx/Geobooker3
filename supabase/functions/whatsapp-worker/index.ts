@@ -91,6 +91,15 @@ async function failJob(
   nextAttemptAt: string | null = null
 ) {
   const safeDetail = safeFailureDetail(detail);
+  if (messageId && job.job_type === 'campaign' && ['failed', 'cancelled', 'dead_letter'].includes(status)) {
+    const { error: releaseError } = await crm.rpc('release_whatsapp_campaign_reservation', {
+      p_job_id: job.id,
+      p_message_id: messageId,
+      p_final_status: status,
+      p_reason: code
+    });
+    if (releaseError) throw releaseError;
+  }
   const updates = [
     crm.from('outbound_jobs').update({
       status,
@@ -102,12 +111,67 @@ async function failJob(
   ];
   if (messageId) {
     updates.push(crm.from('messages').update({
-      current_status: status === 'retry' ? 'queued' : 'failed',
+      current_status: status === 'retry' ? 'queued' : status === 'unknown' ? 'unknown' : 'failed',
       failure_code: code,
       failure_detail: safeDetail
     }).eq('id', messageId));
   }
+  updates.push(crm.from('audit_log').insert({
+    actor_type: 'system',
+    action: status === 'dead_letter'
+      ? 'whatsapp.outbound_job_dead_lettered'
+      : 'whatsapp.outbound_job_failed',
+    entity_type: 'outbound_job',
+    entity_id: job.id,
+    new_values: {
+      message_id: messageId,
+      status,
+      error_code: code,
+      next_attempt_at: nextAttemptAt
+    },
+    request_id: job.idempotency_key || null
+  }));
   await Promise.all(updates);
+}
+
+async function ensureOutboundActivity(
+  crm: ReturnType<typeof createClient>,
+  params: {
+    accountId: string | null;
+    contactId: string;
+    conversationId: string;
+    messageId: string;
+    jobId: string;
+    isTest: boolean;
+    occurredAt: string;
+  }
+) {
+  const { data: existing, error: lookupError } = await crm
+    .from('activities')
+    .select('id')
+    .eq('message_id', params.messageId)
+    .eq('activity_type', 'whatsapp_outbound')
+    .limit(1)
+    .maybeSingle();
+  if (lookupError) throw lookupError;
+  if (existing) return;
+
+  const { error: insertError } = await crm.from('activities').insert({
+    account_id: params.accountId,
+    contact_id: params.contactId,
+    conversation_id: params.conversationId,
+    message_id: params.messageId,
+    activity_type: 'whatsapp_outbound',
+    summary: 'Outbound WhatsApp message accepted by Meta',
+    metadata: {
+      provider: 'meta_cloud',
+      status: 'accepted',
+      outbound_job_id: params.jobId,
+      is_test: params.isTest
+    },
+    occurred_at: params.occurredAt
+  });
+  if (insertError && insertError.code !== '23505') throw insertError;
 }
 
 async function processJob(
@@ -127,7 +191,7 @@ async function processJob(
 
   const { data: conversation, error: conversationError } = await crm
     .from('conversations')
-    .select('id,contact_id,contact_point_id,service_window_expires_at,status,whatsapp_phone_number_id')
+    .select('id,account_id,contact_id,contact_point_id,service_window_expires_at,status,whatsapp_phone_number_id,is_test')
     .eq('id', job.conversation_id)
     .single();
   if (conversationError || !conversation || conversation.status === 'blocked') {
@@ -135,8 +199,9 @@ async function processJob(
     return { jobId: job.id, status: 'failed', reason: 'conversation_not_available' };
   }
 
-  const [{ data: point }, { data: phoneNumber }, { data: budgetPolicy }] = await Promise.all([
-    crm.from('contact_points').select('normalized_value,validation_status').eq('id', conversation.contact_point_id).single(),
+  const [{ data: point }, { data: contact }, { data: phoneNumber }, { data: budgetPolicy }] = await Promise.all([
+    crm.from('contact_points').select('normalized_value,validation_status,country_code').eq('id', conversation.contact_point_id).single(),
+    crm.from('contacts').select('country_code').eq('id', conversation.contact_id).single(),
     crm.from('whatsapp_phone_numbers').select('provider_phone_number_id,status').eq('id', conversation.whatsapp_phone_number_id).single(),
     crm.from('budget_policies').select('*').eq('provider', 'meta_cloud').eq('is_active', true).limit(1).maybeSingle()
   ]);
@@ -159,7 +224,7 @@ async function processJob(
   if (message.message_type === 'template') {
     const { data, error } = await crm
       .from('whatsapp_templates')
-      .select('id,template_name,language_code,category,approval_status')
+      .select('id,template_name,language_code,category,approval_status,enabled_for_campaigns,reconciliation_status')
       .eq('id', message.template_id)
       .single();
     if (error || !data) {
@@ -167,23 +232,30 @@ async function processJob(
       return { jobId: job.id, status: 'failed', reason: 'template_not_available' };
     }
     template = data;
+    if (job.job_type === 'campaign' && data.reconciliation_status !== 'ready_for_campaign') {
+      await failJob(crm, job, message.id, 'failed', 'template_reconciliation_changed', 'Campaign template is no longer ready');
+      return { jobId: job.id, status: 'failed', reason: 'template_reconciliation_changed' };
+    }
   }
 
   const serviceWindowOpen = isCustomerServiceWindowOpen(conversation.service_window_expires_at);
   const purpose = serviceWindowOpen && message.message_type === 'text'
     ? 'service'
     : template?.category === 'marketing' ? 'marketing' : 'transactional';
-  const { data: permission } = await crm
+  const { data: permissions, error: permissionError } = await crm
     .from('channel_permissions')
-    .select('status')
+    .select('purpose,status')
     .eq('contact_id', conversation.contact_id)
-    .eq('channel', 'whatsapp')
-    .eq('purpose', purpose)
-    .maybeSingle();
+    .eq('channel', 'whatsapp');
+  if (permissionError) throw permissionError;
+  const permission = (permissions || []).find((row) => row.purpose === purpose);
+  const blockedByPermission = (permissions || []).some((row) =>
+    ['opted_out', 'suppressed', 'invalid', 'complaint'].includes(row.status)
+  );
   const policy = evaluateOutboundPolicy({
     budgetPolicy,
     permissionStatus: permission?.status || 'unknown',
-    suppressed: (suppressions || []).length > 0,
+    suppressed: (suppressions || []).length > 0 || blockedByPermission,
     serviceWindowOpen,
     template,
     messageType: message.message_type
@@ -191,6 +263,85 @@ async function processJob(
   if (!policy.allowed) {
     await failJob(crm, job, message.id, 'failed', policy.reason, 'Outbound policy rejected the message');
     return { jobId: job.id, status: 'failed', reason: policy.reason };
+  }
+
+  const pricingCategory = message.message_type === 'text'
+    ? 'service'
+    : String(template?.category || 'utility').toLowerCase();
+  let commercialGuard: Record<string, any> | null = null;
+  if (job.job_type === 'campaign') {
+    const { data: campaignGateRows, error: campaignGateError } = await admin.rpc('crm_whatsapp_campaign_job_gate', {
+      p_job_id: job.id,
+      p_message_id: message.id
+    });
+    if (campaignGateError) {
+      await failJob(crm, job, message.id, 'failed', 'campaign_reservation_gate_unavailable', 'Campaign reservation gate unavailable');
+      return { jobId: job.id, status: 'failed', reason: 'campaign_reservation_gate_unavailable' };
+    }
+    const campaignGate = Array.isArray(campaignGateRows) ? campaignGateRows[0] : campaignGateRows;
+    if (!campaignGate?.allowed) {
+      const reason = Array.isArray(campaignGate?.reasons)
+        ? campaignGate.reasons.join(',')
+        : 'campaign_reservation_gate_blocked';
+      await failJob(crm, job, message.id, 'failed', 'campaign_reservation_gate_blocked', reason);
+      return { jobId: job.id, status: 'failed', reason: 'campaign_reservation_gate_blocked' };
+    }
+    const { data: reservation, error: reservationError } = await crm
+      .from('usage_ledger')
+      .select('recipient_country_code,category,currency,estimated_unit_cost,rate_card_version,rate_card_id,reservation_status')
+      .eq('message_id', message.id)
+      .eq('outbound_job_id', job.id)
+      .single();
+    if (reservationError || reservation?.reservation_status !== 'reserved') {
+      await failJob(crm, job, message.id, 'failed', 'campaign_reservation_missing', 'Campaign reservation is not active');
+      return { jobId: job.id, status: 'failed', reason: 'campaign_reservation_missing' };
+    }
+    commercialGuard = {
+      allowed: true,
+      country_code: reservation.recipient_country_code,
+      category: reservation.category,
+      currency: reservation.currency,
+      estimated_unit_cost: reservation.estimated_unit_cost,
+      rate_card_version: reservation.rate_card_version,
+      rate_card_id: reservation.rate_card_id
+    };
+  } else {
+    const { data: guardRows, error: guardError } = await admin.rpc('crm_whatsapp_outbound_guard', {
+      p_contact_id: conversation.contact_id,
+      p_country_code: contact?.country_code || point.country_code || null,
+      p_category: pricingCategory,
+      p_purpose: purpose,
+      p_exclude_message_id: message.id
+    });
+    if (guardError) {
+      await failJob(crm, job, message.id, 'failed', 'commercial_guard_unavailable', 'Commercial safety guard unavailable');
+      return { jobId: job.id, status: 'failed', reason: 'commercial_guard_unavailable' };
+    }
+    commercialGuard = Array.isArray(guardRows) ? guardRows[0] : guardRows;
+    if (!commercialGuard?.allowed) {
+      const reason = Array.isArray(commercialGuard?.reasons)
+        ? commercialGuard.reasons.join(',')
+        : 'commercial_guard_blocked';
+      await failJob(crm, job, message.id, 'failed', 'commercial_guard_blocked', reason);
+      return { jobId: job.id, status: 'failed', reason: 'commercial_guard_blocked' };
+    }
+    const { data: globalGateRows, error: globalGateError } = await admin.rpc('crm_whatsapp_global_daily_gate');
+    if (globalGateError) {
+      await failJob(crm, job, message.id, 'failed', 'global_daily_gate_unavailable', 'Global daily gate unavailable');
+      return { jobId: job.id, status: 'failed', reason: 'global_daily_gate_unavailable' };
+    }
+    const globalGate = Array.isArray(globalGateRows) ? globalGateRows[0] : globalGateRows;
+    if (!globalGate?.allowed) {
+      const reason = Array.isArray(globalGate?.reasons)
+        ? globalGate.reasons.join(',')
+        : 'global_daily_gate_blocked';
+      await failJob(crm, job, message.id, 'failed', 'global_daily_gate_blocked', reason);
+      return { jobId: job.id, status: 'failed', reason: 'global_daily_gate_blocked' };
+    }
+  }
+  if (!commercialGuard) {
+    await failJob(crm, job, message.id, 'failed', 'commercial_guard_missing', 'Commercial guard result missing');
+    return { jobId: job.id, status: 'failed', reason: 'commercial_guard_missing' };
   }
 
   const accessToken = requiredEnv('WHATSAPP_ACCESS_TOKEN');
@@ -233,27 +384,42 @@ async function processJob(
 
   const providerBody = await providerResponse.json().catch(() => ({}));
   if (!providerResponse.ok) {
+    if (job.job_type === 'campaign' && providerResponse.status >= 500) {
+      await failJob(
+        crm,
+        job,
+        message.id,
+        'unknown',
+        String(providerResponse.status),
+        'Ambiguous provider server response; campaign reservation retained'
+      );
+      return { jobId: job.id, status: 'unknown', retry: false };
+    }
     const retry = computeRetry({ attemptCount: job.attempt_count, statusCode: providerResponse.status });
+    const exhaustedRetry = retry.retry === false
+      && [429, 500, 502, 503, 504].includes(providerResponse.status)
+      && Number(job.attempt_count || 0) >= Number(job.max_attempts || 5);
+    const nextState = exhaustedRetry ? 'dead_letter' : retry.state;
     await failJob(
       crm,
       job,
       message.id,
-      retry.state,
+      nextState,
       String(providerResponse.status),
       providerBody?.error?.message || 'Provider rejected request',
       retry.delaySeconds ? new Date(Date.now() + retry.delaySeconds * 1000).toISOString() : null
     );
-    return { jobId: job.id, status: retry.state, retry: retry.retry };
+    return { jobId: job.id, status: nextState, retry: retry.retry };
   }
 
   const providerMessageId = providerBody?.messages?.[0]?.id;
   if (!providerMessageId) {
-    await failJob(crm, job, message.id, 'failed', 'missing_provider_message_id', 'Provider response missing message id');
-    return { jobId: job.id, status: 'failed', reason: 'missing_provider_message_id' };
+    await failJob(crm, job, message.id, 'unknown', 'missing_provider_message_id', 'Provider response missing message id');
+    return { jobId: job.id, status: 'unknown', reason: 'missing_provider_message_id' };
   }
 
   const now = new Date().toISOString();
-  await Promise.all([
+  const persistenceResults = await Promise.all([
     crm.from('messages').update({
       provider_message_id: providerMessageId,
       provider_phone_number_id: phoneNumber.provider_phone_number_id,
@@ -276,8 +442,49 @@ async function processJob(
     crm.from('conversations').update({
       last_outbound_at: now,
       last_message_at: now
-    }).eq('id', conversation.id)
+    }).eq('id', conversation.id),
+    crm.from('usage_ledger').upsert({
+      message_id: message.id,
+      provider: 'meta_cloud',
+      recipient_country_code: commercialGuard.country_code || contact?.country_code || point.country_code || null,
+      category: commercialGuard.category || pricingCategory,
+      quantity: 1,
+      currency: commercialGuard.currency,
+      estimated_unit_cost: commercialGuard.estimated_unit_cost,
+      rate_card_version: commercialGuard.rate_card_version,
+      rate_card_id: commercialGuard.rate_card_id,
+      charge_status: 'estimated',
+      ...(job.job_type === 'campaign' ? {
+        reservation_status: 'committed',
+        committed_at: now,
+        reservation_expires_at: null
+      } : {})
+    }, { onConflict: 'message_id' }),
+    crm.from('audit_log').insert({
+      actor_type: 'system',
+      action: 'whatsapp.message_submitted',
+      entity_type: 'outbound_job',
+      entity_id: job.id,
+      new_values: {
+        message_id: message.id,
+        status: 'accepted',
+        provider_phone_number_id: phoneNumber.provider_phone_number_id
+      },
+      request_id: job.idempotency_key || null
+    })
   ]);
+  const persistenceError = persistenceResults.find((result) => result.error)?.error;
+  if (persistenceError) throw persistenceError;
+
+  await ensureOutboundActivity(crm, {
+    accountId: conversation.account_id || null,
+    contactId: conversation.contact_id,
+    conversationId: conversation.id,
+    messageId: message.id,
+    jobId: job.id,
+    isTest: conversation.is_test === true,
+    occurredAt: now
+  });
 
   return { jobId: job.id, status: 'accepted', messageId: message.id };
 }

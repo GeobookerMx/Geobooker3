@@ -6,7 +6,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-package-lock.json
 pnpm-lock.yaml
 yarn.lock
 
@@ -93,3 +92,6 @@ apple-secret-output.txt
 *private-key*.txt
 credentials*.json
 service-account*.json
+android/geobooker-upload-key.jks
+android/app/release/
+android/build-error.txt

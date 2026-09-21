@@ -77,6 +77,7 @@ export const getFromCache = (key) => {
  * Limpia entradas de cache expiradas (mantenimiento)
  */
 const cleanOldCache = () => {
+    if (typeof localStorage === 'undefined') return;
     try {
         const keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
@@ -346,7 +347,6 @@ export const CATEGORY_MAPPING = {
     'hospital': 'hospital',
     'hospitales': 'hospital',
     'clinica': 'hospital',
-    'clinica': 'hospital',
     'veterinaria': 'veterinary_care',
     'veterinarias': 'veterinary_care',
     'medicina': 'pharmacy',
@@ -362,11 +362,8 @@ export const CATEGORY_MAPPING = {
     'restaurante': 'restaurant',
     'restaurantes': 'restaurant',
     'cafeteria': 'cafe',
-    'cafeteria': 'cafe',
     'cafeterias': 'cafe',
     'cafe': 'cafe',
-    'cafe': 'cafe',
-    'panaderia': 'bakery',
     'panaderia': 'bakery',
     'panaderias': 'bakery',
     'bar': 'bar',
@@ -380,11 +377,8 @@ export const CATEGORY_MAPPING = {
 
     // Servicios personales
     'barberia': 'hair_care',
-    'barberia': 'hair_care',
     'barberias': 'hair_care',
     'peluqueria': 'hair_care',
-    'peluqueria': 'hair_care',
-    'salon de belleza': 'beauty_salon',
     'salon de belleza': 'beauty_salon',
     'maquillaje': 'beauty_salon',
     'maquillista': 'beauty_salon',
@@ -399,11 +393,33 @@ export const CATEGORY_MAPPING = {
 
     // Automotriz
     'taller mecanico': 'car_repair',
-    'taller mecanico': 'car_repair',
     'talleres': 'car_repair',
     'gasolinera': 'gas_station',
     'gasolineras': 'gas_station',
     'autolavado': 'car_wash',
+    'car wash': 'car_wash',
+    'auto detailing': 'car_wash',
+    'llantas': 'car_repair',
+    'llantera': 'car_repair',
+    'tire shop': 'car_repair',
+    'tyre shop': 'car_repair',
+    'tires': 'car_repair',
+    'tyres': 'car_repair',
+
+    // Hogar, tecnologia y componentes
+    'muebles': 'furniture_store',
+    'muebleria': 'furniture_store',
+    'furniture': 'furniture_store',
+    'furniture store': 'furniture_store',
+    'electrodomesticos': 'home_goods_store',
+    'refrigerador': 'home_goods_store',
+    'appliances': 'home_goods_store',
+    'appliance store': 'home_goods_store',
+    'computadoras': 'electronics_store',
+    'computer store': 'electronics_store',
+    'electronics': 'electronics_store',
+    'espejos': 'home_goods_store',
+    'mirror shop': 'home_goods_store',
 
     // Entretenimiento
     'cine': 'movie_theater',
@@ -413,16 +429,11 @@ export const CATEGORY_MAPPING = {
 
     // Servicios
     'lavanderia': 'laundry',
-    'lavanderia': 'laundry',
-    'lavanderias': 'laundry',
     'lavanderias': 'laundry',
     'planchaduria': 'laundry',
-    'planchaduria': 'laundry',
-    'planchadurias': 'laundry',
     'planchadurias': 'laundry',
     'planchado': 'laundry',
     'planchado de ropa': 'laundry',
-    'tintoreria': 'laundry',
     'tintoreria': 'laundry',
     'banco': 'bank',
     'bancos': 'bank',
@@ -457,6 +468,24 @@ const normalizeSearchTerm = (value = '') =>
         .trim();
 
 const SEARCH_VARIANTS = {
+    tyres: ['tyre shop', 'tyre repair', 'wheel and tyre service', 'auto parts store'],
+    tyre: ['tyre shop', 'tyre repair', 'wheel and tyre service'],
+    tires: ['tire shop', 'tire repair', 'wheel and tire service', 'auto parts store'],
+    tire: ['tire shop', 'tire repair', 'wheel and tire service'],
+    'mexican food': ['Mexican restaurant', 'taqueria', 'tacos', 'authentic Mexican cuisine'],
+    'mexican restaurant': ['Mexican food', 'taqueria', 'tacos'],
+    computers: ['computer store', 'computer repair', 'PC components', 'electronics store'],
+    computer: ['computer store', 'computer repair', 'PC components'],
+    muebles: ['muebleria', 'furniture store', 'home furnishings', 'muebles a medida'],
+    furniture: ['furniture store', 'home furnishings', 'sofa store', 'dining room furniture'],
+    appliances: ['appliance store', 'home appliances', 'white goods', 'appliance repair'],
+    refrigerator: ['appliance store', 'refrigerator repair', 'home appliances'],
+    refrigerador: ['tienda de electrodomesticos', 'reparacion de refrigeradores', 'linea blanca'],
+    mirrors: ['mirror shop', 'custom glass', 'glazier', 'home furnishings'],
+    espejos: ['espejos a medida', 'vidrieria', 'cristaleria', 'muebles y decoracion'],
+    garage: ['auto garage', 'car repair', 'mechanic', 'parking garage'],
+    'car wash': ['auto detailing', 'hand car wash', 'vehicle cleaning'],
+    autolavado: ['lavado de autos', 'detallado automotriz', 'car wash'],
     estetica: ['salon de belleza', 'beauty salon', 'hair salon', 'spa'],
     tatuaje: ['tattoo studio', 'tattoo shop', 'tatuador'],
     tatuajes: ['tattoo studio', 'tattoo shop', 'tatuador'],
@@ -625,7 +654,7 @@ export const searchPlacesUniversal = async (location, searchTerm, radius = 10000
         }
     }
 
-    return mergedResults;
+    return mergedResults.slice(0, 20);
 };
 
 /**

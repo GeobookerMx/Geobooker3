@@ -1,5 +1,9 @@
 ﻿# Auditoria 360 de Seguridad Geobooker
 
+> Documento histórico. Para el estado vigente y el gate previo a producción consultar
+> `docs/GEOBOOKER_SECURITY_AND_360_PROGRAM_2026-09-21.md`. Las cifras de dependencias
+> incluidas aquí corresponden a agosto de 2026 y no deben usarse como estado actual.
+
 Fecha: 2026-08-04  
 Alcance: PWA geobooker.com / geobooker.com.mx, apps Android/iOS via Capacitor, Supabase, Netlify Functions/Edge, Stripe, Resend, CRM, Apify, chatbot GeoBot, storage, workflows y operacion mensual.
 

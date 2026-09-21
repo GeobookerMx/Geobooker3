@@ -5,9 +5,19 @@ const normalize = (value = '') =>
     .toLowerCase()
     .trim();
 
+const escapeRegExp = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const containsTerm = (normalizedValue, term) => {
+  const normalizedTerm = normalize(term);
+  if (!normalizedTerm) return false;
+  if (normalizedValue === normalizedTerm) return true;
+  return new RegExp(`(?:^|[^a-z0-9])${escapeRegExp(normalizedTerm)}(?:$|[^a-z0-9])`, 'i')
+    .test(normalizedValue);
+};
+
 const SEMANTIC_GROUPS = [
   ['hot_dog', ['hot dog', 'perro caliente', 'pancho', 'jocho', 'dogo', 'completo']],
-  ['tire_service', ['vulcanizadora', 'llantera', 'talachera', 'talachas', 'talacha', 'vulca', 'ponchadura', 'llanta ponchada', 'reparar llanta', 'cambio de llanta', 'neumatico pinchado', 'flat tire', 'tire shop', 'tire repair', '24 hour tire repair']],
+  ['tire_service', ['vulcanizadora', 'llantera', 'talachera', 'talachas', 'talacha', 'vulca', 'ponchadura', 'llanta', 'llantas', 'llanta ponchada', 'reparar llanta', 'cambio de llanta', 'neumatico', 'neumaticos', 'neumatico pinchado', 'flat tire', 'flat tyre', 'tire', 'tires', 'tyre', 'tyres', 'tire shop', 'tyre shop', 'tire repair', 'tyre repair', 'wheel and tyre service', '24 hour tire repair']],
   ['locksmith', ['cerrajero', 'abrir puerta', 'perdi mis llaves', 'duplicado de llaves', 'cambio de chapa', 'locksmith', 'key copy', 'locked out', 'emergency locksmith']],
   ['plumber', ['plomero', 'fontanero', 'fuga de agua', 'se rompio una tuberia', 'destapar drenaje', 'plumbing', 'plumber near me', 'water leak', 'clogged drain']],
   ['electrician', ['electricista', 'no tengo luz', 'corto circuito', 'instalacion electrica', 'breaker', 'fuse', 'electrician', 'emergency electrician', 'wiring']],
@@ -77,7 +87,12 @@ const SEMANTIC_GROUPS = [
   ['spa_wellness', ['spa', 'spa massage', 'wellness', 'masajes', 'masaje relajante', 'facial', 'skin care', 'skincare']],
   ['fine_dining', ['fine dining', 'alta cocina', 'chef table', 'menu degustacion', 'tasting menu']],
   ['michelin', ['michelin', 'estrella michelin', 'estrella verde', 'restaurante premiado']],
-  ['mexican_food', ['comida mexicana', 'mexicana', 'antojitos', 'torteria']],
+  ['mexican_food', ['comida mexicana', 'restaurante mexicano', 'mexican food', 'mexican restaurant', 'mexican cuisine', 'mexicana', 'antojitos', 'taqueria', 'tacos', 'torteria']],
+  ['computer_sales_repair', ['computer', 'computers', 'computer store', 'computer repair', 'pc repair', 'pc components', 'laptop repair', 'computadora', 'computadoras', 'reparacion de computadoras', 'componentes de computadora']],
+  ['furniture_home', ['furniture', 'furniture store', 'home furnishings', 'sofa', 'sofas', 'dining set', 'mueble', 'muebles', 'muebleria', 'sala', 'salas', 'comedor', 'comedores']],
+  ['appliance_home', ['appliance', 'appliances', 'appliance store', 'appliance repair', 'white goods', 'refrigerator', 'fridge', 'refrigerator repair', 'electrodomesticos', 'linea blanca', 'refrigerador', 'reparacion de refrigeradores']],
+  ['glass_mirror', ['mirror', 'mirrors', 'mirror shop', 'custom mirror', 'glass shop', 'glazier', 'espejo', 'espejos', 'vidrio', 'cristal', 'vidrieria']],
+  ['car_wash', ['car wash', 'auto detailing', 'car detailing', 'autolavado', 'lavado de autos', 'detallado automotriz']],
   ['international_cuisine', ['cocina internacional', 'ramen', 'sushi', 'shawarma', 'kebab', 'curry house', 'izakaya', 'trattoria', 'bistro']],
   ['arepa_shop', ['arepas', 'areperia', 'comida venezolana', 'comida colombiana']],
   ['pupusa_shop', ['pupusas', 'pupuseria', 'comida salvadorena']],
@@ -113,7 +128,7 @@ export const expandSemanticTerms = (value = '') => {
   const expanded = new Set(tokens);
 
   for (const [group, terms] of GROUP_TO_TERMS.entries()) {
-    const hasGroupMatch = terms.some((term) => normalizedValue.includes(term) || tokens.has(term));
+    const hasGroupMatch = terms.some((term) => containsTerm(normalizedValue, term) || tokens.has(term));
     if (hasGroupMatch) {
       terms.forEach((term) => expanded.add(term));
       expanded.add(group);
@@ -132,5 +147,5 @@ export const matchesSemanticText = (query = '', haystackValues = []) => {
     .map((value) => normalize(value))
     .join(' | ');
 
-  return expandedQuery.some((term) => normalizedHaystack.includes(term));
+  return expandedQuery.some((term) => containsTerm(normalizedHaystack, term));
 };

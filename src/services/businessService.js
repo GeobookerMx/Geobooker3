@@ -1,7 +1,7 @@
 import { supabase } from "../lib/supabase";
 import { getAttributionSummary } from "./attributionService";
 import { matchesSemanticText } from "../utils/semanticDictionary";
-import { analyzeSearchIntent, getIntentSearchHaystack } from "../utils/searchIntentEngine";
+import { analyzeSearchIntent, getIntentSearchHaystack, inferSearchLanguage } from "../utils/searchIntentEngine";
 
 const TT_INTENT_TERMS = [
   'todo transporte',
@@ -466,7 +466,10 @@ export async function searchBusinessesSemantically(searchQuery, userCountry = in
   if (!normalizedQuery) return [];
 
   const intentAnalysis = analyzeSearchIntent(normalizedQuery);
-  const rpcSearchQuery = intentAnalysis?.expandedQuery || normalizedQuery;
+  // El Knowledge Graph resuelve aliases e intenciones sobre la consulta original.
+  // Enviar una concatenacion de fallbacks reduce la similitud y puede ocultar el
+  // termino exacto (por ejemplo, `tyres`).
+  const rpcSearchQuery = normalizedQuery;
   let semanticMatches = [];
   let matchSource = 'knowledge_graph';
 
@@ -475,7 +478,10 @@ export async function searchBusinessesSemantically(searchQuery, userCountry = in
     {
       search_query: rpcSearchQuery,
       user_country: userCountry,
-      user_language: typeof navigator !== "undefined" ? (navigator.language || "es-MX") : "es-MX",
+      user_language: inferSearchLanguage(
+        normalizedQuery,
+        typeof navigator !== "undefined" ? (navigator.language || "es-MX") : "es-MX"
+      ),
     }
   );
 

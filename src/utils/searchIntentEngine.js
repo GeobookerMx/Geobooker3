@@ -5,10 +5,103 @@ const normalize = (value = '') =>
     .toLowerCase()
     .trim();
 
+const escapeRegExp = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const containsTerm = (normalizedQuery, term) => {
+  const normalizedTerm = normalize(term);
+  if (!normalizedTerm) return false;
+  if (normalizedQuery === normalizedTerm) return true;
+
+  // Evita falsos positivos como `tire` dentro de `entire`, sin perder frases
+  // con signos o medidas tecnicas como 3/8.
+  const pattern = new RegExp(`(?:^|[^a-z0-9])${escapeRegExp(normalizedTerm)}(?:$|[^a-z0-9])`, 'i');
+  return pattern.test(normalizedQuery);
+};
+
 const hasAny = (normalizedQuery, terms = []) =>
-  terms.some((term) => normalizedQuery.includes(normalize(term)));
+  terms.some((term) => containsTerm(normalizedQuery, term));
 
 export const SEARCH_INTENT_RULES = [
+  {
+    id: 'tyres_tire_services',
+    label: 'Tyres, llantas y servicio de neumaticos',
+    confidence: 0.96,
+    categoryHints: ['tire-service', 'tire-shop', 'auto-parts', 'mechanic'],
+    googleQuery: 'tyre shop tire repair tire store auto parts',
+    fallbackQueries: ['tyres near me', 'tire shop near me', 'wheel and tyre service', 'auto parts near me'],
+    trustSignals: ['stock', 'medida compatible', 'instalacion', 'reparacion'],
+    keywords: ['tyre', 'tyres', 'tyre shop', 'tyre repair', 'tire', 'tires', 'tire shop', 'tire repair', 'flat tyre', 'flat tire', 'llanta', 'llantas', 'llantera', 'vulcanizadora', 'neumatico', 'neumaticos']
+  },
+  {
+    id: 'mexican_food_restaurants',
+    label: 'Comida y restaurantes mexicanos',
+    confidence: 0.95,
+    categoryHints: ['mexican-restaurant', 'restaurant', 'taco-shop', 'food-and-drink'],
+    googleQuery: 'Mexican restaurant authentic Mexican food',
+    fallbackQueries: ['Mexican food near me', 'tacos near me', 'taqueria near me', 'antojitos mexicanos'],
+    trustSignals: ['menu', 'horario', 'resenas', 'ubicacion'],
+    keywords: ['mexican food', 'mexican restaurant', 'mexican cuisine', 'comida mexicana', 'restaurante mexicano', 'taqueria', 'tacos', 'antojitos mexicanos']
+  },
+  {
+    id: 'car_wash_detailing',
+    label: 'Autolavado y detallado automotriz',
+    confidence: 0.92,
+    categoryHints: ['car-wash', 'car-detailing', 'automotive-service'],
+    googleQuery: 'car wash auto detailing',
+    fallbackQueries: ['car wash near me', 'auto detailing near me', 'autolavado cerca', 'lavado de autos'],
+    trustSignals: ['servicios', 'horario', 'precio', 'resenas'],
+    keywords: ['car wash', 'auto detailing', 'car detailing', 'autolavado', 'lavado de autos', 'detallado automotriz']
+  },
+  {
+    id: 'garage_auto_service',
+    label: 'Garage, taller y servicio automotriz',
+    confidence: 0.86,
+    categoryHints: ['mechanic', 'car-repair', 'auto-parts', 'parking-garage'],
+    googleQuery: 'auto garage car repair mechanic',
+    fallbackQueries: ['garage near me', 'car repair near me', 'mechanic near me', 'parking garage near me'],
+    trustSignals: ['especialidad', 'diagnostico', 'garantia', 'horario'],
+    keywords: ['garage', 'auto garage', 'repair garage', 'car garage', 'car repair garage', 'taller automotriz', 'taller mecanico']
+  },
+  {
+    id: 'computers_sales_repair',
+    label: 'Computadoras, componentes y reparacion',
+    confidence: 0.91,
+    categoryHints: ['computer-store', 'computer-repair', 'electronics-store', 'electronics-repair'],
+    googleQuery: 'computer store computer repair electronics',
+    fallbackQueries: ['computer store near me', 'computer repair near me', 'PC components near me', 'reparacion de computadoras'],
+    trustSignals: ['garantia', 'diagnostico', 'compatibilidad', 'stock'],
+    keywords: ['computer', 'computers', 'computer repair', 'computer store', 'pc repair', 'pc components', 'laptop repair', 'computadora', 'computadoras', 'reparacion de computadoras', 'componentes de computadora', 'laptop']
+  },
+  {
+    id: 'furniture_home_furnishings',
+    label: 'Muebles y articulos para el hogar',
+    confidence: 0.90,
+    categoryHints: ['furniture-store', 'home-goods-store', 'carpenter'],
+    googleQuery: 'furniture store home furnishings',
+    fallbackQueries: ['furniture store near me', 'sofas and dining room furniture', 'muebleria cerca', 'muebles a medida'],
+    trustSignals: ['entrega', 'medidas', 'garantia', 'existencia'],
+    keywords: ['furniture', 'furniture store', 'home furnishings', 'sofa', 'sofas', 'dining set', 'dining room furniture', 'mueble', 'muebles', 'muebleria', 'sala', 'salas', 'comedor', 'comedores']
+  },
+  {
+    id: 'appliances_refrigeration_home',
+    label: 'Electrodomesticos, refrigeradores y reparacion',
+    confidence: 0.90,
+    categoryHints: ['appliance-store', 'appliance-repair', 'home-goods-store', 'hvac-refrigeration'],
+    googleQuery: 'appliance store refrigerator repair',
+    fallbackQueries: ['appliance store near me', 'refrigerator repair near me', 'white goods store', 'reparacion de refrigeradores'],
+    trustSignals: ['garantia', 'instalacion', 'servicio tecnico', 'existencia'],
+    keywords: ['appliance', 'appliances', 'white goods', 'refrigerator', 'fridge', 'refrigerator repair', 'appliance repair', 'electrodomestico', 'electrodomesticos', 'refrigerador', 'refrigeradores', 'reparacion de refrigeradores', 'linea blanca']
+  },
+  {
+    id: 'glass_mirrors',
+    label: 'Vidrio, cristales y espejos',
+    confidence: 0.88,
+    categoryHints: ['glass-mirror-shop', 'glazier', 'home-goods-store', 'hardware-store'],
+    googleQuery: 'glass mirror shop glazier',
+    fallbackQueries: ['mirror shop near me', 'custom glass near me', 'vidrieria cerca', 'espejos a medida'],
+    trustSignals: ['corte a medida', 'instalacion', 'tipo de vidrio', 'cotizacion'],
+    keywords: ['mirror', 'mirrors', 'mirror shop', 'custom mirror', 'glass shop', 'glazier', 'espejo', 'espejos', 'espejos a medida', 'vidrio', 'cristal', 'vidrieria']
+  },
   {
     id: 'fasteners_hardware',
     label: 'Tornilleria y ferreteria',
@@ -314,7 +407,7 @@ export const analyzeSearchIntent = (query = '') => {
   const matches = SEARCH_INTENT_RULES
     .filter((rule) => hasAny(normalizedQuery, rule.keywords))
     .map((rule) => {
-      const matchedTerms = rule.keywords.filter((term) => normalizedQuery.includes(normalize(term)));
+      const matchedTerms = rule.keywords.filter((term) => containsTerm(normalizedQuery, term));
       const specificityBoost = Math.min(0.05, matchedTerms.length * 0.01);
       return {
         ...rule,
@@ -356,6 +449,21 @@ export const getIntentSearchHaystack = (query = '') => {
   const analysis = analyzeSearchIntent(query);
   if (!analysis) return [query];
   return [query, analysis.label, analysis.googleQuery, ...analysis.fallbackQueries, ...analysis.categoryHints, ...analysis.trustSignals];
+};
+
+export const inferSearchLanguage = (query = '', fallbackLocale = 'es-MX') => {
+  const normalizedQuery = normalize(query);
+  const fallback = String(fallbackLocale || 'es').split('-')[0].toLowerCase();
+  if (!normalizedQuery) return fallback || 'es';
+
+  const englishSignals = ['near me', 'repair', 'store', 'shop', 'supplier', 'food', 'restaurant', 'tyre', 'tire', 'computer', 'furniture', 'appliance', 'mirror'];
+  const spanishSignals = ['cerca de mi', 'reparacion', 'tienda', 'proveedor', 'comida', 'restaurante', 'llanta', 'computadora', 'muebles', 'refrigerador', 'espejo'];
+  const englishScore = englishSignals.filter((term) => containsTerm(normalizedQuery, term)).length;
+  const spanishScore = spanishSignals.filter((term) => containsTerm(normalizedQuery, term)).length;
+
+  if (englishScore > spanishScore) return 'en';
+  if (spanishScore > englishScore) return 'es';
+  return ['en', 'es'].includes(fallback) ? fallback : 'en';
 };
 
 export { normalize as normalizeSearchIntentText };

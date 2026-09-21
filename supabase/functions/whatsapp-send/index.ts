@@ -46,6 +46,11 @@ function cleanTemplateParameters(value: unknown) {
   return value.map((parameter) => String(parameter).trim()).filter(Boolean).map((parameter) => parameter.slice(0, 1024));
 }
 
+function boundedEnvInteger(name: string, fallback: number, min: number, max: number) {
+  const parsed = Number(Deno.env.get(name));
+  return Number.isInteger(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
+}
+
 Deno.serve(async (request: Request) => {
   const origin = request.headers.get('origin');
   const cors = corsHeaders(origin);
@@ -75,6 +80,24 @@ Deno.serve(async (request: Request) => {
 
     if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'true') {
       return response(503, { error: 'whatsapp_sending_disabled' }, cors);
+    }
+
+    const requestLimitPerMinute = boundedEnvInteger(
+      'WHATSAPP_SEND_REQUESTS_PER_MINUTE',
+      20,
+      1,
+      100
+    );
+    const minuteAgo = new Date(Date.now() - 60_000).toISOString();
+    const { count: recentRequestCount, error: rateLimitError } = await admin
+      .schema('crm')
+      .from('outbound_jobs')
+      .select('id', { count: 'exact', head: true })
+      .eq('created_by_user_id', authData.user.id)
+      .gte('created_at', minuteAgo);
+    if (rateLimitError) throw rateLimitError;
+    if ((recentRequestCount || 0) >= requestLimitPerMinute) {
+      return response(429, { error: 'whatsapp_send_rate_limited' }, cors);
     }
 
     const rawBody = await request.text();
@@ -115,8 +138,9 @@ Deno.serve(async (request: Request) => {
       return response(404, { error: 'conversation_not_available' }, cors);
     }
 
-    const [{ data: point }, { data: phoneNumber }, { data: budgetPolicy }] = await Promise.all([
-      admin.schema('crm').from('contact_points').select('normalized_value,validation_status').eq('id', conversation.contact_point_id).single(),
+    const [{ data: point }, { data: contact }, { data: phoneNumber }, { data: budgetPolicy }] = await Promise.all([
+      admin.schema('crm').from('contact_points').select('normalized_value,validation_status,country_code').eq('id', conversation.contact_point_id).single(),
+      admin.schema('crm').from('contacts').select('country_code').eq('id', conversation.contact_id).single(),
       admin.schema('crm').from('whatsapp_phone_numbers').select('provider_phone_number_id,status').eq('id', conversation.whatsapp_phone_number_id).single(),
       admin.schema('crm').from('budget_policies').select('*').eq('provider', 'meta_cloud').eq('is_active', true).limit(1).maybeSingle()
     ]);
@@ -141,7 +165,7 @@ Deno.serve(async (request: Request) => {
       const { data, error } = await admin
         .schema('crm')
         .from('whatsapp_templates')
-        .select('id,template_name,language_code,category,approval_status')
+        .select('id,template_name,language_code,category,approval_status,enabled_for_campaigns')
         .eq('id', templateId)
         .single();
       if (error) return response(409, { error: 'template_not_available' }, cors);
@@ -152,24 +176,57 @@ Deno.serve(async (request: Request) => {
     const purpose = serviceWindowOpen && messageType === 'text'
       ? 'service'
       : template?.category === 'marketing' ? 'marketing' : 'transactional';
-    const { data: permission } = await admin
+    const { data: permissions, error: permissionError } = await admin
       .schema('crm')
       .from('channel_permissions')
-      .select('status')
+      .select('purpose,status')
       .eq('contact_id', conversation.contact_id)
-      .eq('channel', 'whatsapp')
-      .eq('purpose', purpose)
-      .maybeSingle();
+      .eq('channel', 'whatsapp');
+    if (permissionError) throw permissionError;
+    const permission = (permissions || []).find((row) => row.purpose === purpose);
+    const blockedByPermission = (permissions || []).some((row) =>
+      ['opted_out', 'suppressed', 'invalid', 'complaint'].includes(row.status)
+    );
 
     const policy = evaluateOutboundPolicy({
       budgetPolicy,
       permissionStatus: permission?.status || 'unknown',
-      suppressed: (suppressions || []).length > 0,
+      suppressed: (suppressions || []).length > 0 || blockedByPermission,
       serviceWindowOpen,
       template,
       messageType
     });
     if (!policy.allowed) return response(409, { error: policy.reason }, cors);
+
+    const pricingCategory = messageType === 'text'
+      ? 'service'
+      : String(template?.category || 'utility').toLowerCase();
+    const { data: guardRows, error: guardError } = await admin.rpc('crm_whatsapp_outbound_guard', {
+      p_contact_id: conversation.contact_id,
+      p_country_code: contact?.country_code || point.country_code || null,
+      p_category: pricingCategory,
+      p_purpose: purpose,
+      p_exclude_message_id: null
+    });
+    if (guardError) {
+      return response(503, { error: 'commercial_guard_unavailable' }, cors);
+    }
+    const commercialGuard = Array.isArray(guardRows) ? guardRows[0] : guardRows;
+    if (!commercialGuard?.allowed) {
+      return response(409, {
+        error: 'commercial_guard_blocked',
+        reasons: Array.isArray(commercialGuard?.reasons) ? commercialGuard.reasons : []
+      }, cors);
+    }
+    const { data: globalGateRows, error: globalGateError } = await admin.rpc('crm_whatsapp_global_daily_gate');
+    if (globalGateError) return response(503, { error: 'global_daily_gate_unavailable' }, cors);
+    const globalGate = Array.isArray(globalGateRows) ? globalGateRows[0] : globalGateRows;
+    if (!globalGate?.allowed) {
+      return response(409, {
+        error: 'global_daily_gate_blocked',
+        reasons: Array.isArray(globalGate?.reasons) ? globalGate.reasons : []
+      }, cors);
+    }
 
     const text = String(body.text || '').trim();
     if (messageType === 'text' && (!text || text.length > 4096)) {
@@ -192,7 +249,26 @@ Deno.serve(async (request: Request) => {
       })
       .select('id')
       .single();
-    if (messageError) throw messageError;
+    if (messageError) {
+      if (messageError.code === '23505') {
+        const { data: concurrentJob } = await admin
+          .schema('crm')
+          .from('outbound_jobs')
+          .select('id,message_id,status')
+          .eq('idempotency_key', idempotencyKey)
+          .maybeSingle();
+        if (concurrentJob) {
+          return response(200, {
+            accepted: true,
+            duplicate: true,
+            jobId: concurrentJob.id,
+            status: concurrentJob.status
+          }, cors);
+        }
+        return response(409, { error: 'idempotency_request_in_progress' }, cors);
+      }
+      throw messageError;
+    }
 
     const { data: job, error: jobError } = await admin
       .schema('crm')
@@ -207,13 +283,40 @@ Deno.serve(async (request: Request) => {
         request_payload: {
           messageType,
           templateId: template?.id || null,
-          templateParameters
+          templateParameters,
+          commercialGuard: {
+            countryCode: contact?.country_code || point.country_code || null,
+            category: pricingCategory,
+            currency: commercialGuard.currency,
+            estimatedUnitCost: commercialGuard.estimated_unit_cost,
+            rateCardVersion: commercialGuard.rate_card_version,
+            rateCardId: commercialGuard.rate_card_id
+          }
         },
         created_by_user_id: authData.user.id
       })
       .select('id')
       .single();
     if (jobError) throw jobError;
+
+    const { error: auditError } = await admin
+      .schema('crm')
+      .from('audit_log')
+      .insert({
+        actor_user_id: authData.user.id,
+        actor_type: 'user',
+        action: 'whatsapp.message_queued',
+        entity_type: 'outbound_job',
+        entity_id: job.id,
+        new_values: {
+          message_id: message.id,
+          conversation_id: conversation.id,
+          message_type: messageType,
+          purpose: policy.purpose
+        },
+        request_id: idempotencyKey
+      });
+    if (auditError) throw auditError;
 
     return response(202, { accepted: true, queued: true, jobId: job.id, messageId: message.id }, cors);
   } catch (error) {

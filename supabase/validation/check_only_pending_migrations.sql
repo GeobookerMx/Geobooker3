@@ -1,34 +1,8 @@
--- GEOBOOKER — Verificación de migraciones pendientes en producción
--- Ejecutar como READ-ONLY en Supabase SQL Editor de PRODUCCIÓN
--- No modifica nada. Solo compara lo que ya se aplicó.
---
--- Instrucciones:
--- 1. Abre Supabase Dashboard → SQL Editor en el proyecto de producción
--- 2. Ejecuta PRIMERO la sección de diagnóstico (query 1) para ver cómo
---    Supabase guarda las versiones en este proyecto.
--- 3. Luego ejecuta el query 2 de verificación completa.
+-- GEOBOOKER — Solo muestra las migraciones PENDIENTES en producción
+-- Ejecuta esto para ver qué falta aplicar
 
--- ============================================================
--- QUERY 1: Diagnóstico — ver últimas 10 migraciones aplicadas
--- (ejecuta esto primero para confirmar el formato de versión)
--- ============================================================
-SELECT * FROM supabase_migrations.schema_migrations
-ORDER BY version DESC
-LIMIT 10;
-
--- ============================================================
--- QUERY 2: Verificación completa de 68 migraciones
--- El JOIN usa substring(name, 1, 14) para extraer el timestamp
--- de 14 dígitos (ej: '20260807023000') que Supabase usa como version.
--- Si tu instancia guarda el nombre completo como version, cambia
--- el JOIN a: ON applied.version = expected.name
--- ============================================================
 SELECT
-  expected.name AS migration_file,
-  CASE
-    WHEN applied.version IS NOT NULL THEN '✅ APLICADA'
-    ELSE '🔴 PENDIENTE'
-  END AS status
+  expected.name AS migration_pendiente
 FROM (
   VALUES
     ('20260807023000_consumption_auth_funnel_views'),
@@ -85,7 +59,6 @@ FROM (
     ('20260908015000_crm_global_campaign_planning'),
     ('20260910200357_crm_agent_knowledge_files'),
     ('20260910204000_crm_agent_connector_requests'),
-    -- SEPTIEMBRE 17-21: las más importantes a verificar
     ('20260917010000_crm_whatsapp_commercial_safety_gates'),
     ('20260917020000_crm_whatsapp_rate_cards_draft_20260917'),
     ('20260917021000_crm_whatsapp_template_reconciliation'),
@@ -101,7 +74,6 @@ FROM (
     ('20260921100000_crm_whatsapp_atomic_campaign_dispatch')
 ) AS expected(name)
 LEFT JOIN supabase_migrations.schema_migrations AS applied
-  -- Supabase guarda solo el timestamp de 14 dígitos como 'version'
-  -- Ej: '20260807023000' (sin el sufijo de nombre)
   ON applied.version = substring(expected.name FROM 1 FOR 14)
+WHERE applied.version IS NULL
 ORDER BY expected.name;

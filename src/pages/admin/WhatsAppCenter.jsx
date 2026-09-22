@@ -1577,14 +1577,17 @@ function CampaignReadinessView() {
   const load = useCallback(() => {
     setLoading(true);
     setError('');
-    Promise.all([callAdmin('campaign_readiness'), callAdmin('campaign_list'), callAdmin('campaign_wizard_options'), callAdmin('campaign_dispatch_gate_status')])
+    Promise.allSettled([callAdmin('campaign_readiness'), callAdmin('campaign_list'), callAdmin('campaign_wizard_options'), callAdmin('campaign_dispatch_gate_status')])
       .then(([readinessResult, campaignResult, wizardResult, gateResult]) => {
-        setReadiness(readinessResult.readiness || null);
-        setMarkets(readinessResult.markets || []);
-        setCampaigns(campaignResult.rows || []);
-        setTemplates(wizardResult.templates || []);
-        setWizardOptions(wizardResult);
-        setDispatchGate(gateResult.gate || null);
+        if (readinessResult.status === 'rejected') throw readinessResult.reason;
+        if (campaignResult.status === 'rejected') throw campaignResult.reason;
+        if (wizardResult.status === 'rejected') throw wizardResult.reason;
+        setReadiness(readinessResult.value.readiness || null);
+        setMarkets(readinessResult.value.markets || []);
+        setCampaigns(campaignResult.value.rows || []);
+        setTemplates(wizardResult.value.templates || []);
+        setWizardOptions(wizardResult.value);
+        setDispatchGate(gateResult.status === 'fulfilled' ? gateResult.value.gate || null : null);
       })
       .catch((loadError) => setError(loadError.message))
       .finally(() => setLoading(false));

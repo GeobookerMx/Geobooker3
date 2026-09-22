@@ -1601,6 +1601,21 @@ function CampaignReadinessView() {
   }, [countryCode, industry]);
   const createDraft = async (event) => {
     event.preventDefault();
+    const validationErrors = [];
+    if (draftName.trim().length < 3) validationErrors.push('nombre de campana');
+    if (!campaignGoal) validationErrors.push('objetivo');
+    if (!['marketing', 'transactional'].includes(draftPurpose)) validationErrors.push('finalidad');
+    if (!/^[A-Z]{2}$/.test(countryCode)) validationErrors.push('pais');
+    if (!languageCode) validationErrors.push('idioma');
+    if (!timezone) validationErrors.push('zona horaria');
+    if (Number(draftLimit) < 1 || Number(draftLimit) > 500) validationErrors.push('limite de destinatarios');
+    if (!draftTemplateId) validationErrors.push('plantilla');
+    if (validationErrors.length) {
+      const message = `Completa antes del dry run: ${validationErrors.join(', ')}.`;
+      setError(message);
+      toast.error(message);
+      return;
+    }
     setDraftLoading(true);
     setError('');
     setDryRunResult(null);
@@ -1782,7 +1797,17 @@ function CampaignReadinessView() {
     2: /^[A-Z]{2}$/.test(countryCode) && Boolean(languageCode) && Boolean(timezone),
     3: Number(draftLimit) >= 1 && Number(draftLimit) <= 500 && Number(minScore) >= 0 && Number(minScore) <= 100,
     4: Boolean(draftTemplateId && selectedTemplate),
-    5: Boolean(draftTemplateId && selectedTemplate)
+    5: draftName.trim().length >= 3
+      && Boolean(campaignGoal)
+      && ['marketing', 'transactional'].includes(draftPurpose)
+      && /^[A-Z]{2}$/.test(countryCode)
+      && Boolean(languageCode)
+      && Boolean(timezone)
+      && Number(draftLimit) >= 1
+      && Number(draftLimit) <= 500
+      && Number(minScore) >= 0
+      && Number(minScore) <= 100
+      && Boolean(draftTemplateId && selectedTemplate)
   };
   return <div className="space-y-5">
     <div className="flex flex-wrap items-center justify-between gap-3">

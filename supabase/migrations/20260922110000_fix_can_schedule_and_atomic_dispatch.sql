@@ -1,4 +1,4 @@
--- Fix missing can_schedule column and register atomic campaign dispatch functions.
+-- Fix missing can_schedule column, resolve PL/pgSQL variable ambiguity, and register atomic campaign dispatch functions.
 
 ALTER TABLE crm.campaign_dispatch_runs
   ADD COLUMN IF NOT EXISTS can_schedule BOOLEAN NOT NULL DEFAULT FALSE,
@@ -91,9 +91,9 @@ BEGIN
 
   safe_batch_size := LEAST(GREATEST(COALESCE(p_batch_size, 50), 1), 500);
 
-  SELECT * INTO campaign_record
-  FROM crm.campaigns
-  WHERE id = p_campaign_id AND channel = 'whatsapp';
+  SELECT c.* INTO campaign_record
+  FROM crm.campaigns c
+  WHERE c.id = p_campaign_id AND c.channel = 'whatsapp';
 
   IF campaign_record.id IS NULL THEN
     RAISE EXCEPTION 'whatsapp_campaign_not_found' USING ERRCODE = '22023';
@@ -105,11 +105,11 @@ BEGIN
   END IF;
 
   SELECT
-    count(*) FILTER (WHERE eligibility_status = 'eligible')::integer AS eligible_count,
-    count(*) FILTER (WHERE eligibility_status <> 'eligible')::integer AS excluded_count
+    count(*) FILTER (WHERE cm.eligibility_status = 'eligible')::integer AS eligible_count,
+    count(*) FILTER (WHERE cm.eligibility_status <> 'eligible')::integer AS excluded_count
   INTO member_stats
-  FROM crm.campaign_members
-  WHERE crm.campaign_members.campaign_id = p_campaign_id;
+  FROM crm.campaign_members cm
+  WHERE cm.campaign_id = p_campaign_id;
 
   total_eligible := COALESCE(member_stats.eligible_count, 0);
   total_excluded := COALESCE(member_stats.excluded_count, 0);
@@ -120,17 +120,17 @@ BEGIN
   END IF;
 
   SELECT count(*)::integer AS risk_count INTO job_risk
-  FROM crm.outbound_jobs
-  WHERE status IN ('failed', 'dead_letter');
+  FROM crm.outbound_jobs oj
+  WHERE oj.status IN ('failed', 'dead_letter');
 
   IF COALESCE(job_risk.risk_count, 0) > 0 THEN
     reason_list := reason_list || jsonb_build_array('Existen ' || job_risk.risk_count::text || ' trabajos en dead_letter/failed. Requieren diagnóstico.');
   END IF;
 
-  SELECT * INTO budget_record
-  FROM crm.budget_policies
-  WHERE provider = 'meta_cloud' AND is_active
-  ORDER BY updated_at DESC LIMIT 1;
+  SELECT bp.* INTO budget_record
+  FROM crm.budget_policies bp
+  WHERE bp.provider = 'meta_cloud' AND bp.is_active
+  ORDER BY bp.updated_at DESC LIMIT 1;
 
   IF budget_record.id IS NULL OR budget_record.kill_switch THEN
     is_ready := false;
@@ -163,16 +163,16 @@ BEGIN
   RETURN QUERY
   SELECT
     r.id AS run_id,
-    r.campaign_id,
-    r.status,
-    r.can_schedule,
-    r.eligible_member_count,
-    r.excluded_member_count,
-    r.batch_size,
+    r.campaign_id AS campaign_id,
+    r.status AS status,
+    r.can_schedule AS can_schedule,
+    r.eligible_member_count AS eligible_member_count,
+    r.excluded_member_count AS excluded_member_count,
+    r.batch_size AS batch_size,
     total_batches AS batch_count,
-    r.reasons,
-    r.sending_enabled,
-    r.created_at
+    r.reasons AS reasons,
+    r.sending_enabled AS sending_enabled,
+    r.created_at AS created_at
   FROM crm.campaign_dispatch_runs r
   WHERE r.id = new_run_id;
 END;
@@ -269,24 +269,24 @@ BEGIN
     RETURN;
   END IF;
 
-  SELECT * INTO control_record
-  FROM crm.whatsapp_campaign_dispatch_controls
-  WHERE provider = 'meta_cloud'
+  SELECT ctrl.* INTO control_record
+  FROM crm.whatsapp_campaign_dispatch_controls ctrl
+  WHERE ctrl.provider = 'meta_cloud'
   FOR UPDATE;
 
   safe_limit := LEAST(GREATEST(COALESCE(p_max_members, 1), 1), 20);
 
-  SELECT * INTO campaign_record
-  FROM crm.campaigns
-  WHERE id = p_campaign_id AND channel = 'whatsapp'
+  SELECT c.* INTO campaign_record
+  FROM crm.campaigns c
+  WHERE c.id = p_campaign_id AND c.channel = 'whatsapp'
   FOR UPDATE;
   IF campaign_record.id IS NULL OR campaign_record.status <> 'approved' THEN
     RAISE EXCEPTION 'approved_whatsapp_campaign_required' USING ERRCODE = '22023';
   END IF;
 
-  SELECT * INTO preflight_record
-  FROM crm.campaign_dispatch_runs
-  WHERE id = p_preflight_run_id AND campaign_id = p_campaign_id
+  SELECT r.* INTO preflight_record
+  FROM crm.campaign_dispatch_runs r
+  WHERE r.id = p_preflight_run_id AND r.campaign_id = p_campaign_id
   FOR UPDATE;
   IF preflight_record.id IS NULL OR preflight_record.status <> 'ready' THEN
     RAISE EXCEPTION 'fresh_ready_preflight_required' USING ERRCODE = '22023';

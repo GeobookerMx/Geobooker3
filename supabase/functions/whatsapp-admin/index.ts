@@ -1692,6 +1692,155 @@ Deno.serve(async (request: Request) => {
       }, corsHeaders);
     }
 
+    if (action === 'campaign_dispatch_gate_status') {
+      const { data, error } = await crm.from('whatsapp_campaign_dispatch_controls')
+        .select('provider,queue_enabled,single_use,max_members_per_dispatch,authorization_expires_at,authorized_by_user_id,updated_at')
+        .eq('provider', 'meta_cloud')
+        .maybeSingle();
+      if (error) {
+        return json(409, {
+          error: 'campaign_dispatch_gate_status_unavailable',
+          message: safeFailureDetail(error.message)
+        }, corsHeaders);
+      }
+      return json(200, {
+        gate: data || null,
+        sendingEnabled: Deno.env.get('WHATSAPP_SEND_ENABLED') === 'true'
+      }, corsHeaders);
+    }
+
+    if (action === 'campaign_authorize_queue_pilot') {
+      if (adminUser.role !== 'super_admin') return json(403, { error: 'super_admin_required' }, corsHeaders);
+      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'false') {
+        return json(409, { error: 'queue_authorization_requires_global_sending_disabled' }, corsHeaders);
+      }
+      if (String(body.confirmation || '').trim() !== 'AUTORIZAR COLA PILOTO 1') {
+        return json(409, { error: 'queue_authorization_confirmation_required' }, corsHeaders);
+      }
+      const campaignId = String(body.campaignId || '');
+      const preflightRunId = String(body.preflightRunId || '');
+      if (!/^[0-9a-f-]{36}$/i.test(campaignId)) return json(400, { error: 'invalid_campaign_id' }, corsHeaders);
+      if (!/^[0-9a-f-]{36}$/i.test(preflightRunId)) return json(400, { error: 'invalid_preflight_run_id' }, corsHeaders);
+
+      const { data: campaign, error: campaignError } = await crm.from('campaigns')
+        .select('id,status,channel,purpose')
+        .eq('id', campaignId)
+        .maybeSingle();
+      if (campaignError) throw campaignError;
+      if (!campaign || campaign.channel !== 'whatsapp' || campaign.status !== 'approved') {
+        return json(409, { error: 'campaign_must_be_approved_whatsapp' }, corsHeaders);
+      }
+
+      const { data: preflight, error: preflightError } = await crm.from('campaign_dispatch_runs')
+        .select('id,campaign_id,status,can_schedule,created_at')
+        .eq('id', preflightRunId)
+        .eq('campaign_id', campaignId)
+        .maybeSingle();
+      if (preflightError) throw preflightError;
+      const preflightCreatedAt = preflight?.created_at ? new Date(preflight.created_at).getTime() : 0;
+      if (!preflight || preflight.status !== 'ready' || preflight.can_schedule !== true || Date.now() - preflightCreatedAt > 15 * 60 * 1000) {
+        return json(409, { error: 'fresh_ready_preflight_required' }, corsHeaders);
+      }
+
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+      const { data, error } = await crm.from('whatsapp_campaign_dispatch_controls')
+        .update({
+          queue_enabled: true,
+          single_use: true,
+          max_members_per_dispatch: 1,
+          authorization_expires_at: expiresAt,
+          authorized_by_user_id: authData.user.id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('provider', 'meta_cloud')
+        .select('provider,queue_enabled,single_use,max_members_per_dispatch,authorization_expires_at,authorized_by_user_id,updated_at')
+        .maybeSingle();
+      if (error) throw error;
+      await crm.from('audit_log').insert({
+        actor_user_id: authData.user.id,
+        actor_type: 'user',
+        action: 'whatsapp.campaign.queue_authorize_pilot',
+        entity_type: 'whatsapp_campaign',
+        entity_id: campaignId,
+        new_values: {
+          result: 'authorized',
+          preflight_run_id: preflightRunId,
+          max_members_per_dispatch: 1,
+          authorization_expires_at: expiresAt,
+          sending_enabled: false
+        }
+      });
+      return json(200, { gate: data || null, sendingEnabled: false }, corsHeaders);
+    }
+
+    if (action === 'campaign_dispatch_atomic') {
+      if (adminUser.role !== 'super_admin') return json(403, { error: 'super_admin_required' }, corsHeaders);
+      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'false') {
+        return json(409, { error: 'atomic_dispatch_requires_global_sending_disabled' }, corsHeaders);
+      }
+      if (String(body.confirmation || '').trim() !== 'ENCOLAR 1 MENSAJE') {
+        return json(409, { error: 'atomic_dispatch_confirmation_required' }, corsHeaders);
+      }
+      const campaignId = String(body.campaignId || '');
+      const preflightRunId = String(body.preflightRunId || '');
+      if (!/^[0-9a-f-]{36}$/i.test(campaignId)) return json(400, { error: 'invalid_campaign_id' }, corsHeaders);
+      if (!/^[0-9a-f-]{36}$/i.test(preflightRunId)) return json(400, { error: 'invalid_preflight_run_id' }, corsHeaders);
+      const { data, error } = await admin.rpc('crm_dispatch_whatsapp_campaign_atomic', {
+        p_campaign_id: campaignId,
+        p_preflight_run_id: preflightRunId,
+        p_max_members: 1,
+        p_actor_user_id: authData.user.id
+      });
+      if (error) {
+        return json(409, {
+          error: 'campaign_atomic_dispatch_blocked',
+          message: safeFailureDetail(error.message)
+        }, corsHeaders);
+      }
+      const result = data?.[0] || null;
+      await crm.from('audit_log').insert({
+        actor_user_id: authData.user.id,
+        actor_type: 'user',
+        action: 'whatsapp.campaign.atomic_dispatch',
+        entity_type: 'whatsapp_campaign',
+        entity_id: campaignId,
+        new_values: {
+          result: 'queued',
+          preflight_run_id: preflightRunId,
+          queued_members: result?.queued_members || 0,
+          reserved_cost: result?.reserved_cost || 0,
+          currency: result?.currency || null,
+          replayed: result?.replayed === true,
+          queue_gate_closed: result?.queue_gate_closed === true,
+          sending_enabled: false
+        }
+      });
+      return json(200, { result, sendingEnabled: false }, corsHeaders);
+    }
+
+    if (action === 'campaign_close_queue_gate') {
+      if (adminUser.role !== 'super_admin') return json(403, { error: 'super_admin_required' }, corsHeaders);
+      const { data, error } = await crm.from('whatsapp_campaign_dispatch_controls')
+        .update({
+          queue_enabled: false,
+          authorization_expires_at: null,
+          authorized_by_user_id: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('provider', 'meta_cloud')
+        .select('provider,queue_enabled,single_use,max_members_per_dispatch,authorization_expires_at,authorized_by_user_id,updated_at')
+        .maybeSingle();
+      if (error) throw error;
+      await crm.from('audit_log').insert({
+        actor_user_id: authData.user.id,
+        actor_type: 'user',
+        action: 'whatsapp.campaign.queue_gate_close',
+        entity_type: 'whatsapp_campaign_dispatch_control',
+        new_values: { result: 'closed', sending_enabled: Deno.env.get('WHATSAPP_SEND_ENABLED') === 'true' }
+      });
+      return json(200, { gate: data || null, sendingEnabled: Deno.env.get('WHATSAPP_SEND_ENABLED') === 'true' }, corsHeaders);
+    }
+
     if (action === 'campaign_list') {
       const { data, error } = await crm.from('campaigns')
         .select('id,name,purpose,status,audience_rule,template_id,campaign_goal,language_code,timezone_name,estimated_recipient_count,estimated_cost,cost_currency,created_at,updated_at')

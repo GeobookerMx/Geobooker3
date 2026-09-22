@@ -1568,17 +1568,23 @@ function CampaignReadinessView() {
   const [dryRunResult, setDryRunResult] = useState(null);
   const [approvalCheck, setApprovalCheck] = useState(null);
   const [preflightResult, setPreflightResult] = useState(null);
+  const [preflightCampaignId, setPreflightCampaignId] = useState('');
+  const [dispatchGate, setDispatchGate] = useState(null);
+  const [queueConfirmation, setQueueConfirmation] = useState('');
+  const [dispatchConfirmation, setDispatchConfirmation] = useState('');
+  const [dispatchResult, setDispatchResult] = useState(null);
   const [approvalLoading, setApprovalLoading] = useState('');
   const load = useCallback(() => {
     setLoading(true);
     setError('');
-    Promise.all([callAdmin('campaign_readiness'), callAdmin('campaign_list'), callAdmin('campaign_wizard_options')])
-      .then(([readinessResult, campaignResult, wizardResult]) => {
+    Promise.all([callAdmin('campaign_readiness'), callAdmin('campaign_list'), callAdmin('campaign_wizard_options'), callAdmin('campaign_dispatch_gate_status')])
+      .then(([readinessResult, campaignResult, wizardResult, gateResult]) => {
         setReadiness(readinessResult.readiness || null);
         setMarkets(readinessResult.markets || []);
         setCampaigns(campaignResult.rows || []);
         setTemplates(wizardResult.templates || []);
         setWizardOptions(wizardResult);
+        setDispatchGate(gateResult.gate || null);
       })
       .catch((loadError) => setError(loadError.message))
       .finally(() => setLoading(false));
@@ -1648,6 +1654,8 @@ function CampaignReadinessView() {
       toast.success('Campaña aprobada sin envíos ni agenda.');
       setApprovalCheck(null);
       setPreflightResult(null);
+      setPreflightCampaignId('');
+      setDispatchResult(null);
       await load();
     } catch (loadError) {
       setError(loadError.message);
@@ -1662,7 +1670,65 @@ function CampaignReadinessView() {
     try {
       const result = await callAdmin('campaign_dispatch_preflight', { campaignId, batchSize: 50 });
       setPreflightResult(result.preflight || null);
+      setPreflightCampaignId(campaignId);
+      setDispatchResult(null);
+      setQueueConfirmation('');
+      setDispatchConfirmation('');
       toast.success('Preflight generado. Sin cola ni envíos.');
+    } catch (loadError) {
+      setError(loadError.message);
+      toast.error(loadError.message);
+    } finally {
+      setApprovalLoading('');
+    }
+  };
+  const authorizeQueuePilot = async () => {
+    if (!preflightCampaignId || !preflightResult?.run_id) return;
+    setApprovalLoading('authorize-queue');
+    setError('');
+    try {
+      const result = await callAdmin('campaign_authorize_queue_pilot', {
+        campaignId: preflightCampaignId,
+        preflightRunId: preflightResult.run_id,
+        confirmation: queueConfirmation
+      });
+      setDispatchGate(result.gate || null);
+      toast.success('Gate de cola piloto autorizado por 10 minutos.');
+    } catch (loadError) {
+      setError(loadError.message);
+      toast.error(loadError.message);
+    } finally {
+      setApprovalLoading('');
+    }
+  };
+  const enqueueAtomicPilot = async () => {
+    if (!preflightCampaignId || !preflightResult?.run_id) return;
+    setApprovalLoading('atomic-dispatch');
+    setError('');
+    try {
+      const result = await callAdmin('campaign_dispatch_atomic', {
+        campaignId: preflightCampaignId,
+        preflightRunId: preflightResult.run_id,
+        confirmation: dispatchConfirmation
+      });
+      setDispatchResult(result.result || null);
+      setDispatchGate(null);
+      toast.success('Se reservo y encolo 1 mensaje. Aun no activa envios globales.');
+      await load();
+    } catch (loadError) {
+      setError(loadError.message);
+      toast.error(loadError.message);
+    } finally {
+      setApprovalLoading('');
+    }
+  };
+  const closeQueueGate = async () => {
+    setApprovalLoading('close-queue');
+    setError('');
+    try {
+      const result = await callAdmin('campaign_close_queue_gate');
+      setDispatchGate(result.gate || null);
+      toast.success('Gate de cola cerrado.');
     } catch (loadError) {
       setError(loadError.message);
       toast.error(loadError.message);
@@ -1887,6 +1953,34 @@ function CampaignReadinessView() {
           <StatusBadge tone="good">No queue Â· No send</StatusBadge>
         </div>
         {Array.isArray(preflightResult.reasons) && preflightResult.reasons.length > 0 && <p className="mt-3 text-sm">Razones: {preflightResult.reasons.join(', ')}</p>}
+      </div>}
+      {preflightResult?.can_schedule && <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-blue-950">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="font-bold">Piloto real controlado</p>
+            <p className="mt-1 text-sm">Autoriza una ventana temporal, reserva presupuesto y encola exactamente 1 mensaje. No cambia WHATSAPP_SEND_ENABLED ni llama a Meta desde esta pantalla.</p>
+          </div>
+          <StatusBadge tone={dispatchGate?.queue_enabled ? 'warning' : 'good'}>{dispatchGate?.queue_enabled ? 'Gate abierto' : 'Gate cerrado'}</StatusBadge>
+        </div>
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          <div className="rounded-xl border border-blue-100 bg-white p-3 dark:bg-gray-900">
+            <p className="text-sm font-semibold">1. Autorizar cola piloto</p>
+            <p className="mt-1 text-xs text-gray-500">Escribe exactamente: AUTORIZAR COLA PILOTO 1</p>
+            <input value={queueConfirmation} onChange={(event) => setQueueConfirmation(event.target.value)} className="mt-2 w-full rounded-lg border px-3 py-2 text-sm dark:bg-gray-950" />
+            <button type="button" onClick={authorizeQueuePilot} disabled={approvalLoading === 'authorize-queue' || queueConfirmation !== 'AUTORIZAR COLA PILOTO 1'} className="mt-2 rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-40">Autorizar 10 min</button>
+          </div>
+          <div className="rounded-xl border border-blue-100 bg-white p-3 dark:bg-gray-900">
+            <p className="text-sm font-semibold">2. Encolar reserva atomica</p>
+            <p className="mt-1 text-xs text-gray-500">Escribe exactamente: ENCOLAR 1 MENSAJE</p>
+            <input value={dispatchConfirmation} onChange={(event) => setDispatchConfirmation(event.target.value)} className="mt-2 w-full rounded-lg border px-3 py-2 text-sm dark:bg-gray-950" />
+            <button type="button" onClick={enqueueAtomicPilot} disabled={approvalLoading === 'atomic-dispatch' || !dispatchGate?.queue_enabled || dispatchConfirmation !== 'ENCOLAR 1 MENSAJE'} className="mt-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-40">Encolar 1</button>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-600">
+          <button type="button" onClick={closeQueueGate} disabled={approvalLoading === 'close-queue'} className="rounded-lg border bg-white px-3 py-2 font-semibold disabled:opacity-40 dark:bg-gray-900">Cerrar gate</button>
+          {dispatchGate?.authorization_expires_at && <span>Expira: {formatDate(dispatchGate.authorization_expires_at)}</span>}
+          {dispatchResult && <StatusBadge tone="good">Queued {dispatchResult.queued_members || 0} - {dispatchResult.currency || ''} {Number(dispatchResult.reserved_cost || 0).toFixed(4)}</StatusBadge>}
+        </div>
       </div>}
       <div className="mt-4 overflow-x-auto">
         <table className="min-w-full text-sm">

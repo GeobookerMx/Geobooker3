@@ -1610,6 +1610,14 @@ function CampaignReadinessView() {
     if (!timezone) validationErrors.push('zona horaria');
     if (Number(draftLimit) < 1 || Number(draftLimit) > 500) validationErrors.push('limite de destinatarios');
     if (!draftTemplateId) validationErrors.push('plantilla');
+    const selectedMarketForDraft = (wizardOptions?.markets || markets || []).find((market) => market.country_code === countryCode);
+    const marketDailyCap = Number(selectedMarketForDraft?.daily_recipient_cap || 0);
+    if (marketDailyCap > 0 && Number(draftLimit) > marketDailyCap) {
+      validationErrors.push(`limite mayor al maximo diario del mercado (${marketDailyCap})`);
+    }
+    if (!previewLoading && previewRows.length === 0) {
+      validationErrors.push('audiencia elegible; el preview actual no tiene destinatarios');
+    }
     if (validationErrors.length) {
       const message = `Completa antes del dry run: ${validationErrors.join(', ')}.`;
       setError(message);
@@ -1645,8 +1653,11 @@ function CampaignReadinessView() {
       await load();
       await loadPreview();
     } catch (loadError) {
-      setError(loadError.message);
-      toast.error(loadError.message);
+      const fallbackMessage = !previewLoading && previewRows.length === 0
+        ? 'No se pudo crear el dry run porque los filtros actuales no tienen destinatarios elegibles. Reduce filtros, baja el score minimo o importa/contacta audiencia con opt-in.'
+        : loadError.message;
+      setError(fallbackMessage);
+      toast.error(fallbackMessage);
     } finally {
       setDraftLoading(false);
     }

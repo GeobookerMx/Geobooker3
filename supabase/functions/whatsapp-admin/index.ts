@@ -2776,6 +2776,6 @@ Deno.serve(async (request: Request) => {
     return json(400, { error: 'unsupported_action' }, corsHeaders);
   } catch (error) {
     console.error('WhatsApp admin request failed', { name: error?.name, message: safeFailureDetail(error?.message) });
-    return json(500, { error: 'whatsapp_admin_failed' }, corsHeaders);
+    return json(500, { error: 'whatsapp_admin_failed', message: safeFailureDetail(error?.message || String(error)) }, corsHeaders);
   }
 });

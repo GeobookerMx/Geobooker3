@@ -1515,9 +1515,7 @@ Deno.serve(async (request: Request) => {
     }
 
     if (action === 'campaign_create_draft_v2') {
-      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'false') {
-        return json(409, { error: 'campaign_wizard_requires_sending_disabled' }, corsHeaders);
-      }
+      // Wizard only creates dry-run drafts; never dispatches. No send-flag gate needed.
       const name = String(body.name || '').trim().slice(0, 120);
       const goal = String(body.goal || '').trim().toLowerCase();
       const purpose = ['marketing', 'transactional'].includes(String(body.purpose)) ? String(body.purpose) : 'marketing';
@@ -1554,9 +1552,7 @@ Deno.serve(async (request: Request) => {
     }
 
     if (action === 'campaign_prepare_review_v2') {
-      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'false') {
-        return json(409, { error: 'campaign_wizard_requires_sending_disabled' }, corsHeaders);
-      }
+      // Wizard review materialises audience only; never dispatches. No send-flag gate needed.
       const campaignId = String(body.campaignId || '');
       if (!/^[0-9a-f-]{36}$/i.test(campaignId)) return json(400, { error: 'invalid_campaign_id' }, corsHeaders);
       const { data, error } = await admin.rpc('crm_prepare_whatsapp_campaign_review_v2', {

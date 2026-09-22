@@ -1,4 +1,4 @@
--- Fix missing can_schedule column, resolve PL/pgSQL variable ambiguity, and register atomic campaign dispatch functions.
+-- Fix missing can_schedule and channel/payload columns, resolve PL/pgSQL variable ambiguity, and register atomic campaign dispatch functions.
 
 ALTER TABLE crm.campaign_dispatch_runs
   ADD COLUMN IF NOT EXISTS can_schedule BOOLEAN NOT NULL DEFAULT FALSE,
@@ -14,6 +14,10 @@ ALTER TABLE crm.campaign_dispatch_runs
 
 ALTER TABLE crm.campaign_members
   ADD COLUMN IF NOT EXISTS template_parameters JSONB NOT NULL DEFAULT '[]'::jsonb;
+
+ALTER TABLE crm.outbound_jobs
+  ADD COLUMN IF NOT EXISTS channel TEXT NOT NULL DEFAULT 'whatsapp',
+  ADD COLUMN IF NOT EXISTS payload JSONB NOT NULL DEFAULT '{}'::jsonb;
 
 ALTER TABLE crm.usage_ledger
   ADD COLUMN IF NOT EXISTS campaign_member_id UUID REFERENCES crm.campaign_members(id) ON DELETE RESTRICT,
@@ -370,12 +374,27 @@ BEGIN
     );
 
     INSERT INTO crm.outbound_jobs (
-      id, conversation_id, message_id, channel, status, payload,
-      idempotency_key, scheduled_at, attempt_count, created_at, updated_at
+      id, conversation_id, message_id, channel, job_type, status, request_payload, payload,
+      idempotency_key, scheduled_at, attempt_count, created_by_user_id, created_at, updated_at
     ) VALUES (
-      job_id, conversation_id, message_id, 'whatsapp', 'pending',
-      jsonb_build_object('message_id', message_id, 'template_id', template_record.id, 'campaign_id', p_campaign_id),
-      idempotency_key, p_now, 0, p_now, p_now
+      job_id, conversation_id, message_id, 'whatsapp', 'campaign', 'pending',
+      jsonb_build_object(
+        'campaignId', p_campaign_id,
+        'campaignMemberId', member_record.id,
+        'preflightRunId', p_preflight_run_id,
+        'purpose', campaign_record.purpose,
+        'templateId', template_record.id,
+        'templateParameters', member_record.template_parameters
+      ),
+      jsonb_build_object(
+        'campaignId', p_campaign_id,
+        'campaignMemberId', member_record.id,
+        'preflightRunId', p_preflight_run_id,
+        'purpose', campaign_record.purpose,
+        'templateId', template_record.id,
+        'templateParameters', member_record.template_parameters
+      ),
+      idempotency_key, p_now, 0, p_actor_user_id, p_now, p_now
     );
 
     UPDATE crm.campaign_members

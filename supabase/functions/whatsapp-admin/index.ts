@@ -963,9 +963,6 @@ Deno.serve(async (request: Request) => {
       if (adminUser.role !== 'super_admin') {
         return json(403, { error: 'super_admin_required' }, corsHeaders);
       }
-      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'false') {
-        return json(409, { error: 'subscription_requires_sending_disabled' }, corsHeaders);
-      }
 
       const accessToken = requiredMetaEnv('WHATSAPP_ACCESS_TOKEN');
       const graphVersion = requiredMetaEnv('META_GRAPH_API_VERSION');
@@ -1047,9 +1044,6 @@ Deno.serve(async (request: Request) => {
     if (action === 'configure_webhook_override') {
       if (adminUser.role !== 'super_admin') {
         return json(403, { error: 'super_admin_required' }, corsHeaders);
-      }
-      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'false') {
-        return json(409, { error: 'webhook_override_requires_sending_disabled' }, corsHeaders);
       }
 
       const accessToken = requiredMetaEnv('WHATSAPP_ACCESS_TOKEN');
@@ -1134,9 +1128,6 @@ Deno.serve(async (request: Request) => {
     if (action === 'register_phone') {
       if (adminUser.role !== 'super_admin') {
         return json(403, { error: 'super_admin_required' }, corsHeaders);
-      }
-      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'false') {
-        return json(409, { error: 'registration_requires_sending_disabled' }, corsHeaders);
       }
 
       const accessToken = requiredMetaEnv('WHATSAPP_ACCESS_TOKEN');
@@ -1709,9 +1700,6 @@ Deno.serve(async (request: Request) => {
 
     if (action === 'campaign_authorize_queue_pilot') {
       if (adminUser.role !== 'super_admin') return json(403, { error: 'super_admin_required' }, corsHeaders);
-      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'false') {
-        return json(409, { error: 'queue_authorization_requires_global_sending_disabled' }, corsHeaders);
-      }
       if (String(body.confirmation || '').trim() !== 'AUTORIZAR COLA PILOTO 1') {
         return json(409, { error: 'queue_authorization_confirmation_required' }, corsHeaders);
       }
@@ -1947,9 +1935,6 @@ Deno.serve(async (request: Request) => {
       if (adminUser.role !== 'super_admin') {
         return json(403, { error: 'super_admin_required' }, corsHeaders);
       }
-      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'false') {
-        return json(409, { error: 'audit_requires_sending_disabled' }, corsHeaders);
-      }
       const accessToken = requiredMetaEnv('WHATSAPP_ACCESS_TOKEN');
       const graphVersion = requiredMetaEnv('META_GRAPH_API_VERSION');
       const configuredWabaId = requiredMetaEnv('WHATSAPP_BUSINESS_ACCOUNT_ID');
@@ -2005,9 +1990,6 @@ Deno.serve(async (request: Request) => {
     if (action === 'agent_configure_websites') {
       if (adminUser.role !== 'super_admin') {
         return json(403, { error: 'super_admin_required' }, corsHeaders);
-      }
-      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'false') {
-        return json(409, { error: 'agent_knowledge_requires_sending_disabled' }, corsHeaders);
       }
       const accessToken = requiredMetaEnv('WHATSAPP_ACCESS_TOKEN');
       const configuredPhoneNumberId = requiredMetaEnv('WHATSAPP_PHONE_NUMBER_ID');
@@ -2130,9 +2112,6 @@ Deno.serve(async (request: Request) => {
     if (action === 'agent_files_upload') {
       if (adminUser.role !== 'super_admin') {
         return json(403, { error: 'super_admin_required' }, corsHeaders);
-      }
-      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'false') {
-        return json(409, { error: 'agent_files_require_sending_disabled' }, corsHeaders);
       }
       if (!uploadedFile) {
         return json(400, { error: 'file_required' }, corsHeaders);
@@ -2266,9 +2245,6 @@ Deno.serve(async (request: Request) => {
       if (adminUser.role !== 'super_admin') {
         return json(403, { error: 'super_admin_required' }, corsHeaders);
       }
-      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'false') {
-        return json(409, { error: 'agent_files_require_sending_disabled' }, corsHeaders);
-      }
       const configuredPhoneNumberId = requiredMetaEnv('WHATSAPP_PHONE_NUMBER_ID');
       const localId = String(body.localId || '').trim();
       const selected = await crm.from('agent_knowledge_files')
@@ -2303,9 +2279,6 @@ Deno.serve(async (request: Request) => {
     if (action === 'agent_files_delete') {
       if (adminUser.role !== 'super_admin') {
         return json(403, { error: 'super_admin_required' }, corsHeaders);
-      }
-      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'false') {
-        return json(409, { error: 'agent_files_require_sending_disabled' }, corsHeaders);
       }
       const accessToken = requiredMetaEnv('WHATSAPP_ACCESS_TOKEN');
       const configuredPhoneNumberId = requiredMetaEnv('WHATSAPP_PHONE_NUMBER_ID');
@@ -2353,9 +2326,6 @@ Deno.serve(async (request: Request) => {
     if (action === 'agent_test') {
       if (adminUser.role !== 'super_admin') {
         return json(403, { error: 'super_admin_required' }, corsHeaders);
-      }
-      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'false') {
-        return json(409, { error: 'agent_test_requires_sending_disabled' }, corsHeaders);
       }
       const accessToken = requiredMetaEnv('WHATSAPP_ACCESS_TOKEN');
       const configuredPhoneNumberId = requiredMetaEnv('WHATSAPP_PHONE_NUMBER_ID');
@@ -2417,9 +2387,6 @@ Deno.serve(async (request: Request) => {
     if (action === 'agent_meta_connector_audit') {
       if (adminUser.role !== 'super_admin') {
         return json(403, { error: 'super_admin_required' }, corsHeaders);
-      }
-      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'false') {
-        return json(409, { error: 'agent_connector_audit_requires_sending_disabled' }, corsHeaders);
       }
       const accessToken = requiredMetaEnv('WHATSAPP_ACCESS_TOKEN');
       const configuredPhoneNumberId = requiredMetaEnv('WHATSAPP_PHONE_NUMBER_ID');
@@ -2500,9 +2467,6 @@ Deno.serve(async (request: Request) => {
     if (action === 'agent_meta_connector_create') {
       if (adminUser.role !== 'super_admin') {
         return json(403, { error: 'super_admin_required' }, corsHeaders);
-      }
-      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'false') {
-        return json(409, { error: 'agent_connector_create_requires_sending_disabled' }, corsHeaders);
       }
 
       const accessToken = requiredMetaEnv('WHATSAPP_ACCESS_TOKEN');

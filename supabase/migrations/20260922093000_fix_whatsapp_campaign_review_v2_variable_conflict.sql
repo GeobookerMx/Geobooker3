@@ -10,9 +10,13 @@
 -- missing_consent_members, suppressed_members, invalid_candidates — never campaign_id.
 -- So this rename is safe and fully backward compatible.
 --
--- Safe to run multiple times (CREATE OR REPLACE).
+-- DROP required because PostgreSQL does not allow changing return type with CREATE OR REPLACE.
+-- The only change is renaming OUT column campaign_id → result_campaign_id to remove ambiguity.
+-- No data is lost; no dependencies exist on this function outside whatsapp-admin Edge Function.
 
-CREATE OR REPLACE FUNCTION public.crm_prepare_whatsapp_campaign_review_v2(
+DROP FUNCTION IF EXISTS public.crm_prepare_whatsapp_campaign_review_v2(UUID, UUID);
+
+CREATE FUNCTION public.crm_prepare_whatsapp_campaign_review_v2(
   p_campaign_id UUID,
   p_actor_user_id UUID DEFAULT auth.uid()
 )

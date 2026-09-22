@@ -729,7 +729,7 @@ function ContactabilityView() {
     ['Send switch', 'OFF', 'WHATSAPP_SEND_ENABLED=false.', 'good']
   ];
 
-  return <div className="space-y-5">
+  return <div className="flex flex-col gap-5">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
         <h2 className="text-2xl font-bold">Contactability Engine</h2>
@@ -754,7 +754,7 @@ function ContactabilityView() {
         </div>
       </div>
     </div>
-    <div className="rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+    <div className="order-4 rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h3 className="font-bold">Preview de contactos por mercado/industria</h3>
@@ -1488,7 +1488,7 @@ function AgentConnectorPanel() {
 
 function MetaBusinessAgentView() {
   return <div className="space-y-4">
-    <div className="rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+    <div className="order-2 rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
       <h2 className="text-2xl font-bold">Meta Business Agent</h2>
       <p className="mt-1 text-sm text-gray-500">Configuración segura del agente para Geobooker: knowledge público, archivos revisados y pruebas sandbox. No activa respuestas productivas.</p>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -1882,7 +1882,7 @@ function CampaignReadinessView() {
         </table>
       </div>
     </div>
-    <form onSubmit={createDraft} className="rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+    <form onSubmit={createDraft} className="order-1 rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="font-bold">Campaign Wizard V2</h3>
@@ -1961,7 +1961,7 @@ function CampaignReadinessView() {
         ].map(([label, value, tone]) => <IntegrationCard key={label} label={label} value={Number(value || 0).toLocaleString()} tone={tone} />)}
       </div>}
     </form>
-    <div className="rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+    <div className="order-3 rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
       <h3 className="font-bold">Campaign drafts recientes</h3>
       {approvalCheck && <div className={`mt-4 rounded-xl border p-4 ${approvalCheck.is_approvable ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-950'}`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -2048,7 +2048,7 @@ function CampaignReadinessView() {
         </table>
       </div>
     </div>
-    <div className="rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+    <div className="order-5 rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
       <div className="flex items-start gap-3">
         <ShieldCheck className="mt-1 h-5 w-5 text-emerald-600" />
         <div>

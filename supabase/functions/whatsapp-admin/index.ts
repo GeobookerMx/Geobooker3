@@ -1773,8 +1773,9 @@ Deno.serve(async (request: Request) => {
 
     if (action === 'campaign_dispatch_atomic') {
       if (adminUser.role !== 'super_admin') return json(403, { error: 'super_admin_required' }, corsHeaders);
-      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'false') {
-        return json(409, { error: 'atomic_dispatch_requires_global_sending_disabled' }, corsHeaders);
+      // Dispatch only allowed when sending is live-enabled
+      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'true') {
+        return json(409, { error: 'atomic_dispatch_requires_sending_enabled' }, corsHeaders);
       }
       if (String(body.confirmation || '').trim() !== 'ENCOLAR 1 MENSAJE') {
         return json(409, { error: 'atomic_dispatch_confirmation_required' }, corsHeaders);
@@ -1796,6 +1797,7 @@ Deno.serve(async (request: Request) => {
         }, corsHeaders);
       }
       const result = data?.[0] || null;
+      const sendingEnabled = Deno.env.get('WHATSAPP_SEND_ENABLED') === 'true';
       await crm.from('audit_log').insert({
         actor_user_id: authData.user.id,
         actor_type: 'user',
@@ -1810,11 +1812,12 @@ Deno.serve(async (request: Request) => {
           currency: result?.currency || null,
           replayed: result?.replayed === true,
           queue_gate_closed: result?.queue_gate_closed === true,
-          sending_enabled: false
+          sending_enabled: sendingEnabled
         }
       });
-      return json(200, { result, sendingEnabled: false }, corsHeaders);
+      return json(200, { result, sendingEnabled }, corsHeaders);
     }
+
 
     if (action === 'campaign_close_queue_gate') {
       if (adminUser.role !== 'super_admin') return json(403, { error: 'super_admin_required' }, corsHeaders);

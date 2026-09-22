@@ -1,23 +1,23 @@
 -- Fix WhatsApp Campaign Wizard V2 dry-run review — campaign_id column ambiguity.
 --
--- In PL/pgSQL, when a RETURNS TABLE has a column named campaign_id AND the
--- function body writes to crm.campaign_members(campaign_id), the bare name
--- campaign_id inside ON CONFLICT(...) resolves to the OUT variable, not the
--- physical table column, causing:
---   ERROR: column reference "campaign_id" is ambiguous
+-- Supabase Cloud does not allow SET plpgsql.variable_conflict in CREATE FUNCTION.
+-- Fix: rename the RETURNS TABLE OUT column from "campaign_id" to "result_campaign_id"
+-- so it no longer conflicts with the physical column crm.campaign_members.campaign_id
+-- inside the function body's ON CONFLICT clause.
 --
--- Fix: set plpgsql.variable_conflict = use_column for this function only,
--- so bare column names in SQL statements are resolved as table columns, not
--- OUT variables. This is the minimal, targeted fix with no behaviour change.
+-- The Edge Function whatsapp-admin reads data?.[0] and returns the full object;
+-- the frontend only reads total_candidates, eligible_members, materialized_members,
+-- missing_consent_members, suppressed_members, invalid_candidates — never campaign_id.
+-- So this rename is safe and fully backward compatible.
 --
--- Safe to run multiple times (OR REPLACE).
+-- Safe to run multiple times (CREATE OR REPLACE).
 
 CREATE OR REPLACE FUNCTION public.crm_prepare_whatsapp_campaign_review_v2(
   p_campaign_id UUID,
   p_actor_user_id UUID DEFAULT auth.uid()
 )
 RETURNS TABLE (
-  campaign_id UUID,
+  result_campaign_id UUID,
   total_candidates BIGINT,
   materialized_members BIGINT,
   eligible_members BIGINT,
@@ -35,7 +35,6 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = pg_catalog, public, crm
-SET plpgsql.variable_conflict = use_column
 AS $$
 DECLARE
   campaign_record RECORD;
@@ -98,6 +97,7 @@ BEGIN
     AND (rc.effective_to IS NULL OR rc.effective_to > prepared_timestamp)
   ORDER BY rc.effective_from DESC LIMIT 1;
 
+  -- Reset any previously computed (non-queued/non-sent) members
   UPDATE crm.campaign_members cm SET
     eligibility_status = 'excluded',
     eligibility_reasons = '["recomputed_by_wizard_v2"]'::jsonb,
@@ -213,33 +213,41 @@ BEGIN
     candidate.contact_id
   LIMIT safe_limit;
 
-  -- Use table-qualified campaign_id to avoid OUT variable ambiguity
+  -- Use p_campaign_id explicitly in INSERT to avoid any residual column/variable ambiguity
   INSERT INTO crm.campaign_members (
     campaign_id, account_id, contact_id, contact_point_id, eligibility_status,
     eligibility_reasons, score, recipient_country_code, language_code,
     estimated_unit_cost, cost_currency, queued_job_id, provider_message_id, updated_at
   )
   SELECT
-    p_campaign_id, candidate.account_id, candidate.contact_id, candidate.contact_point_id,
-    candidate.eligibility_status, candidate.eligibility_reasons, candidate.score,
-    candidate.country_code, campaign_record.language_code,
+    p_campaign_id,
+    candidate.account_id,
+    candidate.contact_id,
+    candidate.contact_point_id,
+    candidate.eligibility_status,
+    candidate.eligibility_reasons,
+    candidate.score,
+    candidate.country_code,
+    campaign_record.language_code,
     CASE WHEN candidate.eligibility_status = 'eligible' THEN rate_record.unit_cost ELSE NULL END,
     CASE WHEN candidate.eligibility_status = 'eligible' THEN rate_record.currency ELSE NULL END,
-    NULL, NULL, prepared_timestamp
+    NULL,
+    NULL,
+    prepared_timestamp
   FROM pg_temp.whatsapp_campaign_v2_candidates candidate
   WHERE candidate.contact_point_id IS NOT NULL
   ON CONFLICT (campaign_id, contact_id, contact_point_id) DO UPDATE SET
-    account_id            = EXCLUDED.account_id,
-    eligibility_status    = EXCLUDED.eligibility_status,
-    eligibility_reasons   = EXCLUDED.eligibility_reasons,
-    score                 = EXCLUDED.score,
-    recipient_country_code= EXCLUDED.recipient_country_code,
-    language_code         = EXCLUDED.language_code,
-    estimated_unit_cost   = EXCLUDED.estimated_unit_cost,
-    cost_currency         = EXCLUDED.cost_currency,
-    queued_job_id         = NULL,
-    provider_message_id   = NULL,
-    updated_at            = EXCLUDED.updated_at;
+    account_id             = EXCLUDED.account_id,
+    eligibility_status     = EXCLUDED.eligibility_status,
+    eligibility_reasons    = EXCLUDED.eligibility_reasons,
+    score                  = EXCLUDED.score,
+    recipient_country_code = EXCLUDED.recipient_country_code,
+    language_code          = EXCLUDED.language_code,
+    estimated_unit_cost    = EXCLUDED.estimated_unit_cost,
+    cost_currency          = EXCLUDED.cost_currency,
+    queued_job_id          = NULL,
+    provider_message_id    = NULL,
+    updated_at             = EXCLUDED.updated_at;
 
   UPDATE crm.campaigns c SET
     status = 'review_ready',
@@ -274,6 +282,7 @@ BEGIN
     'sending_enabled', false
   ) FROM pg_temp.whatsapp_campaign_v2_candidates;
 
+  -- Return result_campaign_id (renamed from campaign_id to avoid PL/pgSQL OUT variable clash)
   RETURN QUERY SELECT
     p_campaign_id,
     count(*)::bigint,

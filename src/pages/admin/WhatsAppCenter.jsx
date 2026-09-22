@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { QRCodeSVG } from 'qrcode.react';
-import { supabase } from '../../lib/supabase';
+import { supabase, supabaseKey, supabaseUrl } from '../../lib/supabase';
 
 const NAVIGATION = [
   ['summary', 'Resumen', HeartPulse],
@@ -312,10 +312,30 @@ function metaStatusTone(value, goodValues = []) {
 }
 
 async function callAdmin(action, params = {}) {
-  const { data, error } = await supabase.functions.invoke('whatsapp-admin', { body: { action, ...params } });
-  if (error) throw new Error(error.message || 'No fue posible consultar WhatsApp Center');
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token;
+  const response = await fetch(`${supabaseUrl}/functions/v1/whatsapp-admin`, {
+    method: 'POST',
+    headers: {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${token || supabaseKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ action, ...params })
+  });
+  const text = await response.text();
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = null;
+  }
+  if (!response.ok) {
+    const message = data?.message || data?.error || data?.detail || text || `WhatsApp Center HTTP ${response.status}`;
+    throw new Error(message);
+  }
   if (data?.error) throw new Error(data.message || data.error);
-  return data;
+  return data || {};
 }
 
 async function callAdminMultipart(formData) {

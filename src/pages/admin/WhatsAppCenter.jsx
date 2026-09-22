@@ -1593,6 +1593,7 @@ function CampaignReadinessView() {
   const [queueConfirmation, setQueueConfirmation] = useState('');
   const [dispatchConfirmation, setDispatchConfirmation] = useState('');
   const [dispatchResult, setDispatchResult] = useState(null);
+  const [dispatchLoading, setDispatchLoading] = useState('');
   const [approvalLoading, setApprovalLoading] = useState('');
   const load = useCallback(() => {
     setLoading(true);
@@ -1716,9 +1717,10 @@ function CampaignReadinessView() {
   const runPreflight = async (campaignId) => {
     setApprovalLoading(campaignId);
     setError('');
+    setDispatchResult(null);
     try {
       const result = await callAdmin('campaign_dispatch_preflight', { campaignId, batchSize: 50 });
-      setPreflightResult(result.preflight || null);
+      setPreflightResult({ ...(result.preflight || {}), campaignId });
       setPreflightCampaignId(campaignId);
       setDispatchResult(null);
       setQueueConfirmation('');
@@ -1729,6 +1731,26 @@ function CampaignReadinessView() {
       toast.error(loadError.message);
     } finally {
       setApprovalLoading('');
+    }
+  };
+  const dispatchAtomic = async (campaignId, preflightRunId) => {
+    if (!window.confirm('¿Confirmas encolar 1 mensaje real a WhatsApp? Esta acción no se puede deshacer.')) return;
+    setDispatchLoading(campaignId);
+    setError('');
+    try {
+      const result = await callAdmin('campaign_dispatch_atomic', {
+        campaignId,
+        preflightRunId,
+        confirmation: 'ENCOLAR 1 MENSAJE'
+      });
+      setDispatchResult(result.result || null);
+      toast.success(`✅ ${result.result?.queued_members || 1} mensaje(s) encolado(s). El worker procesará el envío.`);
+      await load();
+    } catch (loadError) {
+      setError(loadError.message);
+      toast.error(loadError.message);
+    } finally {
+      setDispatchLoading('');
     }
   };
   const authorizeQueuePilot = async () => {
@@ -2003,6 +2025,11 @@ function CampaignReadinessView() {
         </div>
         {Array.isArray(approvalCheck.reasons) && approvalCheck.reasons.length > 0 && <p className="mt-3 text-sm">Razones: {approvalCheck.reasons.join(', ')}</p>}
       </div>}
+      {dispatchResult && <div className="mt-4 rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-emerald-900">
+        <p className="font-bold">🚀 Despacho ejecutado</p>
+        <p className="mt-1 text-sm">Mensajes encolados: <strong>{dispatchResult.queued_members || 0}</strong> · Costo reservado: <strong>{dispatchResult.currency || ''} {Number(dispatchResult.reserved_cost || 0).toFixed(4)}</strong></p>
+        <p className="mt-1 text-xs text-emerald-700">El worker procesará el envío. Revisa el estado en Diagnósticos o en las Invocations de whatsapp-worker.</p>
+      </div>}
       {preflightResult && <div className={`mt-4 rounded-xl border p-4 ${preflightResult.can_schedule ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-950'}`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -2058,9 +2085,19 @@ function CampaignReadinessView() {
               <td className="px-3 py-2">{formatDate(campaign.updated_at)}</td>
               <td className="px-3 py-2">
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={() => checkApproval(campaign.id)} disabled={approvalLoading === campaign.id} className="rounded-lg border px-2 py-1 text-xs font-semibold disabled:opacity-50">Check</button>
+                  <button type="button" onClick={() => checkApproval(campaign.id)} disabled={approvalLoading === campaign.id || dispatchLoading === campaign.id} className="rounded-lg border px-2 py-1 text-xs font-semibold disabled:opacity-50">Check</button>
                   {campaign.status === 'review_ready' && <button type="button" onClick={() => approveNoSend(campaign.id)} disabled={approvalLoading === campaign.id} className="rounded-lg bg-gray-900 px-2 py-1 text-xs font-semibold text-white disabled:opacity-50">Approve no-send</button>}
                   {campaign.status === 'approved' && <button type="button" onClick={() => runPreflight(campaign.id)} disabled={approvalLoading === campaign.id} className="rounded-lg bg-blue-600 px-2 py-1 text-xs font-semibold text-white disabled:opacity-50">Preflight</button>}
+                  {campaign.status === 'approved' && preflightResult?.campaignId === campaign.id && preflightResult?.can_schedule && preflightResult?.run_id && (
+                    <button
+                      type="button"
+                      onClick={() => dispatchAtomic(campaign.id, preflightResult.run_id)}
+                      disabled={dispatchLoading === campaign.id}
+                      className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2 py-1 text-xs font-bold text-white disabled:opacity-50 hover:bg-emerald-700"
+                    >
+                      {dispatchLoading === campaign.id ? '⏳ Encolando…' : '🚀 Despachar 1 msg'}
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>)}

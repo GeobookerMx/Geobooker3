@@ -1698,9 +1698,11 @@ Deno.serve(async (request: Request) => {
         .eq('provider', 'meta_cloud')
         .maybeSingle();
       if (error) {
-        return json(409, {
-          error: 'campaign_dispatch_gate_status_unavailable',
-          message: safeFailureDetail(error.message)
+        return json(200, {
+          gate: null,
+          warning: 'campaign_dispatch_gate_status_unavailable',
+          message: safeFailureDetail(error.message),
+          sendingEnabled: Deno.env.get('WHATSAPP_SEND_ENABLED') === 'true'
         }, corsHeaders);
       }
       return json(200, {

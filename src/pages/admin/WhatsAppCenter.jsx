@@ -311,6 +311,14 @@ function metaStatusTone(value, goodValues = []) {
   return goodValues.includes(normalized) ? 'good' : normalized ? 'warning' : 'bad';
 }
 
+function normalizeTemplateCategory(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function normalizeTemplateLanguage(value) {
+  return String(value || '').trim().replace('-', '_').toLowerCase();
+}
+
 async function callAdmin(action, params = {}) {
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData?.session?.access_token;
@@ -1878,13 +1886,16 @@ function CampaignReadinessView() {
     ...(wizardOptions?.markets || [])
   ].map((market) => [market.country_code, market])).values()).sort((a, b) => a.market_name.localeCompare(b.market_name));
   const expectedCategory = draftPurpose === 'marketing' ? 'marketing' : 'utility';
+  const normalizedExpectedCategory = normalizeTemplateCategory(expectedCategory);
+  const normalizedLanguageCode = normalizeTemplateLanguage(languageCode);
   const compatibleTemplates = templates.filter((template) => (
-    template.category === expectedCategory
-    && String(template.language_code || '').replace('-', '_').toLowerCase() === languageCode.replace('-', '_').toLowerCase()
+    normalizeTemplateCategory(template.category) === normalizedExpectedCategory
+    && normalizeTemplateLanguage(template.language_code) === normalizedLanguageCode
   ));
   const selectedTemplate = templates.find((template) => template.id === draftTemplateId) || null;
   const matchingRates = (wizardOptions?.rates || []).filter((rate) => (
-    rate.country_code === countryCode && rate.category === selectedTemplate?.category
+    rate.country_code === countryCode
+    && normalizeTemplateCategory(rate.category) === normalizeTemplateCategory(selectedTemplate?.category)
   ));
   const activeRate = matchingRates.find((rate) => rate.status === 'active') || null;
   const observedRate = activeRate || matchingRates[0] || null;
@@ -2017,7 +2028,11 @@ function CampaignReadinessView() {
       </div>}
       {wizardStep === 4 && <div className="mt-5 space-y-3">
         <label className="text-sm font-semibold">Plantilla compatible<select value={draftTemplateId} onChange={(event) => setDraftTemplateId(event.target.value)} className="mt-1 w-full rounded-xl border bg-white px-3 py-2 font-normal dark:bg-gray-900"><option value="">Selecciona una plantilla habilitada</option>{compatibleTemplates.map((template) => <option key={template.id} value={template.id}>{template.template_name} · {template.language_code} · {template.category}</option>)}</select></label>
-        {!compatibleTemplates.length && <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">No hay plantilla habilitada para {expectedCategory} en {languageCode}. El wizard queda bloqueado correctamente.</div>}
+        {!compatibleTemplates.length && <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+          <p>No hay plantilla habilitada para {expectedCategory} en {languageCode}. El wizard queda bloqueado correctamente.</p>
+          <p className="mt-1 text-xs">Diagnóstico: el backend devolvió {templates.length} plantilla(s) habilitada(s). Filtro normalizado: {normalizedExpectedCategory} / {normalizedLanguageCode}.</p>
+          {templates.length > 0 && <p className="mt-1 text-xs">Disponibles: {templates.slice(0, 5).map((template) => `${template.template_name} (${template.category}/${template.language_code})`).join(' · ')}</p>}
+        </div>}
         {selectedTemplate && <div className="rounded-xl border bg-gray-50 p-3 text-sm dark:bg-gray-900"><p className="font-semibold">{selectedTemplate.template_name}</p><p className="mt-1 text-gray-600 dark:text-gray-300">{selectedTemplate.body_text || 'Meta no devolvió una vista previa del cuerpo.'}</p><p className="mt-2 text-xs text-gray-500">Variables: {selectedTemplate.variable_count || 0} · Rol: {selectedTemplate.campaign_role || 'sin clasificar'}</p></div>}
       </div>}
       {wizardStep === 5 && <div className="mt-5 space-y-4">

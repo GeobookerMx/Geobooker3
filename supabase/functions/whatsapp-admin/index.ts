@@ -332,6 +332,13 @@ function templateVariables(components: unknown) {
   return [...new Set(matches.map((value) => value.replace(/\s/g, '')))];
 }
 
+function templateBodyVariables(components: unknown) {
+  const componentList = Array.isArray(components) ? components : [];
+  const body = componentList.find((entry: any) => String(entry?.type || '').toUpperCase() === 'BODY');
+  const matches = String(body?.text || '').match(/{{\s*\d+\s*}}/g) || [];
+  return [...new Set(matches.map((value) => value.replace(/\s/g, '')))];
+}
+
 function templateMediaHeader(componentsValue: unknown) {
   const components = Array.isArray(componentsValue) ? componentsValue : [];
   const header = components.find((entry: any) => String(entry?.type || '').toUpperCase() === 'HEADER');
@@ -436,7 +443,7 @@ function templateComponentMetadata(componentsValue: unknown) {
     body_text: typeof body?.text === 'string' ? body.text : null,
     footer_text: typeof footer?.text === 'string' ? footer.text : null,
     buttons_json: Array.isArray(buttons?.buttons) ? buttons.buttons : [],
-    variable_count: templateVariables(components).length,
+    variable_count: templateBodyVariables(components).length,
     variable_examples: examples
   };
 }

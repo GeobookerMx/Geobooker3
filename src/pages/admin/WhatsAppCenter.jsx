@@ -608,6 +608,17 @@ function InboxView() {
     const allowed = detail.permissions?.some((permission) => ['allowed', 'opted_in'].includes(permission.status));
     return allowed ? { tone: 'good', label: 'Contactable' } : { tone: 'warning', label: 'Consentimiento desconocido' };
   }, [detail]);
+  const serviceWindowOpen = Boolean(sendEligibility?.checks?.serviceWindowOpen);
+  const sendStatusLabel = eligibilityLoading
+    ? 'Evaluando…'
+    : sendEligibility?.canSend
+      ? 'Texto libre permitido'
+      : serviceWindowOpen
+        ? 'Envío manual bloqueado'
+        : 'Texto libre OFF';
+  const sendStatusDetail = serviceWindowOpen
+    ? `Ventana de servicio abierta hasta ${formatDate(sendEligibility.serviceWindowExpiresAt)}`
+    : 'La ventana de 24h cerró; usa plantilla aprobada o una campaña con consentimiento.';
 
   const sendControlledReply = async () => {
     const text = draftText.trim();
@@ -678,7 +689,7 @@ function InboxView() {
             <div className="flex flex-wrap gap-2"><button type="button" onClick={() => setMessageType('text')} className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${messageType === 'text' ? 'bg-emerald-600 text-white' : 'border'}`}>Texto</button><button type="button" onClick={() => setMessageType('template')} className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${messageType === 'template' ? 'bg-emerald-600 text-white' : 'border'}`}>Template</button><button type="button" disabled className="rounded-lg border px-3 py-1.5 text-sm opacity-50">Adjuntar</button></div>
             {messageType === 'template' && <select value={templateId} onChange={(event) => setTemplateId(event.target.value)} className="w-full rounded-xl border bg-white px-3 py-2 text-sm dark:bg-gray-900"><option value="">Selecciona una plantilla aprobada</option>{templates.map((template) => <option key={template.id} value={template.id}>{template.template_name} · {template.language_code}</option>)}</select>}
             <textarea value={draftText} onChange={(event) => setDraftText(event.target.value.slice(0, 4096))} rows="3" placeholder={messageType === 'text' ? 'Escribe una respuesta…' : 'Vista previa de variables (el envío permanece bloqueado)'} className="w-full resize-none rounded-xl border bg-gray-50 px-3 py-2 text-sm dark:bg-gray-900" />
-            <div className="flex items-start gap-2 rounded-xl border bg-gray-50 px-3 py-2 text-sm dark:bg-gray-900"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" /><div className="flex-1"><p className="font-semibold">{eligibilityLoading ? 'Evaluando…' : sendEligibility?.canSend ? 'CAN SEND' : 'SENDING DISABLED'}</p><p className="text-xs text-gray-500">{sendEligibility?.checks?.serviceWindowOpen ? `Ventana de servicio abierta hasta ${formatDate(sendEligibility.serviceWindowExpiresAt)}` : 'Ventana de servicio cerrada.'}</p>{sendEligibility?.reasons?.length > 0 && <ul className="mt-1 list-disc pl-4 text-xs text-amber-700">{sendEligibility.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>}</div><button type="button" onClick={sendControlledReply} disabled={!sendEligibility?.canSend || messageType !== 'text' || !draftText.trim() || sendingReply} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"><Send className="h-4 w-4" />{sendingReply ? 'ENVIANDO…' : sendEligibility?.canSend ? 'ENVIAR' : 'SEND OFF'}</button></div>
+            <div className="flex items-start gap-2 rounded-xl border bg-gray-50 px-3 py-2 text-sm dark:bg-gray-900"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" /><div className="flex-1"><p className="font-semibold">{sendStatusLabel}</p><p className="text-xs text-gray-500">{sendStatusDetail}</p>{sendEligibility?.reasons?.length > 0 && <ul className="mt-1 list-disc pl-4 text-xs text-amber-700">{sendEligibility.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>}</div><button type="button" onClick={sendControlledReply} disabled={!sendEligibility?.canSend || messageType !== 'text' || !draftText.trim() || sendingReply} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"><Send className="h-4 w-4" />{sendingReply ? 'ENVIANDO…' : sendEligibility?.canSend ? 'ENVIAR' : 'TEXTO OFF'}</button></div>
             <div className="flex justify-between text-xs text-gray-400"><span>{eligibility.label}</span><span>{draftText.length}/4096</span></div>
           </div>
         </>}
@@ -756,7 +767,6 @@ function ContactabilityView() {
         <p className="text-sm text-gray-500">Evalua si un contacto puede usarse por WhatsApp sin confundir telefono con permiso.</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        <button onClick={runWorkerOnce} disabled={approvalLoading === 'worker-run-once'} className="inline-flex items-center gap-2 rounded-xl border bg-white px-4 py-2 font-semibold disabled:opacity-50 dark:bg-gray-800">Procesar worker 1</button>
         <button onClick={load} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border bg-white px-4 py-2 font-semibold disabled:opacity-50 dark:bg-gray-800"><RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />Actualizar</button>
       </div>
     </div>
@@ -1511,7 +1521,7 @@ function AgentConnectorPanel() {
 
 function MetaBusinessAgentView() {
   return <div className="space-y-4">
-    <div className="order-2 rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+    <div className="rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
       <h2 className="text-2xl font-bold">Meta Business Agent</h2>
       <p className="mt-1 text-sm text-gray-500">Configuración segura del agente para Geobooker: knowledge público, archivos revisados y pruebas sandbox. No activa respuestas productivas.</p>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -1883,14 +1893,14 @@ function CampaignReadinessView() {
       && Number(minScore) <= 100
       && Boolean(draftTemplateId && selectedTemplate)
   };
-  return <div className="space-y-5">
-    <div className="flex flex-wrap items-center justify-between gap-3">
+  return <div className="flex flex-col gap-5">
+    <div className="order-1 flex flex-wrap items-center justify-between gap-3">
       <div><h2 className="text-2xl font-bold">Readiness de campañas</h2><p className="text-sm text-gray-500">Preparación agregada; no crea ni envía campañas.</p></div>
       <button onClick={load} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border bg-white px-4 py-2 font-semibold disabled:opacity-50 dark:bg-gray-800"><RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />Actualizar</button>
     </div>
-    {error && !error.includes('no_unprocessed_eligible_members') && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">Readiness no disponible todavía: {error}</div>}
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{cards.map(([label, value, detail, tone]) => <IntegrationCard key={label} label={label} value={Number(value || 0).toLocaleString()} detail={detail} tone={tone} />)}</div>
-    <div className="rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+    {error && !error.includes('no_unprocessed_eligible_members') && <div className="order-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">Readiness no disponible todavía: {error}</div>}
+    <div className="order-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{cards.map(([label, value, detail, tone]) => <IntegrationCard key={label} label={label} value={Number(value || 0).toLocaleString()} detail={detail} tone={tone} />)}</div>
+    <div className="order-7 rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div><h3 className="font-bold">Mercados internacionales candidatos</h3><p className="text-sm text-gray-500">Cohorte comercial inicial; todos permanecen bloqueados hasta revisión y activación explícita.</p></div>
         <StatusBadge tone={approvedMarkets ? 'good' : 'warning'}>{approvedMarkets}/20 habilitados</StatusBadge>
@@ -1913,7 +1923,7 @@ function CampaignReadinessView() {
         </table>
       </div>
     </div>
-    <div className="rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+    <div className="order-5 rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h3 className="font-bold">Preview de audiencia WhatsApp</h3>
@@ -1945,13 +1955,25 @@ function CampaignReadinessView() {
         </table>
       </div>
     </div>
-    <form onSubmit={createDraft} className="order-1 rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+    <form onSubmit={createDraft} className="order-3 rounded-2xl border-2 border-emerald-200 bg-white p-5 shadow-sm dark:border-emerald-900 dark:bg-gray-800">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="font-bold">Campaign Wizard V2</h3>
-          <p className="text-sm text-gray-500">Materializa una audiencia para revisión. No aprueba, no agenda y no envía mensajes.</p>
+          <h3 className="font-bold">Crear campaña rápida</h3>
+          <p className="text-sm text-gray-500">Flujo corto: objetivo, mercado, audiencia, plantilla y revisión. Primero crea un dry run; el envío real sigue protegido por approval, preflight y gate.</p>
         </div>
         <StatusBadge tone="good">No queue · No send</StatusBadge>
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          ['1', 'Crear dry run', 'Calcula audiencia y costo sin enviar.'],
+          ['2', 'Aprobar', 'Valida plantilla, opt-in, mercado y presupuesto.'],
+          ['3', 'Encolar', 'Abre gate temporal y reserva el lote.'],
+          ['4', 'Medir', 'Estados, respuestas, costo y actividad CRM.']
+        ].map(([number, title, text]) => <div key={title} className="rounded-xl border bg-emerald-50 p-3 text-sm text-emerald-950 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">{number}</span>
+          <p className="mt-2 font-bold">{title}</p>
+          <p className="mt-1 text-xs opacity-80">{text}</p>
+        </div>)}
       </div>
       <div className="mt-4 grid grid-cols-5 gap-2">
         {['Objetivo', 'Mercado', 'Audiencia', 'Plantilla', 'Revisión'].map((label, index) => {
@@ -2024,7 +2046,7 @@ function CampaignReadinessView() {
         ].map(([label, value, tone]) => <IntegrationCard key={label} label={label} value={Number(value || 0).toLocaleString()} tone={tone} />)}
       </div>}
     </form>
-    <div className="order-3 rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+    <div className="order-6 rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
       <h3 className="font-bold">Campaign drafts recientes</h3>
       {approvalCheck && <div className={`mt-4 rounded-xl border p-4 ${approvalCheck.is_approvable ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-950'}`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -2133,7 +2155,7 @@ function CampaignReadinessView() {
         </table>
       </div>
     </div>
-    <div className="order-5 rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+    <div className="order-8 rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
       <div className="flex items-start gap-3">
         <ShieldCheck className="mt-1 h-5 w-5 text-emerald-600" />
         <div>

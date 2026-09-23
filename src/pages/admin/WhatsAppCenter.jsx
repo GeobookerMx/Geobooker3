@@ -755,7 +755,10 @@ function ContactabilityView() {
         <h2 className="text-2xl font-bold">Contactability Engine</h2>
         <p className="text-sm text-gray-500">Evalua si un contacto puede usarse por WhatsApp sin confundir telefono con permiso.</p>
       </div>
-      <button onClick={load} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border bg-white px-4 py-2 font-semibold disabled:opacity-50 dark:bg-gray-800"><RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />Actualizar</button>
+      <div className="flex flex-wrap gap-2">
+        <button onClick={runWorkerOnce} disabled={approvalLoading === 'worker-run-once'} className="inline-flex items-center gap-2 rounded-xl border bg-white px-4 py-2 font-semibold disabled:opacity-50 dark:bg-gray-800">Procesar worker 1</button>
+        <button onClick={load} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border bg-white px-4 py-2 font-semibold disabled:opacity-50 dark:bg-gray-800"><RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />Actualizar</button>
+      </div>
     </div>
     {error && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">Contactability no disponible todavia: {error}</div>}
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{cards.map(([label, value, detail, tone]) => <IntegrationCard key={label} label={label} value={typeof value === 'number' ? value.toLocaleString() : value} detail={detail} tone={tone} />)}</div>
@@ -1459,40 +1462,40 @@ function AgentConnectorPanel() {
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <h3 className="font-bold">Geobooker Connector seguro</h3>
-        <p className="mt-1 text-sm">Puente controlado entre Meta Business Agent y CRM. No expone Supabase, no acepta SQL y no habilita envÃ­os.</p>
+        <p className="mt-1 text-sm">Puente controlado entre Meta Business Agent y CRM. No expone Supabase, no acepta SQL y no habilita envíos.</p>
       </div>
       <button onClick={load} disabled={loading} className="rounded-xl border bg-white px-3 py-2 text-sm font-semibold text-blue-900 disabled:opacity-50">Actualizar</button>
     </div>
     <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <IntegrationCard label="Connector" value={connector.connectionStatus || 'No confirmado'} detail={connector.endpointPath || '/functions/v1/meta-business-agent-connector'} tone={connector.connectionStatus === 'prepared' ? 'good' : 'warning'} />
       <IntegrationCard label="Secret server-side" value={connector.connectorSecretPresent ? 'CONFIGURADO' : 'PENDIENTE'} detail="Nunca se muestra al navegador." tone={connector.connectorSecretPresent ? 'good' : 'warning'} />
-      <IntegrationCard label="Mutaciones" value={connector.mutationsEnabled ? 'ENABLED' : 'DISABLED'} detail="Debe seguir desactivado hasta aprobaciÃ³n." tone={connector.mutationsEnabled ? 'bad' : 'good'} />
-      <IntegrationCard label="ProducciÃ³n Agent" value="DISABLED" detail="Respuestas reales aÃºn no activadas." tone="good" />
+      <IntegrationCard label="Mutaciones" value={connector.mutationsEnabled ? 'ENABLED' : 'DISABLED'} detail="Debe seguir desactivado hasta aprobación." tone={connector.mutationsEnabled ? 'bad' : 'good'} />
+      <IntegrationCard label="Producción Agent" value="DISABLED" detail="Respuestas reales aún no activadas." tone="good" />
     </div>
     <div className="mt-4 rounded-xl border bg-white p-3 text-gray-900">
       <p className="font-bold">Acciones allowlist</p>
       <div className="mt-2 overflow-x-auto">
         <table className="min-w-full text-xs">
-          <thead><tr>{['AcciÃ³n', 'Permiso', 'Tipo', 'Estado inicial'].map((label) => <th key={label} className="px-2 py-1 text-left">{label}</th>)}</tr></thead>
+          <thead><tr>{['Acción', 'Permiso', 'Tipo', 'Estado inicial'].map((label) => <th key={label} className="px-2 py-1 text-left">{label}</th>)}</tr></thead>
           <tbody>{(status?.actions || []).map((row) => <tr key={row.action} className="border-t">
             <td className="px-2 py-1 font-semibold">{row.action}</td>
             <td className="px-2 py-1">{row.permission}</td>
             <td className="px-2 py-1">{row.mutation ? 'mutativa' : 'lectura limitada'}</td>
-            <td className="px-2 py-1">{row.productionMutationBlocked ? 'bloqueada en producciÃ³n' : row.initialStatus}</td>
+            <td className="px-2 py-1">{row.productionMutationBlocked ? 'bloqueada en producción' : row.initialStatus}</td>
           </tr>)}</tbody>
         </table>
       </div>
     </div>
     <div className="mt-4 grid gap-3 sm:grid-cols-3">
-      <IntegrationCard label="Requests 24h" value={status?.metrics24h?.total ?? 0} detail="AuditorÃ­a del connector." tone="neutral" />
+      <IntegrationCard label="Requests 24h" value={status?.metrics24h?.total ?? 0} detail="Auditoría del connector." tone="neutral" />
       <IntegrationCard label="Bloqueados/fail 24h" value={status?.metrics24h?.blockedOrFailed ?? 0} detail="Errores y guardrails." tone={(status?.metrics24h?.blockedOrFailed || 0) > 0 ? 'warning' : 'good'} />
-      <IntegrationCard label="Latencia promedio" value={status?.metrics24h?.avgLatencyMs ? `${status.metrics24h.avgLatencyMs} ms` : 'Sin datos'} detail="Ãšltimas 24h." tone="neutral" />
+      <IntegrationCard label="Latencia promedio" value={status?.metrics24h?.avgLatencyMs ? `${status.metrics24h.avgLatencyMs} ms` : 'Sin datos'} detail="Últimas 24h." tone="neutral" />
     </div>
     <div className="mt-4 rounded-xl border bg-white p-3 text-gray-900">
       <p className="font-bold">Logs recientes sanitizados</p>
-      {!logs.length ? <p className="mt-2 text-sm text-gray-500">Sin llamadas registradas todavÃ­a.</p> : <div className="mt-2 overflow-x-auto">
+      {!logs.length ? <p className="mt-2 text-sm text-gray-500">Sin llamadas registradas todavía.</p> : <div className="mt-2 overflow-x-auto">
         <table className="min-w-full text-xs">
-          <thead><tr>{['Fecha', 'AcciÃ³n', 'Status', 'Idempotencia', 'Error'].map((label) => <th key={label} className="px-2 py-1 text-left">{label}</th>)}</tr></thead>
+          <thead><tr>{['Fecha', 'Acción', 'Status', 'Idempotencia', 'Error'].map((label) => <th key={label} className="px-2 py-1 text-left">{label}</th>)}</tr></thead>
           <tbody>{logs.map((row) => <tr key={row.id} className="border-t">
             <td className="px-2 py-1">{formatDate(row.created_at)}</td>
             <td className="px-2 py-1">{row.action}</td>
@@ -1593,6 +1596,7 @@ function CampaignReadinessView() {
   const [queueConfirmation, setQueueConfirmation] = useState('');
   const [dispatchConfirmation, setDispatchConfirmation] = useState('');
   const [dispatchResult, setDispatchResult] = useState(null);
+  const [workerRunResult, setWorkerRunResult] = useState(null);
   const [dispatchLoading, setDispatchLoading] = useState('');
   const [approvalLoading, setApprovalLoading] = useState('');
   const load = useCallback(() => {
@@ -1744,7 +1748,8 @@ function CampaignReadinessView() {
         confirmation: 'ENCOLAR 1 MENSAJE'
       });
       setDispatchResult(result.result || null);
-      toast.success(`✅ ${result.result?.queued_members || 1} mensaje(s) encolado(s). El worker procesará el envío.`);
+      setWorkerRunResult(result.workerResult || null);
+      toast.success(`✅ ${result.result?.queued_members || 1} mensaje(s) encolado(s). Worker procesados: ${result.workerResult?.body?.processed ?? 0}.`);
       await load();
     } catch (loadError) {
       setError(loadError.message);
@@ -1783,8 +1788,9 @@ function CampaignReadinessView() {
         confirmation: dispatchConfirmation
       });
       setDispatchResult(result.result || null);
+      setWorkerRunResult(result.workerResult || null);
       setDispatchGate(null);
-      toast.success('Se reservo y encolo 1 mensaje. Aun no activa envios globales.');
+      toast.success(`Se reservó y encoló 1 mensaje. Worker procesados: ${result.workerResult?.body?.processed ?? 0}.`);
       await load();
     } catch (loadError) {
       setError(loadError.message);
@@ -1800,6 +1806,21 @@ function CampaignReadinessView() {
       const result = await callAdmin('campaign_close_queue_gate');
       setDispatchGate(result.gate || null);
       toast.success('Gate de cola cerrado.');
+    } catch (loadError) {
+      setError(loadError.message);
+      toast.error(loadError.message);
+    } finally {
+      setApprovalLoading('');
+    }
+  };
+  const runWorkerOnce = async () => {
+    setApprovalLoading('worker-run-once');
+    setError('');
+    try {
+      const result = await callAdmin('campaign_worker_run_once', { limit: 1 });
+      setWorkerRunResult(result.worker || null);
+      toast.success(`Worker ejecutado. Procesados: ${result.worker?.body?.processed ?? 0}.`);
+      await load();
     } catch (loadError) {
       setError(loadError.message);
       toast.error(loadError.message);
@@ -1867,7 +1888,7 @@ function CampaignReadinessView() {
       <div><h2 className="text-2xl font-bold">Readiness de campañas</h2><p className="text-sm text-gray-500">Preparación agregada; no crea ni envía campañas.</p></div>
       <button onClick={load} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border bg-white px-4 py-2 font-semibold disabled:opacity-50 dark:bg-gray-800"><RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />Actualizar</button>
     </div>
-    {error && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">Readiness no disponible todavía: {error}</div>}
+    {error && !error.includes('no_unprocessed_eligible_members') && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">Readiness no disponible todavía: {error}</div>}
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{cards.map(([label, value, detail, tone]) => <IntegrationCard key={label} label={label} value={Number(value || 0).toLocaleString()} detail={detail} tone={tone} />)}</div>
     <div className="rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1974,7 +1995,7 @@ function CampaignReadinessView() {
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950"><strong>Revisión segura:</strong> confirmar sólo crea el borrador y calcula la audiencia. No aprueba, agenda, encola ni envía.</div>
       </div>}
       <div className="hidden">
-        <input value={draftName} onChange={(event) => setDraftName(event.target.value)} required minLength={3} maxLength={120} placeholder="Nombre de campaÃ±a" className="rounded-xl border bg-white px-3 py-2 text-sm dark:bg-gray-900" />
+        <input value={draftName} onChange={(event) => setDraftName(event.target.value)} required minLength={3} maxLength={120} placeholder="Nombre de campaña" className="rounded-xl border bg-white px-3 py-2 text-sm dark:bg-gray-900" />
         <select value={draftPurpose} onChange={(event) => setDraftPurpose(event.target.value)} className="rounded-xl border bg-white px-3 py-2 text-sm dark:bg-gray-900">
           <option value="marketing">Marketing</option>
           <option value="transactional">Transactional</option>
@@ -1982,16 +2003,16 @@ function CampaignReadinessView() {
         </select>
         <select value={draftTemplateId} onChange={(event) => setDraftTemplateId(event.target.value)} disabled={draftPurpose === 'service'} className="rounded-xl border bg-white px-3 py-2 text-sm disabled:opacity-50 dark:bg-gray-900">
           <option value="">Plantilla aprobada requerida</option>
-          {templates.map((template) => <option key={template.id} value={template.id}>{template.template_name} Â· {template.language_code}</option>)}
+          {templates.map((template) => <option key={template.id} value={template.id}>{template.template_name} · {template.language_code}</option>)}
         </select>
         <input type="number" min="1" max="500" value={draftLimit} onChange={(event) => setDraftLimit(event.target.value)} className="rounded-xl border bg-white px-3 py-2 text-sm dark:bg-gray-900" />
-        <button type="submit" disabled={draftLoading || !draftName.trim() || (draftPurpose !== 'service' && !draftTemplateId)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"><ShieldCheck className="h-4 w-4" />{draftLoading ? 'Preparandoâ€¦' : 'Crear dry run'}</button>
+        <button type="submit" disabled={draftLoading || !draftName.trim() || (draftPurpose !== 'service' && !draftTemplateId)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"><ShieldCheck className="h-4 w-4" />{draftLoading ? 'Preparando…' : 'Crear dry run'}</button>
       </div>
       <div className="mt-5 flex flex-wrap justify-between gap-3 border-t pt-4 dark:border-gray-700">
         <button type="button" onClick={() => setWizardStep((step) => Math.max(1, step - 1))} disabled={wizardStep === 1} className="rounded-xl border px-4 py-2 text-sm font-semibold disabled:opacity-40">Anterior</button>
         {wizardStep < 5 ? <button type="button" onClick={() => setWizardStep((step) => Math.min(5, step + 1))} disabled={!stepReady[wizardStep]} className="rounded-xl bg-gray-900 px-4 py-2 text-sm font-bold text-white disabled:opacity-40">Siguiente</button> : <button type="submit" disabled={draftLoading || !stepReady[5]} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-40"><ShieldCheck className="h-4 w-4" />{draftLoading ? 'Preparando…' : 'Crear dry run seguro'}</button>}
       </div>
-      <p className="mt-2 text-xs text-gray-500">Usa los filtros actuales del preview: paÃ­s <strong>{countryCode || 'Todos'}</strong> e industria <strong>{industry || 'Todas'}</strong>.</p>
+      <p className="mt-2 text-xs text-gray-500">Usa los filtros actuales del preview: país <strong>{countryCode || 'Todos'}</strong> e industria <strong>{industry || 'Todas'}</strong>.</p>
       {dryRunResult && <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
         {[
           ['Candidatos', dryRunResult.total_candidates, 'info'],
@@ -1999,7 +2020,7 @@ function CampaignReadinessView() {
           ['Elegibles', dryRunResult.eligible_members, 'good'],
           ['Sin consentimiento', dryRunResult.missing_consent_members, 'warning'],
           ['Suprimidos', dryRunResult.suppressed_members, 'bad'],
-          ['InvÃ¡lidos', dryRunResult.invalid_candidates, 'warning']
+          ['Inválidos', dryRunResult.invalid_candidates, 'warning']
         ].map(([label, value, tone]) => <IntegrationCard key={label} label={label} value={Number(value || 0).toLocaleString()} tone={tone} />)}
       </div>}
     </form>
@@ -2009,7 +2030,7 @@ function CampaignReadinessView() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="font-bold">Approval gate: {approvalCheck.is_approvable ? 'PASS' : 'BLOCKED'}</p>
-            <p className="text-sm">Elegibles: {approvalCheck.eligible_members || 0} Â· Sin consentimiento: {approvalCheck.missing_consent_members || 0} Â· Suprimidos: {approvalCheck.suppressed_members || 0} Â· InvÃ¡lidos: {approvalCheck.invalid_members || 0}</p>
+            <p className="text-sm">Elegibles: {approvalCheck.eligible_members || 0} · Sin consentimiento: {approvalCheck.missing_consent_members || 0} · Suprimidos: {approvalCheck.suppressed_members || 0} · Inválidos: {approvalCheck.invalid_members || 0}</p>
           </div>
           <StatusBadge tone={approvalCheck.is_approvable ? 'good' : 'warning'}>{approvalCheck.campaign_status}</StatusBadge>
         </div>
@@ -2030,13 +2051,19 @@ function CampaignReadinessView() {
         <p className="mt-1 text-sm">Mensajes encolados: <strong>{dispatchResult.queued_members || 0}</strong> · Costo reservado: <strong>{dispatchResult.currency || ''} {Number(dispatchResult.reserved_cost || 0).toFixed(4)}</strong></p>
         <p className="mt-1 text-xs text-emerald-700">El worker procesará el envío. Revisa el estado en Diagnósticos o en las Invocations de whatsapp-worker.</p>
       </div>}
+      {workerRunResult && <div className={`mt-4 rounded-xl border p-4 ${workerRunResult.ok ? 'border-emerald-300 bg-emerald-50 text-emerald-900' : 'border-amber-300 bg-amber-50 text-amber-950'}`}>
+        <p className="font-bold">Worker WhatsApp</p>
+        <p className="mt-1 text-sm">HTTP: <strong>{workerRunResult.status ?? 'n/d'}</strong> · Procesados: <strong>{workerRunResult.body?.processed ?? 0}</strong></p>
+        {Array.isArray(workerRunResult.body?.results) && workerRunResult.body.results.length > 0 && <p className="mt-1 text-xs">Resultado: {workerRunResult.body.results.map((row) => row.status || row.reason || 'sin_estado').join(', ')}</p>}
+        {workerRunResult.body?.error && <p className="mt-1 text-xs">Error: {workerRunResult.body.error}</p>}
+      </div>}
       {preflightResult && <div className={`mt-4 rounded-xl border p-4 ${preflightResult.can_schedule ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-950'}`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="font-bold">Dispatch preflight: {preflightResult.can_schedule ? 'READY' : 'BLOCKED'}</p>
-            <p className="text-sm">Elegibles: {preflightResult.eligible_member_count || 0} Â· Excluidos: {preflightResult.excluded_member_count || 0} Â· Batches: {preflightResult.batch_count || 0} de {preflightResult.batch_size || 50}</p>
+            <p className="text-sm">Elegibles: {preflightResult.eligible_member_count || 0} · Excluidos: {preflightResult.excluded_member_count || 0} · Batches: {preflightResult.batch_count || 0} de {preflightResult.batch_size || 50}</p>
           </div>
-          <StatusBadge tone="good">No queue Â· No send</StatusBadge>
+          <StatusBadge tone="good">No queue · No send</StatusBadge>
         </div>
         {Array.isArray(preflightResult.reasons) && preflightResult.reasons.length > 0 && <p className="mt-3 text-sm">Razones: {preflightResult.reasons.join(', ')}</p>}
       </div>}
@@ -2066,15 +2093,16 @@ function CampaignReadinessView() {
           <button type="button" onClick={closeQueueGate} disabled={approvalLoading === 'close-queue'} className="rounded-lg border bg-white px-3 py-2 font-semibold disabled:opacity-40 dark:bg-gray-900">Cerrar gate</button>
           {dispatchGate?.authorization_expires_at && <span>Expira: {formatDate(dispatchGate.authorization_expires_at)}</span>}
           {dispatchResult && <StatusBadge tone="good">Queued {dispatchResult.queued_members || 0} - {dispatchResult.currency || ''} {Number(dispatchResult.reserved_cost || 0).toFixed(4)}</StatusBadge>}
+          <button type="button" onClick={runWorkerOnce} disabled={approvalLoading === 'worker-run-once'} className="rounded-lg border bg-white px-3 py-2 font-semibold disabled:opacity-40 dark:bg-gray-900">Procesar worker 1</button>
         </div>
       </div>}
       <div className="mt-4 overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-left text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-            <tr>{['CampaÃ±a', 'PropÃ³sito', 'Estado', 'Elegibles', 'Sin consentimiento', 'Suprimidos', 'Actualizada', 'Gate'].map((label) => <th key={label} className="px-3 py-2">{label}</th>)}</tr>
+            <tr>{['Campaña', 'Propósito', 'Estado', 'Elegibles', 'Sin consentimiento', 'Suprimidos', 'Actualizada', 'Gate'].map((label) => <th key={label} className="px-3 py-2">{label}</th>)}</tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-700">
-            {campaigns.length === 0 && <tr><td colSpan="8" className="px-3 py-8 text-center text-gray-500">Sin campaÃ±as WhatsApp todavÃ­a.</td></tr>}
+            {campaigns.length === 0 && <tr><td colSpan="8" className="px-3 py-8 text-center text-gray-500">Sin campañas WhatsApp todavía.</td></tr>}
             {campaigns.map((campaign) => <tr key={campaign.id}>
               <td className="px-3 py-2 font-semibold">{campaign.name}</td>
               <td className="px-3 py-2">{campaign.purpose}</td>

@@ -525,7 +525,32 @@ Deno.serve(async (request: Request) => {
 
     const results = [];
     for (const job of jobs || []) {
-      results.push(await processJob(admin, job));
+      try {
+        results.push(await processJob(admin, job));
+      } catch (jobError) {
+        const code = 'worker_unhandled_exception';
+        const detail = safeFailureDetail(jobError?.message || jobError);
+        console.error('WhatsApp worker job failed', {
+          jobId: job?.id || null,
+          name: jobError?.name || 'Error',
+          message: detail
+        });
+        await admin.schema('crm').from('outbound_jobs').update({
+          status: 'unknown',
+          locked_at: null,
+          next_attempt_at: null,
+          last_error_code: code,
+          last_error_detail: detail
+        }).eq('id', job.id);
+        if (job.message_id) {
+          await admin.schema('crm').from('messages').update({
+            current_status: 'unknown',
+            failure_code: code,
+            failure_detail: detail
+          }).eq('id', job.message_id);
+        }
+        results.push({ jobId: job?.id || null, status: 'unknown', reason: code });
+      }
     }
 
     return json(200, { processed: results.length, results }, corsHeaders);

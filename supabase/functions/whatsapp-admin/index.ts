@@ -1427,9 +1427,19 @@ Deno.serve(async (request: Request) => {
         admin.rpc('crm_whatsapp_international_readiness')
       ]);
       if (readinessResult.error) {
+        // no_unprocessed_eligible_members is an informational state (clean queue),
+        // not a real failure. Return a soft 200 so the UI doesn't show an error banner.
+        const errMsg = readinessResult.error.message || '';
+        if (errMsg.includes('no_unprocessed_eligible_members')) {
+          return json(200, {
+            readiness: null,
+            markets: marketsResult.data || [],
+            readiness_note: 'no_unprocessed_eligible_members'
+          }, corsHeaders);
+        }
         return json(409, {
           error: 'campaign_readiness_unavailable',
-          message: safeFailureDetail(readinessResult.error.message)
+          message: safeFailureDetail(errMsg)
         }, corsHeaders);
       }
       if (marketsResult.error) {
@@ -1667,9 +1677,27 @@ Deno.serve(async (request: Request) => {
         p_actor_user_id: authData.user.id
       });
       if (error) {
+        const errMsg = safeFailureDetail(error.message);
+        if (errMsg.includes('no_unprocessed_eligible_members')) {
+          return json(200, {
+            preflight: {
+              campaign_id: campaignId,
+              can_schedule: false,
+              eligible_member_count: 0,
+              excluded_member_count: 0,
+              batch_count: 0,
+              batch_size: batchSize,
+              reasons: ['no_unprocessed_eligible_members']
+            },
+            warning: 'no_unprocessed_eligible_members',
+            message: 'No quedan miembros elegibles sin procesar para esta campaña.',
+            sendingEnabled: Deno.env.get('WHATSAPP_SEND_ENABLED') === 'true',
+            productionSendEnabled: Deno.env.get('WHATSAPP_SEND_ENABLED') === 'true'
+          }, corsHeaders);
+        }
         return json(409, {
           error: 'campaign_dispatch_preflight_blocked',
-          message: safeFailureDetail(error.message)
+          message: errMsg
         }, corsHeaders);
       }
       return json(200, {
@@ -1779,9 +1807,27 @@ Deno.serve(async (request: Request) => {
         p_actor_user_id: authData.user.id
       });
       if (error) {
+        const errMsg = safeFailureDetail(error.message);
+        if (errMsg.includes('no_unprocessed_eligible_members')) {
+          return json(200, {
+            result: {
+              campaign_id: campaignId,
+              preflight_run_id: preflightRunId,
+              queued_members: 0,
+              reserved_cost: 0,
+              currency: null,
+              replayed: false,
+              queue_gate_closed: true
+            },
+            warning: 'no_unprocessed_eligible_members',
+            message: 'No quedan miembros elegibles sin procesar para esta campaña.',
+            workerResult: null,
+            sendingEnabled: Deno.env.get('WHATSAPP_SEND_ENABLED') === 'true'
+          }, corsHeaders);
+        }
         return json(409, {
           error: 'campaign_atomic_dispatch_blocked',
-          message: safeFailureDetail(error.message)
+          message: errMsg
         }, corsHeaders);
       }
       const result = data?.[0] || null;
@@ -1803,7 +1849,66 @@ Deno.serve(async (request: Request) => {
           sending_enabled: sendingEnabled
         }
       });
-      return json(200, { result, sendingEnabled }, corsHeaders);
+      let workerResult = null;
+      if (sendingEnabled && result?.queued_members > 0) {
+        try {
+          const workerResponse = await fetch(`${requiredEnv('SUPABASE_URL')}/functions/v1/whatsapp-worker`, {
+            method: 'POST',
+            headers: {
+              apikey: requiredEnv('SUPABASE_SERVICE_ROLE_KEY'),
+              Authorization: `Bearer ${requiredEnv('SUPABASE_SERVICE_ROLE_KEY')}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ limit: 10 })
+          });
+          workerResult = {
+            ok: workerResponse.ok,
+            status: workerResponse.status,
+            body: await workerResponse.json().catch(() => ({}))
+          };
+        } catch (workerErr) {
+          console.error('Failed to trigger worker after atomic dispatch', workerErr);
+          workerResult = { ok: false, status: 0, body: { error: 'worker_trigger_failed' } };
+        }
+      }
+      return json(200, { result, workerResult, sendingEnabled }, corsHeaders);
+    }
+
+    if (action === 'campaign_worker_run_once') {
+      if (adminUser.role !== 'super_admin') return json(403, { error: 'super_admin_required' }, corsHeaders);
+      if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'true') {
+        return json(409, { error: 'worker_requires_sending_enabled' }, corsHeaders);
+      }
+      const limit = Math.min(Math.max(Number(body.limit || 1), 1), 5);
+      const workerResponse = await fetch(`${requiredEnv('SUPABASE_URL')}/functions/v1/whatsapp-worker`, {
+        method: 'POST',
+        headers: {
+          apikey: requiredEnv('SUPABASE_SERVICE_ROLE_KEY'),
+          Authorization: `Bearer ${requiredEnv('SUPABASE_SERVICE_ROLE_KEY')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ limit })
+      });
+      const workerBody = await workerResponse.json().catch(() => ({}));
+      await crm.from('audit_log').insert({
+        actor_user_id: authData.user.id,
+        actor_type: 'user',
+        action: 'whatsapp.worker.run_once',
+        entity_type: 'outbound_jobs',
+        new_values: {
+          ok: workerResponse.ok,
+          status: workerResponse.status,
+          limit,
+          processed: workerBody?.processed ?? null
+        }
+      });
+      return json(workerResponse.ok ? 200 : 502, {
+        worker: {
+          ok: workerResponse.ok,
+          status: workerResponse.status,
+          body: workerBody
+        }
+      }, corsHeaders);
     }
 
 

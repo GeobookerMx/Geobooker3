@@ -2125,7 +2125,7 @@ function CampaignReadinessView() {
           <button type="button" onClick={closeQueueGate} disabled={approvalLoading === 'close-queue'} className="rounded-lg border bg-white px-3 py-2 font-semibold disabled:opacity-40 dark:bg-gray-900">Cerrar gate</button>
           {dispatchGate?.authorization_expires_at && <span>Expira: {formatDate(dispatchGate.authorization_expires_at)}</span>}
           {dispatchResult && <StatusBadge tone="good">Queued {dispatchResult.queued_members || 0} - {dispatchResult.currency || ''} {Number(dispatchResult.reserved_cost || 0).toFixed(4)}</StatusBadge>}
-          <button type="button" onClick={runWorkerOnce} disabled={approvalLoading === 'worker-run-once'} className="rounded-lg border bg-white px-3 py-2 font-semibold disabled:opacity-40 dark:bg-gray-900">Procesar worker 1</button>
+          <button type="button" onClick={runWorkerOnce} disabled={approvalLoading === 'worker-run-once'} className="rounded-lg border bg-white px-3 py-2 font-semibold disabled:opacity-40 dark:bg-gray-900">Enviar ahora / procesar cola</button>
         </div>
       </div>}
       <div className="mt-4 overflow-x-auto">

@@ -1765,7 +1765,7 @@ function CampaignReadinessView() {
       if (queuedMembers > 0) {
         toast.success(`✅ ${queuedMembers} mensaje(s) encolado(s). Worker procesados: ${result.workerResult?.body?.processed ?? 0}.`);
       } else {
-        toast.warning('No se encolaron mensajes nuevos: no quedan miembros elegibles sin procesar para esta campaña.');
+        toast('No se encolaron mensajes nuevos: no quedan miembros elegibles sin procesar para esta campaña.');
       }
       await load();
     } catch (loadError) {
@@ -1812,7 +1812,7 @@ function CampaignReadinessView() {
       if (queuedMembers > 0) {
         toast.success(`Se reservó y encoló ${queuedMembers} mensaje(s). Worker procesados: ${result.workerResult?.body?.processed ?? 0}.`);
       } else {
-        toast.warning('No se encolaron mensajes nuevos: no quedan miembros elegibles sin procesar para esta campaña.');
+        toast('No se encolaron mensajes nuevos: no quedan miembros elegibles sin procesar para esta campaña.');
       }
       await load();
     } catch (loadError) {

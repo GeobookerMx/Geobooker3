@@ -63,6 +63,105 @@ function cleanTemplateParameters(value: unknown) {
     .map((parameter) => parameter.slice(0, 1024));
 }
 
+function firstUrl(value: unknown): string | null {
+  if (typeof value === 'string') {
+    const match = value.match(/https:\/\/[^\s"'<>]+/i);
+    return match?.[0] || null;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = firstUrl(item);
+      if (found) return found;
+    }
+  }
+  if (value && typeof value === 'object') {
+    for (const item of Object.values(value as Record<string, unknown>)) {
+      const found = firstUrl(item);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+// Meta CDN / WhatsApp CDN domains that issue pre-signed URLs which expire.
+// Sending these as `link:` in a template message causes error 131053.
+const META_EXPIRING_CDN_PATTERN = /\.whatsapp\.net\/|scontent\.|fbcdn\.net\/|cdn\.whatsapp\.net\/|lookaside\.fbsbx\.com\/|z-p3-scontent\./i;
+
+function isMetaExpiringUrl(url: string | null): boolean {
+  return Boolean(url && META_EXPIRING_CDN_PATTERN.test(url));
+}
+
+function normalizeTemplateComponents(value: unknown): Record<string, any>[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((component): component is Record<string, any> =>
+    Boolean(component) && typeof component === 'object' && !Array.isArray(component)
+  );
+}
+
+function buildTemplateProviderComponents(
+  template: Record<string, any>,
+  bodyParameters: string[],
+  headerImageUrl?: string | null
+) {
+  const components: Record<string, any>[] = [];
+  const templateComponents = normalizeTemplateComponents(template.components);
+  const header = templateComponents.find((component) =>
+    String(component.type || '').toUpperCase() === 'HEADER'
+  );
+
+  if (header) {
+    const format = String(header.format || '').toUpperCase();
+    if (format === 'IMAGE') {
+      // Priority 1: caller-supplied permanent public URL (e.g. from campaign payload)
+      // Priority 2: example URL from template sync — but ONLY if it is NOT a Meta CDN
+      //             pre-signed URL (those expire and cause error 131053).
+      // Priority 3: omit header component — Meta will use the image stored with the
+      //             approved template, which is the safest fallback.
+      const candidateUrl = headerImageUrl || firstUrl(header.example) || firstUrl(header);
+      const useUrl = candidateUrl && !isMetaExpiringUrl(candidateUrl) ? candidateUrl : null;
+
+      if (useUrl) {
+        components.push({
+          type: 'header',
+          parameters: [{ type: 'image', image: { link: useUrl } }]
+        });
+      }
+      // If no usable permanent URL, omit the header component.
+      // Meta will display the approved template image stored on their platform.
+    } else if (['VIDEO', 'DOCUMENT'].includes(format)) {
+      return {
+        ok: false,
+        errorCode: 'template_header_media_unsupported',
+        errorDetail: `Template ${format} header is not supported by the current worker`
+      };
+    }
+  }
+
+  if (bodyParameters.length) {
+    components.push({
+      type: 'body',
+      parameters: bodyParameters.map((value) => ({ type: 'text', text: value }))
+    });
+  }
+
+  const dynamicUrlButton = templateComponents
+    .find((component) => String(component.type || '').toUpperCase() === 'BUTTONS')
+    ?.buttons
+    ?.some((button: Record<string, any>) =>
+      String(button?.type || '').toUpperCase() === 'URL'
+      && /\{\{\s*\d+\s*\}\}/.test(String(button?.url || ''))
+    );
+  if (dynamicUrlButton) {
+    return {
+      ok: false,
+      errorCode: 'template_dynamic_url_button_unsupported',
+      errorDetail: 'Template has a dynamic URL button but no button parameter mapping is configured'
+    };
+  }
+
+  return { ok: true, components };
+}
+
 async function authorizeWorker(
   admin: ReturnType<typeof createClient>,
   bearer: string,
@@ -224,7 +323,7 @@ async function processJob(
   if (message.message_type === 'template') {
     const { data, error } = await crm
       .from('whatsapp_templates')
-      .select('id,template_name,language_code,category,approval_status,enabled_for_campaigns,reconciliation_status')
+      .select('id,template_name,language_code,category,approval_status,enabled_for_campaigns,reconciliation_status,components')
       .eq('id', message.template_id)
       .single();
     if (error || !data) {
@@ -347,6 +446,26 @@ async function processJob(
   const accessToken = requiredEnv('WHATSAPP_ACCESS_TOKEN');
   const graphVersion = requiredEnv('META_GRAPH_API_VERSION');
   const templateParameters = cleanTemplateParameters(job.request_payload?.templateParameters);
+  // headerImageUrl: permanent public image URL that overrides the template example.
+  // Useful when the campaign supplies a specific image instead of the default template image.
+  const headerImageUrl: string | null =
+    typeof job.request_payload?.headerImageUrl === 'string'
+      ? job.request_payload.headerImageUrl
+      : null;
+  const templateComponentBuild = message.message_type === 'template'
+    ? buildTemplateProviderComponents(template, templateParameters, headerImageUrl)
+    : { ok: true, components: [] };
+  if (!templateComponentBuild.ok) {
+    await failJob(
+      crm,
+      job,
+      message.id,
+      'failed',
+      templateComponentBuild.errorCode || 'template_component_mapping_failed',
+      templateComponentBuild.errorDetail || 'Template component mapping failed'
+    );
+    return { jobId: job.id, status: 'failed', reason: templateComponentBuild.errorCode };
+  }
   const recipient = point.normalized_value.replace(/^\+/, '');
   const providerPayload = message.message_type === 'text'
     ? { messaging_product: 'whatsapp', to: recipient, type: 'text', text: { body: message.body_text } }
@@ -357,11 +476,8 @@ async function processJob(
         template: {
           name: template.template_name,
           language: { code: template.language_code },
-          ...(templateParameters.length ? {
-            components: [{
-              type: 'body',
-              parameters: templateParameters.map((value) => ({ type: 'text', text: value }))
-            }]
+          ...(templateComponentBuild.components.length ? {
+            components: templateComponentBuild.components
           } : {})
         }
       };

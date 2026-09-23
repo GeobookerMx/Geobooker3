@@ -332,6 +332,13 @@ function templateVariables(components: unknown) {
   return [...new Set(matches.map((value) => value.replace(/\s/g, '')))];
 }
 
+function templateMediaHeader(componentsValue: unknown) {
+  const components = Array.isArray(componentsValue) ? componentsValue : [];
+  const header = components.find((entry: any) => String(entry?.type || '').toUpperCase() === 'HEADER');
+  const format = String(header?.format || '').toUpperCase();
+  return ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(format) ? format : null;
+}
+
 const CORE_TEMPLATE_NAMES = new Set([
   'gb_optin_confirm_es_mx',
   'gb_business_registration_help_es_mx',
@@ -347,15 +354,23 @@ const CORE_TEMPLATE_NAMES = new Set([
   'gb_app_download_en_us'
 ]);
 
-function templateGovernance(nameValue: unknown, languageValue: unknown, statusValue: unknown, qualityValue: unknown) {
+function templateGovernance(
+  nameValue: unknown,
+  languageValue: unknown,
+  statusValue: unknown,
+  qualityValue: unknown,
+  componentsValue: unknown = []
+) {
   const name = String(nameValue || '').trim().toLowerCase();
   const language = String(languageValue || '').trim().replace('-', '_').toLowerCase();
   const approved = String(statusValue || '').toLowerCase() === 'approved';
+  const mediaHeader = templateMediaHeader(componentsValue);
   const notes: string[] = [];
   let reconciliationStatus = 'unreviewed';
 
   if (!approved) notes.push('STATUS_NOT_APPROVED');
   if (!qualityValue) notes.push('QUALITY_PENDING');
+  if (mediaHeader) notes.push(`MEDIA_HEADER_${mediaHeader}_REQUIRES_STABLE_PROVIDER_MEDIA`);
 
   const localeMismatch = (name.endsWith('_es_mx') && language !== 'es_mx')
     || (name.endsWith('_en_us') && !['en', 'en_us'].includes(language));
@@ -391,6 +406,7 @@ function templateGovernance(nameValue: unknown, languageValue: unknown, statusVa
   else if (localeMismatch) reconciliationStatus = 'locale_mismatch';
   else if (nameMismatch) reconciliationStatus = 'name_mismatch';
   else if (legacy) reconciliationStatus = 'legacy';
+  else if (mediaHeader) reconciliationStatus = 'pass';
   else if (CORE_TEMPLATE_NAMES.has(name)) {
     reconciliationStatus = 'ready_for_campaign';
     notes.push('READY_FOR_CAMPAIGN');
@@ -2029,7 +2045,7 @@ Deno.serve(async (request: Request) => {
               components,
               quality_score: qualityScore,
               ...templateComponentMetadata(components),
-              ...templateGovernance(template.name, template.language, normalizeTemplateStatus(template.status), qualityScore),
+              ...templateGovernance(template.name, template.language, normalizeTemplateStatus(template.status), qualityScore, components),
               raw_hash: await templateSnapshotHash(template),
               provider_updated_at: syncedAt,
               last_synced_at: syncedAt

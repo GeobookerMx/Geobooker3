@@ -1759,7 +1759,12 @@ function CampaignReadinessView() {
       });
       setDispatchResult(result.result || null);
       setWorkerRunResult(result.workerResult || null);
-      toast.success(`✅ ${result.result?.queued_members || 1} mensaje(s) encolado(s). Worker procesados: ${result.workerResult?.body?.processed ?? 0}.`);
+      const queuedMembers = Number(result.result?.queued_members || 0);
+      if (queuedMembers > 0) {
+        toast.success(`✅ ${queuedMembers} mensaje(s) encolado(s). Worker procesados: ${result.workerResult?.body?.processed ?? 0}.`);
+      } else {
+        toast.warning('No se encolaron mensajes nuevos: no quedan miembros elegibles sin procesar para esta campaña.');
+      }
       await load();
     } catch (loadError) {
       setError(loadError.message);
@@ -1800,7 +1805,12 @@ function CampaignReadinessView() {
       setDispatchResult(result.result || null);
       setWorkerRunResult(result.workerResult || null);
       setDispatchGate(null);
-      toast.success(`Se reservó y encoló 1 mensaje. Worker procesados: ${result.workerResult?.body?.processed ?? 0}.`);
+      const queuedMembers = Number(result.result?.queued_members || 0);
+      if (queuedMembers > 0) {
+        toast.success(`Se reservó y encoló ${queuedMembers} mensaje(s). Worker procesados: ${result.workerResult?.body?.processed ?? 0}.`);
+      } else {
+        toast.warning('No se encolaron mensajes nuevos: no quedan miembros elegibles sin procesar para esta campaña.');
+      }
       await load();
     } catch (loadError) {
       setError(loadError.message);
@@ -2068,10 +2078,10 @@ function CampaignReadinessView() {
         </div>
         {Array.isArray(approvalCheck.reasons) && approvalCheck.reasons.length > 0 && <p className="mt-3 text-sm">Razones: {approvalCheck.reasons.join(', ')}</p>}
       </div>}
-      {dispatchResult && <div className="mt-4 rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-emerald-900">
-        <p className="font-bold">🚀 Despacho ejecutado</p>
+      {dispatchResult && <div className={`mt-4 rounded-xl border p-4 ${Number(dispatchResult.queued_members || 0) > 0 ? 'border-emerald-300 bg-emerald-50 text-emerald-900' : 'border-amber-300 bg-amber-50 text-amber-950'}`}>
+        <p className="font-bold">{Number(dispatchResult.queued_members || 0) > 0 ? '🚀 Despacho ejecutado' : 'Sin nuevos miembros para encolar'}</p>
         <p className="mt-1 text-sm">Mensajes encolados: <strong>{dispatchResult.queued_members || 0}</strong> · Costo reservado: <strong>{dispatchResult.currency || ''} {Number(dispatchResult.reserved_cost || 0).toFixed(4)}</strong></p>
-        <p className="mt-1 text-xs text-emerald-700">El worker procesará el envío. Revisa el estado en Diagnósticos o en las Invocations de whatsapp-worker.</p>
+        <p className={`mt-1 text-xs ${Number(dispatchResult.queued_members || 0) > 0 ? 'text-emerald-700' : 'text-amber-800'}`}>{Number(dispatchResult.queued_members || 0) > 0 ? 'El worker procesará el envío. Revisa el estado en Diagnósticos o en las Invocations de whatsapp-worker.' : 'La audiencia del preflight ya fue procesada o quedó sin miembros pendientes. Revisa Campaign members, jobs y messages antes de reintentar.'}</p>
       </div>}
       {workerRunResult && <div className={`mt-4 rounded-xl border p-4 ${workerRunResult.ok ? 'border-emerald-300 bg-emerald-50 text-emerald-900' : 'border-amber-300 bg-amber-50 text-amber-950'}`}>
         <p className="font-bold">Worker WhatsApp</p>

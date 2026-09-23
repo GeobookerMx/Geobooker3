@@ -1800,11 +1800,29 @@ Deno.serve(async (request: Request) => {
       const preflightRunId = String(body.preflightRunId || '');
       if (!/^[0-9a-f-]{36}$/i.test(campaignId)) return json(400, { error: 'invalid_campaign_id' }, corsHeaders);
       if (!/^[0-9a-f-]{36}$/i.test(preflightRunId)) return json(400, { error: 'invalid_preflight_run_id' }, corsHeaders);
+      const rawScheduleAt = body.scheduleAt ? String(body.scheduleAt).trim() : '';
+      let scheduleAt: string | null = null;
+      if (rawScheduleAt) {
+        const parsedScheduleAt = new Date(rawScheduleAt);
+        if (!Number.isFinite(parsedScheduleAt.getTime())) return json(400, { error: 'invalid_schedule_at' }, corsHeaders);
+        const now = Date.now();
+        if (parsedScheduleAt.getTime() < now - 60_000) return json(409, { error: 'schedule_at_is_in_the_past' }, corsHeaders);
+        if (parsedScheduleAt.getTime() > now + 30 * 24 * 60 * 60 * 1000) return json(409, { error: 'schedule_at_too_far' }, corsHeaders);
+        scheduleAt = parsedScheduleAt.toISOString();
+      }
+      const { error: scheduleError } = await crm
+        .from('campaigns')
+        .update({ scheduled_at: scheduleAt, updated_at: new Date().toISOString() })
+        .eq('id', campaignId)
+        .eq('channel', 'whatsapp')
+        .eq('status', 'approved');
+      if (scheduleError) return json(409, { error: 'campaign_schedule_update_failed', message: safeFailureDetail(scheduleError.message) }, corsHeaders);
       const { data, error } = await admin.rpc('crm_dispatch_whatsapp_campaign_atomic', {
         p_campaign_id: campaignId,
         p_preflight_run_id: preflightRunId,
         p_max_members: 1,
-        p_actor_user_id: authData.user.id
+        p_actor_user_id: authData.user.id,
+        p_now: scheduleAt || new Date().toISOString()
       });
       if (error) {
         const errMsg = safeFailureDetail(error.message);

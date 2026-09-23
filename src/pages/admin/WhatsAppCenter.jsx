@@ -1605,6 +1605,8 @@ function CampaignReadinessView() {
   const [dispatchGate, setDispatchGate] = useState(null);
   const [queueConfirmation, setQueueConfirmation] = useState('');
   const [dispatchConfirmation, setDispatchConfirmation] = useState('');
+  const [dispatchMode, setDispatchMode] = useState('now');
+  const [scheduledDispatchAt, setScheduledDispatchAt] = useState('');
   const [dispatchResult, setDispatchResult] = useState(null);
   const [workerRunResult, setWorkerRunResult] = useState(null);
   const [dispatchLoading, setDispatchLoading] = useState('');
@@ -1800,7 +1802,8 @@ function CampaignReadinessView() {
       const result = await callAdmin('campaign_dispatch_atomic', {
         campaignId: preflightCampaignId,
         preflightRunId: preflightResult.run_id,
-        confirmation: dispatchConfirmation
+        confirmation: dispatchConfirmation,
+        scheduleAt: dispatchMode === 'scheduled' && scheduledDispatchAt ? new Date(scheduledDispatchAt).toISOString() : null
       });
       setDispatchResult(result.result || null);
       setWorkerRunResult(result.workerResult || null);
@@ -2117,8 +2120,21 @@ function CampaignReadinessView() {
           <div className="rounded-xl border border-blue-100 bg-white p-3 dark:bg-gray-900">
             <p className="text-sm font-semibold">2. Encolar reserva atomica</p>
             <p className="mt-1 text-xs text-gray-500">Escribe exactamente: ENCOLAR 1 MENSAJE</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <label className="text-xs font-semibold text-gray-600">
+                Modo de salida
+                <select value={dispatchMode} onChange={(event) => setDispatchMode(event.target.value)} className="mt-1 w-full rounded-lg border bg-white px-2 py-2 text-sm dark:bg-gray-950">
+                  <option value="now">Enviar ahora</option>
+                  <option value="scheduled">Programar envío</option>
+                </select>
+              </label>
+              <label className="text-xs font-semibold text-gray-600">
+                Fecha/hora local
+                <input type="datetime-local" value={scheduledDispatchAt} onChange={(event) => setScheduledDispatchAt(event.target.value)} disabled={dispatchMode !== 'scheduled'} className="mt-1 w-full rounded-lg border bg-white px-2 py-2 text-sm disabled:opacity-50 dark:bg-gray-950" />
+              </label>
+            </div>
             <input value={dispatchConfirmation} onChange={(event) => setDispatchConfirmation(event.target.value)} className="mt-2 w-full rounded-lg border px-3 py-2 text-sm dark:bg-gray-950" />
-            <button type="button" onClick={enqueueAtomicPilot} disabled={approvalLoading === 'atomic-dispatch' || !dispatchGate?.queue_enabled || dispatchConfirmation !== 'ENCOLAR 1 MENSAJE'} className="mt-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-40">Encolar 1</button>
+            <button type="button" onClick={enqueueAtomicPilot} disabled={approvalLoading === 'atomic-dispatch' || !dispatchGate?.queue_enabled || dispatchConfirmation !== 'ENCOLAR 1 MENSAJE' || (dispatchMode === 'scheduled' && !scheduledDispatchAt)} className="mt-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-40">{dispatchMode === 'scheduled' ? 'Programar 1' : 'Encolar 1 ahora'}</button>
           </div>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-600">

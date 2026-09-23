@@ -22,3 +22,6 @@ verify_jwt = true
 
 [functions.crm-reconcile-dry-run]
 verify_jwt = true
+
+[functions.location-intelligence]
+verify_jwt = true

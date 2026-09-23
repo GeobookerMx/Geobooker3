@@ -41,6 +41,7 @@ const CRM2Imports = lazy(() => import("./pages/admin/CRM2Imports.jsx"));
 const CRM2Operations = lazy(() => import("./pages/admin/CRM2Operations.jsx"));
 const CRM2Directory = lazy(() => import("./pages/admin/CRM2Directory.jsx"));
 const WhatsAppCenter = lazy(() => import("./pages/admin/WhatsAppCenter.jsx"));
+const GeoScoreAdmin = lazy(() => import("./pages/admin/GeoScoreAdmin.jsx"));
 const AdminSecurity = lazy(() => import("./pages/admin/Security.jsx"));
 const ApifyScraper = lazy(() => import("./pages/admin/ApifyScraper.jsx"));
 const LeadsHistory = lazy(() => import("./pages/admin/LeadsHistory.jsx"));
@@ -261,6 +262,7 @@ export default function AppRouter() {
           <Route path="import" element={<BulkImport />} />
           <Route path="crm" element={<UnifiedCRM />} />
           <Route path="whatsapp" element={<WhatsAppCenter />} />
+          <Route path="geoscore" element={<GeoScoreAdmin />} />
           <Route
             path="crm2-imports"
             element={featureFlags.crm2ImportReview ? <CRM2Imports /> : <Navigate to="/admin/crm" replace />}

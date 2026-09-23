@@ -44,6 +44,71 @@ const CAMPAIGN_GOAL_LABELS = {
   app_growth: 'Descarga y crecimiento de la app'
 };
 
+const CAMPAIGN_CONTACT_SOURCE_GUIDANCE = {
+  opt_in_form: {
+    label: 'Formulario / QR con opt-in',
+    status: 'campaign_ready',
+    tone: 'good',
+    summary: 'Fuente ideal para campanas WhatsApp: consentimiento, evidencia y finalidad quedan documentados.',
+    allowedUse: 'Marketing y utility, sujeto a plantilla, mercado, tarifa, suppression y frequency cap.',
+    crmUse: 'Crear/actualizar contacto, consentimiento y actividad.',
+    whatsappUse: 'Elegible si el telefono, idioma y mercado pasan el gate.'
+  },
+  inbound_whatsapp: {
+    label: 'Mensaje entrante / conversacion iniciada',
+    status: 'service_ready',
+    tone: 'good',
+    summary: 'Sirve para respuestas de servicio y seguimiento dentro de la relacion existente.',
+    allowedUse: 'Servicio dentro de ventana y templates utility/marketing solo si existe opt-in para esa finalidad.',
+    crmUse: 'Vincular conversacion, contacto, actividad y posible oportunidad.',
+    whatsappUse: 'Elegible para respuesta; marketing requiere opt-in separado.'
+  },
+  owned_csv_with_consent: {
+    label: 'CSV propio con consentimiento',
+    status: 'review_required',
+    tone: 'warning',
+    summary: 'Puede usarse si el CSV incluye evidencia verificable de permiso y finalidad.',
+    allowedUse: 'Importar, deduplicar, normalizar y revisar evidencia antes de campana.',
+    crmUse: 'Importador CRM + deduplicacion + consentimiento.',
+    whatsappUse: 'Elegible solo despues de validar evidencia y suppression.'
+  },
+  crm_existing: {
+    label: 'Contacto CRM existente',
+    status: 'review_required',
+    tone: 'info',
+    summary: 'Depende del estado de consentimiento y de la fuente guardada en CRM.',
+    allowedUse: 'Segmentar por pais, industria, score, owner, producto y etapa.',
+    crmUse: 'Revisar timeline, consentimiento, ultima interaccion y proxima accion.',
+    whatsappUse: 'Elegible solo si contact point + consentimiento + mercado pasan el gate.'
+  },
+  open_data: {
+    label: 'DENUE / INEGI / fuente abierta',
+    status: 'crm_only_until_opt_in',
+    tone: 'bad',
+    summary: 'No debe usarse para WhatsApp marketing directo. Sirve para inteligencia comercial y captacion de opt-in por canales permitidos.',
+    allowedUse: 'Research, scoring, enriquecimiento, segmentacion y campanas de captacion no invasivas.',
+    crmUse: 'Crear cuenta/prospecto, clasificar industria, pais/ciudad y product fit.',
+    whatsappUse: 'No elegible hasta que el negocio solicite contacto o complete opt-in.'
+  },
+  partner_referral: {
+    label: 'Referido / partner',
+    status: 'review_required',
+    tone: 'warning',
+    summary: 'Puede funcionar si el partner transfirio permiso de contacto o existe solicitud documentada.',
+    allowedUse: 'Validar consentimiento, fuente y finalidad antes de enviar.',
+    crmUse: 'Registrar partner/source_url/evidencia.',
+    whatsappUse: 'Elegible solo con evidencia suficiente.'
+  }
+};
+
+const COUNTRY_CAMPAIGN_GUIDANCE = {
+  MX: { language: 'es_MX', example: '+52', starterLimit: 20, note: 'Mercado piloto natural de Geobooker; iniciar con opt-in confirmado y plantillas es_MX.' },
+  US: { language: 'en_US', example: '+1', starterLimit: 10, note: 'Usar mensajes en ingles y segmentos con alto fit; evitar listas frias sin permiso.' },
+  GB: { language: 'en_US', example: '+44', starterLimit: 10, note: 'Probar con ingles; si se crean templates en_GB, migrar el mercado a ese idioma.' },
+  ES: { language: 'es_MX', example: '+34', starterLimit: 10, note: 'Recomendable crear variantes es_ES antes de escalar campanas.' },
+  CA: { language: 'en_US', example: '+1', starterLimit: 10, note: 'Separar segmentos en ingles/frances si el mercado lo requiere.' }
+};
+
 const TEMPLATE_BLUEPRINTS = [
   {
     name: 'gb_optin_confirm_es_mx',
@@ -1633,6 +1698,7 @@ function CampaignReadinessView() {
   const [languageCode, setLanguageCode] = useState('es_MX');
   const [timezone, setTimezone] = useState('America/Mexico_City');
   const [sourceTier, setSourceTier] = useState('');
+  const [contactSource, setContactSource] = useState('opt_in_form');
   const [minScore, setMinScore] = useState(0);
   const [scheduledLocalTime, setScheduledLocalTime] = useState('10:00');
   const [dryRunResult, setDryRunResult] = useState(null);
@@ -1712,6 +1778,7 @@ function CampaignReadinessView() {
         city: city || null,
         industry: industry || null,
         sourceTier: sourceTier || null,
+        contactSource,
         languageCode,
         timezone,
         minScore: Number(minScore) || 0,
@@ -1914,6 +1981,14 @@ function CampaignReadinessView() {
     { country_code: 'MX', market_name: 'México', primary_language_code: 'es_MX', primary_timezone: 'America/Mexico_City', market_status: 'research', whatsapp_marketing_enabled: false },
     ...(wizardOptions?.markets || [])
   ].map((market) => [market.country_code, market])).values()).sort((a, b) => a.market_name.localeCompare(b.market_name));
+  const selectedMarketForWizard = marketChoices.find((market) => market.country_code === countryCode) || null;
+  const contactSourceGuide = CAMPAIGN_CONTACT_SOURCE_GUIDANCE[contactSource] || CAMPAIGN_CONTACT_SOURCE_GUIDANCE.crm_existing;
+  const countryGuide = COUNTRY_CAMPAIGN_GUIDANCE[countryCode] || {
+    language: selectedMarketForWizard?.primary_language_code || languageCode || 'en_US',
+    example: 'E.164',
+    starterLimit: Number(selectedMarketForWizard?.daily_recipient_cap || 10) || 10,
+    note: 'Mercado nuevo: activar solo despues de tarifa, idioma, opt-in y template aprobada.'
+  };
   const expectedCategory = draftPurpose === 'marketing' ? 'marketing' : 'utility';
   const normalizedExpectedCategory = normalizeTemplateCategory(expectedCategory);
   const normalizedLanguageCode = normalizeTemplateLanguage(languageCode);
@@ -1929,6 +2004,14 @@ function CampaignReadinessView() {
   const activeRate = matchingRates.find((rate) => rate.status === 'active') || null;
   const observedRate = activeRate || matchingRates[0] || null;
   const maximumEstimatedCost = observedRate ? Number(observedRate.unit_cost || 0) * Number(draftLimit || 0) : null;
+  const assistantWarnings = [
+    !countryCode ? 'Selecciona un pais para calcular idioma, tarifa y elegibilidad.' : null,
+    selectedMarketForWizard && !selectedMarketForWizard.whatsapp_marketing_enabled && draftPurpose === 'marketing' ? 'Este mercado aun no esta habilitado para marketing.' : null,
+    selectedMarketForWizard && !['pilot', 'approved'].includes(selectedMarketForWizard.market_status) ? `Estado de mercado: ${selectedMarketForWizard.market_status}.` : null,
+    !activeRate && selectedTemplate ? 'No hay tarifa activa para este pais/categoria.' : null,
+    contactSourceGuide.status === 'crm_only_until_opt_in' ? 'Fuente abierta: no enviar WhatsApp marketing hasta obtener opt-in.' : null,
+    compatibleTemplates.length === 0 ? 'No hay plantilla compatible con finalidad e idioma.' : null
+  ].filter(Boolean);
   const stepReady = {
     1: draftName.trim().length >= 3 && Boolean(campaignGoal) && ['marketing', 'transactional'].includes(draftPurpose),
     2: /^[A-Z]{2}$/.test(countryCode) && Boolean(languageCode) && Boolean(timezone),
@@ -2056,6 +2139,40 @@ function CampaignReadinessView() {
           <p className="mt-1 text-xs opacity-80">{text}</p>
         </div>)}
       </div>
+      <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-blue-950 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="font-bold">Campaign Assistant</h3>
+            <p className="mt-1 text-sm">Guia operativa para saber a que numeros se enviara, de que fuente vienen y si el pais/template/costo estan listos.</p>
+          </div>
+          <StatusBadge tone={assistantWarnings.length ? 'warning' : 'good'}>{assistantWarnings.length ? 'Revisar antes de enviar' : 'Flujo coherente'}</StatusBadge>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <IntegrationCard label="Pais / idioma" value={countryCode || 'Sin pais'} detail={`Sugerido: ${countryGuide.language} · prefijo ${countryGuide.example}`} tone={countryCode ? 'info' : 'warning'} />
+          <IntegrationCard label="Fuente de numeros" value={contactSourceGuide.label} detail={contactSourceGuide.status} tone={contactSourceGuide.tone} />
+          <IntegrationCard label="Costo estimado" value={maximumEstimatedCost === null ? 'Sin tarifa' : `${observedRate.currency} ${maximumEstimatedCost.toFixed(2)}`} detail={observedRate ? `${observedRate.unit_cost} por mensaje · ${observedRate.status}` : 'Selecciona template/pais'} tone={activeRate ? 'good' : 'warning'} />
+          <IntegrationCard label="Audiencia preview" value={previewRows.length} detail="Muestra elegible actual; no es envio al azar." tone={previewRows.length ? 'good' : 'warning'} />
+        </div>
+        <div className="mt-4 grid gap-3 lg:grid-cols-3">
+          <div className="rounded-xl bg-white/70 p-3 text-sm dark:bg-gray-900/40">
+            <p className="font-bold">Uso permitido</p>
+            <p className="mt-1">{contactSourceGuide.allowedUse}</p>
+          </div>
+          <div className="rounded-xl bg-white/70 p-3 text-sm dark:bg-gray-900/40">
+            <p className="font-bold">Uso CRM</p>
+            <p className="mt-1">{contactSourceGuide.crmUse}</p>
+          </div>
+          <div className="rounded-xl bg-white/70 p-3 text-sm dark:bg-gray-900/40">
+            <p className="font-bold">Uso WhatsApp</p>
+            <p className="mt-1">{contactSourceGuide.whatsappUse}</p>
+          </div>
+        </div>
+        <div className="mt-3 rounded-xl bg-white/70 p-3 text-sm dark:bg-gray-900/40">
+          <p><strong>Regla:</strong> no se envia al azar. El backend solo materializa contactos que pasen telefono valido, pais, idioma, consentimiento/evidencia, suppression, mercado y plantilla.</p>
+          <p className="mt-1"><strong>Nota pais:</strong> {countryGuide.note}</p>
+          {assistantWarnings.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5">{assistantWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}
+        </div>
+      </div>
       <div className="mt-4 grid grid-cols-5 gap-2">
         {['Objetivo', 'Mercado', 'Audiencia', 'Plantilla', 'Revisión'].map((label, index) => {
           const step = index + 1;
@@ -2078,6 +2195,7 @@ function CampaignReadinessView() {
       </div>}
       {wizardStep === 3 && <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <label className="text-sm font-semibold">Industria<input value={industry} onChange={(event) => setIndustry(event.target.value.slice(0, 120))} placeholder="Ej. restaurantes" className="mt-1 w-full rounded-xl border bg-white px-3 py-2 font-normal dark:bg-gray-900" /></label>
+        <label className="text-sm font-semibold">Fuente de numeros<select value={contactSource} onChange={(event) => setContactSource(event.target.value)} className="mt-1 w-full rounded-xl border bg-white px-3 py-2 font-normal dark:bg-gray-900">{Object.entries(CAMPAIGN_CONTACT_SOURCE_GUIDANCE).map(([value, guide]) => <option key={value} value={value}>{guide.label}</option>)}</select></label>
         <label className="text-sm font-semibold">Calidad de fuente<select value={sourceTier} onChange={(event) => setSourceTier(event.target.value)} className="mt-1 w-full rounded-xl border bg-white px-3 py-2 font-normal dark:bg-gray-900"><option value="">Cualquier tier permitido</option>{['AAA', 'AA', 'A', 'B'].map((tier) => <option key={tier} value={tier}>{tier}</option>)}</select></label>
         <label className="text-sm font-semibold">Score mínimo<input type="number" min="0" max="100" value={minScore} onChange={(event) => setMinScore(event.target.value)} className="mt-1 w-full rounded-xl border bg-white px-3 py-2 font-normal dark:bg-gray-900" /></label>
         <label className="text-sm font-semibold">Máximo destinatarios<input type="number" min="1" max="500" value={draftLimit} onChange={(event) => setDraftLimit(event.target.value)} className="mt-1 w-full rounded-xl border bg-white px-3 py-2 font-normal dark:bg-gray-900" /></label>

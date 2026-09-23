@@ -18,7 +18,8 @@ import {
     Mail,
     Globe,
     Shield,
-    MessageCircle
+    MessageCircle,
+    MapPin
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { featureFlags } from '../../config/featureFlags';
@@ -149,6 +150,7 @@ const Sidebar = ({ onLogout }) => {
             items: [
                 { path: '/admin/crm', icon: Mail, label: 'CRM y Marketing' },
                 { path: '/admin/whatsapp', icon: MessageCircle, label: 'WhatsApp Center' },
+                { path: '/admin/geoscore', icon: MapPin, label: 'GeoScore' },
                 ...(featureFlags.crm2ImportReview
                     ? [{ path: '/admin/crm2-imports', icon: Database, label: 'CRM 2.0 Staging' }]
                     : []),

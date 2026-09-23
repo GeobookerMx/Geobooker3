@@ -352,12 +352,14 @@ const CORE_TEMPLATE_NAMES = new Set([
   'gb_ads_requested_info_es_mx',
   'gb_business_invitation_es_mx',
   'gb_ads_followup_es_mx',
+  'gb_ads_followup_text_es_mx',
   'gb_app_download_es_mx',
   'gb_optin_confirm_en_us',
   'gb_business_registration_help_en_us',
   'gb_ads_requested_info_en_us',
   'gb_business_invitation_en_us',
   'gb_ads_followup_en_us',
+  'gb_ads_followup_text_en_us',
   'gb_app_download_en_us'
 ]);
 

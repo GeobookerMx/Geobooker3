@@ -221,6 +221,7 @@ const MX_CORE_TEMPLATE_NAMES = [
   'gb_ads_requested_info_es_mx',
   'gb_business_invitation_es_mx',
   'gb_ads_followup_es_mx',
+  'gb_ads_followup_text_es_mx',
   'gb_app_download_es_mx'
 ];
 
@@ -230,6 +231,7 @@ const EN_CORE_TEMPLATE_NAMES = [
   'gb_ads_requested_info_en_us',
   'gb_business_invitation_en_us',
   'gb_ads_followup_en_us',
+  'gb_ads_followup_text_en_us',
   'gb_app_download_en_us'
 ];
 
@@ -269,6 +271,14 @@ function displayWhatsAppPhone(value) {
   const digits = raw.replace(/\D/g, '');
   if (/^521\d{10}$/.test(digits)) return `+52${digits.slice(3)}`;
   return raw;
+}
+
+function templateHasMediaHeader(row) {
+  const components = Array.isArray(row?.components) ? row.components : [];
+  return components.some((component) => (
+    String(component?.type || '').toUpperCase() === 'HEADER'
+    && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(String(component?.format || '').toUpperCase())
+  ));
 }
 
 function StatusBadge({ tone = 'neutral', children }) {
@@ -923,6 +933,15 @@ function TemplatesView() {
     result[row.approval_status] = (result[row.approval_status] || 0) + 1;
     return result;
   }, { total: 0, approved: 0, pending: 0, rejected: 0, paused: 0, disabled: 0, deleted: 0 });
+  const mediaHeaderTemplates = rows.filter(templateHasMediaHeader);
+  const campaignEnabledTemplates = rows.filter((row) => row.enabled_for_campaigns);
+  const campaignReadyMarketingMx = rows.filter((row) => (
+    row.enabled_for_campaigns
+    && row.reconciliation_status === 'ready_for_campaign'
+    && row.approval_status === 'approved'
+    && row.category === 'marketing'
+    && String(row.language_code || '').replace('-', '_').toLowerCase() === 'es_mx'
+  ));
   const approvedUsableNames = new Set(rows
     .filter((row) => row.approval_status === 'approved'
       && !['locale_mismatch', 'name_mismatch', 'legacy', 'status_not_approved'].includes(row.reconciliation_status))
@@ -948,6 +967,16 @@ function TemplatesView() {
       <IntegrationCard label="Rechazadas/inactivas" value={(counts.rejected || 0) + (counts.disabled || 0) + (counts.deleted || 0)} detail="Bloqueadas para envío." tone={(counts.rejected || 0) + (counts.disabled || 0) + (counts.deleted || 0) ? 'bad' : 'good'} />
       <IntegrationCard label="MX Core" value={`${MX_CORE_TEMPLATE_NAMES.length - mxMissing.length}/${MX_CORE_TEMPLATE_NAMES.length}`} detail={mxTemplateReadiness ? 'México listo a nivel template.' : `Faltan: ${mxMissing.join(', ')}`} tone={mxTemplateReadiness ? 'good' : 'warning'} />
       <IntegrationCard label="EN Core" value={`${EN_CORE_TEMPLATE_NAMES.length - enMissing.length}/${EN_CORE_TEMPLATE_NAMES.length}`} detail={enTemplateReadiness ? 'Inglés listo a nivel template.' : `Faltan: ${enMissing.join(', ')}`} tone={enTemplateReadiness ? 'good' : 'warning'} />
+    </div>
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <IntegrationCard label="Campañas habilitadas" value={campaignEnabledTemplates.length} detail={`${campaignReadyMarketingMx.length} marketing es_MX listas para wizard.`} tone={campaignReadyMarketingMx.length ? 'good' : 'warning'} />
+      <IntegrationCard label="Con imagen/media" value={mediaHeaderTemplates.length} detail="Bloqueadas para campañas hasta media estable." tone={mediaHeaderTemplates.length ? 'warning' : 'good'} />
+      <IntegrationCard label="Piloto recomendado" value="Text-only" detail="Texto + botón + UTM hasta cerrar media assets." tone="good" />
+      <IntegrationCard label="No borrar imágenes" value="Conservar" detail="No se eliminan de Meta; sólo no entran al wizard." tone="info" />
+    </div>
+    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
+      <p className="font-bold">Regla actual de campañas</p>
+      <p className="mt-1">No quitamos imágenes de Meta. Las plantillas con HEADER IMAGE/VIDEO/DOCUMENT se conservan, pero quedan fuera del Campaign Wizard hasta registrar un asset estable de Geobooker. Para pilotos y campañas iniciales: texto + botón + UTM.</p>
     </div>
     <div className="rounded-2xl border bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1924,6 +1953,34 @@ function CampaignReadinessView() {
     </div>
     {error && !error.includes('no_unprocessed_eligible_members') && <div className="order-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">Readiness no disponible todavía: {error}</div>}
     <div className="order-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{cards.map(([label, value, detail, tone]) => <IntegrationCard key={label} label={label} value={Number(value || 0).toLocaleString()} detail={detail} tone={tone} />)}</div>
+    <div className="order-6 grid gap-4 xl:grid-cols-3">
+      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-950 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
+        <h3 className="font-bold">Fuentes validas para campanas WhatsApp</h3>
+        <ul className="mt-3 space-y-2">
+          <li><strong>Permitidas:</strong> formulario/QR de consentimiento, respuesta entrante, landing oficial, cliente que pide informacion o contacto CRM con evidencia.</li>
+          <li><strong>CSV / DENUE / fuentes abiertas:</strong> sirven para prospeccion CRM y scoring, pero no para WhatsApp marketing hasta obtener opt-in comprobable.</li>
+          <li><strong>Internacional:</strong> cada pais requiere mercado habilitado, idioma compatible, tarifa activa y evidencia de consentimiento.</li>
+        </ul>
+      </div>
+      <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-sm text-blue-950 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100">
+        <h3 className="font-bold">Checklist antes de enviar</h3>
+        <ul className="mt-3 space-y-2">
+          <li>Plantilla aprobada y habilitada para campanas; para pilotos usar text-only.</li>
+          <li>Mercado ON, tarifa activa, limite diario y presupuesto reservable.</li>
+          <li>Opt-in con evidencia, suppression limpia y frequency cap respetado.</li>
+          <li>Preflight READY, gate temporal abierto y worker sin errores recientes.</li>
+        </ul>
+      </div>
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">
+        <h3 className="font-bold">Estados esperados</h3>
+        <ul className="mt-3 space-y-2">
+          <li><strong>queued:</strong> reservado en CRM, todavia pendiente del worker.</li>
+          <li><strong>accepted + wamid:</strong> Meta acepto el envio; esperar webhook de estado.</li>
+          <li><strong>sent/delivered/read:</strong> seguimiento real del proveedor.</li>
+          <li><strong>failed:</strong> revisar codigo Meta, plantilla, parametros o media.</li>
+        </ul>
+      </div>
+    </div>
     <div className="order-7 rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div><h3 className="font-bold">Mercados internacionales candidatos</h3><p className="text-sm text-gray-500">Cohorte comercial inicial; todos permanecen bloqueados hasta revisión y activación explícita.</p></div>

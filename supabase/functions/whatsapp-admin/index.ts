@@ -1556,7 +1556,6 @@ Deno.serve(async (request: Request) => {
         city: body.city ? String(body.city).trim().slice(0, 120) : null,
         industry: body.industry ? String(body.industry).trim().slice(0, 120) : null,
         source_tier: sourceTier,
-        contact_source: body.contactSource ? String(body.contactSource).trim().slice(0, 80) : null,
         language_code: String(body.languageCode || '').trim().replace('-', '_').slice(0, 16),
         timezone: String(body.timezone || '').trim().slice(0, 80),
         min_score: Math.min(100, Math.max(0, Number(body.minScore) || 0)),

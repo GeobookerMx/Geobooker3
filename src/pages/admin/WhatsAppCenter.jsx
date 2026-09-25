@@ -109,6 +109,54 @@ const COUNTRY_CAMPAIGN_GUIDANCE = {
   CA: { language: 'en_US', example: '+1', starterLimit: 10, note: 'Separar segmentos en ingles/frances si el mercado lo requiere.' }
 };
 
+const AUDIENCE_BUILDER_PLAYBOOK = [
+  {
+    source: 'CRM / opt-in existente',
+    canSend: 'Si',
+    filterBy: 'pais, ciudad, industria, score, idioma, consentimiento y supresion',
+    target: 'Campanas reales de 1 a 20 hoy, luego lotes controlados.',
+    action: 'Crear dry run directamente cuando Elegibles finales sea mayor a 0.'
+  },
+  {
+    source: 'CSV propio con consentimiento',
+    canSend: 'Despues de validar',
+    filterBy: 'column mapping, telefono E.164, pais, industria, fuente, evidencia y duplicados',
+    target: 'Convertir lista propia en audiencia elegible sin mezclar unknown consent.',
+    action: 'Importar, normalizar, deduplicar y crear channel_permissions + consent_evidence.'
+  },
+  {
+    source: 'DENUE / INEGI / fuente abierta',
+    canSend: 'No directo',
+    filterBy: 'giro, clase SCIAN/categoria, municipio, estado, colonia, score y product fit',
+    target: 'Prospectos para investigacion, scoring y captacion de opt-in.',
+    action: 'Crear audiencia de captacion: landing/QR/email permitido/call-to-action antes de WhatsApp marketing.'
+  },
+  {
+    source: 'Overture / Apify internacional',
+    canSend: 'No directo',
+    filterBy: 'pais, ciudad, categoria, website, telefono publico, calidad de fuente y mercado',
+    target: 'Expansion global: research + opt-in por mercado e idioma.',
+    action: 'Activar mercado, tarifa, idioma, template y consentimiento antes de campana.'
+  }
+];
+
+const OPT_IN_ACQUISITION_COPY = {
+  es: {
+    title: 'Copy recomendado para captar opt-in antes de WhatsApp',
+    body: '¿Quieres que Geobooker revise opciones para dar visibilidad a tu negocio? Registra tu interés y confirma si deseas recibir información por WhatsApp. Puedes darte de baja en cualquier momento.',
+    cta: 'Quiero información por WhatsApp',
+    landing: 'https://geobooker.com.mx/whatsapp-consent',
+    note: 'Usar en landing, QR, email permitido, llamada o anuncio Click-to-WhatsApp. No usar como WhatsApp outbound a contactos sin permiso.'
+  },
+  en: {
+    title: 'Recommended opt-in acquisition copy',
+    body: 'Would you like Geobooker to review visibility options for your business? Register your interest and confirm if you want to receive information on WhatsApp. You can opt out at any time.',
+    cta: 'Send me WhatsApp information',
+    landing: 'https://geobooker.com.mx/whatsapp-consent',
+    note: 'Use on landing pages, QR, permitted email, calls or Click-to-WhatsApp ads. Do not use as WhatsApp outbound for contacts without permission.'
+  }
+};
+
 const TEMPLATE_BLUEPRINTS = [
   {
     name: 'gb_optin_confirm_es_mx',
@@ -209,6 +257,20 @@ const TEMPLATE_BLUEPRINTS = [
     avoidUse: 'No prometer ventas, alcance o resultados garantizados.'
   },
   {
+    name: 'gb_ads_lead_qualification_es_mx',
+    language: 'es_MX',
+    category: 'MARKETING',
+    leadType: 'advertiser',
+    stage: 'lead_qualification',
+    purpose: 'Generar respuesta comercial y clasificar interes',
+    variables: ['{{1}} nombre', '{{2}} industria', '{{3}} ciudad o mercado'],
+    examples: ['Carlos', 'restaurantes', 'Ciudad de Mexico'],
+    body: 'Hola {{1}}, en Geobooker podemos ayudarte a explorar opciones de visibilidad para negocios de {{2}} en {{3}}. Si te interesa, responde 1 para recibir opciones o 2 para hablar con alguien. Puedes responder BAJA en cualquier momento.',
+    button: 'URL: Ver opciones -> https://geobooker.com.mx/advertise?utm_source=whatsapp&utm_medium=template&utm_campaign=gb_ads_lead_qualification_es_mx',
+    safeUse: 'Solo con opt-in marketing comprobable, mercado activo y plantilla aprobada. Ideal para leads B2B iniciales.',
+    avoidUse: 'No usar con DENUE/INEGI/open data sin opt-in; no prometer resultados garantizados.'
+  },
+  {
     name: 'gb_app_download_es_mx',
     language: 'es_MX',
     category: 'MARKETING',
@@ -263,6 +325,20 @@ const TEMPLATE_BLUEPRINTS = [
     button: 'URL: Explore Geobooker Ads -> https://geobooker.com.mx/advertise',
     safeUse: 'Only with current marketing opt-in, an approved market and frequency cap.',
     avoidUse: 'Do not promise guaranteed sales, reach or results.'
+  },
+  {
+    name: 'gb_ads_lead_qualification_en_us',
+    language: 'en_US',
+    category: 'MARKETING',
+    leadType: 'advertiser',
+    stage: 'lead_qualification',
+    purpose: 'Generate a commercial reply and qualify interest',
+    variables: ['{{1}} name', '{{2}} industry', '{{3}} market'],
+    examples: ['Alex', 'restaurants', 'Mexico City'],
+    body: 'Hi {{1}}, Geobooker can help explore visibility options for {{2}} businesses in {{3}}. If useful, reply 1 to receive options or 2 to speak with someone. Reply STOP at any time.',
+    button: 'URL: View options -> https://geobooker.com.mx/advertise?utm_source=whatsapp&utm_medium=template&utm_campaign=gb_ads_lead_qualification_en_us',
+    safeUse: 'Only with documented marketing opt-in, active market and approved template. Best for early B2B lead qualification.',
+    avoidUse: 'Do not use with Overture/open data/scraped numbers without opt-in; do not promise guaranteed results.'
   },
   {
     name: 'gb_app_download_en_us',
@@ -1678,11 +1754,13 @@ function CampaignReadinessView() {
   const [readiness, setReadiness] = useState(null);
   const [markets, setMarkets] = useState([]);
   const [previewRows, setPreviewRows] = useState([]);
+  const [audienceDiagnostics, setAudienceDiagnostics] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [wizardOptions, setWizardOptions] = useState(null);
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [diagnosticsLoading, setDiagnosticsLoading] = useState(false);
   const [draftLoading, setDraftLoading] = useState(false);
   const [error, setError] = useState('');
   const [countryCode, setCountryCode] = useState('');
@@ -1739,6 +1817,23 @@ function CampaignReadinessView() {
       .catch((loadError) => setError(loadError.message))
       .finally(() => setPreviewLoading(false));
   }, [countryCode, industry]);
+  const loadAudienceDiagnostics = useCallback(() => {
+    setDiagnosticsLoading(true);
+    callAdmin('campaign_audience_diagnostics', {
+      countryCode: countryCode || null,
+      industry: industry || null,
+      purpose: draftPurpose,
+      languageCode: languageCode || null,
+      sourceTier: sourceTier || null,
+      minScore: Number(minScore) || 0
+    })
+      .then((result) => setAudienceDiagnostics(result.rows || []))
+      .catch((loadError) => {
+        setAudienceDiagnostics([]);
+        setError(loadError.message);
+      })
+      .finally(() => setDiagnosticsLoading(false));
+  }, [countryCode, industry, draftPurpose, languageCode, sourceTier, minScore]);
   const createDraft = async (event) => {
     event.preventDefault();
     const validationErrors = [];
@@ -1755,8 +1850,8 @@ function CampaignReadinessView() {
     if (marketDailyCap > 0 && Number(draftLimit) > marketDailyCap) {
       validationErrors.push(`limite mayor al maximo diario del mercado (${marketDailyCap})`);
     }
-    if (!previewLoading && previewRows.length === 0) {
-      validationErrors.push('audiencia elegible; el preview actual no tiene destinatarios');
+    if (!diagnosticsLoading && Number(eligibleMetric?.metric_value || 0) === 0) {
+      validationErrors.push(`audiencia elegible; ${firstBlockingMetric?.next_action || 'no hay contactos que pasen permiso, evidencia y telefono valido'}`);
     }
     if (validationErrors.length) {
       const message = `Completa antes del dry run: ${validationErrors.join(', ')}.`;
@@ -1794,8 +1889,8 @@ function CampaignReadinessView() {
       await load();
       await loadPreview();
     } catch (loadError) {
-      const fallbackMessage = !previewLoading && previewRows.length === 0
-        ? 'No se pudo crear el dry run porque los filtros actuales no tienen destinatarios elegibles. Reduce filtros, baja el score minimo o importa/contacta audiencia con opt-in.'
+      const fallbackMessage = !diagnosticsLoading && Number(eligibleMetric?.metric_value || 0) === 0
+        ? `No se pudo crear el dry run porque no hay destinatarios elegibles. ${firstBlockingMetric?.next_action || 'Importa o capta contactos con opt-in verificable antes de crear campana.'}`
         : loadError.message;
       setError(fallbackMessage);
       toast.error(fallbackMessage);
@@ -1957,6 +2052,7 @@ function CampaignReadinessView() {
   };
   useEffect(() => { load(); }, [load]);
   useEffect(() => { loadPreview(); }, [loadPreview]);
+  useEffect(() => { loadAudienceDiagnostics(); }, [loadAudienceDiagnostics]);
   if (loading && !readiness) return <Loading />;
   const blocked = Number(readiness?.whatsapp_suppressed || 0);
   const unknown = Number(readiness?.whatsapp_unknown_or_missing || 0);
@@ -1983,6 +2079,9 @@ function CampaignReadinessView() {
   ].map((market) => [market.country_code, market])).values()).sort((a, b) => a.market_name.localeCompare(b.market_name));
   const selectedMarketForWizard = marketChoices.find((market) => market.country_code === countryCode) || null;
   const contactSourceGuide = CAMPAIGN_CONTACT_SOURCE_GUIDANCE[contactSource] || CAMPAIGN_CONTACT_SOURCE_GUIDANCE.crm_existing;
+  const diagnosticsByKey = Object.fromEntries((audienceDiagnostics || []).map((row) => [row.metric_key, row]));
+  const eligibleMetric = diagnosticsByKey.eligible || null;
+  const firstBlockingMetric = (audienceDiagnostics || []).find((row) => ['active_contacts', 'with_whatsapp', 'valid_whatsapp', 'consent_ready', 'evidenced', 'eligible'].includes(row.metric_key) && Number(row.metric_value || 0) === 0);
   const countryGuide = COUNTRY_CAMPAIGN_GUIDANCE[countryCode] || {
     language: selectedMarketForWizard?.primary_language_code || languageCode || 'en_US',
     example: 'E.164',
@@ -2034,7 +2133,7 @@ function CampaignReadinessView() {
       <div><h2 className="text-2xl font-bold">Readiness de campañas</h2><p className="text-sm text-gray-500">Preparación agregada; no crea ni envía campañas.</p></div>
       <button onClick={load} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border bg-white px-4 py-2 font-semibold disabled:opacity-50 dark:bg-gray-800"><RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />Actualizar</button>
     </div>
-    {error && !error.includes('no_unprocessed_eligible_members') && <div className="order-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">Readiness no disponible todavía: {error}</div>}
+    {error && !error.includes('no_unprocessed_eligible_members') && !error.includes('no_eligible_members') && <div className="order-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">Readiness no disponible todavía: {error}</div>}
     <div className="order-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{cards.map(([label, value, detail, tone]) => <IntegrationCard key={label} label={label} value={Number(value || 0).toLocaleString()} detail={detail} tone={tone} />)}</div>
     <div className="order-6 grid gap-4 xl:grid-cols-3">
       <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-950 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
@@ -2149,9 +2248,9 @@ function CampaignReadinessView() {
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <IntegrationCard label="Pais / idioma" value={countryCode || 'Sin pais'} detail={`Sugerido: ${countryGuide.language} · prefijo ${countryGuide.example}`} tone={countryCode ? 'info' : 'warning'} />
-          <IntegrationCard label="Fuente de numeros" value={contactSourceGuide.label} detail={contactSourceGuide.status} tone={contactSourceGuide.tone} />
+          <IntegrationCard label="Origen de audiencia" value={contactSourceGuide.label} detail={contactSourceGuide.status} tone={contactSourceGuide.tone} />
           <IntegrationCard label="Costo estimado" value={maximumEstimatedCost === null ? 'Sin tarifa' : `${observedRate.currency} ${maximumEstimatedCost.toFixed(2)}`} detail={observedRate ? `${observedRate.unit_cost} por mensaje · ${observedRate.status}` : 'Selecciona template/pais'} tone={activeRate ? 'good' : 'warning'} />
-          <IntegrationCard label="Audiencia preview" value={previewRows.length} detail="Muestra elegible actual; no es envio al azar." tone={previewRows.length ? 'good' : 'warning'} />
+          <IntegrationCard label="Elegibles estrictos" value={Number(eligibleMetric?.metric_value || 0).toLocaleString()} detail="Permiso + evidencia + numero valido." tone={Number(eligibleMetric?.metric_value || 0) ? 'good' : 'warning'} />
         </div>
         <div className="mt-4 grid gap-3 lg:grid-cols-3">
           <div className="rounded-xl bg-white/70 p-3 text-sm dark:bg-gray-900/40">
@@ -2168,9 +2267,78 @@ function CampaignReadinessView() {
           </div>
         </div>
         <div className="mt-3 rounded-xl bg-white/70 p-3 text-sm dark:bg-gray-900/40">
-          <p><strong>Regla:</strong> no se envia al azar. El backend solo materializa contactos que pasen telefono valido, pais, idioma, consentimiento/evidencia, suppression, mercado y plantilla.</p>
+          <p><strong>Regla:</strong> no se envia al azar. El origen de audiencia no extrae contactos; solo documenta de donde deberian venir. El backend solo materializa contactos que ya existan en CRM y pasen telefono valido, pais, idioma, consentimiento/evidencia, suppression, mercado y plantilla.</p>
           <p className="mt-1"><strong>Nota pais:</strong> {countryGuide.note}</p>
           {assistantWarnings.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5">{assistantWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}
+        </div>
+      </div>
+      <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="font-bold">Diagnostico de fuentes y elegibilidad</h3>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">Explica por que el dry run queda en 0. No importa, no encola y no envia.</p>
+          </div>
+          <button type="button" onClick={loadAudienceDiagnostics} disabled={diagnosticsLoading} className="inline-flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm font-semibold disabled:opacity-50 dark:bg-gray-800"><RefreshCw className={`h-4 w-4 ${diagnosticsLoading ? 'animate-spin' : ''}`} />Diagnosticar</button>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {(audienceDiagnostics || []).map((row) => <IntegrationCard key={row.metric_key} label={row.metric_label} value={Number(row.metric_value || 0).toLocaleString()} detail={row.detail} tone={row.metric_status === 'bad' ? 'bad' : row.metric_status === 'good' ? 'good' : row.metric_status === 'info' ? 'info' : 'warning'} />)}
+          {!diagnosticsLoading && audienceDiagnostics.length === 0 && <div className="rounded-xl border bg-white p-4 text-sm text-gray-500 dark:bg-gray-800">Aun no hay diagnostico disponible.</div>}
+        </div>
+        {firstBlockingMetric && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+          <p className="font-bold">Primer bloqueo detectado: {firstBlockingMetric.metric_label}</p>
+          <p className="mt-1">{firstBlockingMetric.next_action}</p>
+        </div>}
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <div className="rounded-xl bg-white p-3 text-sm dark:bg-gray-800">
+            <p className="font-bold">Destinatarios elegibles hoy</p>
+            <p className="mt-1">Vienen de /whatsapp-consent o CSV propio con opt-in verificable. Deben tener permiso y evidencia.</p>
+          </div>
+          <div className="rounded-xl bg-white p-3 text-sm dark:bg-gray-800">
+            <p className="font-bold">DENUE / INEGI / Overture / Apify</p>
+            <p className="mt-1">Primero son cuentas/prospectos para CRM, GeoScore y captacion. No se vuelven destinatarios hasta que confirmen opt-in.</p>
+          </div>
+          <div className="rounded-xl bg-white p-3 text-sm dark:bg-gray-800">
+            <p className="font-bold">Otros paises</p>
+            <p className="mt-1">Requieren mercado ON, tarifa activa, plantilla en idioma correcto y contactos con consentimiento comprobable.</p>
+          </div>
+        </div>
+      </div>
+      <div className="mt-4 rounded-2xl border border-purple-200 bg-purple-50 p-4 text-purple-950 dark:border-purple-900 dark:bg-purple-950 dark:text-purple-100">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="font-bold">Audience Builder: como llegar a 20 elegibles</h3>
+            <p className="mt-1 text-sm">Primero se filtran prospectos; despues se convierten en elegibles con opt-in. Este bloque guia la estrategia antes de crear campanas grandes.</p>
+          </div>
+          <StatusBadge tone="info">Prospectos → Opt-in → Campaña</StatusBadge>
+        </div>
+        <div className="mt-4 overflow-x-auto rounded-xl border border-purple-200 bg-white/80 dark:border-purple-900 dark:bg-gray-900/40">
+          <table className="min-w-full text-sm">
+            <thead className="text-left">
+              <tr>{['Fuente', '¿Puede enviar?', 'Filtros reales', 'Objetivo', 'Accion recomendada'].map((label) => <th key={label} className="px-3 py-2">{label}</th>)}</tr>
+            </thead>
+            <tbody className="divide-y divide-purple-100 dark:divide-purple-900">
+              {AUDIENCE_BUILDER_PLAYBOOK.map((row) => <tr key={row.source}>
+                <td className="px-3 py-2 font-semibold">{row.source}</td>
+                <td className="px-3 py-2"><StatusBadge tone={row.canSend === 'Si' ? 'good' : row.canSend.includes('Despues') ? 'warning' : 'bad'}>{row.canSend}</StatusBadge></td>
+                <td className="min-w-[220px] px-3 py-2">{row.filterBy}</td>
+                <td className="min-w-[220px] px-3 py-2">{row.target}</td>
+                <td className="min-w-[260px] px-3 py-2">{row.action}</td>
+              </tr>)}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          {[OPT_IN_ACQUISITION_COPY.es, OPT_IN_ACQUISITION_COPY.en].map((copy) => <div key={copy.title} className="rounded-xl bg-white p-4 text-sm dark:bg-gray-900">
+            <p className="font-bold">{copy.title}</p>
+            <p className="mt-2">{copy.body}</p>
+            <p className="mt-2"><strong>CTA:</strong> {copy.cta}</p>
+            <p className="mt-1"><strong>Landing:</strong> {copy.landing}</p>
+            <p className="mt-2 text-xs opacity-80">{copy.note}</p>
+          </div>)}
+        </div>
+        <div className="mt-4 rounded-xl bg-white p-4 text-sm dark:bg-gray-900">
+          <p className="font-bold">Regla operativa para 20 contactos</p>
+          <p className="mt-1">Si el filtro devuelve 500 prospectos pero solo 1 elegible, el sistema no debe inventar 19 destinatarios. Debe crear una cohorte de captacion para conseguir 19 opt-ins adicionales y despues ejecutar la campana.</p>
         </div>
       </div>
       <div className="mt-4 grid grid-cols-5 gap-2">
@@ -2195,11 +2363,24 @@ function CampaignReadinessView() {
       </div>}
       {wizardStep === 3 && <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <label className="text-sm font-semibold">Industria<input value={industry} onChange={(event) => setIndustry(event.target.value.slice(0, 120))} placeholder="Ej. restaurantes" className="mt-1 w-full rounded-xl border bg-white px-3 py-2 font-normal dark:bg-gray-900" /></label>
-        <label className="text-sm font-semibold">Fuente de numeros<select value={contactSource} onChange={(event) => setContactSource(event.target.value)} className="mt-1 w-full rounded-xl border bg-white px-3 py-2 font-normal dark:bg-gray-900">{Object.entries(CAMPAIGN_CONTACT_SOURCE_GUIDANCE).map(([value, guide]) => <option key={value} value={value}>{guide.label}</option>)}</select></label>
+        <label className="text-sm font-semibold">Origen de audiencia<select value={contactSource} onChange={(event) => setContactSource(event.target.value)} className="mt-1 w-full rounded-xl border bg-white px-3 py-2 font-normal dark:bg-gray-900">{Object.entries(CAMPAIGN_CONTACT_SOURCE_GUIDANCE).map(([value, guide]) => <option key={value} value={value}>{guide.label}</option>)}</select></label>
         <label className="text-sm font-semibold">Calidad de fuente<select value={sourceTier} onChange={(event) => setSourceTier(event.target.value)} className="mt-1 w-full rounded-xl border bg-white px-3 py-2 font-normal dark:bg-gray-900"><option value="">Cualquier tier permitido</option>{['AAA', 'AA', 'A', 'B'].map((tier) => <option key={tier} value={tier}>{tier}</option>)}</select></label>
         <label className="text-sm font-semibold">Score mínimo<input type="number" min="0" max="100" value={minScore} onChange={(event) => setMinScore(event.target.value)} className="mt-1 w-full rounded-xl border bg-white px-3 py-2 font-normal dark:bg-gray-900" /></label>
         <label className="text-sm font-semibold">Máximo destinatarios<input type="number" min="1" max="500" value={draftLimit} onChange={(event) => setDraftLimit(event.target.value)} className="mt-1 w-full rounded-xl border bg-white px-3 py-2 font-normal dark:bg-gray-900" /></label>
-        <div className="md:col-span-2 xl:col-span-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">El backend excluirá números inválidos, consentimiento desconocido o sin evidencia, supresiones, idioma incompatible y mercados no autorizados.</div>
+        <div className="md:col-span-2 xl:col-span-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">El backend excluirá números inválidos, consentimiento desconocido o sin evidencia, supresiones, idioma incompatible y mercados no autorizados. Cambiar el origen no extrae contactos automáticamente: primero deben existir en CRM.</div>
+        {Number(eligibleMetric?.metric_value || 0) > 0 && <div className="md:col-span-2 xl:col-span-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="font-bold">Audiencia lista: {Number(eligibleMetric?.metric_value || 0).toLocaleString()} destinatario(s) elegible(s)</p>
+              <p className="mt-1">Ahora falta elegir una plantilla compatible y crear el dry run. Esto todavía no encola ni envía mensajes.</p>
+              {contactSource === 'open_data' && <p className="mt-1 text-xs">Nota: aunque seleccionaste fuente abierta, el destinatario elegible viene de CRM/opt-in. DENUE/INEGI no se usa para envío directo.</p>}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {contactSource === 'open_data' && <button type="button" onClick={() => setContactSource('crm_existing')} className="rounded-xl border border-emerald-300 bg-white px-3 py-2 text-xs font-bold text-emerald-900">Usar origen CRM</button>}
+              <button type="button" onClick={() => setWizardStep(4)} className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white">Continuar a plantilla</button>
+            </div>
+          </div>
+        </div>}
       </div>}
       {wizardStep === 4 && <div className="mt-5 space-y-3">
         <label className="text-sm font-semibold">Plantilla compatible<select value={draftTemplateId} onChange={(event) => setDraftTemplateId(event.target.value)} className="mt-1 w-full rounded-xl border bg-white px-3 py-2 font-normal dark:bg-gray-900"><option value="">Selecciona una plantilla habilitada</option>{compatibleTemplates.map((template) => <option key={template.id} value={template.id}>{template.template_name} · {template.language_code} · {template.category}</option>)}</select></label>

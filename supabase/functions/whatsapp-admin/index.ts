@@ -1497,6 +1497,34 @@ Deno.serve(async (request: Request) => {
       return json(200, { rows: data || [], limit }, corsHeaders);
     }
 
+    if (action === 'campaign_audience_diagnostics') {
+      const countryCode = body.countryCode ? String(body.countryCode).trim().toUpperCase().slice(0, 2) : null;
+      const industry = body.industry ? String(body.industry).trim().slice(0, 120) : null;
+      const purpose = ['marketing', 'transactional', 'service'].includes(String(body.purpose)) ? String(body.purpose) : 'marketing';
+      const languageCode = body.languageCode ? String(body.languageCode).trim().replace('-', '_').slice(0, 16) : null;
+      const sourceTier = body.sourceTier ? String(body.sourceTier).trim().toUpperCase().slice(0, 3) : null;
+      const minScore = Math.min(100, Math.max(0, Number(body.minScore) || 0));
+      const { data, error } = await admin.rpc('crm_whatsapp_audience_diagnostics', {
+        p_country_code: countryCode || null,
+        p_industry: industry || null,
+        p_purpose: purpose,
+        p_language_code: languageCode || null,
+        p_source_tier: sourceTier || null,
+        p_min_score: minScore
+      });
+      if (error) {
+        return json(409, {
+          error: 'campaign_audience_diagnostics_unavailable',
+          message: safeFailureDetail(error.message)
+        }, corsHeaders);
+      }
+      return json(200, {
+        rows: data || [],
+        filters: { countryCode, industry, purpose, languageCode, sourceTier, minScore },
+        checkedAt: new Date().toISOString()
+      }, corsHeaders);
+    }
+
     if (action === 'campaign_wizard_options') {
       const [templatesResult, marketsResult, ratesResult, frequencyResult, budgetResult] = await Promise.all([
         crm.from('whatsapp_templates')

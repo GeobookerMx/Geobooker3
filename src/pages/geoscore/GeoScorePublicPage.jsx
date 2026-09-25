@@ -26,11 +26,17 @@ import { supabase } from '../../lib/supabase';
 
 const COUNTRY_OPTIONS = [
   { code: 'MX', name: 'México', flag: '🇲🇽' },
+  { code: 'GB', name: 'Reino Unido', flag: '🇬🇧' },
   { code: 'ES', name: 'España', flag: '🇪🇸' },
   { code: 'US', name: 'Estados Unidos', flag: '🇺🇸' },
+  { code: 'FR', name: 'Francia', flag: '🇫🇷' },
+  { code: 'DE', name: 'Alemania', flag: '🇩🇪' },
+  { code: 'AE', name: 'Dubai / EAU', flag: '🇦🇪' },
+  { code: 'JP', name: 'Japón', flag: '🇯🇵' },
   { code: 'CO', name: 'Colombia', flag: '🇨🇴' },
   { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
-  { code: 'CL', name: 'Chile', flag: '🇨🇱' }
+  { code: 'CL', name: 'Chile', flag: '🇨🇱' },
+  { code: 'AU', name: 'Australia', flag: '🇦🇺' }
 ];
 
 const INTERNATIONAL_LOCATIONS = {
@@ -42,6 +48,13 @@ const INTERNATIONAL_LOCATIONS = {
     { name: 'Monterrey - San Pedro', lat: '25.657200', lng: '-100.366700', city: 'Monterrey' },
     { name: 'Puebla - Angelópolis', lat: '19.030500', lng: '-98.232500', city: 'Puebla' },
     { name: 'Cancún - Zona Hotelera', lat: '21.139100', lng: '-86.753300', city: 'Cancún' }
+  ],
+  GB: [
+    { name: 'London - Soho / Oxford St', lat: '51.513600', lng: '-0.136500', city: 'London' },
+    { name: 'London - Covent Garden', lat: '51.511700', lng: '-0.124000', city: 'London' },
+    { name: 'London - Mayfair', lat: '51.509500', lng: '-0.149700', city: 'London' },
+    { name: 'London - Shoreditch Tech', lat: '51.523000', lng: '-0.078000', city: 'London' },
+    { name: 'Manchester - Northern Quarter', lat: '53.483000', lng: '-2.235000', city: 'Manchester' }
   ],
   ES: [
     { name: 'Madrid - Gran Vía / Centro', lat: '40.420000', lng: '-3.705000', city: 'Madrid' },
@@ -57,6 +70,26 @@ const INTERNATIONAL_LOCATIONS = {
     { name: 'Los Angeles - Santa Monica', lat: '34.019500', lng: '-118.491200', city: 'Los Angeles, CA' },
     { name: 'Houston - The Galleria', lat: '29.739700', lng: '-95.464900', city: 'Houston, TX' }
   ],
+  FR: [
+    { name: 'Paris - Le Marais', lat: '48.857500', lng: '2.358000', city: 'Paris' },
+    { name: 'Paris - Champs-Élysées', lat: '48.869800', lng: '2.307500', city: 'Paris' },
+    { name: 'Lyon - Presqu\'île', lat: '45.764000', lng: '4.835700', city: 'Lyon' }
+  ],
+  DE: [
+    { name: 'Berlin - Mitte / Alexanderplatz', lat: '52.520000', lng: '13.405000', city: 'Berlin' },
+    { name: 'Munich - Altstadt', lat: '48.137000', lng: '11.575000', city: 'Munich' },
+    { name: 'Frankfurt - Innenstadt', lat: '50.110900', lng: '8.682100', city: 'Frankfurt' }
+  ],
+  AE: [
+    { name: 'Dubai - Downtown / Burj Khalifa', lat: '25.197200', lng: '55.274400', city: 'Dubai' },
+    { name: 'Dubai - Marina / JBR', lat: '25.077200', lng: '55.133200', city: 'Dubai' },
+    { name: 'Dubai - DIFC Financial Center', lat: '25.210000', lng: '55.280000', city: 'Dubai' }
+  ],
+  JP: [
+    { name: 'Tokyo - Shibuya Crossing', lat: '35.659500', lng: '139.700500', city: 'Tokyo' },
+    { name: 'Tokyo - Ginza Commercial', lat: '35.671900', lng: '139.764800', city: 'Tokyo' },
+    { name: 'Tokyo - Shinjuku Central', lat: '35.693800', lng: '139.703400', city: 'Tokyo' }
+  ],
   CO: [
     { name: 'Bogotá - Zona T / El Retiro', lat: '4.667500', lng: '-74.053800', city: 'Bogotá' },
     { name: 'Bogotá - Chapinero Alto', lat: '4.648000', lng: '-74.060000', city: 'Bogotá' },
@@ -71,6 +104,11 @@ const INTERNATIONAL_LOCATIONS = {
   CL: [
     { name: 'Santiago - Providencia', lat: '-33.426000', lng: '-70.612000', city: 'Santiago' },
     { name: 'Santiago - Las Condes / El Golf', lat: '-33.415000', lng: '-70.598000', city: 'Santiago' }
+  ],
+  AU: [
+    { name: 'Sydney - CBD / George St', lat: '-33.868800', lng: '151.209300', city: 'Sydney' },
+    { name: 'Sydney - Surry Hills', lat: '-33.886000', lng: '151.212000', city: 'Sydney' },
+    { name: 'Melbourne - CBD / Flinders', lat: '-37.817500', lng: '144.967100', city: 'Melbourne' }
   ]
 };
 

@@ -15,21 +15,64 @@ import {
   Gift,
   Share2,
   Download,
-  Loader2
+  Loader2,
+  Globe2,
+  FileText
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { jsPDF } from 'jspdf';
 import { supabase } from '../../lib/supabase';
 
-const POPULAR_LOCATIONS = [
-  { name: 'CDMX - Polanco', lat: '19.433890', lng: '-99.191250', city: 'Ciudad de México' },
-  { name: 'CDMX - Roma / Condesa', lat: '19.416200', lng: '-99.167800', city: 'Ciudad de México' },
-  { name: 'CDMX - Centro Histórico', lat: '19.432608', lng: '-99.133209', city: 'Ciudad de México' },
-  { name: 'Guadalajara - Providencia', lat: '20.692300', lng: '-103.382100', city: 'Guadalajara' },
-  { name: 'Monterrey - San Pedro', lat: '25.657200', lng: '-100.366700', city: 'Monterrey' },
-  { name: 'Puebla - Angelópolis', lat: '19.030500', lng: '-98.232500', city: 'Puebla' },
-  { name: 'Querétaro - Juriquilla', lat: '20.705100', lng: '-100.443900', city: 'Querétaro' }
+const COUNTRY_OPTIONS = [
+  { code: 'MX', name: 'México', flag: '🇲🇽' },
+  { code: 'ES', name: 'España', flag: '🇪🇸' },
+  { code: 'US', name: 'Estados Unidos', flag: '🇺🇸' },
+  { code: 'CO', name: 'Colombia', flag: '🇨🇴' },
+  { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
+  { code: 'CL', name: 'Chile', flag: '🇨🇱' }
 ];
+
+const INTERNATIONAL_LOCATIONS = {
+  MX: [
+    { name: 'CDMX - Polanco', lat: '19.433890', lng: '-99.191250', city: 'Ciudad de México' },
+    { name: 'CDMX - Roma / Condesa', lat: '19.416200', lng: '-99.167800', city: 'Ciudad de México' },
+    { name: 'CDMX - Centro Histórico', lat: '19.432608', lng: '-99.133209', city: 'Ciudad de México' },
+    { name: 'Guadalajara - Providencia', lat: '20.692300', lng: '-103.382100', city: 'Guadalajara' },
+    { name: 'Monterrey - San Pedro', lat: '25.657200', lng: '-100.366700', city: 'Monterrey' },
+    { name: 'Puebla - Angelópolis', lat: '19.030500', lng: '-98.232500', city: 'Puebla' },
+    { name: 'Cancún - Zona Hotelera', lat: '21.139100', lng: '-86.753300', city: 'Cancún' }
+  ],
+  ES: [
+    { name: 'Madrid - Gran Vía / Centro', lat: '40.420000', lng: '-3.705000', city: 'Madrid' },
+    { name: 'Madrid - Barrio de Salamanca', lat: '40.430000', lng: '-3.680000', city: 'Madrid' },
+    { name: 'Barcelona - Eixample', lat: '41.390000', lng: '2.160000', city: 'Barcelona' },
+    { name: 'Barcelona - Gràcia', lat: '41.402000', lng: '2.158000', city: 'Barcelona' },
+    { name: 'Valencia - Ciutat Vella', lat: '39.475000', lng: '-0.377000', city: 'Valencia' }
+  ],
+  US: [
+    { name: 'Miami - Brickell Financial', lat: '25.761700', lng: '-80.191800', city: 'Miami, FL' },
+    { name: 'Miami - Wynwood Arts', lat: '25.804200', lng: '-80.198900', city: 'Miami, FL' },
+    { name: 'New York - SoHo / Manhattan', lat: '40.723300', lng: '-74.003000', city: 'New York, NY' },
+    { name: 'Los Angeles - Santa Monica', lat: '34.019500', lng: '-118.491200', city: 'Los Angeles, CA' },
+    { name: 'Houston - The Galleria', lat: '29.739700', lng: '-95.464900', city: 'Houston, TX' }
+  ],
+  CO: [
+    { name: 'Bogotá - Zona T / El Retiro', lat: '4.667500', lng: '-74.053800', city: 'Bogotá' },
+    { name: 'Bogotá - Chapinero Alto', lat: '4.648000', lng: '-74.060000', city: 'Bogotá' },
+    { name: 'Medellín - El Poblado / Provenza', lat: '6.208500', lng: '-75.567000', city: 'Medellín' },
+    { name: 'Medellín - Laureles', lat: '6.244000', lng: '-75.592000', city: 'Medellín' }
+  ],
+  AR: [
+    { name: 'Buenos Aires - Palermo Soho', lat: '-34.588000', lng: '-58.430000', city: 'Buenos Aires' },
+    { name: 'Buenos Aires - Recoleta', lat: '-34.587000', lng: '-58.393000', city: 'Buenos Aires' },
+    { name: 'Buenos Aires - Puerto Madero', lat: '-34.611000', lng: '-58.364000', city: 'Buenos Aires' }
+  ],
+  CL: [
+    { name: 'Santiago - Providencia', lat: '-33.426000', lng: '-70.612000', city: 'Santiago' },
+    { name: 'Santiago - Las Condes / El Golf', lat: '-33.415000', lng: '-70.598000', city: 'Santiago' }
+  ]
+};
 
 const COMMERCIAL_VERTICALS = [
   { key: 'restaurant', name: 'Restaurante / Alimentos', icon: '🍽️', desc: 'Comida rápida, formal, cafeterías y bares' },
@@ -41,6 +84,7 @@ const COMMERCIAL_VERTICALS = [
 ];
 
 export default function GeoScorePublicPage() {
+  const [selectedCountry, setSelectedCountry] = useState('MX');
   const [vertical, setVertical] = useState('restaurant');
   const [lat, setLat] = useState('19.433890');
   const [lng, setLng] = useState('-99.191250');
@@ -48,6 +92,17 @@ export default function GeoScorePublicPage() {
   const [radiusMeters, setRadiusMeters] = useState('1000');
   const [loading, setLoading] = useState(false);
   const [scoreResult, setScoreResult] = useState(null);
+
+  const handleCountryChange = (countryCode) => {
+    setSelectedCountry(countryCode);
+    const firstLoc = INTERNATIONAL_LOCATIONS[countryCode]?.[0];
+    if (firstLoc) {
+      setLat(firstLoc.lat);
+      setLng(firstLoc.lng);
+      setLocationName(firstLoc.name);
+    }
+    setScoreResult(null);
+  };
 
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -77,7 +132,7 @@ export default function GeoScorePublicPage() {
         body: {
           action: 'calculate_score',
           businessTypeKey: vertical,
-          countryCode: 'MX',
+          countryCode: selectedCountry,
           lat: Number(lat),
           lng: Number(lng),
           radiusMeters: Number(radiusMeters)
@@ -93,10 +148,85 @@ export default function GeoScorePublicPage() {
       }
     } catch (err) {
       console.warn('GeoScore direct calculate fallback:', err);
-      // Fallback friendly demo response if edge function has temporary network hiccup
       toast.error(err.message || 'Error al calcular. Reintentando...');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadPDF = () => {
+    if (!scoreResult) return;
+    try {
+      const doc = new jsPDF();
+      doc.setFillColor(15, 23, 42); // Dark background
+      doc.rect(0, 0, 210, 40, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text('GEOBOOKER GEOSCORE™', 14, 20);
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Estudio de Mercado Express Internacional · Certificado Oficial', 14, 28);
+      doc.text(`Fecha: ${new Date().toLocaleDateString('es-MX')}`, 150, 28);
+
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Ubicación Analizada: ${locationName} (${selectedCountry})`, 14, 52);
+
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Giro Evaluado: ${COMMERCIAL_VERTICALS.find(v => v.key === vertical)?.name || vertical}`, 14, 60);
+      doc.text(`Radio de Influencia: ${radiusMeters} metros | Coordenadas: ${lat}, ${lng}`, 14, 66);
+
+      // Score Box
+      doc.setFillColor(241, 245, 249);
+      doc.roundedRect(14, 75, 182, 35, 3, 3, 'F');
+      
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 41, 59);
+      doc.text('RESULTADO GLOBAL GEOSCORE:', 20, 88);
+
+      doc.setFontSize(26);
+      doc.setTextColor(37, 99, 235);
+      doc.text(`${scoreResult.score}/100`, 20, 102);
+
+      doc.setFontSize(16);
+      doc.setTextColor(16, 185, 129);
+      doc.text(`Calificación: Grado ${scoreResult.grade}`, 120, 95);
+
+      // Diagnosis
+      doc.setFontSize(11);
+      doc.setTextColor(51, 65, 85);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Diagnóstico Estratégico:', 14, 122);
+      doc.setFont('helvetica', 'normal');
+      const splitText = doc.splitTextToSize(scoreResult.recommendation || '', 180);
+      doc.text(splitText, 14, 128);
+
+      // 5 Pillars Breakdown
+      doc.setFont('helvetica', 'bold');
+      doc.text('Desglose de los 5 Pilares Comerciales:', 14, 150);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`1. Competencia Directa: ${scoreResult.breakdown?.competition?.score ?? 0} pts (${scoreResult.breakdown?.competition?.count ?? 0} competidores)`, 18, 158);
+      doc.text(`2. Sinergia Comercial: ${scoreResult.breakdown?.complementarity?.score ?? 0} pts (${scoreResult.breakdown?.complementarity?.count ?? 0} comercios ancla)`, 18, 166);
+      doc.text(`3. Densidad Total: ${scoreResult.breakdown?.density?.score ?? 0} pts (${scoreResult.breakdown?.density?.totalNearby ?? 0} negocios en radio)`, 18, 174);
+      doc.text(`4. Accesibilidad y Conectividad: ${scoreResult.breakdown?.accessibility?.score ?? 0} pts`, 18, 182);
+      doc.text(`5. Calidad y Confianza de Datos: ${scoreResult.breakdown?.confidence?.score ?? 0}%`, 18, 190);
+
+      // Footer
+      doc.setFontSize(9);
+      doc.setTextColor(148, 163, 184);
+      doc.text('Servicio gratuito de Estudio de Mercado Express por Geobooker hasta Enero 2027.', 14, 275);
+      doc.text('Visita https://geobooker.com.mx para registrar tu negocio o acceder a más herramientas.', 14, 282);
+
+      doc.save(`GeoScore_${locationName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+      toast.success('¡PDF descargado con éxito!');
+    } catch (err) {
+      toast.error('No se pudo generar el PDF');
     }
   };
 
@@ -130,12 +260,12 @@ export default function GeoScorePublicPage() {
             Conoce el <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent">GeoScore™</span> de tu ubicación comercial
           </h1>
           <p className="mt-4 text-base sm:text-xl text-slate-300 max-w-3xl mx-auto">
-            Evalúa la viabilidad comercial de cualquier punto en México. Analiza competencia, comercios ancla, flujo potencial y densidad de mercado al instante.
+            Evalúa la viabilidad comercial de cualquier punto en México, España, EE. UU., Colombia, Argentina y Chile. Analiza competencia, flujo potencial y densidad de mercado al instante.
           </p>
         </div>
       </div>
 
-      {/* Main Interactive Interactive Section */}
+      {/* Main Interactive Section */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <div className="grid gap-8 lg:grid-cols-12 items-start">
           
@@ -145,12 +275,36 @@ export default function GeoScorePublicPage() {
               <Compass className="h-5 w-5 text-cyan-400" /> Configura tu Estudio
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-slate-400">
-              Personaliza el giro y las coordenadas a evaluar.
+              Selecciona el país, giro y las coordenadas a evaluar.
             </p>
+
+            {/* Country Selector */}
+            <div className="mt-5">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                <Globe2 className="h-3.5 w-3.5 text-cyan-400" /> 1. País / Mercado
+              </label>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {COUNTRY_OPTIONS.map((c) => (
+                  <button
+                    key={c.code}
+                    type="button"
+                    onClick={() => handleCountryChange(c.code)}
+                    className={`flex items-center justify-center gap-1.5 rounded-xl border p-2 text-xs font-bold transition-all ${
+                      selectedCountry === c.code
+                        ? 'border-blue-500 bg-blue-600 text-white shadow-md'
+                        : 'border-slate-800 bg-slate-800/60 text-slate-300 hover:bg-slate-800'
+                    }`}
+                  >
+                    <span>{c.flag}</span>
+                    <span>{c.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Vertical Picker */}
             <div className="mt-6">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-400">1. Giro Comercial</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400">2. Giro Comercial</label>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {COMMERCIAL_VERTICALS.map((v) => (
                   <button
@@ -170,11 +324,11 @@ export default function GeoScorePublicPage() {
               </div>
             </div>
 
-            {/* Quick Cities */}
+            {/* Quick Cities for selected country */}
             <div className="mt-6">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-400">2. Ubicación o Polo Comercial</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400">3. Polos Comerciales en {COUNTRY_OPTIONS.find(c => c.code === selectedCountry)?.name}</label>
               <div className="mt-2 flex flex-wrap gap-1.5">
-                {POPULAR_LOCATIONS.map((loc) => (
+                {(INTERNATIONAL_LOCATIONS[selectedCountry] || []).map((loc) => (
                   <button
                     key={loc.name}
                     type="button"
@@ -185,7 +339,7 @@ export default function GeoScorePublicPage() {
                     }}
                     className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-all ${
                       locationName === loc.name
-                        ? 'bg-blue-600 text-white font-bold'
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold shadow-sm'
                         : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                     }`}
                   >
@@ -208,7 +362,7 @@ export default function GeoScorePublicPage() {
             {/* Radio Slider */}
             <div className="mt-6">
               <div className="flex justify-between items-center text-xs">
-                <span className="font-bold uppercase tracking-wider text-slate-400">3. Radio de Mercado</span>
+                <span className="font-bold uppercase tracking-wider text-slate-400">4. Radio de Mercado</span>
                 <span className="font-bold text-cyan-400">{radiusMeters === '500' ? '500 m (Peatonal)' : radiusMeters === '1000' ? '1 km (Estándar)' : `${Number(radiusMeters)/1000} km`}</span>
               </div>
               <input
@@ -230,10 +384,10 @@ export default function GeoScorePublicPage() {
               className="mt-8 w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 p-4 font-black text-white text-base shadow-lg shadow-blue-500/25 hover:from-cyan-400 hover:to-indigo-500 transition-all disabled:opacity-50"
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
-              {loading ? 'Analizando mercado...' : 'Calcular GeoScore Express Gratis'}
+              {loading ? 'Analizando mercado internacional...' : 'Calcular GeoScore Express Gratis'}
             </button>
             <p className="mt-2 text-center text-[11px] text-slate-400">
-              ⚡ Sin registro requerido durante la promoción · Análisis multi-fuente inmediato
+              ⚡ Sin costo · Válido para emprendedores e inversionistas hasta Enero 2027
             </p>
           </div>
 
@@ -251,7 +405,7 @@ export default function GeoScorePublicPage() {
                 <div className="mt-6 flex flex-wrap justify-center gap-4 text-xs text-slate-400">
                   <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Competidores directos</span>
                   <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Sinergia comercial</span>
-                  <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Densidad y accesibilidad</span>
+                  <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Cobertura multi-país</span>
                 </div>
               </div>
             )}
@@ -263,7 +417,7 @@ export default function GeoScorePublicPage() {
                 <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-6">
                   <div>
                     <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-400 mb-2">
-                      <ShieldCheck className="h-3.5 w-3.5" /> ESTUDIO EXPRESS COMPLETADO
+                      <ShieldCheck className="h-3.5 w-3.5" /> ESTUDIO EXPRESS COMPLETADO ({selectedCountry})
                     </div>
                     <h3 className="text-2xl font-black text-white">{locationName}</h3>
                     <p className="text-xs text-slate-400 mt-0.5">Radio de análisis: {scoreResult.metrics?.radiusMeters || radiusMeters} metros</p>
@@ -345,13 +499,23 @@ export default function GeoScorePublicPage() {
 
                 {/* Actions & Next Steps */}
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-800">
-                  <button
-                    type="button"
-                    onClick={handleShare}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700 transition-colors"
-                  >
-                    <Share2 className="h-4 w-4" /> Compartir Estudio
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={handleDownloadPDF}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-blue-500/40 bg-blue-500/10 px-4 py-2 text-xs font-bold text-blue-200 hover:bg-blue-500/20 transition-colors shadow-sm"
+                    >
+                      <Download className="h-4 w-4 text-cyan-400" /> Descargar PDF Oficial
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleShare}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700 transition-colors"
+                    >
+                      <Share2 className="h-4 w-4" /> Compartir
+                    </button>
+                  </div>
 
                   <Link
                     to="/business/register"

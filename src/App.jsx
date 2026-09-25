@@ -61,6 +61,8 @@ const PUBLIC_NATIVE_PATH_PREFIXES = [
   '/b2b-connect',
   '/download',
   '/emprende',
+  '/geoscore',
+  '/estudio-mercado',
   '/space',
   '/reset-password'
 ];

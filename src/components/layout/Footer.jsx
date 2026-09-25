@@ -166,6 +166,11 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/geoscore" data-nav-id="geoscore_footer_link" className="text-amber-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block font-bold">
+                    GeoScore™ (Estudio Gratis)
+                  </Link>
+                </li>
+                <li>
                   <Link to="/emprende" data-nav-id="emprende_footer_link" className="text-cyan-300 hover:text-white hover:pl-2 transition-all duration-200 inline-block font-bold">
                     Geobooker Emprende
                   </Link>

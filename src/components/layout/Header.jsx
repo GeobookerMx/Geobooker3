@@ -200,6 +200,14 @@ export default function Header() {
           <Link to="/b2b-connect" className="text-geoPurple font-bold hover:text-geoPink transition-colors flex items-center gap-1">
             {t('nav.b2bProviders')}
           </Link>
+          <Link
+            to="/geoscore"
+            data-nav-id="geoscore_desktop_nav"
+            className="text-indigo-950 font-black hover:text-indigo-600 transition-colors rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 px-3 py-1.5 shadow-sm flex items-center gap-1.5"
+          >
+            <span>GeoScore™</span>
+            <span className="rounded-full bg-emerald-600 px-1.5 py-0.2 text-[10px] font-black text-white uppercase">Gratis</span>
+          </Link>
 
           <Link
             to="/claim"
@@ -397,6 +405,15 @@ export default function Header() {
             className="block text-geoPurple font-bold hover:text-geoPink py-1"
           >
             {t('nav.b2bProviders')}
+          </Link>
+
+          <Link
+            to="/geoscore"
+            data-nav-id="geoscore_mobile_nav"
+            onClick={() => setIsOpen(false)}
+            className="block rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-3 text-center text-white font-black shadow-lg"
+          >
+            GeoScore™ Express (100% Gratis)
           </Link>
 
           <Link

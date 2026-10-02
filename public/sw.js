@@ -4,7 +4,7 @@
  * Proporciona funcionalidad offline y caché de assets
  */
 
-const CACHE_VERSION = 'v2.4.0';
+const CACHE_VERSION = 'v2.4.1';
 const CACHE_NAME = `geobooker-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `geobooker-runtime-${CACHE_VERSION}`;
 const CRITICAL_PRECACHE_ASSETS = new Set(['/index.html']);
@@ -98,7 +98,7 @@ self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
     const isDocumentRequest = request.mode === 'navigate' || request.destination === 'document';
-    const isBuildAsset = url.pathname.startsWith('/assets/');
+    const isBuildAsset = url.pathname.startsWith('/assets/') && /\.(js|css)$/i.test(url.pathname);
 
     // Solo cachear requests GET
     if (request.method !== 'GET') {

@@ -7,7 +7,7 @@ import {
   Calendar, CheckCircle2, AlertCircle, Clock,
   ChevronRight, Filter, Search, Plus, Eye,
   Settings, Trash2, Edit2, Play, Pause, X,
-  TrendingUp, DollarSign, Info, RefreshCw, FileText
+  TrendingUp, DollarSign, Info, RefreshCw, FileText, ImageIcon
 } from 'lucide-react';
 import { sendCampaignApprovedEmail, sendCampaignRejectedEmail } from '../../services/notificationService';
 import CampaignDetailsModal from '../../components/admin/CampaignDetailsModal';
@@ -35,6 +35,7 @@ const AdsManagement = () => {
   const [rejectCustom, setRejectCustom] = useState('');
   // Metrics viewer state
   const [metricsModal, setMetricsModal] = useState({ open: false, campaign: null, metrics: null, loading: false });
+  const [auditModal, setAuditModal] = useState({ open: false, campaign: null, audit: null, loading: false });
   const [analyticsData, setAnalyticsData] = useState({ // Datos para grAficas
     impressionsOverTime: [],
     spacePerformance: [],
@@ -339,6 +340,25 @@ const AdsManagement = () => {
     } catch (err) {
       console.error('Error loading metrics:', err);
       setMetricsModal(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const openCommercialAuditModal = async (campaign) => {
+    setAuditModal({ open: true, campaign, audit: null, loading: true });
+    try {
+      const language = campaign.kpi_report_language || campaign.buyer_language || (campaign.billing_country === 'US' ? 'en' : 'es');
+      const { data, error } = await supabase.rpc('ads_campaign_commercial_audit', {
+        p_campaign_id: campaign.id,
+        p_language: language,
+        p_persist: true
+      });
+      if (error) throw error;
+      setAuditModal({ open: true, campaign, audit: data, loading: false });
+      await loadData(statusFilter, spaceFilter);
+    } catch (error) {
+      console.error('Error loading commercial audit:', error);
+      toast.error(error.message || 'No se pudo cargar la auditoria comercial');
+      setAuditModal({ open: true, campaign, audit: { error: error.message }, loading: false });
     }
   };
 
@@ -665,6 +685,14 @@ const AdsManagement = () => {
                             {contractLoading === campaign.id ? 'Generando...' : 'Contrato'}
                           </button>
                           <button
+                            onClick={() => openCommercialAuditModal(campaign)}
+                            className="text-sky-700 hover:text-sky-900 bg-sky-50 px-3 py-1 rounded hover:bg-sky-100 transition flex items-center gap-1"
+                            title="Auditoria fiscal, comercial y KPI en idioma del contratante"
+                          >
+                            <Info className="w-4 h-4" />
+                            Auditoria
+                          </button>
+                          <button
                             onClick={async () => {
                               const { data: creatives } = await supabase
                                 .from('ad_creatives')
@@ -759,6 +787,86 @@ const AdsManagement = () => {
         />
       )}
 
+      {auditModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setAuditModal({ open: false, campaign: null, audit: null, loading: false })}>
+          <div className="w-full max-w-4xl overflow-hidden rounded-lg bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Auditoria comercial</h3>
+                <p className="text-sm text-gray-500">{auditModal.campaign?.advertiser_name || 'Campana'} · {auditModal.campaign?.advertiser_email || 'Sin email'}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAuditModal({ open: false, campaign: null, audit: null, loading: false })}
+                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                aria-label="Cerrar auditoria"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="max-h-[75vh] overflow-y-auto px-6 py-5">
+              {auditModal.loading ? (
+                <div className="flex min-h-[180px] items-center justify-center text-gray-500">
+                  <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
+                  Calculando auditoria...
+                </div>
+              ) : auditModal.audit?.error ? (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                  {auditModal.audit.error}
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  <div className="grid gap-3 md:grid-cols-4">
+                    <AuditTile label="Estado" value={auditModal.audit?.status || 'N/A'} tone={auditModal.audit?.status === 'blocked' ? 'red' : auditModal.audit?.status === 'review_required' ? 'amber' : 'green'} />
+                    <AuditTile label="Escenario" value={auditModal.audit?.scenario || 'N/A'} />
+                    <AuditTile label="Moneda" value={auditModal.audit?.controls?.currency || 'N/A'} />
+                    <AuditTile label="Alto valor" value={auditModal.audit?.controls?.isHighValue ? 'Si' : 'No'} tone={auditModal.audit?.controls?.isHighValue ? 'amber' : 'gray'} />
+                  </div>
+
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <AuditPanel title="Control fiscal">
+                      <AuditRow label="Facturacion" value={auditModal.audit?.controls?.billingCountry || 'N/A'} />
+                      <AuditRow label="Mercado objetivo" value={auditModal.audit?.controls?.targetCountry || auditModal.campaign?.target_location || 'N/A'} />
+                      <AuditRow label="Clasificacion" value={auditModal.audit?.fiscal?.classification || 'N/A'} />
+                      <AuditRow label="Revision" value={auditModal.audit?.fiscal?.reviewStatus || 'N/A'} />
+                      <p className="mt-3 text-xs leading-relaxed text-gray-500">{auditModal.audit?.fiscal?.note}</p>
+                    </AuditPanel>
+
+                    <AuditPanel title="Inversion y gasto">
+                      <AuditRow label="Total" value={`${auditModal.audit?.controls?.total ?? 0} ${auditModal.audit?.controls?.currency || ''}`} />
+                      <AuditRow label="Cotizado MXN" value={auditModal.audit?.controls?.quotedMxn != null ? `$${Number(auditModal.audit.controls.quotedMxn).toLocaleString('es-MX')} MXN` : 'Pendiente'} />
+                      <AuditRow label="Umbral alto valor" value={`$${Number(auditModal.audit?.controls?.highValueThresholdMxn || 18000).toLocaleString('es-MX')} MXN`} />
+                      <AuditRow label="OXXO permitido" value={auditModal.audit?.controls?.oxxoAllowed ? 'Si' : 'No'} />
+                    </AuditPanel>
+                  </div>
+
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <AuditPanel title="Bloqueos">
+                      <AuditList items={auditModal.audit?.blockers} empty="Sin bloqueos criticos" tone="red" />
+                    </AuditPanel>
+                    <AuditPanel title="Advertencias">
+                      <AuditList items={auditModal.audit?.warnings} empty="Sin advertencias" tone="amber" />
+                    </AuditPanel>
+                  </div>
+
+                  <AuditPanel title="KPI y recomendaciones">
+                    <div className="grid gap-3 md:grid-cols-4">
+                      <AuditTile label="Impresiones" value={auditModal.audit?.kpi?.metrics?.impressions ?? 0} />
+                      <AuditTile label="Clics" value={auditModal.audit?.kpi?.metrics?.clicks ?? 0} />
+                      <AuditTile label="CTR" value={`${auditModal.audit?.kpi?.metrics?.ctrPercent ?? 0}%`} />
+                      <AuditTile label="Dias activos" value={auditModal.audit?.kpi?.metrics?.activeDays ?? 0} />
+                    </div>
+                    <p className="mt-4 text-sm text-gray-700">{auditModal.audit?.kpi?.summary}</p>
+                    <AuditList items={auditModal.audit?.kpi?.recommendations} empty="Sin recomendaciones todavia" tone="blue" />
+                  </AuditPanel>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal de Vista Previa */}
       {previewCampaign && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setPreviewCampaign(null)}>
@@ -803,7 +911,7 @@ const AdsManagement = () => {
                     </div>
                   ) : (
                     <div className="p-8 text-center text-gray-400">
-                      <Image className="w-16 h-16 mx-auto mb-2 opacity-50" />
+                      <ImageIcon className="w-16 h-16 mx-auto mb-2 opacity-50" />
                       <p>Sin imagen cargada</p>
                     </div>
                   )}
@@ -1138,7 +1246,7 @@ const AdsManagement = () => {
 export default AdsManagement;
 
 /** Card simple para las estadAsticas de arriba */
-function StatsCard({ title, value, icon: Icon, color = 'blue', highlight = false }) {
+function StatsCard({ title, value, icon, color = 'blue', highlight = false }) {
   const colorMap = {
     blue: 'text-blue-600 bg-blue-50',
     green: 'text-green-600 bg-green-50',
@@ -1152,7 +1260,7 @@ function StatsCard({ title, value, icon: Icon, color = 'blue', highlight = false
       <div
         className={`p-3 rounded-full mr-4 ${colorMap[color] || colorMap.blue}`}
       >
-        <Icon className="w-5 h-5" />
+        {React.createElement(icon, { className: 'w-5 h-5' })}
       </div>
       <div>
         <div className="text-sm text-gray-500">{title}</div>
@@ -1162,4 +1270,61 @@ function StatsCard({ title, value, icon: Icon, color = 'blue', highlight = false
   );
 }
 
+function AuditTile({ label, value, tone = 'gray' }) {
+  const toneClass = {
+    green: 'border-green-200 bg-green-50 text-green-800',
+    red: 'border-red-200 bg-red-50 text-red-800',
+    amber: 'border-amber-200 bg-amber-50 text-amber-800',
+    blue: 'border-blue-200 bg-blue-50 text-blue-800',
+    gray: 'border-gray-200 bg-gray-50 text-gray-800'
+  }[tone] || 'border-gray-200 bg-gray-50 text-gray-800';
 
+  return (
+    <div className={`rounded-lg border p-3 ${toneClass}`}>
+      <div className="text-[11px] font-semibold uppercase tracking-wide opacity-70">{label}</div>
+      <div className="mt-1 break-words text-sm font-bold">{String(value ?? 'N/A')}</div>
+    </div>
+  );
+}
+
+function AuditPanel({ title, children }) {
+  return (
+    <section className="rounded-lg border border-gray-200 bg-white p-4">
+      <h4 className="text-sm font-bold text-gray-900">{title}</h4>
+      <div className="mt-3">{children}</div>
+    </section>
+  );
+}
+
+function AuditRow({ label, value }) {
+  return (
+    <div className="flex items-start justify-between gap-4 border-b border-gray-100 py-2 text-sm last:border-0">
+      <span className="text-gray-500">{label}</span>
+      <span className="text-right font-semibold text-gray-900">{String(value ?? 'N/A')}</span>
+    </div>
+  );
+}
+
+function AuditList({ items, empty, tone = 'gray' }) {
+  const values = Array.isArray(items) ? items : [];
+  const toneClass = {
+    red: 'bg-red-50 text-red-700',
+    amber: 'bg-amber-50 text-amber-700',
+    blue: 'bg-blue-50 text-blue-700',
+    gray: 'bg-gray-50 text-gray-700'
+  }[tone] || 'bg-gray-50 text-gray-700';
+
+  if (values.length === 0) {
+    return <p className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-500">{empty}</p>;
+  }
+
+  return (
+    <ul className="space-y-2">
+      {values.map((item, index) => (
+        <li key={`${item}-${index}`} className={`rounded-lg px-3 py-2 text-sm ${toneClass}`}>
+          {String(item).replaceAll('_', ' ')}
+        </li>
+      ))}
+    </ul>
+  );
+}

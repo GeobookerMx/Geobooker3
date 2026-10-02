@@ -6,6 +6,7 @@ const { resolveEmailSender } = require('./_email-config');
 const { buildCampaignEmail, renderCampaignCopy } = require('./_campaign-email');
 const { ensureCronOrAdmin } = require('./_cron-auth');
 const { buildUnsubscribeUrl } = require('./_crm-unsubscribe');
+const { isEmailSuppressed, loadActiveEmailSuppressions, normalizeEmail } = require('./_crm-email-suppression');
 
 const supabase = createClient(
     process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
@@ -236,12 +237,16 @@ exports.handler = async (event) => {
         const contactIds = queueRows.map(r => r.contact_id).filter(Boolean);
         const { data: contactsData, error: contactsError } = await supabase
             .from('marketing_contacts')
-            .select('id, email, company_name, contact_name, tier, assigned_email_sender, email_sent_count, email_status, is_active, email_unsubscribed')
+            .select('id, email, company_name, contact_name, tier, source, assigned_email_sender, email_sent_count, email_status, is_active, email_unsubscribed, email_marketing_basis, email_consented_at, email_consent_evidence_ref')
             .in('id', contactIds);
 
         if (contactsError) throw contactsError;
 
         const contactsById = Object.fromEntries((contactsData || []).map(c => [c.id, c]));
+        const activeSuppressions = await loadActiveEmailSuppressions(
+            supabase,
+            (contactsData || []).map(contact => contact.email)
+        );
 
         // Combinar queue + contactos y filtrar los que tengan email válido
         const queueItems = queueRows
@@ -252,6 +257,9 @@ exports.handler = async (event) => {
                 if (contact.is_active === false) return false;
                 if (contact.email_unsubscribed) return false;
                 if (['bounced', 'complained', 'suppressed', 'failed', 'unsubscribed'].includes(String(contact.email_status || '').toLowerCase())) return false;
+                if (contact.email_marketing_basis !== 'explicit_opt_in') return false;
+                if (!contact.email_consented_at || !String(contact.email_consent_evidence_ref || '').trim()) return false;
+                if (activeSuppressions.has(normalizeEmail(contact.email))) return false;
                 return true;
             });
 
@@ -380,7 +388,20 @@ exports.handler = async (event) => {
 
                 // Log de la ronda
                 const roundName = emailRound === 1 ? 'INVITACIÓN' : emailRound === 2 ? 'SEGUIMIENTO' : 'RE-ENGAGEMENT';
-                console.log(`📧 Ronda ${emailRound} (${roundName}) para: ${contact.email}`);
+                const emailDomain = String(contact.email || '').split('@')[1] || 'unknown';
+                console.log(`Email round ${emailRound} (${roundName}) for contact ${contact.id} at ${emailDomain}`);
+
+                // Recheck immediately before provider submission so a new opt-out wins.
+                if (await isEmailSuppressed(supabase, contact.email)) {
+                    await supabase
+                        .from('email_queue')
+                        .update({ status: 'failed', error_message: 'Recipient is globally suppressed' })
+                        .eq('id', item.id)
+                        .eq('status', 'pending');
+                    results.failed++;
+                    results.errors.push({ contact_id: item.contact_id, email_domain: emailDomain, error: 'globally_suppressed' });
+                    continue;
+                }
 
                 // 2. Reemplazar variables en el HTML y Subject
                 const greeting = contact.contact_name || 'Estimado/a';
@@ -514,16 +535,18 @@ exports.handler = async (event) => {
                 else if (emailRound === 2) results.byRound.round2++;
                 else results.byRound.round3++;
 
-                console.log(`✅ Email enviado a: ${contact.email} (${contact.tier}, Ronda ${emailRound})`);
+                console.log(`Email sent to contact ${contact.id} at ${emailDomain} (${contact.tier}, round ${emailRound})`);
 
                 // Delay configurable para respetar Resend y cuidar reputacion de dominio.
                 await wait(governance.requestDelayMs);
 
             } catch (emailError) {
-                console.error(`❌ Error enviando a ${item._contact?.email || 'unknown'}:`, emailError);
+                const emailDomain = String(item._contact?.email || '').split('@')[1] || 'unknown';
+                console.error(`Email send failed for contact ${item.contact_id} at ${emailDomain}:`, emailError);
                 results.failed++;
                 results.errors.push({
-                    email: item._contact?.email || 'unknown',
+                    contact_id: item.contact_id,
+                    email_domain: emailDomain,
                     error: emailError.message
                 });
 

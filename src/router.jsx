@@ -120,6 +120,7 @@ const NearshoringMexicoPage = lazy(() => import("./pages/en/NearshoringMexicoPag
 const MexicoBusinessDirectoryPage = lazy(() => import("./pages/en/MexicoBusinessDirectoryPage.jsx"));
 
 const GeoScorePublicPage = lazy(() => import("./pages/geoscore/GeoScorePublicPage.jsx"));
+const CertificateVerifyPage = lazy(() => import("./pages/geoscore/CertificateVerifyPage.jsx"));
 
 // Geobooker Emprende - Lazy Loaded
 const EmprendePage = lazy(() => import("./pages/emprende/EmprendePage.jsx"));
@@ -172,6 +173,8 @@ export default function AppRouter() {
           <Route path="/emprende/resultado/:publicToken" element={<EmprendePage />} />
           <Route path="/geoscore" element={<GeoScorePublicPage />} />
           <Route path="/estudio-mercado" element={<GeoScorePublicPage />} />
+          <Route path="/certificate/:token" element={<CertificateVerifyPage />} />
+          <Route path="/certificado/:token" element={<CertificateVerifyPage />} />
 
           <Route path="/claim" element={<ClaimBusinessPage />} />
 

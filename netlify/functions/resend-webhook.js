@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { verifyResendWebhook } = require('./_resend-webhook-signature');
+const { recordEmailSuppression } = require('./_crm-email-suppression');
 
 const MAX_BODY_BYTES = 256 * 1024;
 const HANDLED_EVENTS = new Set([
@@ -158,6 +159,13 @@ async function processEmailEvent(supabase, webhook) {
   } else if (type === 'email.clicked') {
     await updateContactEngagement(supabase, email, { last_email_clicked: now, email_status: 'clicked' }, 10);
   } else if (type === 'email.bounced') {
+    const bounceType = String(metadata.bounce_type || '').toLowerCase();
+    await recordEmailSuppression(supabase, {
+      email,
+      reason: bounceType.includes('soft') || bounceType.includes('temporary') ? 'soft_bounce' : 'hard_bounce',
+      source: 'resend_webhook',
+      sourceMetadata: { event_type: type, message_id: messageId, bounce_type: metadata.bounce_type || null }
+    });
     await requireSuccess(
       supabase.from('marketing_contacts').update({
         email_status: 'bounced',
@@ -174,6 +182,12 @@ async function processEmailEvent(supabase, webhook) {
       'bounce_queue_update_failed'
     );
   } else if (type === 'email.complained') {
+    await recordEmailSuppression(supabase, {
+      email,
+      reason: 'complaint',
+      source: 'resend_webhook',
+      sourceMetadata: { event_type: type, message_id: messageId }
+    });
     await requireSuccess(
       supabase.from('marketing_contacts').update({
         email_status: 'complained',
@@ -190,6 +204,14 @@ async function processEmailEvent(supabase, webhook) {
       'complaint_queue_update_failed'
     );
   } else if (type === 'email.suppressed' || type === 'email.failed') {
+    if (type === 'email.suppressed') {
+      await recordEmailSuppression(supabase, {
+        email,
+        reason: 'invalid',
+        source: 'resend_webhook',
+        sourceMetadata: { event_type: type, message_id: messageId, provider_reason: metadata.reason || null }
+      });
+    }
     await requireSuccess(
       supabase.from('marketing_contacts').update({
         email_status: type === 'email.suppressed' ? 'suppressed' : 'failed',

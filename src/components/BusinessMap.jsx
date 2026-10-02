@@ -2,7 +2,7 @@ import React, { useMemo, memo, useCallback, useRef, useEffect, useState } from '
 import { useTranslation } from 'react-i18next';
 import { GoogleMap, MarkerF, InfoWindowF, MarkerClusterer, CircleF, OverlayView } from '@react-google-maps/api';
 import LastUpdatedBadge from './common/LastUpdatedBadge';
-import { trackRouteClick, trackBusinessView } from '../services/analyticsService';
+import { trackRouteClick } from '../services/analyticsService';
 import { GOOGLE_MAPS_API_KEY } from '../config/supabase';
 import { getAwardMeta } from '../utils/awardUtils';
 
@@ -63,9 +63,20 @@ function useGoogleMaps(apiKey) {
   const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
+    const handleAuthError = () => setLoadError(new Error('Google Maps rechazo la clave o sus restricciones'));
+    const handleNetworkError = () => setLoadError(new Error('No se pudo conectar con Google Maps'));
+    const handleConfigError = () => setLoadError(new Error('Falta configurar VITE_GOOGLE_MAPS_API_KEY'));
+    document.addEventListener('google-maps-auth-error', handleAuthError);
+    document.addEventListener('google-maps-network-error', handleNetworkError);
+    document.addEventListener('google-maps-config-error', handleConfigError);
+
     if (!apiKey) {
       setLoadError(new Error('No API key provided'));
-      return;
+      return () => {
+        document.removeEventListener('google-maps-auth-error', handleAuthError);
+        document.removeEventListener('google-maps-network-error', handleNetworkError);
+        document.removeEventListener('google-maps-config-error', handleConfigError);
+      };
     }
 
     loadGoogleMapsScript(apiKey)
@@ -74,6 +85,12 @@ function useGoogleMaps(apiKey) {
         console.error('[Geobooker] Google Maps error:', err);
         setLoadError(err);
       });
+
+    return () => {
+      document.removeEventListener('google-maps-auth-error', handleAuthError);
+      document.removeEventListener('google-maps-network-error', handleNetworkError);
+      document.removeEventListener('google-maps-config-error', handleConfigError);
+    };
   }, [apiKey]);
 
   return { isLoaded, loadError };
@@ -447,10 +464,8 @@ export const BusinessMap = memo(({
   onMapIdle = null, // Callback cuando el mapa termina de moverse (para debounced queries)
   zoom = 14
 }) => {
-  const { t, i18n } = useTranslation();
-  const mapCenter = center || userLocation || defaultCenter;
+  const { t } = useTranslation();
   const mapRef = useRef(null);
-  const userCircleRef = useRef(null);
   const [hoveredBusiness, setHoveredBusiness] = useState(null);
   const [hoveredMarkerId, setHoveredMarkerId] = useState(null); // For bounce animation
   const bounceTimerRef = useRef(null);
@@ -515,7 +530,9 @@ export const BusinessMap = memo(({
         e.stopPropagation();
         try {
           e.target.blur();
-        } catch (err) {}
+        } catch {
+          // Some WebView elements do not expose blur().
+        }
       }
     };
 
@@ -740,7 +757,17 @@ export const BusinessMap = memo(({
   if (loadError) {
     return (
       <div className="flex items-center justify-center h-64 bg-red-100 text-red-600 rounded-lg">
-        {t('map.mapError')}
+        <div className="text-center p-4">
+          <p className="font-semibold">{t('map.mapError')}</p>
+          <p className="mt-1 text-xs">{loadError.message}</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-2 px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded font-bold"
+          >
+            ↻ {t('map.retry')}
+          </button>
+        </div>
       </div>
     );
   }

@@ -31,6 +31,12 @@
     "hideComments": "Hide comments",
     "frequentQuestions": "Frequently asked questions"
   },
+  "map": {
+    "mapError": "Error loading Google Maps. Please verify your Google Maps API configuration.",
+    "loadingMap": "Loading interactive map...",
+    "retry": "Retry connection",
+    "openExternal": "Open in Google Maps"
+  },
   "nav": {
     "home": "Home",
     "businesses": "Businesses",

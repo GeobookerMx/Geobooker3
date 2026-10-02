@@ -1562,7 +1562,7 @@ Deno.serve(async (request: Request) => {
         rates: ratesResult.data || [],
         frequencyPolicies: frequencyResult.data || [],
         budgetPolicies: budgetResult.data || [],
-        limits: { maximumRecipientsPerDraft: 500, defaultBatchSize: 50 },
+        limits: { maximumRecipientsPerDraft: 20, defaultBatchSize: 20 },
         sendingEnabled: false,
         checkedAt: new Date().toISOString()
       }, corsHeaders);
@@ -1587,7 +1587,7 @@ Deno.serve(async (request: Request) => {
         language_code: String(body.languageCode || '').trim().replace('-', '_').slice(0, 16),
         timezone: String(body.timezone || '').trim().slice(0, 80),
         min_score: Math.min(100, Math.max(0, Number(body.minScore) || 0)),
-        max_recipients: clampInteger(body.maxRecipients, 100, 1, 500),
+        max_recipients: clampInteger(body.maxRecipients, 20, 1, 20),
         scheduled_local_time: body.scheduledLocalTime ? String(body.scheduledLocalTime).trim().slice(0, 5) : null,
         dry_run_required: true,
         sending_enabled: false,
@@ -1723,7 +1723,7 @@ Deno.serve(async (request: Request) => {
     if (action === 'campaign_dispatch_preflight') {
       const campaignId = String(body.campaignId || '');
       if (!/^[0-9a-f-]{36}$/i.test(campaignId)) return json(400, { error: 'invalid_campaign_id' }, corsHeaders);
-      const batchSize = clampInteger(body.batchSize, 50, 1, 500);
+      const batchSize = clampInteger(body.batchSize, 20, 1, 20);
       const { data, error } = await admin.rpc('crm_whatsapp_campaign_dispatch_preflight', {
         p_campaign_id: campaignId,
         p_batch_size: batchSize,
@@ -1779,9 +1779,20 @@ Deno.serve(async (request: Request) => {
       }, corsHeaders);
     }
 
+    if (action === 'dial_prefix_report') {
+      const countryCode = body.countryCode ? String(body.countryCode).trim().toUpperCase().slice(0, 2) : null;
+      await admin.rpc('crm_refresh_whatsapp_dial_prefix_policies', { p_country_code: countryCode });
+      const { data, error } = await admin.rpc('crm_whatsapp_dial_prefix_report', {
+        p_country_code: countryCode,
+        p_limit: clampInteger(body.limit, 50, 1, 100)
+      });
+      if (error) return json(409, { error: 'dial_prefix_report_failed', message: safeFailureDetail(error.message) }, corsHeaders);
+      return json(200, { rows: data || [] }, corsHeaders);
+    }
+
     if (action === 'campaign_authorize_queue_pilot') {
       if (adminUser.role !== 'super_admin') return json(403, { error: 'super_admin_required' }, corsHeaders);
-      if (String(body.confirmation || '').trim() !== 'AUTORIZAR COLA PILOTO 1') {
+      if (String(body.confirmation || '').trim() !== 'AUTORIZAR COLA PILOTO 20') {
         return json(409, { error: 'queue_authorization_confirmation_required' }, corsHeaders);
       }
       const campaignId = String(body.campaignId || '');
@@ -1814,7 +1825,7 @@ Deno.serve(async (request: Request) => {
         .update({
           queue_enabled: true,
           single_use: true,
-          max_members_per_dispatch: 1,
+          max_members_per_dispatch: 20,
           authorization_expires_at: expiresAt,
           authorized_by_user_id: authData.user.id,
           updated_at: new Date().toISOString()
@@ -1832,7 +1843,7 @@ Deno.serve(async (request: Request) => {
         new_values: {
           result: 'authorized',
           preflight_run_id: preflightRunId,
-          max_members_per_dispatch: 1,
+          max_members_per_dispatch: 20,
           authorization_expires_at: expiresAt,
           sending_enabled: false
         }
@@ -1846,13 +1857,40 @@ Deno.serve(async (request: Request) => {
       if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'true') {
         return json(409, { error: 'atomic_dispatch_requires_sending_enabled' }, corsHeaders);
       }
-      if (String(body.confirmation || '').trim() !== 'ENCOLAR 1 MENSAJE') {
+      if (String(body.confirmation || '').trim() !== 'ENCOLAR 20 MENSAJES') {
         return json(409, { error: 'atomic_dispatch_confirmation_required' }, corsHeaders);
       }
       const campaignId = String(body.campaignId || '');
       const preflightRunId = String(body.preflightRunId || '');
+      const maxMembers = clampInteger(body.maxMembers, 20, 1, 20);
       if (!/^[0-9a-f-]{36}$/i.test(campaignId)) return json(400, { error: 'invalid_campaign_id' }, corsHeaders);
       if (!/^[0-9a-f-]{36}$/i.test(preflightRunId)) return json(400, { error: 'invalid_preflight_run_id' }, corsHeaders);
+      const { data: campaignForLimit, error: campaignLimitError } = await crm
+        .from('campaigns')
+        .select('id,purpose,audience_rule')
+        .eq('id', campaignId)
+        .eq('channel', 'whatsapp')
+        .eq('status', 'approved')
+        .maybeSingle();
+      if (campaignLimitError) return json(409, { error: 'campaign_limit_lookup_failed', message: safeFailureDetail(campaignLimitError.message) }, corsHeaders);
+      if (!campaignForLimit) return json(409, { error: 'approved_whatsapp_campaign_required' }, corsHeaders);
+      const audienceRule = campaignForLimit.audience_rule || {};
+      const { data: segmentLimitRows, error: segmentLimitError } = await admin.rpc('crm_whatsapp_segment_limit_status', {
+        p_country_code: audienceRule.country_code || 'MX',
+        p_city: audienceRule.city || null,
+        p_industry: audienceRule.industry || null,
+        p_purpose: campaignForLimit.purpose || 'marketing',
+        p_now: new Date().toISOString()
+      });
+      if (segmentLimitError) return json(409, { error: 'segment_limit_check_failed', message: safeFailureDetail(segmentLimitError.message) }, corsHeaders);
+      const segmentLimit = Array.isArray(segmentLimitRows) ? segmentLimitRows[0] : null;
+      if (segmentLimit?.limit_found && (!segmentLimit.allowed || Number(segmentLimit.remaining_today || 0) < maxMembers)) {
+        return json(409, {
+          error: 'segment_daily_limit_reached',
+          message: 'La audiencia seleccionada ya no tiene cupo diario suficiente para esta tanda.',
+          segmentLimit
+        }, corsHeaders);
+      }
       const rawScheduleAt = body.scheduleAt ? String(body.scheduleAt).trim() : '';
       let scheduleAt: string | null = null;
       if (rawScheduleAt) {
@@ -1873,7 +1911,7 @@ Deno.serve(async (request: Request) => {
       const { data, error } = await admin.rpc('crm_dispatch_whatsapp_campaign_atomic', {
         p_campaign_id: campaignId,
         p_preflight_run_id: preflightRunId,
-        p_max_members: 1,
+        p_max_members: maxMembers,
         p_actor_user_id: authData.user.id,
         p_now: scheduleAt || new Date().toISOString()
       });
@@ -1915,6 +1953,7 @@ Deno.serve(async (request: Request) => {
           queued_members: result?.queued_members || 0,
           reserved_cost: result?.reserved_cost || 0,
           currency: result?.currency || null,
+          max_members: maxMembers,
           replayed: result?.replayed === true,
           queue_gate_closed: result?.queue_gate_closed === true,
           sending_enabled: sendingEnabled
@@ -1930,7 +1969,7 @@ Deno.serve(async (request: Request) => {
               Authorization: `Bearer ${requiredEnv('SUPABASE_SERVICE_ROLE_KEY')}`,
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ limit: 10 })
+            body: JSON.stringify({ limit: maxMembers })
           });
           workerResult = {
             ok: workerResponse.ok,
@@ -1950,7 +1989,7 @@ Deno.serve(async (request: Request) => {
       if (Deno.env.get('WHATSAPP_SEND_ENABLED') !== 'true') {
         return json(409, { error: 'worker_requires_sending_enabled' }, corsHeaders);
       }
-      const limit = Math.min(Math.max(Number(body.limit || 1), 1), 5);
+      const limit = Math.min(Math.max(Number(body.limit || 20), 1), 20);
       const workerResponse = await fetch(`${requiredEnv('SUPABASE_URL')}/functions/v1/whatsapp-worker`, {
         method: 'POST',
         headers: {
@@ -2017,15 +2056,41 @@ Deno.serve(async (request: Request) => {
       const members = campaignIds.length
         ? await crm.from('campaign_members').select('campaign_id,eligibility_status').in('campaign_id', campaignIds)
         : { data: [] };
+      const messages = campaignIds.length
+        ? await crm.from('messages').select('crm_campaign_id,current_status,direction').in('crm_campaign_id', campaignIds)
+        : { data: [] };
       const rows = (data || []).map((campaign) => {
         const campaignMembers = (members.data || []).filter((member) => member.campaign_id === campaign.id);
         const counts = campaignMembers.reduce((result: Record<string, number>, member: { eligibility_status: string }) => {
           result[member.eligibility_status] = (result[member.eligibility_status] || 0) + 1;
           return result;
         }, {});
-        return { ...campaign, memberCounts: counts };
+        const campaignMessages = (messages.data || []).filter((message) => message.crm_campaign_id === campaign.id && message.direction === 'outbound');
+        const messageCounts = campaignMessages.reduce((result: Record<string, number>, message: { current_status: string }) => {
+          const status = message.current_status || 'unknown';
+          result[status] = (result[status] || 0) + 1;
+          if (['accepted', 'sent', 'delivered', 'read'].includes(status)) result.accepted = (result.accepted || 0) + 1;
+          if (['sent', 'delivered', 'read'].includes(status)) result.sent = (result.sent || 0) + 1;
+          if (['delivered', 'read'].includes(status)) result.delivered = (result.delivered || 0) + 1;
+          if (status === 'read') result.read = (result.read || 0) + 1;
+          if (status === 'failed') result.failed = (result.failed || 0) + 1;
+          return result;
+        }, {});
+        return { ...campaign, memberCounts: counts, messageCounts };
       });
-      return json(200, { rows }, corsHeaders);
+      const rowsWithLimits = await Promise.all(rows.map(async (campaign) => {
+        const audienceRule = campaign.audience_rule || {};
+        const { data: segmentLimitRows } = await admin.rpc('crm_whatsapp_segment_limit_status', {
+          p_country_code: audienceRule.country_code || 'MX',
+          p_city: audienceRule.city || null,
+          p_industry: audienceRule.industry || null,
+          p_purpose: campaign.purpose || 'marketing',
+          p_now: new Date().toISOString()
+        });
+        const segmentLimit = Array.isArray(segmentLimitRows) ? segmentLimitRows[0] : null;
+        return { ...campaign, segmentLimit };
+      }));
+      return json(200, { rows: rowsWithLimits }, corsHeaders);
     }
 
     if (action === 'templates') {

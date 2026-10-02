@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
 
   <!-- Google Maps API Key para iOS Capacitor WKWebView -->
-  <meta name="google-maps-key" content="AIzaSyB0sOzA3Hzj8zX7Rn9M0eGJM4pEeBdTff4" />
+  <meta name="google-maps-key" content="%VITE_GOOGLE_MAPS_API_KEY%" />
 
   <!-- 
     FIX iOS WKWebView: Carga Google Maps con callback explícito.
@@ -30,8 +30,12 @@
       // Evitar cargar dos veces
       if (document.getElementById('google-maps-script')) return;
       
-      var key = document.querySelector('meta[name="google-maps-key"]')?.content
-                || 'AIzaSyB0sOzA3Hzj8zX7Rn9M0eGJM4pEeBdTff4';
+      var key = document.querySelector('meta[name="google-maps-key"]')?.content || '';
+      if (!key || key.indexOf('%VITE_') === 0) {
+        console.error('[Geobooker] VITE_GOOGLE_MAPS_API_KEY no esta configurada.');
+        document.dispatchEvent(new Event('google-maps-config-error'));
+        return;
+      }
 
       var script = document.createElement('script');
       script.id = 'google-maps-script';

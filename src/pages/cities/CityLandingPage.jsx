@@ -424,6 +424,7 @@ export default function CityLandingPage() {
     const market = MARKET_BY_SLUG.get(citySlug);
     const isIndexable = INDEXABLE_CITY_SLUGS.has(citySlug);
     const recordsAvailable = Number(market?.currentRecords || 0);
+    const usesGlobalSearch = market?.coverageMode === 'google_places';
     const countryLabels = {
         US: 'United States', GB: 'United Kingdom', CA: 'Canada', ES: 'España',
         NL: 'Netherlands', IT: 'Italia', FR: 'France', DE: 'Deutschland',
@@ -512,11 +513,11 @@ export default function CityLandingPage() {
                                 disabled={!isIndexable}
                                 placeholder={isIndexable
                                     ? (isSpanish ? `Buscar negocios en ${city.name}...` : `Search businesses in ${city.name}...`)
-                                    : (isSpanish ? 'Mercado aún no disponible' : 'Market not available yet')}
+                                    : (isSpanish ? 'Mercado aun no disponible' : 'Market not available yet')}
                                 className="flex-1 px-4 py-3 text-gray-800 focus:outline-none disabled:bg-gray-100"
                             />
                             <button disabled={!isIndexable} className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
-                                {isIndexable ? (isSpanish ? 'Buscar' : 'Search') : (isSpanish ? 'Próximamente' : 'Coming soon')}
+                                {isIndexable ? (isSpanish ? 'Buscar' : 'Search') : (isSpanish ? 'Proximamente' : 'Coming soon')}
                             </button>
                         </form>
 
@@ -524,17 +525,23 @@ export default function CityLandingPage() {
                         <div className="flex items-center justify-center gap-8 mt-8">
                             <div>
                                 <div className="text-2xl font-bold">{city.population}</div>
-                                <div className="text-sm opacity-75">{isSpanish ? 'Población' : 'Population'}</div>
+                                <div className="text-sm opacity-75">{isSpanish ? 'Poblacion' : 'Population'}</div>
                             </div>
                             <div className="w-px h-10 bg-white/30"></div>
                             <div>
                                 <div className="text-2xl font-bold">
-                                    {recordsAvailable > 0 ? recordsAvailable.toLocaleString() : (isSpanish ? 'Próximamente' : 'Coming soon')}
+                                    {usesGlobalSearch
+                                        ? (isSpanish ? 'Busqueda global' : 'Global search')
+                                        : recordsAvailable > 0
+                                            ? recordsAvailable.toLocaleString()
+                                            : (isSpanish ? 'Proximamente' : 'Coming soon')}
                                 </div>
                                 <div className="text-sm opacity-75">
-                                    {recordsAvailable > 0
-                                        ? (isSpanish ? 'Perfiles disponibles' : 'Available listings')
-                                        : (isSpanish ? 'Sin publicación activa' : 'No active publication')}
+                                    {usesGlobalSearch
+                                        ? (isSpanish ? 'Piloto con Google Places' : 'Google Places pilot')
+                                        : recordsAvailable > 0
+                                            ? (isSpanish ? 'Perfiles disponibles' : 'Available listings')
+                                            : (isSpanish ? 'Sin publicacion activa' : 'No active publication')}
                                 </div>
                             </div>
                         </div>
@@ -546,7 +553,7 @@ export default function CityLandingPage() {
             <section className="py-16 bg-gray-50">
                 <div className="container mx-auto px-4">
                     <h2 className="text-2xl font-bold text-gray-800 mb-8 text-center">
-                        {isSpanish ? `Categorías Populares en ${city.name}` : `Popular Categories in ${city.name}`}
+                        {isSpanish ? `Categorias populares en ${city.name}` : `Popular Categories in ${city.name}`}
                     </h2>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto">
                         {isIndexable && city.popularCategories.map((cat) => (

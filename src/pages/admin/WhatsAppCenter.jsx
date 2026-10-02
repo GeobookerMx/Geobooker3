@@ -90,6 +90,24 @@ const CAMPAIGN_CONTACT_SOURCE_GUIDANCE = {
     crmUse: 'Crear cuenta/prospecto, clasificar industria, pais/ciudad y product fit.',
     whatsappUse: 'No elegible hasta que el negocio solicite contacto o complete opt-in.'
   },
+  apify_overture: {
+    label: 'Apify / Overture global',
+    status: 'crm_only_until_opt_in',
+    tone: 'bad',
+    summary: 'Fuente util para expansion global y GeoScore; no equivale a consentimiento WhatsApp.',
+    allowedUse: 'Research, deduplicacion, validacion de pais/lada, scoring y captacion de opt-in.',
+    crmUse: 'Crear prospectos con fuente, ciudad, industria, telefono publico y evidencia de origen.',
+    whatsappUse: 'No elegible para campana hasta tener opt-in; los intentos reales alimentan el radar de ladas.'
+  },
+  future_business_data: {
+    label: 'Fuente futura de negocios',
+    status: 'review_required',
+    tone: 'warning',
+    summary: 'Cualquier fuente nueva debe entrar primero como prospecto auditable.',
+    allowedUse: 'Mapeo de columnas, pais, telefono, fuente, licencia, consentimiento y calidad.',
+    crmUse: 'Normalizar y puntuar antes de usarla en campanas.',
+    whatsappUse: 'Elegible solo si aporta consentimiento verificable o si el contacto lo confirma despues.'
+  },
   partner_referral: {
     label: 'Referido / partner',
     status: 'review_required',
@@ -405,6 +423,11 @@ const AGENT_TEST_CASES = [
 function formatDate(value) {
   if (!value) return 'Sin datos';
   return new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+}
+
+function formatMoney(value, currency = 'MXN') {
+  if (value === null || value === undefined || value === '') return 'Sin tarifa';
+  return `${currency || 'MXN'} ${Number(value || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
 }
 
 function displayWhatsAppPhone(value) {
@@ -1758,6 +1781,7 @@ function CampaignReadinessView() {
   const [templates, setTemplates] = useState([]);
   const [wizardOptions, setWizardOptions] = useState(null);
   const [campaigns, setCampaigns] = useState([]);
+  const [dialPrefixRows, setDialPrefixRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [diagnosticsLoading, setDiagnosticsLoading] = useState(false);
@@ -1768,7 +1792,7 @@ function CampaignReadinessView() {
   const [draftName, setDraftName] = useState('');
   const [draftPurpose, setDraftPurpose] = useState('marketing');
   const [draftTemplateId, setDraftTemplateId] = useState('');
-  const [draftLimit, setDraftLimit] = useState(100);
+  const [draftLimit, setDraftLimit] = useState(20);
   const [wizardStep, setWizardStep] = useState(1);
   const [campaignGoal, setCampaignGoal] = useState('geobooker_ads');
   const [region, setRegion] = useState('');
@@ -1795,8 +1819,8 @@ function CampaignReadinessView() {
   const load = useCallback(() => {
     setLoading(true);
     setError('');
-    Promise.allSettled([callAdmin('campaign_readiness'), callAdmin('campaign_list'), callAdmin('campaign_wizard_options'), callAdmin('campaign_dispatch_gate_status')])
-      .then(([readinessResult, campaignResult, wizardResult, gateResult]) => {
+    Promise.allSettled([callAdmin('campaign_readiness'), callAdmin('campaign_list'), callAdmin('campaign_wizard_options'), callAdmin('campaign_dispatch_gate_status'), callAdmin('dial_prefix_report', { limit: 50 })])
+      .then(([readinessResult, campaignResult, wizardResult, gateResult, prefixResult]) => {
         if (readinessResult.status === 'rejected') throw readinessResult.reason;
         if (campaignResult.status === 'rejected') throw campaignResult.reason;
         if (wizardResult.status === 'rejected') throw wizardResult.reason;
@@ -1806,6 +1830,7 @@ function CampaignReadinessView() {
         setTemplates(wizardResult.value.templates || []);
         setWizardOptions(wizardResult.value);
         setDispatchGate(gateResult.status === 'fulfilled' ? gateResult.value.gate || null : null);
+        setDialPrefixRows(prefixResult.status === 'fulfilled' ? prefixResult.value.rows || [] : []);
       })
       .catch((loadError) => setError(loadError.message))
       .finally(() => setLoading(false));
@@ -1843,7 +1868,7 @@ function CampaignReadinessView() {
     if (!/^[A-Z]{2}$/.test(countryCode)) validationErrors.push('pais');
     if (!languageCode) validationErrors.push('idioma');
     if (!timezone) validationErrors.push('zona horaria');
-    if (Number(draftLimit) < 1 || Number(draftLimit) > 500) validationErrors.push('limite de destinatarios');
+    if (Number(draftLimit) < 1 || Number(draftLimit) > 20) validationErrors.push('limite de destinatarios (maximo 20)');
     if (!draftTemplateId) validationErrors.push('plantilla');
     const selectedMarketForDraft = (wizardOptions?.markets || markets || []).find((market) => market.country_code === countryCode);
     const marketDailyCap = Number(selectedMarketForDraft?.daily_recipient_cap || 0);
@@ -1877,7 +1902,7 @@ function CampaignReadinessView() {
         languageCode,
         timezone,
         minScore: Number(minScore) || 0,
-        maxRecipients: Number(draftLimit) || 100,
+        maxRecipients: Number(draftLimit) || 20,
         scheduledLocalTime
       });
       const review = await callAdmin('campaign_prepare_review_v2', { campaignId: draft.campaignId });
@@ -1934,7 +1959,7 @@ function CampaignReadinessView() {
     setError('');
     setDispatchResult(null);
     try {
-      const result = await callAdmin('campaign_dispatch_preflight', { campaignId, batchSize: 50 });
+      const result = await callAdmin('campaign_dispatch_preflight', { campaignId, batchSize: 20 });
       setPreflightResult({ ...(result.preflight || {}), campaignId });
       setPreflightCampaignId(campaignId);
       setDispatchResult(null);
@@ -1949,14 +1974,15 @@ function CampaignReadinessView() {
     }
   };
   const dispatchAtomic = async (campaignId, preflightRunId) => {
-    if (!window.confirm('¿Confirmas encolar 1 mensaje real a WhatsApp? Esta acción no se puede deshacer.')) return;
+    if (!window.confirm('Confirmas encolar hasta 20 mensajes reales a WhatsApp? Esta accion no se puede deshacer.')) return;
     setDispatchLoading(campaignId);
     setError('');
     try {
       const result = await callAdmin('campaign_dispatch_atomic', {
         campaignId,
         preflightRunId,
-        confirmation: 'ENCOLAR 1 MENSAJE'
+        confirmation: 'ENCOLAR 20 MENSAJES',
+        maxMembers: 20
       });
       setDispatchResult(result.result || null);
       setWorkerRunResult(result.workerResult || null);
@@ -2002,6 +2028,7 @@ function CampaignReadinessView() {
         campaignId: preflightCampaignId,
         preflightRunId: preflightResult.run_id,
         confirmation: dispatchConfirmation,
+        maxMembers: 20,
         scheduleAt: dispatchMode === 'scheduled' && scheduledDispatchAt ? new Date(scheduledDispatchAt).toISOString() : null
       });
       setDispatchResult(result.result || null);
@@ -2039,7 +2066,7 @@ function CampaignReadinessView() {
     setApprovalLoading('worker-run-once');
     setError('');
     try {
-      const result = await callAdmin('campaign_worker_run_once', { limit: 1 });
+      const result = await callAdmin('campaign_worker_run_once', { limit: 20 });
       setWorkerRunResult(result.worker || null);
       toast.success(`Worker ejecutado. Procesados: ${result.worker?.body?.processed ?? 0}.`);
       await load();
@@ -2114,7 +2141,7 @@ function CampaignReadinessView() {
   const stepReady = {
     1: draftName.trim().length >= 3 && Boolean(campaignGoal) && ['marketing', 'transactional'].includes(draftPurpose),
     2: /^[A-Z]{2}$/.test(countryCode) && Boolean(languageCode) && Boolean(timezone),
-    3: Number(draftLimit) >= 1 && Number(draftLimit) <= 500 && Number(minScore) >= 0 && Number(minScore) <= 100,
+    3: Number(draftLimit) >= 1 && Number(draftLimit) <= 20 && Number(minScore) >= 0 && Number(minScore) <= 100,
     4: Boolean(draftTemplateId && selectedTemplate),
     5: draftName.trim().length >= 3
       && Boolean(campaignGoal)
@@ -2123,7 +2150,7 @@ function CampaignReadinessView() {
       && Boolean(languageCode)
       && Boolean(timezone)
       && Number(draftLimit) >= 1
-      && Number(draftLimit) <= 500
+      && Number(draftLimit) <= 20
       && Number(minScore) >= 0
       && Number(minScore) <= 100
       && Boolean(draftTemplateId && selectedTemplate)
@@ -2366,7 +2393,7 @@ function CampaignReadinessView() {
         <label className="text-sm font-semibold">Origen de audiencia<select value={contactSource} onChange={(event) => setContactSource(event.target.value)} className="mt-1 w-full rounded-xl border bg-white px-3 py-2 font-normal dark:bg-gray-900">{Object.entries(CAMPAIGN_CONTACT_SOURCE_GUIDANCE).map(([value, guide]) => <option key={value} value={value}>{guide.label}</option>)}</select></label>
         <label className="text-sm font-semibold">Calidad de fuente<select value={sourceTier} onChange={(event) => setSourceTier(event.target.value)} className="mt-1 w-full rounded-xl border bg-white px-3 py-2 font-normal dark:bg-gray-900"><option value="">Cualquier tier permitido</option>{['AAA', 'AA', 'A', 'B'].map((tier) => <option key={tier} value={tier}>{tier}</option>)}</select></label>
         <label className="text-sm font-semibold">Score mínimo<input type="number" min="0" max="100" value={minScore} onChange={(event) => setMinScore(event.target.value)} className="mt-1 w-full rounded-xl border bg-white px-3 py-2 font-normal dark:bg-gray-900" /></label>
-        <label className="text-sm font-semibold">Máximo destinatarios<input type="number" min="1" max="500" value={draftLimit} onChange={(event) => setDraftLimit(event.target.value)} className="mt-1 w-full rounded-xl border bg-white px-3 py-2 font-normal dark:bg-gray-900" /></label>
+        <label className="text-sm font-semibold">Máximo destinatarios<input type="number" min="1" max="20" value={draftLimit} onChange={(event) => setDraftLimit(event.target.value)} className="mt-1 w-full rounded-xl border bg-white px-3 py-2 font-normal dark:bg-gray-900" /></label>
         <div className="md:col-span-2 xl:col-span-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">El backend excluirá números inválidos, consentimiento desconocido o sin evidencia, supresiones, idioma incompatible y mercados no autorizados. Cambiar el origen no extrae contactos automáticamente: primero deben existir en CRM.</div>
         {Number(eligibleMetric?.metric_value || 0) > 0 && <div className="md:col-span-2 xl:col-span-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -2411,7 +2438,7 @@ function CampaignReadinessView() {
           <option value="">Plantilla aprobada requerida</option>
           {templates.map((template) => <option key={template.id} value={template.id}>{template.template_name} · {template.language_code}</option>)}
         </select>
-        <input type="number" min="1" max="500" value={draftLimit} onChange={(event) => setDraftLimit(event.target.value)} className="rounded-xl border bg-white px-3 py-2 text-sm dark:bg-gray-900" />
+        <input type="number" min="1" max="20" value={draftLimit} onChange={(event) => setDraftLimit(event.target.value)} className="rounded-xl border bg-white px-3 py-2 text-sm dark:bg-gray-900" />
         <button type="submit" disabled={draftLoading || !draftName.trim() || (draftPurpose !== 'service' && !draftTemplateId)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"><ShieldCheck className="h-4 w-4" />{draftLoading ? 'Preparando…' : 'Crear dry run'}</button>
       </div>
       <div className="mt-5 flex flex-wrap justify-between gap-3 border-t pt-4 dark:border-gray-700">
@@ -2477,20 +2504,20 @@ function CampaignReadinessView() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="font-bold">Piloto real controlado</p>
-            <p className="mt-1 text-sm">Autoriza una ventana temporal, reserva presupuesto y encola exactamente 1 mensaje. No cambia WHATSAPP_SEND_ENABLED ni llama a Meta desde esta pantalla.</p>
+            <p className="mt-1 text-sm">Autoriza una ventana temporal, reserva presupuesto y encola hasta 20 mensajes desde el numero conectado a la API de WhatsApp.</p>
           </div>
           <StatusBadge tone={dispatchGate?.queue_enabled ? 'warning' : 'good'}>{dispatchGate?.queue_enabled ? 'Gate abierto' : 'Gate cerrado'}</StatusBadge>
         </div>
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
           <div className="rounded-xl border border-blue-100 bg-white p-3 dark:bg-gray-900">
             <p className="text-sm font-semibold">1. Autorizar cola piloto</p>
-            <p className="mt-1 text-xs text-gray-500">Escribe exactamente: AUTORIZAR COLA PILOTO 1</p>
+            <p className="mt-1 text-xs text-gray-500">Escribe exactamente: AUTORIZAR COLA PILOTO 20</p>
             <input value={queueConfirmation} onChange={(event) => setQueueConfirmation(event.target.value)} className="mt-2 w-full rounded-lg border px-3 py-2 text-sm dark:bg-gray-950" />
-            <button type="button" onClick={authorizeQueuePilot} disabled={approvalLoading === 'authorize-queue' || queueConfirmation !== 'AUTORIZAR COLA PILOTO 1'} className="mt-2 rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-40">Autorizar 10 min</button>
+            <button type="button" onClick={authorizeQueuePilot} disabled={approvalLoading === 'authorize-queue' || queueConfirmation !== 'AUTORIZAR COLA PILOTO 20'} className="mt-2 rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-40">Autorizar 10 min</button>
           </div>
           <div className="rounded-xl border border-blue-100 bg-white p-3 dark:bg-gray-900">
             <p className="text-sm font-semibold">2. Encolar reserva atomica</p>
-            <p className="mt-1 text-xs text-gray-500">Escribe exactamente: ENCOLAR 1 MENSAJE</p>
+            <p className="mt-1 text-xs text-gray-500">Escribe exactamente: ENCOLAR 20 MENSAJES</p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               <label className="text-xs font-semibold text-gray-600">
                 Modo de salida
@@ -2505,7 +2532,7 @@ function CampaignReadinessView() {
               </label>
             </div>
             <input value={dispatchConfirmation} onChange={(event) => setDispatchConfirmation(event.target.value)} className="mt-2 w-full rounded-lg border px-3 py-2 text-sm dark:bg-gray-950" />
-            <button type="button" onClick={enqueueAtomicPilot} disabled={approvalLoading === 'atomic-dispatch' || !dispatchGate?.queue_enabled || dispatchConfirmation !== 'ENCOLAR 1 MENSAJE' || (dispatchMode === 'scheduled' && !scheduledDispatchAt)} className="mt-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-40">{dispatchMode === 'scheduled' ? 'Programar 1' : 'Encolar 1 ahora'}</button>
+            <button type="button" onClick={enqueueAtomicPilot} disabled={approvalLoading === 'atomic-dispatch' || !dispatchGate?.queue_enabled || dispatchConfirmation !== 'ENCOLAR 20 MENSAJES' || (dispatchMode === 'scheduled' && !scheduledDispatchAt)} className="mt-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-40">{dispatchMode === 'scheduled' ? 'Programar 20' : 'Encolar 20 ahora'}</button>
           </div>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-600">
@@ -2518,15 +2545,25 @@ function CampaignReadinessView() {
       <div className="mt-4 overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-left text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-            <tr>{['Campaña', 'Propósito', 'Estado', 'Elegibles', 'Sin consentimiento', 'Suprimidos', 'Actualizada', 'Gate'].map((label) => <th key={label} className="px-3 py-2">{label}</th>)}</tr>
+            <tr>{['Campaña', 'Propósito', 'Estado', 'Elegibles', 'Costo est.', 'Cupo hoy', 'Enviados', 'Entregados', 'Leídos', 'Fallidos', 'Sin consentimiento', 'Suprimidos', 'Actualizada', 'Gate'].map((label) => <th key={label} className="px-3 py-2">{label}</th>)}</tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-700">
-            {campaigns.length === 0 && <tr><td colSpan="8" className="px-3 py-8 text-center text-gray-500">Sin campañas WhatsApp todavía.</td></tr>}
+            {campaigns.length === 0 && <tr><td colSpan="14" className="px-3 py-8 text-center text-gray-500">Sin campañas WhatsApp todavía.</td></tr>}
             {campaigns.map((campaign) => <tr key={campaign.id}>
               <td className="px-3 py-2 font-semibold">{campaign.name}</td>
               <td className="px-3 py-2">{campaign.purpose}</td>
               <td className="px-3 py-2"><StatusBadge tone={campaign.status === 'review_ready' ? 'info' : 'neutral'}>{campaign.status}</StatusBadge></td>
               <td className="px-3 py-2">{campaign.memberCounts?.eligible || 0}</td>
+              <td className="px-3 py-2">{formatMoney(campaign.estimated_cost, campaign.cost_currency)}</td>
+              <td className="px-3 py-2">
+                {campaign.segmentLimit?.limit_found
+                  ? `${Number(campaign.segmentLimit.remaining_today || 0).toLocaleString()} / ${Number(campaign.segmentLimit.daily_message_limit || 0).toLocaleString()}`
+                  : 'Sin regla'}
+              </td>
+              <td className="px-3 py-2">{campaign.messageCounts?.sent || 0}</td>
+              <td className="px-3 py-2">{campaign.messageCounts?.delivered || 0}</td>
+              <td className="px-3 py-2">{campaign.messageCounts?.read || 0}</td>
+              <td className="px-3 py-2">{campaign.messageCounts?.failed || 0}</td>
               <td className="px-3 py-2">{campaign.memberCounts?.missing_consent || 0}</td>
               <td className="px-3 py-2">{campaign.memberCounts?.suppressed || 0}</td>
               <td className="px-3 py-2">{formatDate(campaign.updated_at)}</td>
@@ -2542,11 +2579,42 @@ function CampaignReadinessView() {
                       disabled={dispatchLoading === campaign.id}
                       className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2 py-1 text-xs font-bold text-white disabled:opacity-50 hover:bg-emerald-700"
                     >
-                      {dispatchLoading === campaign.id ? '⏳ Encolando…' : '🚀 Despachar 1 msg'}
+                      {dispatchLoading === campaign.id ? 'Encolando...' : 'Despachar hasta 20'}
                     </button>
                   )}
                 </div>
               </td>
+            </tr>)}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div className="order-8 rounded-2xl border bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="font-bold">Ladas WhatsApp probadas</h3>
+          <p className="mt-1 text-sm text-gray-500">Evidencia real por país, código y área. Sirve para saber qué ladas funcionan y cuáles deben vigilarse o bloquearse.</p>
+        </div>
+        <StatusBadge tone="info">{dialPrefixRows.length} registradas</StatusBadge>
+      </div>
+      <div className="mt-4 overflow-x-auto">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-50 text-left text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+            <tr>{['País', 'Código', 'Área', 'Estado', 'Aceptados', 'Enviados', 'Entregados', 'Leídos', 'Fallidos', 'Último éxito'].map((label) => <th key={label} className="px-3 py-2">{label}</th>)}</tr>
+          </thead>
+          <tbody className="divide-y dark:divide-gray-700">
+            {dialPrefixRows.length === 0 && <tr><td colSpan="10" className="px-3 py-8 text-center text-gray-500">Sin evidencia de ladas todavía.</td></tr>}
+            {dialPrefixRows.map((row) => <tr key={`${row.country_code || 'XX'}-${row.calling_code}-${row.area_code || 'all'}`}>
+              <td className="px-3 py-2">{row.country_code || 'Sin país'}</td>
+              <td className="px-3 py-2 font-mono">{row.calling_code}</td>
+              <td className="px-3 py-2 font-mono">{row.area_code || '-'}</td>
+              <td className="px-3 py-2"><StatusBadge tone={row.status === 'allowed' ? 'good' : row.status === 'blocked' ? 'bad' : 'warning'}>{row.status}</StatusBadge></td>
+              <td className="px-3 py-2">{row.accepted_count || 0}</td>
+              <td className="px-3 py-2">{row.sent_count || 0}</td>
+              <td className="px-3 py-2">{row.delivered_count || 0}</td>
+              <td className="px-3 py-2">{row.read_count || 0}</td>
+              <td className="px-3 py-2">{row.failed_count || 0}</td>
+              <td className="px-3 py-2">{formatDate(row.last_success_at)}</td>
             </tr>)}
           </tbody>
         </table>

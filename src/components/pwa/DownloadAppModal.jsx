@@ -1,162 +1,165 @@
 // src/components/pwa/DownloadAppModal.jsx
-/**
- * Modal atractivo que sugiere descargar la app PWA
- * Se muestra después de que el usuario ha navegado un poco
- */
-import React, { useState, useEffect } from 'react';
-import { X, Download, Smartphone, Star, Zap, Bell, Check } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Check, Download, MapPin, Share2, Smartphone, X, Zap } from 'lucide-react';
+import { trackAppDownloadIntent } from '../../services/analyticsService';
+
+const DISMISS_KEY = 'app_modal_dismissed';
+const DISMISS_DAYS = 7;
+
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
 
 export default function DownloadAppModal() {
-    const [isVisible, setIsVisible] = useState(false);
-    const [deferredPrompt, setDeferredPrompt] = useState(null);
-    const [isInstalled, setIsInstalled] = useState(false);
-    const [isIOS, setIsIOS] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
-    useEffect(() => {
-        // Check if already installed
-        if (window.matchMedia('(display-mode: standalone)').matches) {
-            setIsInstalled(true);
-            return;
-        }
+  useEffect(() => {
+    if (isStandalone()) {
+      setIsInstalled(true);
+      return undefined;
+    }
 
-        // Check if iOS
-        const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        setIsIOS(isIOSDevice);
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    setIsIOS(isIOSDevice);
 
-        // Check if already dismissed recently
-        const lastDismissed = localStorage.getItem('app_modal_dismissed');
-        if (lastDismissed) {
-            const dismissedDate = new Date(lastDismissed);
-            const daysSinceDismissed = (Date.now() - dismissedDate.getTime()) / (1000 * 60 * 60 * 24);
-            if (daysSinceDismissed < 7) return; // Don't show for 7 days
-        }
+    const lastDismissed = localStorage.getItem(DISMISS_KEY);
+    if (lastDismissed) {
+      const dismissedDate = new Date(lastDismissed);
+      const daysSinceDismissed = (Date.now() - dismissedDate.getTime()) / (1000 * 60 * 60 * 24);
+      if (daysSinceDismissed < DISMISS_DAYS) return undefined;
+    }
 
-        // Listen for install prompt
-        const handleBeforeInstall = (e) => {
-            e.preventDefault();
-            setDeferredPrompt(e);
-        };
-
-        window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-
-        // Show modal after 30 seconds of browsing
-        const timer = setTimeout(() => {
-            setIsVisible(true);
-        }, 30000);
-
-        // Or after 3 page views
-        const pageViews = parseInt(sessionStorage.getItem('page_views') || '0') + 1;
-        sessionStorage.setItem('page_views', pageViews.toString());
-
-        if (pageViews >= 3) {
-            setTimeout(() => setIsVisible(true), 5000);
-        }
-
-        return () => {
-            window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
-            clearTimeout(timer);
-        };
-    }, []);
-
-    const handleInstall = async () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-                setIsVisible(false);
-                localStorage.setItem('app_installed', 'true');
-            }
-            setDeferredPrompt(null);
-        } else if (isIOS) {
-            // Show iOS instructions
-            alert('Para instalar:\n\n1. Toca el botón "Compartir" (📤)\n2. Selecciona "Agregar a pantalla de inicio"\n3. Toca "Agregar"');
-        }
+    const handleBeforeInstall = (event) => {
+      event.preventDefault();
+      setDeferredPrompt(event);
     };
 
-    const handleDismiss = () => {
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+
+    const timer = window.setTimeout(() => {
+      setIsVisible(true);
+    }, 30000);
+
+    const pageViews = Number.parseInt(sessionStorage.getItem('page_views') || '0', 10) + 1;
+    sessionStorage.setItem('page_views', pageViews.toString());
+
+    let pageViewTimer = null;
+    if (pageViews >= 3) {
+      pageViewTimer = window.setTimeout(() => setIsVisible(true), 5000);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.clearTimeout(timer);
+      if (pageViewTimer) window.clearTimeout(pageViewTimer);
+    };
+  }, []);
+
+  const handleInstall = async () => {
+    if (deferredPrompt) {
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        await trackAppDownloadIntent({
+          target: 'pwa_install',
+          platformHint: 'pwa',
+          source: 'download_app_modal',
+          campaign: 'pwa_install'
+        });
         setIsVisible(false);
-        localStorage.setItem('app_modal_dismissed', new Date().toISOString());
-    };
+        localStorage.setItem('app_installed', 'true');
+      }
+      setDeferredPrompt(null);
+      return;
+    }
 
-    if (isInstalled || !isVisible) return null;
+    if (isIOS) {
+      await trackAppDownloadIntent({
+        target: 'pwa_install_help',
+        platformHint: 'ios',
+        source: 'download_app_modal',
+        campaign: 'pwa_install'
+      });
+      alert('Para instalar:\n\n1. Toca el boton Compartir\n2. Selecciona Agregar a pantalla de inicio\n3. Toca Agregar');
+    }
+  };
 
-    const benefits = [
-        { icon: Zap, text: 'Acceso instantáneo sin abrir navegador' },
-        { icon: Bell, text: 'Notificaciones de ofertas cercanas' },
-        { icon: Star, text: 'Experiencia premium sin anuncios' },
-    ];
+  const handleDismiss = () => {
+    setIsVisible(false);
+    localStorage.setItem(DISMISS_KEY, new Date().toISOString());
+  };
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-            <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
-                {/* Header con gradiente */}
-                <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-6 text-white relative overflow-hidden">
-                    {/* Decoración de fondo */}
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+  if (isInstalled || !isVisible) return null;
 
-                    <button
-                        onClick={handleDismiss}
-                        className="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 transition"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
+  const benefits = [
+    { icon: Zap, text: 'Acceso rapido desde tu pantalla de inicio' },
+    { icon: MapPin, text: 'Busqueda local, mapa y fichas a la mano' },
+    { icon: Smartphone, text: 'Experiencia optimizada para telefono' }
+  ];
 
-                    <div className="relative">
-                        <div className="w-20 h-20 bg-white rounded-2xl shadow-lg flex items-center justify-center mb-4 mx-auto overflow-hidden">
-                            <img
-                                src="/images/geobooker-app-icon-original.jpg"
-                                alt="Geobooker"
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        <h2 className="text-2xl font-bold text-center">
-                            ¡Lleva Geobooker contigo!
-                        </h2>
-                        <p className="text-indigo-100 text-center mt-2">
-                            Instala nuestra app gratuita en tu dispositivo
-                        </p>
-                    </div>
-                </div>
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="relative bg-gradient-to-br from-blue-700 via-indigo-700 to-slate-950 p-6 text-white">
+          <button
+            type="button"
+            onClick={handleDismiss}
+            className="absolute right-4 top-4 rounded-full bg-white/15 p-2 transition hover:bg-white/25"
+            aria-label="Cerrar aviso"
+          >
+            <X className="h-5 w-5" />
+          </button>
 
-                {/* Beneficios */}
-                <div className="p-6">
-                    <div className="space-y-4 mb-6">
-                        {benefits.map((benefit, idx) => (
-                            <div key={idx} className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <benefit.icon className="w-5 h-5 text-indigo-600" />
-                                </div>
-                                <span className="text-gray-700">{benefit.text}</span>
-                                <Check className="w-5 h-5 text-green-500 ml-auto" />
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Botones */}
-                    <div className="space-y-3">
-                        <button
-                            onClick={handleInstall}
-                            className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02]"
-                        >
-                            <Download className="w-6 h-6" />
-                            <span className="text-lg">Descargar App Gratis</span>
-                        </button>
-
-                        <button
-                            onClick={handleDismiss}
-                            className="w-full text-gray-500 hover:text-gray-700 py-2 text-sm transition"
-                        >
-                            Quizás más tarde
-                        </button>
-                    </div>
-
-                    {/* Footer */}
-                    <p className="text-center text-xs text-gray-400 mt-4">
-                        Sin necesidad de ir a la tienda de apps
-                    </p>
-                </div>
-            </div>
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-lg">
+            <img
+              src="/images/geobooker-app-icon-original.jpg"
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <h2 className="text-center text-2xl font-bold">Lleva Geobooker contigo</h2>
+          <p className="mt-2 text-center text-sm text-blue-100">
+            Instala la app para abrir busqueda local, mapa y fichas mas rapido.
+          </p>
         </div>
-    );
+
+        <div className="p-6">
+          <div className="mb-6 space-y-4">
+            {benefits.map((benefit) => {
+              const Icon = benefit.icon;
+              return (
+                <div key={benefit.text} className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100">
+                    <Icon className="h-5 w-5 text-blue-700" />
+                  </div>
+                  <span className="text-gray-700">{benefit.text}</span>
+                  <Check className="ml-auto h-5 w-5 text-green-500" />
+                </div>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleInstall}
+            className="flex w-full items-center justify-center gap-3 rounded-xl bg-blue-700 px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-blue-800"
+          >
+            {isIOS && !deferredPrompt ? <Share2 className="h-6 w-6" /> : <Download className="h-6 w-6" />}
+            Descargar app gratis
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDismiss}
+            className="mt-3 w-full py-2 text-sm text-gray-500 transition hover:text-gray-700"
+          >
+            Quizas mas tarde
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

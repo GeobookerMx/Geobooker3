@@ -3,7 +3,9 @@ import { createClient } from 'npm:@supabase/supabase-js@2.83.0';
 const DEFAULT_ORIGINS = new Set([
   'https://www.geobooker.com.mx',
   'https://geobooker.com.mx',
-  'http://localhost:5173'
+  'http://localhost:5173',
+  'https://localhost',
+  'capacitor://localhost'
 ]);
 
 const BUSINESS_TYPE_ALIASES: Record<string, string> = {
@@ -34,6 +36,8 @@ function requiredEnv(name: string) {
 }
 
 function corsHeaders(origin: string | null) {
+  const isNetlifyPreview = Boolean(origin && /^https:\/\/[a-z0-9-]+--geobooker3\.netlify\.app$/i.test(origin));
+  if (origin && !DEFAULT_ORIGINS.has(origin) && !isNetlifyPreview) return null;
   const allowed = origin || '*';
   return {
     'Access-Control-Allow-Origin': allowed,
@@ -83,6 +87,11 @@ function boundedNumber(value: unknown, min: number, max: number) {
   return Number.isFinite(parsed) && parsed >= min && parsed <= max ? parsed : null;
 }
 
+function boundedText(value: unknown, fallback: string, maxLength = 160) {
+  const normalized = String(value || '').trim().replace(/\s+/g, ' ').slice(0, maxLength);
+  return normalized || fallback;
+}
+
 function extractWeights(profile: Record<string, unknown> | null) {
   const weights = (profile?.weights && typeof profile.weights === 'object')
     ? profile.weights as Record<string, unknown>
@@ -128,7 +137,7 @@ async function getAdminUser(admin: ReturnType<typeof createClient>, token: strin
     .select('id,role')
     .eq('id', authData.user.id)
     .maybeSingle();
-  return { user: authData.user, adminUser: adminUser || { id: authData.user.id, role: 'authenticated' }, error: null };
+  return { user: authData.user, adminUser: adminUser || null, error: adminUser ? null : 'admin_required' };
 }
 
 async function getStatus(admin: ReturnType<typeof createClient>) {
@@ -206,8 +215,7 @@ Deno.serve(async (request: Request) => {
 
   try {
     const authorization = request.headers.get('authorization') || '';
-    const token = authorization.match(/^Bearer\s+(.+)$/i)?.[1];
-    if (!token) return response(401, { error: 'authentication_required' }, cors);
+    const token = authorization.match(/^Bearer\s+(.+)$/i)?.[1] || null;
 
     const admin = createClient(
       requiredEnv('SUPABASE_URL'),
@@ -215,12 +223,26 @@ Deno.serve(async (request: Request) => {
       { auth: { persistSession: false, autoRefreshToken: false } }
     );
 
-    const { user, adminUser, error: authError } = await getAdminUser(admin, token);
-    if (authError === 'invalid_session') return response(401, { error: 'invalid_session' }, cors);
-    if (authError || !user || !adminUser) return response(403, { error: 'admin_required' }, cors);
-
     const body = await request.json().catch(() => ({}));
     const action = String(body.action || 'status');
+
+    // Acciones públicas permitidas para visitantes, PWA y apps móviles (con anon key o sin sesión)
+    const publicActions = new Set(['calculate_score', 'score_preview', 'issue_certificate']);
+
+    let user: any = null;
+    let adminUser: any = null;
+
+    if (token) {
+      const userRes = await getAdminUser(admin, token);
+      user = userRes.user;
+      adminUser = userRes.adminUser;
+    }
+
+    // Si la acción no es pública, requerir sesión de admin
+    if (!publicActions.has(action)) {
+      if (!token) return response(401, { error: 'authentication_required' }, cors);
+      if (!user || !adminUser) return response(403, { error: 'admin_required' }, cors);
+    }
 
     if (action === 'status') {
       return response(200, {
@@ -311,13 +333,12 @@ Deno.serve(async (request: Request) => {
         return response(400, { error: 'valid_coordinates_required' }, cors);
       }
 
-      const { data, error } = await admin.rpc('geoscore_calculate_location_score', {
+      const { data, error } = await admin.rpc('geoscore_calculate_location_score_safe', {
         p_business_type_key: businessTypeKey,
         p_lat: lat,
         p_lng: lng,
         p_country_code: countryCode,
-        p_radius_meters: Math.round(radiusMeters),
-        p_save_analysis: false
+        p_radius_meters: Math.round(radiusMeters)
       });
 
       if (error) throw error;
@@ -325,6 +346,64 @@ Deno.serve(async (request: Request) => {
       return response(200, {
         scoreResult: data,
         calculatedAt: new Date().toISOString()
+      }, cors);
+    }
+
+    if (action === 'issue_certificate') {
+      const businessTypeKey = normalizeBusinessType(body.businessTypeKey || body.businessType || body.category) || 'restaurant';
+      const lat = boundedNumber(body.lat ?? body.latitude, -90, 90);
+      const lng = boundedNumber(body.lng ?? body.longitude, -180, 180);
+      const countryCode = normalizeCountry(body.countryCode) || 'MX';
+      const radiusMeters = boundedNumber(body.radiusMeters, 100, 5000) || 1000;
+      const locationName = boundedText(body.locationName || body.addressLabel, 'Ubicacion evaluada');
+
+      if (lat === null || lng === null) {
+        return response(400, { error: 'valid_coordinates_required' }, cors);
+      }
+
+      const { data: scoreResult, error: scoreError } = await admin.rpc('geoscore_calculate_location_score_safe', {
+        p_business_type_key: businessTypeKey,
+        p_lat: lat,
+        p_lng: lng,
+        p_country_code: countryCode,
+        p_radius_meters: Math.round(radiusMeters)
+      });
+
+      if (scoreError) throw scoreError;
+
+      if (!scoreResult || scoreResult.status !== 'success' || scoreResult.scoreProduced !== true) {
+        return response(409, {
+          error: 'score_not_eligible_for_certificate',
+          scoreResult,
+          message: scoreResult?.recommendation || 'GeoScore no produjo una calificacion verificable.'
+        }, cors);
+      }
+
+      const { data: certificate, error: certificateError } = await admin.rpc('geoscore_issue_certificate', {
+        p_country_code: countryCode,
+        p_business_type_key: businessTypeKey,
+        p_location_name: locationName,
+        p_lat: lat,
+        p_lng: lng,
+        p_radius_meters: Math.round(radiusMeters),
+        p_score: Number(scoreResult.score),
+        p_grade: String(scoreResult.grade || ''),
+        p_recommendation: String(scoreResult.recommendation || ''),
+        p_breakdown: scoreResult.breakdown || {},
+        p_strengths: scoreResult.strengths || [],
+        p_risks: scoreResult.risks || [],
+        p_metrics: scoreResult.metrics || {},
+        p_issued_to_name: null,
+        p_issued_to_email: null,
+        p_analysis_id: null
+      });
+
+      if (certificateError) throw certificateError;
+
+      return response(200, {
+        certificate,
+        scoreResult,
+        issuedAt: new Date().toISOString()
       }, cors);
     }
 

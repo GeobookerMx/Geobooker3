@@ -11,7 +11,6 @@ const StickyBanner = lazy(() => import('../components/ads/StickyBanner'));
 const InterstitialAd = lazy(() => import('../components/ads/InterstitialAd'));
 const RecommendedSection = lazy(() => import('../components/ads/RecommendedSection'));
 const SponsoredResultCard = lazy(() => import('../components/ads/SponsoredResultCard'));
-const SponsoredFullwidth = lazy(() => import('../components/ads/SponsoredFullwidth'));
 const ReferralFloatingWidget = lazy(() => import('../components/referral/ReferralFloatingWidget'));
 const ChristmasPromoModal = lazy(() => import('../components/referral/ChristmasPromoModal'));
 const AIRecommendations = lazy(() => import('../components/recommendations/AIRecommendations'));
@@ -304,10 +303,12 @@ const HomeGrowthPrompt = () => {
 };
 import useInterstitialTrigger from '../components/ads/useInterstitialTrigger';
 import SEO from '../components/SEO';
+import { Capacitor } from '@capacitor/core';
 // Guest search limit
 import { useGuestSearchLimit } from '../hooks/useGuestSearchLimit';
 // Apple Guideline 3.1.1: ocultar promos de paquetes pagos en iOS nativo
 import { IS_IOS_NATIVE } from '../utils/iosStore';
+import { featureFlags } from '../config/featureFlags';
 import OpenNowFilter from '../components/common/OpenNowFilter';
 import LocationRefreshButton from '../components/common/LocationRefreshButton';
 import AppStoresLaunchBanner from '../components/common/AppStoresLaunchBanner';
@@ -556,6 +557,9 @@ const HomePage = () => {
   const [nearbyAwardCount, setNearbyAwardCount] = useState(0);
   const [showDeferredAds, setShowDeferredAds] = useState(false);
   const [showDeferredFloatingUi, setShowDeferredFloatingUi] = useState(false);
+  const isNativeApp = Capacitor.isNativePlatform();
+  const showSponsoredCardV1 = featureFlags.adsSponsoredCardV1;
+  const showLegacyAdFormats = featureFlags.adsLegacyDisplayFormats && !isNativeApp;
   const mapIdleTimerRef = useRef(null);
   const awardFilterRef = useRef('all');
   const viewportRequestSeqRef = useRef(0);
@@ -1609,8 +1613,8 @@ const HomePage = () => {
       </div>
 
 
-      {/* Hero Banner Publicitario (Primera Plana) */}
-      {showDeferredAds && (
+      {/* Formatos publicitarios legacy: solo PWA/web y con flag explicito. */}
+      {showDeferredAds && showLegacyAdFormats && (
         <Suspense fallback={<DeferredSectionFallback minHeight="120px" />}>
           <HeroBanner />
         </Suspense>
@@ -1621,18 +1625,11 @@ const HomePage = () => {
         <AIRecommendations />
       </div>
 
-      {/* Resultados Patrocinados - Solo si hay busqueda activa */}
+      {/* GEO_SPONSORED_CARD_V1 - un solo slot contextual en V1 */}
       {
-        businesses.length > 0 && (
+        showSponsoredCardV1 && businesses.length > 0 && (
           <div className="container mx-auto px-4 py-6">
             <div className="max-w-4xl mx-auto space-y-4">
-              {/* Primer resultado patrocinado */}
-              <SponsoredResultCard context={{ search: true, location: userLocation }} />
-
-              {/* Anuncio fullwidth despues del 3er resultado */}
-              <SponsoredFullwidth context={{ search: true, location: userLocation }} />
-
-              {/* Segundo resultado patrocinado */}
               <SponsoredResultCard context={{ search: true, location: userLocation }} />
             </div>
           </div>
@@ -1843,8 +1840,8 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Carrusel de Negocios Destacados (Primera Plana) */}
-      {showDeferredAds && (
+      {/* Formatos publicitarios legacy: solo PWA/web y con flag explicito. */}
+      {showDeferredAds && showLegacyAdFormats && (
         <Suspense fallback={<DeferredSectionFallback minHeight="180px" />}>
           <CarouselAd />
         </Suspense>
@@ -2214,16 +2211,16 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Banner Inferior Sticky (Segunda Plana) */}
-      {showDeferredAds && (
+      {/* Formatos publicitarios legacy: solo PWA/web y con flag explicito. */}
+      {showDeferredAds && showLegacyAdFormats && (
         <Suspense fallback={null}>
           <StickyBanner />
         </Suspense>
       )}
 
-      {/* Interstitial Ad (Pantalla Completa) - Aparece despues de 5 busquedas */}
+      {/* Interstitial legacy: deshabilitado por defecto en builds moviles. */}
       {
-        showInterstitial && (
+        showLegacyAdFormats && showInterstitial && (
           <InterstitialAd onClose={closeInterstitial} />
         )
       }

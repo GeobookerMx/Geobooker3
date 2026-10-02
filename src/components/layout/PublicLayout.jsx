@@ -3,6 +3,7 @@ import React from "react";
 import { Outlet } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
+import InstallPrompt from "../pwa/InstallPrompt";
 
 export default function PublicLayout() {
   // Apple 5.1.1(iv) compliance: el permiso de ubicación se solicita ÚNICAMENTE
@@ -16,6 +17,7 @@ export default function PublicLayout() {
         <Outlet />
       </main>
       <Footer />
+      <InstallPrompt />
     </>
   );
 }

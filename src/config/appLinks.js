@@ -5,8 +5,8 @@ const WEB_BASE_URL = getCanonicalOrigin();
 export const APP_LINKS = {
   web: WEB_BASE_URL,
   downloadHub: getDownloadHubUrl(),
-  androidStoreUrl: import.meta.env.VITE_ANDROID_STORE_URL || 'https://play.google.com/store/apps/details?id=com.geobooker.app&hl=es_MX',
-  iosStoreUrl: import.meta.env.VITE_IOS_STORE_URL || 'https://apps.apple.com/mx/app/geobooker-cerca-de-ti/id6758590506',
+  androidStoreUrl: import.meta.env.VITE_ANDROID_STORE_URL || 'https://play.google.com/store/apps/details?id=com.geobooker.app',
+  iosStoreUrl: import.meta.env.VITE_IOS_STORE_URL || 'https://apps.apple.com/app/geobooker-cerca-de-ti/id6758590506',
 };
 
 export const hasAndroidStoreLink = () => Boolean(APP_LINKS.androidStoreUrl);

@@ -31,6 +31,12 @@
     "hideComments": "Ocultar comentarios",
     "frequentQuestions": "Preguntas frecuentes"
   },
+  "map": {
+    "mapError": "Error cargando Google Maps. Revisa la configuración de API de Google Maps.",
+    "loadingMap": "Cargando mapa interactivo...",
+    "retry": "Reintentar conexión",
+    "openExternal": "Abrir en Google Maps"
+  },
   "nav": {
     "home": "Inicio",
     "businesses": "Negocios",

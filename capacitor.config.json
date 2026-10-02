@@ -31,9 +31,8 @@
     },
     "Geolocation": {
       "permissions": {
-        "location": "always"
+        "location": "whileInUse"
       }
     }
   }
 }
-

@@ -171,6 +171,77 @@ async function upsertCommercialEvent(supabase, payload) {
     throw error;
 }
 
+async function claimStripeWebhookEvent(supabase, stripeEvent) {
+    const objectId = stripeEvent?.data?.object?.id || null;
+    const record = {
+        stripe_event_id: stripeEvent.id,
+        event_type: stripeEvent.type,
+        livemode: Boolean(stripeEvent.livemode),
+        api_version: stripeEvent.api_version || null,
+        object_id: objectId,
+        processing_status: 'processing',
+        payload: stripeEvent,
+        metadata: {
+            request_id: stripeEvent.request?.id || null,
+            pending_webhooks: stripeEvent.pending_webhooks || 0
+        }
+    };
+
+    const { error } = await supabase.from('stripe_webhook_events').insert(record);
+    if (!error) return true;
+
+    const missingTable = error.code === '42P01' || String(error.message || '').toLowerCase().includes('stripe_webhook_events');
+    if (missingTable) {
+        console.warn('[stripe-webhook] stripe_webhook_events not available yet; idempotency audit skipped');
+        return true;
+    }
+
+    const duplicate = error.code === '23505' || String(error.message || '').toLowerCase().includes('duplicate key');
+    if (!duplicate) throw error;
+
+    const { data: existing, error: selectError } = await supabase
+        .from('stripe_webhook_events')
+        .select('processing_status, attempts')
+        .eq('stripe_event_id', stripeEvent.id)
+        .maybeSingle();
+    if (selectError) throw selectError;
+
+    if (existing?.processing_status === 'processed' || existing?.processing_status === 'processing') {
+        console.log(`[stripe-webhook] Duplicate event ignored: ${stripeEvent.id}`);
+        return false;
+    }
+
+    const { error: updateError } = await supabase
+        .from('stripe_webhook_events')
+        .update({
+            processing_status: 'processing',
+            attempts: Number(existing?.attempts || 1) + 1,
+            last_seen_at: new Date().toISOString(),
+            last_error: null
+        })
+        .eq('stripe_event_id', stripeEvent.id);
+    if (updateError) throw updateError;
+
+    return true;
+}
+
+async function markStripeWebhookEvent(supabase, stripeEvent, status, error = null) {
+    try {
+        const payload = {
+            processing_status: status,
+            last_seen_at: new Date().toISOString(),
+            last_error: error ? String(error.message || error).slice(0, 1000) : null,
+            ...(status === 'processed' ? { processed_at: new Date().toISOString() } : {})
+        };
+        await supabase
+            .from('stripe_webhook_events')
+            .update(payload)
+            .eq('stripe_event_id', stripeEvent.id);
+    } catch (auditError) {
+        console.warn('[stripe-webhook] Could not update webhook audit status:', auditError.message);
+    }
+}
+
 async function upsertConnectClientAccount(supabase, payload = {}) {
     const primaryContactEmail = payload.primary_contact_email || payload.billing_email || payload.contact_email;
     if (!primaryContactEmail) return null;
@@ -238,8 +309,14 @@ exports.handler = async (event) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
+    let claimedWebhookEvent = false;
 
     try {
+        claimedWebhookEvent = await claimStripeWebhookEvent(supabase, stripeEvent);
+        if (!claimedWebhookEvent) {
+            return { statusCode: 200, body: JSON.stringify({ received: true, duplicate: true }) };
+        }
+
         switch (stripeEvent.type) {
             case 'checkout.session.completed': {
                 const session = stripeEvent.data.object;
@@ -865,23 +942,25 @@ exports.handler = async (event) => {
                 break;
             }
 
-            // CASO: Error de Pago (Tarjeta declinada, etc.)
+            // CASO: Error o cancelacion de pago (tarjeta, OXXO expirado/cancelado, etc.)
+            case 'payment_intent.canceled':
             case 'payment_intent.payment_failed': {
                 const paymentIntent = stripeEvent.data.object;
                 const metadata = paymentIntent.metadata || {};
                 const connectCampaignId = metadata.connect_campaign_id;
                 const campaignId = metadata.campaign_id || metadata.product_id;
+                const unsuccessfulStatus = stripeEvent.type === 'payment_intent.canceled' ? 'canceled' : 'failed';
 
                 if (connectCampaignId) {
                     const { error } = await supabase
                         .from('connect_campaigns')
                         .update({
-                            payment_status: 'failed'
+                            payment_status: unsuccessfulStatus
                         })
                         .eq('id', connectCampaignId);
 
                     if (error) {
-                        console.error(`Error actualizando reserva Connect fallida ${connectCampaignId}:`, error);
+                        console.error(`Error actualizando reserva Connect no exitosa ${connectCampaignId}:`, error);
                     } else {
                         await upsertCommercialEvent(supabase, {
                             source_type: 'connect_campaign',
@@ -896,24 +975,24 @@ exports.handler = async (event) => {
                             amount: Number(metadata.reservation_price_mxn || 0),
                             billing_country: 'MX',
                             tax_status: 'domestic_mx',
-                            payment_status: 'failed',
+                            payment_status: unsuccessfulStatus,
                             payment_method: 'card',
                             operational_status: 'intake',
-                            notes: 'Connect payment failed',
+                            notes: `Connect payment ${unsuccessfulStatus}`,
                             metadata: { failure_type: stripeEvent.type }
                         });
-                        console.log(`Pago fallido para reserva Connect ${connectCampaignId}. Estado de pago marcado como failed.`);
+                        console.log(`Pago no exitoso para reserva Connect ${connectCampaignId}. Estado: ${unsuccessfulStatus}.`);
                     }
                 } else if (campaignId) {
                     const { error } = await supabase
                         .from('ad_campaigns')
                         .update({
-                            payment_status: 'failed'
+                            payment_status: unsuccessfulStatus
                         })
                         .eq('id', campaignId);
 
                     if (error) {
-                        console.error(`Error actualizando campana fallida ${campaignId}:`, error);
+                        console.error(`Error actualizando campana no exitosa ${campaignId}:`, error);
                     } else {
                         await upsertCommercialEvent(supabase, {
                             source_type: 'ad_campaign',
@@ -928,22 +1007,28 @@ exports.handler = async (event) => {
                             amount: Number(metadata.total_budget || metadata.amount || 0),
                             billing_country: metadata.billing_country || 'MX',
                             tax_status: metadata.tax_status || (metadata.billing_country === 'MX' ? 'domestic_mx' : 'export_0_iva'),
-                            payment_status: 'failed',
+                            payment_status: unsuccessfulStatus,
                             payment_method: metadata.payment_type === 'oxxo' ? 'oxxo' : 'card',
-                            operational_status: 'payment_failed',
-                            notes: 'Ads payment failed',
+                            operational_status: `payment_${unsuccessfulStatus}`,
+                            notes: `Ads payment ${unsuccessfulStatus}`,
                             metadata: { failure_type: stripeEvent.type }
                         });
-                        console.log(`Pago fallido para campana ${campaignId}. Estado de pago marcado como failed.`);
+                        console.log(`Pago no exitoso para campana ${campaignId}. Estado: ${unsuccessfulStatus}.`);
                     }
                 }
                 break;
             }
         }
 
+        if (claimedWebhookEvent) {
+            await markStripeWebhookEvent(supabase, stripeEvent, 'processed');
+        }
         return { statusCode: 200, body: JSON.stringify({ received: true }) };
     } catch (error) {
         console.error('Error modificando base de datos:', error);
+        if (claimedWebhookEvent) {
+            await markStripeWebhookEvent(supabase, stripeEvent, 'failed', error);
+        }
         return { statusCode: 500, body: 'Database update failed' };
     }
 };

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Activity,
   AlertTriangle,
   Award,
   BarChart3,
@@ -39,16 +38,20 @@ function Card({ label, value, detail, tone = 'neutral' }) {
   </div>;
 }
 
-function formatDate(value) {
-  if (!value) return 'Sin datos';
-  return new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
-}
-
 async function callLocationIntelligence(action, payload = {}) {
   const { data, error } = await supabase.functions.invoke('location-intelligence', {
     body: { action, ...payload }
   });
-  if (error) throw error;
+  if (error) {
+    let message = error.message || 'La funcion GeoScore no respondio correctamente';
+    try {
+      const body = await error.context?.clone?.().json();
+      message = body?.message || body?.error || message;
+    } catch {
+      // Network errors do not always include a JSON response.
+    }
+    throw new Error(message);
+  }
   return data;
 }
 
@@ -63,8 +66,6 @@ const CITY_PRESETS = [
 export default function GeoScoreAdmin() {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState(null);
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [preview, setPreview] = useState(null);
   const [metricsLoading, setMetricsLoading] = useState(false);
   const [metrics, setMetrics] = useState(null);
   const [scoreLoading, setScoreLoading] = useState(false);
@@ -98,13 +99,15 @@ export default function GeoScoreAdmin() {
     } catch (error) {
       console.warn('GeoScore fallback activated:', error);
       setStatus({
-        mode: 'preview_ready',
-        mxMode: 'ready',
+        mode: 'backend_unavailable',
+        mxMode: 'backend_unavailable',
         sources: [],
         profiles: [],
-        sourceCounts: { total: 3, active: 1, draft: 2 },
-        profileCounts: { total: 6, active: 1, draft: 5 }
+        sourceCounts: { total: 0, active: 0, draft: 0 },
+        profileCounts: { total: 0, active: 0, draft: 0 },
+        error: error.message || 'No se pudo consultar el backend GeoScore'
       });
+      toast.error(error.message || 'No se pudo consultar el backend GeoScore');
     } finally {
       setLoading(false);
     }
@@ -126,7 +129,11 @@ export default function GeoScoreAdmin() {
         radiusMeters: Number(form.radiusMeters)
       });
       setScoreResult(result.scoreResult || null);
-      toast.success('GeoScore Multi-Pilar calculado exitosamente');
+      if (result.scoreResult?.status !== 'success') {
+        toast.error(result.scoreResult?.recommendation || 'GeoScore no esta disponible para esta zona');
+      } else {
+        toast.success('GeoScore Multi-Pilar calculado exitosamente');
+      }
     } catch (error) {
       toast.error(error.message || 'No se pudo calcular GeoScore');
     } finally {
@@ -172,27 +179,6 @@ export default function GeoScoreAdmin() {
     }
   };
 
-  const runPreview = async (event) => {
-    event?.preventDefault();
-    setPreviewLoading(true);
-    setPreview(null);
-    try {
-      const result = await callLocationIntelligence('model_preview', {
-        businessTypeKey: form.businessTypeKey,
-        countryCode: form.countryCode,
-        lat: Number(form.lat),
-        lng: Number(form.lng),
-        addressLabel: form.addressLabel
-      });
-      setPreview(result);
-      toast.success('Preview de modelo ejecutado');
-    } catch (error) {
-      toast.error(error.message || 'No se pudo ejecutar preview');
-    } finally {
-      setPreviewLoading(false);
-    }
-  };
-
   const applyPreset = (preset) => {
     setForm((current) => ({
       ...current,
@@ -205,11 +191,6 @@ export default function GeoScoreAdmin() {
   };
 
   const update = (field, value) => setForm((current) => ({ ...current, [field]: value }));
-
-  const sources = status?.sources || [];
-  const profiles = status?.profiles || [];
-  const enabled = status?.mode === 'enabled';
-  const mxEnabled = status?.mxMode === 'enabled';
 
   return <div className="space-y-6">
     <div className="flex flex-wrap items-start justify-between gap-4">
@@ -247,6 +228,12 @@ export default function GeoScoreAdmin() {
     {loading && <div className="flex min-h-[200px] items-center justify-center text-gray-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Cargando motor GeoScore...</div>}
 
     {!loading && status && <>
+      {status.error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <p className="font-bold">GeoScore no esta disponible</p>
+          <p className="mt-1">{status.error}</p>
+        </div>
+      )}
       {/* Configuration & Controls */}
       <div className="grid gap-6 xl:grid-cols-12">
         <div className="rounded-3xl border bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 xl:col-span-5">
@@ -338,7 +325,15 @@ export default function GeoScoreAdmin() {
         <div className="rounded-3xl border bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 xl:col-span-7">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold">Evaluación de Ubicación</h2>
-            {scoreResult && (
+            {scoreResult && scoreResult.status !== 'success' && (
+              <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-5 text-amber-900">
+                <p className="font-bold">Cobertura insuficiente</p>
+                <p className="mt-1 text-sm">{scoreResult.recommendation}</p>
+                <p className="mt-2 text-xs">Negocios ubicados en el radio: {scoreResult.metrics?.totalBusinesses ?? 0}. GeoScore no genero una calificacion.</p>
+              </div>
+            )}
+
+            {scoreResult?.status === 'success' && (
               <Badge tone={scoreResult.score >= 80 ? 'good' : scoreResult.score >= 60 ? 'warning' : 'bad'}>
                 Grado: {scoreResult.grade}
               </Badge>

@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { normalizeEmail, verifyUnsubscribeToken } = require('./_crm-unsubscribe');
+const { recordEmailSuppression } = require('./_crm-email-suppression');
 
 const headers = {
   'Content-Type': 'text/html; charset=utf-8',
@@ -41,6 +42,13 @@ exports.handler = async (event) => {
 
   try {
     const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+    await recordEmailSuppression(supabase, {
+      email,
+      reason: 'opt_out',
+      source: 'crm_unsubscribe',
+      sourceMetadata: { method: event.httpMethod.toLowerCase() }
+    });
+
     const { data: contacts, error: lookupError } = await supabase
       .from('marketing_contacts')
       .select('id')

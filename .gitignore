@@ -92,6 +92,9 @@ apple-secret-output.txt
 *private-key*.txt
 credentials*.json
 service-account*.json
+data/*.csv
+data/*.xlsx
+data/processed/
 android/geobooker-upload-key.jks
 android/app/release/
 android/build-error.txt

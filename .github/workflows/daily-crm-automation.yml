@@ -18,11 +18,13 @@ jobs:
     steps:
       - name: Generate Email Queue
         run: |
-          curl --fail --show-error --silent \
+          response="$(curl --fail-with-body --show-error --silent \
             -X POST "https://geobooker.com.mx/.netlify/functions/generate-email-queue" \
             -H "Content-Type: application/json" \
             -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
-            -d '{"limit":100}'
+            -d '{"limit":100}')"
+          echo "$response" | jq '{success, contacts_added, pending_total, error, message}'
+          echo "$response" | jq -e '.success == true' > /dev/null
 
       - name: Generate WhatsApp Queue
         run: |
@@ -38,8 +40,13 @@ jobs:
     steps:
       - name: Process Email Queue Batch
         run: |
-          curl --fail --show-error --silent \
+          response="$(curl --fail-with-body --show-error --silent \
             -X POST "https://geobooker.com.mx/.netlify/functions/process-email-queue" \
             -H "Content-Type: application/json" \
             -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
-            -d '{"limit":25}'
+            -d '{"limit":25}')"
+          echo "$response" | jq '{success, paused, sent, failed, deferred, stopReason, reason, message}'
+          echo "$response" | jq -e '.success == true' > /dev/null
+          if [ "$(echo "$response" | jq -r '.paused // false')" = "true" ]; then
+            echo "::warning::El envio diario de correo esta pausado en CRM."
+          fi

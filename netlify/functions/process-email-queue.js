@@ -237,7 +237,7 @@ exports.handler = async (event) => {
         const contactIds = queueRows.map(r => r.contact_id).filter(Boolean);
         const { data: contactsData, error: contactsError } = await supabase
             .from('marketing_contacts')
-            .select('id, email, company_name, contact_name, tier, source, assigned_email_sender, email_sent_count, email_status, is_active, email_unsubscribed, email_marketing_basis, email_consented_at, email_consent_evidence_ref')
+            .select('id, email, company_name, contact_name, tier, source, assigned_email_sender, email_sent_count, email_status, is_active, email_unsubscribed, email_marketing_allowed, email_marketing_basis, email_consented_at, email_consent_evidence_ref')
             .in('id', contactIds);
 
         if (contactsError) throw contactsError;
@@ -256,6 +256,7 @@ exports.handler = async (event) => {
                 if (!contact?.email) return false;
                 if (contact.is_active === false) return false;
                 if (contact.email_unsubscribed) return false;
+                if (contact.email_marketing_allowed !== true) return false;
                 if (['bounced', 'complained', 'suppressed', 'failed', 'unsubscribed'].includes(String(contact.email_status || '').toLowerCase())) return false;
                 if (contact.email_marketing_basis !== 'explicit_opt_in') return false;
                 if (!contact.email_consented_at || !String(contact.email_consent_evidence_ref || '').trim()) return false;

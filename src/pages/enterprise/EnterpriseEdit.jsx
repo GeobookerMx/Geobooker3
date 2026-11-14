@@ -105,7 +105,7 @@ export default function EnterpriseEdit() {
         try {
             const fileExt = file.name.split('.').pop();
             const fileName = `${user.id}_${Date.now()}.${fileExt}`;
-            const filePath = `campaigns/${fileName}`;
+            const filePath = `${user.id}/campaigns/${fileName}`;
 
             const { error } = await supabase.storage
                 .from('ad-creatives')

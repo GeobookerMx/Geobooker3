@@ -652,7 +652,6 @@ export async function createBusiness(form, user, options = {}) {
     invoicing_details: clean(form.invoicing_details),
     has_job_openings: form.has_job_openings ?? false,
     job_openings_details: clean(form.job_openings_details),
-    status: "pending",
     images: form.images || [],
     opening_hours: form.opening_hours || null,
     listing_type: form.listing_type === 'space_rental' ? 'space_rental' : 'business',
@@ -661,7 +660,6 @@ export async function createBusiness(form, user, options = {}) {
     rent_currency: clean(form.rent_currency) || null,
     area_sqm: form.area_sqm ? Number(form.area_sqm) : null,
     available_from: clean(form.available_from) || null,
-    created_at: new Date().toISOString(),
     attribution_text: getAttributionSummary(),
   };
 

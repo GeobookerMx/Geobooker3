@@ -128,14 +128,14 @@ const BusinessApprovals = () => {
         try {
             const business = businesses.find(b => b.id === businessId);
 
-            const { error } = await supabase
-                .from('businesses')
-                .update({ status: 'approved' })
-                .eq('id', businessId);
+            const { data: changed, error } = await supabase.rpc('admin_set_business_status', {
+                p_business_id: businessId,
+                p_status: 'approved'
+            });
 
-            if (error) {
+            if (error || !changed) {
                 console.error('❌ Error de Supabase:', error);
-                throw error;
+                throw error || new Error('Negocio no encontrado');
             }
 
             // Registrar en logs de auditoría
@@ -165,12 +165,13 @@ const BusinessApprovals = () => {
         try {
             const business = businesses.find(b => b.id === businessId);
 
-            const { error } = await supabase
-                .from('businesses')
-                .update({ status: 'rejected' })
-                .eq('id', businessId);
+            const { data: changed, error } = await supabase.rpc('admin_set_business_status', {
+                p_business_id: businessId,
+                p_status: 'rejected'
+            });
 
             if (error) throw error;
+            if (!changed) throw new Error('Negocio no encontrado');
 
             // Registrar en logs de auditoría
             await logAction(isRentalSpacesMode ? 'reject_rental_space' : 'reject_business', 'business', businessId, business?.name, { reason });
@@ -197,15 +198,13 @@ const BusinessApprovals = () => {
     const handleMoveToPending = async (businessId) => {
         const loadingToast = toast.loading('Moviedo a pendiente para re-evaluación...');
         try {
-            const { error } = await supabase
-                .from('businesses')
-                .update({
-                    status: 'pending',
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', businessId);
+            const { data: changed, error } = await supabase.rpc('admin_set_business_status', {
+                p_business_id: businessId,
+                p_status: 'pending'
+            });
 
             if (error) throw error;
+            if (!changed) throw new Error('Negocio no encontrado');
 
             // Registrar en logs de auditoría
             const business = businesses.find(b => b.id === businessId);

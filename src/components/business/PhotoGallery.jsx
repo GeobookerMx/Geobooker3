@@ -62,9 +62,11 @@ const PhotoGallery = ({ businessId, isOwner = false }) => {
                 // Subir a Supabase Storage
                 const fileExt = file.name.split('.').pop();
                 const fileName = `${businessId}-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-                const filePath = `business-photos/${fileName}`;
+                const { data: { user }, error: authError } = await supabase.auth.getUser();
+                if (authError || !user) throw new Error('Debes iniciar sesión');
+                const filePath = `${user.id}/business-photos/${fileName}`;
 
-                const { data: uploadData, error: uploadError } = await supabase.storage
+                const { error: uploadError } = await supabase.storage
                     .from('business-assets')
                     .upload(filePath, file);
 

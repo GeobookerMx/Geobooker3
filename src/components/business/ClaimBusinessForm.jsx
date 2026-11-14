@@ -68,7 +68,7 @@ const ClaimBusinessForm = ({ isOpen, onClose, business, onSuccess }) => {
 
     const uploadEvidence = async (file) => {
         const fileExt = file.name.split('.').pop();
-        const fileName = `claims/${user.id}/${business.id}_${Date.now()}.${fileExt}`;
+        const fileName = `${user.id}/claims/${business.id}_${Date.now()}.${fileExt}`;
 
         const { error } = await supabase.storage
             .from('business-images')

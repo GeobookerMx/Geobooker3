@@ -253,7 +253,7 @@ const BusinessEditPage = () => {
             }
 
             try {
-                const fileName = `${id}/${Date.now()}_${file.name}`;
+                const fileName = `${user.id}/${id}/${Date.now()}_${file.name}`;
                 const { error: uploadError } = await supabase.storage
                     .from(BUSINESS_IMAGES_BUCKET)
                     .upload(fileName, file);

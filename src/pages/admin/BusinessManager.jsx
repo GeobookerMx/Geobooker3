@@ -33,12 +33,13 @@ const BusinessManager = () => {
 
   const handleApprove = async (businessId) => {
     try {
-      const { error } = await supabase
-        .from('businesses')
-        .update({ status: 'approved' })
-        .eq('id', businessId);
+      const { data: changed, error } = await supabase.rpc('admin_set_business_status', {
+        p_business_id: businessId,
+        p_status: 'approved'
+      });
 
       if (error) throw error;
+      if (!changed) throw new Error('Negocio no encontrado');
       
       // Actualizar lista local
       setBusinesses(businesses.map(business =>

@@ -5,7 +5,7 @@
  * For international advertisers (Nike, Heineken, Coca-Cola, etc.)
  */
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft, ArrowRight, Check, Globe, MapPin, Calendar,
     Upload, CreditCard, Loader2, Sparkles, Building2, Zap,
@@ -588,8 +588,12 @@ export default function EnterpriseCheckout() {
 
         setUploading(true);
         try {
+            const { data: { user }, error: authError } = await supabase.auth.getUser();
+            if (authError || !user) {
+                throw new Error('Sign in before uploading your creative.');
+            }
             const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-            const filePath = `enterprise/${Date.now()}_${cleanName}`;
+            const filePath = `${user.id}/enterprise/${Date.now()}_${cleanName}`;
 
             const { error } = await supabase.storage
                 .from('ad-creatives')
@@ -609,7 +613,7 @@ export default function EnterpriseCheckout() {
             toast.success(`${isAllowedVideo ? 'Video' : 'Image'} uploaded successfully`);
         } catch (error) {
             console.error('Upload error:', error);
-            toast.error('Upload failed. Please try again or use a different file.');
+            toast.error(error.message || 'Upload failed. Please try again or use a different file.');
         } finally {
             setUploading(false);
             e.target.value = '';
@@ -1185,6 +1189,9 @@ export default function EnterpriseCheckout() {
                                                     <input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime,.mov" onChange={handleImageUpload} className="hidden" />
                                                 </label>
                                             )}
+                                            <p className="mt-2 text-xs text-gray-400">
+                                                A Geobooker account is required to upload. <Link to="/login" className="text-amber-400 underline">Sign in</Link>
+                                            </p>
                                             <div className="mt-4 grid gap-2 text-left text-xs text-gray-400 sm:grid-cols-2">
                                                 <p><span className="font-semibold text-gray-300">Images:</span> {CREATIVE_LIMITS.image.formats}, max {formatBytes(CREATIVE_LIMITS.image.maxBytes)}, minimum {CREATIVE_LIMITS.image.minWidth} x {CREATIVE_LIMITS.image.minHeight}px.</p>
                                                 <p><span className="font-semibold text-gray-300">Videos:</span> {CREATIVE_LIMITS.video.formats}, max {formatBytes(CREATIVE_LIMITS.video.maxBytes)}, max {CREATIVE_LIMITS.video.maxDurationSeconds}s.</p>

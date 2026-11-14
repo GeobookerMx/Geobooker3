@@ -10,7 +10,7 @@ const { normalizeEmail } = require('../../netlify/functions/_crm-email-suppressi
 const processorPath = new URL('../../netlify/functions/process-email-queue.js', import.meta.url);
 const unsubscribePath = new URL('../../netlify/functions/crm-unsubscribe.js', import.meta.url);
 const webhookPath = new URL('../../netlify/functions/resend-webhook.js', import.meta.url);
-const migrationPath = new URL('../../supabase/migrations/20260930130000_crm_email_explicit_opt_in_gate.sql', import.meta.url);
+const migrationPath = new URL('../../supabase/migrations/20261114153727_crm_email_explicit_opt_in_gate_20260930.sql', import.meta.url);
 
 test('email normalization is stable for suppression matching', () => {
   assert.equal(normalizeEmail('  Person@Example.COM '), 'person@example.com');

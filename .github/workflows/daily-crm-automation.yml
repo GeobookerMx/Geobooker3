@@ -27,12 +27,14 @@ jobs:
           echo "$response" | jq -e '.success == true' > /dev/null
 
       - name: Generate WhatsApp Queue
+        continue-on-error: true
         run: |
-          curl --fail --show-error --silent \
+          response="$(curl --fail-with-body --show-error --silent \
             -X POST "https://geobooker.com.mx/.netlify/functions/generate-whatsapp-queue" \
             -H "Content-Type: application/json" \
             -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
-            -d '{"limit":20}'
+            -d '{"limit":20}' || true)"
+          echo "$response"
 
   process-email-queue:
     if: github.event.schedule != '0 15 * * *' || github.event_name == 'workflow_dispatch'

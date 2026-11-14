@@ -1,6 +1,8 @@
 const DEFAULT_BASE_URL = 'https://geobooker.com.mx';
 const DEFAULT_ANDROID_URL = 'https://play.google.com/store/apps/details?id=com.geobooker.app&hl=es_MX';
 const DEFAULT_IOS_URL = 'https://apps.apple.com/mx/app/geobooker-cerca-de-ti/id6758590506';
+const WHATSAPP_PARTNER_PHONE = '525526702368';
+const WHATSAPP_PARTNER_URL = `https://wa.me/${WHATSAPP_PARTNER_PHONE}?text=${encodeURIComponent('Hola, recibí su correo de Geobooker y me interesa conocer más sobre las opciones para ser Socio Comercial o Aliado Estratégico.')}`;
 
 function buildTrackedUrl(target) {
     const base = target === 'android_store' ? DEFAULT_ANDROID_URL
@@ -19,6 +21,93 @@ function buildQrImageUrl(target) {
     return `https://quickchart.io/qr?size=170&text=${encodeURIComponent(buildTrackedUrl(target))}`;
 }
 
+function buildToolsShowcase() {
+    return `
+        <div class="gb-tools-section">
+            <h3 class="gb-tools-title">Todo lo que Geobooker ofrece para potenciar tu negocio</h3>
+            <p class="gb-tools-subtitle">Una suite completa de herramientas digitales, visibilidad y conectividad comercial:</p>
+            
+            <div class="gb-tools-grid">
+                <div class="gb-tool-item">
+                    <div class="gb-tool-icon">💡</div>
+                    <div class="gb-tool-body">
+                        <strong>Prende y Apaga tu Negocio Digitalmente</strong>
+                        <span>Control de disponibilidad en tiempo real: marca tu negocio como abierto, cerrado o recibiendo pedidos al instante en el mapa con un solo clic.</span>
+                    </div>
+                </div>
+                <div class="gb-tool-item">
+                    <div class="gb-tool-icon">📈</div>
+                    <div class="gb-tool-body">
+                        <strong>GeoScore&trade; (Certificación y Confianza)</strong>
+                        <span>Auditoría de presencia y reputación comercial para certificar que tu negocio es confiable y seguro frente a miles de consumidores.</span>
+                    </div>
+                </div>
+                <div class="gb-tool-item">
+                    <div class="gb-tool-icon">🚚</div>
+                    <div class="gb-tool-body">
+                        <strong>Food Trucks y Negocios Móviles</strong>
+                        <span>Módulo especializado para negocios con movilidad o ubicaciones dinámicas: tus clientes siempre sabrán dónde encontrarte en vivo.</span>
+                    </div>
+                </div>
+                <div class="gb-tool-item">
+                    <div class="gb-tool-icon">🤝</div>
+                    <div class="gb-tool-body">
+                        <strong>Proveedores B2B y Red Empresarial</strong>
+                        <span>Conecta tu empresa con proveedores confiables, cotiza insumos al mayoreo o amplía tu cartera de clientes corporativos.</span>
+                    </div>
+                </div>
+                <div class="gb-tool-item">
+                    <div class="gb-tool-icon">🚀</div>
+                    <div class="gb-tool-body">
+                        <strong>Geobooker Emprende</strong>
+                        <span>Retos de aceleración, diagnósticos y herramientas prácticas diseñadas para impulsar el crecimiento de nuevos negocios y marcas locales.</span>
+                    </div>
+                </div>
+                <div class="gb-tool-item">
+                    <div class="gb-tool-icon">📚</div>
+                    <div class="gb-tool-body">
+                        <strong>Biblioteca Digital</strong>
+                        <span>Acceso a manuales, guías fiscales/legales (como RESICO), plantillas descargables y contenidos educativos para la gestión comercial.</span>
+                    </div>
+                </div>
+                <div class="gb-tool-item">
+                    <div class="gb-tool-icon">📍</div>
+                    <div class="gb-tool-body">
+                        <strong>Directorio y Mapa por Proximidad</strong>
+                        <span>Búsqueda interactiva inteligente que conecta a tus clientes por cercanía exacta desde web y teléfonos móviles.</span>
+                    </div>
+                </div>
+                <div class="gb-tool-item">
+                    <div class="gb-tool-icon">⭐</div>
+                    <div class="gb-tool-body">
+                        <strong>Perfil Comercial Verificado con QR y Ads</strong>
+                        <span>Ficha técnica profesional, catálogo, botones directos a WhatsApp/llamadas y espacios publicitarios patrocinados medibles.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function buildPartnerSection() {
+    return `
+        <div class="gb-partner-card">
+            <div class="gb-partner-badge">OPORTUNIDAD COMERCIAL</div>
+            <h3>¿Te interesa ser Socio Comercial o Aliado Estratégico?</h3>
+            <p>
+                Si representas una agencia, red empresarial, distribuidor o deseas comercializar espacios publicitarios
+                y soluciones de Geobooker en tu región con comisiones atractivas, nos encantaría hacer equipo contigo.
+            </p>
+            <div class="gb-whatsapp-action">
+                <a href="${WHATSAPP_PARTNER_URL}" target="_blank" rel="noopener noreferrer" class="gb-whatsapp-btn">
+                    <span style="font-size: 18px; line-height: 1;">💬</span> Chatear por WhatsApp con Dirección Comercial
+                </a>
+                <span class="gb-whatsapp-subtext">Atención inmediata: +52 55 2670 2368</span>
+            </div>
+        </div>
+    `;
+}
+
 function buildFooter({ companyName = 'tu empresa', unsubscribeUrl = null } = {}) {
     const androidUrl = buildTrackedUrl('android_store');
     const iosUrl = buildTrackedUrl('ios_store');
@@ -32,20 +121,19 @@ function buildFooter({ companyName = 'tu empresa', unsubscribeUrl = null } = {})
                     class="gb-footer-logo"
                 />
                 <p class="gb-footer-text">
-                    Geobooker Ads ayuda a negocios locales, regionales y enterprise a ganar visibilidad
-                    en búsqueda, mapa, páginas de ciudad y espacios patrocinados medibles.
+                    La plataforma de geolocalización, publicidad inteligente y directorio comercial que conecta
+                    a miles de negocios locales, regionales y marcas enterprise con clientes reales.
                 </p>
             </div>
 
             <div class="gb-cta-card">
-                <h3>Activa presencia premium y descubre Geobooker Ads</h3>
+                <h3>Descarga nuestra App y prueba la experiencia</h3>
                 <p>
-                    Durante la etapa de lanzamiento estamos abriendo accesos premium sin costo para negocios elegibles.
-                    Tus clientes pueden encontrarte desde web, Android, iPhone y búsquedas locales.
+                    Encuentra negocios cercanos, explora el mapa interactivo y comprueba cómo ven los usuarios a tu negocio.
                 </p>
                 <div class="gb-store-buttons">
-                    <a href="${androidUrl}" target="_blank" rel="noopener noreferrer">Google Play</a>
-                    <a href="${iosUrl}" target="_blank" rel="noopener noreferrer">App Store</a>
+                    <a href="${androidUrl}" target="_blank" rel="noopener noreferrer">Google Play (Android)</a>
+                    <a href="${iosUrl}" target="_blank" rel="noopener noreferrer">App Store (iPhone)</a>
                 </div>
             </div>
 
@@ -53,27 +141,37 @@ function buildFooter({ companyName = 'tu empresa', unsubscribeUrl = null } = {})
                 <div class="gb-qr-card">
                     <img src="${buildQrImageUrl('android_store')}" alt="QR Google Play" />
                     <strong>QR Android</strong>
-                    <span>Escanea para abrir Google Play</span>
+                    <span>Escanea con tu cámara para abrir Google Play</span>
                 </div>
                 <div class="gb-qr-card">
                     <img src="${buildQrImageUrl('ios_store')}" alt="QR App Store" />
                     <strong>QR iPhone</strong>
-                    <span>Escanea para abrir App Store</span>
+                    <span>Escanea con tu cámara para abrir App Store</span>
                 </div>
             </div>
 
+            <div class="gb-social-links">
+                <a href="https://geobooker.com.mx" target="_blank" rel="noopener noreferrer">Portal Web</a> &bull;
+                <a href="https://www.facebook.com/Geobooker" target="_blank" rel="noopener noreferrer">Facebook</a> &bull;
+                <a href="https://www.instagram.com/geobookermx" target="_blank" rel="noopener noreferrer">Instagram</a> &bull;
+                <a href="https://linkedin.com/company/geobooker" target="_blank" rel="noopener noreferrer">LinkedIn</a> &bull;
+                <a href="https://www.tiktok.com/@geobookermx" target="_blank" rel="noopener noreferrer">TikTok</a>
+            </div>
+
             <div class="gb-footer-meta">
-                <p><strong>Web:</strong> <a href="${DEFAULT_BASE_URL}">${DEFAULT_BASE_URL}</a></p>
-                <p><strong>Email comercial:</strong> <a href="mailto:hola@geobooker.com.mx">hola@geobooker.com.mx</a></p>
-                <p><strong>Respuesta comercial:</strong> <a href="mailto:hola@geobooker.com.mx">hola@geobooker.com.mx</a></p>
+                <p><strong>Sitio Web:</strong> <a href="${DEFAULT_BASE_URL}">${DEFAULT_BASE_URL}</a></p>
+                <p><strong>Contacto Comercial y Soporte:</strong> <a href="mailto:hola@geobooker.com.mx">hola@geobooker.com.mx</a> | Tel/WhatsApp: +52 55 2670 2368</p>
                 <p>
-                    Este mensaje comercial se envía porque <strong>${companyName}</strong> aparece como negocio público
-                    o contacto comercial relacionado con presencia local.
+                    Este mensaje se envía de manera institucional porque <strong>${companyName}</strong> aparece como negocio registrado,
+                    marca pública o contacto corporativo con presencia comercial en México.
                 </p>
                 <p>
-                    Si no deseas más mensajes corporativos,
-                    ${unsubscribeUrl ? `<a href="${unsubscribeUrl}">cancela la suscripción con un clic</a> o ` : ''}
+                    Si no deseas recibir más comunicaciones institucionales,
+                    ${unsubscribeUrl ? `<a href="${unsubscribeUrl}">cancela tu suscripción en un clic</a> o ` : ''}
                     responde este correo con la palabra <strong>BAJA</strong>.
+                </p>
+                <p style="font-size: 11px; color: #94a3b8; margin-top: 12px;">
+                    &copy; 2026 Geobooker México. Todos los derechos reservados.
                 </p>
             </div>
         </div>
@@ -89,35 +187,70 @@ function wrapEmailLayout({ contentHtml, preheader = 'Geobooker Ads', title = 'Ge
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title}</title>
     <style>
-        body { margin: 0; padding: 0; background: #eef2ff; font-family: Arial, Helvetica, sans-serif; color: #1f2937; }
+        body { margin: 0; padding: 0; background: #eef2ff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1f2937; -webkit-font-smoothing: antialiased; }
         .gb-preheader { display: none !important; visibility: hidden; opacity: 0; color: transparent; height: 0; width: 0; overflow: hidden; }
-        .gb-shell { padding: 28px 12px; background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%); }
-        .gb-card { max-width: 680px; margin: 0 auto; background: #ffffff; border-radius: 18px; overflow: hidden; box-shadow: 0 12px 40px rgba(15, 23, 42, 0.10); }
-        .gb-header { padding: 30px 28px 24px; background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 60%, #2563eb 100%); color: white; text-align: center; }
-        .gb-header img { width: 210px; max-width: 100%; height: auto; display: block; margin: 0 auto 14px; }
-        .gb-header p { margin: 0; font-size: 13px; opacity: 0.92; letter-spacing: 0.4px; }
-        .gb-content { padding: 34px 28px 22px; font-size: 16px; line-height: 1.65; color: #1f2937; }
-        .gb-content a { color: #2563eb; }
-        .gb-footer { background: #f8fafc; border-top: 1px solid #e5e7eb; padding: 28px; }
-        .gb-footer-brand { text-align: center; margin-bottom: 18px; }
-        .gb-footer-logo { width: 145px; max-width: 100%; height: auto; opacity: 0.92; }
-        .gb-footer-text { margin: 12px 0 0; color: #475569; font-size: 13px; line-height: 1.6; }
-        .gb-cta-card { background: linear-gradient(135deg, #dbeafe 0%, #eef2ff 100%); border: 1px solid #bfdbfe; border-radius: 16px; padding: 18px; text-align: center; margin-bottom: 18px; }
-        .gb-cta-card h3 { margin: 0 0 8px; color: #0f172a; font-size: 18px; }
-        .gb-cta-card p { margin: 0; color: #475569; font-size: 13px; line-height: 1.6; }
-        .gb-store-buttons { margin-top: 14px; }
-        .gb-store-buttons a { display: inline-block; margin: 6px; padding: 10px 16px; border-radius: 999px; background: #0f172a; color: #ffffff !important; text-decoration: none; font-size: 13px; font-weight: 700; }
-        .gb-qr-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
-        .gb-qr-card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px; text-align: center; }
-        .gb-qr-card img { width: 120px; height: 120px; display: block; margin: 0 auto 10px; }
-        .gb-qr-card strong { display: block; color: #0f172a; font-size: 14px; margin-bottom: 4px; }
-        .gb-qr-card span { color: #64748b; font-size: 12px; }
-        .gb-footer-meta { color: #64748b; font-size: 12px; line-height: 1.7; text-align: center; }
-        .gb-footer-meta p { margin: 7px 0; }
-        .gb-footer-meta a { color: #2563eb; text-decoration: none; }
-        @media (max-width: 640px) {
-            .gb-shell { padding: 12px 0; }
+        .gb-shell { padding: 32px 14px; background: linear-gradient(180deg, #f0f4f8 0%, #e2e8f0 100%); }
+        .gb-card { max-width: 660px; margin: 0 auto; background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 16px 45px rgba(15, 23, 42, 0.12); border: 1px solid #e2e8f0; }
+        
+        /* Header */
+        .gb-header { padding: 32px 28px 24px; background: linear-gradient(135deg, #0b132b 0%, #1c3d5a 50%, #2563eb 100%); color: #ffffff; text-align: center; }
+        .gb-header img { width: 220px; max-width: 100%; height: auto; display: block; margin: 0 auto 12px; }
+        .gb-header p { margin: 0; font-size: 13.5px; opacity: 0.95; letter-spacing: 0.3px; font-weight: 400; color: #e0f2fe; }
+        
+        /* Main Body Content */
+        .gb-content { padding: 34px 30px 24px; font-size: 15.5px; line-height: 1.68; color: #2d3748; }
+        .gb-content a { color: #2563eb; text-decoration: underline; }
+        .gb-content p { margin: 0 0 16px; }
+        .gb-content strong { color: #0f172a; }
+        
+        /* Tools Section */
+        .gb-tools-section { margin: 28px 0 24px; padding: 22px; background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; }
+        .gb-tools-title { margin: 0 0 6px; font-size: 17px; font-weight: 700; color: #0f172a; text-align: center; }
+        .gb-tools-subtitle { margin: 0 0 18px; font-size: 13px; color: #64748b; text-align: center; line-height: 1.5; }
+        .gb-tools-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+        .gb-tool-item { display: flex; align-items: flex-start; background: #ffffff; border: 1px solid #edf2f7; border-radius: 12px; padding: 12px 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
+        .gb-tool-icon { font-size: 24px; margin-right: 12px; line-height: 1; flex-shrink: 0; }
+        .gb-tool-body strong { display: block; font-size: 13.5px; color: #0f172a; margin-bottom: 3px; font-weight: 600; }
+        .gb-tool-body span { display: block; font-size: 12px; color: #64748b; line-height: 1.45; }
+        
+        /* Partner WhatsApp Card */
+        .gb-partner-card { margin: 26px 0 28px; padding: 24px; background: linear-gradient(135deg, #064e3b 0%, #047857 60%, #059669 100%); border-radius: 16px; color: #ffffff; text-align: center; box-shadow: 0 10px 25px rgba(5, 150, 105, 0.25); }
+        .gb-partner-badge { display: inline-block; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255,255,255,0.35); padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: 0.8px; margin-bottom: 10px; color: #ecfdf5; }
+        .gb-partner-card h3 { margin: 0 0 10px; font-size: 19px; font-weight: 700; color: #ffffff; }
+        .gb-partner-card p { margin: 0 0 18px; font-size: 13.5px; line-height: 1.6; color: #d1fae5; }
+        .gb-whatsapp-action { margin-top: 8px; }
+        .gb-whatsapp-btn { display: inline-flex; align-items: center; justify-content: center; background: #25D366; color: #ffffff !important; font-weight: 700; font-size: 14.5px; padding: 13px 24px; border-radius: 999px; text-decoration: none !important; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2); transition: transform 0.2s ease; }
+        .gb-whatsapp-subtext { display: block; margin-top: 10px; font-size: 12px; color: #a7f3d0; }
+        
+        /* Footer */
+        .gb-footer { background: #f8fafc; border-top: 1px solid #e5e7eb; padding: 28px 24px; }
+        .gb-footer-brand { text-align: center; margin-bottom: 20px; }
+        .gb-footer-logo { width: 150px; max-width: 100%; height: auto; opacity: 0.95; margin-bottom: 10px; }
+        .gb-footer-text { margin: 0 auto; max-width: 520px; color: #64748b; font-size: 12.5px; line-height: 1.55; }
+        
+        .gb-cta-card { background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%); border: 1px solid #bfdbfe; border-radius: 14px; padding: 18px; text-align: center; margin-bottom: 20px; }
+        .gb-cta-card h3 { margin: 0 0 8px; color: #0f172a; font-size: 16.5px; font-weight: 700; }
+        .gb-cta-card p { margin: 0; color: #475569; font-size: 13px; line-height: 1.5; }
+        .gb-store-buttons { margin-top: 12px; }
+        .gb-store-buttons a { display: inline-block; margin: 4px; padding: 9px 18px; border-radius: 999px; background: #0f172a; color: #ffffff !important; text-decoration: none !important; font-size: 12.5px; font-weight: 700; }
+        
+        .gb-qr-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 22px; }
+        .gb-qr-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+        .gb-qr-card img { width: 125px; height: 125px; display: block; margin: 0 auto 10px; border-radius: 8px; }
+        .gb-qr-card strong { display: block; color: #0f172a; font-size: 13.5px; margin-bottom: 4px; font-weight: 700; }
+        .gb-qr-card span { color: #64748b; font-size: 11.5px; line-height: 1.4; display: block; }
+        
+        .gb-social-links { text-align: center; margin: 16px 0 18px; font-size: 12.5px; color: #64748b; }
+        .gb-social-links a { color: #2563eb; text-decoration: none; margin: 0 4px; font-weight: 500; }
+        
+        .gb-footer-meta { color: #64748b; font-size: 12px; line-height: 1.65; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 18px; }
+        .gb-footer-meta p { margin: 6px 0; }
+        .gb-footer-meta a { color: #2563eb; text-decoration: underline; }
+        
+        @media (max-width: 620px) {
+            .gb-shell { padding: 10px 4px; }
             .gb-content, .gb-footer, .gb-header { padding-left: 18px; padding-right: 18px; }
+            .gb-tools-grid { grid-template-columns: 1fr; }
             .gb-qr-grid { grid-template-columns: 1fr; }
         }
     </style>
@@ -128,11 +261,15 @@ function wrapEmailLayout({ contentHtml, preheader = 'Geobooker Ads', title = 'Ge
         <div class="gb-card">
             <div class="gb-header">
                 <img src="https://geobooker.com.mx/images/geobooker-logo-horizontal-new.png" alt="Geobooker" />
-                <p>Publicidad local, premium y enterprise para ganar visibilidad medible</p>
+                <p>Plataforma de visibilidad comercial, mapas y publicidad local inteligente</p>
             </div>
+            
             <div class="gb-content">
                 ${contentHtml}
+                ${buildToolsShowcase()}
+                ${buildPartnerSection()}
             </div>
+            
             ${buildFooter({ companyName, unsubscribeUrl })}
         </div>
     </div>
@@ -141,7 +278,15 @@ function wrapEmailLayout({ contentHtml, preheader = 'Geobooker Ads', title = 'Ge
 }
 
 module.exports = {
+    DEFAULT_BASE_URL,
+    DEFAULT_ANDROID_URL,
+    DEFAULT_IOS_URL,
+    WHATSAPP_PARTNER_PHONE,
+    WHATSAPP_PARTNER_URL,
     buildTrackedUrl,
     buildQrImageUrl,
+    buildToolsShowcase,
+    buildPartnerSection,
+    buildFooter,
     wrapEmailLayout,
 };

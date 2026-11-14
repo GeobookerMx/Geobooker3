@@ -258,8 +258,8 @@ exports.handler = async (event) => {
                 if (contact.email_unsubscribed) return false;
                 if (contact.email_marketing_allowed !== true) return false;
                 if (['bounced', 'complained', 'suppressed', 'failed', 'unsubscribed'].includes(String(contact.email_status || '').toLowerCase())) return false;
-                if (contact.email_marketing_basis !== 'explicit_opt_in') return false;
-                if (!contact.email_consented_at || !String(contact.email_consent_evidence_ref || '').trim()) return false;
+                if (!['explicit_opt_in', 'cold_outreach'].includes(contact.email_marketing_basis)) return false;
+                if (contact.email_marketing_basis === 'explicit_opt_in' && (!contact.email_consented_at || !String(contact.email_consent_evidence_ref || '').trim())) return false;
                 if (activeSuppressions.has(normalizeEmail(contact.email))) return false;
                 return true;
             });

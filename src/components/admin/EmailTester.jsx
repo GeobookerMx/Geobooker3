@@ -5,7 +5,7 @@ import React, { useMemo, useState } from 'react';
 import { Mail, Send, Loader2, CheckCircle, AlertCircle, Power } from 'lucide-react';
 import { sendEmail } from '../../services/mailService';
 
-const DEFAULT_RECIPIENTS = 'jpvanesss85@gmail.com\ngeobookerr@gmail.com';
+const DEFAULT_RECIPIENTS = 'jpvaness85@gmail.com\njuan.pablo.pg@hotmail.com';
 
 const splitRecipients = (value = '') => (
     value

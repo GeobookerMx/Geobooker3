@@ -2,7 +2,7 @@
 
 ## Estado
 
-Las cuatro migraciones se aplicaron a Supabase de producción el 14 de noviembre de 2026 y se verificaron sus permisos, políticas y cuentas administradoras mediante consultas de solo lectura. El frontend y las aplicaciones móviles requieren publicación por separado.
+Las cuatro migraciones se aplicaron a Supabase de producción el 14 de noviembre de 2026 y se verificaron sus permisos, políticas y cuentas administradoras mediante consultas de solo lectura. El frontend se publicó en `main` con el commit `7c131fd` y se comprobó que el sitio público sirve el módulo de aprobación con `admin_set_business_status`. Las aplicaciones móviles requieren reconstrucción y distribución por separado.
 
 ## Acceso de administrador
 
@@ -30,7 +30,7 @@ La consulta de producción encontró exactamente dos filas en `public.admin_user
 ## Orden de despliegue y comprobaciones
 
 1. Las cuatro migraciones se aplicaron en orden `155000`, `160000`, `161000`, `162000`.
-2. Publicar el frontend con las nuevas rutas de Storage y RPC administrativas. El checkout empresarial anónimo ya no podrá subir archivos; debe iniciar sesión antes de esa etapa.
+2. El frontend se publicó con las nuevas rutas de Storage y RPC administrativas. El checkout empresarial anónimo ya no podrá subir archivos; debe iniciar sesión antes de esa etapa.
 3. Ejecutar las pruebas negativas con sesiones reales como `anon`, usuario común y las dos cuentas administradoras. Verificar carga de imágenes propias, rechazo de edición/borrado ajeno y aprobación de negocios. El Security Advisor todavía registra hallazgos ajenos a esta remediación, incluidos 26 casos de RLS sin política y 72 funciones `SECURITY DEFINER` ejecutables por `anon`.
 4. Reconstruir y redistribuir Android e iOS. La actualización del paquete por sí sola no protege las aplicaciones ya instaladas.
 

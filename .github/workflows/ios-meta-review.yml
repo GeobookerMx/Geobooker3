@@ -42,6 +42,8 @@ jobs:
           cache: npm
       - name: Check Apple toolchain
         run: |
+          export DEVELOPER_DIR=/Applications/Xcode_26.3.app/Contents/Developer
+          echo "DEVELOPER_DIR=$DEVELOPER_DIR" >> "$GITHUB_ENV"
           xcodebuild -version
           python3 -c 'import subprocess; v=subprocess.check_output(["xcodebuild","-version"],text=True).split()[1]; assert int(v.split(".")[0]) >= 26, "Select Xcode 26+ for Capacitor 8"'
       - run: npm ci

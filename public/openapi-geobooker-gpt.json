@@ -108,6 +108,116 @@
         }
       }
     },
+    "/enterprise/media-kit": {
+      "get": {
+        "summary": "Enterprise Media Kit",
+        "description": "Returns the enterprise overview for Geobooker: advertising, GeoScore, B2B Connect, market coverage, KPIs and campaign positioning for brands, agencies and large companies.",
+        "operationId": "getEnterpriseMediaKit",
+        "responses": {
+          "200": {
+            "description": "Enterprise media kit page"
+          }
+        }
+      }
+    },
+    "/advertise": {
+      "get": {
+        "summary": "Local Advertising on Geobooker",
+        "description": "Returns information about local advertising inventory, sponsored placements and campaign options for businesses that want visibility inside Geobooker.",
+        "operationId": "getLocalAdvertisingPage",
+        "responses": {
+          "200": {
+            "description": "Local advertising page"
+          }
+        }
+      }
+    },
+    "/geoscore": {
+      "get": {
+        "summary": "GeoScore Market Study",
+        "description": "Returns the public GeoScore tool for evaluating commercial location viability, density, competition and market signals where coverage is available.",
+        "operationId": "getGeoScorePage",
+        "responses": {
+          "200": {
+            "description": "GeoScore market study page"
+          }
+        }
+      }
+    },
+    "/biblioteca": {
+      "get": {
+        "summary": "Geobooker Business Library",
+        "description": "Returns the Geobooker educational library for entrepreneurs and local businesses, including guides on visibility, operations, trust and sustainable growth.",
+        "operationId": "getBusinessLibrary",
+        "responses": {
+          "200": {
+            "description": "Business library page"
+          }
+        }
+      }
+    },
+    "/b2b-connect": {
+      "get": {
+        "summary": "B2B Connect and Supplier Discovery",
+        "description": "Returns the B2B Connect page for companies looking for suppliers, strategic accounts, commercial leads or business discovery support.",
+        "operationId": "getB2bConnectPage",
+        "responses": {
+          "200": {
+            "description": "B2B Connect page"
+          }
+        }
+      }
+    },
+    "/markets/{marketSlug}": {
+      "get": {
+        "summary": "Enterprise Market Landing Page",
+        "description": "Returns a market-specific Geobooker page for enterprise advertising, GeoScore studies, B2B discovery and campaign planning by country.",
+        "operationId": "getEnterpriseMarketPage",
+        "parameters": [
+          {
+            "name": "marketSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["mexico", "usa", "spain", "colombia", "canada", "uk"],
+              "example": "mexico"
+            },
+            "description": "Country or market slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Enterprise market page"
+          }
+        }
+      }
+    },
+    "/industries/{industrySlug}": {
+      "get": {
+        "summary": "Enterprise Industry Landing Page",
+        "description": "Returns an industry-specific Geobooker page for local advertising, GeoScore studies, B2B discovery and campaign planning by vertical.",
+        "operationId": "getEnterpriseIndustryPage",
+        "parameters": [
+          {
+            "name": "industrySlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["restaurants", "retail", "real-estate", "automotive", "health", "professional-services"],
+              "example": "restaurants"
+            },
+            "description": "Commercial industry slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Enterprise industry page"
+          }
+        }
+      }
+    },
     "/download": {
       "get": {
         "summary": "Download Geobooker App",

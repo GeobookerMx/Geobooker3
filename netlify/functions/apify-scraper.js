@@ -51,7 +51,7 @@ export async function handler(event) {
     }
 
     const { action = 'start' } = body;
-    const ACTOR_ID = 'compass~crawler-google-places';
+    const ACTOR_ID = process.env.APIFY_GOOGLE_PLACES_ACTOR || 'compass/crawler-google-places';
     const BASE_URL = 'https://api.apify.com/v2';
 
     try {
@@ -79,9 +79,11 @@ export async function handler(event) {
 
             const input = {
                 searchStringsArray: [searchString],
+                locationQuery: location,
                 maxCrawledPlacesPerSearch: maxResults,
                 language: searchLanguage,
                 deeperCityScrape: false,
+                includeWebResults: false,
                 maxReviews: 0,
                 maxImages: 0,
                 skipClosedPlaces: true,
@@ -93,7 +95,8 @@ export async function handler(event) {
             console.log(`🚀 Starting: "${searchQuery}" in ${location}`);
 
             // Llamada directa a Apify API para iniciar actor
-            const startRes = await fetch(`${BASE_URL}/acts/${ACTOR_ID}/runs`, {
+            const encodedActorId = encodeURIComponent(ACTOR_ID.replace('/', '~'));
+            const startRes = await fetch(`${BASE_URL}/acts/${encodedActorId}/runs`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -116,7 +119,7 @@ export async function handler(event) {
                     if (startRes.status === 401) {
                         errorMessage = 'API Token inválido o expirado';
                     } else if (startRes.status === 404) {
-                        errorMessage = 'Actor no encontrado. Verifica que compass~crawler-google-places existe.';
+                        errorMessage = `Actor no encontrado. Verifica APIFY_GOOGLE_PLACES_ACTOR (${ACTOR_ID}).`;
                     } else if (startRes.status === 402) {
                         errorMessage = 'Sin créditos en Apify. Recarga tu cuenta.';
                     }
@@ -203,7 +206,9 @@ export async function handler(event) {
                 const businesses = (Array.isArray(items) ? items : []).map(place => ({
                     name: place.title || place.name,
                     address: place.address,
-                    phone: place.phone,
+                    phone: place.phoneUnformatted || place.phone,
+                    country_code: place.countryCode || null,
+                    city: place.city || null,
                     email: place.email || (place.contactInfo?.email) || null,
                     website: place.website,
                     category: place.categoryName || place.categories?.[0],

@@ -166,7 +166,7 @@ const LeadsHistory = () => {
         }
 
         const phone = WhatsAppService.normalizePhone(lead.phone, {
-            countryCode: WhatsAppService.inferCountryFromLocation(lead.search_location || lead.address || ''),
+            countryCode: lead.country_code || WhatsAppService.inferCountryFromLocation(lead.address || lead.search_location || ''),
             location: lead.search_location || lead.address || ''
         });
 

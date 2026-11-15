@@ -6,10 +6,7 @@ import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { APP_LINKS } from '../config/appLinks';
 import { WHATSAPP_CHANNELS } from '../config/contacts';
-import pkg from 'google-libphonenumber';
-
-const { PhoneNumberUtil, PhoneNumberFormat } = pkg;
-const phoneUtil = PhoneNumberUtil.getInstance();
+import { normalizeWhatsAppPhone } from '../utils/whatsappPhone';
 
 /**
  * Obtiene la fecha de hoy en zona horaria de MAxico (UTC-6)
@@ -277,7 +274,13 @@ export class WhatsAppService {
             [['peru', 'lima'], 'PE'],
             [['ecuador', 'quito'], 'EC'],
             [['brazil', 'brasil', 'sao paulo', 'rio de janeiro'], 'BR'],
-            [['italy', 'italia', 'rome', 'roma', 'milan', 'milano'], 'IT']
+            [['italy', 'italia', 'rome', 'roma', 'milan', 'milano'], 'IT'],
+            [['netherlands', 'paises bajos', 'amsterdam', 'rotterdam'], 'NL'],
+            [['czech republic', 'czechia', 'chequia', 'prague', 'praga'], 'CZ'],
+            [['united arab emirates', 'emiratos arabes', 'dubai', 'abu dhabi'], 'AE'],
+            [['qatar', 'doha'], 'QA'],
+            [['singapore', 'singapur'], 'SG'],
+            [['south africa', 'sudafrica', 'johannesburg', 'cape town'], 'ZA']
         ];
 
         for (const [keywords, code] of rules) {
@@ -368,50 +371,8 @@ export class WhatsAppService {
      * Evita asumir M?xico para leads internacionales cuando no hay evidencia suficiente.
      */
     static normalizePhone(phone, options = {}) {
-        if (!phone) return '';
-
-        const raw = String(phone).trim();
-        try {
-            const explicitCountry = (options.countryCode || '').toUpperCase();
-            const locationCountry = this.inferCountryFromLocation(options.location || '');
-            const phoneCountry = this.inferCountryFromPhone(raw.replace(/\D/g, ''));
-            const resolvedCountry = explicitCountry || locationCountry || phoneCountry || 'MX';
-
-            const parsed = phoneUtil.parseAndKeepRawInput(raw, resolvedCountry);
-            if (phoneUtil.isValidNumber(parsed)) {
-                return phoneUtil.format(parsed, PhoneNumberFormat.E164);
-            }
-        } catch (e) {
-            // Ignorar y continuar con fallback
-        }
-
-        // Fallback robusto tradicional
-        const clean = raw.replace(/\D/g, '');
-        if (!clean) return '';
-
-        if (raw.startsWith('+') && clean.startsWith('521') && clean.length === 13) {
-            return '+52' + clean.slice(3);
-        }
-
-        if (raw.startsWith('+') && clean.length >= 10 && clean.length <= 15) {
-            return '+' + clean;
-        }
-
-        const explicitCountry = (options.countryCode || '').toUpperCase();
-        const locationCountry = this.inferCountryFromLocation(options.location || '');
-        const phoneCountry = this.inferCountryFromPhone(clean);
-        const resolvedCountry = explicitCountry || locationCountry || phoneCountry;
-
-        if (resolvedCountry) {
-            return this.normalizePhoneForCountry(clean, resolvedCountry);
-        }
-
-        if (clean.startsWith('521') && clean.length === 13) return '+52' + clean.slice(3);
-        if (clean.startsWith('52') && clean.length >= 12) return '+' + clean;
-        if (clean.startsWith('1') && clean.length === 11) return '+' + clean;
-        if (clean.length >= 11 && clean.length <= 15) return '+' + clean;
-
-        return '';
+        const countryCode = options.countryCode || this.inferCountryFromLocation(options.location || '');
+        return normalizeWhatsAppPhone(phone, { countryCode });
     }
 
     static detectLanguage(phone, forceLanguage = null, options = {}) {
@@ -524,25 +485,7 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
      * Validar formato de telAfono
      */
     static isValidPhone(phone, options = {}) {
-        if (!phone) return false;
-        try {
-            const rawPhone = String(phone).trim();
-            const explicitCountry = (options.countryCode || '').toUpperCase();
-            const locationCountry = this.inferCountryFromLocation(options.location || '');
-            const phoneCountry = this.inferCountryFromPhone(rawPhone.replace(/\D/g, ''));
-            const resolvedCountry = explicitCountry || locationCountry || phoneCountry || 'MX';
-            const country = rawPhone.startsWith('+') ? undefined : resolvedCountry;
-            const parsed = phoneUtil.parseAndKeepRawInput(rawPhone, country);
-            return phoneUtil.isValidNumber(parsed);
-        } catch (e) {
-            const normalized = this.normalizePhone(phone, options);
-            if (normalized) return true;
-
-            const clean = String(phone).replace(/\D/g, '');
-            if (clean.length < 10 || clean.length > 15) return false;
-            if (/^0+$/.test(clean) || /^(\d)\1+$/.test(clean)) return false;
-            return true;
-        }
+        return Boolean(this.normalizePhone(phone, options));
     }
 
     /**
@@ -557,7 +500,7 @@ _(If you're not interested, reply NO and we won't contact you again.)_`
 
             // 0. VALIDAR TELEFONO PRIMERO (antes de contar)
             if (!this.isValidPhone(contact.phone, phoneContext)) {
-                toast.error(`Numero invalido: ${contact.phone}. No se conto como enviado.`);
+                toast.error('No se pudo validar el formato. Revisa el país y usa +código de país y número completo. No se contó como enviado.');
                 return { success: false, error: 'invalid_phone', notCounted: true };
             }
 

@@ -1,0 +1,108 @@
+{
+  "markets": [
+    {
+      "slug": "mexico",
+      "name": "Mexico",
+      "language": "es-MX",
+      "currency": "MXN",
+      "headline": "Publicidad local, GeoScore y descubrimiento comercial para Mexico",
+      "description": "Geobooker ayuda a marcas, franquicias y negocios a ganar visibilidad por ciudad, industria y momento de compra en Mexico.",
+      "cities": ["Ciudad de Mexico", "Guadalajara", "Monterrey", "Puebla", "Cancun", "Queretaro"],
+      "signals": ["busqueda local", "mapa de negocios", "GeoScore", "campanas por ciudad", "pagos y reportes"]
+    },
+    {
+      "slug": "usa",
+      "name": "United States",
+      "language": "en-US",
+      "currency": "USD",
+      "headline": "Local discovery and measurable campaigns for United States markets",
+      "description": "Geobooker supports city-level discovery, market intelligence and enterprise campaign planning for US expansion teams.",
+      "cities": ["Miami", "Houston", "Los Angeles", "New York", "Chicago", "Dallas"],
+      "signals": ["local search", "business discovery", "GeoScore", "multi-city campaigns", "KPI reporting"]
+    },
+    {
+      "slug": "spain",
+      "name": "Spain",
+      "language": "es-ES",
+      "currency": "EUR",
+      "headline": "Campanas locales y analisis comercial para empresas en Espana",
+      "description": "Geobooker organiza visibilidad, estudios de mercado y campanas por ciudad para equipos comerciales que quieren crecer en Espana.",
+      "cities": ["Madrid", "Barcelona", "Valencia", "Sevilla", "Malaga", "Bilbao"],
+      "signals": ["publicidad local", "estudio de mercado", "GeoScore", "B2B", "reportes ejecutivos"]
+    },
+    {
+      "slug": "colombia",
+      "name": "Colombia",
+      "language": "es-CO",
+      "currency": "COP",
+      "headline": "Publicidad local y B2B para mercados comerciales en Colombia",
+      "description": "Geobooker ayuda a activar presencia local, estudiar zonas y conectar negocios por ciudad e industria en Colombia.",
+      "cities": ["Bogota", "Medellin", "Cali", "Barranquilla", "Cartagena"],
+      "signals": ["descubrimiento local", "campanas", "GeoScore", "proveedores", "leads comerciales"]
+    },
+    {
+      "slug": "canada",
+      "name": "Canada",
+      "language": "en-CA",
+      "currency": "CAD",
+      "headline": "Market discovery and enterprise advertising for Canada",
+      "description": "Geobooker gives brands and local operators a practical way to understand visibility, density and city-level opportunities in Canada.",
+      "cities": ["Toronto", "Vancouver", "Montreal", "Calgary", "Ottawa"],
+      "signals": ["local discovery", "market studies", "GeoScore", "campaign planning", "supplier search"]
+    },
+    {
+      "slug": "uk",
+      "name": "United Kingdom",
+      "language": "en-GB",
+      "currency": "GBP",
+      "headline": "Business discovery and campaign intelligence for the United Kingdom",
+      "description": "Geobooker helps teams evaluate locations, local competition and enterprise advertising opportunities across UK cities.",
+      "cities": ["London", "Manchester", "Birmingham", "Liverpool", "Leeds"],
+      "signals": ["business search", "GeoScore", "local ads", "B2B discovery", "campaign reporting"]
+    }
+  ],
+  "industries": [
+    {
+      "slug": "restaurants",
+      "name": "Restaurants and Food",
+      "headline": "Publicidad local y GeoScore para restaurantes",
+      "description": "Geobooker ayuda a restaurantes, cafeterias y marcas de alimentos a comparar zonas, aparecer en busquedas locales y medir campanas.",
+      "useCases": ["apertura de sucursales", "visibilidad por zona", "promociones locales", "mapa de competencia", "campanas por temporada"]
+    },
+    {
+      "slug": "retail",
+      "name": "Retail and Local Commerce",
+      "headline": "Visibilidad comercial para retail y negocios locales",
+      "description": "Geobooker permite planear presencia por ciudad, atraer compradores cercanos y medir resultados de publicidad local.",
+      "useCases": ["trafico a tienda", "campanas por categoria", "expansion por colonia", "ofertas locales", "presencia en mapas"]
+    },
+    {
+      "slug": "real-estate",
+      "name": "Real Estate and Commercial Spaces",
+      "headline": "GeoScore y promocion para espacios comerciales",
+      "description": "Geobooker conecta ubicaciones, locales, plazas y oportunidades inmobiliarias con demanda comercial medible.",
+      "useCases": ["renta de locales", "analisis de ubicacion", "promocion de plazas", "comparacion de zonas", "captacion de negocios"]
+    },
+    {
+      "slug": "automotive",
+      "name": "Automotive and Mobility",
+      "headline": "Campanas locales para automotriz, talleres y movilidad",
+      "description": "Geobooker ayuda a agencias, talleres, autolavados y servicios de movilidad a ubicarse ante clientes cercanos.",
+      "useCases": ["leads por zona", "servicios cercanos", "campanas por ciudad", "presencia local", "B2B automotriz"]
+    },
+    {
+      "slug": "health",
+      "name": "Health and Wellness",
+      "headline": "Descubrimiento local para salud, bienestar y fitness",
+      "description": "Geobooker apoya a clinicas, farmacias, gimnasios y servicios de bienestar con visibilidad local y estudios de mercado.",
+      "useCases": ["busqueda por cercania", "evaluacion de zona", "campanas preventivas", "sucursales", "competencia local"]
+    },
+    {
+      "slug": "professional-services",
+      "name": "Professional Services",
+      "headline": "B2B y publicidad local para servicios profesionales",
+      "description": "Geobooker ayuda a despachos, consultores y proveedores profesionales a ser descubiertos por empresas y clientes locales.",
+      "useCases": ["captacion B2B", "posicionamiento local", "proveedores", "campanas por industria", "reportes ejecutivos"]
+    }
+  ]
+}

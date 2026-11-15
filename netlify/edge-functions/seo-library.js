@@ -78,6 +78,14 @@ export default async (request, context) => {
 
   const slug = url.pathname.split('/').filter(Boolean)[1] || '';
   const doc = documents.find((item) => item.slug === slug);
+  // Assets/PDFs are handled above. An unknown article must not become a
+  // duplicate copy of the index with HTTP 200 (soft 404).
+  if (slug && !doc) {
+    return new Response('<!doctype html><html lang="es"><head><meta name="robots" content="noindex"><title>Guía no encontrada | Geobooker</title></head><body><h1>Guía no encontrada</h1><a href="/biblioteca">Ver biblioteca</a></body></html>', {
+      status: 404,
+      headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300', 'X-Robots-Tag': 'noindex' }
+    });
+  }
   const globalMode = url.hostname.endsWith('geobooker.com') && !url.hostname.endsWith('geobooker.com.mx');
   const origin = globalMode ? GLOBAL_ORIGIN : MX_ORIGIN;
   const page = doc ? renderDocument(doc) : renderIndex(origin, globalMode);
@@ -98,19 +106,22 @@ export default async (request, context) => {
     }))
   };
 
-  return new HTMLRewriter()
-    .on('html', { element(element) { element.setAttribute('lang', doc || !globalMode ? 'es-MX' : 'en'); } })
-    .on('title', { element(element) { element.setInnerContent(page.title); } })
-    .on('meta[name="description"]', { element(element) { element.setAttribute('content', page.description); } })
-    .on('meta[property="og:title"]', { element(element) { element.setAttribute('content', page.title); } })
-    .on('meta[property="og:description"]', { element(element) { element.setAttribute('content', page.description); } })
-    .on('meta[property="og:url"]', { element(element) { element.setAttribute('content', canonical); } })
-    .on('meta[name="twitter:title"]', { element(element) { element.setAttribute('content', page.title); } })
-    .on('meta[name="twitter:description"]', { element(element) { element.setAttribute('content', page.description); } })
-    .on('link[rel="canonical"]', { element(element) { element.setAttribute('href', canonical); } })
-    .on('head', { element(element) {
-      element.append('<script type="application/ld+json">' + jsonForHtml(schema) + '</script>', { html: true });
-    } })
-    .on('#root', { element(element) { element.append(page.html, { html: true }); } })
-    .transform(response);
+  let html = await response.text();
+  html = html
+    .replace(/<html([^>]*)lang="[^"]*"([^>]*)>/i, '<html$1lang="' + (doc || !globalMode ? 'es-MX' : 'en') + '"$2>')
+    .replace(/<title>[\s\S]*?<\/title>/i, '<title>' + escapeHtml(page.title) + '</title>')
+    .replace(/<meta\s+name="description"[^>]*>/i, '<meta name="description" content="' + escapeHtml(page.description) + '">')
+    .replace(/<meta\s+property="og:title"[^>]*>/i, '<meta property="og:title" content="' + escapeHtml(page.title) + '">')
+    .replace(/<meta\s+property="og:description"[^>]*>/i, '<meta property="og:description" content="' + escapeHtml(page.description) + '">')
+    .replace(/<meta\s+property="og:url"[^>]*>/i, '<meta property="og:url" content="' + escapeHtml(canonical) + '">')
+    .replace(/<meta\s+name="twitter:title"[^>]*>/i, '<meta name="twitter:title" content="' + escapeHtml(page.title) + '">')
+    .replace(/<meta\s+name="twitter:description"[^>]*>/i, '<meta name="twitter:description" content="' + escapeHtml(page.description) + '">')
+    .replace(/<link\s+rel="canonical"[^>]*>/i, '<link rel="canonical" href="' + escapeHtml(canonical) + '">')
+    .replace('</head>', '<script type="application/ld+json">' + jsonForHtml(schema) + '</script></head>')
+    .replace(/<div id="root"[^>]*>/, match => match + page.html);
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+  headers.delete('content-encoding');
+  headers.set('content-type', 'text/html; charset=utf-8');
+  return new Response(html, { status: response.status, headers });
 };

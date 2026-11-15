@@ -52,6 +52,7 @@ const UnsubscribePage = lazy(() => import("./pages/UnsubscribePage.jsx"));
 
 // User Pages - Lazy Loaded
 const HomePage = lazy(() => import("./pages/HomePage.jsx"));
+const GeoDirectoryPage = lazy(() => import("./pages/GeoDirectoryPage.jsx"));
 const FAQPage = lazy(() => import("./pages/FAQPage.jsx"));
 const SupportPage = lazy(() => import("./pages/SupportPage.jsx"));
 const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage.jsx"));
@@ -98,6 +99,8 @@ const AuthorityPage = lazy(() => import("./pages/AuthorityPage.jsx"));
 
 // Enterprise / Global Ads - Lazy Loaded
 const EnterpriseLanding = lazy(() => import("./pages/enterprise/EnterpriseLanding.jsx"));
+const EnterpriseMediaKit = lazy(() => import("./pages/enterprise/EnterpriseMediaKit.jsx"));
+const EnterpriseSeoLanding = lazy(() => import("./pages/enterprise/EnterpriseSeoLanding.jsx"));
 const EnterpriseContact = lazy(() => import("./pages/enterprise/EnterpriseContact.jsx"));
 const EnterpriseCheckout = lazy(() => import("./pages/enterprise/EnterpriseCheckout.jsx"));
 const EnterpriseSuccess = lazy(() => import("./pages/enterprise/EnterpriseSuccess.jsx"));
@@ -152,7 +155,7 @@ export default function AppRouter() {
           <Route path="/c/:category" element={<HomePage />} />
           <Route path="/c/:category/:subcategory" element={<HomePage />} />
           <Route path="/ciudad/:city" element={<HomePage />} />
-          <Route path="/ciudad/:city/:category" element={<HomePage />} />
+          <Route path="/ciudad/:city/:category" element={<GeoDirectoryPage />} />
           <Route path="/categories" element={<CategoriesPage />} />
 
           <Route path="/cities/:citySlug" element={<CityLandingPage />} />
@@ -207,10 +210,13 @@ export default function AppRouter() {
           <Route path="/guia-resico" element={<GuiaResicoPage />} />
           <Route path="/payment/oxxo-pending" element={<OxxoPendingPage />} />
           <Route path="/enterprise" element={<EnterpriseLanding />} />
+          <Route path="/enterprise/media-kit" element={<EnterpriseMediaKit />} />
           <Route path="/enterprise/contact" element={<EnterpriseContact />} />
           <Route path="/enterprise/checkout" element={<EnterpriseCheckout />} />
           <Route path="/enterprise/success" element={<EnterpriseSuccess />} />
           <Route path="/enterprise/edit/:id" element={<EnterpriseEdit />} />
+          <Route path="/markets/:slug" element={<EnterpriseSeoLanding type="markets" />} />
+          <Route path="/industries/:slug" element={<EnterpriseSeoLanding type="industries" />} />
           <Route path="/b2b-connect" element={<B2bConnect />} />
           <Route path="/b2b-connect/checkout" element={<ConnectCheckout />} />
           <Route path="/b2b-connect/success" element={<ConnectSuccess />} />

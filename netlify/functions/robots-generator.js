@@ -8,12 +8,15 @@ const PUBLIC_RULES = [
   'Allow: /robots.txt',
   'Allow: /sitemap.xml',
   'Allow: /llms.txt',
+  'Allow: /llms-full.txt',
+  'Allow: /ai.txt',
+  'Allow: /.well-known/ai-plugin.json',
   'Allow: /.well-known/assetlinks.json',
   'Allow: /.well-known/apple-app-site-association',
   'Allow: /assets/',
   'Allow: /images/',
-  'Disallow: /admin/',
-  'Disallow: /dashboard/',
+  'Disallow: /admin',
+  'Disallow: /dashboard',
   'Disallow: /auth/',
   'Disallow: /api/',
   'Disallow: /.netlify/functions/',
@@ -34,7 +37,13 @@ const TRUSTED_AI_AND_SEARCH_CRAWLERS = [
   'PerplexityBot',
   'ClaudeBot',
   'Claude-User',
-  'Google-Extended'
+  'Google-Extended',
+  'Applebot',
+  'Applebot-Extended',
+  'Meta-ExternalAgent',
+  'Bytespider',
+  'cohere-ai',
+  'Amazonbot'
 ];
 
 const BLOCKED_LOW_VALUE_CRAWLERS = ['DotBot', 'MJ12bot'];
@@ -54,6 +63,9 @@ exports.handler = async (event) => {
     ...BLOCKED_LOW_VALUE_CRAWLERS.map((agent) => renderGroup(agent, ['Disallow: /'])),
     'Sitemap: ' + origin + '/sitemap.xml',
     'LLMs: ' + origin + '/llms.txt',
+    'LLMs-Full: ' + origin + '/llms-full.txt',
+    'AI: ' + origin + '/ai.txt',
+    'AI-Plugin: ' + origin + '/.well-known/ai-plugin.json',
     ''
   ].join('\n');
 

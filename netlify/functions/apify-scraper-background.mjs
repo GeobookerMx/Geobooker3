@@ -58,21 +58,27 @@ export async function handler(event) {
         const client = new ApifyClient({ token: APIFY_API_TOKEN });
 
         // Configuración del actor
+        const actorId = process.env.APIFY_GOOGLE_PLACES_ACTOR || 'compass/crawler-google-places';
+        const searchString = `${searchQuery} in ${location}`;
+        const isEnglishLocation = /USA|UK|Canada|Australia|London|New York|Chicago|Los Angeles|Toronto|Sydney|Ireland|Singapore/i.test(location);
+        const searchLanguage = isEnglishLocation ? 'en' : 'es';
+
         const input = {
-            searchStringsArray: [searchQuery],
+            searchStringsArray: [searchString],
             locationQuery: location,
             maxCrawledPlacesPerSearch: maxResults,
-            language: 'es',
+            language: searchLanguage,
             deeperCityScrape: false,
             includeWebResults: false,
             maxReviews: 0,
-            maxImages: 0
+            maxImages: 0,
+            skipClosedPlaces: true
         };
 
         console.log(`🔍 [Background] Iniciando: "${searchQuery}" en ${location}`);
 
         // Ejecutar actor
-        const run = await client.actor('compass/crawler-google-places').call(input);
+        const run = await client.actor(actorId).call(input);
 
         console.log(`✅ Scraping completado. Dataset: ${run.defaultDatasetId}`);
 
@@ -83,7 +89,9 @@ export async function handler(event) {
         const businesses = items.map(place => ({
             name: place.title,
             address: place.address,
-            phone: place.phone,
+            phone: place.phoneUnformatted || place.phone,
+            country_code: place.countryCode || null,
+            city: place.city || null,
             website: place.website,
             category: place.categoryName,
             rating: place.totalScore,

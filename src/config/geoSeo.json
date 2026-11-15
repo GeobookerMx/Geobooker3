@@ -1,0 +1,27 @@
+{
+  "cities": {
+    "cdmx": { "name": "Ciudad de México", "aliases": ["Ciudad de México", "Ciudad de Mexico", "CDMX", "Mexico City"] },
+    "guadalajara": { "name": "Guadalajara", "aliases": ["Guadalajara"] },
+    "monterrey": { "name": "Monterrey", "aliases": ["Monterrey"] },
+    "puebla": { "name": "Puebla", "aliases": ["Puebla"] },
+    "tijuana": { "name": "Tijuana", "aliases": ["Tijuana"] },
+    "merida": { "name": "Mérida", "aliases": ["Mérida", "Merida"] },
+    "queretaro": { "name": "Querétaro", "aliases": ["Querétaro", "Queretaro"] },
+    "leon": { "name": "León", "aliases": ["León", "Leon"] }
+  },
+  "categories": {
+    "restaurantes": { "name": "Restaurantes", "aliases": ["restaurantes", "restaurant"] },
+    "bares": { "name": "Bares", "aliases": ["bares", "bar"] },
+    "tiendas": { "name": "Tiendas", "aliases": ["tiendas", "store"] },
+    "servicios": { "name": "Servicios", "aliases": ["servicios", "service"] },
+    "hogar_autos": { "name": "Hogar y autos", "aliases": ["hogar_autos"] },
+    "salud": { "name": "Salud", "aliases": ["salud"] },
+    "entretenimiento": { "name": "Entretenimiento", "aliases": ["entretenimiento"] },
+    "educacion": { "name": "Educación", "aliases": ["educacion"] },
+    "alojamiento": { "name": "Alojamiento", "aliases": ["alojamiento"] },
+    "inmobiliarias": { "name": "Inmobiliarias", "aliases": ["inmobiliarias"] },
+    "finanzas": { "name": "Finanzas", "aliases": ["finanzas"] },
+    "tecnologia": { "name": "Tecnología", "aliases": ["tecnologia"] },
+    "eventos": { "name": "Eventos", "aliases": ["eventos"] }
+  }
+}

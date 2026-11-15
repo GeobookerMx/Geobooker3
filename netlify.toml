@@ -136,6 +136,24 @@
   force = true
 
 [[redirects]]
+  from = "/llms-full.txt"
+  to = "/.netlify/functions/llms-generator?full=1"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/ai.txt"
+  to = "/.netlify/functions/llms-generator"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/.well-known/ai-plugin.json"
+  to = "/.netlify/functions/ai-plugin-generator"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/biblioteca/biblioteca-geobooker-2026-compilado-para-word-v3.txt"
   to = "/biblioteca/biblioteca-geobooker-2026-edicion-profesional.pdf"
   status = 301
@@ -208,3 +226,15 @@
   function = "seo-business"
   path = "/business/*"
 
+
+[[edge_functions]]
+  function = "seo-library"
+  path = "/biblioteca"
+
+[[edge_functions]]
+  function = "seo-library"
+  path = "/biblioteca/*"
+
+[[edge_functions]]
+  function = "seo-geo-directory"
+  path = "/ciudad/*"

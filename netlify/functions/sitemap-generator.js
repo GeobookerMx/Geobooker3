@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const publicGlobalMarkets = require('../../src/config/publicGlobalMarkets.json');
+const enterpriseSeoPages = require('../../src/config/enterpriseSeoPages.json');
 
 const GLOBAL_ORIGIN = 'https://www.geobooker.com';
 const MX_ORIGIN = 'https://geobooker.com.mx';
@@ -39,6 +40,7 @@ exports.handler = async (event) => {
   const alternateLang = globalMode ? 'es-MX' : 'en';
 
   const routes = new Map();
+  const { geoPathForRecord } = await import('./_geo-directory.mjs');
   const addRoute = (path, lastmod, priority = '0.8', changefreq = 'weekly') => {
     if (routes.size >= MAX_URLS) return;
     const normalizedPath = normalizePath(path);
@@ -48,6 +50,8 @@ exports.handler = async (event) => {
   const staticRoutes = [
     ['', '1.0', 'daily'],
     ['/categories', '0.9', 'weekly'],
+    ['/geoscore', '0.9', 'weekly'],
+    ['/estudio-mercado', '0.9', 'weekly'],
     ['/what-is-geobooker', '0.9', 'monthly'],
     ['/que-es-geobooker', '0.9', 'monthly'],
     ['/local-business-search', '0.9', 'monthly'],
@@ -63,13 +67,22 @@ exports.handler = async (event) => {
     ['/download', '0.9', 'weekly'],
     ['/advertise', '0.9', 'weekly'],
     ['/enterprise', '0.9', 'weekly'],
+    ['/enterprise/media-kit', '0.9', 'weekly'],
+    ['/enterprise/contact', '0.8', 'weekly'],
     ['/b2b-connect', '0.8', 'weekly'],
+    ['/proveedores', '0.8', 'weekly'],
     ['/biblioteca', '0.8', 'weekly'],
     ['/emprende', '0.8', 'weekly'],
     ['/claim', '0.8', 'weekly'],
+    ['/business/register', '0.8', 'weekly'],
+    ['/space/register', '0.7', 'weekly'],
+    ['/whatsapp-consent', '0.6', 'monthly'],
     ['/about', '0.7', 'monthly'],
+    ['/quienes-somos', '0.7', 'monthly'],
     ['/community', '0.7', 'monthly'],
+    ['/comunidad', '0.7', 'monthly'],
     ['/support', '0.6', 'monthly'],
+    ['/soporte', '0.6', 'monthly'],
     ['/faq', '0.6', 'monthly'],
     ['/seguridad', '0.5', 'monthly'],
     ['/legal/ads-policy', '0.5', 'monthly'],
@@ -80,6 +93,14 @@ exports.handler = async (event) => {
     ['/data-deletion', '0.4', 'monthly'],
   ];
   staticRoutes.forEach(([path, priority, changefreq]) => addRoute(path, null, priority, changefreq));
+
+  (enterpriseSeoPages.markets || []).forEach((market) => {
+    addRoute('/markets/' + market.slug, null, '0.9', 'weekly');
+  });
+
+  (enterpriseSeoPages.industries || []).forEach((industry) => {
+    addRoute('/industries/' + industry.slug, null, '0.9', 'weekly');
+  });
 
   const libraryDocumentRoutes = [
     '/biblioteca/punto-de-partida-geobooker',
@@ -126,7 +147,7 @@ exports.handler = async (event) => {
   categoryRoutes.forEach((route) => addRoute(route, null, '0.8', 'weekly'));
 
   if (globalMode) {
-    ['/en/advertise-in-mexico', '/en/pricing', '/en/industries'].forEach((route) => addRoute(route, null, '0.7', 'monthly'));
+    ['/en/advertise-in-mexico', '/en/pricing', '/en/industries'].forEach((route) => addRoute(route, null, '0.8', 'monthly'));
     // High-value international SEO landing pages
     addRoute('/en/find-businesses-near-me', null, '0.9', 'weekly');
     addRoute('/en/nearshoring-mexico', null, '0.9', 'weekly');
@@ -138,17 +159,34 @@ exports.handler = async (event) => {
       try {
         const { data: businesses, error } = await supabase
           .from('businesses')
-          .select('id, slug, updated_at, country')
+          .select('id, slug, updated_at, country, country_code, city, category')
           .eq('status', 'approved')
           .order('updated_at', { ascending: false })
           .limit(10000);
         if (!error && businesses) {
           businesses
             .filter((biz) => String(biz.country || 'MX').toUpperCase() === 'MX')
-            .forEach((biz) => addRoute('/business/' + (biz.slug || biz.id), biz.updated_at, '0.7', 'weekly'));
+            .forEach((biz) => {
+              addRoute('/business/' + (biz.slug || biz.id), biz.updated_at, '0.7', 'weekly');
+              const geoPath = biz.slug && biz.country_code === 'MX' ? geoPathForRecord(biz) : null;
+              if (geoPath) addRoute(geoPath, biz.updated_at, '0.8', 'weekly');
+            });
         }
       } catch (err) {
         console.warn('[sitemap-generator] businesses skipped:', err.message);
+      }
+      try {
+        const { data: candidates, error } = await supabase.from('business_candidates')
+          .select('slug, city_name, category_normalized, updated_at')
+          .eq('moderation_status', 'approved').eq('country_code', 'MX')
+          .not('slug', 'is', null).order('updated_at', { ascending: false }).limit(10000);
+        if (error) throw error;
+        (candidates || []).forEach(record => {
+          const geoPath = geoPathForRecord(record);
+          if (geoPath) addRoute(geoPath, record.updated_at, '0.8', 'weekly');
+        });
+      } catch (err) {
+        console.warn('[sitemap-generator] geo directory skipped:', err.message);
       }
     }
 

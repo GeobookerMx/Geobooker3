@@ -3,6 +3,15 @@ import { useEffect } from 'react';
 import { COMPANY_INFO, CONTACT_EMAILS, PHONE_NUMBERS, SOCIAL_LINKS } from '../config/contacts';
 import { buildCanonicalUrl, getAlternateUrls, getCanonicalOrigin, getMarketLanguage } from '../config/domainStrategy';
 
+const GEOBOOKER_AREA_SERVED = [
+    { '@type': 'Country', name: 'Mexico' },
+    { '@type': 'Country', name: 'United States' },
+    { '@type': 'Country', name: 'Spain' },
+    { '@type': 'Country', name: 'Colombia' },
+    { '@type': 'Country', name: 'Argentina' },
+    { '@type': 'Country', name: 'Chile' }
+];
+
 const SEO = ({
     title = 'Geobooker - Busqueda local, negocios y servicios cerca de ti',
     description = 'Geobooker conecta necesidades reales con negocios y servicios cercanos. Encuentra, descubre y contacta negocios locales con mas claridad.',
@@ -189,7 +198,18 @@ const addWebAppSchema = (currentLang) => {
         browserRequirements: 'Requires JavaScript. Requires HTML5.',
         url: getCanonicalOrigin(),
         inLanguage: ['es', 'en'],
-        areaServed: { '@type': 'Country', name: 'Mexico' },
+        areaServed: GEOBOOKER_AREA_SERVED,
+        featureList: [
+            'Local business search and interactive proximity map',
+            'Real-time open and closed business availability toggle',
+            'GeoScore location and market analysis based on available coverage',
+            'Food truck and mobile merchant live tracking',
+            'B2B supplier connection and wholesale directory',
+            'Geobooker Emprende business accelerator',
+            'Digital business library and fiscal guides',
+            'Verified business profiles with dynamic QR codes',
+            'Geobooker Ads sponsored placements'
+        ],
         offers: {
             '@type': 'Offer',
             price: '0',
@@ -238,7 +258,7 @@ const addOrganizationSchema = () => {
             contactType: 'customer support',
             availableLanguage: ['Spanish', 'English']
         },
-        areaServed: { '@type': 'Country', name: 'Mexico' },
+        areaServed: GEOBOOKER_AREA_SERVED,
         knowsLanguage: ['es', 'en']
     };
 

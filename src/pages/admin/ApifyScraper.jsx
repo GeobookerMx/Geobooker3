@@ -21,39 +21,7 @@ import { getAuthenticatedJsonHeaders } from '../../services/authenticatedRequest
 
 const FUNCTIONS_BASE_URL = (import.meta.env.VITE_FUNCTIONS_BASE_URL || '/.netlify/functions').replace(/\/$/, '');
 
-const inferCountryCodeFromLocation = (value = '') => {
-    const normalized = String(value || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase();
-    const rules = [
-        [['mexico', 'cdmx', 'guadalajara', 'monterrey', 'jalisco', 'nuevo leon', 'puebla', 'queretaro'], 'MX'],
-        [['usa', 'united states', 'los angeles', 'california', 'texas', 'new york', 'florida', 'miami', 'houston', 'dallas', 'chicago'], 'US'],
-        [['canada', 'toronto', 'vancouver', 'montreal', 'ottawa', 'calgary'], 'CA'],
-        [['uk', 'united kingdom', 'london', 'manchester', 'birmingham', 'liverpool', 'glasgow', 'england', 'scotland'], 'GB'],
-        [['spain', 'espana', 'madrid', 'barcelona', 'valencia', 'sevilla'], 'ES'],
-        [['france', 'paris', 'lyon', 'marseille'], 'FR'],
-        [['germany', 'berlin', 'munich', 'hamburg', 'frankfurt'], 'DE'],
-        [['portugal', 'lisbon', 'porto'], 'PT'],
-        [['ireland', 'dublin'], 'IE'],
-        [['australia', 'sydney', 'melbourne', 'brisbane', 'perth'], 'AU'],
-        [['new zealand', 'auckland', 'wellington'], 'NZ'],
-        [['argentina', 'buenos aires'], 'AR'],
-        [['chile', 'santiago'], 'CL'],
-        [['colombia', 'bogota', 'medellin', 'cartagena'], 'CO'],
-        [['peru', 'lima'], 'PE'],
-        [['ecuador', 'quito'], 'EC'],
-        [['brazil', 'brasil', 'sao paulo', 'rio de janeiro'], 'BR']
-    ];
-
-    for (const [keywords, code] of rules) {
-        if (keywords.some((keyword) => normalized.includes(keyword))) {
-            return code;
-        }
-    }
-
-    return '';
-};
+const inferCountryCodeFromLocation = (value = '') => WhatsAppService.inferCountryFromLocation(value);
 
 const ApifyScraper = () => {
     const isPureLocalVite = typeof window !== 'undefined'
@@ -485,7 +453,7 @@ const ApifyScraper = () => {
     };
 
     const normalizeLeadPhone = (lead, fallbackLocation = location) => {
-        const inferredCountry = inferCountryCodeFromLocation(fallbackLocation || lead.address || '');
+        const inferredCountry = lead.country_code || lead.countryCode || inferCountryCodeFromLocation(lead.address || fallbackLocation || '');
         const normalized = WhatsAppService.normalizePhone(lead.phone, {
             countryCode: inferredCountry,
             location: fallbackLocation || lead.address || ''
@@ -544,8 +512,8 @@ const ApifyScraper = () => {
                 name: lead.name || lead.title,
                 company: lead.name || lead.title,
                 language: messageLanguage,
-                country_code: inferCountryCodeFromLocation(location || lead.address || ''),
-                location: location || lead.address || ''
+                country_code: lead.country_code || lead.countryCode || inferCountryCodeFromLocation(lead.address || location || ''),
+                location: lead.address || location || ''
             }, 'apify');
 
             if (result.success) {

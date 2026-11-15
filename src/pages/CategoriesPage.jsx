@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import geoSeo from '../config/geoSeo.json';
 import SEO from '../components/SEO';
 import {
   Utensils, Coffee, ShoppingBag, Briefcase, Wrench, HeartPulse, Film, GraduationCap,
@@ -186,6 +187,13 @@ const CategoriesPage = () => {
         </div>
 
         {/* Grid de 8 categorías */}
+        <section className="mb-8 rounded-2xl border bg-white p-5">
+          <h2 className="text-xl font-bold">Explora negocios por ciudad</h2>
+          <p className="my-2 text-sm text-gray-600">Selecciona una categoría para consultar los perfiles públicos disponibles.</p>
+          <div className="flex flex-wrap gap-3">{Object.entries(geoSeo.cities).map(([slug, city]) => (
+            <Link key={slug} className="text-blue-700 underline" to={`/ciudad/${slug}/${selectedCategory?.id || 'restaurantes'}`}>{city.name}</Link>
+          ))}</div>
+        </section>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
           {CATEGORIES.map((cat) => {
             const Icon = cat.icon;

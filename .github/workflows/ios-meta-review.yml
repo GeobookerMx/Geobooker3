@@ -1,0 +1,100 @@
+name: iOS Meta review and TestFlight
+
+on:
+  push:
+    branches: [codex/ios-meta-events-review]
+  workflow_dispatch:
+    inputs:
+      upload_to_testflight:
+        description: Upload a signed build to TestFlight (never submits App Store review)
+        type: boolean
+        default: false
+      marketing_version:
+        description: Numeric version checked against App Store Connect; required for upload
+        type: string
+      build_number:
+        description: Unused build number checked against App Store Connect; required for upload
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-meta-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      UPLOAD_TESTFLIGHT: ${{ inputs.upload_to_testflight || 'false' }}
+      MARKETING_VERSION: ${{ inputs.marketing_version }}
+      BUILD_NUMBER: ${{ inputs.build_number }}
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Check Apple toolchain
+        run: |
+          xcodebuild -version
+          python3 -c 'import subprocess; v=subprocess.check_output(["xcodebuild","-version"],text=True).split()[1]; assert int(v.split(".")[0]) >= 26, "Select Xcode 26+ for Capacitor 8"'
+      - run: npm ci
+      - name: Conversion behavior tests
+        run: node scripts/tests/meta-conversions.test.mjs
+      - run: npm run build
+      - name: Sync Capacitor on macOS
+        run: npx cap sync ios
+      - name: Resolve and record exact native SDK versions
+        run: |
+          xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj -scheme App -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages"
+          python3 scripts/ios/release-evidence.py --output "$RUNNER_TEMP/ios-evidence"
+      - name: Prepare signing for TestFlight
+        if: env.UPLOAD_TESTFLIGHT == 'true'
+        env:
+          APPLE_DISTRIBUTION_P12_BASE64: ${{ secrets.APPLE_DISTRIBUTION_P12_BASE64 }}
+          APPLE_DISTRIBUTION_P12_PASSWORD: ${{ secrets.APPLE_DISTRIBUTION_P12_PASSWORD }}
+          APPLE_PROVISIONING_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+          APP_STORE_CONNECT_PRIVATE_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY_BASE64 }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: bash scripts/ios/prepare-testflight-signing.sh
+      - name: Archive Release
+        shell: bash
+        run: |
+          settings=()
+          if [[ "$UPLOAD_TESTFLIGHT" == true ]]; then
+            settings+=("MARKETING_VERSION=$MARKETING_VERSION" "CURRENT_PROJECT_VERSION=$BUILD_NUMBER" "CODE_SIGN_STYLE=Manual" "CODE_SIGN_IDENTITY=Apple Distribution" "PROVISIONING_PROFILE_SPECIFIER=$IOS_PROFILE_UUID")
+          else
+            settings+=("CODE_SIGNING_ALLOWED=NO")
+          fi
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS' -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" -archivePath "$RUNNER_TEMP/Geobooker.xcarchive" archive "${settings[@]}"
+          python3 scripts/ios/release-evidence.py --archive "$RUNNER_TEMP/Geobooker.xcarchive" --output "$RUNNER_TEMP/ios-evidence"
+      - name: Upload to TestFlight only
+        if: env.UPLOAD_TESTFLIGHT == 'true'
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Geobooker.xcarchive" -exportPath "$RUNNER_TEMP/ios-export" -exportOptionsPlist "$RUNNER_TEMP/ios-export-options.plist" -authenticationKeyPath "$RUNNER_TEMP/ios-signing/AuthKey.p8" -authenticationKeyID "$APP_STORE_CONNECT_KEY_ID" -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
+      - name: Upload dependency and archive evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-meta-build-evidence
+          path: ${{ runner.temp }}/ios-evidence
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Remove temporary signing material
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f "$RUNNER_TEMP/ios-signing/signing.keychain-db" ]]; then
+            security delete-keychain "$RUNNER_TEMP/ios-signing/signing.keychain-db"
+          fi
+          python3 -c 'import os, pathlib, shutil; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"ios-signing"; shutil.rmtree(p, ignore_errors=True); profile=pathlib.Path.home()/"Library/MobileDevice/Provisioning Profiles/geobooker-meta-review.mobileprovision"; profile.unlink(missing_ok=True)'

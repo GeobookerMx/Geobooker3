@@ -732,5 +732,9 @@ export async function createBusiness(form, user, options = {}) {
     console.warn("Error al procesar conversion de referido:", refErr);
   }
 
+  // Record the successful submission locally. Meta publication waits for server approval.
+  void import('./metaConversions').then(({ rememberMetaBusiness }) => {
+    rememberMetaBusiness(createdBusiness, user.id);
+  }).catch(() => {});
   return createdBusiness;
 }

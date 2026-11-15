@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { clarityIdentifyUser } from "../services/trackingService";
 import { Capacitor } from "@capacitor/core";
+import { observeMetaConversions, rememberMetaSignup } from '../services/metaConversions';
 
 const AuthContext = createContext(null);
 
@@ -17,6 +18,25 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);      // usuario actual
   const [loading, setLoading] = useState(true); // cargando sesión inicial
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const check = () => {
+      if (document.visibilityState === 'hidden') return;
+      void observeMetaConversions({ user });
+    };
+    check();
+    window.addEventListener('geobooker:meta-ready', check);
+    window.addEventListener('focus', check);
+    document.addEventListener('visibilitychange', check);
+    const timer = setInterval(check, 60000);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('geobooker:meta-ready', check);
+      window.removeEventListener('focus', check);
+      document.removeEventListener('visibilitychange', check);
+    };
+  }, [user]);
 
   useEffect(() => {
     let timeoutId;
@@ -79,6 +99,7 @@ export const AuthProvider = ({ children }) => {
 
     // Si el registro fue exitoso, guardar datos de ubicación
     if (data?.user && !error) {
+      rememberMetaSignup(data);
       try {
         const registrationDomain = window.location.hostname;
         const preferredLanguage = registrationDomain.includes('.mx') ? 'es' : 'en';

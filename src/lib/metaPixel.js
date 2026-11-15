@@ -167,6 +167,7 @@ function getSavedMarketingConsent() {
 }
 
 function canUseMetaPixel() {
+  if (isNativeApp()) return false;
   if (!isBrowser() || !META_PIXEL_ID || !OFFICIAL_HOSTNAMES.has(window.location.hostname.toLowerCase())) {
     return false;
   }
@@ -285,9 +286,9 @@ export function metaTrackViewContent({ contentId, category = 'business' } = {}) 
   });
 }
 
-export function metaTrackCompleteRegistration({ method = 'email' } = {}) {
+export function metaTrackCompleteRegistration({ method = 'email', userId } = {}) {
   const safeMethod = ['email', 'google', 'apple', 'oauth'].includes(method) ? method : 'other';
-  if (isNativeApp()) return metaAppTrackCompleteRegistration({ method: safeMethod });
+  if (isNativeApp()) return metaAppTrackCompleteRegistration({ method: safeMethod, userId });
   return metaTrack('CompleteRegistration', {
     content_name: 'user_registration',
     status: true,

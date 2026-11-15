@@ -17,7 +17,7 @@ import {
   trackSessionStart,
   trackUserLogin
 } from "./services/analyticsService";
-import { initTrackingFromConsent, enableTracking } from "./services/trackingService";
+import { initTrackingFromConsent, enableTracking, disableTracking } from "./services/trackingService";
 import { detectUserCountry } from "./services/geoLocationService";
 import { usePageTracking } from "./hooks/usePageTracking";
 // ✅ FIX Apple Guideline 2.1: ATT permission request
@@ -333,6 +333,7 @@ function AppInitializer() {
         try {
           appStateListener = await CapApp.addListener('appStateChange', async ({ isActive }) => {
             if (isActive) {
+              initTrackingFromConsent();
               trackAppRuntimeEvent('session_resume', {
                 metadata: { source: 'app_state_change' }
               });
@@ -372,7 +373,11 @@ function AppInitializer() {
         console.log("[ATT] Status inicial:", currentStatus);
         localStorage.setItem("att_status", currentStatus);
 
-        if (currentStatus !== "notDetermined") return;
+        if (currentStatus !== "notDetermined") {
+          if (currentStatus === "authorized") void enableTracking();
+          else disableTracking();
+          return;
+        }
 
         // 2) Esperar a que la app esté completamente activa (splash fuera)
         const fireRequest = async () => {
@@ -384,7 +389,7 @@ function AppInitializer() {
             localStorage.setItem("att_status", status);
             if (status === "authorized") {
               enableTracking();
-            }
+            } else disableTracking();
           } catch (e) {
             console.warn("[ATT] requestPermission falló:", e);
           }

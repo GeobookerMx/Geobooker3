@@ -6,7 +6,8 @@
  * public.international_businesses en Supabase.
  *
  * Uso:
- *   node scripts/import-denue-geoscore.mjs
+ *   node scripts/import-denue-geoscore.mjs --dry-run --city=Guadalajara --limit=100
+ *   node scripts/import-denue-geoscore.mjs --apply --source-release=EDICION_COMPROBADA --city=Guadalajara --limit=1000
  *
  * Variables requeridas (.env.local):
  *   VITE_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
@@ -25,6 +26,8 @@ import path from 'node:path';
 import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+import { classifyDenueActivity } from './open-data/denue-categories.mjs';
 
 // ── Config ─────────────────────────────────────────────────────────────────
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -32,6 +35,7 @@ const ROOT = path.resolve(__dirname, '..');
 
 // Load .env.local manually (no dotenv dependency needed)
 const envPath = path.join(ROOT, '.env.local');
+dotenv.config({ path: envPath });
 const envVars = {};
 if (fs.existsSync(envPath)) {
   fs.readFileSync(envPath, 'utf8').split('\n').forEach(line => {
@@ -46,6 +50,35 @@ const CSV_FILE     = path.join(ROOT, 'denue_datos.csv');
 const BATCH_SIZE   = 300;   // registros por lote
 const MAX_RETRIES  = 3;     // reintentos por lote fallido
 const DELAY_MS     = 400;   // pausa entre lotes (ms)
+
+const args = process.argv.slice(2);
+const getArg = (name, fallback = null) => {
+  const found = args.find((arg) => arg === `--${name}` || arg.startsWith(`--${name}=`));
+  if (!found) return fallback;
+  if (found === `--${name}`) return true;
+  return found.split('=').slice(1).join('=');
+};
+const normalizeText = (value) => String(value || '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .trim();
+
+const LIMIT = Number(getArg('limit', 5000));
+const STATE_FILTER = normalizeText(getArg('state', ''));
+const CITY_FILTER = normalizeText(getArg('city', ''));
+const DRY_RUN = Boolean(getArg('dry-run', false)) || !getArg('apply', false);
+const SOURCE_RELEASE = String(getArg('source-release', '')).trim();
+const PUBLISH = Boolean(getArg('publish', false));
+
+if (!Number.isInteger(LIMIT) || LIMIT < 1 || LIMIT > 25000) {
+  console.error('El límite debe ser un entero entre 1 y 25000 por lote.');
+  process.exit(1);
+}
+if (!DRY_RUN && !SOURCE_RELEASE) {
+  console.error('Para aplicar un lote indica --source-release con la edición comprobada del archivo.');
+  process.exit(1);
+}
 
 if (!SUPABASE_URL || !SERVICE_KEY) {
   console.error('❌ Faltan VITE_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en .env.local');
@@ -63,57 +96,9 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
 
 // ── Mapeo SCIAN → GeoScore category ────────────────────────────────────────
 // SCIAN 2018: https://www.inegi.org.mx/app/scian/
-const SCIAN_CATEGORY_MAP = {
-  // Restaurantes y alimentos
-  '7221': 'restaurantes', '7222': 'restaurantes', '7223': 'restaurantes',
-  '7224': 'restaurantes', '7225': 'restaurantes', '7226': 'restaurantes',
-  // Cafeterías
-  '7227': 'restaurantes', // Servicios de preparación de alimentos para consumo inmediato (incluye cafés)
-  // Farmacias
-  '4612': 'salud', '4613': 'salud',
-  // Gimnasios y deportes
-  '7139': 'deporte', '7131': 'deporte', '7132': 'deporte',
-  // Autolavados y talleres
-  '8111': 'hogar_autos', '8112': 'hogar_autos', '8119': 'hogar_autos',
-  '8121': 'hogar_autos', // Lavado y lubricación de autos
-  // Retail / comercio local
-  '4611': 'tiendas', '4621': 'tiendas', '4622': 'tiendas', '4623': 'tiendas',
-  '4631': 'tiendas', '4632': 'tiendas', '4633': 'tiendas', '4641': 'tiendas',
-  '4642': 'tiendas', '4643': 'tiendas', '4644': 'tiendas', '4645': 'tiendas',
-  '4646': 'tiendas', '4647': 'tiendas', '4648': 'tiendas', '4649': 'tiendas',
-  '4651': 'tiendas', '4652': 'tiendas', '4653': 'tiendas', '4659': 'tiendas',
-  '4661': 'tiendas', '4662': 'tiendas', '4663': 'tiendas', '4664': 'tiendas',
-  '4665': 'tiendas', '4669': 'tiendas', '4671': 'tiendas', '4679': 'tiendas',
-  '4681': 'tiendas', '4682': 'tiendas', '4683': 'tiendas', '4689': 'tiendas',
-  '4691': 'tiendas', '4699': 'tiendas',
-  // Supermercados
-  '4711': 'tiendas', '4719': 'tiendas',
-  // Servicios bancarios y financieros
-  '5211': 'servicios', '5221': 'servicios', '5222': 'servicios', '5223': 'servicios',
-  '5231': 'servicios', '5239': 'servicios', '5241': 'servicios',
-  // Hoteles
-  '7211': 'hospedaje', '7212': 'hospedaje', '7213': 'hospedaje',
-  // Educación
-  '6111': 'servicios', '6112': 'servicios', '6113': 'servicios', '6114': 'servicios',
-  '6115': 'servicios', '6116': 'servicios', '6117': 'servicios',
-  // Salud / clínicas
-  '6211': 'salud', '6212': 'salud', '6213': 'salud', '6214': 'salud',
-  '6215': 'salud', '6216': 'salud', '6219': 'salud', '6221': 'salud',
-  '6231': 'salud', '6232': 'salud', '6239': 'salud', '6241': 'salud',
-  '6242': 'salud', '6243': 'salud', '6244': 'salud',
-  // Entretenimiento
-  '7111': 'entretenimiento', '7112': 'entretenimiento', '7113': 'entretenimiento',
-  '7114': 'entretenimiento', '7115': 'entretenimiento', '7121': 'entretenimiento',
-  '7131': 'entretenimiento', '7132': 'entretenimiento', '7139': 'entretenimiento',
-  '7141': 'entretenimiento', '7151': 'entretenimiento',
-};
 
 function mapCategory(codigoAct) {
-  if (!codigoAct) return 'servicios';
-  // Los primeros 4 dígitos del código SCIAN son la clase
-  const prefix4 = String(codigoAct).substring(0, 4);
-  const prefix3 = String(codigoAct).substring(0, 3);
-  return SCIAN_CATEGORY_MAP[prefix4] || SCIAN_CATEGORY_MAP[prefix3] || 'servicios';
+  return classifyDenueActivity(codigoAct);
 }
 
 function mapSubcategory(nombreAct) {
@@ -127,8 +112,10 @@ function mapSubcategory(nombreAct) {
     return 'pharmacy';
   if (n.includes('gimnasio') || n.includes('gym') || n.includes('fitness') || n.includes('sport'))
     return 'gym';
-  if (n.includes('lavado') || n.includes('autolavado') || n.includes('taller'))
+  if (n.includes('autolavado') || n.includes('lavado de autom'))
     return 'car_wash';
+  if (n.includes('reparación') && (n.includes('autom') || n.includes('camion')))
+    return 'auto_repair';
   if (n.includes('tienda') || n.includes('abarrot') || n.includes('minisuper') || n.includes('minisúper'))
     return 'local_retail';
   if (n.includes('super') || n.includes('mercado'))
@@ -190,6 +177,10 @@ async function sleep(ms) {
 }
 
 async function insertBatch(batch, batchNum, retries = 0) {
+  if (DRY_RUN) {
+    return { inserted: batch.length, error: false };
+  }
+
   const { error } = await supabase
     .from('international_businesses')
     .upsert(batch, { onConflict: 'source_record_id', ignoreDuplicates: true });
@@ -211,6 +202,7 @@ async function main() {
   console.log('=====================================');
   console.log(`📁 Archivo: ${CSV_FILE}`);
   console.log(`📦 Lote: ${BATCH_SIZE} registros`);
+  console.log(`Modo: ${DRY_RUN ? 'revisión sin escritura' : 'aplicar'}; edición: ${SOURCE_RELEASE || 'sin comprobar'}`);
   console.log(`🔗 Supabase: ${SUPABASE_URL}`);
   console.log('');
 
@@ -266,6 +258,16 @@ async function main() {
     const address     = buildAddress(row);
     const city        = (row.municipio || row.localidad || '').trim().slice(0, 120);
     const state       = (row.entidad || '').replace(/\?/g, 'e').trim().slice(0, 80);
+
+    if (STATE_FILTER && normalizeText(state) !== STATE_FILTER) {
+      totalSkipped++;
+      continue;
+    }
+    if (CITY_FILTER && ![row.municipio, row.localidad].some((value) => normalizeText(value).includes(CITY_FILTER))) {
+      totalSkipped++;
+      continue;
+    }
+
     const phone       = row.telefono ? row.telefono.replace(/\D/g, '').slice(0, 20) : null;
     const website     = row.www ? (row.www.startsWith('http') ? row.www : `https://${row.www}`) : null;
     const slug        = slugify(name, row.id);
@@ -289,16 +291,29 @@ async function main() {
       slug,
       source_type:       'denue_inegi',
       source_record_id:  `denue-mx-${row.id}`,
-      attribution_text:  'DENUE INEGI 2025. Directorio Nacional de Unidades Económicas.',
+      attribution_text:  `INEGI. Directorio Estadístico Nacional de Unidades Económicas (DENUE). Edición: ${SOURCE_RELEASE || 'sin comprobar; solo revisión'}.`,
       status:            'approved',
       business_status:   'active',
-      is_visible:        true,  // MX siempre aprobado tras migración 20261002091000
+      is_visible:        PUBLISH, // Publication is explicit, after batch QA.
       is_claimed:        false,
       is_verified:       false,
       preferred_language:'es',
       imported_at:       new Date().toISOString(),
       updated_at:        new Date().toISOString()
     });
+
+    if (LIMIT > 0 && totalInserted + batch.length >= LIMIT) {
+      const remaining = LIMIT - totalInserted;
+      const finalBatch = batch.slice(0, remaining);
+      if (finalBatch.length > 0) {
+        batchNum++;
+        const result = await insertBatch(finalBatch, batchNum);
+        totalInserted += result.inserted;
+        if (result.error) totalErrors += finalBatch.length;
+      }
+      batch = [];
+      break;
+    }
 
     // Cuando el lote está lleno, insertar
     if (batch.length >= BATCH_SIZE) {
@@ -339,12 +354,12 @@ async function main() {
   console.log('✅ IMPORT COMPLETADO');
   console.log('════════════════════════════════════════');
   console.log(`📊 Total procesados:  ${totalProcessed.toLocaleString()}`);
-  console.log(`✅ Insertados en BD:  ${totalInserted.toLocaleString()}`);
-  console.log(`⏭️  Sin coordenadas:   ${totalSkipped.toLocaleString()}`);
+  console.log(`${DRY_RUN ? 'Registros preparados (sin escritura)' : 'Registros procesados (incluye duplicados omitidos)'}: ${totalInserted.toLocaleString()}`);
+  console.log(`⏭️  Omitidos por coordenadas o filtros: ${totalSkipped.toLocaleString()}`);
   console.log(`❌ Errores de lote:   ${totalErrors.toLocaleString()}`);
   console.log(`⏱️  Tiempo total:      ${totalTime}s`);
   console.log('');
-  console.log('🎯 GeoScore ahora puede calcular en cualquier punto de México.');
+  console.log(DRY_RUN ? 'Revisión completada sin modificar la base de datos.' : 'Lote procesado; comprueba recuentos reales y calidad antes de publicarlo.');
   console.log('');
 }
 

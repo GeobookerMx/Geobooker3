@@ -2,7 +2,7 @@
   "version": 1,
   "strategy": "city_demand_first",
   "source": "Overture Maps Places",
-  "sourceRelease": "2026-08-19.0",
+  "sourceRelease": "2026-10-21.0",
   "batchStages": [1000, 3000, 5000, 10000],
   "searchResultLimit": 20,
   "databasePausePercent": 70,

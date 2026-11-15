@@ -1,6 +1,10 @@
 {
   "cities": {
-    "cdmx": { "name": "Ciudad de México", "aliases": ["Ciudad de México", "Ciudad de Mexico", "CDMX", "Mexico City"] },
+    "cdmx": {
+      "name": "Ciudad de México", "aliases": ["Ciudad de México", "Ciudad de Mexico", "CDMX", "Mexico City"],
+      "stateCode": "09",
+      "boroughs": ["Álvaro Obregón", "Alvaro Obregon", "Azcapotzalco", "Benito Juárez", "Benito Juarez", "Coyoacán", "Coyoacan", "Cuajimalpa de Morelos", "Cuauhtémoc", "Cuauhtemoc", "Gustavo A. Madero", "Iztacalco", "Iztapalapa", "La Magdalena Contreras", "Miguel Hidalgo", "Milpa Alta", "Tláhuac", "Tlahuac", "Tlalpan", "Venustiano Carranza", "Xochimilco"]
+    },
     "guadalajara": { "name": "Guadalajara", "aliases": ["Guadalajara"] },
     "monterrey": { "name": "Monterrey", "aliases": ["Monterrey"] },
     "puebla": { "name": "Puebla", "aliases": ["Puebla"] },
@@ -14,11 +18,11 @@
     "bares": { "name": "Bares", "aliases": ["bares", "bar"] },
     "tiendas": { "name": "Tiendas", "aliases": ["tiendas", "store"] },
     "servicios": { "name": "Servicios", "aliases": ["servicios", "service"] },
-    "hogar_autos": { "name": "Hogar y autos", "aliases": ["hogar_autos"] },
-    "salud": { "name": "Salud", "aliases": ["salud"] },
+    "hogar_autos": { "name": "Hogar y autos", "aliases": ["hogar_autos", "automotriz"] },
+    "salud": { "name": "Salud y belleza", "aliases": ["salud", "belleza"] },
     "entretenimiento": { "name": "Entretenimiento", "aliases": ["entretenimiento"] },
     "educacion": { "name": "Educación", "aliases": ["educacion"] },
-    "alojamiento": { "name": "Alojamiento", "aliases": ["alojamiento"] },
+    "alojamiento": { "name": "Alojamiento", "aliases": ["alojamiento", "hoteles", "hospedaje"] },
     "inmobiliarias": { "name": "Inmobiliarias", "aliases": ["inmobiliarias"] },
     "finanzas": { "name": "Finanzas", "aliases": ["finanzas"] },
     "tecnologia": { "name": "Tecnología", "aliases": ["tecnologia"] },

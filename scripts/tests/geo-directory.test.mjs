@@ -6,6 +6,9 @@ import edge from '../../netlify/edge-functions/seo-geo-directory.js';
 test('city aliases map to one canonical page and arbitrary filters are rejected', () => {
     assert.equal(geoPathForRecord({ city: 'Ciudad de México', category: 'restaurant' }), '/ciudad/cdmx/restaurantes');
     assert.equal(geoPathForRecord({ city_name: 'Mérida', category_normalized: 'salud' }), '/ciudad/merida/salud');
+    assert.equal(geoPathForRecord({ city: 'Guadalajara', category: 'hoteles' }), '/ciudad/guadalajara/alojamiento');
+    assert.equal(geoPathForRecord({ city: 'Benito Juárez', state_code: '09', category: 'restaurantes' }), '/ciudad/cdmx/restaurantes');
+    assert.equal(geoPathForRecord({ city: 'Benito Juárez', state_code: '23', category: 'restaurantes' }), null);
     assert.equal(resolveGeoPage('unknown', 'salud'), null);
     assert.equal(resolveGeoPage('cdmx', 'constructor'), null);
     assert.equal(geoPathForRecord({ city: 'Unknown', category: 'restaurantes' }), null);
@@ -23,6 +26,10 @@ test('directory restricts queries to approved Mexican profiles and deduplicates 
     assert.equal(result.businesses[0].path, '/business/cafe');
     assert.equal(urls[0].searchParams.get('status'), 'eq.approved');
     assert.equal(urls[1].searchParams.get('moderation_status'), 'eq.approved');
+    assert.equal(urls[2].pathname, '/rest/v1/international_businesses');
+    assert.equal(urls[2].searchParams.get('status'), 'eq.approved');
+    assert.equal(urls[2].searchParams.get('is_visible'), 'eq.true');
+    assert.ok(urls[2].searchParams.get('or').includes('and(state_code.eq.09,city.in.('));
     assert.ok(urls.every(url => url.searchParams.get('country_code') === 'eq.MX'));
     await assert.rejects(loadGeoDirectory(resolveGeoPage('cdmx', 'restaurantes'), { url: 'https://example.test', key: 'test', fetcher: async () => new Response('', { status: 500 }) }));
 });

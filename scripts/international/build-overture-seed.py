@@ -372,13 +372,16 @@ def main() -> None:
     parser.add_argument("--max-per-category", type=int, default=500)
     parser.add_argument("--max-per-subcategory", type=int, default=100)
     parser.add_argument("--areas", nargs="+", required=True)
+    parser.add_argument("--release", help="Pinned Overture release; defaults to the config value")
     args = parser.parse_args()
 
     if min(args.limit, args.max_per_category, args.max_per_subcategory) <= 0:
         parser.error("limits must be positive integers")
 
     config = json.loads(args.config.read_text(encoding="utf-8"))
-    release = config["release"]
+    release = args.release or config["release"]
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}\.\d+", release):
+        parser.error("release must have the form YYYY-MM-DD.N")
     area_map = {area["id"]: area for area in config["areas"]}
     records_by_area = {
         area_id: fetch_area_with_retry(

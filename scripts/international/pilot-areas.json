@@ -1,6 +1,6 @@
 {
   "source": "Overture Maps Places",
-  "release": "2026-08-19.0",
+  "release": "2026-10-21.0",
   "maxRecordsPerArea": 10000,
   "minimumConfidence": 0.75,
   "areas": [

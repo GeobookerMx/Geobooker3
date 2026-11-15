@@ -22,6 +22,7 @@ def main() -> None:
     parser.add_argument("--max-per-subcategory", type=int, default=400)
     parser.add_argument("--config", type=Path, default=script_directory / "pilot-areas.json")
     parser.add_argument("--rollout-config", type=Path, default=script_directory / "expansion-markets.json")
+    parser.add_argument("--release", help="Override the config with a reviewed, pinned source release")
     args = parser.parse_args()
 
     if args.limit <= 0:
@@ -64,6 +65,8 @@ def main() -> None:
         "--areas",
         args.area,
     ]
+    if args.release:
+        command.extend(["--release", args.release])
 
     try:
         completed = subprocess.run(command, check=True, capture_output=True, text=True)
@@ -79,7 +82,7 @@ def main() -> None:
         "countryCode": market["countryCode"],
         "city": market["city"],
         "source": extraction_config["source"],
-        "sourceRelease": extraction_config["release"],
+        "sourceRelease": args.release or extraction_config["release"],
         "targetRecords": args.limit,
         "previousRecords": market["currentRecords"],
         "generatedAt": datetime.now(timezone.utc).isoformat(),

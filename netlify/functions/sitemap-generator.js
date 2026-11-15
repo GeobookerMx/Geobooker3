@@ -188,6 +188,19 @@ exports.handler = async (event) => {
       } catch (err) {
         console.warn('[sitemap-generator] geo directory skipped:', err.message);
       }
+      try {
+        const { data: publicInventory, error } = await supabase.from('international_businesses')
+          .select('slug, city, state_code, category, updated_at')
+          .eq('country_code', 'MX').eq('status', 'approved').eq('is_visible', true)
+          .not('slug', 'is', null).order('updated_at', { ascending: false }).limit(10000);
+        if (error) throw error;
+        (publicInventory || []).forEach(record => {
+          const geoPath = geoPathForRecord(record);
+          if (geoPath) addRoute(geoPath, record.updated_at, '0.8', 'weekly');
+        });
+      } catch (err) {
+        console.warn('[sitemap-generator] open inventory skipped:', err.message);
+      }
     }
 
     if (globalMode && INDEXABLE_MARKETS.length > 0) {

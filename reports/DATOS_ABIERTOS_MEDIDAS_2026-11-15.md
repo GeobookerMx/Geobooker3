@@ -16,7 +16,7 @@
 
 ## Trabajo realizado
 
-GeoSEO consulta ahora también el inventario internacional publicado en México. El sitemap considera una muestra acotada de hasta 10,000 registros visibles para descubrir combinaciones, sin publicar centenares de miles de URLs por cada petición. El muestreo limita cobertura del sitemap y no reemplaza un futuro catálogo incremental completo. La prueba de solo lectura del nuevo recorrido recuperó 24 perfiles de restaurantes en CDMX, todos con atribución.
+GeoSEO consulta ahora también el inventario internacional publicado en México. El sitemap considera hasta 100 registros visibles por categoría para descubrir combinaciones, sin publicar centenares de miles de URLs por cada petición. Separar las muestras por categoría evita que un lote reciente de servicios oculte todos los restaurantes. El muestreo todavía limita cobertura geográfica y no reemplaza un futuro catálogo incremental completo. La prueba de solo lectura del nuevo recorrido recuperó 24 perfiles de restaurantes en CDMX, todos con atribución.
 
 El importador DENUE queda en modo revisión por defecto. Aplicar exige una edición declarada; las filas nuevas quedan ocultas salvo publicación explícita. Se corrigió el mensaje de conteos: un upsert con duplicados omitidos no demuestra inserciones nuevas. Se validó una revisión de 100 registros sin escritura.
 

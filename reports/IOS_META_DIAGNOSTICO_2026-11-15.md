@@ -29,7 +29,7 @@ Inicialmente Meta devolvía reglas AAM `r1` y `r2`, con AAM habilitado en el con
 
 - Repositorio oficial `https://github.com/meta/facebook-ios-sdk`; selección exacta **19.0.1** para la siguiente compilación. Hasta compilar en Xcode es una versión seleccionada, no una dependencia resuelta ni una versión publicada.
 - Único producto directo Meta: `FacebookCore`. `FacebookBasics`, `FBSDKCoreKit_Basics`, `FacebookAEM` y `FBAEMKit` son dependencias transitivas del producto oficial. No se agregan LoginKit, ShareKit ni GamingServicesKit.
-- iOS mínimo del proyecto sigue en **15.0**, también exigido por Capacitor 8.6.2 y el plugin ATT 8.1.5. Meta 19.0.1 exige iOS 15. No se cambia la cobertura de dispositivos frente al proyecto actual. Capacitor 8 requiere Xcode 26+.
+- iOS mínimo del proyecto sigue en **15.0**, también exigido por Capacitor 8.6.2 y el plugin ATT 8.1.5. Meta 19.0.1 exige iOS 15. No se cambia la cobertura de dispositivos frente al proyecto actual. Capacitor 8 requiere Xcode 26+, pero el binario oficial FBAEMKit 19.0.1 fue construido con Swift 6.4: su interfaz contiene calificadores que Xcode 26.3 no admite. La prueba remota confirmó ese error. Se selecciona Xcode 27.2 para esta integración; Apple lo identifica con Swift 6.4. Esto afecta al compilador requerido en Mac/CI, no al iOS mínimo de los usuarios.
 - Se registró el plugin local en `GeobookerViewController`, conectado al storyboard. Antes existía el Swift del plugin pero no su registro en el bridge ni en la lista de plugins.
 - El SDK se inicializa solo con ATT autorizado y configuración de Meta comprobada sin AAM ni configuración automática/codeless. Si la verificación falla o está sin conexión, la medición no arranca y la app sigue funcionando.
 - Se desactivan eventos automáticos, IDFA, metadatos de pantallas/URLs, información para mejora de producto y codeless debug. Se limita el uso de eventos a analítica y conversiones. No se agrega user ID de Meta ni información de contacto/ubicación a los parámetros.
@@ -96,4 +96,5 @@ Sin ATT autorizado esta implementación no envía conversiones personales a Meta
 - [Meta, Package.swift de 19.0.1](https://github.com/meta/facebook-ios-sdk/blob/v19.0.1/Package.swift), [cambios oficiales](https://github.com/meta/facebook-ios-sdk/blob/main/CHANGELOG.md).
 - [Capacitor: iOS 15 y Xcode 26](https://capacitorjs.com/docs/updating/8-0), [registro de plugins locales](https://capacitorjs.com/docs/ios/custom-code).
 - [Apple: datos de privacidad](https://developer.apple.com/app-store/app-privacy-details/).
+- [Apple: versiones de Xcode y Swift](https://developer.apple.com/xcode/system-requirements/), [imagen de GitHub con Xcode 27.2](https://github.com/actions/runner-images/blob/main/images/macos/xcode-27-arm64-Readme.md).
 - [Supabase: signUp y respuestas de cuentas existentes](https://supabase.com/docs/reference/javascript/auth-signup).

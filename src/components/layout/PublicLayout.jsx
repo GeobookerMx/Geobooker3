@@ -4,6 +4,7 @@ import { Outlet } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
 import InstallPrompt from "../pwa/InstallPrompt";
+import DiscoveryAccessGate from "../DiscoveryAccessGate";
 
 export default function PublicLayout() {
   // Apple 5.1.1(iv) compliance: el permiso de ubicación se solicita ÚNICAMENTE
@@ -14,7 +15,7 @@ export default function PublicLayout() {
     <>
       <Header />
       <main className="min-h-screen overflow-x-hidden bg-white">
-        <Outlet />
+        <DiscoveryAccessGate><Outlet /></DiscoveryAccessGate>
       </main>
       <Footer />
       <InstallPrompt />

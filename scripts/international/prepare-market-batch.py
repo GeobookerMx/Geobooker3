@@ -48,6 +48,9 @@ def main() -> None:
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.report.parent.mkdir(parents=True, exist_ok=True)
+    provenance_path = args.report.with_suffix('.sources.jsonl')
+    if len({args.output.resolve(),args.report.resolve(),provenance_path.resolve()}) != 3:
+        parser.error('SQL, report and source manifest must use different output paths')
     builder = script_directory / "build-overture-seed.py"
     command = [
         sys.executable,
@@ -64,6 +67,8 @@ def main() -> None:
         str(args.max_per_subcategory),
         "--areas",
         args.area,
+        '--provenance-output',
+        str(provenance_path),
     ]
     if args.release:
         command.extend(["--release", args.release])
@@ -88,6 +93,8 @@ def main() -> None:
         "generatedAt": datetime.now(timezone.utc).isoformat(),
         "sqlFile": str(args.output),
         "checksumSha256": checksum,
+        'provenanceFile':str(provenance_path),
+        'provenanceChecksumSha256':hashlib.sha256(provenance_path.read_bytes()).hexdigest(),
         "status": "automated_checks_complete_manual_review_required",
         "qualityGates": rollout_config["qualityGates"],
         "automatedQualityChecks": automated_quality,

@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import time
 import unicodedata
 from collections import Counter, defaultdict, deque
 from pathlib import Path
 from urllib.parse import urlparse
-
-from overturemaps import record_batch_reader
 
 
 ROOT_CATEGORY_MAP = {
@@ -48,34 +47,53 @@ def first_value(value: object) -> object | None:
 
 
 def normalize_website(value: object | None) -> str | None:
+    if isinstance(value, dict):
+        value = value.get('value') or value.get('url')
     website = str(value or "").strip()
-    if not website:
+    if not website or re.search(r'\s', website):
+        return None
+    if re.match(r'^[a-z][a-z0-9+.-]*:', website, re.I) and not re.match(r'^https?://', website, re.I):
         return None
     if "://" not in website:
         website = "https://" + website
-    parsed = urlparse(website)
-    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+    try:
+        parsed = urlparse(website)
+    except ValueError:
+        return None
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname or '.' not in parsed.hostname or parsed.username or parsed.password:
         return None
     return website
 
 
 def normalize_phone(value: object | None) -> str | None:
+    if isinstance(value, dict):
+        value = value.get('value') or value.get('phone')
     phone = str(value or "").strip()
+    if not re.fullmatch(r'[+\d\s().-]+', phone):
+        return None
     digits = re.sub(r"\D", "", phone)
     return phone if 6 <= len(digits) <= 15 else None
 
 
 def normalize_record(row: dict, area: dict, release: str) -> dict | None:
-    name = (row.get("names") or {}).get("primary")
+    names = row.get('names')
+    if not isinstance(names,dict):
+        return None
+    name = names.get("primary")
     taxonomy = row.get("taxonomy") or {}
+    if not isinstance(taxonomy,dict):
+        return None
     hierarchy = taxonomy.get("hierarchy") or []
     root_category = hierarchy[0] if hierarchy else None
-    primary_category = taxonomy.get("primary") or (row.get("categories") or {}).get("primary")
-    confidence = float(row.get("confidence") or 0)
-
-    if not name or confidence < 0.75 or root_category not in ROOT_CATEGORY_MAP:
+    primary_category = taxonomy.get("primary") or row.get('basic_category') or (row.get("categories") or {}).get("primary")
+    try:
+        confidence = float(row.get("confidence") or 0)
+    except (TypeError, ValueError):
         return None
-    if row.get("operating_status") == "permanently_closed":
+
+    if not isinstance(name,str) or not name.strip() or not math.isfinite(confidence) or not 0.75 <= confidence <= 1 or root_category not in ROOT_CATEGORY_MAP:
+        return None
+    if row.get("operating_status") in {"permanently_closed", "temporarily_closed", "closed"}:
         return None
 
     addresses = row.get("addresses") or []
@@ -87,7 +105,7 @@ def normalize_record(row: dict, area: dict, release: str) -> dict | None:
     }
     matching_addresses = [
         item for item in addresses
-        if (item.get("country") or "").upper() == country_code
+        if isinstance(item,dict) and str(item.get("country") or "").upper() == country_code
         and normalize_for_match(item.get("locality")) in accepted_localities
     ]
     if not matching_addresses:
@@ -99,12 +117,27 @@ def normalize_record(row: dict, area: dict, release: str) -> dict | None:
     bbox = row.get("bbox") or {}
     longitude = bbox.get("xmin")
     latitude = bbox.get("ymin")
-    if longitude is None or latitude is None:
+    geometry = row.get('geometry')
+    if isinstance(geometry, dict):
+        coordinates = geometry.get('coordinates')
+        if geometry.get('type') != 'Point' or not isinstance(coordinates,(list,tuple)) or len(coordinates) != 2:
+            return None
+        longitude, latitude = coordinates
+    try:
+        longitude, latitude = float(longitude), float(latitude)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(longitude) or not math.isfinite(latitude) or not (-180 <= longitude <= 180 and -90 <= latitude <= 90):
+        return None
+    west,south,east,north = area['bbox']
+    if not (west <= longitude <= east and south <= latitude <= north):
         return None
 
     website = normalize_website(first_value(row.get("websites")))
     phone = normalize_phone(first_value(row.get("phones")))
-    source_id = row["id"]
+    source_id = str(row.get('id') or '').strip()
+    if not re.fullmatch(r'[a-zA-Z0-9._:-]{1,160}',source_id):
+        return None
     score = confidence + (0.04 if website else 0) + (0.03 if phone else 0) + (0.03 if address.get("freeform") else 0)
 
     return {
@@ -125,6 +158,8 @@ def normalize_record(row: dict, area: dict, release: str) -> dict | None:
         "confidence": confidence,
         "score": score,
         "release": release,
+        "source_dataset": f"overture_places/{release}",
+        "provenance": {"source_id":source_id,"release":release,"version":row.get('version'),"sources":row.get('sources') or []},
         "preferred_language": area.get("defaultLanguage", "en"),
     }
 
@@ -187,6 +222,7 @@ def fetch_area(
     max_per_category: int,
     max_per_subcategory: int,
 ) -> list[dict]:
+    from overturemaps import record_batch_reader
     reader = record_batch_reader(
         "place",
         bbox=area["bbox"],
@@ -199,6 +235,7 @@ def fetch_area(
         raise RuntimeError(f"{area['id']}: Overture STAC returned no files for the approved area")
     selected: list[dict] = []
     seen: set[tuple] = set()
+    source_ids: set[str] = set()
 
     for batch in reader:
         for row in batch.to_pylist():
@@ -206,14 +243,15 @@ def fetch_area(
             if not record:
                 continue
             key = (
-                record["name"].casefold(),
-                record["address"].casefold() if record["address"] else "",
+                normalize_for_match(record["name"]),
+                normalize_for_match(record["address"]),
                 round(record["latitude"], 5),
                 round(record["longitude"], 5),
             )
-            if key in seen:
+            if key in seen or record['source_id'] in source_ids:
                 continue
             seen.add(key)
+            source_ids.add(record['source_id'])
             selected.append(record)
 
     selected.sort(key=lambda item: (-item["score"], item["name"].casefold(), item["source_id"]))
@@ -277,6 +315,8 @@ def render_sql(records_by_area: dict[str, list[dict]], release: str) -> str:
                     sql_text(item["slug"]),
                     "'seed_overture'",
                     sql_text(item["source_id"]),
+                    sql_text(item.get('source_dataset') or f'overture_places/{release}'),
+                    str(item['confidence']),
                     sql_text(f"Overture Maps Foundation, Places {release}"),
                     "'approved'",
                     "'active'",
@@ -324,6 +364,8 @@ CREATE TABLE IF NOT EXISTS public.international_businesses (
   slug TEXT NOT NULL,
   source_type TEXT NOT NULL DEFAULT 'seed_overture',
   source_record_id TEXT NOT NULL,
+  source_dataset TEXT,
+  confidence NUMERIC,
   attribution_text TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'approved',
   business_status TEXT NOT NULL DEFAULT 'active',
@@ -346,10 +388,13 @@ ALTER TABLE public.international_businesses ENABLE ROW LEVEL SECURITY;
 GRANT SELECT ON public.international_businesses TO anon, authenticated;
 GRANT ALL ON public.international_businesses TO service_role;
 
+ALTER TABLE public.international_businesses ADD COLUMN IF NOT EXISTS source_dataset TEXT;
+ALTER TABLE public.international_businesses ADD COLUMN IF NOT EXISTS confidence NUMERIC;
+
 INSERT INTO public.international_businesses (
   owner_id, name, description, category, subcategory, address, city, state_code,
   postal_code, country_code, latitude, longitude, website, website_url, phone,
-  slug, source_type, source_record_id, attribution_text, status, business_status,
+  slug, source_type, source_record_id, source_dataset, confidence, attribution_text, status, business_status,
   is_visible, is_claimed, is_verified, preferred_language, imported_at, updated_at
 ) VALUES
 {values_sql}
@@ -373,6 +418,7 @@ def main() -> None:
     parser.add_argument("--max-per-subcategory", type=int, default=100)
     parser.add_argument("--areas", nargs="+", required=True)
     parser.add_argument("--release", help="Pinned Overture release; defaults to the config value")
+    parser.add_argument('--provenance-output',type=Path,help='Optional JSONL source lineage; contains no contact fields')
     args = parser.parse_args()
 
     if min(args.limit, args.max_per_category, args.max_per_subcategory) <= 0:
@@ -394,6 +440,12 @@ def main() -> None:
         for area_id in args.areas
     }
     args.output.write_text(render_sql(records_by_area, release), encoding="utf-8", newline="\n")
+    if args.provenance_output:
+        args.provenance_output.parent.mkdir(parents=True,exist_ok=True)
+        with args.provenance_output.open('w',encoding='utf-8',newline='\n') as handle:
+            for records in records_by_area.values():
+                for record in records:
+                    handle.write(json.dumps(record['provenance'],ensure_ascii=False,default=lambda value:value.isoformat() if hasattr(value,'isoformat') else str(value))+'\n')
     for area_id, records in records_by_area.items():
         area = area_map[area_id]
         west, south, east, north = area["bbox"]

@@ -20,6 +20,7 @@ FIELDS = [
     "attribution_text", "status", "business_status", "is_visible", "is_claimed",
     "is_verified", "preferred_language", "imported_at", "updated_at",
 ]
+PROVENANCE_FIELDS = FIELDS[:18] + ['source_dataset','confidence'] + FIELDS[18:]
 ALLOWED_CATEGORIES = {
     "restaurantes", "tiendas", "salud", "belleza", "servicios", "automotriz", "hoteles"
 }
@@ -75,13 +76,20 @@ def parse_token(token: str):
 
 def read_records(path: Path) -> list[dict]:
     records: list[dict] = []
-    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+    sql = path.read_text(encoding='utf-8')
+    header = re.search(r'INSERT INTO public\.international_businesses\s*\((.*?)\)\s*VALUES',sql,re.S)
+    if not header:
+        raise ValueError('Missing inventory INSERT header')
+    fields = [value.strip() for value in header.group(1).split(',')]
+    if fields not in [FIELDS,PROVENANCE_FIELDS]:
+        raise ValueError('Unsupported inventory INSERT columns')
+    for line_number, line in enumerate(sql.splitlines(), start=1):
         if not line.startswith("(NULL, "):
             continue
         tokens = split_sql_values(line)
-        if len(tokens) != len(FIELDS):
-            raise ValueError(f"{path}:{line_number}: expected {len(FIELDS)} fields, found {len(tokens)}")
-        records.append(dict(zip(FIELDS, map(parse_token, tokens))))
+        if len(tokens) != len(fields):
+            raise ValueError(f"{path}:{line_number}: expected {len(fields)} fields, found {len(tokens)}")
+        records.append(dict(zip(fields, map(parse_token, tokens))))
     return records
 
 

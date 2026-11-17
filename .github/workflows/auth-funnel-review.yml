@@ -1,0 +1,30 @@
+name: Auth funnel schema review
+
+on:
+  push:
+    branches: [main, codex/auth-funnel-schema, codex/ios-meta-events-review]
+    paths:
+      - 'src/services/analyticsService.js'
+      - 'scripts/tests/auth-funnel-schema.test.mjs'
+      - '.github/workflows/auth-funnel-review.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/services/analyticsService.js'
+      - 'scripts/tests/auth-funnel-schema.test.mjs'
+      - '.github/workflows/auth-funnel-review.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node --test scripts/tests/auth-funnel-schema.test.mjs scripts/tests/auth-session-observer.test.mjs scripts/tests/auth-premium-security.test.mjs
+      - run: npm run build

@@ -6,7 +6,7 @@ import { App as CapApp } from "@capacitor/app";
 import { supabase } from "./lib/supabase";
 
 import { AppProvider } from "./contexts/AppContext";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { LocationProvider } from "./contexts/LocationContext";
 import { useSessionTimeout } from "./hooks/useSessionTimeout";
 import {
@@ -36,6 +36,7 @@ import { captureAttribution } from "./services/attributionService";
 import { initWebVitals } from "./services/vitalsService";
 import { withAuthTimeout } from "./utils/authFlow";
 import { setAuthRefreshActivity } from "./utils/authSessionObserver";
+import { consumeAuthDestination, requiresDiscoveryAccount } from "./utils/discoveryAccess";
 import { activatePremiumPromotion } from "./services/premiumService";
 import { isPremiumPromoActive } from "./config/promotions";
 import { clearPremiumIntent, hasPremiumIntent } from "./config/premiumFlow";
@@ -43,6 +44,12 @@ import { markPasswordRecoveryVerified } from "./utils/authRedirects";
 
 const ChatWidget = lazy(() => import("./components/agent/ChatWidget"));
 const CookieConsent = lazy(() => import("./components/CookieConsent"));
+
+function AccountAwareChat() {
+  const { user } = useAuth();
+  const needsAccount = requiresDiscoveryAccount({ hostname: window.location.hostname, isNative: Capacitor.isNativePlatform(), platform: Capacitor.getPlatform() });
+  return needsAccount && (!user || user.is_anonymous) ? null : <ChatWidget />;
+}
 
 // ✅ FIX iPad/iOS: HashRouter en nativo (capacitor://) — BrowserRouter en web
 // BrowserRouter falla en Capacitor porque usa HTML5 History API sobre file://
@@ -144,7 +151,7 @@ async function handleNativeAuthLink(url) {
         void trackNativeAuthCompletion(data?.session, 'native_deep_link_code');
         activateNativePremiumIfRequested(data?.session);
       }
-      window.location.hash = isRecovery ? '/reset-password' : '/dashboard';
+      window.location.hash = isRecovery ? '/reset-password' : consumeAuthDestination();
       return true;
     }
 
@@ -164,7 +171,7 @@ async function handleNativeAuthLink(url) {
         void trackNativeAuthCompletion(data?.session, 'native_deep_link_tokens');
         activateNativePremiumIfRequested(data?.session);
       }
-      window.location.hash = isRecovery ? '/reset-password' : '/dashboard';
+      window.location.hash = isRecovery ? '/reset-password' : consumeAuthDestination();
       return true;
     }
 
@@ -194,7 +201,7 @@ async function handleNativeAuthLink(url) {
       const { data: { session } } = await withAuthTimeout(supabase.auth.getSession(), 5_000);
       if (session) {
         if (!isRecovery) activateNativePremiumIfRequested(session);
-        window.location.hash = isRecovery ? '/reset-password' : '/dashboard';
+        window.location.hash = isRecovery ? '/reset-password' : consumeAuthDestination();
         return true;
       }
     } catch {
@@ -458,7 +465,7 @@ function App() {
             <LocationProvider>
               <AppRouter />
               <Suspense fallback={null}>
-                <ChatWidget />
+                <AccountAwareChat />
                 <CookieConsent />
               </Suspense>
             </LocationProvider>

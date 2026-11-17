@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
@@ -12,10 +12,13 @@ import { activatePremiumPromotion } from '../services/premiumService';
 import { rememberPremiumIntent } from '../config/premiumFlow';
 import { metaTrackCompleteRegistration } from '../lib/metaPixel';
 import { beginOAuthSignIn, getOAuthCallbackUrl } from '../services/oauthService';
+import { consumeAuthDestination, getAuthDestination, rememberAuthDestination } from '../utils/discoveryAccess';
 
 const SignupPage = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const destination = getAuthDestination(searchParams.get('next'));
     const isNative = Capacitor.isNativePlatform();
     const isAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
     const premiumPromoActive = isPremiumPromoActive();
@@ -89,6 +92,7 @@ const SignupPage = () => {
 
         try {
             rememberPremiumIntent(premiumPromoActive && activateFreePremiumOnSignup);
+            rememberAuthDestination(destination);
             const normalizedEmail = formData.email.trim().toLowerCase();
             // Obtener código de referido si existe
             const referralCode = localStorage.getItem('referral_code');
@@ -193,9 +197,9 @@ const SignupPage = () => {
 
             setTimeout(() => {
                 if (data?.session) {
-                    navigate('/dashboard', { replace: true });
+                    navigate(consumeAuthDestination(destination), { replace: true });
                 } else {
-                    navigate('/login?premium=1&next=%2Fdashboard', { replace: true });
+                    navigate(`/login?next=${encodeURIComponent(destination)}`, { replace: true });
                 }
             }, 1200);
 
@@ -221,6 +225,7 @@ const SignupPage = () => {
             setLoading(true);
             trackAuthFunnelEvent('oauth_start', { funnel: 'signup', method: provider });
             rememberPremiumIntent(premiumPromoActive && activateFreePremiumOnSignup);
+            rememberAuthDestination(destination);
 
             await beginOAuthSignIn(provider);
         } catch (error) {

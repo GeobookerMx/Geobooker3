@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -10,10 +10,13 @@ import { getPremiumPromoDeadlineLabel, isPremiumPromoActive } from '../config/pr
 import { clearPremiumIntent, getPremiumIntentPreference, rememberPremiumIntent } from '../config/premiumFlow';
 import { withAuthTimeout } from '../utils/authFlow';
 import { beginOAuthSignIn } from '../services/oauthService';
+import { consumeAuthDestination, getAuthDestination, rememberAuthDestination } from '../utils/discoveryAccess';
 
 const LoginPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const destination = getAuthDestination(searchParams.get('next'));
   const { signIn } = useAuth();
   const isAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 
@@ -76,7 +79,7 @@ const LoginPage = () => {
           });
       }
       toast.success(t('login.welcomeBack'));
-      navigate('/dashboard', { replace: true });
+      navigate(consumeAuthDestination(destination), { replace: true });
     } catch (error) {
       trackAuthFunnelEvent('login_error', {
         funnel: 'login',
@@ -108,6 +111,7 @@ const LoginPage = () => {
       setLoading(true);
       trackAuthFunnelEvent('oauth_start', { funnel: 'login', method: provider });
       rememberPremiumIntent(premiumPromoActive && activateFreePremiumOnLogin);
+      rememberAuthDestination(destination);
 
       await beginOAuthSignIn(provider);
     } catch (error) {
@@ -245,7 +249,7 @@ const LoginPage = () => {
           <div className="mt-6 text-center">
             <p className="text-gray-600">
               {t('login.noAccount')}{' '}
-              <Link to="/signup" className="text-blue-600 font-semibold hover:underline">
+              <Link to={`/signup?next=${encodeURIComponent(destination)}`} onClick={() => rememberAuthDestination(destination)} className="text-blue-600 font-semibold hover:underline">
                 {t('login.signUpFree')}
               </Link>
             </p>

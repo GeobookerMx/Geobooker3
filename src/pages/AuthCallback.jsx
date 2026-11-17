@@ -13,6 +13,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { activatePremiumPromotion } from '../services/premiumService';
 import { isPremiumPromoActive } from '../config/promotions';
 import { clearPremiumIntent, hasPremiumIntent } from '../config/premiumFlow';
+import { consumeAuthDestination } from '../utils/discoveryAccess';
 
 const AuthCallback = () => {
     const navigate = useNavigate();
@@ -79,7 +80,7 @@ const AuthCallback = () => {
                 return activatePremiumPromotion(data.session.access_token).then(() => clearPremiumIntent());
             }).catch(() => console.warn('[AuthCallback] Premium se podrá activar desde el panel'));
         }
-        const redirectTimeoutId = setTimeout(() => navigate('/dashboard', { replace: true }), 500);
+        const redirectTimeoutId = setTimeout(() => navigate(consumeAuthDestination(), { replace: true }), 500);
         return () => clearTimeout(redirectTimeoutId);
     }, [user, loading, authError, navigate, searchParams]);
 

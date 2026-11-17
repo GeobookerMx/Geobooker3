@@ -45,6 +45,8 @@ const bundle = await build({
     import { AuthProvider, useAuth } from './src/contexts/AuthContext.jsx';
     import ProtectedRoute from './src/components/ProtectedRoute.jsx';
     import AuthCallback from './src/pages/AuthCallback.jsx';
+    import DiscoveryAccessGate from './src/components/DiscoveryAccessGate.jsx';
+    import {rememberAuthDestination} from './src/utils/discoveryAccess.js';
     const originalTimer = window.setTimeout.bind(window);
     const originalCancel = window.clearTimeout.bind(window);
     const startupTimers = new Map();
@@ -63,9 +65,10 @@ const bundle = await build({
       };},[signIn,navigate]);
       return <div>Password login</div>;
     }
-    async function check(platform, callbackRoute, provider='apple') {
+    async function check(platform, callbackRoute, provider='apple', returnTo=null) {
       window.__platform = platform;
       window.__listeners = new Set();
+      if(returnTo) rememberAuthDestination(returnTo);
       let resolveSession;
       window.__sessionRead = new Promise(resolve => { resolveSession = resolve; });
       const host = document.createElement('div'); document.body.append(host);
@@ -77,6 +80,7 @@ const bundle = await build({
           <Route path='/welcome' element={<div data-login='yes'>Login screen</div>}/>
           <Route path='/login' element={<div data-login='yes'>Login screen</div>}/>
           <Route path='/login-form' element={<PasswordAccess/>}/>
+          <Route path='/business/return-target' element={<ProtectedRoute><div data-panel='yes' data-return='yes'>Original business</div></ProtectedRoute>}/>
         </Routes></AuthProvider>
       </MemoryRouter>);
       await wait(); await wait();
@@ -87,6 +91,7 @@ const bundle = await build({
       else for (const cb of window.__listeners) cb('SIGNED_IN', session);
       await wait(); await wait();
       assert(host.querySelector('[data-panel]'), platform + ': authenticated panel did not open');
+      if(returnTo) assert(host.querySelector('[data-return]'),platform+': OAuth lost the requested destination');
       // Reproduce the production failure: startup read is still pending when its
       // old timeout expires after Apple has already authenticated the account.
       if(callbackRoute!=='password') for (const cb of [...startupTimers.values()]) cb();
@@ -104,6 +109,25 @@ const bundle = await build({
       root.unmount(); host.remove();
       assert(window.__listeners.size === 0, platform + ': listener leaked');
     }
+    async function checkDiscoveryGate(platform) {
+      window.__platform=platform; window.__listeners=new Set();
+      let resolveRead; window.__sessionRead=new Promise(resolve=>{resolveRead=resolve;});
+      const host=document.createElement('div');document.body.append(host);const root=createRoot(host);
+      root.render(<MemoryRouter initialEntries={['/business/example']}><AuthProvider>
+        <DiscoveryAccessGate required={true}><div data-business='yes'>Private exploration</div></DiscoveryAccessGate>
+      </AuthProvider></MemoryRouter>);
+      await wait();await wait();resolveRead({data:{session:null},error:null});await wait();
+      assert(!host.querySelector('[data-business]'),platform+': exploration rendered before login');
+      assert(host.textContent.includes('Inicia sesión para explorar'),platform+': required notice missing');
+      assert(host.querySelector('a[href^="/login?next="]'),platform+': missing login destination');
+      for(const cb of window.__listeners)cb('SIGNED_IN',{user:{id:'anonymous',is_anonymous:true}});
+      await wait();assert(!host.querySelector('[data-business]'),platform+': anonymous auth bypassed required login');
+      for(const cb of window.__listeners)cb('SIGNED_IN',{user:{id:'registered'}});
+      await wait();assert(host.querySelector('[data-business]'),platform+': registered account cannot explore');
+      for(const cb of window.__listeners)cb('SIGNED_OUT',null);
+      await wait();assert(!host.querySelector('[data-business]'),platform+': logout did not restore gate');
+      root.unmount();host.remove();
+    }
     (async () => {
       const passed=[];
       try {
@@ -115,6 +139,8 @@ const bundle = await build({
         for(const provider of ['google','facebook']) {
           await check('web',true,provider); passed.push('web:'+provider+'-callback');
         }
+        await check('web',true,'google','/business/return-target');passed.push('web:oauth-return-destination');
+        for(const platform of ['web','android']){await checkDiscoveryGate(platform);passed.push(platform+':required-discovery-login');}
         document.getElementById('auth-check-results').textContent=JSON.stringify({ok:true,passed});
       } catch(error) {
         document.getElementById('auth-check-results').textContent=JSON.stringify({ok:false,passed,error:error.message});

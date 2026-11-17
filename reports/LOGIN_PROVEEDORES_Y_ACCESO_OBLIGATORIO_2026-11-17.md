@@ -22,6 +22,8 @@ Una prueba funcional ejecuta el servicio real con inserciones simuladas contra l
 
 Preparado para `geobooker.com.mx`, `www.geobooker.com.mx` y Android nativo. La web global y el comportamiento nativo iOS no se cambian en esta entrega de acceso obligatorio.
 
+Las vistas previas y el dominio Netlify del proyecto `geobooker3` muestran también el aviso para poder revisarlo antes de activarlo en el dominio mexicano. No se aplica a dominios de otros proyectos.
+
 - Mapa, búsquedas, categorías, ciudades, perfiles, GeoScore, Emprende y Biblioteca muestran un aviso de acceso obligatorio antes de montar la herramienta.
 - Registro, login, retorno OAuth, recuperación, privacidad, términos, ayuda y páginas de presentación permanecen accesibles. No hay botón de cerrar el aviso para seguir explorando como invitado.
 - Una sesión anónima de Supabase no cumple el requisito. Una cuenta autenticada real permite entrar; cerrar sesión vuelve a mostrar el aviso.

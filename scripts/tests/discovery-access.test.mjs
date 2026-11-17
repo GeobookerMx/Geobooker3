@@ -4,7 +4,9 @@ import { requiresDiscoveryAccount, isDiscoveryPath, safeAuthDestination, remembe
 
 test('required exploration login applies to Mexico web and native Android, not iOS or global web', () => {
   for (const hostname of ['geobooker.com.mx', 'www.geobooker.com.mx']) assert.equal(requiresDiscoveryAccount({hostname}), true);
-  for (const hostname of ['www.geobooker.com', 'geobooker.com', 'geobooker.com.mx.evil.invalid', 'localhost']) assert.equal(requiresDiscoveryAccount({hostname}), false);
+  assert.equal(requiresDiscoveryAccount({hostname:'deploy-preview-14--geobooker3.netlify.app'}),true);
+  assert.equal(requiresDiscoveryAccount({hostname:'geobooker3.netlify.app'}),true);
+  for (const hostname of ['www.geobooker.com', 'geobooker.com', 'geobooker.com.mx.evil.invalid', 'deploy-preview-1--other-project.netlify.app', 'localhost']) assert.equal(requiresDiscoveryAccount({hostname}), false);
   assert.equal(requiresDiscoveryAccount({isNative:true,platform:'android',hostname:'localhost'}), true);
   assert.equal(requiresDiscoveryAccount({isNative:true,platform:'ios',hostname:'geobooker.com.mx'}), false);
 });

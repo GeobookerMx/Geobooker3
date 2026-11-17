@@ -4,7 +4,9 @@ const DISCOVERY_PATHS = ['/c', '/ciudad', '/cities', '/categories', '/business',
 
 export function requiresDiscoveryAccount({ hostname = '', isNative = false, platform = 'web' } = {}) {
   if (isNative) return platform === 'android';
-  return ['geobooker.com.mx', 'www.geobooker.com.mx'].includes(String(hostname).toLowerCase());
+  const host = String(hostname).toLowerCase();
+  return ['geobooker.com.mx', 'www.geobooker.com.mx', 'geobooker3.netlify.app'].includes(host)
+    || host.endsWith('--geobooker3.netlify.app');
 }
 
 export function isDiscoveryPath(pathname = '/') {

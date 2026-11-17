@@ -6,6 +6,8 @@ on:
     paths:
       - 'src/contexts/AuthContext.jsx'
       - 'src/utils/authSessionObserver.js'
+      - 'src/utils/oauthErrors.js'
+      - 'scripts/tests/oauth-errors.test.mjs'
       - 'src/pages/AuthCallback.jsx'
       - 'src/pages/LoginPage.jsx'
       - 'src/components/ProtectedRoute.jsx'
@@ -17,6 +19,8 @@ on:
     paths:
       - 'src/contexts/AuthContext.jsx'
       - 'src/utils/authSessionObserver.js'
+      - 'src/utils/oauthErrors.js'
+      - 'scripts/tests/oauth-errors.test.mjs'
       - 'src/pages/AuthCallback.jsx'
       - 'src/pages/LoginPage.jsx'
       - 'src/components/ProtectedRoute.jsx'
@@ -39,5 +43,5 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Session races and recovery security
-        run: node --test scripts/tests/auth-session-observer.test.mjs scripts/tests/auth-premium-security.test.mjs
+        run: node --test scripts/tests/auth-session-observer.test.mjs scripts/tests/auth-premium-security.test.mjs scripts/tests/oauth-errors.test.mjs
       - run: npm run build

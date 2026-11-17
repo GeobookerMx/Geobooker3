@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -10,10 +10,13 @@ import { getPremiumPromoDeadlineLabel, isPremiumPromoActive } from '../config/pr
 import { clearPremiumIntent, getPremiumIntentPreference, rememberPremiumIntent } from '../config/premiumFlow';
 import { withAuthTimeout } from '../utils/authFlow';
 import { beginOAuthSignIn } from '../services/oauthService';
+import { getOAuthError } from '../utils/oauthErrors';
 
 const LoginPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const callbackError = getOAuthError(searchParams.toString(), window.location.hash);
   const { signIn } = useAuth();
   const isAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 
@@ -134,6 +137,12 @@ const LoginPage = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('login.title')}</h1>
           <p className="text-gray-600">{t('login.subtitle')}</p>
         </div>
+
+        {callbackError && (
+          <div role="alert" className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            {callbackError.message}
+          </div>
+        )}
 
         {premiumPromoActive && (
           <div className="mb-5 rounded-2xl border-2 border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 p-4 shadow-sm">

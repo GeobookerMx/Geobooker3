@@ -1,0 +1,43 @@
+name: Shared auth session review
+
+on:
+  push:
+    branches: [main, codex/auth-session-recovery, codex/ios-meta-events-review]
+    paths:
+      - 'src/contexts/AuthContext.jsx'
+      - 'src/utils/authSessionObserver.js'
+      - 'src/pages/AuthCallback.jsx'
+      - 'src/pages/LoginPage.jsx'
+      - 'src/components/ProtectedRoute.jsx'
+      - 'src/App.jsx'
+      - 'scripts/tests/auth-session*'
+      - '.github/workflows/auth-session-review.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/contexts/AuthContext.jsx'
+      - 'src/utils/authSessionObserver.js'
+      - 'src/pages/AuthCallback.jsx'
+      - 'src/pages/LoginPage.jsx'
+      - 'src/components/ProtectedRoute.jsx'
+      - 'src/App.jsx'
+      - 'scripts/tests/auth-session*'
+      - '.github/workflows/auth-session-review.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Session races and recovery security
+        run: node --test scripts/tests/auth-session-observer.test.mjs scripts/tests/auth-premium-security.test.mjs
+      - run: npm run build

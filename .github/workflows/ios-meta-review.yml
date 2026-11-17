@@ -51,6 +51,7 @@ jobs:
         run: |
           node scripts/tests/meta-conversions.test.mjs
           node scripts/tests/holiday-season.test.mjs
+          node scripts/tests/auth-session-observer.test.mjs
       - run: npm run build
       - name: Sync Capacitor on macOS
         run: npx cap sync ios

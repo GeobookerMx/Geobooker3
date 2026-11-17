@@ -83,6 +83,8 @@ Sin ATT autorizado esta implementación no envía conversiones personales a Meta
 
 ## Compilación y firma
 
+Actualización de login: el usuario confirmó haber subido el build 61 y reportó rebote de «Continuar con Apple» tanto en iPhone como en web. El arreglo compartido de autenticación se documenta en `reports/AUDITORIA_LOGIN_2026-11-17.md`. La siguiente compilación iOS preparada es **1.5.11 (62)** e incorpora el observador de sesión, el callback unificado y la reanudación sin refresh forzado. El código anterior reproduce el rebote del temporizador en Chrome; el corregido pasa 11 escenarios React simulados. El retorno real a Apple en TestFlight y los eventos Meta siguen pendientes de probar. El build 61 ya subido no cambia con estas correcciones fuente.
+
 La compilación con Xcode 27.2 resolvió el problema del compilador y llegó a la fase final de firma de frameworks. Esa fase intentaba firmar aun con `CODE_SIGNING_ALLOWED=NO`; se corrigió para respetar ese ajuste en pruebas sin certificado. La firma normal para TestFlight permanece activa.
 
 El 17 de noviembre el usuario aplicó la corrección en su checkout independiente `Geobooker-Meta-Review-20261115` y compartió `BUILD SUCCEEDED` para Release sin firma con Xcode 27.1. Los ajustes mostrados por Xcode confirmaron bundle `com.geobooker.ios`, equipo `QCN4SYVAQ4` e iOS mínimo `15.0`. Esta compilación todavía tenía versión `1.4.10 (55)`, anterior al incremento y a la incorporación de las mejoras estacionales; se debe recompilar la entrega final. Este resultado no acredita firma, recepción de eventos ni pruebas físicas de ATT.

@@ -27,7 +27,9 @@ import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import { createHash } from 'node:crypto';
 import { classifyDenueActivity } from './open-data/denue-categories.mjs';
+import { prepareDenueRecord, readDenueRows } from './open-data/denue-quality.mjs';
 
 // ── Config ─────────────────────────────────────────────────────────────────
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -46,12 +48,14 @@ if (fs.existsSync(envPath)) {
 
 const SUPABASE_URL = envVars['VITE_SUPABASE_URL'] || process.env.VITE_SUPABASE_URL;
 const SERVICE_KEY  = envVars['SUPABASE_SERVICE_ROLE_KEY'] || process.env.SUPABASE_SERVICE_ROLE_KEY;
-const CSV_FILE     = path.join(ROOT, 'denue_datos.csv');
 const BATCH_SIZE   = 300;   // registros por lote
 const MAX_RETRIES  = 3;     // reintentos por lote fallido
 const DELAY_MS     = 400;   // pausa entre lotes (ms)
 
 const args = process.argv.slice(2);
+for (const flag of ['apply','dry-run','publish']) {
+  if (args.some(arg => arg.startsWith(`--${flag}=`))) throw new Error(`Usa --${flag} sin asignar un valor; no se admiten booleanos como texto.`);
+}
 const getArg = (name, fallback = null) => {
   const found = args.find((arg) => arg === `--${name}` || arg.startsWith(`--${name}=`));
   if (!found) return fallback;
@@ -70,6 +74,12 @@ const CITY_FILTER = normalizeText(getArg('city', ''));
 const DRY_RUN = Boolean(getArg('dry-run', false)) || !getArg('apply', false);
 const SOURCE_RELEASE = String(getArg('source-release', '')).trim();
 const PUBLISH = Boolean(getArg('publish', false));
+const CSV_FILE = path.resolve(String(getArg('file', path.join(ROOT,'denue_datos.csv'))));
+const ENCODING = String(getArg('encoding','latin1'));
+const REPORT_FILE = getArg('report') ? path.resolve(String(getArg('report'))) : null;
+const PROVENANCE_FILE = getArg('provenance-output') ? path.resolve(String(getArg('provenance-output'))) : null;
+if (!['latin1','utf8'].includes(ENCODING)) throw new Error('Usa --encoding=latin1 o --encoding=utf8.');
+if ([REPORT_FILE,PROVENANCE_FILE].includes(CSV_FILE) || (REPORT_FILE && REPORT_FILE === PROVENANCE_FILE)) throw new Error('Las salidas deben ser distintas entre sí y del CSV original.');
 
 if (!Number.isInteger(LIMIT) || LIMIT < 1 || LIMIT > 25000) {
   console.error('El límite debe ser un entero entre 1 y 25000 por lote.');
@@ -80,7 +90,7 @@ if (!DRY_RUN && !SOURCE_RELEASE) {
   process.exit(1);
 }
 
-if (!SUPABASE_URL || !SERVICE_KEY) {
+if (!DRY_RUN && (!SUPABASE_URL || !SERVICE_KEY)) {
   console.error('❌ Faltan VITE_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en .env.local');
   process.exit(1);
 }
@@ -90,7 +100,8 @@ if (!fs.existsSync(CSV_FILE)) {
   process.exit(1);
 }
 
-const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
+if (!DRY_RUN && SUPABASE_URL !== 'https://dllckokqkgcraxyxsfqc.supabase.co') throw new Error('Este importador solo admite el proyecto Geobooker.');
+const supabase = DRY_RUN ? null : createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false }
 });
 
@@ -203,60 +214,44 @@ async function main() {
   console.log(`📁 Archivo: ${CSV_FILE}`);
   console.log(`📦 Lote: ${BATCH_SIZE} registros`);
   console.log(`Modo: ${DRY_RUN ? 'revisión sin escritura' : 'aplicar'}; edición: ${SOURCE_RELEASE || 'sin comprobar'}`);
-  console.log(`🔗 Supabase: ${SUPABASE_URL}`);
+  console.log(`🔗 Supabase: ${DRY_RUN ? 'sin conexión; no se requieren credenciales' : SUPABASE_URL}`);
   console.log('');
 
   // Contar líneas primero
   const totalLines = await new Promise(resolve => {
     let count = 0;
-    const rl = createInterface({ input: fs.createReadStream(CSV_FILE, { encoding: 'latin1' }) });
+    const rl = createInterface({ input: fs.createReadStream(CSV_FILE, { encoding: ENCODING }) });
     rl.on('line', () => count++);
     rl.on('close', () => resolve(count));
   });
   console.log(`📊 Total líneas en CSV (incluye header): ${totalLines.toLocaleString()}`);
   console.log('');
 
-  let headers = null;
   let batch = [];
   let batchNum = 0;
   let totalProcessed = 0;
   let totalInserted = 0;
   let totalSkipped = 0;
   let totalErrors = 0;
+  const seenIds = new Set();
+  const seenLocations = new Set();
+  const quality = {source:'inegi_denue',sourceEdition:SOURCE_RELEASE || null,editionStatus:'not_independently_verified',mode:DRY_RUN ? 'preview' : 'apply',rejectedByReason:{},warnings:{},potentialLocationDuplicates:0,categories:{},withPhone:0,withWebsite:0};
+  if (PROVENANCE_FILE) { fs.mkdirSync(path.dirname(PROVENANCE_FILE),{recursive:true}); fs.writeFileSync(PROVENANCE_FILE,''); }
   const startTime = Date.now();
 
-  const rl = createInterface({
-    input: fs.createReadStream(CSV_FILE, { encoding: 'latin1' }),
-    crlfDelay: Infinity
-  });
-
-  for await (const line of rl) {
-    if (!headers) {
-      headers = parseCSVLine(line);
-      console.log(`📋 Columnas detectadas: ${headers.slice(0, 6).join(', ')} ... (+${headers.length - 6} más)`);
-      console.log('');
-      continue;
-    }
-
-    const fields = parseCSVLine(line);
-    const row = {};
-    headers.forEach((h, i) => { row[h] = (fields[i] || '').trim(); });
-
+  for await (const row of readDenueRows(CSV_FILE,ENCODING)) {
     totalProcessed++;
 
     // Filtrar registros sin coordenadas válidas
-    const lat = parseFloat(row.latitud);
-    const lng = parseFloat(row.longitud);
-    if (!lat || !lng || isNaN(lat) || isNaN(lng) || lat < 14 || lat > 33 || lng < -118 || lng > -86) {
+    const prepared = prepareDenueRecord(row,{release:SOURCE_RELEASE,publish:!DRY_RUN && PUBLISH});
+    if (prepared.rejected) {
+      quality.rejectedByReason[prepared.rejected] = (quality.rejectedByReason[prepared.rejected] || 0) + 1;
       totalSkipped++;
       continue;
     }
 
     const category    = mapCategory(row.codigo_act);
     const subcategory = mapSubcategory(row.nombre_act);
-    const name        = (row.nom_estab || row.raz_social || 'Negocio DENUE').trim().slice(0, 200);
-    const address     = buildAddress(row);
-    const city        = (row.municipio || row.localidad || '').trim().slice(0, 120);
     const state       = (row.entidad || '').replace(/\?/g, 'e').trim().slice(0, 80);
 
     if (STATE_FILTER && normalizeText(state) !== STATE_FILTER) {
@@ -268,39 +263,19 @@ async function main() {
       continue;
     }
 
-    const phone       = row.telefono ? row.telefono.replace(/\D/g, '').slice(0, 20) : null;
-    const website     = row.www ? (row.www.startsWith('http') ? row.www : `https://${row.www}`) : null;
-    const slug        = slugify(name, row.id);
-
-    batch.push({
-      owner_id:          null,
-      name,
-      description:       row.nombre_act ? `${row.nombre_act}. Importado de DENUE INEGI.` : 'Importado de DENUE INEGI.',
-      category,
-      subcategory,
-      address,
-      city,
-      state_code:        row.cve_ent || null,
-      postal_code:       row.cod_postal || null,
-      country_code:      'MX',
-      latitude:          lat,
-      longitude:         lng,
-      website,
-      website_url:       website,
-      phone:             phone ? `+52${phone}` : null,
-      slug,
-      source_type:       'denue_inegi',
-      source_record_id:  `denue-mx-${row.id}`,
-      attribution_text:  `INEGI. Directorio Estadístico Nacional de Unidades Económicas (DENUE). Edición: ${SOURCE_RELEASE || 'sin comprobar; solo revisión'}.`,
-      status:            'approved',
-      business_status:   'active',
-      is_visible:        PUBLISH, // Publication is explicit, after batch QA.
-      is_claimed:        false,
-      is_verified:       false,
-      preferred_language:'es',
-      imported_at:       new Date().toISOString(),
-      updated_at:        new Date().toISOString()
-    });
+    if (seenIds.has(prepared.record.source_record_id)) {
+      quality.rejectedByReason.duplicate_source_id = (quality.rejectedByReason.duplicate_source_id || 0) + 1;
+      totalSkipped++; continue;
+    }
+    seenIds.add(prepared.record.source_record_id);
+    if (seenLocations.has(prepared.duplicateKey)) quality.potentialLocationDuplicates++;
+    seenLocations.add(prepared.duplicateKey);
+    for (const warning of prepared.warnings) quality.warnings[warning] = (quality.warnings[warning] || 0) + 1;
+    quality.categories[category] = (quality.categories[category] || 0) + 1;
+    if (prepared.record.phone) quality.withPhone++;
+    if (prepared.record.website) quality.withWebsite++;
+    batch.push({...prepared.record,subcategory});
+    if (PROVENANCE_FILE) fs.appendFileSync(PROVENANCE_FILE,JSON.stringify(prepared.provenance)+'\n');
 
     if (LIMIT > 0 && totalInserted + batch.length >= LIMIT) {
       const remaining = LIMIT - totalInserted;
@@ -328,8 +303,8 @@ async function main() {
 
       process.stdout.write(
         `\r  📥 Lote ${batchNum} | ` +
-        `${totalInserted.toLocaleString()} insertados | ` +
-        `${totalSkipped.toLocaleString()} sin coords | ` +
+        `${totalInserted.toLocaleString()} ${DRY_RUN ? 'preparados' : 'procesados'} | ` +
+        `${totalSkipped.toLocaleString()} omitidos | ` +
         `${pct}% | ` +
         `${rate} reg/s | ${elapsed}s`
       );
@@ -361,6 +336,21 @@ async function main() {
   console.log('');
   console.log(DRY_RUN ? 'Revisión completada sin modificar la base de datos.' : 'Lote procesado; comprueba recuentos reales y calidad antes de publicarlo.');
   console.log('');
+  quality.recordsRead = totalProcessed;
+  quality.recordsPrepared = totalInserted;
+  quality.batchErrors = totalErrors;
+  quality.rejectedOrFiltered = totalSkipped;
+  quality.databaseRowsWritten = DRY_RUN ? 0 : null;
+  quality.requiresReviewBeforePublication = true;
+  console.log('QUALITY_JSON=' + JSON.stringify(quality));
+  if (REPORT_FILE) {
+    const hash = createHash('sha256');
+    for await (const chunk of fs.createReadStream(CSV_FILE)) hash.update(chunk);
+    quality.sourceFileSha256 = hash.digest('hex');
+    fs.mkdirSync(path.dirname(REPORT_FILE),{recursive:true});
+    fs.writeFileSync(REPORT_FILE,JSON.stringify(quality,null,2)+'\n');
+  }
+  if (totalErrors) process.exitCode = 1;
 }
 
 main().catch(err => {

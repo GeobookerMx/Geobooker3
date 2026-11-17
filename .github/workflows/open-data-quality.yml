@@ -1,0 +1,38 @@
+name: Open data quality
+on:
+  push:
+    branches: [main, codex/open-data-quality-20261117]
+    paths:
+      - 'scripts/open-data/**'
+      - 'scripts/import-denue-geoscore.mjs'
+      - 'scripts/international/**'
+      - 'scripts/tests/*denue*'
+      - 'scripts/tests/test_overture_quality.py'
+      - '.github/workflows/open-data-quality.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/open-data/**'
+      - 'scripts/import-denue-geoscore.mjs'
+      - 'scripts/international/**'
+      - 'scripts/tests/*denue*'
+      - 'scripts/tests/test_overture_quality.py'
+      - '.github/workflows/open-data-quality.yml'
+permissions:
+  contents: read
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci --ignore-scripts
+      - run: node --test scripts/tests/denue-quality.test.mjs scripts/tests/denue-categories.test.mjs
+      - run: python -m unittest discover -s scripts/tests -p test_overture_quality.py -v

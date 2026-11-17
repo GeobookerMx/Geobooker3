@@ -99,9 +99,9 @@
       "defaultLanguage": "es",
       "timezone": "Europe/Madrid",
       "wave": 2,
-      "status": "planned",
-      "currentRecords": 0,
-      "nextTargetRecords": 1000,
+      "status": "preview",
+      "currentRecords": 1000,
+      "nextTargetRecords": 3000,
       "extractionEnabled": true
     },
     {
@@ -112,9 +112,9 @@
       "defaultLanguage": "en",
       "timezone": "Europe/London",
       "wave": 3,
-      "status": "planned",
-      "currentRecords": 0,
-      "nextTargetRecords": 1000,
+      "status": "preview",
+      "currentRecords": 1000,
+      "nextTargetRecords": 3000,
       "extractionEnabled": true
     },
     {

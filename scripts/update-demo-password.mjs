@@ -1,40 +1,38 @@
-import { createClient } from '@supabase/supabase-js'
+// Explicit maintenance command. Never run as part of builds or deployment.
+// Provide credentials and DEMO_NEW_PASSWORD through a private environment.
+import 'dotenv/config';
+import { createClient } from '@supabase/supabase-js';
 
-// ====== CAMBIA ESTOS 3 VALORES ======
-const SUPABASE_URL = 'https://dllckokqkgcraxyxsfqc.supabase.co'
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsbGNrb2txa2djcmF4eXhzZnFjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Nzk4ODcyMSwiZXhwIjoyMDczNTY0NzIxfQ.C-8SZaLHXuUJtCnwPHJJFF7i49amwXpTEBuvNKpb8yA'
-const DEMO_USER_ID = '379796dd-0c42-40fa-9d48-3d3e7ccc64db'
-// ====================================
+const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const userId = process.env.DEMO_USER_ID;
+const password = process.env.DEMO_NEW_PASSWORD;
 
-const NEW_DEMO_PASSWORD = 'GeoDemo2026!'
-
-const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-})
-
-async function main() {
-  try {
-    const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
-      DEMO_USER_ID,
-      {
-        password: NEW_DEMO_PASSWORD,
-        email_confirm: true,
-      }
-    )
-
-    if (error) throw error
-
-    console.log('✅ Contraseña actualizada correctamente')
-    console.log('User ID:', data.user?.id)
-    console.log('Nuevo password:', NEW_DEMO_PASSWORD)
-  } catch (err) {
-    console.error('❌ Error actualizando la contraseña demo:')
-    console.error(err)
-    process.exit(1)
-  }
+if (url !== 'https://dllckokqkgcraxyxsfqc.supabase.co') {
+  console.error('Este comando solo admite el proyecto Supabase de Geobooker.');
+  process.exit(1);
+}
+if (!key || !userId || !password) {
+  console.error('Faltan SUPABASE_SERVICE_ROLE_KEY, DEMO_USER_ID o DEMO_NEW_PASSWORD en el entorno privado.');
+  process.exit(1);
+}
+if (!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(userId) || password.length < 12) {
+  console.error('Se requiere un UUID de demostración válido y una contraseña de al menos 12 caracteres.');
+  process.exit(1);
 }
 
-main()
+const client = createClient(url, key, {auth:{persistSession:false,autoRefreshToken:false}});
+try {
+  const {data:admin,error:lookupError} = await client.from('admin_users').select('id').eq('id',userId).maybeSingle();
+  if (lookupError || admin) {
+    console.error('No se puede modificar una cuenta administrativa mediante este comando.');
+    process.exitCode = 1;
+  } else {
+    const {error} = await client.auth.admin.updateUserById(userId,{password});
+    if (error) throw new Error('demo_password_update_failed');
+    console.log('Contraseña de demostración actualizada. Su valor no se muestra.');
+  }
+} catch {
+  console.error('No se pudo actualizar la cuenta de demostración. Revisa la configuración privada.');
+  process.exitCode = 1;
+}

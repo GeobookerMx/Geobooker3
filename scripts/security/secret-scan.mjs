@@ -24,7 +24,7 @@ const allowedPublicEnvKeys = new Set([
   'VITE_CRM2_IMPORT_REVIEW_ENABLED'
 ]);
 
-const placeholderPattern = /^(|changeme|change_me|your_|tu_|xxx|xxxx|example|placeholder|<.+>|\$\{.+\})/i;
+const placeholderPattern = /^(?:changeme|change_me|your_|tu_|xxx|xxxx|example|placeholder|<.+>|\$\{.+\})/i;
 const findings = [];
 
 function isExampleFile(file) {

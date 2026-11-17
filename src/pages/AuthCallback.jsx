@@ -7,7 +7,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { getAuthErrorCode, trackAuthFunnelEvent, trackUserLogin } from '../services/analyticsService';
+import { trackAuthFunnelEvent, trackUserLogin } from '../services/analyticsService';
+import { getOAuthError } from '../utils/oauthErrors';
 import { getPlatform } from '../utils/platformDetection';
 import { useAuth } from '../contexts/AuthContext';
 import { activatePremiumPromotion } from '../services/premiumService';
@@ -19,13 +20,15 @@ const AuthCallback = () => {
     const [searchParams] = useSearchParams();
     const [status, setStatus] = useState('processing');
     const { user, loading, authError, retrySession } = useAuth();
+    const callbackError = getOAuthError(searchParams.toString(), window.location.hash);
+    const callbackErrorCode = callbackError?.code;
 
     useEffect(() => {
-        const error = searchParams.get('error');
-        if (error) {
+        if (callbackErrorCode) {
             setStatus('error');
             trackAuthFunnelEvent('oauth_callback_error', {
-                funnel: 'login', method: 'oauth', errorCode: getAuthErrorCode(error)
+                funnel: 'login', method: 'oauth', errorCode: callbackErrorCode,
+                dedupeKey: `oauth_callback_error:${callbackErrorCode}`
             });
             return;
         }
@@ -81,7 +84,7 @@ const AuthCallback = () => {
         }
         const redirectTimeoutId = setTimeout(() => navigate('/dashboard', { replace: true }), 500);
         return () => clearTimeout(redirectTimeoutId);
-    }, [user, loading, authError, navigate, searchParams]);
+    }, [user, loading, authError, navigate, searchParams, callbackErrorCode]);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
@@ -125,7 +128,7 @@ const AuthCallback = () => {
                             Error de autenticación
                         </h2>
                         <p className="mt-2 text-gray-500">
-                            No se pudo completar el acceso. Puedes volver a intentarlo.
+                            {callbackError?.message || 'No se pudo completar el acceso. Puedes volver a intentarlo.'}
                         </p>
                         <button type="button" onClick={() => navigate('/login', { replace: true })} className="mt-5 min-h-[44px] rounded-xl bg-blue-600 px-6 py-3 text-white">Volver al acceso</button>
                     </>

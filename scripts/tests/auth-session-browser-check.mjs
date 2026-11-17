@@ -26,15 +26,17 @@ const mocks = {
   tracking: `export const clarityIdentifyUser=()=>{};`,
   conversions: `export const observeMetaConversions=async()=>{}; export const rememberMetaSignup=()=>{};`,
   analytics: `export const getAuthErrorCode=()=> 'test'; export const trackAuthFunnelEvent=()=>{}; export const trackUserLogin=()=>{};`,
+  oauth: `export const beginOAuthSignIn=async()=>{};`,
   platform: `export const getPlatform=()=>window.__platform;`,
   premium: `export const activatePremiumPromotion=async()=>{};`,
-  promotions: `export const isPremiumPromoActive=()=>false;`,
-  intent: `export const clearPremiumIntent=()=>{}; export const hasPremiumIntent=()=>false;`,
+  promotions: `export const isPremiumPromoActive=()=>false; export const getPremiumPromoDeadlineLabel=()=>'';`,
+  intent: `export const clearPremiumIntent=()=>{}; export const hasPremiumIntent=()=>false; export const getPremiumIntentPreference=()=>null; export const rememberPremiumIntent=()=>{};`,
 };
 const aliases = new Map([
   ['lib/supabase', 'supabase'], ['@capacitor/core', 'capacitor'],
   ['services/trackingService', 'tracking'], ['services/metaConversions', 'conversions'],
   ['services/analyticsService', 'analytics'], ['utils/platformDetection', 'platform'],
+  ['services/oauthService', 'oauth'],
   ['services/premiumService', 'premium'], ['config/promotions', 'promotions'], ['config/premiumFlow', 'intent'],
 ]);
 const bundle = await build({
@@ -45,6 +47,7 @@ const bundle = await build({
     import { AuthProvider, useAuth } from './src/contexts/AuthContext.jsx';
     import ProtectedRoute from './src/components/ProtectedRoute.jsx';
     import AuthCallback from './src/pages/AuthCallback.jsx';
+    import LoginPage from './src/pages/LoginPage.jsx';
     const originalTimer = window.setTimeout.bind(window);
     const originalCancel = window.clearTimeout.bind(window);
     const startupTimers = new Map();
@@ -104,6 +107,26 @@ const bundle = await build({
       root.unmount(); host.remove();
       assert(window.__listeners.size === 0, platform + ': listener leaked');
     }
+    async function checkFailure(platform, screen, fragmentOnly=false) {
+      window.__platform=platform;
+      window.__listeners=new Set();
+      window.__sessionRead=Promise.resolve({data:{session:null},error:null});
+      const params='error=server_error&error_code=unexpected_failure&error_description=Unable+to+exchange+external+code%3A+PRIVATE_CODE+private%40example.invalid';
+      window.location.hash=fragmentOnly ? params : '';
+      const host=document.createElement('div');document.body.append(host);
+      const root=createRoot(host);
+      root.render(<MemoryRouter initialEntries={['/'+screen+(fragmentOnly ? '' : '?'+params)]}>
+        <AuthProvider><Routes>
+          <Route path='/auth/callback' element={<AuthCallback/>}/>
+          <Route path='/login' element={<LoginPage/>}/>
+        </Routes></AuthProvider>
+      </MemoryRouter>);
+      await wait();await wait();await wait();
+      assert(host.textContent.includes('Tu proveedor no pudo completar el acceso'), platform+': provider failure is hidden on '+screen);
+      assert(!host.textContent.includes('PRIVATE_CODE') && !host.textContent.includes('private@example.invalid'), platform+': raw provider details leaked');
+      if(screen==='login') assert(host.querySelector('[role=alert]'),platform+': login has no accessible failure notice');
+      root.unmount();host.remove();window.location.hash='';
+    }
     (async () => {
       const passed=[];
       try {
@@ -115,6 +138,11 @@ const bundle = await build({
         for(const provider of ['google','facebook']) {
           await check('web',true,provider); passed.push('web:'+provider+'-callback');
         }
+        for(const platform of ['web','ios','android']) {
+          await checkFailure(platform,'auth/callback'); passed.push(platform+':provider-error-callback');
+          await checkFailure(platform,'login'); passed.push(platform+':provider-error-login');
+        }
+        await checkFailure('web','auth/callback',true); passed.push('web:fragment-only-provider-error');
         document.getElementById('auth-check-results').textContent=JSON.stringify({ok:true,passed});
       } catch(error) {
         document.getElementById('auth-check-results').textContent=JSON.stringify({ok:false,passed,error:error.message});

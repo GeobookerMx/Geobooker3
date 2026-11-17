@@ -40,6 +40,7 @@ import { activatePremiumPromotion } from "./services/premiumService";
 import { isPremiumPromoActive } from "./config/promotions";
 import { clearPremiumIntent, hasPremiumIntent } from "./config/premiumFlow";
 import { markPasswordRecoveryVerified } from "./utils/authRedirects";
+import { getOAuthError } from "./utils/oauthErrors";
 
 const ChatWidget = lazy(() => import("./components/agent/ChatWidget"));
 const CookieConsent = lazy(() => import("./components/CookieConsent"));
@@ -168,25 +169,28 @@ async function handleNativeAuthLink(url) {
       return true;
     }
 
-    if (urlObj.searchParams.has('error')) {
-      const description = urlObj.searchParams.get('error_description') || urlObj.searchParams.get('error');
+    const callbackError = getOAuthError(urlObj.search, urlObj.hash);
+    if (callbackError) {
       trackAuthFunnelEvent('oauth_callback_error', {
         funnel: 'login',
         method: 'oauth',
-        errorCode: String(description || 'oauth_error').slice(0, 80),
+        errorCode: callbackError.code,
         metadata: {
           source: 'native_deep_link_error',
           native_callback: true
         }
       });
-      window.location.hash = `/login?error=${encodeURIComponent(description)}`;
+      window.location.hash = `/login?error=${callbackError.code}`;
       return true;
     }
 
     window.location.hash = isRecovery ? '/reset-password' : `/auth/callback${urlObj.search || ''}`;
     return true;
   } catch (error) {
-    console.error('[Auth Global] Error procesando el enlace de autenticacion:', error);
+    const callbackError = getOAuthError(new URLSearchParams({
+      error: 'callback_failed', error_description: String(error?.message || '')
+    }).toString());
+    console.warn('[Auth Global] No se pudo completar el acceso:', callbackError.code);
 
     // Si la otra ruta nativa ya estableció la sesión, conservar el éxito en vez
     // de sobrescribirlo con una redirección tardía a /login.
@@ -203,13 +207,13 @@ async function handleNativeAuthLink(url) {
     trackAuthFunnelEvent('oauth_callback_error', {
       funnel: 'login',
       method: 'oauth',
-      errorCode: String(error?.message || 'auth_failed').slice(0, 80),
+      errorCode: callbackError.code,
       metadata: {
         source: 'native_deep_link_exception',
         native_callback: true
       }
     });
-    window.location.hash = '/login?error=auth_failed';
+    window.location.hash = `/login?error=${callbackError.code}`;
     return true;
   }
 }

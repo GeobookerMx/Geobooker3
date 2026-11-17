@@ -35,6 +35,8 @@ Las vistas previas y el dominio Netlify del proyecto `geobooker3` muestran tambi
 
 La entrega del aviso queda en revisión, sin activarlo en producción mientras Apple siga fallando y Facebook tenga un Client ID incorrecto. La corrección independiente de analítica puede publicarse sin activar la barrera.
 
+Actualización posterior del 17/11: el usuario reiteró expresamente activar el acceso obligatorio en web/PWA de geobooker.com.mx, manteniendo pendiente Apple. Google fue confirmado funcional y el Client ID público de Facebook ya devuelve 3176918089184321. Se procede con la barrera de navegación y el retorno al destino solicitado. Esto no convierte los datos públicos del directorio en privados ni acredita instalaciones móviles. Las apps instaladas requieren su propia actualización para recibir el código.
+
 ## Verificación
 
 - 18 pruebas Node de sesión/recuperación/política de acceso y 1 prueba de contrato de analítica pasan.

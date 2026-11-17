@@ -202,6 +202,7 @@ export default function BusinessFormPage() {
   });
 
   const [submitting, setSubmitting] = useState(false);
+  const submitLock = useRef(false);
   const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [mapLoaded, setMapLoaded] = useState(false);
 
@@ -334,19 +335,12 @@ export default function BusinessFormPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitLock.current) return;
 
     if (!user?.id) {
       toast.error("Debes iniciar sesión para registrar tu negocio");
       navigate('/login');
       return;
-    }
-
-    if (publicationType === 'business' && businessCount >= 1 && !isPremiumPromoActive()) {
-      const { data: isPremium, error: premiumError } = await supabase.rpc('get_user_premium_status', { user_id: user.id });
-      if (premiumError || !isPremium) {
-        setShowUpgradeModal(true);
-        return;
-      }
     }
 
     // Validación de campos requeridos
@@ -376,7 +370,15 @@ export default function BusinessFormPage() {
     }
 
     try {
+      submitLock.current = true;
       setSubmitting(true);
+      if (publicationType === 'business' && businessCount >= 1 && !isPremiumPromoActive()) {
+        const { data: isPremium, error: premiumError } = await supabase.rpc('get_user_premium_status', { user_id: user.id });
+        if (premiumError || !isPremium) {
+          setShowUpgradeModal(true);
+          return;
+        }
+      }
       const createdBusiness = await createBusiness({ ...form, listing_type: publicationType }, user, { imageFiles });
       if (createdBusiness?.id) {
         trackBusinessCreated(createdBusiness.id, createdBusiness.name || form.business_name, {
@@ -388,13 +390,16 @@ export default function BusinessFormPage() {
       if (createdBusiness?.image_upload_warning) {
         toast.success('El espacio fue registrado. Podras agregar las fotos desde tu panel.');
       } else {
-        toast.success(publicationType === 'space_rental' ? '¡Espacio enviado a revision!' : '¡Negocio registrado exitosamente!');
+        toast.success(publicationType === 'space_rental' ? '¡Espacio enviado a revisión!'
+          : createdBusiness?.status === 'approved' ? 'Tu negocio ya está publicado.'
+            : 'Tu negocio se guardó y está pendiente de revisión.');
       }
       navigate("/dashboard");
     } catch (error) {
       console.error("Error:", error);
       toast.error("Error al registrar el negocio: " + error.message);
     } finally {
+      submitLock.current = false;
       setSubmitting(false);
     }
   };
@@ -449,7 +454,7 @@ export default function BusinessFormPage() {
             <p className="text-blue-100 mt-2">
               {publicationType === 'space_rental'
                 ? 'Cualquier usuario registrado puede enviar un espacio. Geobooker lo revisara antes de publicarlo.'
-                : 'Únete a Geobooker y haz que miles de clientes te encuentren.'}
+                : 'Crea el perfil de tu negocio. Lo revisaremos antes de publicarlo.'}
             </p>
           </div>
 
@@ -468,6 +473,7 @@ export default function BusinessFormPage() {
                 <button
                   type="button"
                   onClick={() => selectPublicationType('business')}
+                  disabled={submitting}
                   className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition ${publicationType === 'business' ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 hover:border-blue-300'}`}
                 >
                   <Store className="h-6 w-6" />
@@ -476,6 +482,7 @@ export default function BusinessFormPage() {
                 <button
                   type="button"
                   onClick={() => selectPublicationType('space_rental')}
+                  disabled={submitting}
                   className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition ${publicationType === 'space_rental' ? 'border-emerald-600 bg-emerald-50 text-emerald-900' : 'border-gray-200 hover:border-emerald-300'}`}
                 >
                   <Home className="h-6 w-6" />
@@ -792,24 +799,25 @@ export default function BusinessFormPage() {
             )}
 
             {/* Botones */}
-            <div className="pt-6 border-t border-gray-200 flex justify-between items-center">
+            <div className="flex flex-col gap-4 border-t border-gray-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-gray-500">
                 <span className="text-red-500">*</span> Campos obligatorios
               </p>
-              <div className="flex gap-4">
+              <div className="flex w-full flex-col-reverse gap-3 sm:w-auto sm:flex-row">
                 <button
                   type="button"
                   onClick={() => navigate("/dashboard")}
-                  className="px-6 py-3 text-gray-700 font-medium hover:bg-gray-100 rounded-lg transition"
+                  disabled={submitting}
+                  className="min-h-[44px] rounded-lg px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="min-h-[44px] rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-3 font-bold text-white shadow-lg transition hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {submitting ? "Registrando..." : publicationType === 'space_rental' ? 'Enviar espacio a revision' : "Registrar Negocio 🚀"}
+                  {submitting ? "Guardando..." : publicationType === 'space_rental' ? 'Enviar espacio a revisión' : 'Enviar negocio a revisión'}
                 </button>
               </div>
             </div>

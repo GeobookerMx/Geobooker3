@@ -13,9 +13,11 @@ La consulta pública de Apple devolvió:
 | Campo público `version` | `Version 57` (texto literal de Apple; no prueba el número interno de build) |
 | Publicación | `2026-10-07T18:03:48Z` |
 | iOS mínimo publicado | `15.0` |
-| Proyecto fuente local | `MARKETING_VERSION=1.4.10`, `CURRENT_PROJECT_VERSION=55` |
+| Proyecto fuente al iniciar la revisión | `MARKETING_VERSION=1.4.10`, `CURRENT_PROJECT_VERSION=55` |
 
 La diferencia entre la ficha y el proyecto impide identificar el binario publicado solo con este checkout. Hay que recuperar su `Package.resolved`, archivo de compilación o log de resolución de la Mac/CI que lo publicó. El catálogo de Apple no expone la versión de FBSDKCoreKit.
+
+Actualización del 17 de noviembre: el usuario confirmó que App Store Connect muestra como última versión `1.5.10`, build `58`. Con esa evidencia se prepara `1.5.11 (59)` en Debug y Release. No se ha subido a TestFlight ni publicado; el SDK del binario anterior sigue sin acreditarse.
 
 ## Asociación de Meta comprobada
 
@@ -27,7 +29,7 @@ Inicialmente Meta devolvía reglas AAM `r1` y `r2`, con AAM habilitado en el con
 
 ## Integración preparada
 
-- Repositorio oficial `https://github.com/meta/facebook-ios-sdk`; selección exacta **19.0.1** para la siguiente compilación. Hasta compilar en Xcode es una versión seleccionada, no una dependencia resuelta ni una versión publicada.
+- Repositorio oficial `https://github.com/meta/facebook-ios-sdk`; selección exacta **19.0.1** para la siguiente compilación. La compilación nativa de revisión pasó en la iMac; conservar además `Package.resolved` como evidencia de resolución. No se debe confundir esta integración con el SDK del binario publicado.
 - Único producto directo Meta: `FacebookCore`. `FacebookBasics`, `FBSDKCoreKit_Basics`, `FacebookAEM` y `FBAEMKit` son dependencias transitivas del producto oficial. No se agregan LoginKit, ShareKit ni GamingServicesKit.
 - iOS mínimo del proyecto sigue en **15.0**, también exigido por Capacitor 8.6.2 y el plugin ATT 8.1.5. Meta 19.0.1 exige iOS 15. No se cambia la cobertura de dispositivos frente al proyecto actual. Capacitor 8 requiere Xcode 26+, pero el binario oficial FBAEMKit 19.0.1 fue construido con Swift 6.4: su interfaz contiene calificadores que Xcode 26.3 no admite. La prueba remota confirmó ese error. Se selecciona Xcode 27.2 para esta integración; Apple lo identifica con Swift 6.4. Esto afecta al compilador requerido en Mac/CI, no al iOS mínimo de los usuarios.
 - Se registró el plugin local en `GeobookerViewController`, conectado al storyboard. Antes existía el Swift del plugin pero no su registro en el bridge ni en la lista de plugins.
@@ -72,10 +74,27 @@ Sin ATT autorizado esta implementación no envía conversiones personales a Meta
 - Workflow `.github/workflows/ios-meta-review.yml`: ejecutor macOS, resolución SPM, Release archive y evidencia de dependencias/manifiestos. Las ejecuciones de rama compilan sin firma. La subida a TestFlight es una opción manual y no presenta la app a App Store Review.
 - `scripts/ios/release-evidence.py` exige la resolución 19.0.1 y guarda `Package.resolved` e información del archive, sin el token cliente. El artefacto distingue explícitamente pruebas físicas y recepción Meta pendientes.
 - La subida firmada necesita los secretos del repositorio: `APPLE_DISTRIBUTION_P12_BASE64`, `APPLE_DISTRIBUTION_P12_PASSWORD`, `APPLE_PROVISIONING_PROFILE_BASE64`, `APP_STORE_CONNECT_PRIVATE_KEY_BASE64`, `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`. Deben configurarse directamente en GitHub, sin pegarlos en el chat ni en el repositorio. El perfil debe ser App Store para `com.geobooker.ios`, equipo `QCN4SYVAQ4`.
-- Variables públicas/secretos de build: URL y clave pública Supabase y clave de Maps según el workflow. Nunca service-role. Antes de subir, confirmar en App Store Connect la versión numérica y un build nuevo. No se incrementó a partir de una suposición sobre `Version 57`.
+- Variables públicas/secretos de build: URL y clave pública Supabase y clave de Maps según el workflow. Nunca service-role. La versión preparada `1.5.11 (59)` se basa en la confirmación del usuario de `1.5.10 (58)` en App Store Connect; comprobar que el build siga disponible antes de subir.
 - Las rutas SPM locales generadas en Windows tienen barras invertidas; `npx cap sync ios` se ejecuta en macOS antes de resolver para regenerarlas correctamente.
 
-## Matriz de validación física pendiente
+## Compilación y firma
+
+La compilación con Xcode 27.2 resolvió el problema del compilador y llegó a la fase final de firma de frameworks. Esa fase intentaba firmar aun con `CODE_SIGNING_ALLOWED=NO`; se corrigió para respetar ese ajuste en pruebas sin certificado. La firma normal para TestFlight permanece activa.
+
+El 17 de noviembre el usuario aplicó la corrección en su checkout independiente `Geobooker-Meta-Review-20261115` y compartió `BUILD SUCCEEDED` para Release sin firma con Xcode 27.1. Los ajustes mostrados por Xcode confirmaron bundle `com.geobooker.ios`, equipo `QCN4SYVAQ4` e iOS mínimo `15.0`. Esta compilación todavía tenía versión `1.4.10 (55)`, anterior al incremento y a la incorporación de las mejoras estacionales; se debe recompilar la entrega final. Este resultado no acredita firma, recepción de eventos ni pruebas físicas de ATT.
+
+## Temporada 2026 y experiencia en el mismo build
+
+- Sección ligera de descubrimiento navideño integrada en el buscador: regalos, restaurantes, pastelerías, florerías, juguetes y salones. Cada acceso utiliza la búsqueda real y conserva el mercado seleccionado. Español e inglés; otros idiomas siguen el fallback inglés.
+- Vigencia por fecha local: 15 de noviembre de 2026 al 6 de enero de 2027. Desde el 26 de diciembre cambia a bienvenida de 2027; el 7 de enero se oculta sin necesitar otra actualización. El usuario puede ocultarla de manera persistente.
+- Se retiró del inicio la referencia al modal vencido de 2024/2025. La propuesta nueva usa iconos vectoriales y decoración estática, sin animaciones ni recursos pesados.
+- Buscador con botón de borrar y retorno de foco, teclado de búsqueda, estado accesible y sugerencias con botones de al menos 44 px. Los botones tienen espacio reservado para no tapar el texto.
+- Publicación con protección frente al doble toque antes de llamadas asíncronas y botones adaptados a pantallas pequeñas. Los mensajes distinguen guardado pendiente de revisión y publicación aprobada; no prometen publicación al guardar.
+- Ocho pruebas específicas pasan: seis de conversiones y dos de vigencia/contenido estacional. Compilación web comprobada. Revisión visual y funcional en iPhone sigue pendiente.
+
+Texto propuesto para novedades: «Descubre negocios y opciones para tus regalos y reuniones de temporada. Mejoramos la búsqueda y el registro de negocios, con información más clara sobre su revisión y publicación. Incluimos ajustes de privacidad y medición de campañas.» No se ha publicado en App Store Connect.
+
+## Matriz de pruebas físicas
 
 | Prueba en Release/TestFlight | Resultado esperado | Evidencia pendiente |
 | --- | --- | --- |

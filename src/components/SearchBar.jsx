@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from '../contexts/LocationContext';
 import { searchPlacesUniversal } from '../services/googlePlacesService';
@@ -7,6 +7,7 @@ import { trackSearch } from '../services/analyticsService';
 import { isAwardSearchQuery } from '../utils/awardUtils';
 import { matchesSemanticText } from '../utils/semanticDictionary';
 import { analyzeSearchIntent, buildIntentSearchQueries } from '../utils/searchIntentEngine';
+import SeasonalDiscovery from './common/SeasonalDiscovery';
 
 const LOCAL_RESULT_LIMIT = 20;
 
@@ -75,6 +76,7 @@ const SearchBar = ({
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState(initialValue);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const inputRef = useRef(null);
   const { userLocation, permissionGranted, requestLocationPermission } = useLocation();
 
   const intentPreview = useMemo(() => {
@@ -318,7 +320,11 @@ const SearchBar = ({
 
       <div className="relative">
         <input
-          type="text"
+          ref={inputRef}
+          type="search"
+          enterKeyHint="search"
+          autoComplete="off"
+          aria-label={t('home.searchPlaceholder')}
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
@@ -326,20 +332,16 @@ const SearchBar = ({
           }}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           placeholder={t('home.searchPlaceholder', { defaultValue: 'Que buscas? Ej: farmacia, cemento, flete, tacos...' })}
-          className="w-full rounded-full border-2 border-gray-200 bg-white px-6 py-4 text-lg text-gray-900 shadow-lg outline-none transition duration-200 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-full border-2 border-gray-200 bg-white py-4 pl-5 pr-28 text-base text-gray-900 shadow-lg outline-none transition duration-200 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-lg [&::-webkit-search-cancel-button]:appearance-none"
           disabled={loading}
         />
 
-        {loading && searchTerm && (
-          <div className="absolute left-6 top-full mt-1 text-sm font-medium text-blue-600">
-            Buscando "{searchTerm}"...
-          </div>
-        )}
-
         <button
+          type="button"
+          aria-label={t('common.search')}
           onClick={() => handleSearch()}
           disabled={loading || !searchTerm.trim()}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-blue-600 p-3 text-white transition duration-200 hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+          className="absolute right-2 top-1/2 flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-full bg-blue-600 p-3 text-white transition duration-200 hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
         >
           {loading ? (
             <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-t-2 border-white"></div>
@@ -349,7 +351,21 @@ const SearchBar = ({
             </svg>
           )}
         </button>
+        {searchTerm && !loading && (
+          <button type="button" aria-label={t('common.clearSearch', { defaultValue: 'Clear search' })}
+            onClick={() => { setSearchTerm(''); setShowSuggestions(false); inputRef.current?.focus(); }}
+            className="absolute right-14 top-1/2 flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-full text-xl text-slate-500 hover:bg-slate-100">
+            <span aria-hidden="true">×</span>
+          </button>
+        )}
       </div>
+
+      {loading && searchTerm && (
+        <p role="status" className="mt-3 rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm">
+          {t('common.searchingFor', { query: searchTerm })}
+        </p>
+      )}
+      {!searchTerm.trim() && <SeasonalDiscovery onSearch={handleSuggestionClick} disabled={loading} />}
 
       {intentPreview && (
         <div className="mt-3 rounded-2xl border border-cyan-200 bg-gradient-to-r from-cyan-50 to-blue-50 p-4 text-left shadow-sm">
@@ -398,9 +414,11 @@ const SearchBar = ({
             })
             .slice(0, 14)
             .map((category, index) => (
-              <div
+              <button
                 key={index}
-                className="cursor-pointer border-b border-gray-100 px-4 py-3 hover:bg-gray-50 last:border-b-0"
+                type="button"
+                disabled={loading}
+                className="min-h-[44px] w-full cursor-pointer border-b border-gray-100 px-4 py-3 text-left hover:bg-gray-50 last:border-b-0"
                 onClick={() => handleSuggestionClick(category)}
               >
                 <div className="flex items-center">
@@ -409,7 +427,7 @@ const SearchBar = ({
                   </svg>
                   <span className="text-gray-700">{category}</span>
                 </div>
-              </div>
+              </button>
             ))}
         </div>
       )}

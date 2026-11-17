@@ -47,8 +47,10 @@ jobs:
           xcodebuild -version
           python3 -c 'import subprocess; v=subprocess.check_output(["xcodebuild","-version"],text=True).split()[1]; assert int(v.split(".")[0]) >= 27, "Meta 19.0.1 binaries require the Swift 6.4 compiler shipped in Xcode 27"'
       - run: npm ci
-      - name: Conversion behavior tests
-        run: node scripts/tests/meta-conversions.test.mjs
+      - name: Conversion and seasonal behavior tests
+        run: |
+          node scripts/tests/meta-conversions.test.mjs
+          node scripts/tests/holiday-season.test.mjs
       - run: npm run build
       - name: Sync Capacitor on macOS
         run: npx cap sync ios

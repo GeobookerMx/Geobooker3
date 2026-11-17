@@ -1,44 +1,64 @@
 // src/pages/AuthCallback.jsx
 // Maneja el callback de OAuth (Google, Apple, Facebook) después de autenticación.
 //
-// Estrategia:
-// - Espera activamente al evento SIGNED_IN de Supabase en lugar de hacer polling
-//   sobre getSession(). Esto evita el race condition donde getSession() responde
-//   `null` porque el token de la URL todavía no se procesó internamente.
-// - Hasta 8s de espera total: si para entonces no llegó SIGNED_IN, revisa una vez
-//   más getSession() (cubre el caso donde la sesión ya estaba persistida y no
-//   se dispara un nuevo evento).
+// AuthProvider owns session restoration and Supabase events on every platform.
+// This page must not run a competing timeout that sends an authenticated user
+// back to login while the provider is still processing the OAuth callback.
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { getAuthErrorCode, trackAuthFunnelEvent, trackUserLogin } from '../services/analyticsService';
 import { getPlatform } from '../utils/platformDetection';
-import { Capacitor } from '@capacitor/core';
+import { useAuth } from '../contexts/AuthContext';
 import { activatePremiumPromotion } from '../services/premiumService';
 import { isPremiumPromoActive } from '../config/promotions';
 import { clearPremiumIntent, hasPremiumIntent } from '../config/premiumFlow';
-
-const MAX_WAIT_MS = Capacitor.isNativePlatform() ? 15000 : 8000;
 
 const AuthCallback = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const [status, setStatus] = useState('processing');
+    const { user, loading, authError, retrySession } = useAuth();
 
     useEffect(() => {
-        let resolved = false;
-        let timeoutId;
-        let redirectTimeoutId;
-        let subscription;
+        const error = searchParams.get('error');
+        if (error) {
+            setStatus('error');
+            trackAuthFunnelEvent('oauth_callback_error', {
+                funnel: 'login', method: 'oauth', errorCode: getAuthErrorCode(error)
+            });
+            return;
+        }
+        if (loading) {
+            setStatus('processing');
+            return;
+        }
+        if (authError) {
+            setStatus('timeout');
+            return;
+        }
+        if (!user?.id) {
+            setStatus('error');
+            return;
+        }
 
-        const persistProfile = async (sessionUser) => {
+        setStatus('success');
+        const provider = user.app_metadata?.provider || 'oauth';
+        try {
+            trackAuthFunnelEvent('oauth_callback_success', {
+                funnel: 'login', method: provider, userId: user.id
+            });
+            Promise.resolve(trackUserLogin(user.id, provider)).catch(() => {});
+        } catch { /* Analytics cannot prevent navigation after a confirmed login. */ }
+
+        const persistProfile = async () => {
             try {
                 const registrationDomain = window.location.hostname;
                 const preferredLanguage = registrationDomain.includes('.mx') ? 'es' : 'en';
                 await supabase.from('user_profiles').upsert({
-                    id: sessionUser.id,
-                    email: sessionUser.email,
-                    full_name: sessionUser.user_metadata?.full_name || sessionUser.email?.split('@')[0],
+                    id: user.id,
+                    email: user.email,
+                    full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
                     preferred_language: preferredLanguage,
                     registration_domain: registrationDomain,
                     last_login_at: new Date().toISOString(),
@@ -52,100 +72,16 @@ const AuthCallback = () => {
             }
         };
 
-        const onSuccess = async (session) => {
-            if (resolved) return;
-            resolved = true;
-            clearTimeout(timeoutId);
-            if (subscription) subscription.unsubscribe();
-
-            setStatus('success');
-            const provider = session.user?.app_metadata?.provider || 'oauth';
-            trackAuthFunnelEvent('oauth_callback_success', {
-                funnel: 'login',
-                method: provider,
-                userId: session.user.id
-            });
-            try { trackUserLogin(session.user.id, provider); } catch (e) { /* analytics opcional */ }
-            // El acceso ya fue confirmado. Perfil y Premium son tareas secundarias
-            // y nunca deben bloquear la entrada del usuario a la aplicación.
-            void persistProfile(session.user);
-
-            if (isPremiumPromoActive() && hasPremiumIntent()) {
-                void activatePremiumPromotion(session.access_token)
-                    .then(() => clearPremiumIntent())
-                    .catch((premiumError) => {
-                        console.warn('[AuthCallback] No se pudo activar Premium:', premiumError);
-                    });
-            }
-
-            // Pequeño delay para mostrar el mensaje de éxito antes de redirigir
-            redirectTimeoutId = setTimeout(() => navigate('/dashboard', { replace: true }), 500);
-        };
-
-        const onFailure = (reason) => {
-            if (resolved) return;
-            resolved = true;
-            clearTimeout(timeoutId);
-            if (subscription) subscription.unsubscribe();
-
-            console.error('[AuthCallback] Falló el callback:', reason);
-            trackAuthFunnelEvent('oauth_callback_error', {
-                funnel: 'login',
-                method: 'oauth',
-                errorCode: getAuthErrorCode(reason)
-            });
-            setStatus(reason === 'timeout' ? 'timeout' : 'error');
-            redirectTimeoutId = setTimeout(() => {
-                navigate('/login?error=' + encodeURIComponent(reason || 'callback_failed'), { replace: true });
-            }, 1500);
-        };
-
-        const run = async () => {
-            // 1. Revisar error explícito en query params (?error=...)
-            const error = searchParams.get('error');
-            const errorDescription = searchParams.get('error_description');
-            if (error) {
-                onFailure(errorDescription || error);
-                return;
-            }
-
-            // 2. Suscribirse a onAuthStateChange ANTES de cualquier getSession()
-            //    para no perder el evento SIGNED_IN si llega entre llamadas.
-            const sub = supabase.auth.onAuthStateChange((event, session) => {
-                if (resolved) return;
-                if (event === 'SIGNED_IN' && session) {
-                    onSuccess(session);
-                }
-            });
-            subscription = sub.data.subscription;
-
-            // 3. Revisar si Supabase ya tiene una sesión persistida (caso de retorno
-            //    rápido o de PWA con detectSessionInUrl=true que ya procesó el token).
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session) {
-                    onSuccess(session);
-                    return;
-                }
-            } catch (e) {
-                // Ignorar — seguimos esperando el evento
-            }
-
-        };
-
-        // El timeout cubre toda la operación, incluida una llamada a getSession()
-        // que nunca resuelva. onFailure marca resolved antes de cambiar el estado,
-        // por lo que cualquier respuesta tardía queda ignorada de forma segura.
-        timeoutId = setTimeout(() => onFailure('timeout'), MAX_WAIT_MS);
-        run();
-
-        return () => {
-            resolved = true;
-            clearTimeout(timeoutId);
-            clearTimeout(redirectTimeoutId);
-            if (subscription) subscription.unsubscribe();
-        };
-    }, [navigate, searchParams]);
+        void persistProfile();
+        if (isPremiumPromoActive() && hasPremiumIntent()) {
+            void supabase.auth.getSession().then(({ data }) => {
+                if (data?.session?.user?.id !== user.id) return;
+                return activatePremiumPromotion(data.session.access_token).then(() => clearPremiumIntent());
+            }).catch(() => console.warn('[AuthCallback] Premium se podrá activar desde el panel'));
+        }
+        const redirectTimeoutId = setTimeout(() => navigate('/dashboard', { replace: true }), 500);
+        return () => clearTimeout(redirectTimeoutId);
+    }, [user, loading, authError, navigate, searchParams]);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
@@ -189,8 +125,9 @@ const AuthCallback = () => {
                             Error de autenticación
                         </h2>
                         <p className="mt-2 text-gray-500">
-                            Redirigiendo al login...
+                            No se pudo completar el acceso. Puedes volver a intentarlo.
                         </p>
+                        <button type="button" onClick={() => navigate('/login', { replace: true })} className="mt-5 min-h-[44px] rounded-xl bg-blue-600 px-6 py-3 text-white">Volver al acceso</button>
                     </>
                 )}
 
@@ -200,11 +137,12 @@ const AuthCallback = () => {
                             <span className="text-3xl" aria-hidden="true">⏱️</span>
                         </div>
                         <h2 className="mt-6 text-xl font-semibold text-gray-800">
-                            El inicio de sesión tardó demasiado
+                            No pudimos comprobar tu sesión
                         </h2>
                         <p className="mt-2 text-gray-500">
-                            Redirigiendo al login para intentarlo nuevamente...
+                            Revisa tu conexión y vuelve a intentar. Conservaremos la sesión si ya está activa.
                         </p>
+                        <button type="button" onClick={retrySession} className="mt-5 min-h-[44px] rounded-xl bg-blue-600 px-6 py-3 text-white">Volver a intentar</button>
                     </>
                 )}
             </div>

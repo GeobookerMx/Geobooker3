@@ -19,6 +19,10 @@ La diferencia entre la ficha y el proyecto impide identificar el binario publica
 
 Actualización del 17 de noviembre: el usuario confirmó que App Store Connect muestra como última versión `1.5.10`, build `58`. Con esa evidencia se prepara `1.5.11 (59)` en Debug y Release. No se ha subido a TestFlight ni publicado; el SDK del binario anterior sigue sin acreditarse.
 
+Después, el usuario compartió el resultado de carga de `1.5.11 (59)` con advertencia Apple **90683**: faltaba `NSLocationAlwaysAndWhenInUseUsageDescription` en el binario. La clave existía en un cambio local previo que había quedado fuera del commit; se incorpora ahora a la rama y se prepara **1.5.11 (60)**. La documentación oficial de `@capacitor/geolocation` v8 exige esa clave y `NSLocationWhenInUseUsageDescription` por la dependencia nativa, aunque no se use ubicación de fondo. No se agrega modo de segundo plano ni se cambia la solicitud de permisos. El verificador comprueba textos no vacíos en el plist fuente y en el archive final, junto con ATT. La corrección requiere un archivo nuevo; no modifica el build 59 ya cargado. La aceptación y el procesamiento de Apple siguen pendientes de confirmar.
+
+Referencia: https://capacitorjs.com/docs/apis/geolocation#ios
+
 ## Asociación de Meta comprobada
 
 Una consulta autenticada de solo lectura a Graph API devolvió `id=3176918089184321`, `name=Geobooker` y `object_store_urls.itunes=http://itunes.apple.com/app/id6758590506`. La app Meta apunta a la misma ficha de Apple y esta declara el bundle correcto. `ios_bundle_id` no fue devuelto: revisar además ese campo en Meta Developers, Configuración básica, plataforma iOS. El proyecto comprueba en tiempo de ejecución App ID, bundle y token de cliente.
@@ -74,7 +78,7 @@ Sin ATT autorizado esta implementación no envía conversiones personales a Meta
 - Workflow `.github/workflows/ios-meta-review.yml`: ejecutor macOS, resolución SPM, Release archive y evidencia de dependencias/manifiestos. Las ejecuciones de rama compilan sin firma. La subida a TestFlight es una opción manual y no presenta la app a App Store Review.
 - `scripts/ios/release-evidence.py` exige la resolución 19.0.1 y guarda `Package.resolved` e información del archive, sin el token cliente. El artefacto distingue explícitamente pruebas físicas y recepción Meta pendientes.
 - La subida firmada necesita los secretos del repositorio: `APPLE_DISTRIBUTION_P12_BASE64`, `APPLE_DISTRIBUTION_P12_PASSWORD`, `APPLE_PROVISIONING_PROFILE_BASE64`, `APP_STORE_CONNECT_PRIVATE_KEY_BASE64`, `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`. Deben configurarse directamente en GitHub, sin pegarlos en el chat ni en el repositorio. El perfil debe ser App Store para `com.geobooker.ios`, equipo `QCN4SYVAQ4`.
-- Variables públicas/secretos de build: URL y clave pública Supabase y clave de Maps según el workflow. Nunca service-role. La versión preparada `1.5.11 (59)` se basa en la confirmación del usuario de `1.5.10 (58)` en App Store Connect; comprobar que el build siga disponible antes de subir.
+- Variables públicas/secretos de build: URL y clave pública Supabase y clave de Maps según el workflow. Nunca service-role. La versión preparada actual es `1.5.11 (60)`; el build 59 se intentó cargar y mostró la advertencia de ubicación descrita arriba. Comprobar que el build nuevo siga disponible antes de subir.
 - Las rutas SPM locales generadas en Windows tienen barras invertidas; `npx cap sync ios` se ejecuta en macOS antes de resolver para regenerarlas correctamente.
 
 ## Compilación y firma
@@ -82,6 +86,8 @@ Sin ATT autorizado esta implementación no envía conversiones personales a Meta
 La compilación con Xcode 27.2 resolvió el problema del compilador y llegó a la fase final de firma de frameworks. Esa fase intentaba firmar aun con `CODE_SIGNING_ALLOWED=NO`; se corrigió para respetar ese ajuste en pruebas sin certificado. La firma normal para TestFlight permanece activa.
 
 El 17 de noviembre el usuario aplicó la corrección en su checkout independiente `Geobooker-Meta-Review-20261115` y compartió `BUILD SUCCEEDED` para Release sin firma con Xcode 27.1. Los ajustes mostrados por Xcode confirmaron bundle `com.geobooker.ios`, equipo `QCN4SYVAQ4` e iOS mínimo `15.0`. Esta compilación todavía tenía versión `1.4.10 (55)`, anterior al incremento y a la incorporación de las mejoras estacionales; se debe recompilar la entrega final. Este resultado no acredita firma, recepción de eventos ni pruebas físicas de ATT.
+
+La ejecución GitHub Actions `44111943674` del commit `012dc48` finalizó correctamente: archive Release sin firma con Meta y las mejoras estacionales. No detectaba los textos de ubicación faltantes; el verificador ahora los exige. No equivale a validación de App Store ni a pruebas físicas.
 
 ## Temporada 2026 y experiencia en el mismo build
 

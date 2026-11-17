@@ -7,10 +7,27 @@ import shutil
 import subprocess
 from pathlib import Path
 
+
+def validate_purpose_strings(info):
+    purposes = {}
+    for key in (
+        'NSLocationWhenInUseUsageDescription',
+        'NSLocationAlwaysAndWhenInUseUsageDescription',
+        'NSUserTrackingUsageDescription',
+    ):
+        value = info.get(key)
+        if not isinstance(value, str) or not value.strip() or '$(' in value:
+            raise SystemExit(f'Missing or unresolved user-facing purpose string: {key}')
+        purposes[key] = value
+    return purposes
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--archive', type=Path)
 parser.add_argument('--output', type=Path, required=True)
 args = parser.parse_args()
+with Path('ios/App/App/Info.plist').open('rb') as stream:
+    validate_purpose_strings(plistlib.load(stream))
 args.output.mkdir(parents=True, exist_ok=True)
 lock = Path('ios/App/App.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved')
 if not lock.exists():
@@ -32,6 +49,7 @@ if args.archive:
     app = args.archive / 'Products/Applications/App.app'
     with (app / 'Info.plist').open('rb') as stream:
         info = plistlib.load(stream)
+    evidence['purposeStrings'] = validate_purpose_strings(info)
     evidence['archive'] = {key: info.get(key) for key in [
         'CFBundleIdentifier', 'CFBundleShortVersionString', 'CFBundleVersion', 'MinimumOSVersion', 'FacebookAppID',
         'FacebookAutoLogAppEventsEnabled', 'FacebookAdvertiserIDCollectionEnabled',

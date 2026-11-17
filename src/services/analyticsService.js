@@ -749,13 +749,17 @@ export async function trackAuthFunnelEvent(eventName, {
             traffic_source: attribution?.utm_source || null,
             traffic_medium: attribution?.utm_medium || null,
             traffic_campaign: attribution?.utm_campaign || null,
-            metadata: {
-                funnel,
-                method,
-                anonymous_id: getOrCreateDeviceId(),
-                session_id: getSessionId(),
-                error_code: errorCode ? String(errorCode).slice(0, 80) : null,
-                ...safeMetadata
+            attribution_snapshot: {
+                current: attribution,
+                first_touch: getFirstTouchAttribution(),
+                auth_funnel: {
+                    funnel,
+                    method,
+                    anonymous_id: getOrCreateDeviceId(),
+                    session_id: getSessionId(),
+                    error_code: errorCode ? String(errorCode).slice(0, 80) : null,
+                    ...safeMetadata
+                }
             }
         };
 

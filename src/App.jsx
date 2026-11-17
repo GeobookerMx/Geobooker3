@@ -35,6 +35,7 @@ import { captureQrAttribution } from "./services/qrAttributionService";
 import { captureAttribution } from "./services/attributionService";
 import { initWebVitals } from "./services/vitalsService";
 import { withAuthTimeout } from "./utils/authFlow";
+import { setAuthRefreshActivity } from "./utils/authSessionObserver";
 import { activatePremiumPromotion } from "./services/premiumService";
 import { isPremiumPromoActive } from "./config/promotions";
 import { clearPremiumIntent, hasPremiumIntent } from "./config/premiumFlow";
@@ -137,6 +138,7 @@ async function handleNativeAuthLink(url) {
     if (code) {
       const { data, error } = await withAuthTimeout(supabase.auth.exchangeCodeForSession(code));
       if (error) throw error;
+      if (!data?.session?.user?.id) throw new Error('auth_session_missing');
       if (isRecovery) markPasswordRecoveryVerified();
       if (!isRecovery) {
         void trackNativeAuthCompletion(data?.session, 'native_deep_link_code');
@@ -156,6 +158,7 @@ async function handleNativeAuthLink(url) {
         refresh_token: refreshToken
       }));
       if (error) throw error;
+      if (!data?.session?.user?.id) throw new Error('auth_session_missing');
       if (isRecovery) markPasswordRecoveryVerified();
       if (!isRecovery) {
         void trackNativeAuthCompletion(data?.session, 'native_deep_link_tokens');
@@ -240,7 +243,7 @@ function routeNativeDeepLinkToApp(url) {
 if (isNative) {
   try {
     CapApp.addListener('appUrlOpen', async (data) => {
-      console.log('[App Global] Deep link recibido:', data.url);
+      console.log('[App Global] Enlace recibido; procesando destino nativo');
       if (await handleNativeAuthLink(data?.url)) {
         console.log('[App Global] Enlace de autenticacion procesado');
       } else if (routeNativeDeepLinkToApp(data?.url)) {
@@ -324,23 +327,20 @@ function AppInitializer() {
     const handleOnline = () => flushEventQueue();
     window.addEventListener("online", handleOnline);
 
-    // ✅ FIX Bug #3: Refrescar sesión cuando la app vuelve al primer plano (Android/iOS)
-    // Sin esto el token expira en background y el usuario ve la pantalla de login al regresar
+    // Supabase coordinates token expiry. Do not force rotation during Apple OAuth.
     let appStateListener = null;
 
     if (Capacitor.isNativePlatform()) {
       const setupNativeListeners = async () => {
         try {
-          appStateListener = await CapApp.addListener('appStateChange', async ({ isActive }) => {
+          appStateListener = await CapApp.addListener('appStateChange', ({ isActive }) => {
+            void setAuthRefreshActivity(supabase.auth, isActive).catch(() => {
+              console.warn('[Auth] No se pudo actualizar la renovación automática');
+            });
             if (isActive) {
               trackAppRuntimeEvent('session_resume', {
                 metadata: { source: 'app_state_change' }
               });
-              const { data: { session } } = await supabase.auth.getSession();
-              if (session) {
-                await supabase.auth.refreshSession();
-                console.log('[Auth] Sesión refrescada al volver al frente');
-              }
             }
           });
         } catch (err) {

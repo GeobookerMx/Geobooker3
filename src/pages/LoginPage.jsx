@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import { getAuthErrorCode, trackAuthFunnelEvent, trackUserLogin } from '../services/analyticsService';
 import { Capacitor } from '@capacitor/core';
@@ -14,6 +14,7 @@ import { beginOAuthSignIn } from '../services/oauthService';
 const LoginPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { signIn } = useAuth();
   const isAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 
   const [loading, setLoading] = useState(false);
@@ -52,11 +53,9 @@ const LoginPage = () => {
     setLoading(true);
     try {
       const normalizedEmail = formData.email.trim().toLowerCase();
-      const { data, error } = await withAuthTimeout(supabase.auth.signInWithPassword({
-        email: normalizedEmail,
-        password: formData.password
-      }));
+      const { data, error } = await withAuthTimeout(signIn(normalizedEmail, formData.password));
       if (error) throw error;
+      if (!data?.session?.user?.id) throw new Error('No se pudo confirmar la sesión. Inténtalo de nuevo.');
       if (data.user?.id) {
         trackAuthFunnelEvent('login_success', {
           funnel: 'login',

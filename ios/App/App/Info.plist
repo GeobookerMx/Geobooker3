@@ -72,7 +72,15 @@
 	<false/>
 	<key>FacebookAdvertiserIDCollectionEnabled</key>
 	<false/>
+	<key>FBSDKAutoLogMetaDataEnabled</key>
+	<false/>
+	<key>FBSDKAutoLogProductImprovementEnabled</key>
+	<false/>
+	<key>FacebookCodelessDebugLogEnabled</key>
+	<false/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Usamos tu ubicación para mostrarte negocios cercanos a tu alrededor de forma rápida.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Usamos tu ubicacion para mostrar negocios cercanos, calcular estudios GeoScore y mejorar resultados locales cuando uses Geobooker.</string>
 </dict>
 </plist>

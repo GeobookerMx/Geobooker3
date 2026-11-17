@@ -12,7 +12,6 @@ const InterstitialAd = lazy(() => import('../components/ads/InterstitialAd'));
 const RecommendedSection = lazy(() => import('../components/ads/RecommendedSection'));
 const SponsoredResultCard = lazy(() => import('../components/ads/SponsoredResultCard'));
 const ReferralFloatingWidget = lazy(() => import('../components/referral/ReferralFloatingWidget'));
-const ChristmasPromoModal = lazy(() => import('../components/referral/ChristmasPromoModal'));
 const AIRecommendations = lazy(() => import('../components/recommendations/AIRecommendations'));
 const GeobookersRecommend = lazy(() => import('../components/recommendations/GeobookersRecommend'));
 const GuestLoginPromptModal = lazy(() => import('../components/modals/GuestLoginPromptModal'));
@@ -2239,12 +2238,6 @@ const HomePage = () => {
         </Suspense>
       )}
 
-      {/* Christmas Promo Modal - Seasonal */}
-      {showDeferredFloatingUi && (
-        <Suspense fallback={null}>
-          <ChristmasPromoModal />
-        </Suspense>
-      )}
     </div>
   );
 };

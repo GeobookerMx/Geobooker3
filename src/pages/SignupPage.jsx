@@ -10,7 +10,7 @@ import { Capacitor } from '@capacitor/core';
 import { withAuthTimeout } from '../utils/authFlow';
 import { activatePremiumPromotion } from '../services/premiumService';
 import { rememberPremiumIntent } from '../config/premiumFlow';
-import { metaTrackCompleteRegistration } from '../lib/metaPixel';
+import { rememberMetaSignup, rememberMetaOAuthSignup } from '../services/metaConversions';
 import { beginOAuthSignIn, getOAuthCallbackUrl } from '../services/oauthService';
 
 const SignupPage = () => {
@@ -110,7 +110,7 @@ const SignupPage = () => {
 
             // ✅ TRACKEAR SIGNUP (NUEVO)
             if (data?.user?.id) {
-                metaTrackCompleteRegistration({ method: 'email' });
+                rememberMetaSignup(data);
                 trackAuthFunnelEvent('signup_success', {
                     funnel: 'signup',
                     method: 'email',
@@ -222,6 +222,7 @@ const SignupPage = () => {
             trackAuthFunnelEvent('oauth_start', { funnel: 'signup', method: provider });
             rememberPremiumIntent(premiumPromoActive && activateFreePremiumOnSignup);
 
+            rememberMetaOAuthSignup(provider);
             await beginOAuthSignIn(provider);
         } catch (error) {
             console.error(`Error ${provider} Sign-up:`, error);

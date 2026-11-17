@@ -3,6 +3,8 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { clarityIdentifyUser } from "../services/trackingService";
 import { Capacitor } from "@capacitor/core";
+import { observeMetaConversions, rememberMetaSignup } from '../services/metaConversions';
+import { observeAuthSession } from '../utils/authSessionObserver';
 
 const AuthContext = createContext(null);
 
@@ -17,68 +19,56 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);      // usuario actual
   const [loading, setLoading] = useState(true); // cargando sesión inicial
+  const [authError, setAuthError] = useState(null);
+  const [sessionCheck, setSessionCheck] = useState(0);
 
   useEffect(() => {
-    let timeoutId;
-
-    const getSession = async () => {
-      try {
-        const {
-          data: { session },
-          error,
-        } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Error obteniendo sesión:', error.message);
-        }
-        setUser(session?.user ?? null);
-      } catch (err) {
-        console.error('Error crítico en auth getSession:', err.message);
-        setUser(null);
-      } finally {
-        setLoading(false);
-        clearTimeout(timeoutId);
-      }
+    if (!user?.id) return;
+    const check = () => {
+      if (document.visibilityState === 'hidden') return;
+      void observeMetaConversions({ user });
     };
-
-    // ✅ FIX: En Android/iOS nativo dar más tiempo — redes 3G/4G pueden ser lentas
-    // 8s era insuficiente y causaba que el usuario apareciera como "no logueado"
-    const AUTH_TIMEOUT_MS = Capacitor.isNativePlatform() ? 15000 : 8000;
-    timeoutId = setTimeout(() => {
-      console.warn('⚠️ Auth timeout: renderizando app sin sesión');
-      setUser(null);
-      setLoading(false);
-    }, AUTH_TIMEOUT_MS);
-
-    getSession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      const user = session?.user ?? null;
-      setUser(user);
-      setLoading(false);
-      // 🔍 Microsoft Clarity: identify user on login/logout
-      if (user?.id) {
-        const isAdmin = user.email?.includes('geobookerr@') || user.email?.includes('ventasgeobooker@');
-        clarityIdentifyUser(
-          user.id,
-          user.email,
-          isAdmin ? 'admin' : 'user'
-        );
-      }
-    });
-
+    check();
+    window.addEventListener('geobooker:meta-ready', check);
+    window.addEventListener('focus', check);
+    document.addEventListener('visibilitychange', check);
+    const timer = setInterval(check, 60000);
     return () => {
-      subscription.unsubscribe();
-      clearTimeout(timeoutId);
+      clearInterval(timer);
+      window.removeEventListener('geobooker:meta-ready', check);
+      window.removeEventListener('focus', check);
+      document.removeEventListener('visibilitychange', check);
     };
-  }, []);
+  }, [user]);
+
+  useEffect(() => {
+    setLoading(true);
+    setAuthError(null);
+    return observeAuthSession({
+      auth: supabase.auth,
+      timeoutMs: Capacitor.isNativePlatform() ? 15000 : 8000,
+      onState: (next) => {
+        if ('user' in next) setUser(next.user);
+        setLoading(next.loading);
+        setAuthError(next.authError);
+      },
+      onError: error => console.warn('[Auth] No se pudo comprobar la sesión:', error?.code || error?.name || 'auth_error'),
+      onUser: (sessionUser) => {
+        // Optional analytics must not throw inside Supabase's auth callback.
+        try {
+          const isAdmin = sessionUser.email?.includes('geobookerr@') || sessionUser.email?.includes('ventasgeobooker@');
+          Promise.resolve(clarityIdentifyUser(sessionUser.id, sessionUser.email, isAdmin ? 'admin' : 'user')).catch(() => {});
+        } catch { /* Authentication does not depend on analytics. */ }
+      },
+    });
+  }, [sessionCheck]);
 
   const signUp = async (email, password, fullName = '') => {
     const { data, error } = await supabase.auth.signUp({ email, password });
 
     // Si el registro fue exitoso, guardar datos de ubicación
     if (data?.user && !error) {
+      rememberMetaSignup(data);
       try {
         const registrationDomain = window.location.hostname;
         const preferredLanguage = registrationDomain.includes('.mx') ? 'es' : 'en';
@@ -105,6 +95,11 @@ export const AuthProvider = ({ children }) => {
       email,
       password,
     });
+    if (!error && data?.session?.user) {
+      setUser(data.session.user);
+      setAuthError(null);
+      setLoading(false);
+    }
     return { data, error };
   };
 
@@ -116,6 +111,8 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     loading,
+    authError,
+    retrySession: () => setSessionCheck(value => value + 1),
     isAuthenticated: !!user,
     signUp,
     signIn,

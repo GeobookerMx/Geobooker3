@@ -15,6 +15,7 @@ const STANDARD_EVENTS = new Set([
   'Search',
   'ViewContent',
   'CompleteRegistration',
+  'FirstBusinessPublished',
   'Lead',
 ]);
 
@@ -23,6 +24,7 @@ const eventNameMap = {
   Search: 'fb_mobile_search',
   ViewContent: 'fb_mobile_content_view',
   CompleteRegistration: 'fb_mobile_complete_registration',
+  FirstBusinessPublished: 'first_business_published',
   Lead: 'fb_mobile_lead',
 };
 
@@ -32,6 +34,7 @@ const recentEvents = new Map();
 let nativeStatusPromise = null;
 let enabled = false;
 let activationSent = false;
+let consentRevision = 0;
 
 function isNativeMobile() {
   return Capacitor.isNativePlatform()
@@ -124,18 +127,24 @@ async function configureNative() {
 }
 
 export async function enableMetaAppEvents() {
+  const revision = ++consentRevision;
   if (!isNativeMobile()) return false;
   const configured = await configureNative();
-  if (!configured) return false;
+  if (!configured || revision !== consentRevision) return false;
 
   try {
     const result = await nativeMetaAppEvents.enable({
       advertiserIdCollection: false,
     });
+    if (revision !== consentRevision) {
+      await nativeMetaAppEvents.disable();
+      return false;
+    }
     enabled = result?.enabled === true;
     if (enabled && !activationSent) {
       activationSent = true;
     }
+    if (enabled && typeof window !== 'undefined') window.dispatchEvent(new Event('geobooker:meta-ready'));
     return enabled;
   } catch {
     return false;
@@ -143,6 +152,7 @@ export async function enableMetaAppEvents() {
 }
 
 export async function disableMetaAppEvents() {
+  consentRevision++;
   enabled = false;
   try {
     if (isNativeMobile()) await nativeMetaAppEvents.disable();
@@ -153,6 +163,8 @@ export async function disableMetaAppEvents() {
 
 export async function trackMetaAppEvent(eventName, params = {}, options = {}) {
   if (!STANDARD_EVENTS.has(eventName) || !enabled || !isNativeMobile()) return false;
+  if (Capacitor.getPlatform() === 'ios'
+    && !['CompleteRegistration', 'FirstBusinessPublished'].includes(eventName)) return false;
 
   const mappedName = eventNameMap[eventName];
   if (!mappedName) return false;
@@ -164,8 +176,9 @@ export async function trackMetaAppEvent(eventName, params = {}, options = {}) {
     const result = await nativeMetaAppEvents.logEvent({
       name: mappedName,
       params: sanitizeParams(params),
+      dedupeKey: options.dedupeKey || '',
     });
-    return result?.sent === true;
+    return result?.queued === true || result?.sent === true || result?.duplicate === true;
   } catch {
     return false;
   }
@@ -197,16 +210,21 @@ export function metaAppTrackViewContent({ contentId, category = 'business' } = {
   return true;
 }
 
-export function metaAppTrackCompleteRegistration({ method = 'email' } = {}) {
+export function metaAppTrackCompleteRegistration({ method = 'email', userId } = {}) {
   const safeMethod = ['email', 'google', 'apple', 'oauth'].includes(method) ? method : 'other';
-  void trackMetaAppEvent('CompleteRegistration', {
-    registration_method: safeMethod,
-    status: true,
+  return trackMetaAppEvent('CompleteRegistration', {
+    fb_registration_method: safeMethod,
   }, {
-    dedupeKey: `user_registration:${safeMethod}`,
+    dedupeKey: `registration:${userId}`,
     dedupeWindowMs: 30000,
   });
-  return true;
+}
+
+export function metaAppTrackFirstBusinessPublished(userId) {
+  return trackMetaAppEvent('FirstBusinessPublished', {}, {
+    dedupeKey: `first_business:${userId}`,
+    dedupeWindowMs: 30000,
+  });
 }
 
 export function metaAppTrackLead(leadType) {

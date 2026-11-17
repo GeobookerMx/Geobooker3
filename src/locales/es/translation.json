@@ -8,6 +8,8 @@
     "delete": "Eliminar",
     "edit": "Editar",
     "search": "Buscar",
+    "clearSearch": "Borrar búsqueda",
+    "searchingFor": "Buscando «{{query}}»…",
     "close": "Cerrar",
     "back": "Volver",
     "next": "Siguiente",

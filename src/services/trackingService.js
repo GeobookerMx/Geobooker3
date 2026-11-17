@@ -14,6 +14,7 @@
  */
 
 import { isIOSApp } from '../utils/platformDetection';
+import { AppTrackingTransparency } from '@capgo/capacitor-app-tracking-transparency';
 import { disableMetaPixel, enableMetaPixel } from '../lib/metaPixel';
 import { disableMetaAppEvents, enableMetaAppEvents } from './metaAppEvents';
 
@@ -30,6 +31,7 @@ const CLARITY_PROJECT_ID = 'v1j8dut5lg';
 
 let trackingEnabled = false;
 let trackingScriptsLoaded = false;
+let consentRevision = 0;
 
 // ============================================
 // SCRIPT INJECTION (Dynamic)
@@ -154,6 +156,20 @@ function loadClarity() {
  * @param {boolean} options.marketing - Enable marketing/ads tracking
  */
 export async function enableTracking(options = { analytics: true, marketing: true }) {
+    const revision = ++consentRevision;
+    if (isIOSApp()) {
+        try {
+            const { status } = await AppTrackingTransparency.getStatus();
+            if (revision !== consentRevision) return;
+            if (status !== 'authorized') {
+                disableTracking();
+                return;
+            }
+        } catch {
+            if (revision === consentRevision) disableTracking();
+            return;
+        }
+    }
     if (options.marketing) {
         enableMetaPixel();
         void enableMetaAppEvents();
@@ -205,6 +221,7 @@ export async function enableTracking(options = { analytics: true, marketing: tru
  * Updates consent state to denied but doesn't remove already-loaded scripts
  */
 export function disableTracking() {
+    consentRevision++;
     trackingEnabled = false;
     disableMetaPixel();
     void disableMetaAppEvents();
@@ -240,13 +257,8 @@ export function initTrackingFromConsent() {
     try {
         // On iOS native app, don't auto-enable unless already authorized
         if (isIOSApp()) {
-            const attStatus = localStorage.getItem('att_status');
-            if (attStatus === 'authorized') {
-                console.log('📱 iOS native: already authorized, enabling tracking');
-                enableTracking();
-            } else {
-                console.log('📱 iOS native: skipping auto-init, waiting for ATT');
-            }
+            // A cached preference is not authorization: re-read ATT on every launch/resume.
+            void enableTracking();
             return;
         }
 

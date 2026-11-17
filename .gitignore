@@ -98,3 +98,11 @@ data/processed/
 android/geobooker-upload-key.jks
 android/app/release/
 android/build-error.txt
+
+# Signing credentials stay in local/private storage or CI secrets.
+*.p8
+*.p12
+*.pfx
+*.jks
+*.keystore
+.security-tracked-files.txt

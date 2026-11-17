@@ -1,0 +1,42 @@
+name: Security guard
+
+on:
+  push:
+    branches: [main, codex/security-layer-20261117]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 12 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-guard-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Scan tracked files without printing secrets
+        run: |
+          git ls-files > .security-tracked-files.txt
+          node scripts/security/secret-scan.mjs .security-tracked-files.txt
+      - name: Install test dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Verify scanner, authorization and abuse controls
+        run: >-
+          node --test
+          scripts/tests/secret-scan.test.mjs
+          scripts/tests/security-guard.test.mjs
+          scripts/tests/auth-premium-security.test.mjs

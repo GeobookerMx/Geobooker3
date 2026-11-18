@@ -1,0 +1,392 @@
+[
+  {
+    "id": "us-houston",
+    "city": "Houston",
+    "countryCode": "US",
+    "wave": 2,
+    "records": 1000,
+    "sourceRelease": "2026-10-21.0",
+    "sqlSha256": "f81be98d06bf338deebad0223b13440d02e61d67429f412fe976ecd25ff2a799",
+    "recordsSha256": "41284e4d6fe7fe6f136bbf350cbcf30af912a40b88eb25c98d61471c3bcc1be0",
+    "provenanceSha256": "e0dc5643e13a0f968e4067001b5ba9d8207e946c2164a25f27964c10165d98a5",
+    "categories": {
+      "belleza": 200,
+      "restaurantes": 200,
+      "salud": 200,
+      "servicios": 200,
+      "tiendas": 200
+    },
+    "completeness": {
+      "websiteCount": 980,
+      "websitePercent": 98.0,
+      "httpsWebsiteCount": 619,
+      "phoneCount": 987,
+      "phonePercent": 98.7,
+      "websiteOrPhoneCount": 998,
+      "websiteOrPhonePercent": 99.8
+    },
+    "duplicateRecords": 0,
+    "invalidCoordinates": 0,
+    "outsideBbox": 0,
+    "independentLocationVerification": false,
+    "ownerAuthorizedPreliminaryPublication": true,
+    "providers": [
+      "AllThePlaces",
+      "Birdeye",
+      "BrightQuery",
+      "DAC",
+      "Foursquare",
+      "Microsoft",
+      "Overture",
+      "Overture-signals",
+      "PinMeTo",
+      "Uberall",
+      "meta"
+    ],
+    "licenses": [
+      "Apache-2.0",
+      "CC0-1.0",
+      "CDLA-Permissive-2.0"
+    ]
+  },
+  {
+    "id": "ca-vancouver",
+    "city": "Vancouver",
+    "countryCode": "CA",
+    "wave": 2,
+    "records": 1000,
+    "sourceRelease": "2026-10-21.0",
+    "sqlSha256": "96da4fd7bc32efe2b9937509e97869e0164ba4e30a96200b15398dab33233c33",
+    "recordsSha256": "7ca95f83b25b5ff036b2d5a0be2ad799a39b7cad14d96641d10c323dcedff7ea",
+    "provenanceSha256": "7c8283f3cc1ab7e1fb5b5e445ab546a114340348066d956b34f64ff424029169",
+    "categories": {
+      "belleza": 200,
+      "restaurantes": 200,
+      "salud": 200,
+      "servicios": 200,
+      "tiendas": 200
+    },
+    "completeness": {
+      "websiteCount": 981,
+      "websitePercent": 98.1,
+      "httpsWebsiteCount": 437,
+      "phoneCount": 988,
+      "phonePercent": 98.8,
+      "websiteOrPhoneCount": 1000,
+      "websiteOrPhonePercent": 100.0
+    },
+    "duplicateRecords": 0,
+    "invalidCoordinates": 0,
+    "outsideBbox": 0,
+    "independentLocationVerification": false,
+    "ownerAuthorizedPreliminaryPublication": true,
+    "providers": [
+      "AllThePlaces",
+      "DAC",
+      "Foursquare",
+      "Microsoft",
+      "Overture",
+      "PinMeTo",
+      "RenderSEO",
+      "Uberall",
+      "meta"
+    ],
+    "licenses": [
+      "Apache-2.0",
+      "CC0-1.0",
+      "CDLA-Permissive-2.0"
+    ]
+  },
+  {
+    "id": "nl-amsterdam",
+    "city": "Amsterdam",
+    "countryCode": "NL",
+    "wave": 3,
+    "records": 1000,
+    "sourceRelease": "2026-10-21.0",
+    "sqlSha256": "a7cdb2a3d7664fc59e11991942cda7a795d65d071b5abb3c0a33b22d0ab044aa",
+    "recordsSha256": "fd5aa7caec1d2dec98cf5a5b9c8e226e82479aacaf16ab4fb3af74d265d45d05",
+    "provenanceSha256": "30b7bb2095df9306d675e6a6c7439c5b0647c69493f917d66d65e1a9739aaed9",
+    "categories": {
+      "belleza": 166,
+      "hoteles": 166,
+      "restaurantes": 167,
+      "salud": 167,
+      "servicios": 167,
+      "tiendas": 167
+    },
+    "completeness": {
+      "websiteCount": 968,
+      "websitePercent": 96.8,
+      "httpsWebsiteCount": 405,
+      "phoneCount": 968,
+      "phonePercent": 96.8,
+      "websiteOrPhoneCount": 989,
+      "websiteOrPhonePercent": 98.9
+    },
+    "duplicateRecords": 0,
+    "invalidCoordinates": 0,
+    "outsideBbox": 0,
+    "independentLocationVerification": false,
+    "ownerAuthorizedPreliminaryPublication": true,
+    "providers": [
+      "AllThePlaces",
+      "BrightQuery",
+      "DAC",
+      "Foursquare",
+      "Microsoft",
+      "Overture",
+      "PinMeTo",
+      "Uberall",
+      "meta"
+    ],
+    "licenses": [
+      "Apache-2.0",
+      "CC0-1.0",
+      "CDLA-Permissive-2.0"
+    ]
+  },
+  {
+    "id": "it-rome",
+    "city": "Rome",
+    "countryCode": "IT",
+    "wave": 3,
+    "records": 1000,
+    "sourceRelease": "2026-10-21.0",
+    "sqlSha256": "12e4216922492367dd2069208c6f2b4461805fd1b3b5fb2bf79156f3bf816145",
+    "recordsSha256": "e16eb72484cadef0a6b9c0229b359ff73d5f0c8953d2f7f2558270b3529e8777",
+    "provenanceSha256": "96bbfb6bdacb02885058c9d1f066df55c489e632cd32ef296cc2c44794bb8228",
+    "categories": {
+      "belleza": 166,
+      "hoteles": 166,
+      "restaurantes": 167,
+      "salud": 167,
+      "servicios": 167,
+      "tiendas": 167
+    },
+    "completeness": {
+      "websiteCount": 959,
+      "websitePercent": 95.9,
+      "httpsWebsiteCount": 417,
+      "phoneCount": 992,
+      "phonePercent": 99.2,
+      "websiteOrPhoneCount": 996,
+      "websiteOrPhonePercent": 99.6
+    },
+    "duplicateRecords": 0,
+    "invalidCoordinates": 0,
+    "outsideBbox": 0,
+    "independentLocationVerification": false,
+    "ownerAuthorizedPreliminaryPublication": true,
+    "providers": [
+      "BrightQuery",
+      "DAC",
+      "Foursquare",
+      "Microsoft",
+      "Overture",
+      "PinMeTo",
+      "Uberall",
+      "meta"
+    ],
+    "licenses": [
+      "Apache-2.0",
+      "CDLA-Permissive-2.0"
+    ]
+  },
+  {
+    "id": "it-milan",
+    "city": "Milan",
+    "countryCode": "IT",
+    "wave": 3,
+    "records": 1000,
+    "sourceRelease": "2026-10-21.0",
+    "sqlSha256": "1fb5954ecd5e6c6e2434e69807a1ddc6dbaae2e35e7b607d326bf7a5c3a297a7",
+    "recordsSha256": "61673260bd34ac51a84d25ff1ae70f2fc17059e8b669152425f320bbdc377f26",
+    "provenanceSha256": "17f609d0d62a84d4b7a5ccf8f6c77aad49a14c7de71f55578e97ac2c89200f5b",
+    "categories": {
+      "belleza": 166,
+      "hoteles": 166,
+      "restaurantes": 167,
+      "salud": 167,
+      "servicios": 167,
+      "tiendas": 167
+    },
+    "completeness": {
+      "websiteCount": 958,
+      "websitePercent": 95.8,
+      "httpsWebsiteCount": 386,
+      "phoneCount": 989,
+      "phonePercent": 98.9,
+      "websiteOrPhoneCount": 996,
+      "websiteOrPhonePercent": 99.6
+    },
+    "duplicateRecords": 0,
+    "invalidCoordinates": 0,
+    "outsideBbox": 0,
+    "independentLocationVerification": false,
+    "ownerAuthorizedPreliminaryPublication": true,
+    "providers": [
+      "AllThePlaces",
+      "BrightQuery",
+      "Foursquare",
+      "Microsoft",
+      "Overture",
+      "PinMeTo",
+      "Uberall",
+      "meta"
+    ],
+    "licenses": [
+      "Apache-2.0",
+      "CC0-1.0",
+      "CDLA-Permissive-2.0"
+    ]
+  },
+  {
+    "id": "fr-paris",
+    "city": "Paris",
+    "countryCode": "FR",
+    "wave": 3,
+    "records": 1000,
+    "sourceRelease": "2026-10-21.0",
+    "sqlSha256": "10c59377bf249a0fc288589d0eef756849512d4afeed57e75a18534cbd2c77c0",
+    "recordsSha256": "2b289be35e2a2ad951f300ebcd6f500618fc22782fde126944895cd92f504ef4",
+    "provenanceSha256": "2c14740968bb70fc112e181cb25f4389a28d6c53f507bbfa6632017ff3fd425e",
+    "categories": {
+      "belleza": 166,
+      "hoteles": 166,
+      "restaurantes": 167,
+      "salud": 167,
+      "servicios": 167,
+      "tiendas": 167
+    },
+    "completeness": {
+      "websiteCount": 979,
+      "websitePercent": 97.9,
+      "httpsWebsiteCount": 433,
+      "phoneCount": 990,
+      "phonePercent": 99.0,
+      "websiteOrPhoneCount": 1000,
+      "websiteOrPhonePercent": 100.0
+    },
+    "duplicateRecords": 0,
+    "invalidCoordinates": 0,
+    "outsideBbox": 0,
+    "independentLocationVerification": false,
+    "ownerAuthorizedPreliminaryPublication": true,
+    "providers": [
+      "AllThePlaces",
+      "BrightQuery",
+      "DAC",
+      "Foursquare",
+      "OpenTravel",
+      "Overture",
+      "PinMeTo",
+      "Uberall",
+      "meta"
+    ],
+    "licenses": [
+      "Apache-2.0",
+      "CC0-1.0",
+      "CDLA-Permissive-2.0"
+    ]
+  },
+  {
+    "id": "de-berlin",
+    "city": "Berlin",
+    "countryCode": "DE",
+    "wave": 3,
+    "records": 1000,
+    "sourceRelease": "2026-10-21.0",
+    "sqlSha256": "31fe9bc1ebb62152b9126a3d07303884c53fab379fe680c9649b558f3f6e02f5",
+    "recordsSha256": "6a55a180487a59121db201c8916b01f81891845d9195b7a92cf6cf40b3c6fffe",
+    "provenanceSha256": "5cfa5a4cf23e9490c7d70bc85484a4d215eebd2b0478f7d255fe0c29cfe53c79",
+    "categories": {
+      "belleza": 166,
+      "hoteles": 166,
+      "restaurantes": 167,
+      "salud": 167,
+      "servicios": 167,
+      "tiendas": 167
+    },
+    "completeness": {
+      "websiteCount": 991,
+      "websitePercent": 99.1,
+      "httpsWebsiteCount": 463,
+      "phoneCount": 997,
+      "phonePercent": 99.7,
+      "websiteOrPhoneCount": 999,
+      "websiteOrPhonePercent": 99.9
+    },
+    "duplicateRecords": 0,
+    "invalidCoordinates": 0,
+    "outsideBbox": 0,
+    "independentLocationVerification": false,
+    "ownerAuthorizedPreliminaryPublication": true,
+    "providers": [
+      "BrightQuery",
+      "DAC",
+      "Foursquare",
+      "Microsoft",
+      "Overture",
+      "PinMeTo",
+      "Uberall",
+      "meta"
+    ],
+    "licenses": [
+      "Apache-2.0",
+      "CDLA-Permissive-2.0"
+    ]
+  },
+  {
+    "id": "us-new-york",
+    "city": "New York",
+    "countryCode": "US",
+    "wave": 4,
+    "records": 1000,
+    "sourceRelease": "2026-10-21.0",
+    "sqlSha256": "93d4160c4c68290461ca16ce28044da05e135ac6f8b61445c98d68e9c763694e",
+    "recordsSha256": "be3419201025b99cf9a2d4bc579b6e240423707d38835d59ac1a2728b2c68c13",
+    "provenanceSha256": "c5b7b2f023bd0da74e2fc9432f1e03ccb40496c9bcdfb56da0ebe322232b705b",
+    "categories": {
+      "belleza": 166,
+      "hoteles": 166,
+      "restaurantes": 167,
+      "salud": 167,
+      "servicios": 167,
+      "tiendas": 167
+    },
+    "completeness": {
+      "websiteCount": 983,
+      "websitePercent": 98.3,
+      "httpsWebsiteCount": 542,
+      "phoneCount": 992,
+      "phonePercent": 99.2,
+      "websiteOrPhoneCount": 998,
+      "websiteOrPhonePercent": 99.8
+    },
+    "duplicateRecords": 0,
+    "invalidCoordinates": 0,
+    "outsideBbox": 0,
+    "independentLocationVerification": false,
+    "ownerAuthorizedPreliminaryPublication": true,
+    "providers": [
+      "AllThePlaces",
+      "Birdeye",
+      "BrightQuery",
+      "DAC",
+      "Foursquare",
+      "Microsoft",
+      "OpenTravel",
+      "Overture",
+      "Overture-signals",
+      "PinMeTo",
+      "Uberall",
+      "meta"
+    ],
+    "licenses": [
+      "Apache-2.0",
+      "CC0-1.0",
+      "CDLA-Permissive-2.0"
+    ]
+  }
+]

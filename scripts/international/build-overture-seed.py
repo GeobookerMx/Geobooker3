@@ -21,6 +21,7 @@ ROOT_CATEGORY_MAP = {
     "services_and_business": "servicios",
     "automotive": "automotriz",
     "accommodation": "hoteles",
+    "lodging": "hoteles",
 }
 
 

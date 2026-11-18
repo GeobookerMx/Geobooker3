@@ -396,6 +396,13 @@ const Footer = () => {
             </div>
           </div>
 
+          <p className="text-center text-xs text-gray-400 mb-6">
+            Directorio internacional: Overture Maps.{' '}
+            <a href="/open-data-sources.html" className="underline underline-offset-2 hover:text-white">
+              Fuentes y licencias de datos abiertos
+            </a>
+          </p>
+
           {/* Linea divisoria y copyright */}
           <div className="border-t border-gray-700 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center text-gray-400 text-sm">

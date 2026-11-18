@@ -26,6 +26,8 @@ Se rechazan identificadores vacíos, puntos inválidos/fuera del bbox, confianza
 
 ## Actualización y enriquecimiento posteriores
 
+Para muestras de 1,000 registros ya extraídas, `prepare-reviewed-import.py --manifest=ARCHIVO.json` comprueba el checksum y el contenido y genera `.records.json` y `.review.json`. `node scripts/international/import-reviewed-batch.mjs --manifest=ARCHIVO.review.json` valida sin escribir. Añadir `--apply --env-file=RUTA_PRIVADA` carga en el proyecto Geobooker únicamente fichas nuevas, siempre ocultas; la clave de servidor nunca debe copiarse al código ni a la conversación. La publicación es un paso separado y requiere la aprobación indicada en el manifiesto. No se debe presentar una aprobación para preview como verificación independiente de ubicación.
+
 1. Medir cobertura por ciudad/categoría y priorizar huecos reales.
 2. Confirmar edición y licencias de cada fuente; conservar proveedor e identificadores.
 3. Comparar por identidad, nombre/dirección y distancia, conservando las sucursales diferentes.

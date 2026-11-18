@@ -1,5 +1,7 @@
 # Datos abiertos y mapa de Europa — 17/11/2026
 
+Actualización posterior: [expansión de ocho ciudades](OVERTURE_EXPANSION_2026-11-17.md). Ese reporte documenta las nuevas importaciones y su publicación preliminar autorizada; los resultados siguientes corresponden a la primera entrega de este día.
+
 ## Cambios de producción comprobados
 
 - El RPC del mapa `businesses_in_bounds` consultaba fichas nativas y candidatos DENUE; no leía `international_businesses`. Madrid devolvía cero resultados aunque tenía 1000 registros públicos.

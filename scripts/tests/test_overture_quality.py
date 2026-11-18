@@ -24,6 +24,8 @@ class OvertureQuality(unittest.TestCase):
         self.assertEqual(record['website'],'https://example.com')
         self.assertEqual(record['phone'],'+34 931 234 567')
         self.assertEqual(record['provenance']['sources'],self.row['sources'])
+        hotel={**self.row,'taxonomy':{'hierarchy':['lodging'],'primary':'hotel'}}
+        self.assertEqual(builder.normalize_record(hotel,self.area,'2026-10-21.0')['category'],'hoteles')
 
     def test_bad_confidence_and_closed_places_do_not_enter_active_inventory(self):
         for confidence in [float('nan'),float('inf'),1.01,-1,'bad',None]:

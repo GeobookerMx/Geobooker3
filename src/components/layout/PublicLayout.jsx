@@ -2,6 +2,7 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import Header from "./Header";
+import ChristmasBanner from "./ChristmasBanner";
 import Footer from "./Footer";
 import InstallPrompt from "../pwa/InstallPrompt";
 import DiscoveryAccessGate from "../DiscoveryAccessGate";
@@ -14,6 +15,7 @@ export default function PublicLayout() {
   return (
     <>
       <Header />
+      <ChristmasBanner />
       <main className="min-h-screen overflow-x-hidden bg-white">
         <DiscoveryAccessGate><Outlet /></DiscoveryAccessGate>
       </main>

@@ -12,7 +12,7 @@ import { IS_IOS_NATIVE } from "../../utils/iosStore";
 import { Capacitor } from "@capacitor/core";
 import { getPremiumPromoLongMessage, isPremiumPromoActive } from "../../config/promotions";
 import { featureFlags } from "../../config/featureFlags";
-import { BarChart3, Bell, Building2, LogOut, Megaphone, Star, Store } from "lucide-react";
+import { BarChart3, Bell, Building2, LogOut, Megaphone, Star, Store, Trash2 } from "lucide-react";
 
 export default function Header() {
   const { t, i18n } = useTranslation();
@@ -275,6 +275,8 @@ export default function Header() {
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex items-center space-x-2 bg-geoPurple text-white px-3 py-2 rounded-full hover:bg-geoPink transition-colors"
+                aria-expanded={showUserMenu}
+                aria-label={t("nav.user")}
               >
                 {businessLogo ? (
                   <img
@@ -294,13 +296,20 @@ export default function Header() {
               </button>
 
               {showUserMenu && (
-                <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
+                <div className="absolute right-0 top-full mt-2 w-56 max-h-[calc(100dvh-6rem)] overflow-y-auto bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
                   <div className="px-4 py-2 border-b border-gray-200">
                     <p className="text-sm font-semibold text-gray-900">
                       {userProfile?.full_name || t("nav.user")}
                     </p>
                     <p className="text-xs text-gray-500 truncate">{user.email}</p>
                   </div>
+                  <Link
+                    to="/account/delete"
+                    onClick={() => setShowUserMenu(false)}
+                    className="mx-2 mb-2 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-700 hover:bg-red-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-700"
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden="true" /> {t("nav.deleteAccount")}
+                  </Link>
 
                   <Link
                     to="/dashboard"
@@ -350,14 +359,6 @@ export default function Header() {
                     {bibliotecaLabel}
                   </Link>
 
-                  <Link
-                    to="/account/delete"
-                    onClick={() => setShowUserMenu(false)}
-                    className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    {t('nav.deleteAccount')}
-                  </Link>
-
                   <button
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
@@ -380,6 +381,15 @@ export default function Header() {
 
       {isOpen && (
         <div className="xl:hidden bg-geoYellow shadow-inner border-t border-geoPurple/10 px-4 py-4 space-y-4 font-brand">
+          {user && (
+            <Link
+              to="/account/delete"
+              onClick={() => setIsOpen(false)}
+              className="flex w-fit items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 font-bold text-red-700 hover:bg-red-100"
+            >
+              <Trash2 className="h-4 w-4" aria-hidden="true" /> {t("nav.deleteAccount")}
+            </Link>
+          )}
           <Link to="/" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">
             {t("nav.home")}
           </Link>
@@ -530,14 +540,6 @@ export default function Header() {
                   Mis espacios comerciales
                 </Link>
               )}
-
-              <Link
-                to="/account/delete"
-                onClick={() => setIsOpen(false)}
-                className="block text-red-600 hover:text-red-700 mb-2"
-              >
-                    {t('nav.deleteAccount')}
-                  </Link>
 
               <button
                 onClick={() => {

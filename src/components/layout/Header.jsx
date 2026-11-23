@@ -25,8 +25,10 @@ export default function Header() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [businessLogo, setBusinessLogo] = useState(null);
   const [showRecommendForm, setShowRecommendForm] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const mobileMenuRef = useRef(null);
   const userMenuRef = useRef(null);
+  const moreMenuRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -35,6 +37,9 @@ export default function Header() {
       }
       if (showUserMenu && userMenuRef.current && !userMenuRef.current.contains(e.target)) {
         setShowUserMenu(false);
+      }
+      if (showMoreMenu && moreMenuRef.current && !moreMenuRef.current.contains(e.target)) {
+        setShowMoreMenu(false);
       }
     };
 
@@ -45,7 +50,7 @@ export default function Header() {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("touchstart", handleClickOutside);
     };
-  }, [isOpen, showUserMenu]);
+  }, [isOpen, showUserMenu, showMoreMenu]);
 
   // Cargar perfil y logo del negocio cuando cambia el user del AuthContext.
   // Antes este efecto duplicaba la suscripcion de AuthContext.
@@ -142,13 +147,18 @@ export default function Header() {
           {getPremiumPromoLongMessage(currentLocale)} - {t('nav.premiumActivate')}
         </Link>
       )}
-      <div className="container mx-auto flex items-center justify-between px-4 py-3">
-        <Link to="/" className="flex items-center space-x-3">
+      <div className="container mx-auto flex items-center justify-between gap-3 px-4 py-3">
+        <Link to="/" className="flex shrink-0 items-center space-x-3">
           <BrandLogo size={48} className="hover:scale-105 transition-transform duration-200" />
         </Link>
 
+        {!user && (
+          <Link to="/login" className="xl:hidden ml-auto shrink-0 rounded-full bg-geoPurple px-3 py-2 text-sm font-bold text-white hover:bg-geoPink">
+            {t("nav.login")}
+          </Link>
+        )}
         <button
-          className="md:hidden p-2 ml-auto flex flex-col items-center justify-center space-y-1.5 min-w-[44px] min-h-[44px] active:bg-black/5 rounded-lg transition-colors"
+          className="xl:hidden p-2 flex flex-col items-center justify-center space-y-1.5 min-w-[44px] min-h-[44px] active:bg-black/5 rounded-lg transition-colors"
           onClick={() => setIsOpen(!isOpen)}
           aria-label={t("nav.openMenu")}
         >
@@ -169,85 +179,85 @@ export default function Header() {
           />
         </button>
 
-        <nav className="hidden md:flex items-center space-x-6 font-brand">
-          <Link to="/" className="text-geoPurple hover:text-geoPink transition-colors">
-            {t("nav.home")}
-          </Link>
-          <Link to="/categories" className="text-geoPurple hover:text-geoPink transition-colors">
+        <nav className="hidden xl:flex items-center gap-2 font-brand min-w-0">
+          {/* Links principales siempre visibles */}
+          <Link to="/categories" className="text-geoPurple hover:text-geoPink transition-colors whitespace-nowrap text-sm">
             {t("nav.categories")}
           </Link>
-          {featureFlags.commercialSpaces && <Link to="/espacios" className="text-geoPurple font-bold hover:text-geoPink transition-colors">Espacios</Link>}
-          <Link to="/quienes-somos" className="text-geoPurple hover:text-geoPink transition-colors">
-            {t("nav.about")}
-          </Link>
-          <Link to="/comunidad" className="text-geoPurple hover:text-geoPink transition-colors">
-            {t("nav.community")}
-          </Link>
-          <Link
-            to="/emprende"
-            data-nav-id="emprende_desktop_nav"
-            className="text-geoPurple font-black hover:text-geoPink transition-colors rounded-full bg-white/40 px-3 py-1.5 shadow-sm"
-          >
-            {emprendeLabel}
-          </Link>
-          <Link
-            to="/biblioteca"
-            data-nav-id="biblioteca_desktop_nav"
-            className="text-geoPurple font-black hover:text-geoPink transition-colors rounded-full bg-white/40 px-3 py-1.5 shadow-sm"
-          >
-            {bibliotecaLabel}
-          </Link>
-          <Link to="/b2b-connect" className="text-geoPurple font-bold hover:text-geoPink transition-colors flex items-center gap-1">
-            {t('nav.b2bProviders')}
-          </Link>
+
           <Link
             to="/geoscore"
             data-nav-id="geoscore_desktop_nav"
-            className="text-indigo-950 font-black hover:text-indigo-600 transition-colors rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 px-3 py-1.5 shadow-sm flex items-center gap-1.5"
+            className="text-indigo-950 font-black hover:text-indigo-600 transition-colors rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 px-3 py-1.5 shadow-sm flex items-center gap-1 whitespace-nowrap text-sm"
           >
             <span>GeoScore™</span>
-            <span className="rounded-full bg-emerald-600 px-1.5 py-0.2 text-[10px] font-black text-white uppercase">Gratis</span>
+            <span className="rounded-full bg-emerald-600 px-1.5 text-[9px] font-black text-white uppercase">Gratis</span>
           </Link>
 
           <Link
             to="/claim"
-            className="border-2 border-amber-600 text-amber-700 px-4 py-1.5 rounded-full font-bold hover:bg-amber-600 hover:text-white transition-all flex items-center gap-1 shadow-sm hover:-translate-y-0.5"
+            className="border-2 border-amber-600 text-amber-700 px-3 py-1.5 rounded-full font-bold hover:bg-amber-600 hover:text-white transition-all flex items-center gap-1 shadow-sm whitespace-nowrap text-sm"
           >
-            <span className="inline-flex items-center justify-center gap-2"><Store className="h-4 w-4" aria-hidden="true" /> {t('nav.claimBusiness')}</span>
+            <Store className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="hidden lg:inline">{t('nav.claimBusiness')}</span>
+            <span className="lg:hidden">Reclamar</span>
           </Link>
-
-          {user && (
-            <button
-              onClick={() => setShowRecommendForm(true)}
-              className="border-2 border-geoPurple text-geoPurple px-4 py-1.5 rounded-full font-bold hover:bg-geoPurple hover:text-white transition-all flex items-center gap-1 shadow-sm hover:-translate-y-0.5"
-            >
-              <span className="inline-flex items-center justify-center gap-2"><Star className="h-4 w-4" aria-hidden="true" /> {t('nav.recommend')}</span>
-            </button>
-          )}
 
           {/* Apple 3.1.1: link a planes pagos oculto en iOS nativo */}
           {!IS_IOS_NATIVE && (
             <Link
               to="/advertise"
-              className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 py-1.5 rounded-lg font-bold hover:from-red-600 hover:to-orange-600 transition-all flex items-center gap-1 shadow-lg hover:scale-105"
+              className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-3 py-1.5 rounded-lg font-bold hover:from-red-600 hover:to-orange-600 transition-all flex items-center gap-1 shadow-lg whitespace-nowrap text-sm"
             >
-              <span className="inline-flex items-center gap-2"><Megaphone className="h-4 w-4" aria-hidden="true" /> {t("nav.moreSales")}</span>
+              <Megaphone className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="hidden lg:inline">{t("nav.moreSales")}</span>
+              <span className="lg:hidden">Ads</span>
             </Link>
           )}
 
           <Link
             to="/business/register"
-            className="bg-geoPink text-white px-4 py-2 rounded-full hover:bg-geoPurple transition-colors"
+            className="bg-geoPink text-white px-3 py-1.5 rounded-full hover:bg-geoPurple transition-colors whitespace-nowrap text-sm font-bold"
           >
-            + {t("nav.addBusiness")}
+            + <span className="hidden lg:inline">{t("nav.addBusiness")}</span>
+            <span className="lg:hidden">Negocio</span>
           </Link>
 
-          <Link
-            to="/space/register"
-            className="border-2 border-emerald-700 bg-white/70 text-emerald-800 px-4 py-2 rounded-full font-bold hover:bg-emerald-700 hover:text-white transition-colors"
-          >
-            Rentar espacio
-          </Link>
+          {/* Menú "Más" — links secundarios */}
+          <div className="relative" ref={moreMenuRef}>
+            <button
+              type="button"
+              onClick={() => setShowMoreMenu(!showMoreMenu)}
+              className="flex items-center gap-1 text-geoPurple hover:text-geoPink transition-colors font-bold whitespace-nowrap text-sm px-2 py-1.5 rounded-lg hover:bg-black/5"
+              aria-label="Más opciones"
+              aria-expanded={showMoreMenu}
+            >
+              Más
+              <svg className={`w-3.5 h-3.5 transition-transform ${showMoreMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {showMoreMenu && (
+              <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
+                <Link to="/" onClick={() => setShowMoreMenu(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t("nav.home")}</Link>
+                <Link to="/quienes-somos" onClick={() => setShowMoreMenu(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t("nav.about")}</Link>
+                <Link to="/comunidad" onClick={() => setShowMoreMenu(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t("nav.community")}</Link>
+                <Link to="/emprende" data-nav-id="emprende_desktop_nav" onClick={() => setShowMoreMenu(false)} className="block px-4 py-2 text-sm font-bold text-gray-800 hover:bg-gray-50">{emprendeLabel}</Link>
+                <Link to="/biblioteca" data-nav-id="biblioteca_desktop_nav" onClick={() => setShowMoreMenu(false)} className="block px-4 py-2 text-sm font-bold text-gray-800 hover:bg-gray-50">{bibliotecaLabel}</Link>
+                <Link to="/b2b-connect" onClick={() => setShowMoreMenu(false)} className="block px-4 py-2 text-sm font-bold text-gray-800 hover:bg-gray-50">{t('nav.b2bProviders')}</Link>
+                <Link to="/space/register" onClick={() => setShowMoreMenu(false)} className="block px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-50">Rentar espacio</Link>
+                {featureFlags.commercialSpaces && <Link to="/espacios" onClick={() => setShowMoreMenu(false)} className="block px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-50">Espacios</Link>}
+                {user && (
+                  <button
+                    onClick={() => { setShowMoreMenu(false); setShowRecommendForm(true); }}
+                    className="block w-full text-left px-4 py-2 text-sm font-bold text-geoPurple hover:bg-purple-50"
+                  >
+                    <span className="inline-flex items-center gap-2"><Star className="h-4 w-4" aria-hidden="true" /> {t('nav.recommend')}</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
 
           <LanguageSelector />
 
@@ -360,7 +370,7 @@ export default function Header() {
           ) : (
             <Link
               to="/login"
-              className="bg-geoPurple text-white px-4 py-2 rounded-full hover:bg-geoPink transition-colors"
+              className="shrink-0 whitespace-nowrap bg-geoPurple text-white px-4 py-2 rounded-full hover:bg-geoPink transition-colors"
             >
               {t("nav.login")}
             </Link>
@@ -369,7 +379,7 @@ export default function Header() {
       </div>
 
       {isOpen && (
-        <div className="md:hidden bg-geoYellow shadow-inner border-t border-geoPurple/10 px-4 py-4 space-y-4 font-brand">
+        <div className="xl:hidden bg-geoYellow shadow-inner border-t border-geoPurple/10 px-4 py-4 space-y-4 font-brand">
           <Link to="/" onClick={() => setIsOpen(false)} className="block text-geoPurple hover:text-geoPink">
             {t("nav.home")}
           </Link>

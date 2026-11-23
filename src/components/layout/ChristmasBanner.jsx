@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 
 const START = new Date(2026, 10, 23);
 const END = new Date(2027, 0, 7);
@@ -30,17 +31,28 @@ export default function ChristmasBanner() {
         </button>
         <div className="pr-8 text-center">
           <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200">✦ {english ? "Christmas" : "Navidad"} 2026 ✦</p>
-          <p className="mt-1 text-sm font-semibold sm:text-base">{english ? "This season, discover what connects us." : "Esta temporada, descubre lo que nos conecta."}</p>
+          <p className="mt-1 text-sm font-semibold sm:text-base">
+            {english ? "Turn what you know into a new business idea." : "Convierte lo que sabes en una nueva idea de negocio."}
+          </p>
         </div>
-        <div className="mt-2 grid gap-1.5 text-center text-xs leading-snug text-white/90 md:grid-cols-2 md:gap-4">
+        <div className="mt-2 flex flex-col items-center justify-center gap-2 text-center text-xs leading-snug text-white/90 sm:flex-row sm:gap-4">
           <p>
-            {english ? "“Love is the only sane and satisfactory answer to the problem of human existence.”" : "“El amor es la única respuesta sensata y satisfactoria al problema de la existencia humana.”"}
-            <span className="ml-1 font-semibold text-amber-200">— Erich Fromm, <i>{english ? "The Art of Loving" : "El arte de amar"}</i></span>
+            <strong className="text-amber-200">95.4 %</strong>{" "}
+            {english
+              ? "of Mexico's private and state-owned enterprise economic units were microbusinesses in 2023."
+              : "de las unidades económicas del sector privado y empresas paraestatales en México eran micronegocios en 2023."}
+            {" "}<a
+              href="https://www.inegi.org.mx/contenidos/saladeprensa/boletines/2025/ce/CE2024_def.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline decoration-white/50 underline-offset-2 hover:text-amber-200"
+            >
+              {english ? "INEGI, 2024 Economic Census" : "INEGI, Censos Económicos 2024"}
+            </a>
           </p>
-          <p>
-            {english ? "“Who looks outside dreams; who looks inside awakes.”" : "“Quien mira hacia afuera, sueña; quien mira hacia adentro, despierta.”"}
-            <span className="ml-1 font-semibold text-amber-200">— Carl Gustav Jung, {english ? "1916 letter" : "carta de 1916"}</span>
-          </p>
+          <Link to="/emprende" className="shrink-0 rounded-full bg-amber-300 px-3 py-1.5 font-bold text-[#183d36] hover:bg-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+            {english ? "Practice a business idea →" : "Practica una idea de negocio →"}
+          </Link>
         </div>
       </div>
     </section>
